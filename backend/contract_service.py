@@ -182,7 +182,36 @@ class ContractService:
             doc.build(story)
             
             logger.info(f"Generated contract PDF: {output_path}")
-            return str(output_path)
+            
+            # Prepare result
+            result = {
+                'local_path': str(output_path),
+                'filename': filename
+            }
+            
+            # Upload to Google Drive if requested and service is available
+            if upload_to_drive and self.drive_service:
+                try:
+                    # Create custom filename with EDRPOU
+                    drive_filename = f"Договір_{contract_number}_{supplier_edrpou}.pdf"
+                    
+                    drive_result = self.drive_service.upload_file(
+                        file_path=str(output_path),
+                        folder_name='Договори',
+                        custom_name=drive_filename
+                    )
+                    
+                    result['drive_file_id'] = drive_result['file_id']
+                    result['drive_view_link'] = drive_result['web_view_link']
+                    result['drive_download_link'] = drive_result['web_content_link']
+                    
+                    logger.info(f"Uploaded contract to Google Drive: {drive_result['file_id']}")
+                    
+                except Exception as e:
+                    logger.error(f"Failed to upload to Google Drive: {str(e)}")
+                    # Continue without Drive upload
+            
+            return result
             
         except Exception as e:
             logger.error(f"Error generating contract PDF: {str(e)}")
