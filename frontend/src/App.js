@@ -6,9 +6,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { Toaster } from '@/components/ui/sonner';
-import { Plus, Trash2, Search, FileText, Users, Receipt, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Search, FileText, Users, Receipt, Loader2, Package, FileSignature } from 'lucide-react';
 import '@/App.css';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
