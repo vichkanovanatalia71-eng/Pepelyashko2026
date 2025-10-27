@@ -1437,7 +1437,7 @@ function App() {
                   {/* Items section */}
                   <div className="space-y-4">
                     <Label className="text-sm font-medium text-gray-700">Позиції товарів/послуг *</Label>
-                    {contractForm.items.map((item, index) => (
+                    {contractForm.items && contractForm.items.map((item, index) => (
                       <div key={index} className="p-4 border border-gray-300 rounded-lg bg-gray-50 space-y-3">
                         <div className="flex justify-between items-center mb-2">
                           <span className="text-sm font-semibold text-gray-700">Позиція #{index + 1}</span>
