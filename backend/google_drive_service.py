@@ -18,11 +18,12 @@ class GoogleDriveService:
         'Видаткові накладні': None
     }
     
-    def __init__(self, credentials_path: str):
+    def __init__(self, credentials_path: str, shared_drive_id: Optional[str] = None):
         """Initialize Google Drive service with credentials"""
         self.credentials_path = credentials_path
+        self.shared_drive_id = shared_drive_id
         self.service = None
-        self.root_folder_id = None
+        self.root_folder_id = shared_drive_id  # Use shared drive as root
         self._initialize_service()
         
     def _initialize_service(self):
