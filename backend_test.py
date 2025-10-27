@@ -1082,37 +1082,40 @@ class ContractTestSuite:
         # Test 2: Google Drive Service Initialization
         test_results['drive_service_init'] = self.test_google_drive_service_initialization()
         
-        # Test 3: Get Counterparties (specifically looking for ЄДРПОУ 40196816)
+        # Test 3: Specific Invoice drive_file_id Test (from review request)
+        test_results['specific_invoice_drive_file_id'] = self.test_specific_invoice_drive_file_id_scenario()
+        
+        # Test 4: Get Counterparties (specifically looking for ЄДРПОУ 40196816)
         test_results['get_counterparties'] = self.test_get_counterparties_for_documents()
         
-        # Test 4: Invoice PDF Generation
+        # Test 5: Invoice PDF Generation
         test_results['invoice_pdf_generation'] = self.test_invoice_pdf_generation()
         
-        # Test 5: Act PDF Generation
+        # Test 6: Act PDF Generation
         test_results['act_pdf_generation'] = self.test_act_pdf_generation()
         
-        # Test 6: Waybill PDF Generation
+        # Test 7: Waybill PDF Generation
         test_results['waybill_pdf_generation'] = self.test_waybill_pdf_generation()
         
-        # Test 7: Ukrainian Characters in PDFs
+        # Test 8: Ukrainian Characters in PDFs
         test_results['ukrainian_characters'] = self.test_ukrainian_characters_in_pdfs()
         
-        # Test 8: VAT Exemption Marking
+        # Test 9: VAT Exemption Marking
         test_results['vat_exemption'] = self.test_vat_exemption_marking()
         
-        # Test 9: Contract PDF Generation (existing test)
+        # Test 10: Contract PDF Generation (existing test)
         test_results['contract_pdf_generation'] = self.test_contract_pdf_generation()
         
-        # Test 10: Google Drive Links Validation
+        # Test 11: Google Drive Links Validation
         test_results['drive_links'] = self.test_google_drive_links()
         
-        # Test 11: Contract PDF Download (existing test)
+        # Test 12: Contract PDF Download (existing test)
         test_results['pdf_download'] = self.test_contract_pdf_download()
         
-        # Test 12: Contract Email Sending (existing test)
+        # Test 13: Contract Email Sending (existing test)
         test_results['email_sending'] = self.test_contract_email_sending()
         
-        # Test 13: Check for Unicode errors in logs
+        # Test 14: Check for Unicode errors in logs
         test_results['unicode_logs_check'] = self.check_backend_logs_for_unicode_errors()
         
         # Summary
