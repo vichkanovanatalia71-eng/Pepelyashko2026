@@ -23,184 +23,152 @@ class ContractService:
         self.output_dir = Path(__file__).parent / "generated_contracts"
         self.output_dir.mkdir(exist_ok=True)
         
-    def generate_contract_html(self, contract_data: Dict[str, Any]) -> str:
-        """Generate HTML from contract data"""
-        
-        # Extract data
-        contract_number = contract_data.get('contract_number', '001')
-        contract_date = contract_data.get('contract_date', datetime.now().strftime('%d.%m.%Y'))
-        city = contract_data.get('city', 'Одеса')
-        
-        # Counterparty data
-        counterparty = contract_data.get('counterparty', {})
-        supplier_name = counterparty.get('representative_name', '')
-        supplier_edrpou = counterparty.get('edrpou', '')
-        supplier_email = counterparty.get('email', '')
-        supplier_phone = counterparty.get('phone', '')
-        supplier_iban = counterparty.get('iban', '')
-        director_position = counterparty.get('director_position', 'Директор')
-        director_name = counterparty.get('director_name', supplier_name)
-        
-        # Items/specification
-        items = contract_data.get('items', [])
-        total_amount = contract_data.get('total_amount', 0)
-        subject = contract_data.get('subject', 'Постачання товарів')
-        
-        # Generate specification table
-        spec_rows = ""
-        for idx, item in enumerate(items, 1):
-            item_total = item.get('amount', 0)
-            spec_rows += f"""
-            <tr>
-                <td style="border: 1px solid black; padding: 5px; text-align: center;">{idx}</td>
-                <td style="border: 1px solid black; padding: 5px;">{item.get('name', '')}</td>
-                <td style="border: 1px solid black; padding: 5px; text-align: center;">{item.get('unit', '')}</td>
-                <td style="border: 1px solid black; padding: 5px; text-align: center;">{item.get('quantity', 0)}</td>
-                <td style="border: 1px solid black; padding: 5px; text-align: right;">{item.get('price', 0):.2f}</td>
-                <td style="border: 1px solid black; padding: 5px; text-align: right;">{item_total:.2f}</td>
-            </tr>
-            """
-        
-        html_content = f"""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <style>
-                @page {{
-                    size: A4;
-                    margin: 2cm;
-                }}
-                body {{
-                    font-family: 'DejaVu Sans', Arial, sans-serif;
-                    font-size: 12pt;
-                    line-height: 1.5;
-                    color: #000;
-                }}
-                h1 {{
-                    text-align: center;
-                    font-size: 14pt;
-                    font-weight: bold;
-                    margin-bottom: 10px;
-                }}
-                h2 {{
-                    font-size: 12pt;
-                    font-weight: bold;
-                    margin-top: 15px;
-                    margin-bottom: 10px;
-                }}
-                p {{
-                    text-align: justify;
-                    margin-bottom: 10px;
-                }}
-                table {{
-                    width: 100%;
-                    border-collapse: collapse;
-                    margin: 10px 0;
-                }}
-                .center {{
-                    text-align: center;
-                }}
-                .signature-block {{
-                    margin-top: 30px;
-                    display: flex;
-                    justify-content: space-between;
-                }}
-                .signature {{
-                    width: 45%;
-                }}
-            </style>
-        </head>
-        <body>
-            <h1>ДОГОВІР ПОСТАЧАННЯ № {contract_number}</h1>
-            <p class="center">{city}, {contract_date}</p>
-            
-            <p>КОМУНАЛЬНЕ НЕКОМЕРЦІЙНЕ ПІДПРИЄМСТВО "МУРОВАНОКУРИЛОВЕЦЬКА ЦЕНТРАЛЬНА РАЙОННА ЛІКАРНЯ", іменоване в подальшому «Покупець», 
-            в особі директора Шевцова Анатолія Миколайовича, який діє на підставі Статуту, з однієї сторони, та</p>
-            
-            <p><strong>{supplier_name}</strong>, іменований в подальшому «Постачальник», 
-            в особі {director_position} {director_name}, з іншої сторони, 
-            уклали цей Договір про наступне:</p>
-            
-            <h2>1. ПРЕДМЕТ ДОГОВОРУ</h2>
-            <p>1.1. Постачальник зобов'язується передати у власність Покупцю, а Покупець прийняти та оплатити Товар відповідно до умов 
-            цього Договору та Специфікації, яка є невід'ємною частиною цього Договору.</p>
-            
-            <p>1.2. Предмет договору: {subject}</p>
-            
-            <h2>2. СПЕЦИФІКАЦІЯ</h2>
-            <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
-                <thead>
-                    <tr style="background-color: #f0f0f0;">
-                        <th style="border: 1px solid black; padding: 5px;">№</th>
-                        <th style="border: 1px solid black; padding: 5px;">Найменування товару/послуги</th>
-                        <th style="border: 1px solid black; padding: 5px;">Од. вим.</th>
-                        <th style="border: 1px solid black; padding: 5px;">Кількість</th>
-                        <th style="border: 1px solid black; padding: 5px;">Ціна без ПДВ, грн</th>
-                        <th style="border: 1px solid black; padding: 5px;">Сума без ПДВ, грн</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {spec_rows}
-                    <tr style="font-weight: bold;">
-                        <td colspan="5" style="border: 1px solid black; padding: 5px; text-align: right;">РАЗОМ:</td>
-                        <td style="border: 1px solid black; padding: 5px; text-align: right;">{total_amount:.2f}</td>
-                    </tr>
-                </tbody>
-            </table>
-            
-            <h2>3. ЦІНА ТА ПОРЯДОК РОЗРАХУНКІВ</h2>
-            <p>3.1. Загальна вартість Товару за цим Договором становить: <strong>{total_amount:.2f} грн</strong> (без ПДВ).</p>
-            <p>3.2. Оплата здійснюється шляхом 100% передоплати на розрахунковий рахунок Постачальника протягом 3 (трьох) банківських днів 
-            з моменту підписання цього Договору.</p>
-            
-            <h2>4. СТРОК ДІЇ ДОГОВОРУ</h2>
-            <p>4.1. Цей Договір набирає чинності з моменту його підписання Сторонами і діє до 31 грудня {datetime.now().year} року.</p>
-            <p>4.2. Поставка Товару здійснюється протягом 7 (семи) календарних днів з моменту надходження коштів на розрахунковий рахунок Постачальника.</p>
-            
-            <h2>5. РЕКВІЗИТИ ТА ПІДПИСИ СТОРІН</h2>
-            
-            <div style="display: flex; justify-content: space-between; margin-top: 30px;">
-                <div style="width: 45%;">
-                    <p><strong>ПОКУПЕЦЬ:</strong></p>
-                    <p>КНП "Мурованокуриловецька ЦРЛ"</p>
-                    <p>Код ЄДРПОУ: 01982608</p>
-                    <br>
-                    <p>_______________ Шевцов А.М.</p>
-                    <p style="font-size: 10pt;">(підпис)</p>
-                    <p>М.П.</p>
-                </div>
-                
-                <div style="width: 45%;">
-                    <p><strong>ПОСТАЧАЛЬНИК:</strong></p>
-                    <p>{supplier_name}</p>
-                    <p>Код ЄДРПОУ: {supplier_edrpou}</p>
-                    <p>Email: {supplier_email}</p>
-                    <p>Тел.: {supplier_phone}</p>
-                    <p>IBAN: {supplier_iban}</p>
-                    <br>
-                    <p>_______________ {director_name}</p>
-                    <p style="font-size: 10pt;">(підпис)</p>
-                </div>
-            </div>
-        </body>
-        </html>
-        """
-        
-        return html_content
-    
     def generate_contract_pdf(self, contract_data: Dict[str, Any]) -> str:
-        """Generate PDF contract and return file path"""
+        """Generate PDF contract using ReportLab and return file path"""
         try:
-            html_content = self.generate_contract_html(contract_data)
+            # Extract data
+            contract_number = contract_data.get('contract_number', '001')
+            contract_date = contract_data.get('contract_date', datetime.now().strftime('%d.%m.%Y'))
+            city = contract_data.get('city', 'Одеса')
+            
+            # Counterparty data
+            counterparty = contract_data.get('counterparty', {})
+            supplier_name = counterparty.get('representative_name', '')
+            supplier_edrpou = counterparty.get('edrpou', '')
+            supplier_email = counterparty.get('email', '')
+            supplier_phone = counterparty.get('phone', '')
+            supplier_iban = counterparty.get('iban', '')
+            director_position = counterparty.get('director_position', 'Директор')
+            director_name = counterparty.get('director_name', supplier_name)
+            
+            # Items/specification
+            items = contract_data.get('items', [])
+            total_amount = contract_data.get('total_amount', 0)
+            subject = contract_data.get('subject', 'Постачання товарів')
             
             # Generate filename
-            contract_number = contract_data.get('contract_number', '001')
             filename = f"contract_{contract_number}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
             output_path = self.output_dir / filename
             
-            # Generate PDF from HTML
-            HTML(string=html_content).write_pdf(str(output_path))
+            # Create PDF
+            doc = SimpleDocTemplate(str(output_path), pagesize=A4,
+                                    rightMargin=2*cm, leftMargin=2*cm,
+                                    topMargin=2*cm, bottomMargin=2*cm)
+            
+            # Container for PDF elements
+            story = []
+            
+            # Styles
+            styles = getSampleStyleSheet()
+            title_style = ParagraphStyle(
+                'CustomTitle',
+                parent=styles['Heading1'],
+                fontSize=14,
+                textColor=colors.black,
+                alignment=TA_CENTER,
+                spaceAfter=12
+            )
+            
+            normal_style = ParagraphStyle(
+                'CustomNormal',
+                parent=styles['Normal'],
+                fontSize=11,
+                alignment=TA_JUSTIFY,
+                spaceAfter=12
+            )
+            
+            # Title
+            story.append(Paragraph(f'ДОГОВІР ПОСТАЧАННЯ № {contract_number}', title_style))
+            story.append(Paragraph(f'{city}, {contract_date}', ParagraphStyle(
+                'DateStyle', parent=styles['Normal'], fontSize=11, alignment=TA_CENTER, spaceAfter=12
+            )))
+            story.append(Spacer(1, 0.5*cm))
+            
+            # Introduction
+            intro = f"""КОМУНАЛЬНЕ НЕКОМЕРЦІЙНЕ ПІДПРИЄМСТВО "МУРОВАНОКУРИЛОВЕЦЬКА ЦЕНТРАЛЬНА РАЙОННА ЛІКАРНЯ", 
+            іменоване в подальшому «Покупець», в особі директора Шевцова Анатолія Миколайовича, який діє на підставі Статуту, 
+            з однієї сторони, та <b>{supplier_name}</b>, іменований в подальшому «Постачальник», в особі {director_position} {director_name}, 
+            з іншої сторони, уклали цей Договір про наступне:"""
+            story.append(Paragraph(intro, normal_style))
+            story.append(Spacer(1, 0.5*cm))
+            
+            # Section 1
+            story.append(Paragraph('<b>1. ПРЕДМЕТ ДОГОВОРУ</b>', styles['Heading2']))
+            story.append(Paragraph('1.1. Постачальник зобов\'язується передати у власність Покупцю, а Покупець прийняти та оплатити Товар відповідно до умов цього Договору та Специфікації, яка є невід\'ємною частиною цього Договору.', normal_style))
+            story.append(Paragraph(f'1.2. Предмет договору: {subject}', normal_style))
+            story.append(Spacer(1, 0.5*cm))
+            
+            # Section 2 - Specification
+            story.append(Paragraph('<b>2. СПЕЦИФІКАЦІЯ</b>', styles['Heading2']))
+            
+            # Create table data
+            table_data = [['№', 'Найменування', 'Од.', 'К-сть', 'Ціна, грн', 'Сума, грн']]
+            for idx, item in enumerate(items, 1):
+                table_data.append([
+                    str(idx),
+                    item.get('name', ''),
+                    item.get('unit', ''),
+                    str(item.get('quantity', 0)),
+                    f"{item.get('price', 0):.2f}",
+                    f"{item.get('amount', 0):.2f}"
+                ])
+            table_data.append(['', '', '', '', 'РАЗОМ:', f'{total_amount:.2f}'])
+            
+            # Create table
+            table = Table(table_data, colWidths=[1.5*cm, 7*cm, 2*cm, 2*cm, 3*cm, 3*cm])
+            table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, 0), 10),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                ('BACKGROUND', (0, 1), (-1, -2), colors.white),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+            ]))
+            story.append(table)
+            story.append(Spacer(1, 0.5*cm))
+            
+            # Section 3
+            story.append(Paragraph('<b>3. ЦІНА ТА ПОРЯДОК РОЗРАХУНКІВ</b>', styles['Heading2']))
+            story.append(Paragraph(f'3.1. Загальна вартість Товару за цим Договором становить: <b>{total_amount:.2f} грн</b> (без ПДВ).', normal_style))
+            story.append(Paragraph('3.2. Оплата здійснюється шляхом 100% передоплати на розрахунковий рахунок Постачальника протягом 3 (трьох) банківських днів з моменту підписання цього Договору.', normal_style))
+            story.append(Spacer(1, 0.5*cm))
+            
+            # Section 4
+            story.append(Paragraph('<b>4. СТРОК ДІЇ ДОГОВОРУ</b>', styles['Heading2']))
+            story.append(Paragraph(f'4.1. Цей Договір набирає чинності з моменту його підписання Сторонами і діє до 31 грудня {datetime.now().year} року.', normal_style))
+            story.append(Paragraph('4.2. Поставка Товару здійснюється протягом 7 (семи) календарних днів з моменту надходження коштів на розрахунковий рахунок Постачальника.', normal_style))
+            story.append(Spacer(1, 1*cm))
+            
+            # Section 5 - Signatures
+            story.append(Paragraph('<b>5. РЕКВІЗИТИ ТА ПІДПИСИ СТОРІН</b>', styles['Heading2']))
+            story.append(Spacer(1, 0.5*cm))
+            
+            # Signatures table
+            sig_data = [
+                ['ПОКУПЕЦЬ:', 'ПОСТАЧАЛЬНИК:'],
+                ['КНП "Мурованокуриловецька ЦРЛ"', supplier_name],
+                ['Код ЄДРПОУ: 01982608', f'Код ЄДРПОУ: {supplier_edrpou}'],
+                ['', f'Email: {supplier_email}'],
+                ['', f'Тел.: {supplier_phone}'],
+                ['', f'IBAN: {supplier_iban}'],
+                ['', ''],
+                ['___________ Шевцов А.М.', f'___________ {director_name}'],
+                ['М.П.', ''],
+            ]
+            
+            sig_table = Table(sig_data, colWidths=[9*cm, 9*cm])
+            sig_table.setStyle(TableStyle([
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ]))
+            story.append(sig_table)
+            
+            # Build PDF
+            doc.build(story)
             
             logger.info(f"Generated contract PDF: {output_path}")
             return str(output_path)
