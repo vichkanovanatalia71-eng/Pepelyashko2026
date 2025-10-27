@@ -331,7 +331,10 @@ metadata:
   run_ui: false
 
 test_plan:
-  current_focus: []
+  current_focus:
+    - "Invoice PDF Preview with Drive Viewer"
+    - "Act PDF Preview with Drive Viewer"
+    - "Waybill PDF Preview with Drive Viewer"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
