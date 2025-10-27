@@ -477,6 +477,9 @@ function App() {
           
           toast.success(response.data.message || `${docType} успішно створено!`);
           
+          // Refresh all documents list
+          fetchAllDocuments();
+          
           // Refresh documents if viewing a counterparty
           if (selectedCounterparty) {
             const docsResponse = await axios.get(`${API}/counterparties/${selectedCounterparty.edrpou}/documents`);
