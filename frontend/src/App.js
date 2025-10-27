@@ -946,7 +946,7 @@ function App() {
                             {counterpartyDocuments.invoices.map((doc, idx) => (
                               <div key={idx} className="p-3 bg-green-50 rounded-lg flex justify-between items-center">
                                 <p className="text-sm">№{doc.number} від {doc.date} | Сума: {doc.total_amount} грн</p>
-                                {doc.drive_file_id && (
+                                {doc.drive_file_id && doc.drive_file_id !== '' && (
                                   <Button
                                     size="sm"
                                     variant="outline"
@@ -979,7 +979,7 @@ function App() {
                             {counterpartyDocuments.acts.map((doc, idx) => (
                               <div key={idx} className="p-3 bg-purple-50 rounded-lg flex justify-between items-center">
                                 <p className="text-sm">№{doc.number} від {doc.date} | Сума: {doc.total_amount} грн</p>
-                                {doc.drive_file_id && (
+                                {doc.drive_file_id && doc.drive_file_id !== '' && (
                                   <Button
                                     size="sm"
                                     variant="outline"
@@ -1012,7 +1012,7 @@ function App() {
                             {counterpartyDocuments.waybills.map((doc, idx) => (
                               <div key={idx} className="p-3 bg-orange-50 rounded-lg flex justify-between items-center">
                                 <p className="text-sm">№{doc.number} від {doc.date} | Сума: {doc.total_amount} грн</p>
-                                {doc.drive_file_id && (
+                                {doc.drive_file_id && doc.drive_file_id !== '' && (
                                   <Button
                                     size="sm"
                                     variant="outline"
@@ -1045,7 +1045,7 @@ function App() {
                             {counterpartyDocuments.contracts.map((doc, idx) => (
                               <div key={idx} className="p-3 bg-teal-50 rounded-lg flex justify-between items-center">
                                 <p className="text-sm">№{doc.number} від {doc.date} | {doc.subject} | Сума: {doc.amount} грн</p>
-                                {doc.drive_file_id && (
+                                {doc.drive_file_id && doc.drive_file_id !== '' && (
                                   <Button
                                     size="sm"
                                     variant="outline"
@@ -1141,7 +1141,7 @@ function App() {
                           <p className="text-sm text-gray-700 mt-1">{doc.counterparty_name}</p>
                           <p className="text-sm font-medium text-green-700 mt-1">Сума: {doc.total_amount} грн</p>
                         </div>
-                        {doc.drive_file_id && (
+                        {doc.drive_file_id && doc.drive_file_id !== '' && (
                           <Button
                             size="sm"
                             variant="outline"
@@ -1205,7 +1205,7 @@ function App() {
                           <p className="text-sm text-gray-700 mt-1">{doc.counterparty_name}</p>
                           <p className="text-sm font-medium text-purple-700 mt-1">Сума: {doc.total_amount} грн</p>
                         </div>
-                        {doc.drive_file_id && (
+                        {doc.drive_file_id && doc.drive_file_id !== '' && (
                           <Button
                             size="sm"
                             variant="outline"
@@ -1269,7 +1269,7 @@ function App() {
                           <p className="text-sm text-gray-700 mt-1">{doc.counterparty_name}</p>
                           <p className="text-sm font-medium text-orange-700 mt-1">Сума: {doc.total_amount} грн</p>
                         </div>
-                        {doc.drive_file_id && (
+                        {doc.drive_file_id && doc.drive_file_id !== '' && (
                           <Button
                             size="sm"
                             variant="outline"
@@ -1475,7 +1475,7 @@ function App() {
                           <p className="text-sm text-gray-600 mt-1">{doc.subject}</p>
                           <p className="text-sm font-medium text-teal-700 mt-1">Сума: {doc.amount} грн</p>
                         </div>
-                        {doc.drive_file_id && (
+                        {doc.drive_file_id && doc.drive_file_id !== '' && (
                           <Button
                             size="sm"
                             variant="outline"
