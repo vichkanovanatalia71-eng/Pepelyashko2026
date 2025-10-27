@@ -296,10 +296,7 @@ metadata:
   run_ui: false
 
 test_plan:
-  current_focus:
-    - "Invoice PDF Generation with Drive Upload"
-    - "Act PDF Generation with Drive Upload"
-    - "Waybill PDF Generation with Drive Upload"
+  current_focus: []
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
@@ -309,6 +306,9 @@ test_plan:
     - "Google Drive Service Integration"
     - "Contract PDF Generation with Drive Upload"
     - "Contract Email with Drive Link"
+    - "Invoice PDF Generation with Drive Upload"
+    - "Act PDF Generation with Drive Upload"
+    - "Waybill PDF Generation with Drive Upload"
 
 agent_communication:
   - agent: "main"
