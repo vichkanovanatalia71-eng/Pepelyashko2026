@@ -1033,11 +1033,15 @@ function App() {
                         customEmail: '',
                         counterpartyEmail: foundCounterparty?.email || ''
                       });
-                      setShowContractPreview(true);
                       
-                      toast.success('Договір успішно згенеровано!');
+                      // Show dialog first, then toast
+                      setTimeout(() => {
+                        setShowContractPreview(true);
+                        toast.success('Договір успішно згенеровано!');
+                      }, 100);
                     }
                   } catch (error) {
+                    console.error('Contract generation error:', error);
                     toast.error(error.response?.data?.detail || 'Помилка при створенні договору');
                   } finally {
                     setLoading(false);
