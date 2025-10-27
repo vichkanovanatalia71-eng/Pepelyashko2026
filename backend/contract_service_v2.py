@@ -153,49 +153,95 @@ class ContractServiceV2:
 МФО {buyer_data.get('МФО', '')}, e-mail {buyer_data.get('email', '')}, тел. {buyer_data.get('тел', '')}, 
 в особі {buyer_data.get('В особі', '')}, що діє на підставі {buyer_data.get('Підпис', 'Статуту')} (далі – «Покупець»)."""
             story.append(Paragraph(buyer_text, styles['CustomNormal']))
+            story.append(Spacer(1, 3*mm))
+            
+            # 1.3
+            story.append(Paragraph("<b>1.3.</b> Ці дані автоматично підтягуються з аркушів: «Мої дані» (Постачальник) та «Основні дані» (Покупець). Уся номенклатура/послуги та ціни формуються у Специфікації (Додаток 1), яка генерується з аркуша «Замовлення».", styles['CustomNormal']))
             story.append(Spacer(1, 6*mm))
             
             # Section 2: SUBJECT
             story.append(Paragraph("2. ПРЕДМЕТ ДОГОВОРУ", styles['CustomHeading1']))
             story.append(Spacer(1, 3*mm))
             
-            subject_text = f"""<b>2.1.</b> Постачальник зобов'язується поставити Покупцю товари та/або надати послуги 
-({contract_data.get('subject', 'Постачання товарів')}), а Покупець – прийняти та оплатити їх на умовах цього Договору."""
-            story.append(Paragraph(subject_text, styles['CustomNormal']))
+            story.append(Paragraph("<b>2.1.</b> Постачальник зобов'язується поставити Покупцю товари та/або надати послуги, а Покупець – прийняти та оплатити їх на умовах цього Договору.", styles['CustomNormal']))
             story.append(Spacer(1, 3*mm))
             
-            story.append(Paragraph("<b>2.2.</b> Номенклатура, кількість/обсяг, ціни визначаються у Специфікації (Додаток 1), що є невід'ємною частиною Договору.", styles['CustomNormal']))
+            story.append(Paragraph("<b>2.2.</b> Номенклатура, кількість/обсяг, ціни, строки виконання визначаються у Специфікації (Додаток 1) та окремих Замовленнях/Заявках (Додаток 2), що є невід'ємною частиною Договору.", styles['CustomNormal']))
+            story.append(Spacer(1, 3*mm))
+            
+            story.append(Paragraph("<b>2.3.</b> Для товарів застосовуються правила поставки; для послуг – правила надання послуг. Якщо предмет змішаний, застосовуються обидва блоки.", styles['CustomNormal']))
             story.append(Spacer(1, 6*mm))
             
-            # Section 3-7: Standard terms (abbreviated)
+            # Section 3: ORDER FORMATION
             story.append(Paragraph("3. ПОРЯДОК ФОРМУВАННЯ ТА ПІДТВЕРДЖЕННЯ ЗАМОВЛЕННЯ", styles['CustomHeading1']))
             story.append(Spacer(1, 3*mm))
-            story.append(Paragraph("<b>3.1.</b> Покупець формує Замовлення, яке підтверджується шляхом підписання КЕП або обміну електронними повідомленнями.", styles['CustomNormal']))
+            story.append(Paragraph("<b>3.1.</b> Покупець формує Замовлення на аркуші «Замовлення» (№, дата, позиції, строки, місце поставки/надання, відповідальні особи).", styles['CustomNormal']))
+            story.append(Spacer(1, 3*mm))
+            story.append(Paragraph("<b>3.2.</b> На підставі «Замовлення» система формує Специфікацію (Додаток 1) із полями: № позиції, опис, артикул/код, од. виміру, кількість/обсяг, ціна без ПДВ, ставка ПДВ/ЄП, сума без ПДВ, ПДВ, сума з ПДВ/загальна.", styles['CustomNormal']))
+            story.append(Spacer(1, 3*mm))
+            story.append(Paragraph("<b>3.3.</b> Підтвердження здійснюється шляхом підписання КЕП/удаленої згоди або обміну електронними повідомленнями з вкладеною Специфікацією. Електронні документи прирівнюються до паперових (ст. 7 Закону «Про електронні документи…», ст. 18 Закону «Про електронні довірчі послуги»).", styles['CustomNormal']))
+            story.append(Spacer(1, 6*mm))
+            
+            # Section 4: DELIVERY TERMS
+            story.append(Paragraph("4. УМОВИ ПОСТАВКИ ТОВАРІВ", styles['CustomHeading1']))
+            story.append(Spacer(1, 3*mm))
+            story.append(Paragraph("<b>4.1.</b> Базис поставки: DAP – за INCOTERMS 2020 або інший погоджений у Специфікації.", styles['CustomNormal']))
+            story.append(Spacer(1, 3*mm))
+            story.append(Paragraph("<b>4.2.</b> Строк поставки – згідно Специфікації. Дата поставки – дата підписання видаткової накладної/ТТН або акту приймання-передачі товару.", styles['CustomNormal']))
+            story.append(Spacer(1, 3*mm))
+            story.append(Paragraph("<b>4.3.</b> Право власності та ризики випадкової загибелі/пошкодження переходять до Покупця з моменту підписання видаткової накладної (або інший момент, визначений у Специфікації).", styles['CustomNormal']))
+            story.append(Spacer(1, 3*mm))
+            story.append(Paragraph("<b>4.4.</b> Комплектність, тара, пакування – згідно ДСТУ/ТУ та умов Специфікації. Маркування – українською мовою, із зазначенням виробника, дати виготовлення, гарантійних умов, серій/лотів тощо, якщо це вимагає закон.", styles['CustomNormal']))
+            story.append(Spacer(1, 3*mm))
+            story.append(Paragraph("<b>4.5.</b> Якість – відповідно до ДСТУ/ТУ, декларацій/сертифікатів відповідності/якості, висновків СЕС, ін. обов'язкових документів (за номенклатурою). На вимогу надаються копії сертифікатів.", styles['CustomNormal']))
+            story.append(Spacer(1, 6*mm))
+            
+            # Section 5: SERVICES
+            story.append(Paragraph("5. НАДАННЯ ПОСЛУГ", styles['CustomHeading1']))
+            story.append(Spacer(1, 3*mm))
+            story.append(Paragraph("<b>5.1.</b> Обсяг, місце та строки надання – у Специфікації/Замовленні.", styles['CustomNormal']))
+            story.append(Spacer(1, 3*mm))
+            story.append(Paragraph("<b>5.2.</b> Результат надання послуг приймається Актом наданих послуг. Дата підписання Акта – дата належного виконання.", styles['CustomNormal']))
+            story.append(Spacer(1, 3*mm))
+            story.append(Paragraph("<b>5.3.</b> Якщо протягом 5 (п'яти) робочих днів з дати отримання Акта від Покупця не надійшло мотивованих письмових зауважень, послуги вважаються прийнятими в повному обсязі.", styles['CustomNormal']))
+            story.append(Spacer(1, 6*mm))
+            
+            # Section 6: WARRANTY
+            story.append(Paragraph("6. ГАРАНТІЙНІ ЗОБОВ'ЯЗАННЯ (ДЛЯ ТОВАРІВ)", styles['CustomHeading1']))
+            story.append(Spacer(1, 3*mm))
+            story.append(Paragraph("<b>6.1.</b> Гарантійний строк: 12 місяців або встановлений виробником, якщо він більший. Перебіг гарантії починається з дати поставки.", styles['CustomNormal']))
+            story.append(Spacer(1, 3*mm))
+            story.append(Paragraph("<b>6.2.</b> У разі виявлення недоліків у гарантійний період Постачальник за свій рахунок усуває їх/здійснює заміну у строк, розумно необхідний, але не більше 14–30 календарних днів, якщо інше не погоджено.", styles['CustomNormal']))
+            story.append(Spacer(1, 3*mm))
+            story.append(Paragraph("<b>6.3.</b> Гарантія не поширюється на випадки порушення правил експлуатації/зберігання/монтажу, на механічні пошкодження та форс-мажор.", styles['CustomNormal']))
+            story.append(Spacer(1, 6*mm))
+            
+            # Section 7: QUALITY ACCEPTANCE
+            story.append(Paragraph("7. ЯКІСТЬ, ПРИЙМАННЯ ЗА КІЛЬКІСТЮ І ЯКІСТЮ", styles['CustomHeading1']))
+            story.append(Spacer(1, 3*mm))
+            story.append(Paragraph("<b>7.1.</b> Приймання за кількістю – за видатковими накладними/ТТН у момент отримання. За якістю – протягом 14 календарних днів, якщо інше не встановлено у Специфікації/законом для конкретної продукції.", styles['CustomNormal']))
+            story.append(Spacer(1, 3*mm))
+            story.append(Paragraph("<b>7.2.</b> Виявлені невідповідності фіксуються актом розбіжностей із фото/відеопідтвердженням; сторони вживають заходів для заміни/доукомплектування/корекції.", styles['CustomNormal']))
             story.append(Spacer(1, 6*mm))
             
             # Section 8: PRICE AND PAYMENT
-            story.append(Paragraph("4. ЦІНА, ПОДАТКИ, ОПЛАТА", styles['CustomHeading1']))
+            story.append(Paragraph("8. ЦІНА, ПОДАТКИ, ОПЛАТА", styles['CustomHeading1']))
             story.append(Spacer(1, 3*mm))
             
-            total_text = f"""<b>4.1.</b> Загальна вартість згідно Специфікації становить: {self.format_currency(total_amount)} грн 
-(без ПДВ, згідно з п. 181.1 ПКУ/статусом платника)."""
-            story.append(Paragraph(total_text, styles['CustomNormal']))
+            story.append(Paragraph("<b>8.1.</b> Ціни визначаються у Специфікації. Вони можуть бути: з ПДВ/без ПДВ/за ставкою єдиного податку – залежно від статусу Постачальника (дані з «Мої дані»).", styles['CustomNormal']))
             story.append(Spacer(1, 3*mm))
             
-            story.append(Paragraph("<b>4.2.</b> Умови оплати: післяплата протягом 14 календарних днів з дати підписання акту приймання-передачі.", styles['CustomNormal']))
+            story.append(Paragraph("<b>8.2.</b> Валюта розрахунків – гривня.", styles['CustomNormal']))
+            story.append(Spacer(1, 3*mm))
+            
+            story.append(Paragraph("<b>8.3.</b> Умови оплати: передоплата/післяплата/відстрочка – відповідно до Специфікації. Підстави: рахунок/Специфікація/Акт/накладна.", styles['CustomNormal']))
+            story.append(Spacer(1, 3*mm))
+            
+            story.append(Paragraph("<b>8.4.</b> У разі постачання платником ПДВ – Постачальник реєструє податкову накладну в ЄРПН у строки, визначені ПКУ. У разі неплатника ПДВ – у Специфікації зазначається «без ПДВ, згідно з п. 181.1 ПКУ/статусом платника».", styles['CustomNormal']))
+            story.append(Spacer(1, 3*mm))
+            
+            story.append(Paragraph("<b>8.5.</b> Банківські витрати – за платником, якщо інше не погоджено.", styles['CustomNormal']))
             story.append(Spacer(1, 6*mm))
-            
-            # Section: TERM
-            story.append(Paragraph("5. СТРОК ДІЇ ДОГОВОРУ", styles['CustomHeading1']))
-            story.append(Spacer(1, 3*mm))
-            
-            term_text = f"""<b>5.1.</b> Договір набирає чинності з дати підписання і діє до {end_date} або до повного виконання зобов'язань, 
-залежно від того, що настане пізніше."""
-            story.append(Paragraph(term_text, styles['CustomNormal']))
-            story.append(Spacer(1, 6*mm))
-            
-            # Section: SIGNATURES
-            story.append(Paragraph("ПІДПИСИ СТОРІН:", styles['CustomHeading1']))
             story.append(Spacer(1, 6*mm))
             
             # Signature table
