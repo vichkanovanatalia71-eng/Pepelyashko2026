@@ -189,21 +189,33 @@ class GoogleDriveService:
             
             # Upload file
             media = MediaFileUpload(str(file_path), resumable=True)
-            file = self.service.files().create(
-                body=file_metadata,
-                media_body=media,
-                fields='id, webViewLink, webContentLink'
-            ).execute()
+            
+            create_params = {
+                'body': file_metadata,
+                'media_body': media,
+                'fields': 'id, webViewLink, webContentLink'
+            }
+            
+            if self.shared_drive_id:
+                create_params['supportsAllDrives'] = True
+            
+            file = self.service.files().create(**create_params).execute()
             
             # Make file accessible to anyone with the link
             permission = {
                 'type': 'anyone',
                 'role': 'reader'
             }
-            self.service.permissions().create(
-                fileId=file['id'],
-                body=permission
-            ).execute()
+            
+            perm_params = {
+                'fileId': file['id'],
+                'body': permission
+            }
+            
+            if self.shared_drive_id:
+                perm_params['supportsAllDrives'] = True
+            
+            self.service.permissions().create(**perm_params).execute()
             
             logger.info(f"Uploaded file '{file_name}' to folder '{folder_name}'")
             
