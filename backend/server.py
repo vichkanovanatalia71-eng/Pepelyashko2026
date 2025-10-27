@@ -265,6 +265,50 @@ async def get_waybills():
         logging.error(f"Error getting waybills: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
+# Contract endpoints
+@api_router.post("/contracts", response_model=dict)
+async def create_contract(data: ContractCreate):
+    """Create a new contract."""
+    if sheets_service is None:
+        raise HTTPException(status_code=503, detail="Google Sheets service not available")
+    
+    try:
+        result = sheets_service.create_contract(data.model_dump())
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logging.error(f"Error creating contract: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@api_router.get("/contracts", response_model=List[Contract])
+async def get_contracts():
+    """Get all contracts."""
+    if sheets_service is None:
+        raise HTTPException(status_code=503, detail="Google Sheets service not available")
+    
+    try:
+        worksheet = sheets_service.spreadsheet.worksheet("Договори")
+        records = worksheet.get_all_records()
+        
+        result = []
+        for record in records:
+            contract = {
+                'number': str(record['Номер']),
+                'date': str(record['Дата']),
+                'counterparty_edrpou': str(record['ЄДРПОУ контрагента']),
+                'counterparty_name': str(record["Ім'я контрагента"]),
+                'contract_type': str(record['Тип договору']),
+                'subject': str(record['Предмет договору']),
+                'amount': float(record['Сума договору']) if record['Сума договору'] else 0.0
+            }
+            result.append(contract)
+        
+        return result
+    except Exception as e:
+        logging.error(f"Error getting contracts: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
 # Include the router in the main app
 app.include_router(api_router)
 
