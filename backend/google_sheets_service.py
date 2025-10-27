@@ -91,12 +91,12 @@ class GoogleSheetsService:
             for record in records:
                 if str(record.get('ЄДРПОУ', '')) == str(edrpou):
                     return {
-                        'edrpou': record['ЄДРПОУ'],
-                        'representative_name': record["Ім'я представника"],
-                        'email': record['Email'],
-                        'phone': record['Телефон'],
-                        'iban': record['IBAN'],
-                        'contract_type': record['Тип договору']
+                        'edrpou': str(record['ЄДРПОУ']),
+                        'representative_name': str(record["Ім'я представника"]),
+                        'email': str(record['Email']),
+                        'phone': str(record['Телефон']),
+                        'iban': str(record['IBAN']),
+                        'contract_type': str(record['Тип договору'])
                     }
             return None
         except Exception as e:
