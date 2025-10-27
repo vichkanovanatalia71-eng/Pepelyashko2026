@@ -127,16 +127,16 @@ class ContractServiceV2:
             
             # Title
             title_text = f"ДОГОВІР ПОСТАЧАННЯ ТОВАРІВ ТА/АБО НАДАННЯ ПОСЛУГ № {contract_number}"
-            story.append(Paragraph(title_text, styles['Title']))
+            story.append(Paragraph(title_text, styles['ContractTitle']))
             story.append(Spacer(1, 6*mm))
             
             # Location and date
             location_date = f"{city}  «{contract_date_parts['day']}» {contract_date_parts['month']} {contract_date_parts['year']} р."
-            story.append(Paragraph(location_date, styles['Normal']))
+            story.append(Paragraph(location_date, styles['CustomNormal']))
             story.append(Spacer(1, 6*mm))
             
             # Section 1: PARTIES
-            story.append(Paragraph("1. СТОРОНИ ТА ДЖЕРЕЛА ДАНИХ", styles['Heading1']))
+            story.append(Paragraph("1. СТОРОНИ ТА ДЖЕРЕЛА ДАНИХ", styles['CustomHeading1']))
             story.append(Spacer(1, 3*mm))
             
             # 1.1 Supplier
@@ -144,7 +144,7 @@ class ContractServiceV2:
 місцезнаходження {supplier_data.get('Юридична адреса', '')}, IBAN {supplier_data.get('р/р(IBAN)', '')} у банку {supplier_data.get('Банк', '')}, 
 МФО {supplier_data.get('МФО', '')}, e-mail {supplier_data.get('email', '')}, тел. {supplier_data.get('тел', '')}, 
 в особі {supplier_data.get('В особі', '')}, що діє на підставі {supplier_data.get('Підпис', 'Статуту')} (далі – «Постачальник»)."""
-            story.append(Paragraph(supplier_text, styles['Normal']))
+            story.append(Paragraph(supplier_text, styles['CustomNormal']))
             story.append(Spacer(1, 3*mm))
             
             # 1.2 Buyer
@@ -152,50 +152,50 @@ class ContractServiceV2:
 місцезнаходження {buyer_data.get('Юридична адреса', '')}, IBAN {buyer_data.get('р/р(IBAN)', '')} у банку {buyer_data.get('Банк', '')}, 
 МФО {buyer_data.get('МФО', '')}, e-mail {buyer_data.get('email', '')}, тел. {buyer_data.get('тел', '')}, 
 в особі {buyer_data.get('В особі', '')}, що діє на підставі {buyer_data.get('Підпис', 'Статуту')} (далі – «Покупець»)."""
-            story.append(Paragraph(buyer_text, styles['Normal']))
+            story.append(Paragraph(buyer_text, styles['CustomNormal']))
             story.append(Spacer(1, 6*mm))
             
             # Section 2: SUBJECT
-            story.append(Paragraph("2. ПРЕДМЕТ ДОГОВОРУ", styles['Heading1']))
+            story.append(Paragraph("2. ПРЕДМЕТ ДОГОВОРУ", styles['CustomHeading1']))
             story.append(Spacer(1, 3*mm))
             
             subject_text = f"""<b>2.1.</b> Постачальник зобов'язується поставити Покупцю товари та/або надати послуги 
 ({contract_data.get('subject', 'Постачання товарів')}), а Покупець – прийняти та оплатити їх на умовах цього Договору."""
-            story.append(Paragraph(subject_text, styles['Normal']))
+            story.append(Paragraph(subject_text, styles['CustomNormal']))
             story.append(Spacer(1, 3*mm))
             
-            story.append(Paragraph("<b>2.2.</b> Номенклатура, кількість/обсяг, ціни визначаються у Специфікації (Додаток 1), що є невід'ємною частиною Договору.", styles['Normal']))
+            story.append(Paragraph("<b>2.2.</b> Номенклатура, кількість/обсяг, ціни визначаються у Специфікації (Додаток 1), що є невід'ємною частиною Договору.", styles['CustomNormal']))
             story.append(Spacer(1, 6*mm))
             
             # Section 3-7: Standard terms (abbreviated)
-            story.append(Paragraph("3. ПОРЯДОК ФОРМУВАННЯ ТА ПІДТВЕРДЖЕННЯ ЗАМОВЛЕННЯ", styles['Heading1']))
+            story.append(Paragraph("3. ПОРЯДОК ФОРМУВАННЯ ТА ПІДТВЕРДЖЕННЯ ЗАМОВЛЕННЯ", styles['CustomHeading1']))
             story.append(Spacer(1, 3*mm))
-            story.append(Paragraph("<b>3.1.</b> Покупець формує Замовлення, яке підтверджується шляхом підписання КЕП або обміну електронними повідомленнями.", styles['Normal']))
+            story.append(Paragraph("<b>3.1.</b> Покупець формує Замовлення, яке підтверджується шляхом підписання КЕП або обміну електронними повідомленнями.", styles['CustomNormal']))
             story.append(Spacer(1, 6*mm))
             
             # Section 8: PRICE AND PAYMENT
-            story.append(Paragraph("4. ЦІНА, ПОДАТКИ, ОПЛАТА", styles['Heading1']))
+            story.append(Paragraph("4. ЦІНА, ПОДАТКИ, ОПЛАТА", styles['CustomHeading1']))
             story.append(Spacer(1, 3*mm))
             
             total_text = f"""<b>4.1.</b> Загальна вартість згідно Специфікації становить: {self.format_currency(total_amount)} грн 
 (без ПДВ, згідно з п. 181.1 ПКУ/статусом платника)."""
-            story.append(Paragraph(total_text, styles['Normal']))
+            story.append(Paragraph(total_text, styles['CustomNormal']))
             story.append(Spacer(1, 3*mm))
             
-            story.append(Paragraph("<b>4.2.</b> Умови оплати: післяплата протягом 14 календарних днів з дати підписання акту приймання-передачі.", styles['Normal']))
+            story.append(Paragraph("<b>4.2.</b> Умови оплати: післяплата протягом 14 календарних днів з дати підписання акту приймання-передачі.", styles['CustomNormal']))
             story.append(Spacer(1, 6*mm))
             
             # Section: TERM
-            story.append(Paragraph("5. СТРОК ДІЇ ДОГОВОРУ", styles['Heading1']))
+            story.append(Paragraph("5. СТРОК ДІЇ ДОГОВОРУ", styles['CustomHeading1']))
             story.append(Spacer(1, 3*mm))
             
             term_text = f"""<b>5.1.</b> Договір набирає чинності з дати підписання і діє до {end_date} або до повного виконання зобов'язань, 
 залежно від того, що настане пізніше."""
-            story.append(Paragraph(term_text, styles['Normal']))
+            story.append(Paragraph(term_text, styles['CustomNormal']))
             story.append(Spacer(1, 6*mm))
             
             # Section: SIGNATURES
-            story.append(Paragraph("ПІДПИСИ СТОРІН:", styles['Heading1']))
+            story.append(Paragraph("ПІДПИСИ СТОРІН:", styles['CustomHeading1']))
             story.append(Spacer(1, 6*mm))
             
             # Signature table
