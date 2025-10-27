@@ -109,9 +109,15 @@ class ContractService:
             
             # Title
             story.append(Paragraph(f'ДОГОВІР ПОСТАЧАННЯ № {contract_number}', title_style))
-            story.append(Paragraph(f'{city}, {contract_date}', ParagraphStyle(
-                'DateStyle', parent=styles['Normal'], fontSize=11, alignment=TA_CENTER, spaceAfter=12
-            )))
+            date_style = ParagraphStyle(
+                'DateStyle', 
+                parent=styles['Normal'], 
+                fontSize=11, 
+                alignment=TA_CENTER, 
+                spaceAfter=12,
+                fontName='DejaVu'
+            )
+            story.append(Paragraph(f'{city}, {contract_date}', date_style))
             story.append(Spacer(1, 0.5*cm))
             
             # Introduction
