@@ -1007,8 +1007,32 @@ function App() {
                           <h4 className="font-semibold mb-2">Договори ({counterpartyDocuments.contracts.length})</h4>
                           <div className="space-y-2">
                             {counterpartyDocuments.contracts.map((doc, idx) => (
-                              <div key={idx} className="p-3 bg-teal-50 rounded-lg">
+                              <div key={idx} className="p-3 bg-teal-50 rounded-lg flex justify-between items-center">
                                 <p className="text-sm">№{doc.number} від {doc.date} | {doc.subject} | Сума: {doc.amount} грн</p>
+                                {doc.drive_file_id && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      setContractPdfData({
+                                        drive_file_id: doc.drive_file_id,
+                                        drive_view_link: `https://drive.google.com/file/d/${doc.drive_file_id}/view`,
+                                        drive_download_link: `https://drive.google.com/uc?export=download&id=${doc.drive_file_id}`,
+                                        contract_number: doc.number
+                                      });
+                                      setContractEmailForm({
+                                        recipient: 'counterparty',
+                                        customEmail: '',
+                                        counterpartyEmail: selectedCounterparty?.email || ''
+                                      });
+                                      setShowContractPreview(true);
+                                    }}
+                                    className="btn-secondary ml-2"
+                                  >
+                                    <Eye className="w-4 h-4 mr-1" />
+                                    Переглянути
+                                  </Button>
+                                )}
                               </div>
                             ))}
                           </div>
