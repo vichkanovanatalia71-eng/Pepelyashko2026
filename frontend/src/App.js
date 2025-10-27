@@ -1528,7 +1528,7 @@ function App() {
                       onClick={() => {
                         setContractForm({
                           ...contractForm,
-                          items: [...contractForm.items, { name: '', unit: 'шт', quantity: 0, price: 0, amount: 0 }]
+                          items: [...(contractForm.items || []), { name: '', unit: 'шт', quantity: 0, price: 0, amount: 0 }]
                         });
                       }}
                       className="w-full border-dashed border-2 border-gray-300 hover:border-blue-500 hover:bg-blue-50"
