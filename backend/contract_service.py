@@ -192,9 +192,13 @@ class ContractService:
                     'hostname': os.getenv('SMTP_HOST', 'smtp.gmail.com'),
                     'port': int(os.getenv('SMTP_PORT', 587)),
                     'username': os.getenv('SMTP_USERNAME'),
-                    'password': os.getenv('SMTP_PASSWORD'),
-                    'use_tls': True
+                    'password': os.getenv('SMTP_PASSWORD')
                 }
+            
+            # Check if SMTP is configured
+            if not smtp_config['username'] or not smtp_config['password']:
+                logger.warning("SMTP not configured - email not sent")
+                return False
             
             # Create message
             message = EmailMessage()
@@ -223,14 +227,14 @@ class ContractService:
                     filename=os.path.basename(pdf_path)
                 )
             
-            # Send email
+            # Send email with start_tls
             await aiosmtplib.send(
                 message,
                 hostname=smtp_config['hostname'],
                 port=smtp_config['port'],
                 username=smtp_config['username'],
                 password=smtp_config['password'],
-                use_tls=smtp_config['use_tls']
+                start_tls=True
             )
             
             logger.info(f"Contract sent to {recipient_email}")
