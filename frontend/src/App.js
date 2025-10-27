@@ -637,7 +637,231 @@ function App() {
           <TabsContent value="waybills" data-testid="waybills-content">
             <DocumentForm endpoint="waybills" docType="Видаткова Накладна" title="Створення Видаткової Накладної" />
           </TabsContent>
+
+          {/* Contracts Tab */}
+          <TabsContent value="contracts" data-testid="contracts-content">
+            <Card className="glass-card" data-testid="contracts-form-card">
+              <CardHeader>
+                <CardTitle className="text-2xl" data-testid="contracts-form-title">Створення Договору</CardTitle>
+                <CardDescription data-testid="contracts-form-description">Створіть новий договір з контрагентом</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={async (e) => {
+                  e.preventDefault();
+                  setLoading(true);
+                  
+                  if (!searchEdrpou) {
+                    toast.error('Спочатку знайдіть контрагента');
+                    setLoading(false);
+                    return;
+                  }
+
+                  try {
+                    const response = await axios.post(`${API}/contracts`, {
+                      counterparty_edrpou: searchEdrpou,
+                      subject: contractForm.subject,
+                      amount: contractForm.amount
+                    });
+                    toast.success(response.data.message || 'Договір успішно створено!');
+                    
+                    // Reset form
+                    setContractForm({ subject: '', amount: 0 });
+                    setSearchEdrpou('');
+                    setFoundCounterparty(null);
+                  } catch (error) {
+                    toast.error(error.response?.data?.detail || 'Помилка при створенні договору');
+                  } finally {
+                    setLoading(false);
+                  }
+                }} className="space-y-6">
+                  {/* Search counterparty */}
+                  <div className="space-y-2">
+                    <Label htmlFor="contract-search-edrpou" data-testid="contract-search-edrpou-label">Пошук контрагента за ЄДРПОУ</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="contract-search-edrpou"
+                        data-testid="contract-search-edrpou-input"
+                        value={searchEdrpou}
+                        onChange={(e) => setSearchEdrpou(e.target.value)}
+                        placeholder="Введіть код ЄДРПОУ"
+                        className="flex-1"
+                      />
+                      <Button 
+                        type="button" 
+                        onClick={searchCounterparty}
+                        data-testid="contract-search-counterparty-btn"
+                        className="btn-primary"
+                      >
+                        <Search className="w-4 h-4 mr-2" />
+                        Знайти
+                      </Button>
+                    </div>
+                    {foundCounterparty && (
+                      <div className="p-3 bg-teal-50 border border-teal-200 rounded-lg" data-testid="contract-found-counterparty-info">
+                        <p className="text-sm font-medium text-teal-900">
+                          {foundCounterparty.representative_name}
+                        </p>
+                        <p className="text-xs text-teal-700">
+                          {foundCounterparty.email} | {foundCounterparty.phone}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="contract-subject" data-testid="contract-subject-label">Предмет договору *</Label>
+                    <Input
+                      id="contract-subject"
+                      data-testid="contract-subject-input"
+                      value={contractForm.subject}
+                      onChange={(e) => setContractForm({...contractForm, subject: e.target.value})}
+                      placeholder="Наприклад: Постачання товарів, Надання послуг..."
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="contract-amount" data-testid="contract-amount-label">Сума договору (грн) *</Label>
+                    <Input
+                      id="contract-amount"
+                      type="number"
+                      step="0.01"
+                      data-testid="contract-amount-input"
+                      value={contractForm.amount}
+                      onChange={(e) => setContractForm({...contractForm, amount: parseFloat(e.target.value)})}
+                      placeholder="0.00"
+                      required
+                    />
+                  </div>
+
+                  <Button 
+                    type="submit" 
+                    disabled={loading || !foundCounterparty}
+                    data-testid="submit-contract-btn"
+                    className="w-full btn-primary py-6 text-lg"
+                  >
+                    {loading ? (
+                      <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Збереження...</>
+                    ) : (
+                      'Створити Договір'
+                    )}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
+
+        {/* Order Creation Dialog */}
+        <Dialog open={showOrderDialog} onOpenChange={setShowOrderDialog}>
+          <DialogContent className="sm:max-w-[600px]" data-testid="order-dialog">
+            <DialogHeader>
+              <DialogTitle data-testid="order-dialog-title">Створення документів на основі замовлення</DialogTitle>
+              <DialogDescription data-testid="order-dialog-description">
+                Виберіть документи, які потрібно створити на основі цього замовлення
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4 py-4">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="create-invoice"
+                  data-testid="create-invoice-checkbox"
+                  checked={selectedDocs.invoice}
+                  onCheckedChange={(checked) => setSelectedDocs({...selectedDocs, invoice: checked})}
+                />
+                <Label htmlFor="create-invoice" className="cursor-pointer" data-testid="create-invoice-label">
+                  Створити Рахунок
+                </Label>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="create-act"
+                  data-testid="create-act-checkbox"
+                  checked={selectedDocs.act}
+                  onCheckedChange={(checked) => setSelectedDocs({...selectedDocs, act: checked})}
+                />
+                <Label htmlFor="create-act" className="cursor-pointer" data-testid="create-act-label">
+                  Створити Акт виконаних робіт
+                </Label>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="create-waybill"
+                  data-testid="create-waybill-checkbox"
+                  checked={selectedDocs.waybill}
+                  onCheckedChange={(checked) => setSelectedDocs({...selectedDocs, waybill: checked})}
+                />
+                <Label htmlFor="create-waybill" className="cursor-pointer" data-testid="create-waybill-label">
+                  Створити Видаткову накладну
+                </Label>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="create-contract"
+                  data-testid="create-contract-checkbox"
+                  checked={selectedDocs.contract}
+                  onCheckedChange={(checked) => setSelectedDocs({...selectedDocs, contract: checked})}
+                />
+                <Label htmlFor="create-contract" className="cursor-pointer" data-testid="create-contract-label">
+                  Створити Договір
+                </Label>
+              </div>
+              
+              {selectedDocs.contract && (
+                <div className="ml-6 space-y-3 p-4 bg-gray-50 rounded-lg">
+                  <div className="space-y-2">
+                    <Label htmlFor="dialog-contract-subject" data-testid="dialog-contract-subject-label">Предмет договору *</Label>
+                    <Input
+                      id="dialog-contract-subject"
+                      data-testid="dialog-contract-subject-input"
+                      value={contractForm.subject}
+                      onChange={(e) => setContractForm({...contractForm, subject: e.target.value})}
+                      placeholder="Наприклад: Постачання товарів..."
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="dialog-contract-amount" data-testid="dialog-contract-amount-label">Сума договору (грн)</Label>
+                    <Input
+                      id="dialog-contract-amount"
+                      type="number"
+                      step="0.01"
+                      data-testid="dialog-contract-amount-input"
+                      value={contractForm.amount || (orderData?.total_amount || 0)}
+                      onChange={(e) => setContractForm({...contractForm, amount: parseFloat(e.target.value)})}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            <DialogFooter>
+              <Button 
+                variant="outline" 
+                onClick={() => setShowOrderDialog(false)}
+                data-testid="order-dialog-cancel-btn"
+              >
+                Скасувати
+              </Button>
+              <Button 
+                onClick={handleCreateDocumentsFromOrder}
+                disabled={loading || (!selectedDocs.invoice && !selectedDocs.act && !selectedDocs.waybill && !selectedDocs.contract)}
+                data-testid="order-dialog-create-btn"
+                className="btn-primary"
+              >
+                {loading ? (
+                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Створення...</>
+                ) : (
+                  'Створити документи'
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </main>
 
       {/* Footer */}
