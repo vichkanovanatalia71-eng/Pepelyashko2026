@@ -156,12 +156,13 @@ class ContractService:
                 ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
                 ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
                 ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTNAME', (0, 0), (-1, 0), 'DejaVu-Bold'),
+                ('FONTNAME', (0, 1), (-1, -1), 'DejaVu'),
                 ('FONTSIZE', (0, 0), (-1, 0), 10),
                 ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
                 ('BACKGROUND', (0, 1), (-1, -2), colors.white),
                 ('GRID', (0, 0), (-1, -1), 1, colors.black),
-                ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+                ('FONTNAME', (0, -1), (-1, -1), 'DejaVu-Bold'),
             ]))
             story.append(table)
             story.append(Spacer(1, 0.5*cm))
