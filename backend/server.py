@@ -35,6 +35,9 @@ except Exception as e:
     logging.error(f"Failed to initialize Google Sheets service: {str(e)}")
     sheets_service = None
 
+# Initialize Contract service
+contract_service = ContractService()
+
 # Create the main app without a prefix
 app = FastAPI(title="Document Management System")
 
