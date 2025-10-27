@@ -92,11 +92,19 @@ class GoogleDriveService:
             if parent_folder_id:
                 query += f" and '{parent_folder_id}' in parents"
             
-            results = self.service.files().list(
-                q=query,
-                spaces='drive',
-                fields='files(id, name)'
-            ).execute()
+            list_params = {
+                'q': query,
+                'spaces': 'drive',
+                'fields': 'files(id, name)'
+            }
+            
+            if self.shared_drive_id:
+                list_params['supportsAllDrives'] = True
+                list_params['includeItemsFromAllDrives'] = True
+                list_params['corpora'] = 'drive'
+                list_params['driveId'] = self.shared_drive_id
+            
+            results = self.service.files().list(**list_params).execute()
             
             items = results.get('files', [])
             if items:
