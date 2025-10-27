@@ -24,6 +24,7 @@ db = client[os.environ['DB_NAME']]
 # Google Sheets configuration
 CREDENTIALS_PATH = ROOT_DIR / 'credentials.json'
 SPREADSHEET_ID = '1RnVWH300p5Lj8Pe53k2tDdlnSUdFSEF9dEO_eGJj8D4'
+SHARED_DRIVE_ID = '1bbvl4hkAbtLUXs04pzNChv1AXcP4tVCv'  # Shared Drive: Документи КНП
 
 # Initialize Google Sheets service
 try:
