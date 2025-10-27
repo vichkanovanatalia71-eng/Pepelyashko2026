@@ -204,15 +204,14 @@ frontend:
 
 metadata:
   created_by: "main_agent"
-  version: "2.0"
-  test_sequence: 2
+  version: "3.0"
+  test_sequence: 3
   run_ui: false
 
 test_plan:
   current_focus:
-    - "Google Drive Service Integration"
-    - "Contract PDF Generation with Drive Upload"
     - "Contract Preview with Google Drive Viewer"
+    - "Contract Download with Drive Link"
     - "Contract Email with Drive Link"
   stuck_tasks: []
   test_all: false
