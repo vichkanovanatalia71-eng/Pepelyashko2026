@@ -1178,55 +1178,59 @@ function App() {
                   </div>
 
                   {documentForm.items.map((item, index) => (
-                    <div key={index} className="item-card p-4 space-y-3">
+                    <div key={index} className="item-card p-4 space-y-3 bg-white border border-gray-200">
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <Label className="text-xs">Назва</Label>
+                          <Label className="text-xs text-gray-700 font-medium">Назва</Label>
                           <Input
                             value={item.name}
                             onChange={(e) => updateItem(index, 'name', e.target.value)}
                             placeholder="Назва товару"
                             required
+                            className="bg-white"
                           />
                         </div>
                         <div>
-                          <Label className="text-xs">Одиниця виміру</Label>
+                          <Label className="text-xs text-gray-700 font-medium">Одиниця виміру</Label>
                           <Input
                             value={item.unit}
                             onChange={(e) => updateItem(index, 'unit', e.target.value)}
                             placeholder="шт, кг, л"
                             required
+                            className="bg-white"
                           />
                         </div>
                       </div>
                       <div className="grid grid-cols-3 gap-3">
                         <div>
-                          <Label className="text-xs">Кількість</Label>
+                          <Label className="text-xs text-gray-700 font-medium">Кількість</Label>
                           <Input
                             type="number"
                             step="0.01"
                             value={item.quantity}
                             onChange={(e) => updateItem(index, 'quantity', e.target.value)}
                             required
+                            className="bg-white"
                           />
                         </div>
                         <div>
-                          <Label className="text-xs">Ціна</Label>
+                          <Label className="text-xs text-gray-700 font-medium">Ціна</Label>
                           <Input
                             type="number"
                             step="0.01"
                             value={item.price}
                             onChange={(e) => updateItem(index, 'price', e.target.value)}
                             required
+                            className="bg-white"
                           />
                         </div>
                         <div>
-                          <Label className="text-xs">Сума</Label>
+                          <Label className="text-xs text-gray-700 font-medium">Сума</Label>
                           <Input
                             type="number"
                             value={item.amount.toFixed(2)}
                             readOnly
-                            className="bg-gray-50"
+                            className="bg-gray-100"
                           />
                         </div>
                       </div>
