@@ -289,6 +289,41 @@ frontend:
         agent: "main"
         comment: "Відправка email тепер передає drive_view_link на backend для включення в тіло листа."
 
+  - task: "Invoice PDF Preview with Drive Viewer"
+    implemented: true
+    working: "needs_testing"
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "needs_testing"
+        agent: "main"
+        comment: "Додано preview dialog для рахунків з інтеграцією Google Drive Viewer. Після створення рахунку відкривається модальне вікно з попереднім переглядом PDF через Google Drive iframe. Можливість завантаження PDF. UI використовує той самий стиль що й договори."
+
+  - task: "Act PDF Preview with Drive Viewer"
+    implemented: true
+    working: "needs_testing"
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "needs_testing"
+        agent: "main"
+        comment: "Додано preview dialog для актів з інтеграцією Google Drive Viewer. Після створення акту відкривається модальне вікно з попереднім переглядом PDF через Google Drive iframe. Можливість завантаження PDF. UI використовує той самий стиль що й договори."
+
+  - task: "Waybill PDF Preview with Drive Viewer"
+    implemented: true
+    working: "needs_testing"
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "needs_testing"
+        agent: "main"
+        comment: "Додано preview dialog для накладних з інтеграцією Google Drive Viewer. Після створення накладної відкривається модальне вікно з попереднім переглядом PDF через Google Drive iframe. Можливість завантаження PDF. UI використовує той самий стиль що й договори."
 metadata:
   created_by: "main_agent"
   version: "5.0"
