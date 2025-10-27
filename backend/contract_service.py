@@ -78,7 +78,7 @@ class ContractService:
             # Container for PDF elements
             story = []
             
-            # Styles
+            # Styles with Ukrainian font
             styles = getSampleStyleSheet()
             title_style = ParagraphStyle(
                 'CustomTitle',
@@ -86,7 +86,8 @@ class ContractService:
                 fontSize=14,
                 textColor=colors.black,
                 alignment=TA_CENTER,
-                spaceAfter=12
+                spaceAfter=12,
+                fontName='DejaVu-Bold'
             )
             
             normal_style = ParagraphStyle(
@@ -94,7 +95,16 @@ class ContractService:
                 parent=styles['Normal'],
                 fontSize=11,
                 alignment=TA_JUSTIFY,
-                spaceAfter=12
+                spaceAfter=12,
+                fontName='DejaVu'
+            )
+            
+            heading_style = ParagraphStyle(
+                'CustomHeading',
+                parent=styles['Heading2'],
+                fontSize=12,
+                fontName='DejaVu-Bold',
+                spaceAfter=10
             )
             
             # Title
