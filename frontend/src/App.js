@@ -1441,7 +1441,7 @@ function App() {
                       <div key={index} className="p-4 border border-gray-300 rounded-lg bg-gray-50 space-y-3">
                         <div className="flex justify-between items-center mb-2">
                           <span className="text-sm font-semibold text-gray-700">Позиція #{index + 1}</span>
-                          {contractForm.items.length > 1 && (
+                          {contractForm.items && contractForm.items.length > 1 && (
                             <Button
                               type="button"
                               variant="outline"
