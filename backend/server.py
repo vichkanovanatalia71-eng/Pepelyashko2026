@@ -410,12 +410,15 @@ async def download_contract(filename: str):
         if not file_path.exists():
             raise HTTPException(status_code=404, detail="Файл не знайдено")
         
+        # Use urllib to properly encode filename for header
+        from urllib.parse import quote
+        encoded_filename = quote(filename)
+        
         return FileResponse(
             path=str(file_path),
             media_type='application/pdf',
-            filename=filename,
             headers={
-                'Content-Disposition': f'inline; filename="{filename}"'
+                'Content-Disposition': f'inline; filename*=UTF-8\'\'{encoded_filename}'
             }
         )
     except HTTPException:
