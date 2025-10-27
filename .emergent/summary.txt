@@ -1,0 +1,81 @@
+<analysis>
+The AI engineer successfully addressed two major user requests. Initially, the focus was on revamping the UI/UX to match , which involved updating  and  to apply new global styles, colors, and component aesthetics, confirmed by screenshots. Next, a critical bug preventing document email sending was resolved. The AI diagnosed an SMTP authentication error in backend logs, prompting the user to provide correct credentials which were then updated in . Email functionality was confirmed. The most recent task involves adapting new document templates (invoice, act, waybill). The AI analyzed provided Excel files, installed  for old  format, gathered data source details and numbering logic, updated  for supplier data, and created a new  to centralize generation logic.
+</analysis>
+
+<product_requirements>
+The objective is to develop an internal web application for dynamic business document management. This includes:
+1.  **Counterparty Management**: Creation and storage of detailed counterparty data (name, EDRPOU, email, phone, IBAN, contract type, Head of position, Head's Full Name, Підпис) from a Google Sheet (Основні дані). Features include EDRPOU search and a detailed view. Future work involves enabling frontend editing of counterparty data.
+2.  **Document Creation**:
+    *   **Invoices, Acts of Work Performed, Waybills, Specifications**: Generation from templates by searching counterparties and adding product details. Templates for Invoice, Act, and Waybill are being adapted, using static supplier data from Мої дані and dynamic buyer data from Основні дані. The application is explicitly noted as не платник ПДВ (not a VAT payer).
+    *   **Orders**: A dedicated section to create orders and generate related documents.
+    *   **Contracts**: PDF generation from a user-provided HTML-like template, populating data from Основні дані. Functionality includes preview, email to recipients (now working), download, and Google Drive storage (Shared Drive) with specific folder and naming conventions (Договори, document name + EDRPOU). Ukrainian characters must render correctly. Contract numbering: .
+    *   **Document Numbering**: Invoice/Act/Waybill numbering: .
+3.  **UI/UX**: Dynamic styling, recently updated to align with  design aesthetics (blue theme, yellow/orange accents, Montserrat font, rounded cards with subtle shadows, clean forms).
+</product_requirements>
+
+<key_technical_concepts>
+-   Full-stack: React (frontend), FastAPI (backend).
+-   Data Storage: Google Sheets API.
+-   Document Storage: Google Drive API.
+-   PDF Generation:  (with DejaVu font), new .
+-   Email Service: SMTP.
+-   UI: Tailwind CSS, custom CSS.
+-   Backend: Pydantic.
+-   Excel parsing:  for  files.
+</key_technical_concepts>
+
+<code_architecture>
+The application follows a standard full-stack architecture with a React frontend and a FastAPI backend.
+
+-   ****:
+    -   **Importance**: Core FastAPI application, defines all REST API endpoints.
+    -   **Changes**: Expanded for orders and contracts.  model allows  as optional.  Pydantic model includes 11 fields. Added PUT endpoint for counterparty updates. *Upcoming changes for new document generation endpoints.*
+-   ****:
+    -   **Importance**: Encapsulates Google Sheets API logic.
+    -   **Changes**: Fixed numerical data typing. Added , , and methods for document creation using Основні дані. Configured . **Most recently, a new method was added to retrieve supplier data from the Мої дані sheet.**
+-   ****:
+    -   **Importance**: Generates PDF contracts and sends emails.
+    -   **Changes**: Switched to  with DejaVu fonts for Ukrainian characters. Integrated with . Refactored  for HTML-like template and .
+-   ****:
+    -   **Importance**: Dedicated service for Google Drive API interactions.
+    -   **Changes**: Handles service account authentication, folder creation, and file uploads, including Shared Drive support.
+-   ** (NEW)**:
+    -   **Importance**: A new file created to centralize the PDF generation logic for various document types (invoice, act, waybill), aiming to follow the pattern established by .
+    -   **Changes**: File created successfully; content is pending implementation.
+-   ****:
+    -   **Importance**: Stores environment-specific variables like , , .
+    -   **Changes**: Initially included placeholder  and . **These were updated with user-provided credentials (, ) to fix email sending functionality.**
+-   ****:
+    -   **Importance**: Python dependencies.
+    -   **Changes**: Added , . **Implicitly,  was added to handle analysis of old Excel () files.**
+-   ****:
+    -   **Importance**: The main React component, managing application state, routing, and UI.
+    -   **Changes**: Integrated Google Drive viewer. Updated counterparty detail card to dynamically display all 11 fields from Основні дані. Initial design updates were attempted but required further refinement via global CSS.
+-   ****:
+    -   **Importance**: Provides custom CSS styles.
+    -   **Changes**: **Expanded and updated with new styles for cards, buttons, and input fields to implement the  design, including specific color palettes, gradients, and shadows.**
+-   ****:
+    -   **Importance**: Global CSS styles.
+    -   **Changes**: **Created/modified to embed the Montserrat font and apply global design elements from the  reference, ensuring consistent styling across the application.**
+</code_architecture>
+
+<pending_tasks>
+-   Implement counterparty editing functionality in the frontend, specifically within the counterparty detail card, to update data in the Основні дані sheet.
+-   Create PDF generators for all documents (invoice, act, waybill) using specific user-provided templates and data from Мої дані (supplier) and Основні дані (buyer), incorporating the defined numbering logic and не платник ПДВ rule.
+-   Add corresponding API endpoints in  for the new document generation.
+-   Update the frontend to display a preview for each newly generated document, similar to the contract preview.
+</pending_tasks>
+
+<current_work>
+Immediately before this summary request, the AI engineer was tasked with integrating user-provided templates for Рахунок на оплату (Invoice), Видаткова накладна (Waybill), and Акт виконаних робіт (Act) into the application's PDF generation system. This involved analyzing the structure of these Excel files, including handling an older  format by installing the  Python library. Key user requirements for data sourcing were clarified: static supplier data must come from the Мої дані Google Sheet, and variable buyer data from the Основні дані Google Sheet. Furthermore, specific document numbering conventions were defined for both contracts and the new document types, and the application is to function as не платник ПДВ.
+
+To begin the implementation, the AI performed two key actions:
+1.  Modified  to include a method for retrieving supplier-specific data from the Мої дані Google Sheet.
+2.  Created a new file, , intended to consolidate the PDF generation logic for these new document types. This file is currently empty, serving as a placeholder for the upcoming generation functions.
+The immediate next step in the work stream is to update  to expose API endpoints for these new document generation functionalities.
+</current_work>
+
+<optional_next_step>
+Add API endpoints to  for the new document generation functionality (invoice, act, waybill).
+</optional_next_step>
+
