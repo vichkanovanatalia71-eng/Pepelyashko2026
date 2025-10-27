@@ -323,7 +323,32 @@ class GoogleSheetsService:
         """Get counterparty data from 'Основні дані' sheet by ЄДРПОУ."""
         try:
             worksheet = self.spreadsheet.worksheet("Основні дані")
-            records = worksheet.get_all_records()
+            
+            # Define expected headers to handle duplicate empty headers
+            expected_headers = ['ЄДРПОУ', 'Назва', 'Юридична адреса', 'р/р(IBAN)', 'Банк', 'МФО', 'email', 'тел', 'Посада', 'В особі']
+            
+            try:
+                records = worksheet.get_all_records(expected_headers=expected_headers)
+            except Exception as header_error:
+                logger.warning(f"Failed to get records with expected headers: {str(header_error)}")
+                # Fallback: get raw values and process manually
+                all_values = worksheet.get_all_values()
+                if not all_values:
+                    return None
+                
+                # Use first row as headers, filter out empty ones
+                headers = [h.strip() for h in all_values[0] if h.strip()]
+                records = []
+                
+                for row in all_values[1:]:
+                    if any(cell.strip() for cell in row):  # Skip empty rows
+                        record = {}
+                        for i, header in enumerate(expected_headers):
+                            if i < len(row):
+                                record[header] = row[i].strip()
+                            else:
+                                record[header] = ''
+                        records.append(record)
             
             # Search for counterparty by ЄДРПОУ (column A)
             for record in records:
