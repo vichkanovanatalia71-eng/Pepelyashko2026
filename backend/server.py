@@ -443,6 +443,40 @@ async def get_acts():
         logging.error(f"Error getting acts: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
+@api_router.post("/acts/generate-pdf")
+async def generate_act_pdf(data: DocumentCreate):
+    """Generate PDF act and upload to Google Drive."""
+    if sheets_service is None or document_service is None:
+        raise HTTPException(status_code=503, detail="Services not available")
+    
+    try:
+        # Generate PDF and upload to Drive
+        act_data = data.model_dump()
+        result = document_service.generate_act_pdf(
+            act_data=act_data,
+            upload_to_drive=True
+        )
+        
+        # Save act to Google Sheets
+        sheets_service.create_act(act_data)
+        
+        return {
+            'success': True,
+            'message': 'Акт успішно згенеровано та завантажено на Google Drive',
+            'act_number': result['act_number'],
+            'pdf_path': result['pdf_path'],
+            'pdf_filename': result['pdf_filename'],
+            'drive_view_link': result.get('drive_view_link', ''),
+            'drive_download_link': result.get('drive_download_link', ''),
+            'drive_file_id': result.get('drive_file_id', '')
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error generating act PDF: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
 # Waybill endpoints
 @api_router.post("/waybills", response_model=dict)
 async def create_waybill(data: DocumentCreate):
