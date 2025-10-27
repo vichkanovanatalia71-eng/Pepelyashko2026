@@ -127,6 +127,10 @@ class GoogleSheetsService:
         """Create a new invoice."""
         return self._create_document("Рахунки", data, "рахунок")
     
+    def create_order(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Create a new order."""
+        return self._create_document("Замовлення", data, "замовлення")
+    
     def create_act(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Create a new act of completed work."""
         return self._create_document("Акти", data, "акт")
@@ -134,6 +138,43 @@ class GoogleSheetsService:
     def create_waybill(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Create a new waybill."""
         return self._create_document("Видаткові накладні", data, "видаткову накладну")
+    
+    def create_contract(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Create a new contract."""
+        try:
+            worksheet = self.spreadsheet.worksheet("Договори")
+            
+            # Get next document number
+            records = worksheet.get_all_records()
+            next_number = len(records) + 1
+            
+            # Verify counterparty exists
+            counterparty = self.get_counterparty_by_edrpou(data['counterparty_edrpou'])
+            if not counterparty:
+                raise ValueError(f"Контрагента з ЄДРПОУ {data['counterparty_edrpou']} не знайдено")
+            
+            row = [
+                f"{next_number:04d}",
+                datetime.now().strftime('%Y-%m-%d'),
+                data['counterparty_edrpou'],
+                counterparty['representative_name'],
+                data.get('contract_type', counterparty['contract_type']),
+                data.get('subject', ''),
+                data.get('amount', 0)
+            ]
+            
+            worksheet.append_row(row)
+            logger.info(f"Created договір #{next_number:04d}")
+            
+            return {
+                'success': True,
+                'message': 'Договір успішно створено',
+                'document_number': f"{next_number:04d}",
+                'data': data
+            }
+        except Exception as e:
+            logger.error(f"Error creating договір: {str(e)}")
+            raise
     
     def _create_document(self, sheet_name: str, data: Dict[str, Any], doc_type: str) -> Dict[str, Any]:
         """Generic method to create documents (invoices, acts, waybills)."""
