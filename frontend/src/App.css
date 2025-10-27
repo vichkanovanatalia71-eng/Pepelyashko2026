@@ -273,6 +273,98 @@
   white-space: nowrap;
 }
 
+/* Tab-specific total amount styling */
+[data-testid="orders-content"] .bg-gradient-to-r {
+  background: linear-gradient(to right, #dbeafe, #e0e7ff) !important;
+  border-color: #6366f1 !important;
+}
+
+[data-testid="orders-content"] .text-teal-700 {
+  color: #4f46e5 !important;
+}
+
+[data-testid="invoices-content"] .bg-gradient-to-r {
+  background: linear-gradient(to right, #d1fae5, #a7f3d0) !important;
+  border-color: #10b981 !important;
+}
+
+[data-testid="invoices-content"] .text-teal-700 {
+  color: #059669 !important;
+}
+
+[data-testid="acts-content"] .bg-gradient-to-r {
+  background: linear-gradient(to right, #ede9fe, #ddd6fe) !important;
+  border-color: #8b5cf6 !important;
+}
+
+[data-testid="acts-content"] .text-teal-700 {
+  color: #7c3aed !important;
+}
+
+[data-testid="waybills-content"] .bg-gradient-to-r {
+  background: linear-gradient(to right, #ffedd5, #fed7aa) !important;
+  border-color: #fb923c !important;
+}
+
+[data-testid="waybills-content"] .text-teal-700 {
+  color: #f97316 !important;
+}
+
+[data-testid="contracts-content"] .bg-gradient-to-r {
+  background: linear-gradient(to right, #ffe4e6, #fecdd3) !important;
+  border-color: #f43f5e !important;
+}
+
+[data-testid="contracts-content"] .text-teal-700 {
+  color: #e11d48 !important;
+}
+
+/* Found counterparty info boxes */
+[data-testid="orders-content"] .bg-teal-50 {
+  background: #dbeafe !important;
+  border-color: #6366f1 !important;
+}
+
+[data-testid="orders-content"] .text-teal-900 {
+  color: #1e3a8a !important;
+}
+
+[data-testid="invoices-content"] .bg-teal-50 {
+  background: #d1fae5 !important;
+  border-color: #10b981 !important;
+}
+
+[data-testid="invoices-content"] .text-teal-900 {
+  color: #064e3b !important;
+}
+
+[data-testid="acts-content"] .bg-teal-50 {
+  background: #ede9fe !important;
+  border-color: #8b5cf6 !important;
+}
+
+[data-testid="acts-content"] .text-teal-900 {
+  color: #4c1d95 !important;
+}
+
+[data-testid="waybills-content"] .bg-teal-50 {
+  background: #ffedd5 !important;
+  border-color: #fb923c !important;
+}
+
+[data-testid="waybills-content"] .text-teal-900 {
+  color: #7c2d12 !important;
+}
+
+[data-testid="contracts-content"] .bg-teal-50 {
+  background: #ffe4e6 !important;
+  border-color: #f43f5e !important;
+}
+
+[data-testid="contracts-content"] .text-teal-900 {
+  color: #881337 !important;
+}
+
 /* Animations */
 @keyframes fadeIn {
   from {
