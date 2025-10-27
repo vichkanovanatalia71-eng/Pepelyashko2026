@@ -1084,10 +1084,11 @@ function App() {
               )}
             </div>
             
-            <DialogFooter>
+            <DialogFooter className="bg-gray-50 -mx-6 -mb-6 px-6 py-4 rounded-b-lg">
               <Button 
                 variant="outline" 
                 onClick={() => setShowOrderDialog(false)}
+                className="border-gray-300 text-gray-700 hover:bg-gray-100"
               >
                 Скасувати
               </Button>
