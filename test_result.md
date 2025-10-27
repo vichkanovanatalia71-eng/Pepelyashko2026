@@ -196,6 +196,18 @@ backend:
         comment: "✅ Пошук контрагента за ЄДРПОУ працює коректно. GET /api/counterparties повертає список з аркушу 'Основні дані', знайдено контрагента з ЄДРПОУ 40196816. GET /api/counterparties/40196816 повертає правильні дані: edrpou: '40196816', representative_name, email: 'baltapmsdbgr@gmail.com', phone: '380957786491', iban: 'UA648201720344370005000093420'. Виправлено проблему з дублікатами заголовків через fallback механізм. Функціональність працює, тимчасові проблеми з Google Sheets API quota під час тестування."
 
 frontend:
+  - task: "UI/UX Design Update - surdo.org.ua Style"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/App.css, /app/frontend/src/index.css"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "✅ Повністю оновлено дизайн додатку за стилем surdo.org.ua: Основний колір #29A1D4 (синій), акцентні жовтопомаранчеві кнопки, шрифт Montserrat з Google Fonts, білі картки з округленими кутами (border-radius: 20px), м'які тіні, різні кольори для різних типів документів (Замовлення-сині, Рахунки-зелені, Акти-фіолетові, Накладні-помаранчеві, Договори-янтарні), професійний та сучасний вигляд."
+
   - task: "Contract Preview with Google Drive Viewer"
     implemented: true
     working: "needs_testing"
