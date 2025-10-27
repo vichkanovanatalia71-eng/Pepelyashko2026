@@ -453,12 +453,13 @@ async def download_contract(filename: str):
 
 @api_router.post("/contracts/send-email")
 async def send_contract_email(data: ContractSendEmailRequest):
-    """Send contract PDF via email."""
+    """Send contract PDF via email with optional Google Drive link."""
     try:
         success = await contract_service.send_contract_email(
             pdf_path=data.contract_pdf_path,
             recipient_email=data.recipient_email,
-            contract_number=data.contract_number
+            contract_number=data.contract_number,
+            drive_link=data.drive_link
         )
         
         if success:
