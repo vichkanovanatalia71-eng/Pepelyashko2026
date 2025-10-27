@@ -47,6 +47,8 @@ class CounterpartyCreate(BaseModel):
     phone: str = Field(..., description="Телефон")
     iban: str = Field(..., description="IBAN")
     contract_type: str = Field(..., description="Тип договору: Класичний або Некласичний")
+    director_position: Optional[str] = Field(None, description="Посада керівника")
+    director_name: Optional[str] = Field(None, description="ПІБ керівника")
 
 class Counterparty(BaseModel):
     edrpou: str
@@ -55,6 +57,8 @@ class Counterparty(BaseModel):
     phone: str
     iban: str
     contract_type: str
+    director_position: Optional[str] = None
+    director_name: Optional[str] = None
 
 class DocumentItem(BaseModel):
     name: str = Field(..., description="Назва товару/роботи")
