@@ -298,12 +298,19 @@ class GoogleSheetsService:
             
             result = []
             for record in records:
+                # Skip header rows or empty rows
+                try:
+                    total_amount = float(record.get('Загальна сума', 0))
+                except (ValueError, TypeError):
+                    # Skip rows where total_amount is not a valid number (like headers)
+                    continue
+                    
                 doc = {
                     'number': str(record['Номер']),
                     'date': str(record['Дата']),
                     'counterparty_edrpou': str(record['ЄДРПОУ контрагента']),
                     'counterparty_name': str(record["Ім'я контрагента"]),
-                    'total_amount': float(record['Загальна сума']) if record['Загальна сума'] else 0.0
+                    'total_amount': total_amount
                 }
                 
                 # Add drive_file_id if available (for Рахунки, Акти, Видаткові накладні)
@@ -313,7 +320,11 @@ class GoogleSheetsService:
                 # Parse items from JSON
                 items_key = 'Товари' if sheet_name != 'Акти' else 'Роботи'
                 try:
-                    doc['items'] = json.loads(record[items_key])
+                    items_value = record.get(items_key, '[]')
+                    if items_value and items_value != items_key:  # Skip if it's the header
+                        doc['items'] = json.loads(items_value)
+                    else:
+                        doc['items'] = []
                 except:
                     doc['items'] = []
                 
