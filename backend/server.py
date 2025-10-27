@@ -242,7 +242,13 @@ async def get_counterparty(edrpou: str):
             'iban': counterparty_data['р/р(IBAN)'],
             'contract_type': '',
             'director_position': counterparty_data.get('Посада', 'Директор'),
-            'director_name': counterparty_data['Директор']
+            'director_name': counterparty_data['Директор'],
+            'legal_address': counterparty_data.get('Юридична адреса', ''),
+            'bank': counterparty_data.get('Банк', ''),
+            'mfo': counterparty_data.get('МФО', ''),
+            'position': counterparty_data.get('Посада', ''),
+            'represented_by': counterparty_data.get('В особі', ''),
+            'signature': counterparty_data.get('Підпис', '')
         }
         return counterparty
     except HTTPException:
