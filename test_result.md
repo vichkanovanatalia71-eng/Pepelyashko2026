@@ -182,15 +182,18 @@ backend:
 
   - task: "Act PDF Generation with Drive Upload"
     implemented: true
-    working: "needs_testing"
+    working: true
     file: "/app/backend/document_service.py, /app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "needs_testing"
         agent: "main"
         comment: "Реалізовано generate_act_pdf в document_service.py з повною інтеграцією Google Drive. Використовує дані з 'Мої дані' (постачальник) та 'Основні дані' (покупець). Нумерація: 4_середніх_цифри_ЄДРПОУ-послідовний_номер. Позначка 'не платник ПДВ'. Додано API endpoint POST /api/acts/generate-pdf в server.py."
+      - working: true
+        agent: "testing"
+        comment: "✅ ТЕСТ ПРОЙДЕНО: POST /api/acts/generate-pdf працює повністю! Генерація PDF з українськими символами успішна. Номер документа: 9681-1 (правильний формат: середні 4 цифри ЄДРПОУ-послідовність). Файл: Акт_9681-1_40196816.pdf. Google Drive інтеграція працює: drive_view_link=https://drive.google.com/file/d/1ML_Zj-Lcd911fueHJ7NKc3_vUHVI0wDZ/view?usp=drivesdk, drive_file_id=1ML_Zj-Lcd911fueHJ7NKc3_vUHVI0wDZ. Файл завантажено в папку 'Акти' на Google Drive. Позначка 'не платник ПДВ' присутня в PDF контенті."
 
   - task: "Waybill PDF Generation with Drive Upload"
     implemented: true
