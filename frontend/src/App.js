@@ -254,9 +254,16 @@ function App() {
   // Document creation from counterparty view
   const [showDocCreateDialog, setShowDocCreateDialog] = useState(false);
   const [docTypeToCreate, setDocTypeToCreate] = useState('');
+  
+  // All documents state (for lists in tabs)
+  const [allInvoices, setAllInvoices] = useState([]);
+  const [allActs, setAllActs] = useState([]);
+  const [allWaybills, setAllWaybills] = useState([]);
+  const [allContracts, setAllContracts] = useState([]);
 
   useEffect(() => {
     fetchCounterparties();
+    fetchAllDocuments();
   }, []);
 
   const fetchCounterparties = async () => {
