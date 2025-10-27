@@ -198,7 +198,8 @@ class ContractService:
             
             sig_table = Table(sig_data, colWidths=[9*cm, 9*cm])
             sig_table.setStyle(TableStyle([
-                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTNAME', (0, 0), (-1, 0), 'DejaVu-Bold'),
+                ('FONTNAME', (0, 1), (-1, -1), 'DejaVu'),
                 ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
                 ('VALIGN', (0, 0), (-1, -1), 'TOP'),
             ]))
