@@ -433,7 +433,7 @@ class ContractTestSuite:
     def run_all_tests(self):
         """Run all contract tests"""
         logger.info("=" * 60)
-        logger.info("STARTING CONTRACT UNICODE SUPPORT TEST SUITE")
+        logger.info("STARTING GOOGLE DRIVE INTEGRATION TEST SUITE")
         logger.info("=" * 60)
         
         test_results = {}
@@ -441,19 +441,25 @@ class ContractTestSuite:
         # Test 1: Health Check
         test_results['health_check'] = self.test_health_check()
         
-        # Test 2: Get Counterparties
+        # Test 2: Google Drive Service Initialization
+        test_results['drive_service_init'] = self.test_google_drive_service_initialization()
+        
+        # Test 3: Get Counterparties
         test_results['get_counterparties'] = self.test_get_counterparties()
         
-        # Test 3: Contract PDF Generation
+        # Test 4: Contract PDF Generation with Drive Upload
         test_results['pdf_generation'] = self.test_contract_pdf_generation()
         
-        # Test 4: Contract PDF Download
+        # Test 5: Google Drive Links Validation
+        test_results['drive_links'] = self.test_google_drive_links()
+        
+        # Test 6: Contract PDF Download
         test_results['pdf_download'] = self.test_contract_pdf_download()
         
-        # Test 5: Contract Email Sending
+        # Test 7: Contract Email Sending with Drive Link
         test_results['email_sending'] = self.test_contract_email_sending()
         
-        # Test 6: Check for Unicode errors in logs
+        # Test 8: Check for Unicode errors in logs
         test_results['unicode_logs_check'] = self.check_backend_logs_for_unicode_errors()
         
         # Summary
@@ -474,10 +480,10 @@ class ContractTestSuite:
         logger.info(f"OVERALL RESULT: {passed_tests}/{total_tests} tests passed")
         
         if passed_tests == total_tests:
-            logger.info("🎉 ALL TESTS PASSED - Unicode support is working correctly!")
+            logger.info("🎉 ALL TESTS PASSED - Google Drive integration and Unicode support working correctly!")
             return True
         else:
-            logger.error(f"💥 {total_tests - passed_tests} test(s) failed - Unicode support needs attention")
+            logger.error(f"💥 {total_tests - passed_tests} test(s) failed - Issues need attention")
             return False
 
 def main():
