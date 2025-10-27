@@ -275,6 +275,32 @@ function App() {
     }
   };
   
+  const fetchAllDocuments = async () => {
+    try {
+      // Fetch invoices
+      const invoicesResponse = await axios.get(`${API}/invoices`);
+      setAllInvoices(invoicesResponse.data.reverse()); // Newest first
+      
+      // Fetch acts
+      const actsResponse = await axios.get(`${API}/acts`);
+      setAllActs(actsResponse.data.reverse()); // Newest first
+      
+      // Fetch waybills
+      const waybillsResponse = await axios.get(`${API}/waybills`);
+      setAllWaybills(waybillsResponse.data.reverse()); // Newest first
+      
+      // Fetch contracts - need to add this endpoint
+      try {
+        const contractsResponse = await axios.get(`${API}/contracts`);
+        setAllContracts(contractsResponse.data.reverse()); // Newest first
+      } catch (error) {
+        console.log('Contracts endpoint not available yet');
+      }
+    } catch (error) {
+      console.error('Error fetching documents:', error);
+    }
+  };
+  
   const searchAndViewCounterparty = async () => {
     if (!searchCounterpartyEdrpou) {
       toast.error('Введіть код ЄДРПОУ');
