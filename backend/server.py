@@ -108,11 +108,11 @@ class Contract(BaseModel):
     amount: float
 
 class ContractGenerateRequest(BaseModel):
-    counterparty_edrpou: str = Field(..., description="ЄДРПОУ контрагента")
     subject: str = Field(..., description="Предмет договору")
     items: List[DocumentItem] = Field(..., description="Список товарів/робіт")
     total_amount: float = Field(..., description="Загальна сума")
     contract_number: Optional[str] = Field(None, description="Номер договору (автоматично якщо не вказано)")
+    counterparty_edrpou: Optional[str] = Field(None, description="ЄДРПОУ (не використовується, покупець береться з Основні дані)")
 
 class ContractSendEmailRequest(BaseModel):
     contract_pdf_path: str = Field(..., description="Шлях до PDF файлу")
