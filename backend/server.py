@@ -158,12 +158,30 @@ async def create_counterparty(data: CounterpartyCreate):
 
 @api_router.get("/counterparties", response_model=List[Counterparty])
 async def get_counterparties():
-    """Get all counterparties."""
+    """Get all counterparties from 'Основні дані'."""
     if sheets_service is None:
         raise HTTPException(status_code=503, detail="Google Sheets service not available")
     
     try:
-        counterparties = sheets_service.get_all_counterparties()
+        # Get all records from "Основні дані"
+        worksheet = sheets_service.spreadsheet.worksheet("Основні дані")
+        records = worksheet.get_all_records()
+        
+        counterparties = []
+        for record in records:
+            edrpou = str(record.get('ЄДРПОУ', '')).strip()
+            if edrpou:  # Only add if ЄДРПОУ exists
+                counterparties.append({
+                    'edrpou': edrpou,
+                    'representative_name': str(record.get('Назва', '')),
+                    'email': str(record.get('email', '')),
+                    'phone': str(record.get('тел', '')),
+                    'iban': str(record.get('р/р(IBAN)', '')),
+                    'contract_type': '',
+                    'director_position': str(record.get('Посада', 'Директор')),
+                    'director_name': str(record.get('Директор', ''))
+                })
+        
         return counterparties
     except Exception as e:
         logging.error(f"Error getting counterparties: {str(e)}")
@@ -171,14 +189,26 @@ async def get_counterparties():
 
 @api_router.get("/counterparties/{edrpou}", response_model=Counterparty)
 async def get_counterparty(edrpou: str):
-    """Get counterparty by ЄДРПОУ."""
+    """Get counterparty by ЄДРПОУ from 'Основні дані'."""
     if sheets_service is None:
         raise HTTPException(status_code=503, detail="Google Sheets service not available")
     
     try:
-        counterparty = sheets_service.get_counterparty_by_edrpou(edrpou)
-        if not counterparty:
-            raise HTTPException(status_code=404, detail="Контрагента не знайдено")
+        counterparty_data = sheets_service.get_counterparty_from_main_data(edrpou)
+        if not counterparty_data:
+            raise HTTPException(status_code=404, detail="Контрагента не знайдено в 'Основні дані'")
+        
+        # Convert to Counterparty format
+        counterparty = {
+            'edrpou': counterparty_data['ЄДРПОУ'],
+            'representative_name': counterparty_data['Назва'],
+            'email': counterparty_data['email'],
+            'phone': counterparty_data['тел'],
+            'iban': counterparty_data['р/р(IBAN)'],
+            'contract_type': '',
+            'director_position': counterparty_data.get('Посада', 'Директор'),
+            'director_name': counterparty_data['Директор']
+        }
         return counterparty
     except HTTPException:
         raise
