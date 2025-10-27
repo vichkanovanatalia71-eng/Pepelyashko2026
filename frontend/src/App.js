@@ -49,6 +49,7 @@ function App() {
   const [showOrderDialog, setShowOrderDialog] = useState(false);
   const [orderData, setOrderData] = useState(null);
   const [selectedDocs, setSelectedDocs] = useState({
+    order: true,  // Auto-checked by default
     invoice: false,
     act: false,
     waybill: false,
