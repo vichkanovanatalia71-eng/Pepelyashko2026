@@ -41,8 +41,10 @@ except Exception as e:
 try:
     drive_service = GoogleDriveService(
         credentials_path=str(CREDENTIALS_PATH),
-        shared_drive_id=SHARED_DRIVE_ID
+        shared_drive_id=None  # Using regular folder instead of Shared Drive
     )
+    # Override root folder with the provided ID
+    drive_service.root_folder_id = ROOT_FOLDER_ID
     # Setup folder structure
     drive_service.setup_folder_structure()
     logging.info("Google Drive service initialized successfully")
