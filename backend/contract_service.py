@@ -51,15 +51,31 @@ class ContractService:
             contract_number = contract_data.get('contract_number', '001')
             contract_date = contract_data.get('contract_date', datetime.now().strftime('%d.%m.%Y'))
             
-            # Counterparty data
-            counterparty = contract_data.get('counterparty', {})
-            buyer_name = counterparty.get('representative_name', 'Назва контрагента')
-            buyer_edrpou = counterparty.get('edrpou', '')
-            buyer_email = counterparty.get('email', '')
-            buyer_phone = counterparty.get('phone', '')
-            buyer_iban = counterparty.get('iban', '')
-            director_position = counterparty.get('director_position', 'Директор')
-            director_name = counterparty.get('director_name', buyer_name)
+            # Get buyer data (from "Основні дані" sheet)
+            buyer_data = contract_data.get('buyer_data', {})
+            if not buyer_data and self.sheets_service:
+                buyer_data = self.sheets_service.get_buyer_main_data()
+            
+            buyer_name = buyer_data.get('Назва', 'Назва покупця')
+            buyer_address = buyer_data.get('Юридична адреса', '')
+            buyer_edrpou = buyer_data.get('ЄДРПОУ', '')
+            buyer_iban = buyer_data.get('р/р(IBAN)', '')
+            buyer_bank = buyer_data.get('Банк', '')
+            buyer_mfo = buyer_data.get('МФО', '')
+            buyer_email = buyer_data.get('email', '')
+            buyer_phone = buyer_data.get('тел', '')
+            buyer_director = buyer_data.get('Директор', '')
+            
+            # Supplier (постачальник) - static data
+            supplier_name = 'ТОВАРИСТВО З ОБМЕЖЕНОЮ ВІДПОВІДАЛЬНІСТЮ "ВОРДКРАФТ"'
+            supplier_edrpou = '43677030'
+            supplier_address = 'Україна, 65017, Одеська обл., м. Одеса, вул. Квітнева, буд. 22'
+            supplier_iban = 'UA163052990000026007004908751'
+            supplier_bank = 'в АТ КБ "Приватбанк"'
+            supplier_mfo = '305299'
+            supplier_email = 'wordcraft@surdo.org.ua'
+            supplier_phone = '+380 50 540 54 11'
+            supplier_director = 'Роман КОЛОНТАЙ'
             
             # Items/specification
             items = contract_data.get('items', [])
