@@ -28,11 +28,12 @@ except Exception as e:
     raise
 
 class ContractService:
-    def __init__(self, drive_service=None):
+    def __init__(self, drive_service=None, sheets_service=None):
         self.template_path = Path(__file__).parent / "contract_template.docx"
         self.output_dir = Path(__file__).parent / "generated_contracts"
         self.output_dir.mkdir(exist_ok=True)
         self.drive_service = drive_service
+        self.sheets_service = sheets_service
         
     def generate_contract_pdf(
         self, 
