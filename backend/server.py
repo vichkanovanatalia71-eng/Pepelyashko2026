@@ -39,7 +39,10 @@ except Exception as e:
 
 # Initialize Google Drive service
 try:
-    drive_service = GoogleDriveService(credentials_path=str(CREDENTIALS_PATH))
+    drive_service = GoogleDriveService(
+        credentials_path=str(CREDENTIALS_PATH),
+        shared_drive_id=SHARED_DRIVE_ID
+    )
     # Setup folder structure
     drive_service.setup_folder_structure()
     logging.info("Google Drive service initialized successfully")
