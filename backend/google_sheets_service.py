@@ -155,17 +155,17 @@ class GoogleSheetsService:
             records = worksheet.get_all_records()
             next_number = len(records) + 1
             
-            # Verify counterparty exists
-            counterparty = self.get_counterparty_by_edrpou(data['counterparty_edrpou'])
+            # Get counterparty from "Основні дані"
+            counterparty = self.get_counterparty_from_main_data(data['counterparty_edrpou'])
             if not counterparty:
-                raise ValueError(f"Контрагента з ЄДРПОУ {data['counterparty_edrpou']} не знайдено")
+                raise ValueError(f"Контрагента з ЄДРПОУ {data['counterparty_edrpou']} не знайдено в 'Основні дані'")
             
             row = [
                 f"{next_number:04d}",
                 datetime.now().strftime('%Y-%m-%d'),
                 data['counterparty_edrpou'],
-                counterparty['representative_name'],
-                data.get('contract_type', counterparty['contract_type']),
+                counterparty['Назва'],
+                data.get('contract_type', ''),
                 data.get('subject', ''),
                 data.get('amount', 0)
             ]
