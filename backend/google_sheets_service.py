@@ -382,7 +382,29 @@ class GoogleSheetsService:
         """Get buyer's main data from 'Основні дані' sheet (first record or default)."""
         try:
             worksheet = self.spreadsheet.worksheet("Основні дані")
-            records = worksheet.get_all_records()
+            
+            # Define expected headers to handle duplicate empty headers
+            expected_headers = ['ЄДРПОУ', 'Назва', 'Юридична адреса', 'р/р(IBAN)', 'Банк', 'МФО', 'email', 'тел', 'Посада', 'В особі']
+            
+            try:
+                records = worksheet.get_all_records(expected_headers=expected_headers)
+            except Exception as header_error:
+                logger.warning(f"Failed to get records with expected headers: {str(header_error)}")
+                # Fallback: get raw values and process manually
+                all_values = worksheet.get_all_values()
+                if not all_values or len(all_values) < 2:
+                    records = []
+                else:
+                    records = []
+                    for row in all_values[1:]:  # Skip header row
+                        if any(cell.strip() for cell in row):  # Skip empty rows
+                            record = {}
+                            for i, header in enumerate(expected_headers):
+                                if i < len(row):
+                                    record[header] = row[i].strip()
+                                else:
+                                    record[header] = ''
+                            records.append(record)
             
             # Get first record as default buyer
             if records and len(records) > 0:
