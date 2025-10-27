@@ -79,12 +79,8 @@ class ContractService:
             supplier_director = 'Роман КОЛОНТАЙ'
             
             # Items/specification
-            items = contract_data.get('items', [])
             total_amount = contract_data.get('total_amount', 0)
             subject = contract_data.get('subject', 'Товар')
-            
-            # Calculate contract end date (end of current year)
-            current_year = datetime.now().year
             
             # Generate filename
             filename = f"contract_{contract_number}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
