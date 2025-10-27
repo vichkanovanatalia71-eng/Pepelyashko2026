@@ -369,7 +369,9 @@ class GoogleSheetsService:
                     'МФО': str(record.get('МФО', '')),
                     'email': str(record.get('email', '')),
                     'тел': str(record.get('тел', '')),
-                    'Директор': str(record.get('Директор', ''))
+                    'Посада': str(record.get('Посада', 'Директор')),
+                    'В особі': str(record.get('В особі', '')),
+                    'Директор': str(record.get('В особі', ''))
                 }
                 logger.info(f"Retrieved buyer main data from first record: {data['Назва']}")
                 return data
@@ -384,7 +386,9 @@ class GoogleSheetsService:
                 'МФО': '305299',
                 'email': 'ooggiov@ukr.net',
                 'тел': '+380689705567',
-                'Директор': 'Ольга ГРИЦКЕВИЧ'
+                'Директор': 'Ольга ГРИЦКЕВИЧ',
+                'Посада': 'Директор',
+                'В особі': 'Ольга ГРИЦКЕВИЧ'
             }
             
         except Exception as e:
@@ -398,7 +402,9 @@ class GoogleSheetsService:
                 'МФО': '305299',
                 'email': 'ooggiov@ukr.net',
                 'тел': '+380689705567',
-                'Директор': 'Ольга ГРИЦКЕВИЧ'
+                'Директор': 'Ольга ГРИЦКЕВИЧ',
+                'Посада': 'Директор',
+                'В особі': 'Ольга ГРИЦКЕВИЧ'
             }
 
 
