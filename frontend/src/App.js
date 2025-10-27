@@ -1426,20 +1426,114 @@ function App() {
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="contract-amount" className="text-sm font-medium text-gray-700">
-                      Сума договору (грн) *
+                  {/* Items section */}
+                  <div className="space-y-4">
+                    <Label className="text-sm font-medium text-gray-700">Позиції товарів/послуг *</Label>
+                    {contractForm.items.map((item, index) => (
+                      <div key={index} className="p-4 border border-gray-300 rounded-lg bg-gray-50 space-y-3">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-sm font-semibold text-gray-700">Позиція #{index + 1}</span>
+                          {contractForm.items.length > 1 && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const newItems = contractForm.items.filter((_, i) => i !== index);
+                                const newTotal = newItems.reduce((sum, item) => sum + (item.amount || 0), 0);
+                                setContractForm({...contractForm, items: newItems, amount: newTotal});
+                              }}
+                              className="text-red-600 hover:bg-red-50"
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
+                        
+                        <Input
+                          placeholder="Назва товару/послуги"
+                          value={item.name}
+                          onChange={(e) => {
+                            const newItems = [...contractForm.items];
+                            newItems[index].name = e.target.value;
+                            setContractForm({...contractForm, items: newItems});
+                          }}
+                          required
+                        />
+                        
+                        <div className="grid grid-cols-3 gap-2">
+                          <Input
+                            placeholder="шт, кг, л"
+                            value={item.unit}
+                            onChange={(e) => {
+                              const newItems = [...contractForm.items];
+                              newItems[index].unit = e.target.value;
+                              setContractForm({...contractForm, items: newItems});
+                            }}
+                            required
+                          />
+                          
+                          <Input
+                            type="number"
+                            placeholder="Кількість"
+                            value={item.quantity}
+                            onChange={(e) => {
+                              const newItems = [...contractForm.items];
+                              newItems[index].quantity = parseFloat(e.target.value) || 0;
+                              const price = newItems[index].price || 0;
+                              const quantity = parseFloat(e.target.value) || 0;
+                              newItems[index].amount = price * quantity;
+                              const newTotal = newItems.reduce((sum, item) => sum + (item.amount || 0), 0);
+                              setContractForm({...contractForm, items: newItems, amount: newTotal});
+                            }}
+                            required
+                          />
+                          
+                          <Input
+                            type="number"
+                            placeholder="Ціна"
+                            value={item.price}
+                            onChange={(e) => {
+                              const newItems = [...contractForm.items];
+                              newItems[index].price = parseFloat(e.target.value) || 0;
+                              const price = parseFloat(e.target.value) || 0;
+                              const quantity = newItems[index].quantity || 0;
+                              newItems[index].amount = price * quantity;
+                              const newTotal = newItems.reduce((sum, item) => sum + (item.amount || 0), 0);
+                              setContractForm({...contractForm, items: newItems, amount: newTotal});
+                            }}
+                            required
+                          />
+                        </div>
+                        
+                        <div className="text-right">
+                          <span className="text-sm font-medium text-gray-700">
+                            Сума: {(item.amount || 0).toFixed(2)} грн
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                    
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setContractForm({
+                          ...contractForm,
+                          items: [...contractForm.items, { name: '', unit: 'шт', quantity: 0, price: 0, amount: 0 }]
+                        });
+                      }}
+                      className="w-full border-dashed border-2 border-gray-300 hover:border-blue-500 hover:bg-blue-50"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Додати позицію
+                    </Button>
+                  </div>
+
+                  <div className="space-y-2 bg-amber-50 p-4 rounded-lg border border-amber-200">
+                    <Label className="text-sm font-bold text-amber-900">
+                      Загальна сума договору: {contractForm.amount.toFixed(2)} грн
                     </Label>
-                    <Input
-                      id="contract-amount"
-                      type="number"
-                      step="0.01"
-                      value={contractForm.amount}
-                      onChange={(e) => setContractForm({...contractForm, amount: parseFloat(e.target.value)})}
-                      placeholder="0.00"
-                      className="shadow-sm focus:ring-2 focus:ring-amber-500"
-                      required
-                    />
                   </div>
 
                   <Button 
