@@ -18,6 +18,15 @@ from typing import Dict, Any, Optional
 
 logger = logging.getLogger(__name__)
 
+# Register Ukrainian fonts
+try:
+    pdfmetrics.registerFont(TTFont('DejaVu', '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf'))
+    pdfmetrics.registerFont(TTFont('DejaVu-Bold', '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf'))
+    logger.info("Ukrainian fonts registered successfully")
+except Exception as e:
+    logger.error(f"Failed to register Ukrainian fonts: {str(e)}")
+    raise
+
 class ContractService:
     def __init__(self, drive_service=None):
         self.template_path = Path(__file__).parent / "contract_template.docx"
