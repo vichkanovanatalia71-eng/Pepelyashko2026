@@ -79,6 +79,12 @@ class Counterparty(BaseModel):
     contract_type: str
     director_position: Optional[str] = None
     director_name: Optional[str] = None
+    legal_address: Optional[str] = None
+    bank: Optional[str] = None
+    mfo: Optional[str] = None
+    position: Optional[str] = None
+    represented_by: Optional[str] = None
+    signature: Optional[str] = None
 
 class DocumentItem(BaseModel):
     name: str = Field(..., description="Назва товару/роботи")
