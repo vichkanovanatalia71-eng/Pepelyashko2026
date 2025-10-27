@@ -223,7 +223,10 @@ async def get_counterparties():
                     'signature': str(record.get('Підпис', ''))
                 })
         
-
+        return counterparties
+    except Exception as e:
+        logging.error(f"Error getting counterparties: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 @api_router.put("/counterparties/{edrpou}", response_model=dict)
 async def update_counterparty(edrpou: str, data: CounterpartyCreate):
