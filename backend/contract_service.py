@@ -213,7 +213,7 @@ class ContractService:
                 ['', f'Тел.: {supplier_phone}'],
                 ['', f'IBAN: {supplier_iban}'],
                 ['', ''],
-                ['___________ Шевцов А.М.', f'___________ {director_name}'],
+                ['___________ Шевцов А.М.', f'___________ {buyer_director}'],
                 ['М.П.', ''],
             ]
             
