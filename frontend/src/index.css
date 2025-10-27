@@ -1,41 +1,40 @@
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap');
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 194 78% 51%; /* #29A1D4 */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 45 93% 47%; /* Yellow/Orange accent */
+    --secondary-foreground: 0 0% 0%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 194 78% 51%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 194 78% 51%;
+    --radius: 1rem;
+  }
 }
 
-body {
-  font-family: 'Inter', sans-serif;
-  background: linear-gradient(135deg, #e8f5f7 0%, #f0f4ff 50%, #fef4f5 100%);
-  min-height: 100vh;
-  color: #1a202c;
-}
-
-.App {
-  min-height: 100vh;
-}
-
-h1, h2, h3, h4, h5, h6 {
-  font-family: 'Manrope', sans-serif;
-  font-weight: 700;
-}
-
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 10px;
-}
-
-::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(107, 191, 199, 0.3);
-  border-radius: 5px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(107, 191, 199, 0.5);
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Montserrat', sans-serif;
+  }
 }

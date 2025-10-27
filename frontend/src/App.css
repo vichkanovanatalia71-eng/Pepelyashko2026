@@ -1,189 +1,125 @@
-.glass-card {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(107, 191, 199, 0.15);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+/* ========================================
+   Main App Styling - WordCraft Inspired
+   Primary: #29A1D4 (Blue)
+   Secondary: #f59e0b (Amber/Yellow)
+======================================== */
+
+.App {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f0f9ff 0%, #f8fafc 100%);
+  font-family: 'Montserrat', sans-serif;
 }
 
-.glass-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 40px rgba(107, 191, 199, 0.25);
-}
-
-/* Tab-specific color schemes */
-
-/* Counterparties - Teal/Cyan */
-[data-testid="counterparties-content"] .glass-card {
-  box-shadow: 0 8px 32px rgba(107, 191, 199, 0.15);
-}
-
-[data-testid="counterparties-content"] .btn-primary {
-  background: linear-gradient(135deg, #6bbfc7 0%, #5ab4be 100%);
-}
-
-[data-testid="counterparties-content"] .btn-primary:hover {
-  background: linear-gradient(135deg, #5ab4be 0%, #4aa9b3 100%);
-}
-
-/* Orders - Blue/Purple */
-[data-testid="orders-content"] .glass-card {
-  box-shadow: 0 8px 32px rgba(99, 102, 241, 0.15);
-  border: 1px solid rgba(99, 102, 241, 0.1);
-}
-
-[data-testid="orders-content"] .btn-primary {
-  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-}
-
-[data-testid="orders-content"] .btn-primary:hover {
-  background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
-}
-
-[data-testid="orders-content"] .item-card {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(129, 140, 248, 0.1) 100%);
-  border: 1px solid rgba(99, 102, 241, 0.2);
-}
-
-[data-testid="orders-content"] .item-card:hover {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(129, 140, 248, 0.15) 100%);
-  border-color: rgba(99, 102, 241, 0.3);
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
-}
-
-/* Invoices - Green/Emerald */
-[data-testid="invoices-content"] .glass-card {
-  box-shadow: 0 8px 32px rgba(16, 185, 129, 0.15);
-  border: 1px solid rgba(16, 185, 129, 0.1);
-}
-
-[data-testid="invoices-content"] .btn-primary {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-}
-
-[data-testid="invoices-content"] .btn-primary:hover {
-  background: linear-gradient(135deg, #059669 0%, #047857 100%);
-}
-
-[data-testid="invoices-content"] .item-card {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(52, 211, 153, 0.1) 100%);
-  border: 1px solid rgba(16, 185, 129, 0.2);
-}
-
-[data-testid="invoices-content"] .item-card:hover {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(52, 211, 153, 0.15) 100%);
-  border-color: rgba(16, 185, 129, 0.3);
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
-}
-
-/* Acts - Purple/Violet */
-[data-testid="acts-content"] .glass-card {
-  box-shadow: 0 8px 32px rgba(139, 92, 246, 0.15);
-  border: 1px solid rgba(139, 92, 246, 0.1);
-}
-
-[data-testid="acts-content"] .btn-primary {
-  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-}
-
-[data-testid="acts-content"] .btn-primary:hover {
-  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
-}
-
-[data-testid="acts-content"] .item-card {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(167, 139, 250, 0.1) 100%);
-  border: 1px solid rgba(139, 92, 246, 0.2);
-}
-
-[data-testid="acts-content"] .item-card:hover {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(167, 139, 250, 0.15) 100%);
-  border-color: rgba(139, 92, 246, 0.3);
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.15);
-}
-
-/* Waybills - Orange/Amber */
-[data-testid="waybills-content"] .glass-card {
-  box-shadow: 0 8px 32px rgba(251, 146, 60, 0.15);
-  border: 1px solid rgba(251, 146, 60, 0.1);
-}
-
-[data-testid="waybills-content"] .btn-primary {
-  background: linear-gradient(135deg, #fb923c 0%, #f97316 100%);
-}
-
-[data-testid="waybills-content"] .btn-primary:hover {
-  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
-}
-
-[data-testid="waybills-content"] .item-card {
-  background: linear-gradient(135deg, rgba(251, 146, 60, 0.1) 0%, rgba(253, 186, 116, 0.1) 100%);
-  border: 1px solid rgba(251, 146, 60, 0.2);
-}
-
-[data-testid="waybills-content"] .item-card:hover {
-  background: linear-gradient(135deg, rgba(251, 146, 60, 0.15) 0%, rgba(253, 186, 116, 0.15) 100%);
-  border-color: rgba(251, 146, 60, 0.3);
-  box-shadow: 0 4px 12px rgba(251, 146, 60, 0.15);
-}
-
-/* Contracts - Rose/Pink */
-[data-testid="contracts-content"] .glass-card {
-  box-shadow: 0 8px 32px rgba(244, 63, 94, 0.15);
-  border: 1px solid rgba(244, 63, 94, 0.1);
-}
-
-[data-testid="contracts-content"] .btn-primary {
-  background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
-}
-
-[data-testid="contracts-content"] .btn-primary:hover {
-  background: linear-gradient(135deg, #e11d48 0%, #be123c 100%);
-}
-
-[data-testid="contracts-content"] input:focus,
-[data-testid="contracts-content"] textarea:focus {
-  border-color: #f43f5e;
-  box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.1);
-}
+/* ========================================
+   Header Styling
+======================================== */
 
 .header-gradient {
-  background: linear-gradient(135deg, rgba(232, 245, 247, 0.9) 0%, rgba(240, 244, 255, 0.9) 100%);
-  backdrop-filter: blur(20px);
+  background: linear-gradient(135deg, #29A1D4 0%, #1e8bb8 100%);
+  color: white;
+  box-shadow: 0 4px 20px rgba(41, 161, 212, 0.15);
+}
+
+.header-gradient h1 {
+  color: white !important;
+}
+
+.header-gradient p {
+  color: rgba(255, 255, 255, 0.9) !important;
 }
 
 .icon-wrapper {
-  width: 56px;
-  height: 56px;
+  width: 64px;
+  height: 64px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #6bbfc7 0%, #7dd3db 100%);
+  background: rgba(255, 255, 255, 0.2);
   border-radius: 16px;
-  box-shadow: 0 4px 16px rgba(107, 191, 199, 0.3);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
 }
+
+.icon-wrapper svg {
+  color: white !important;
+}
+
+/* ========================================
+   Tab Navigation
+======================================== */
 
 .tabs-list {
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(12px);
-  padding: 6px;
-  border-radius: 12px;
-  border: 1px solid rgba(107, 191, 199, 0.2);
+  background: white;
+  padding: 8px;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e5e7eb;
 }
 
+.tabs-list button {
+  color: #64748b;
+  font-weight: 600;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.tabs-list button[data-state="active"] {
+  background: linear-gradient(135deg, #29A1D4 0%, #1e8bb8 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(41, 161, 212, 0.3);
+}
+
+.tabs-list button:hover:not([data-state="active"]) {
+  background: #f1f5f9;
+  color: #29A1D4;
+}
+
+/* ========================================
+   Card Styling
+======================================== */
+
+.glass-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+}
+
+.glass-card:hover {
+  box-shadow: 0 8px 24px rgba(41, 161, 212, 0.12);
+  transform: translateY(-2px);
+}
+
+.glass-card h2,
+.glass-card h3 {
+  color: #1e293b;
+  font-weight: 700;
+}
+
+.glass-card p {
+  color: #64748b;
+}
+
+/* ========================================
+   Button Styling - WordCraft Style
+======================================== */
+
 .btn-primary {
-  background: linear-gradient(135deg, #6bbfc7 0%, #5ab4be 100%);
+  background: linear-gradient(135deg, #29A1D4 0%, #1e8bb8 100%);
   color: white;
   font-weight: 600;
   border: none;
+  border-radius: 12px;
+  padding: 0.75rem 1.5rem;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(107, 191, 199, 0.3);
+  box-shadow: 0 4px 12px rgba(41, 161, 212, 0.25);
 }
 
 .btn-primary:hover {
-  background: linear-gradient(135deg, #5ab4be 0%, #4aa9b3 100%);
-  box-shadow: 0 6px 20px rgba(107, 191, 199, 0.4);
-  transform: translateY(-1px);
+  background: linear-gradient(135deg, #1e8bb8 0%, #1a7ba3 100%);
+  box-shadow: 0 6px 20px rgba(41, 161, 212, 0.35);
+  transform: translateY(-2px);
 }
 
 .btn-primary:disabled {
@@ -193,35 +129,230 @@
 }
 
 .btn-secondary {
-  background: linear-gradient(135deg, #a8d5dd 0%, #b8e0e8 100%);
-  color: #2d6a73;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
   font-weight: 600;
   border: none;
+  border-radius: 12px;
+  padding: 0.75rem 1.5rem;
   transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
 }
 
 .btn-secondary:hover {
-  background: linear-gradient(135deg, #98cad6 0%, #a8d5dd 100%);
-  transform: translateY(-1px);
+  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.35);
+  transform: translateY(-2px);
 }
 
-/* Tab-specific button colors for document creation */
-[data-testid="counterparties-content"] .btn-secondary {
-  background: linear-gradient(135deg, #a8d5dd 0%, #b8e0e8 100%);
-  color: #2d6a73;
+/* ========================================
+   Input & Form Styling
+======================================== */
+
+input,
+textarea,
+select {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  transition: all 0.3s ease;
+  background: white;
+  font-family: 'Montserrat', sans-serif;
 }
 
-[data-testid="orders-content"] .btn-secondary {
-  background: linear-gradient(135deg, #c7d2fe 0%, #ddd6fe 100%);
-  color: #4338ca;
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: #29A1D4;
+  box-shadow: 0 0 0 3px rgba(41, 161, 212, 0.1);
 }
 
-/* Contracts - Amber/Orange */
-[data-testid="contracts-content"] .glass-card {
-  box-shadow: 0 8px 32px rgba(251, 146, 60, 0.15);
-  border: 1px solid rgba(251, 146, 60, 0.1);
+label {
+  color: #475569;
+  font-weight: 600;
+  font-size: 0.875rem;
 }
 
+/* ========================================
+   Item Cards
+======================================== */
+
+.item-card {
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border: 1px solid #bae6fd;
+  border-radius: 16px;
+  padding: 1rem;
+  transition: all 0.3s ease;
+}
+
+.item-card:hover {
+  background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+  border-color: #7dd3fc;
+  box-shadow: 0 4px 12px rgba(41, 161, 212, 0.15);
+  transform: translateY(-2px);
+}
+
+/* ========================================
+   Counterparty Card
+======================================== */
+
+.counterparty-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 1.25rem;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.counterparty-card:hover {
+  background: #f8fafc;
+  border-color: #29A1D4;
+  box-shadow: 0 4px 16px rgba(41, 161, 212, 0.12);
+  transform: translateX(4px);
+}
+
+.counterparty-card p {
+  color: #1e293b;
+}
+
+.counterparty-card .text-gray-600 {
+  color: #64748b !important;
+}
+
+/* ========================================
+   Badge Styling
+======================================== */
+
+.contract-badge {
+  padding: 6px 16px;
+  background: linear-gradient(135deg, #29A1D4 0%, #1e8bb8 100%);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  box-shadow: 0 2px 8px rgba(41, 161, 212, 0.25);
+}
+
+/* ========================================
+   Info Boxes
+======================================== */
+
+.info-box {
+  background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%);
+  border-left: 4px solid #29A1D4;
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 2px 8px rgba(41, 161, 212, 0.1);
+}
+
+.info-box p {
+  color: #1e40af;
+}
+
+/* ========================================
+   Total Amount Box
+======================================== */
+
+.total-amount-box {
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border: 2px solid #93c5fd;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(147, 197, 253, 0.2);
+}
+
+.total-amount-box label {
+  color: #1e40af;
+  font-size: 1.125rem;
+}
+
+.total-amount-box span {
+  color: #1d4ed8;
+  font-weight: 800;
+}
+
+/* ========================================
+   Dialog Styling
+======================================== */
+
+[role="dialog"] {
+  background: white !important;
+  border-radius: 20px;
+  border: 1px solid #e5e7eb;
+}
+
+[role="dialog"] h2 {
+  color: #1e293b !important;
+  font-weight: 700;
+}
+
+[role="dialog"] p,
+[role="dialog"] label {
+  color: #475569 !important;
+}
+
+/* ========================================
+   Document Type Specific Colors
+======================================== */
+
+/* Orders - Blue */
+[data-testid="orders-content"] .item-card {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  border-color: #93c5fd;
+}
+
+[data-testid="orders-content"] .item-card:hover {
+  background: linear-gradient(135deg, #bfdbfe 0%, #93c5fd 100%);
+  border-color: #60a5fa;
+}
+
+/* Invoices - Green */
+[data-testid="invoices-content"] .btn-primary {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+[data-testid="invoices-content"] .btn-primary:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+}
+
+[data-testid="invoices-content"] .item-card {
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  border-color: #6ee7b7;
+}
+
+/* Acts - Purple */
+[data-testid="acts-content"] .btn-primary {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+}
+
+[data-testid="acts-content"] .btn-primary:hover {
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+}
+
+[data-testid="acts-content"] .item-card {
+  background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
+  border-color: #c4b5fd;
+}
+
+/* Waybills - Orange */
+[data-testid="waybills-content"] .btn-primary {
+  background: linear-gradient(135deg, #fb923c 0%, #f97316 100%);
+}
+
+[data-testid="waybills-content"] .btn-primary:hover {
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+}
+
+[data-testid="waybills-content"] .item-card {
+  background: linear-gradient(135deg, #ffedd5 0%, #fed7aa 100%);
+  border-color: #fdba74;
+}
+
+/* Contracts - Amber */
 [data-testid="contracts-content"] .btn-primary {
   background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
 }
@@ -230,165 +361,14 @@
   background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
 }
 
-[data-testid="contracts-content"] .btn-secondary {
-  background: linear-gradient(135deg, #fde68a 0%, #fcd34d 100%);
-  color: #92400e;
-}
+/* ========================================
+   Animations
+======================================== */
 
-[data-testid="invoices-content"] .btn-secondary {
-  background: linear-gradient(135deg, #a7f3d0 0%, #6ee7b7 100%);
-  color: #047857;
-}
-
-[data-testid="acts-content"] .btn-secondary {
-  background: linear-gradient(135deg, #ddd6fe 0%, #e9d5ff 100%);
-  color: #6d28d9;
-}
-
-[data-testid="waybills-content"] .btn-secondary {
-  background: linear-gradient(135deg, #fed7aa 0%, #fde68a 100%);
-  color: #c2410c;
-}
-
-[data-testid="contracts-content"] .btn-secondary {
-  background: linear-gradient(135deg, #fecdd3 0%, #fda4af 100%);
-  color: #be123c;
-}
-
-.item-card {
-  background: linear-gradient(135deg, rgba(168, 213, 221, 0.1) 0%, rgba(184, 224, 232, 0.1) 100%);
-  border: 1px solid rgba(107, 191, 199, 0.2);
-  border-radius: 12px;
-  transition: all 0.3s ease;
-}
-
-.item-card:hover {
-  background: linear-gradient(135deg, rgba(168, 213, 221, 0.15) 0%, rgba(184, 224, 232, 0.15) 100%);
-  border-color: rgba(107, 191, 199, 0.3);
-  box-shadow: 0 4px 12px rgba(107, 191, 199, 0.15);
-}
-
-.counterparty-card {
-  background: rgba(255, 255, 255, 0.5);
-  border: 1px solid rgba(107, 191, 199, 0.2);
-  border-radius: 12px;
-  transition: all 0.3s ease;
-}
-
-.counterparty-card:hover {
-  background: rgba(255, 255, 255, 0.7);
-  border-color: rgba(107, 191, 199, 0.4);
-  box-shadow: 0 4px 16px rgba(107, 191, 199, 0.2);
-  transform: translateX(4px);
-}
-
-.contract-badge {
-  padding: 4px 12px;
-  background: linear-gradient(135deg, #6bbfc7 0%, #7dd3db 100%);
-  color: white;
-  font-size: 0.75rem;
-  font-weight: 600;
-  border-radius: 20px;
-  white-space: nowrap;
-}
-
-/* Tab-specific total amount styling */
-[data-testid="orders-content"] .bg-gradient-to-r {
-  background: linear-gradient(to right, #dbeafe, #e0e7ff) !important;
-  border-color: #6366f1 !important;
-}
-
-[data-testid="orders-content"] .text-teal-700 {
-  color: #4f46e5 !important;
-}
-
-[data-testid="invoices-content"] .bg-gradient-to-r {
-  background: linear-gradient(to right, #d1fae5, #a7f3d0) !important;
-  border-color: #10b981 !important;
-}
-
-[data-testid="invoices-content"] .text-teal-700 {
-  color: #059669 !important;
-}
-
-[data-testid="acts-content"] .bg-gradient-to-r {
-  background: linear-gradient(to right, #ede9fe, #ddd6fe) !important;
-  border-color: #8b5cf6 !important;
-}
-
-[data-testid="acts-content"] .text-teal-700 {
-  color: #7c3aed !important;
-}
-
-[data-testid="waybills-content"] .bg-gradient-to-r {
-  background: linear-gradient(to right, #ffedd5, #fed7aa) !important;
-  border-color: #fb923c !important;
-}
-
-[data-testid="waybills-content"] .text-teal-700 {
-  color: #f97316 !important;
-}
-
-[data-testid="contracts-content"] .bg-gradient-to-r {
-  background: linear-gradient(to right, #ffe4e6, #fecdd3) !important;
-  border-color: #f43f5e !important;
-}
-
-[data-testid="contracts-content"] .text-teal-700 {
-  color: #e11d48 !important;
-}
-
-/* Found counterparty info boxes */
-[data-testid="orders-content"] .bg-teal-50 {
-  background: #dbeafe !important;
-  border-color: #6366f1 !important;
-}
-
-[data-testid="orders-content"] .text-teal-900 {
-  color: #1e3a8a !important;
-}
-
-[data-testid="invoices-content"] .bg-teal-50 {
-  background: #d1fae5 !important;
-  border-color: #10b981 !important;
-}
-
-[data-testid="invoices-content"] .text-teal-900 {
-  color: #064e3b !important;
-}
-
-[data-testid="acts-content"] .bg-teal-50 {
-  background: #ede9fe !important;
-  border-color: #8b5cf6 !important;
-}
-
-[data-testid="acts-content"] .text-teal-900 {
-  color: #4c1d95 !important;
-}
-
-[data-testid="waybills-content"] .bg-teal-50 {
-  background: #ffedd5 !important;
-  border-color: #fb923c !important;
-}
-
-[data-testid="waybills-content"] .text-teal-900 {
-  color: #7c2d12 !important;
-}
-
-[data-testid="contracts-content"] .bg-teal-50 {
-  background: #ffe4e6 !important;
-  border-color: #f43f5e !important;
-}
-
-[data-testid="contracts-content"] .text-teal-900 {
-  color: #881337 !important;
-}
-
-/* Animations */
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(20px);
   }
   to {
     opacity: 1;
@@ -396,43 +376,94 @@
   }
 }
 
-.glass-card {
-  animation: fadeIn 0.5s ease-out;
+.glass-card,
+.counterparty-card,
+.item-card {
+  animation: fadeIn 0.4s ease-out;
 }
 
-/* Dialog styling */
-[role="dialog"] {
-  background: white !important;
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
-[role="dialog"] h2,
-[role="dialog"] p,
-[role="dialog"] label {
-  color: #1a202c !important;
+/* ========================================
+   Loading States
+======================================== */
+
+.loading-spinner {
+  border: 3px solid #e5e7eb;
+  border-top-color: #29A1D4;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  animation: spin 0.8s linear infinite;
 }
 
-.dialog-overlay {
-  background: rgba(0, 0, 0, 0.5) !important;
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
-/* Input focus styles */
-input:focus,
-textarea:focus,
-select:focus {
-  outline: none;
-  border-color: #6bbfc7;
-  box-shadow: 0 0 0 3px rgba(107, 191, 199, 0.1);
-}
+/* ========================================
+   Responsive Design
+======================================== */
 
-/* Button transitions */
-button {
-  transition: all 0.3s ease;
-}
-
-/* Responsive adjustments */
 @media (max-width: 768px) {
   .icon-wrapper {
     width: 48px;
     height: 48px;
   }
+  
+  .glass-card {
+    border-radius: 16px;
+  }
+  
+  .btn-primary,
+  .btn-secondary {
+    padding: 0.625rem 1.25rem;
+    font-size: 0.875rem;
+  }
+}
+
+/* ========================================
+   Emoji Icons (WordCraft Style)
+======================================== */
+
+.emoji-icon {
+  font-size: 1.25rem;
+  margin-right: 0.5rem;
+}
+
+/* ========================================
+   Success States
+======================================== */
+
+.success-state {
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  border: 2px solid #6ee7b7;
+  color: #065f46;
+  padding: 1rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+}
+
+/* ========================================
+   Error States
+======================================== */
+
+.error-state {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  border: 2px solid #fca5a5;
+  color: #991b1b;
+  padding: 1rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15);
 }
