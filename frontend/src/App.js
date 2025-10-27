@@ -1343,6 +1343,9 @@ function App() {
                       setTimeout(() => {
                         setShowContractPreview(true);
                         toast.success('Договір успішно згенеровано!');
+                        
+                        // Refresh all documents list
+                        fetchAllDocuments();
                       }, 100);
                     }
                   } catch (error) {
