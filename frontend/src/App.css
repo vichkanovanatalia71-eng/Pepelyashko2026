@@ -216,6 +216,25 @@
   color: #4338ca;
 }
 
+/* Contracts - Amber/Orange */
+[data-testid="contracts-content"] .glass-card {
+  box-shadow: 0 8px 32px rgba(251, 146, 60, 0.15);
+  border: 1px solid rgba(251, 146, 60, 0.1);
+}
+
+[data-testid="contracts-content"] .btn-primary {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+[data-testid="contracts-content"] .btn-primary:hover {
+  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+}
+
+[data-testid="contracts-content"] .btn-secondary {
+  background: linear-gradient(135deg, #fde68a 0%, #fcd34d 100%);
+  color: #92400e;
+}
+
 [data-testid="invoices-content"] .btn-secondary {
   background: linear-gradient(135deg, #a7f3d0 0%, #6ee7b7 100%);
   color: #047857;
