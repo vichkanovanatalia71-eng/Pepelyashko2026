@@ -618,6 +618,11 @@ function App() {
             </Card>
           </TabsContent>
 
+          {/* Orders Tab */}
+          <TabsContent value="orders" data-testid="orders-content">
+            <DocumentForm endpoint="orders" docType="Замовлення" title="Створення Замовлення" />
+          </TabsContent>
+
           {/* Invoices Tab */}
           <TabsContent value="invoices" data-testid="invoices-content">
             <DocumentForm endpoint="invoices" docType="Рахунок" title="Створення Рахунку" />
