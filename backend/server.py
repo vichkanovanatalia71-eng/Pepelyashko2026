@@ -365,8 +365,9 @@ async def generate_invoice_pdf(data: DocumentCreate):
             upload_to_drive=True
         )
         
-        # Save invoice to Google Sheets
-        sheets_service.create_invoice(invoice_data)
+        # Save invoice to Google Sheets with drive_file_id
+        drive_file_id = result.get('drive_file_id', '')
+        sheets_service.create_invoice(invoice_data, drive_file_id)
         
         return {
             'success': True,
