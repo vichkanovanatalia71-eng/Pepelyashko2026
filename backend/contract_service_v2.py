@@ -242,6 +242,85 @@ class ContractServiceV2:
             
             story.append(Paragraph("<b>8.5.</b> Банківські витрати – за платником, якщо інше не погоджено.", styles['CustomNormal']))
             story.append(Spacer(1, 6*mm))
+            
+            # Section 9: CONFIDENTIALITY
+            story.append(Paragraph("9. КОНФІДЕНЦІЙНІСТЬ ТА ПЕРСОНАЛЬНІ ДАНІ", styles['CustomHeading1']))
+            story.append(Spacer(1, 3*mm))
+            story.append(Paragraph("<b>9.1.</b> Комерційна інформація за цим Договором є конфіденційною; розголошення заборонене без письмової згоди іншої Сторони, крім випадків, передбачених законом.", styles['CustomNormal']))
+            story.append(Spacer(1, 3*mm))
+            story.append(Paragraph("<b>9.2.</b> Обробка персональних даних здійснюється відповідно до Закону України «Про захист персональних даних» та ст. 32 Конституції України. Сторони є окремими володільцями/розпорядниками та гарантують законні підстави обробки.", styles['CustomNormal']))
+            story.append(Spacer(1, 6*mm))
+            
+            # Section 10: IP
+            story.append(Paragraph("10. ІНТЕЛЕКТУАЛЬНА ВЛАСНІСТЬ (для послуг/робіт)", styles['CustomHeading1']))
+            story.append(Spacer(1, 3*mm))
+            story.append(Paragraph("<b>10.1.</b> Майнові права інтелектуальної власності на результати, створені Постачальником у межах цього Договору за оплату, переходять Покупцю з моменту підписання Акта та повної оплати, якщо інше прямо не зазначено у Специфікації.", styles['CustomNormal']))
+            story.append(Spacer(1, 3*mm))
+            story.append(Paragraph("<b>10.2.</b> Невиключні/виключні права, територія, строк, способи використання – деталізуються у Специфікації. Авторське (особисте немайнове) право зберігається за автором.", styles['CustomNormal']))
+            story.append(Spacer(1, 6*mm))
+            
+            # Section 11: LIABILITY
+            story.append(Paragraph("11. ВІДПОВІДАЛЬНІСТЬ І ШТРАФНІ САНКЦІЇ", styles['CustomHeading1']))
+            story.append(Spacer(1, 3*mm))
+            story.append(Paragraph("<b>11.1.</b> За порушення строків поставки/надання – штраф/пеня: 0,1% від вартості непоставленого/ненаданого за кожен день прострочення, але не більше 10% від відповідної вартості, якщо інше не погоджено.", styles['CustomNormal']))
+            story.append(Spacer(1, 3*mm))
+            story.append(Paragraph("<b>11.2.</b> За порушення строків оплати – пеня у розмірі подвійної облікової ставки НБУ від суми простроченого платежу за кожен день прострочення, плюс інфляційні втрати та 3% річних (ст. 625 ЦКУ).", styles['CustomNormal']))
+            story.append(Spacer(1, 3*mm))
+            story.append(Paragraph("<b>11.3.</b> Сплата санкцій не звільняє від виконання основних зобов'язань.", styles['CustomNormal']))
+            story.append(Spacer(1, 6*mm))
+            
+            # Section 12: FORCE MAJEURE
+            story.append(Paragraph("12. ФОРС-МАЖОР", styles['CustomHeading1']))
+            story.append(Spacer(1, 3*mm))
+            story.append(Paragraph("<b>12.1.</b> Сторона, яка зазнала дії форс-мажору (військові дії, блокада, пожежа, стихія, акти органів влади, кібератаки тощо), звільняється від відповідальності на період дії таких обставин за умови їх підтвердження ТПП України. Повідомлення – протягом 5 роб. днів.", styles['CustomNormal']))
+            story.append(Spacer(1, 6*mm))
+            
+            # Section 13: TERM
+            story.append(Paragraph("13. СТРОК ДІЇ, РОЗІРВАННЯ, ЗМІНИ", styles['CustomHeading1']))
+            story.append(Spacer(1, 3*mm))
+            
+            term_text = f"""<b>13.1.</b> Договір набирає чинності з дати підписання і діє до {end_date} або до повного виконання зобов'язань, залежно від того, що настане пізніше."""
+            story.append(Paragraph(term_text, styles['CustomNormal']))
+            story.append(Spacer(1, 3*mm))
+            
+            story.append(Paragraph("<b>13.2.</b> Може бути розірваний за взаємною згодою сторін або в односторонньому порядку у разі істотного порушення (прострочення понад 30 дн., відмова від приймання/оплати, систематичні порушення) – із письмовим повідомленням за 10 к. дн.", styles['CustomNormal']))
+            story.append(Spacer(1, 3*mm))
+            
+            story.append(Paragraph("<b>13.3.</b> Зміни/доповнення чинні, якщо оформлені додатковою угодою/оновленою Специфікацією, підписані КЕП.", styles['CustomNormal']))
+            story.append(Spacer(1, 6*mm))
+            
+            # Section 14: DISPUTES
+            story.append(Paragraph("14. ВИРІШЕННЯ СПОРІВ", styles['CustomHeading1']))
+            story.append(Spacer(1, 3*mm))
+            story.append(Paragraph("<b>14.1.</b> Спори вирішуються шляхом переговорів; за відсутності згоди – у господарських судах України за місцезнаходженням відповідача або за домовленістю – за місцезнаходженням Позивача, якщо це прямо передбачено у Специфікації.", styles['CustomNormal']))
+            story.append(Spacer(1, 6*mm))
+            
+            # Section 15: ANTI-CORRUPTION
+            story.append(Paragraph("15. АНТИКОРУПЦІЯ, САНКЦІЇ, КОМПЛАЄНС", styles['CustomHeading1']))
+            story.append(Spacer(1, 3*mm))
+            story.append(Paragraph("<b>15.1.</b> Сторони гарантують дотримання антикорупційного законодавства України. Будь-які платежі з корупційною метою заборонені. Порушення є підставою для негайного розірвання.", styles['CustomNormal']))
+            story.append(Spacer(1, 3*mm))
+            story.append(Paragraph("<b>15.2.</b> Сторони підтверджують відсутність у санкційних списках України/ЄС/США (OFAC). У разі запровадження санкцій до будь-якої сторони інша сторона має право зупинити виконання/розірвати договір.", styles['CustomNormal']))
+            story.append(Spacer(1, 6*mm))
+            
+            # Section 16: DOCUMENT EXCHANGE
+            story.append(Paragraph("16. ОБМІН ДОКУМЕНТАМИ", styles['CustomHeading1']))
+            story.append(Spacer(1, 3*mm))
+            story.append(Paragraph("<b>16.1.</b> Сторони визнають юридичну силу електронних документів (КЕП, е-пошта з доменних адрес, ЕДО/EDI) відповідно до законодавства України.", styles['CustomNormal']))
+            story.append(Spacer(1, 3*mm))
+            story.append(Paragraph("<b>16.2.</b> Оригінали (за потреби) обмінюються поштою/кур'єром протягом 10 роб. днів після запиту.", styles['CustomNormal']))
+            story.append(Spacer(1, 6*mm))
+            
+            # Section 17: REQUISITES
+            story.append(Paragraph("17. РЕКВІЗИТИ СТОРІН", styles['CustomHeading1']))
+            story.append(Spacer(1, 3*mm))
+            story.append(Paragraph("Постачальник – з аркуша «Мої дані»; Покупець – з аркуша «Основні дані».", styles['CustomNormal']))
+            story.append(Spacer(1, 3*mm))
+            story.append(Paragraph("(Тут у друкованій версії виводяться значення полів із п. 1.1 та 1.2.)", styles['SmallItalic']))
+            story.append(Spacer(1, 6*mm))
+            
+            # SIGNATURES
+            story.append(Paragraph("ПІДПИСИ СТОРІН:", styles['CustomHeading1']))
             story.append(Spacer(1, 6*mm))
             
             # Signature table
