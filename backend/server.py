@@ -208,7 +208,13 @@ async def get_counterparties():
                     'iban': str(record.get('р/р(IBAN)', '')),
                     'contract_type': '',
                     'director_position': str(record.get('Посада', 'Директор')),
-                    'director_name': str(record.get('В особі', ''))
+                    'director_name': str(record.get('В особі', '')),
+                    'legal_address': str(record.get('Юридична адреса', '')),
+                    'bank': str(record.get('Банк', '')),
+                    'mfo': str(record.get('МФО', '')),
+                    'position': str(record.get('Посада', '')),
+                    'represented_by': str(record.get('В особі', '')),
+                    'signature': str(record.get('Підпис', ''))
                 })
         
         return counterparties
