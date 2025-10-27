@@ -183,7 +183,7 @@ class GoogleSheetsService:
             logger.error(f"Error creating договір: {str(e)}")
             raise
     
-    def _create_document(self, sheet_name: str, data: Dict[str, Any], doc_type: str) -> Dict[str, Any]:
+    def _create_document(self, sheet_name: str, data: Dict[str, Any], doc_type: str, drive_file_id: str = '') -> Dict[str, Any]:
         """Generic method to create documents (invoices, acts, waybills)."""
         try:
             worksheet = self.spreadsheet.worksheet(sheet_name)
@@ -203,7 +203,8 @@ class GoogleSheetsService:
                 data['counterparty_edrpou'],
                 counterparty['Назва'],
                 json.dumps(data['items'], ensure_ascii=False),
-                data['total_amount']
+                data['total_amount'],
+                drive_file_id  # Add drive_file_id to the row
             ]
             
             worksheet.append_row(row)
