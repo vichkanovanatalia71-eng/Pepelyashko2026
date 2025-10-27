@@ -218,7 +218,75 @@ class GoogleSheetsService:
             logger.error(f"Error creating {doc_type}: {str(e)}")
             raise
     
-    def get_documents(self, sheet_name: str) -> List[Dict[str, Any]]:
+    def get_counterparty_documents(self, edrpou: str) -> Dict[str, List[Dict[str, Any]]]:
+        """Get all documents for a specific counterparty."""
+        try:
+            documents = {
+                'orders': [],
+                'invoices': [],
+                'acts': [],
+                'waybills': [],
+                'contracts': []
+            }
+            
+            # Get orders
+            try:
+                orders = self.get_documents("Замовлення")
+                documents['orders'] = [doc for doc in orders if str(doc.get('counterparty_edrpou')) == str(edrpou)]
+            except:
+                pass
+            
+            # Get invoices
+            try:
+                invoices = self.get_documents("Рахунки")
+                documents['invoices'] = [doc for doc in invoices if str(doc.get('counterparty_edrpou')) == str(edrpou)]
+            except:
+                pass
+            
+            # Get acts
+            try:
+                acts = self.get_documents("Акти")
+                documents['acts'] = [doc for doc in acts if str(doc.get('counterparty_edrpou')) == str(edrpou)]
+            except:
+                pass
+            
+            # Get waybills
+            try:
+                waybills = self.get_documents("Видаткові накладні")
+                documents['waybills'] = [doc for doc in waybills if str(doc.get('counterparty_edrpou')) == str(edrpou)]
+            except:
+                pass
+            
+            # Get contracts
+            try:
+                worksheet = self.spreadsheet.worksheet("Договори")
+                records = worksheet.get_all_records()
+                
+                for record in records:
+                    if str(record.get('ЄДРПОУ контрагента')) == str(edrpou):
+                        contract = {
+                            'number': str(record['Номер']),
+                            'date': str(record['Дата']),
+                            'counterparty_edrpou': str(record['ЄДРПОУ контрагента']),
+                            'counterparty_name': str(record["Ім'я контрагента"]),
+                            'contract_type': str(record['Тип договору']),
+                            'subject': str(record['Предмет договору']),
+                            'amount': float(record['Сума договору']) if record['Сума договору'] else 0.0
+                        }
+                        documents['contracts'].append(contract)
+            except:
+                pass
+            
+            return documents
+        except Exception as e:
+            logger.error(f"Error getting documents for counterparty: {str(e)}")
+            return {
+                'orders': [],
+                'invoices': [],
+                'acts': [],
+                'waybills': [],
+                'contracts': []
+            }
         """Get all documents from a specific sheet."""
         try:
             worksheet = self.spreadsheet.worksheet(sheet_name)
