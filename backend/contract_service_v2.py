@@ -268,7 +268,7 @@ class ContractServiceV2:
             story.append(Spacer(1, 12*mm))
             
             # Specification signatures
-            story.append(Paragraph("ПІДПИСИ:", styles['Normal']))
+            story.append(Paragraph("ПІДПИСИ:", styles['CustomNormal']))
             story.append(Spacer(1, 6*mm))
             
             spec_sig_table = Table(signature_data, colWidths=[8*cm, 8*cm])
