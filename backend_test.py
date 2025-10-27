@@ -45,6 +45,11 @@ class ContractTestSuite:
         self.drive_download_link = None
         self.drive_file_id = None
         
+        # New document test results
+        self.invoice_results = {}
+        self.act_results = {}
+        self.waybill_results = {}
+        
     def test_health_check(self):
         """Test if the backend is running and healthy"""
         logger.info("Testing health check...")
