@@ -41,7 +41,7 @@ class ContractService:
         upload_to_drive: bool = True
     ) -> Dict[str, Any]:
         """
-        Generate PDF contract using ReportLab and optionally upload to Google Drive
+        Generate PDF contract using ReportLab based on HTML template
         
         Returns:
             Dict with local_path and optionally drive_file_id and drive_link
@@ -64,7 +64,8 @@ class ContractService:
             buyer_mfo = buyer_data.get('МФО', '')
             buyer_email = buyer_data.get('email', '')
             buyer_phone = buyer_data.get('тел', '')
-            buyer_director = buyer_data.get('Директор', '')
+            buyer_director_full = buyer_data.get('В особі', '')
+            buyer_signature = buyer_data.get('Підпис', '')
             
             # Supplier (постачальник) - static data
             supplier_name = 'ТОВАРИСТВО З ОБМЕЖЕНОЮ ВІДПОВІДАЛЬНІСТЮ "ВОРДКРАФТ"'
@@ -82,6 +83,9 @@ class ContractService:
             total_amount = contract_data.get('total_amount', 0)
             subject = contract_data.get('subject', 'Товар')
             
+            # Calculate contract end date (end of current year)
+            current_year = datetime.now().year
+            
             # Generate filename
             filename = f"contract_{contract_number}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
             output_path = self.output_dir / filename
@@ -89,141 +93,152 @@ class ContractService:
             # Create PDF
             doc = SimpleDocTemplate(str(output_path), pagesize=A4,
                                     rightMargin=2*cm, leftMargin=2*cm,
-                                    topMargin=2*cm, bottomMargin=2*cm)
+                                    topMargin=1.5*cm, bottomMargin=1.5*cm)
             
             # Container for PDF elements
             story = []
             
-            # Styles with Ukrainian font
+            # Define styles
             styles = getSampleStyleSheet()
+            
             title_style = ParagraphStyle(
-                'CustomTitle',
-                parent=styles['Heading1'],
-                fontSize=14,
-                textColor=colors.black,
+                'Title',
+                fontName='DejaVu-Bold',
+                fontSize=16,
                 alignment=TA_CENTER,
-                spaceAfter=12,
-                fontName='DejaVu-Bold'
+                spaceAfter=6
             )
             
             normal_style = ParagraphStyle(
-                'CustomNormal',
-                parent=styles['Normal'],
+                'Normal',
+                fontName='DejaVu',
                 fontSize=10,
                 alignment=TA_JUSTIFY,
                 spaceAfter=8,
-                fontName='DejaVu'
+                leading=14
             )
             
             heading_style = ParagraphStyle(
-                'CustomHeading',
-                parent=styles['Heading2'],
-                fontSize=11,
+                'Heading',
                 fontName='DejaVu-Bold',
+                fontSize=12,
                 spaceAfter=8
             )
             
             small_style = ParagraphStyle(
-                'SmallText',
-                parent=styles['Normal'],
-                fontSize=9,
+                'Small',
                 fontName='DejaVu',
-                spaceAfter=6
+                fontSize=9,
+                textColor=colors.HexColor('#666666'),
+                spaceAfter=12
             )
             
-            # Title
-            story.append(Paragraph(f'Договір поставки № {contract_number}', title_style))
-            date_style = ParagraphStyle(
-                'DateStyle', 
-                parent=styles['Normal'], 
-                fontSize=10, 
-                alignment=TA_CENTER, 
-                spaceAfter=12,
-                fontName='DejaVu'
-            )
-            story.append(Paragraph(contract_date, date_style))
-            story.append(Spacer(1, 0.5*cm))
+            # Title and date
+            story.append(Paragraph(f'ДОГОВІР ПОСТАВКИ № {contract_number}', title_style))
+            story.append(Paragraph(f'м. Одеса &nbsp;&nbsp;&nbsp;&nbsp; {contract_date} р.', small_style))
+            story.append(Spacer(1, 0.3*cm))
             
-            # Parties
-            story.append(Paragraph(f'<b>Постачальник:</b> {supplier_name} (ЄДРПОУ: {supplier_edrpou}), в особі директора {supplier_director}, що діє на підставі Статуту, з однієї сторони, та', normal_style))
-            story.append(Paragraph(f'<b>Покупець:</b> {buyer_name}, в особі директора {buyer_director}, що діє на підставі Статуту, з іншої сторони, разом по тексту цього Договору іменуються як Сторони, а кожна окремо – як Сторона, уклали цей Договір поставки (надалі – Договір) про наступне:', normal_style))
+            # Parties introduction
+            intro_text = f'''<b>Постачальник:</b> {supplier_name}, в особі директора Колонтая Романа Леонідовича, що діє на підставі Статуту, з однієї сторони, та <b>Покупець:</b> {buyer_name}, {buyer_director_full}, з іншої сторони, разом іменовані «Сторони», уклали цей Договір поставки (далі — «Договір») про таке.'''
+            story.append(Paragraph(intro_text, normal_style))
             story.append(Spacer(1, 0.4*cm))
             
-            # Section 1
-            story.append(Paragraph('<b>1. ПРЕДМЕТ ДОГОВОРУ</b>', heading_style))
-            story.append(Paragraph('1.1. Постачальник зобов\'язується передати у власність Покупцю, а Покупець прийняти та оплатити Товар відповідно до умов цього Договору та Специфікації, яка є невід\'ємною частиною цього Договору.', normal_style))
-            story.append(Paragraph(f'1.2. Предмет договору: {subject}', normal_style))
-            story.append(Spacer(1, 0.5*cm))
+            # Section 1: Предмет Договору
+            story.append(Paragraph('<b>1. Предмет Договору</b>', heading_style))
+            story.append(Paragraph(f'1.1. Постачальник зобов\'язується поставити, а Покупець прийняти та оплатити Товар ({subject}) згідно цього Договору та видаткових документів.', normal_style))
+            story.append(Paragraph('1.2. Якість Товару має відповідати вимогам чинного законодавства України, ДСТУ/ТУ та умовам Покупця.', normal_style))
+            story.append(Spacer(1, 0.3*cm))
             
-            # Section 2 - Specification
-            story.append(Paragraph('<b>2. СПЕЦИФІКАЦІЯ</b>', heading_style))
+            # Section 2: Поставка
+            story.append(Paragraph('<b>2. Поставка</b>', heading_style))
+            story.append(Paragraph('2.1. Поставка здійснюється Постачальником за власний рахунок або транспортом, якщо інше не погоджено Сторонами.', normal_style))
+            story.append(Paragraph('2.2. Датою поставки є дата видаткової накладної, підписаної Сторонами. Право власності переходить Покупцю на момент її підписання.', normal_style))
+            story.append(Spacer(1, 0.3*cm))
             
-            # Create table data
-            table_data = [['№', 'Найменування', 'Од.', 'К-сть', 'Ціна, грн', 'Сума, грн']]
-            for idx, item in enumerate(items, 1):
-                table_data.append([
-                    str(idx),
-                    item.get('name', ''),
-                    item.get('unit', ''),
-                    str(item.get('quantity', 0)),
-                    f"{item.get('price', 0):.2f}",
-                    f"{item.get('amount', 0):.2f}"
-                ])
-            table_data.append(['', '', '', '', 'РАЗОМ:', f'{total_amount:.2f}'])
+            # Section 3: Гарантія
+            story.append(Paragraph('<b>3. Гарантія</b>', heading_style))
+            story.append(Paragraph('3.1. Гарантійний строк експлуатації Товару: 12 місяців.', normal_style))
+            story.append(Paragraph('3.2. Упродовж гарантії Постачальник безоплатно усуває виявлені дефекти, крім випадків порушення правил експлуатації.', normal_style))
+            story.append(Spacer(1, 0.3*cm))
             
-            # Create table
-            table = Table(table_data, colWidths=[1.5*cm, 7*cm, 2*cm, 2*cm, 3*cm, 3*cm])
-            table.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
-                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                ('FONTNAME', (0, 0), (-1, 0), 'DejaVu-Bold'),
-                ('FONTNAME', (0, 1), (-1, -1), 'DejaVu'),
-                ('FONTSIZE', (0, 0), (-1, 0), 10),
-                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-                ('BACKGROUND', (0, 1), (-1, -2), colors.white),
-                ('GRID', (0, 0), (-1, -1), 1, colors.black),
-                ('FONTNAME', (0, -1), (-1, -1), 'DejaVu-Bold'),
-            ]))
-            story.append(table)
-            story.append(Spacer(1, 0.5*cm))
+            # Section 4: Ціна і розрахунки
+            story.append(Paragraph('<b>4. Ціна і розрахунки</b>', heading_style))
+            story.append(Paragraph(f'4.1. Загальна вартість Договору: <b>{total_amount:.2f} грн</b> без ПДВ.', normal_style))
+            story.append(Paragraph(f'4.2. Покупець здійснює 100% передоплату відповідно до рахунку на оплату протягом 3 (трьох) банківських днів.', normal_style))
+            story.append(Spacer(1, 0.3*cm))
             
-            # Section 3
-            story.append(Paragraph('<b>3. ЦІНА ТА ПОРЯДОК РОЗРАХУНКІВ</b>', heading_style))
-            story.append(Paragraph(f'3.1. Загальна вартість Товару за цим Договором становить: <b>{total_amount:.2f} грн</b> (без ПДВ).', normal_style))
-            story.append(Paragraph('3.2. Оплата здійснюється шляхом 100% передоплати на розрахунковий рахунок Постачальника протягом 3 (трьох) банківських днів з моменту підписання цього Договору.', normal_style))
-            story.append(Spacer(1, 0.5*cm))
+            # Section 5: Відповідальність
+            story.append(Paragraph('<b>5. Відповідальність</b>', heading_style))
+            story.append(Paragraph('5.1. За порушення умов Договору винна Сторона несе відповідальність згідно із законодавством України та цим Договором.', normal_style))
+            story.append(Paragraph('5.2. За прострочення поставки Постачальник сплачує неустойку 0,1% від вартості непоставленого Товару за кожен день прострочення.', normal_style))
+            story.append(Spacer(1, 0.3*cm))
             
-            # Section 4
-            story.append(Paragraph('<b>4. СТРОК ДІЇ ДОГОВОРУ</b>', heading_style))
-            story.append(Paragraph(f'4.1. Цей Договір набирає чинності з моменту його підписання Сторонами і діє до 31 грудня {datetime.now().year} року.', normal_style))
-            story.append(Paragraph('4.2. Поставка Товару здійснюється протягом 7 (семи) календарних днів з моменту надходження коштів на розрахунковий рахунок Постачальника.', normal_style))
-            story.append(Spacer(1, 1*cm))
+            # Section 6: Форс-мажор
+            story.append(Paragraph('<b>6. Форс-мажор</b>', heading_style))
+            story.append(Paragraph('6.1. Обставини непереборної сили звільняють від відповідальності на період їх дії за наявності підтвердження ТПП України.', normal_style))
+            story.append(Spacer(1, 0.3*cm))
             
-            # Section 5 - Signatures
-            story.append(Paragraph('<b>5. РЕКВІЗИТИ ТА ПІДПИСИ СТОРІН</b>', heading_style))
-            story.append(Spacer(1, 0.5*cm))
+            # Section 7: Строк дії
+            story.append(Paragraph('<b>7. Строк дії</b>', heading_style))
+            story.append(Paragraph('7.1. Договір набирає чинності з дати підписання та діє до повного виконання зобов\'язань.', normal_style))
+            story.append(Paragraph('7.2. Зміни/доповнення дійсні лише у письмовій формі, підписані уповноваженими представниками обох Сторін.', normal_style))
+            story.append(Spacer(1, 0.4*cm))
             
-            # Signatures table
-            sig_data = [
-                ['ПОКУПЕЦЬ:', 'ПОСТАЧАЛЬНИК:'],
-                [buyer_name, supplier_name],
-                [f'Код ЄДРПОУ: {buyer_edrpou}', f'Код ЄДРПОУ: {supplier_edrpou}'],
-                [f'Адреса: {buyer_address}', f'Адреса: {supplier_address}'],
-                [f'Email: {buyer_email}', f'Email: {supplier_email}'],
-                [f'Тел.: {buyer_phone}', f'Тел.: {supplier_phone}'],
-                [f'IBAN: {buyer_iban}', f'IBAN: {supplier_iban}'],
-                ['', ''],
-                [f'___________ {buyer_director}', f'___________ {supplier_director}'],
-                ['М.П.', 'М.П.'],
+            # Section 8: Реквізити сторін
+            story.append(Paragraph('<b>8. Реквізити сторін</b>', heading_style))
+            story.append(Spacer(1, 0.2*cm))
+            
+            # Requisites table
+            req_data = [
+                ['ПОКУПЕЦЬ', 'ПОСТАЧАЛЬНИК'],
+                [
+                    Paragraph(f'<b>{buyer_name}</b><br/>Юр. адреса: {buyer_address}<br/>Код ЄДРПОУ: {buyer_edrpou}<br/>р/р (IBAN): {buyer_iban}<br/>{buyer_bank}<br/>МФО: {buyer_mfo}<br/>E-mail: {buyer_email}<br/>Тел.: {buyer_phone}<br/>Директор: {buyer_signature}', normal_style),
+                    Paragraph(f'<b>{supplier_name}</b><br/>Юр. адреса: {supplier_address}<br/>Код ЄДРПОУ: {supplier_edrpou}<br/>р/р (IBAN): {supplier_iban}<br/>{supplier_bank}<br/>МФО: {supplier_mfo}<br/>E-mail: {supplier_email}<br/>Тел.: {supplier_phone}<br/>Директор: {supplier_director}', normal_style)
+                ]
             ]
             
-            sig_table = Table(sig_data, colWidths=[9*cm, 9*cm])
-            sig_table.setStyle(TableStyle([
+            req_table = Table(req_data, colWidths=[9*cm, 9*cm])
+            req_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#f3f4f6')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
+                ('ALIGN', (0, 0), (-1, 0), 'LEFT'),
                 ('FONTNAME', (0, 0), (-1, 0), 'DejaVu-Bold'),
-                ('FONTNAME', (0, 1), (-1, -1), 'DejaVu'),
-                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('FONTSIZE', (0, 0), (-1, 0), 10),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                ('TOPPADDING', (0, 0), (-1, 0), 12),
+                ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#e5e7eb')),
                 ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                ('LEFTPADDING', (0, 0), (-1, -1), 12),
+                ('RIGHTPADDING', (0, 0), (-1, -1), 12),
+                ('TOPPADDING', (0, 1), (-1, -1), 12),
+                ('BOTTOMPADDING', (0, 1), (-1, -1), 12),
+            ]))
+            story.append(req_table)
+            story.append(Spacer(1, 0.5*cm))
+            
+            # Section 9: Підписи
+            story.append(Paragraph('<b>9. Підписи сторін</b>', heading_style))
+            story.append(Spacer(1, 0.2*cm))
+            
+            sig_data = [
+                ['Постачальник', 'Покупець'],
+                ['', ''],
+                [f'__________________________ / {supplier_director} /', f'__________________________ / {buyer_signature} /']
+            ]
+            
+            sig_table = Table(sig_data, colWidths=[9*cm, 9*cm], rowHeights=[None, 60, None])
+            sig_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#f3f4f6')),
+                ('FONTNAME', (0, 0), (-1, 0), 'DejaVu-Bold'),
+                ('FONTNAME', (0, 2), (-1, 2), 'DejaVu'),
+                ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#e5e7eb')),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('VALIGN', (0, 0), (-1, 0), 'MIDDLE'),
+                ('VALIGN', (0, 2), (-1, 2), 'BOTTOM'),
+                ('LEFTPADDING', (0, 0), (-1, -1), 12),
+                ('RIGHTPADDING', (0, 0), (-1, -1), 12),
+                ('TOPPADDING', (0, 0), (-1, 0), 12),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
             ]))
             story.append(sig_table)
             
@@ -241,8 +256,7 @@ class ContractService:
             # Upload to Google Drive if requested and service is available
             if upload_to_drive and self.drive_service:
                 try:
-                    # Create custom filename with EDRPOU
-                    drive_filename = f"Договір_{contract_number}_{supplier_edrpou}.pdf"
+                    drive_filename = f"Договір_{contract_number}_{buyer_edrpou}.pdf"
                     
                     drive_result = self.drive_service.upload_file(
                         file_path=str(output_path),
@@ -258,7 +272,6 @@ class ContractService:
                     
                 except Exception as e:
                     logger.error(f"Failed to upload to Google Drive: {str(e)}")
-                    # Continue without Drive upload
             
             return result
             
