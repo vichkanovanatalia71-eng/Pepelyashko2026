@@ -178,11 +178,11 @@ class GoogleSheetsService:
             result = []
             for record in records:
                 doc = {
-                    'number': record['Номер'],
-                    'date': record['Дата'],
-                    'counterparty_edrpou': record['ЄДРПОУ контрагента'],
-                    'counterparty_name': record["Ім'я контрагента"],
-                    'total_amount': record['Загальна сума']
+                    'number': str(record['Номер']),
+                    'date': str(record['Дата']),
+                    'counterparty_edrpou': str(record['ЄДРПОУ контрагента']),
+                    'counterparty_name': str(record["Ім'я контрагента"]),
+                    'total_amount': float(record['Загальна сума']) if record['Загальна сума'] else 0.0
                 }
                 
                 # Parse items from JSON
