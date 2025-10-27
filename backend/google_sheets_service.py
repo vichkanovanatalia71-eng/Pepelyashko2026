@@ -422,6 +422,7 @@ class GoogleSheetsService:
                     'тел': str(record.get('тел', '')),
                     'Посада': str(record.get('Посада', 'Директор')),
                     'В особі': str(record.get('В особі', '')),
+                    'Підпис': str(record.get('Підпис', '')),
                     'Директор': str(record.get('В особі', ''))
                 }
                 logger.info(f"Retrieved buyer main data from first record: {data['Назва']}")
