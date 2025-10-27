@@ -316,3 +316,36 @@ class GoogleSheetsService:
         except Exception as e:
             logger.error(f"Error getting documents from {sheet_name}: {str(e)}")
             return []
+    
+    def get_buyer_main_data(self) -> Dict[str, str]:
+        """Get buyer's main data from 'Основні дані' sheet."""
+        try:
+            worksheet = self.spreadsheet.worksheet("Основні дані")
+            records = worksheet.get_all_records()
+            
+            # Convert list of {Поле: value, Значення: value} to dict
+            data = {}
+            for record in records:
+                field = str(record.get('Поле', ''))
+                value = str(record.get('Значення', ''))
+                if field:
+                    data[field] = value
+            
+            logger.info(f"Retrieved buyer main data: {list(data.keys())}")
+            return data
+            
+        except Exception as e:
+            logger.error(f"Error getting buyer main data: {str(e)}")
+            # Return default values if sheet doesn't exist
+            return {
+                'Назва': 'КОМУНАЛЬНЕ НЕКОМЕРЦІЙНЕ ПІДПРИЄМСТВО "БАГАТОПРОФІЛЬНИЙ ШПИТАЛЬ ВЕТЕРАНІВ"',
+                'Юридична адреса': 'Україна, 65038, Одеська обл., місто Одеса, Фонтанська дорога, будинок 114',
+                'ЄДРПОУ': '01998555',
+                'р/р(IBAN)': 'UA863052990000026006004901414',
+                'Банк': 'в акціонерному товаристві комерційного банку "Приватбанк"',
+                'МФО': '305299',
+                'email': 'ooggiov@ukr.net',
+                'тел': '+380689705567',
+                'Директор': 'Ольга ГРИЦКЕВИЧ'
+            }
+
