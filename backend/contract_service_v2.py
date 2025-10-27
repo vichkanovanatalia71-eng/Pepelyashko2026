@@ -318,9 +318,9 @@ class ContractServiceV2:
         """Create custom styles for the document"""
         styles = getSampleStyleSheet()
         
-        # Title style
+        # Contract Title style (custom name to avoid conflict)
         styles.add(ParagraphStyle(
-            name='Title',
+            name='ContractTitle',
             parent=styles['Heading1'],
             fontName='DejaVu-Bold',
             fontSize=14,
@@ -329,9 +329,9 @@ class ContractServiceV2:
             spaceBefore=0
         ))
         
-        # Heading 1
+        # Custom Heading 1
         styles.add(ParagraphStyle(
-            name='Heading1',
+            name='CustomHeading1',
             parent=styles['Normal'],
             fontName='DejaVu-Bold',
             fontSize=12,
@@ -340,9 +340,9 @@ class ContractServiceV2:
             spaceBefore=6*mm
         ))
         
-        # Normal text
+        # Custom Normal text
         styles.add(ParagraphStyle(
-            name='Normal',
+            name='CustomNormal',
             fontName='DejaVu',
             fontSize=11,
             alignment=TA_JUSTIFY,
