@@ -129,13 +129,13 @@ class ContractService:
             story.append(Spacer(1, 0.5*cm))
             
             # Section 1
-            story.append(Paragraph('<b>1. ПРЕДМЕТ ДОГОВОРУ</b>', styles['Heading2']))
+            story.append(Paragraph('<b>1. ПРЕДМЕТ ДОГОВОРУ</b>', heading_style))
             story.append(Paragraph('1.1. Постачальник зобов\'язується передати у власність Покупцю, а Покупець прийняти та оплатити Товар відповідно до умов цього Договору та Специфікації, яка є невід\'ємною частиною цього Договору.', normal_style))
             story.append(Paragraph(f'1.2. Предмет договору: {subject}', normal_style))
             story.append(Spacer(1, 0.5*cm))
             
             # Section 2 - Specification
-            story.append(Paragraph('<b>2. СПЕЦИФІКАЦІЯ</b>', styles['Heading2']))
+            story.append(Paragraph('<b>2. СПЕЦИФІКАЦІЯ</b>', heading_style))
             
             # Create table data
             table_data = [['№', 'Найменування', 'Од.', 'К-сть', 'Ціна, грн', 'Сума, грн']]
