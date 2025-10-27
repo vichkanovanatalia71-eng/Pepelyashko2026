@@ -381,6 +381,21 @@
   animation: fadeIn 0.5s ease-out;
 }
 
+/* Dialog styling */
+[role="dialog"] {
+  background: white !important;
+}
+
+[role="dialog"] h2,
+[role="dialog"] p,
+[role="dialog"] label {
+  color: #1a202c !important;
+}
+
+.dialog-overlay {
+  background: rgba(0, 0, 0, 0.5) !important;
+}
+
 /* Input focus styles */
 input:focus,
 textarea:focus,
