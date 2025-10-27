@@ -201,21 +201,22 @@ class GoogleDriveService:
             
             file = self.service.files().create(**create_params).execute()
             
-            # Make file accessible to anyone with the link
-            permission = {
-                'type': 'anyone',
-                'role': 'reader'
-            }
-            
-            perm_params = {
-                'fileId': file['id'],
-                'body': permission
-            }
-            
-            if self.shared_drive_id:
-                perm_params['supportsAllDrives'] = True
-            
-            self.service.permissions().create(**perm_params).execute()
+            # For Shared Drives, permissions are inherited - don't try to set them
+            if not self.shared_drive_id:
+                # Only set permissions for regular Drive folders
+                permission = {
+                    'type': 'anyone',
+                    'role': 'reader'
+                }
+                
+                perm_params = {
+                    'fileId': file['id'],
+                    'body': permission
+                }
+                
+                self.service.permissions().create(**perm_params).execute()
+            else:
+                logger.info(f"Skipping permission setting for Shared Drive file: {file['id']}")
             
             logger.info(f"Uploaded file '{file_name}' to folder '{folder_name}'")
             
