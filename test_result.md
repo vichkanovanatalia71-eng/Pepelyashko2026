@@ -128,7 +128,7 @@ backend:
 
   - task: "Contract PDF Generation with Drive Upload"
     implemented: true
-    working: false
+    working: true
     file: "/app/backend/contract_service.py"
     stuck_count: 1
     priority: "high"
@@ -143,6 +143,9 @@ backend:
       - working: false
         agent: "testing"
         comment: "❌ КРИТИЧНА ПОМИЛКА: Google Drive завантаження НЕ ПРАЦЮЄ. Service Account не може завантажувати в звичайні папки Drive (помилка 403 storageQuotaExceeded). Folder ID 1NX_cimX_r9suNCFlb3wAhvxSyE_VABb8 - звичайна папка, не Shared Drive. API повертає порожні drive_view_link, drive_download_link, drive_file_id. PDF генерується локально, але Drive інтеграція повністю не функціонує. Потрібна зміна архітектури: використання Shared Drive або OAuth delegation."
+      - working: true
+        agent: "testing"
+        comment: "✅ КРИТИЧНИЙ ТЕСТ ПРОЙДЕНО: Contract PDF Generation з Drive Upload тепер ПРАЦЮЄ! Після оновлення доступів до Shared Drive та виправлення permissions, API endpoint /api/contracts/generate-pdf повертає всі необхідні поля: drive_view_link (https://drive.google.com/file/d/...), drive_download_link, drive_file_id. PDF файли успішно завантажуються на Google Drive з українськими символами в назвах. Тест з payload {counterparty_edrpou, subject: 'Тестовий договір для перевірки Google Drive', items, total_amount: 1000} пройшов успішно."
 
   - task: "Contract Email with Drive Link"
     implemented: true
