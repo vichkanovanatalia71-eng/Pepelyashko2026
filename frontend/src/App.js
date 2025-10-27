@@ -1113,18 +1113,23 @@ function App() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="contract-subject">Предмет договору *</Label>
+                    <Label htmlFor="contract-subject" className="text-sm font-medium text-gray-700">
+                      Предмет договору *
+                    </Label>
                     <Input
                       id="contract-subject"
                       value={contractForm.subject}
                       onChange={(e) => setContractForm({...contractForm, subject: e.target.value})}
                       placeholder="Наприклад: Постачання товарів, Надання послуг..."
+                      className="shadow-sm focus:ring-2 focus:ring-amber-500"
                       required
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="contract-amount">Сума договору (грн) *</Label>
+                    <Label htmlFor="contract-amount" className="text-sm font-medium text-gray-700">
+                      Сума договору (грн) *
+                    </Label>
                     <Input
                       id="contract-amount"
                       type="number"
@@ -1132,6 +1137,7 @@ function App() {
                       value={contractForm.amount}
                       onChange={(e) => setContractForm({...contractForm, amount: parseFloat(e.target.value)})}
                       placeholder="0.00"
+                      className="shadow-sm focus:ring-2 focus:ring-amber-500"
                       required
                     />
                   </div>
@@ -1139,7 +1145,7 @@ function App() {
                   <Button 
                     type="submit" 
                     disabled={loading || !foundCounterparty}
-                    className="w-full btn-primary py-6 text-lg"
+                    className="w-full btn-primary text-white font-semibold py-6 text-lg rounded-lg shadow-md hover:shadow-lg transition-all"
                   >
                     {loading ? (
                       <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Збереження...</>
