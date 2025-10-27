@@ -1337,7 +1337,8 @@ function App() {
                     await axios.post(`${API}/contracts/send-email`, {
                       contract_pdf_path: contractPdfData.pdf_path,
                       recipient_email: recipientEmail,
-                      contract_number: contractPdfData.contract_number
+                      contract_number: contractPdfData.contract_number,
+                      drive_link: contractPdfData.drive_view_link
                     });
                     
                     toast.success(`Договір відправлено на ${recipientEmail}`);
