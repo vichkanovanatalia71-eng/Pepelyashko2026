@@ -1224,6 +1224,135 @@ function App() {
           </DialogContent>
         </Dialog>
         
+        {/* Contract PDF Preview Dialog */}
+        <Dialog open={showContractPreview} onOpenChange={setShowContractPreview}>
+          <DialogContent className="sm:max-w-[900px] max-h-[90vh] bg-white">
+            <DialogHeader>
+              <DialogTitle className="text-gray-900 text-xl font-bold">
+                Попередній перегляд договору {contractPdfData?.contract_number}
+              </DialogTitle>
+              <DialogDescription className="text-gray-600">
+                Переглянь договір та надішли його на email
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4 py-4">
+              {/* PDF Preview */}
+              {contractPdfData && (
+                <div className="border rounded-lg overflow-hidden" style={{height: '400px'}}>
+                  <iframe
+                    src={`${API}/contracts/download/${contractPdfData.pdf_filename}`}
+                    style={{width: '100%', height: '100%', border: 'none'}}
+                    title="Попередній перегляд договору"
+                  />
+                </div>
+              )}
+              
+              {/* Email options */}
+              <div className="space-y-3 p-4 bg-gray-50 rounded-lg">
+                <Label className="text-gray-800 font-semibold">Надіслати договір на email:</Label>
+                
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      id="email-counterparty"
+                      checked={contractEmailForm.recipient === 'counterparty'}
+                      onChange={() => setContractEmailForm({...contractEmailForm, recipient: 'counterparty'})}
+                      className="cursor-pointer"
+                    />
+                    <Label htmlFor="email-counterparty" className="cursor-pointer text-gray-700">
+                      Email контрагента ({contractEmailForm.counterpartyEmail || 'не вказано'})
+                    </Label>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      id="email-custom"
+                      checked={contractEmailForm.recipient === 'custom'}
+                      onChange={() => setContractEmailForm({...contractEmailForm, recipient: 'custom'})}
+                      className="cursor-pointer"
+                    />
+                    <Label htmlFor="email-custom" className="cursor-pointer text-gray-700">
+                      Інший email
+                    </Label>
+                  </div>
+                  
+                  {contractEmailForm.recipient === 'custom' && (
+                    <Input
+                      type="email"
+                      placeholder="Введіть email"
+                      value={contractEmailForm.customEmail}
+                      onChange={(e) => setContractEmailForm({...contractEmailForm, customEmail: e.target.value})}
+                      className="mt-2"
+                    />
+                  )}
+                </div>
+              </div>
+            </div>
+            
+            <DialogFooter className="bg-gray-50 -mx-6 -mb-6 px-6 py-4 rounded-b-lg">
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  window.open(`${API}/contracts/download/${contractPdfData?.pdf_filename}`, '_blank');
+                }}
+                className="border-gray-300 text-gray-700 hover:bg-gray-100"
+              >
+                <FileText className="w-4 h-4 mr-2" />
+                Завантажити PDF
+              </Button>
+              
+              <Button 
+                onClick={async () => {
+                  if (!contractPdfData) return;
+                  
+                  let recipientEmail = '';
+                  if (contractEmailForm.recipient === 'counterparty') {
+                    recipientEmail = contractEmailForm.counterpartyEmail;
+                  } else if (contractEmailForm.recipient === 'custom') {
+                    recipientEmail = contractEmailForm.customEmail;
+                  }
+                  
+                  if (!recipientEmail) {
+                    toast.error('Вкажіть email отримувача');
+                    return;
+                  }
+                  
+                  setLoading(true);
+                  try {
+                    await axios.post(`${API}/contracts/send-email`, {
+                      contract_pdf_path: contractPdfData.pdf_path,
+                      recipient_email: recipientEmail,
+                      contract_number: contractPdfData.contract_number
+                    });
+                    
+                    toast.success(`Договір відправлено на ${recipientEmail}`);
+                    setShowContractPreview(false);
+                    setContractPdfData(null);
+                    setContractForm({ subject: '', amount: 0 });
+                    setSearchEdrpou('');
+                    setFoundCounterparty(null);
+                  } catch (error) {
+                    toast.error('Помилка при відправці email');
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+                disabled={loading}
+                className="btn-primary"
+              >
+                {loading ? (
+                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Відправка...</>
+                ) : (
+                  'Надіслати на email'
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        
         {/* Document Creation Dialog from Counterparty View */}
         <Dialog open={showDocCreateDialog} onOpenChange={setShowDocCreateDialog}>
           <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto bg-white">
