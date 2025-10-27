@@ -146,6 +146,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "✅ КРИТИЧНИЙ ТЕСТ ПРОЙДЕНО: Contract PDF Generation з Drive Upload тепер ПРАЦЮЄ! Після оновлення доступів до Shared Drive та виправлення permissions, API endpoint /api/contracts/generate-pdf повертає всі необхідні поля: drive_view_link (https://drive.google.com/file/d/...), drive_download_link, drive_file_id. PDF файли успішно завантажуються на Google Drive з українськими символами в назвах. Тест з payload {counterparty_edrpou, subject: 'Тестовий договір для перевірки Google Drive', items, total_amount: 1000} пройшов успішно."
+      - working: true
+        agent: "testing"
+        comment: "✅ УКРАЇНСЬКІ ШРИФТИ ТЕСТУВАННЯ ЗАВЕРШЕНО: DejaVu шрифти успішно зареєстровані та працюють коректно. Тест з точним payload з review request: {counterparty_edrpou: '12345678', subject: 'Постачання медичного обладнання та матеріалів', items: [{name: 'Медичне обладнання', unit: 'шт', quantity: 5, price: 3000, amount: 15000}], total_amount: 15000} пройшов успішно. Всі поля заповнені: drive_view_link, drive_download_link, drive_file_id. PDF генерується з читабельним українським текстом. Розмір PDF: 53491 bytes. Contract number: П-0034. Український текст відображається коректно в PDF завдяки DejaVu шрифтам."
 
   - task: "Contract Email with Drive Link"
     implemented: true
