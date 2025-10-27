@@ -39,6 +39,20 @@ function App() {
 
   const [searchEdrpou, setSearchEdrpou] = useState('');
   const [foundCounterparty, setFoundCounterparty] = useState(null);
+  
+  // Order creation dialog state
+  const [showOrderDialog, setShowOrderDialog] = useState(false);
+  const [orderData, setOrderData] = useState(null);
+  const [selectedDocs, setSelectedDocs] = useState({
+    invoice: false,
+    act: false,
+    waybill: false,
+    contract: false
+  });
+  const [contractForm, setContractForm] = useState({
+    subject: '',
+    amount: 0
+  });
 
   useEffect(() => {
     fetchCounterparties();
