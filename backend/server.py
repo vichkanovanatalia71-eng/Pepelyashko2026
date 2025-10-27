@@ -192,7 +192,8 @@ async def get_counterparties():
         counterparties = []
         for record in records:
             edrpou = str(record.get('ЄДРПОУ', '')).strip()
-            if edrpou:  # Only add if ЄДРПОУ exists
+            # Skip header row and empty rows
+            if edrpou and edrpou != 'ЄДРПОУ':  # Skip header row
                 counterparties.append({
                     'edrpou': edrpou,
                     'representative_name': str(record.get('Назва', '')),
