@@ -351,6 +351,40 @@ async def get_invoices():
         logging.error(f"Error getting invoices: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
+@api_router.post("/invoices/generate-pdf")
+async def generate_invoice_pdf(data: DocumentCreate):
+    """Generate PDF invoice and upload to Google Drive."""
+    if sheets_service is None or document_service is None:
+        raise HTTPException(status_code=503, detail="Services not available")
+    
+    try:
+        # Generate PDF and upload to Drive
+        invoice_data = data.model_dump()
+        result = document_service.generate_invoice_pdf(
+            invoice_data=invoice_data,
+            upload_to_drive=True
+        )
+        
+        # Save invoice to Google Sheets
+        sheets_service.create_invoice(invoice_data)
+        
+        return {
+            'success': True,
+            'message': 'Рахунок успішно згенеровано та завантажено на Google Drive',
+            'invoice_number': result['invoice_number'],
+            'pdf_path': result['pdf_path'],
+            'pdf_filename': result['pdf_filename'],
+            'drive_view_link': result.get('drive_view_link', ''),
+            'drive_download_link': result.get('drive_download_link', ''),
+            'drive_file_id': result.get('drive_file_id', '')
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error generating invoice PDF: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
 # Order endpoints
 @api_router.post("/orders", response_model=dict)
 async def create_order(data: DocumentCreate):
