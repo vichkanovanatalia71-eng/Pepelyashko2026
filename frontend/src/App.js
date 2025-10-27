@@ -776,8 +776,24 @@ function App() {
                         <p className="text-lg font-semibold">{selectedCounterparty.edrpou}</p>
                       </div>
                       <div>
-                        <Label className="text-sm text-gray-600">Ім'я представника</Label>
+                        <Label className="text-sm text-gray-600">Назва</Label>
                         <p className="text-lg font-semibold">{selectedCounterparty.representative_name}</p>
+                      </div>
+                      <div className="md:col-span-2">
+                        <Label className="text-sm text-gray-600">Юридична адреса</Label>
+                        <p className="text-lg">{selectedCounterparty.legal_address || 'Не вказано'}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm text-gray-600">р/р (IBAN)</Label>
+                        <p className="text-lg font-mono">{selectedCounterparty.iban}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm text-gray-600">Банк</Label>
+                        <p className="text-lg">{selectedCounterparty.bank || 'Не вказано'}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm text-gray-600">МФО</Label>
+                        <p className="text-lg">{selectedCounterparty.mfo || 'Не вказано'}</p>
                       </div>
                       <div>
                         <Label className="text-sm text-gray-600">Email</Label>
@@ -788,25 +804,17 @@ function App() {
                         <p className="text-lg">{selectedCounterparty.phone}</p>
                       </div>
                       <div>
-                        <Label className="text-sm text-gray-600">IBAN</Label>
-                        <p className="text-lg">{selectedCounterparty.iban}</p>
+                        <Label className="text-sm text-gray-600">Посада</Label>
+                        <p className="text-lg">{selectedCounterparty.position || 'Не вказано'}</p>
                       </div>
-                      <div>
-                        <Label className="text-sm text-gray-600">Тип договору</Label>
-                        <span className="contract-badge">{selectedCounterparty.contract_type}</span>
+                      <div className="md:col-span-2">
+                        <Label className="text-sm text-gray-600">В особі</Label>
+                        <p className="text-lg">{selectedCounterparty.represented_by || 'Не вказано'}</p>
                       </div>
-                      {selectedCounterparty.director_position && (
-                        <div>
-                          <Label className="text-sm text-gray-600">Посада керівника</Label>
-                          <p className="text-lg">{selectedCounterparty.director_position}</p>
-                        </div>
-                      )}
-                      {selectedCounterparty.director_name && (
-                        <div>
-                          <Label className="text-sm text-gray-600">ПІБ керівника</Label>
-                          <p className="text-lg">{selectedCounterparty.director_name}</p>
-                        </div>
-                      )}
+                      <div className="md:col-span-2">
+                        <Label className="text-sm text-gray-600">Підпис</Label>
+                        <p className="text-lg">{selectedCounterparty.signature || 'Не вказано'}</p>
+                      </div>
                     </div>
                     
                     <div className="pt-4 border-t">
