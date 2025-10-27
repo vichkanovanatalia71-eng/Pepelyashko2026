@@ -102,93 +102,110 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Fix UnicodeEncodeError when generating/serving PDF contracts with Ukrainian characters in filenames. PDF preview shows 'Internal server error' and email sending fails."
+user_problem_statement: "Інтеграція Google Drive для зберігання всіх документів (договорів, рахунків, актів, замовлень, накладних). Створити структуру папок, завантажувати PDF файли з українськими символами в назвах, відображати через Google Drive Viewer."
 
 backend:
-  - task: "Contract PDF Generation with Unicode Support"
+  - task: "Google Drive Service Integration"
     implemented: true
-    working: true
+    working: "needs_testing"
+    file: "/app/backend/google_drive_service.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "needs_testing"
+        agent: "main"
+        comment: "Створено GoogleDriveService з методами: create_folder, find_folder, setup_folder_structure, upload_file, delete_file. Підтримує Unicode в назвах файлів. Створює структуру: Документи КНП -> (Рахунки, Договори, Акти, Замовлення, Видаткові накладні)"
+
+  - task: "Contract PDF Generation with Drive Upload"
+    implemented: true
+    working: "needs_testing"
     file: "/app/backend/contract_service.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
-      - working: false
-        agent: "user"
-        comment: "User reported PDF preview showing 'Internal server error' and email sending failing due to UnicodeEncodeError with Ukrainian characters (П) in filename"
       - working: "needs_testing"
         agent: "main"
-        comment: "Fixed Unicode encoding in email attachment by using RFC 2231 encoding tuple format: filename=('utf-8', '', original_filename.encode('utf-8')). This properly handles Ukrainian characters in email attachments."
-      - working: true
-        agent: "testing"
-        comment: "✅ TESTED: Contract PDF generation working correctly with Ukrainian characters. Generated contract П-0018 with Ukrainian text in subject 'Постачання товарів та послуг' and items 'Товар №1 - Медичне обладнання'. PDF created successfully (4023 bytes) without encoding errors."
+        comment: "Оновлено generate_contract_pdf для автоматичного завантаження на Drive. Повертає local_path, drive_file_id, drive_view_link, drive_download_link. Назва файлу: Договір_{номер}_{ЄДРПОУ}.pdf"
 
-  - task: "Contract PDF Download Endpoint"
+  - task: "Contract Email with Drive Link"
     implemented: true
-    working: true
+    working: "needs_testing"
+    file: "/app/backend/contract_service.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "needs_testing"
+        agent: "main"
+        comment: "Оновлено send_contract_email для включення посилання на Google Drive в тілі листа. Email містить як посилання для перегляду онлайн, так і прикріплений PDF файл."
+
+  - task: "Backend API Endpoints Update"
+    implemented: true
+    working: "needs_testing"
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
-      - working: false
-        agent: "user"
-        comment: "PDF download failing with Unicode characters in filename"
-      - working: "already_fixed"
-        agent: "main"
-        comment: "Download endpoint already uses RFC 5987 encoding format: 'Content-Disposition': f'inline; filename*=UTF-8\\'\\''{encoded_filename}' which properly handles Unicode characters in HTTP headers"
-      - working: true
-        agent: "testing"
-        comment: "✅ TESTED: PDF download working correctly with Unicode filenames. Verified RFC 5987 encoding in Content-Disposition header: 'filename*=UTF-8''contract_%D0%9F-0018_20251027_110337.pdf'. Downloaded PDF successfully with proper content-type application/pdf."
-
-  - task: "Contract Email Sending"
-    implemented: true
-    working: true
-    file: "/app/backend/contract_service.py"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: false
-    status_history:
-      - working: false
-        agent: "user"
-        comment: "User reported 'Помилка при відправці email' (Email sending error) with screenshot showing error notification"
       - working: "needs_testing"
         agent: "main"
-        comment: "Fixed Unicode encoding in email attachment. The email attachment now uses proper RFC 2231 encoding for filenames with Ukrainian characters."
-      - working: true
-        agent: "testing"
-        comment: "✅ TESTED: Email sending Unicode encoding fixed. Found and corrected RFC 2231 encoding issue (removed .encode('utf-8') from filename tuple). Email processing now reaches SMTP layer without Unicode errors. SMTP authentication fails as expected (no real credentials configured in test environment)."
+        comment: "Оновлено /api/contracts/generate-pdf для повернення drive_view_link, drive_download_link, drive_file_id. Оновлено /api/contracts/send-email для прийняття drive_link. Ініціалізація Drive сервісу при старті."
 
 frontend:
-  - task: "Contract Preview Dialog"
+  - task: "Contract Preview with Google Drive Viewer"
     implemented: true
     working: "needs_testing"
     file: "/app/frontend/src/App.js"
     stuck_count: 0
-    priority: "medium"
+    priority: "high"
     needs_retesting: true
     status_history:
-      - working: false
-        agent: "user"
-        comment: "Preview dialog shows {'detail':'Internal server error'} instead of PDF"
       - working: "needs_testing"
         agent: "main"
-        comment: "Backend fixes should resolve the internal server error. Frontend code doesn't need changes as it's correctly requesting the PDF from the backend."
+        comment: "Замінено локальний iframe на Google Drive Viewer. PDF тепер відображається через drive_view_link. Fallback для випадку відсутності Drive посилання."
+
+  - task: "Contract Download with Drive Link"
+    implemented: true
+    working: "needs_testing"
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "needs_testing"
+        agent: "main"
+        comment: "Кнопка завантаження використовує drive_download_link якщо доступний, інакше використовує локальне API."
+
+  - task: "Contract Email with Drive Link"
+    implemented: true
+    working: "needs_testing"
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "needs_testing"
+        agent: "main"
+        comment: "Відправка email тепер передає drive_view_link на backend для включення в тіло листа."
 
 metadata:
   created_by: "main_agent"
-  version: "1.0"
-  test_sequence: 1
+  version: "2.0"
+  test_sequence: 2
   run_ui: false
 
 test_plan:
-  current_focus: []
+  current_focus:
+    - "Google Drive Service Integration"
+    - "Contract PDF Generation with Drive Upload"
+    - "Contract Preview with Google Drive Viewer"
+    - "Contract Email with Drive Link"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
 agent_communication:
   - agent: "main"
-    message: "Fixed Unicode encoding issues in contract_service.py by using RFC 2231 encoding for email attachments. The filename parameter now uses tuple format: ('utf-8', '', filename.encode('utf-8')) which properly encodes Ukrainian characters. The download endpoint already had proper RFC 5987 encoding. Ready for backend testing to verify: 1) PDF generation works with Ukrainian characters in contract number, 2) PDF preview loads correctly, 3) PDF download works, 4) Email sending works with Ukrainian filenames."
-  - agent: "testing"
-    message: "✅ ALL BACKEND TESTS PASSED: Contract PDF generation, download, and email functionality working correctly with Ukrainian characters. Fixed minor RFC 2231 encoding issue in email attachment (removed .encode('utf-8')). All Unicode encoding is now properly implemented: 1) PDF generation creates files with Ukrainian characters (П-0018), 2) Download endpoint uses proper RFC 5987 encoding, 3) Email sending reaches SMTP layer without Unicode errors. SMTP authentication fails as expected due to test environment configuration."
+    message: "Реалізовано повну інтеграцію з Google Drive API. Створено сервіс для роботи з Drive, оновлено contract_service для завантаження PDF на Drive, модифіковано API endpoints для повернення Drive посилань, оновлено frontend для перегляду через Google Drive Viewer. Потрібно протестувати: 1) Створення структури папок на Drive, 2) Генерацію та завантаження договору, 3) Перегляд PDF через Drive Viewer, 4) Завантаження з Drive, 5) Відправку email з посиланням на Drive."
