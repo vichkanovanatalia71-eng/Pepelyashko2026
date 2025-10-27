@@ -631,8 +631,8 @@ class DocumentService:
                 try:
                     drive_result = self.drive_service.upload_file(
                         str(filepath),
-                        filename,
-                        folder_name="Видаткові накладні"
+                        "Видаткові накладні",
+                        custom_name=filename
                     )
                     result.update({
                         'drive_file_id': drive_result['file_id'],
