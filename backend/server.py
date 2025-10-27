@@ -54,6 +54,7 @@ except Exception as e:
 
 # Initialize Contract service with Drive integration and Sheets service
 contract_service = ContractService(drive_service=drive_service, sheets_service=sheets_service)
+contract_service_v2 = ContractServiceV2(drive_service=drive_service, sheets_service=sheets_service)
 
 # Initialize Document service for invoices, acts, and waybills
 document_service = DocumentService(drive_service=drive_service, sheets_service=sheets_service)
