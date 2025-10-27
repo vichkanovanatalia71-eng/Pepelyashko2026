@@ -896,15 +896,31 @@ class ContractTestSuite:
             # Step 4: Check that newly created invoice has drive_file_id in the list
             logger.info("4. Перевірка що новостворений рахунок має поле drive_file_id в списку...")
             
+            # Since the invoice number format differs between PDF service and Google Sheets,
+            # we'll look for the invoice by drive_file_id instead
             found_invoice = None
             for invoice in invoices_list:
-                if invoice.get('number') == invoice_number:
+                if invoice.get('drive_file_id') == drive_file_id:
                     found_invoice = invoice
                     break
             
             if not found_invoice:
-                logger.error(f"❌ Новостворений рахунок з номером {invoice_number} не знайдено в списку")
-                return False
+                # Fallback: try to find by invoice number
+                for invoice in invoices_list:
+                    if invoice.get('number') == invoice_number:
+                        found_invoice = invoice
+                        break
+                
+                if not found_invoice:
+                    logger.error(f"❌ Новостворений рахунок не знайдено в списку")
+                    logger.error(f"   Шукали за drive_file_id: {drive_file_id}")
+                    logger.error(f"   Шукали за номером: {invoice_number}")
+                    logger.error(f"   Знайдено рахунків в списку: {len(invoices_list)}")
+                    if invoices_list:
+                        logger.error("   Перші 3 рахунки в списку:")
+                        for i, inv in enumerate(invoices_list[:3]):
+                            logger.error(f"     {i+1}. Номер: {inv.get('number', 'N/A')}, drive_file_id: {inv.get('drive_file_id', 'N/A')}")
+                    return False
             
             # Check if the invoice in the list has drive_file_id
             list_drive_file_id = found_invoice.get('drive_file_id', '')
@@ -914,6 +930,7 @@ class ContractTestSuite:
                 return False
             
             logger.info(f"✅ Новий рахунок в GET /api/invoices має drive_file_id: {list_drive_file_id}")
+            logger.info(f"   Номер рахунку в списку: {found_invoice.get('number', 'N/A')}")
             
             # Step 5: Log results as requested
             logger.info("=" * 50)
