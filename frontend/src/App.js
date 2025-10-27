@@ -414,16 +414,45 @@ function App() {
     }
 
     try {
-      const response = await axios.post(`${API}/${endpoint}`, documentForm);
-      
       if (endpoint === 'orders') {
+        // Handle order creation (existing logic)
+        const response = await axios.post(`${API}/${endpoint}`, documentForm);
         setOrderData({
           ...documentForm,
           document_number: response.data.document_number
         });
         setShowOrderDialog(true);
         toast.success(response.data.message || `${docType} успішно створено!`);
+      } else if (['invoices', 'acts', 'waybills'].includes(endpoint)) {
+        // Generate PDF for invoices, acts, and waybills
+        const response = await axios.post(`${API}/${endpoint}/generate-pdf`, documentForm);
+        
+        if (response.data.success) {
+          // Set current document type for proper labeling
+          let docTypeKey = 'invoice';
+          if (endpoint === 'acts') docTypeKey = 'act';
+          if (endpoint === 'waybills') docTypeKey = 'waybill';
+          
+          setCurrentDocType(docTypeKey);
+          setDocumentPdfData(response.data);
+          setDocumentEmailForm({
+            recipient: 'counterparty',
+            customEmail: '',
+            counterpartyEmail: foundCounterparty?.email || ''
+          });
+          setShowDocumentPreview(true);
+          
+          toast.success(response.data.message || `${docType} успішно створено!`);
+          
+          // Refresh documents if viewing a counterparty
+          if (selectedCounterparty) {
+            const docsResponse = await axios.get(`${API}/counterparties/${selectedCounterparty.edrpou}/documents`);
+            setCounterpartyDocuments(docsResponse.data);
+          }
+        }
       } else {
+        // Original logic for other document types
+        const response = await axios.post(`${API}/${endpoint}`, documentForm);
         toast.success(response.data.message || `${docType} успішно створено!`);
         
         setDocumentForm({
