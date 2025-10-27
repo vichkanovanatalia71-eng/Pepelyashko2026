@@ -1012,16 +1012,31 @@ function App() {
                   }
 
                   try {
-                    const response = await axios.post(`${API}/contracts`, {
+                    // Generate PDF contract
+                    const pdfResponse = await axios.post(`${API}/contracts/generate-pdf`, {
                       counterparty_edrpou: searchEdrpou,
                       subject: contractForm.subject,
-                      amount: contractForm.amount
+                      items: documentForm.items.length > 0 && documentForm.items[0].name 
+                        ? documentForm.items 
+                        : [{ name: contractForm.subject, unit: 'послуга', quantity: 1, price: contractForm.amount, amount: contractForm.amount }],
+                      total_amount: contractForm.amount
                     });
-                    toast.success(response.data.message || 'Договір успішно створено!');
                     
-                    setContractForm({ subject: '', amount: 0 });
-                    setSearchEdrpou('');
-                    setFoundCounterparty(null);
+                    if (pdfResponse.data.success) {
+                      // Set PDF data for preview
+                      setContractPdfData({
+                        ...pdfResponse.data,
+                        counterpartyEmail: foundCounterparty?.email || ''
+                      });
+                      setContractEmailForm({
+                        recipient: 'counterparty',
+                        customEmail: '',
+                        counterpartyEmail: foundCounterparty?.email || ''
+                      });
+                      setShowContractPreview(true);
+                      
+                      toast.success('Договір успішно згенеровано!');
+                    }
                   } catch (error) {
                     toast.error(error.response?.data?.detail || 'Помилка при створенні договору');
                   } finally {
