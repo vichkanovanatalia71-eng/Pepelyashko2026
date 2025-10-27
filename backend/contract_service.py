@@ -222,9 +222,10 @@ class ContractService:
         pdf_path: str, 
         recipient_email: str,
         contract_number: str,
+        drive_link: Optional[str] = None,
         smtp_config: Optional[Dict[str, Any]] = None
     ) -> bool:
-        """Send contract via email"""
+        """Send contract via email with optional Google Drive link"""
         try:
             if smtp_config is None:
                 # Default SMTP configuration
@@ -246,16 +247,27 @@ class ContractService:
             message['To'] = recipient_email
             message['Subject'] = f'Договір № {contract_number}'
             
-            message.set_content(f"""
+            # Email body with optional Drive link
+            email_body = f"""
 Доброго дня!
 
 Направляємо Вам договір № {contract_number} для ознайомлення та підписання.
+"""
+            
+            if drive_link:
+                email_body += f"""
+Переглянути договір онлайн: {drive_link}
 
+"""
+            
+            email_body += """
 Договір у форматі PDF додано до цього листа.
 
 З повагою,
 Система управління документами
-            """)
+            """
+            
+            message.set_content(email_body)
             
             # Attach PDF with proper Unicode filename encoding
             with open(pdf_path, 'rb') as f:
