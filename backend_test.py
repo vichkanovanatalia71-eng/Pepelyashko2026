@@ -41,6 +41,9 @@ class ContractTestSuite:
         self.generated_pdf_filename = None
         self.generated_pdf_path = None
         self.contract_number = None
+        self.drive_view_link = None
+        self.drive_download_link = None
+        self.drive_file_id = None
         
     def test_health_check(self):
         """Test if the backend is running and healthy"""
