@@ -463,10 +463,14 @@ function App() {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue="counterparties" className="w-full" data-testid="main-tabs">
-          <TabsList className="tabs-list grid w-full grid-cols-2 sm:grid-cols-4 mb-8">
+          <TabsList className="tabs-list grid w-full grid-cols-3 sm:grid-cols-6 mb-8">
             <TabsTrigger value="counterparties" data-testid="tab-counterparties">
               <Users className="w-4 h-4 mr-2" />
               Контрагенти
+            </TabsTrigger>
+            <TabsTrigger value="orders" data-testid="tab-orders">
+              <Package className="w-4 h-4 mr-2" />
+              Замовлення
             </TabsTrigger>
             <TabsTrigger value="invoices" data-testid="tab-invoices">
               <Receipt className="w-4 h-4 mr-2" />
@@ -479,6 +483,10 @@ function App() {
             <TabsTrigger value="waybills" data-testid="tab-waybills">
               <FileText className="w-4 h-4 mr-2" />
               Видаткові
+            </TabsTrigger>
+            <TabsTrigger value="contracts" data-testid="tab-contracts">
+              <FileSignature className="w-4 h-4 mr-2" />
+              Договори
             </TabsTrigger>
           </TabsList>
 
