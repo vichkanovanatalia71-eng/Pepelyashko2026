@@ -24,7 +24,7 @@ try:
     # DejaVu for Ukrainian characters
     pdfmetrics.registerFont(TTFont('DejaVu', '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf'))
     pdfmetrics.registerFont(TTFont('DejaVu-Bold', '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf'))
-    pdfmetrics.registerFont(TTFont('DejaVu-Italic', '/usr/share/fonts/truetype/dejavu/DejaVuSans-Oblique.ttf'))
+    pdfmetrics.registerFont(TTFont('DejaVu-Italic', '/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf'))  # Use Serif as italic alternative
     logger.info("Fonts registered successfully")
 except Exception as e:
     logger.error(f"Failed to register fonts: {str(e)}")
