@@ -69,6 +69,8 @@ class GoogleSheetsService:
                 data['phone'],
                 data['iban'],
                 data['contract_type'],
+                data.get('director_position', ''),
+                data.get('director_name', ''),
                 datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             ]
             
