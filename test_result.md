@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Інтеграція Google Drive для зберігання всіх документів (договорів, рахунків, актів, замовлень, накладних). Створити структуру папок, завантажувати PDF файли з українськими символами в назвах, відображати через Google Drive Viewer."
+user_problem_statement: "Оновлення дизайну всього додатку за референсом surdo.org.ua. Застосувати сучасний дизайн з основним синім кольором (#29A1D4), жовтими акцентами для CTA кнопок, шрифтом Montserrat, округленими картками з тінями, та загальною естетикою у стилі WordCraft."
 
 backend:
   - task: "Google Drive Service Integration"
