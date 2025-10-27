@@ -1444,6 +1444,121 @@ function App() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Document PDF Preview Dialog (for invoices, acts, waybills) */}
+        <Dialog open={showDocumentPreview} onOpenChange={setShowDocumentPreview}>
+          <DialogContent className="sm:max-w-[1000px] max-h-[95vh] bg-white z-[100]" style={{zIndex: 9999}}>
+            <DialogHeader>
+              <DialogTitle className="text-gray-900 text-xl font-bold">
+                Попередній перегляд {currentDocType === 'invoice' ? 'рахунку' : currentDocType === 'act' ? 'акту' : 'накладної'} {documentPdfData?.[`${currentDocType}_number`]}
+              </DialogTitle>
+              <DialogDescription className="text-gray-600">
+                Перегляньте документ та надішліть його на email
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4 py-4 overflow-y-auto" style={{maxHeight: 'calc(95vh - 200px)'}}>
+              {/* PDF Preview */}
+              {documentPdfData && (
+                <div className="border-2 border-gray-300 rounded-lg overflow-hidden bg-gray-100" style={{height: '500px'}}>
+                  {documentPdfData.drive_view_link ? (
+                    <iframe
+                      src={`https://drive.google.com/file/d/${documentPdfData.drive_file_id}/preview`}
+                      style={{width: '100%', height: '100%', border: 'none'}}
+                      title="Попередній перегляд документу"
+                      allow="autoplay"
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-gray-500">
+                      <p>PDF генерується... Оновіть сторінку для перегляду</p>
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              {/* Email options */}
+              <div className="space-y-3 p-4 bg-gray-50 rounded-lg">
+                <Label className="text-gray-800 font-semibold">Надіслати документ на email:</Label>
+                
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      id="doc-email-counterparty"
+                      checked={documentEmailForm.recipient === 'counterparty'}
+                      onChange={() => setDocumentEmailForm({...documentEmailForm, recipient: 'counterparty'})}
+                      className="cursor-pointer"
+                    />
+                    <Label htmlFor="doc-email-counterparty" className="cursor-pointer text-gray-700">
+                      Email контрагента ({documentEmailForm.counterpartyEmail || 'не вказано'})
+                    </Label>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      id="doc-email-custom"
+                      checked={documentEmailForm.recipient === 'custom'}
+                      onChange={() => setDocumentEmailForm({...documentEmailForm, recipient: 'custom'})}
+                      className="cursor-pointer"
+                    />
+                    <Label htmlFor="doc-email-custom" className="cursor-pointer text-gray-700">
+                      Інший email
+                    </Label>
+                  </div>
+                  
+                  {documentEmailForm.recipient === 'custom' && (
+                    <Input
+                      type="email"
+                      placeholder="Введіть email"
+                      value={documentEmailForm.customEmail}
+                      onChange={(e) => setDocumentEmailForm({...documentEmailForm, customEmail: e.target.value})}
+                      className="mt-2"
+                    />
+                  )}
+                </div>
+              </div>
+            </div>
+            
+            <DialogFooter className="bg-gray-50 -mx-6 -mb-6 px-6 py-4 rounded-b-lg">
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  const downloadLink = documentPdfData?.drive_download_link;
+                  if (downloadLink) {
+                    window.open(downloadLink, '_blank');
+                  } else {
+                    toast.error('Посилання для завантаження недоступне');
+                  }
+                }}
+                className="border-gray-300 text-gray-700 hover:bg-gray-100"
+              >
+                <FileText className="w-4 h-4 mr-2" />
+                Завантажити PDF
+              </Button>
+              
+              <Button 
+                onClick={() => {
+                  toast.info('Функція відправки email для документів буде додана незабаром');
+                  setShowDocumentPreview(false);
+                  setDocumentPdfData(null);
+                  setDocumentForm({
+                    counterparty_edrpou: '',
+                    items: [{ name: '', unit: '', quantity: 0, price: 0, amount: 0 }],
+                    total_amount: 0
+                  });
+                  setSearchEdrpou('');
+                  setFoundCounterparty(null);
+                  setShowDocCreateDialog(false);
+                }}
+                disabled={loading}
+                className="btn-primary"
+              >
+                Закрити
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
         
         {/* Document Creation Dialog from Counterparty View */}
         <Dialog open={showDocCreateDialog} onOpenChange={setShowDocCreateDialog}>
