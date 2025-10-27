@@ -1187,6 +1187,52 @@ function App() {
               handleDocumentSubmit={handleDocumentSubmit}
               loading={loading}
             />
+            
+            {/* List of all acts */}
+            <Card className="glass-card mt-6">
+              <CardHeader>
+                <CardTitle className="text-xl">Всі акти ({allActs.length})</CardTitle>
+                <CardDescription>Останні створені акти виконаних робіт</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {allActs.length > 0 ? (
+                  <div className="space-y-3">
+                    {allActs.map((doc, idx) => (
+                      <div key={idx} className="p-4 bg-purple-50 rounded-lg border border-purple-200 flex justify-between items-center hover:shadow-md transition-shadow">
+                        <div>
+                          <p className="font-semibold text-gray-900">Акт №{doc.number}</p>
+                          <p className="text-sm text-gray-600">від {doc.date}</p>
+                          <p className="text-sm text-gray-700 mt-1">{doc.counterparty_name}</p>
+                          <p className="text-sm font-medium text-purple-700 mt-1">Сума: {doc.total_amount} грн</p>
+                        </div>
+                        {doc.drive_file_id && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setDocumentPdfData({
+                                drive_file_id: doc.drive_file_id,
+                                drive_view_link: `https://drive.google.com/file/d/${doc.drive_file_id}/view`,
+                                drive_download_link: `https://drive.google.com/uc?export=download&id=${doc.drive_file_id}`,
+                                act_number: doc.number
+                              });
+                              setCurrentDocType('act');
+                              setShowDocumentPreview(true);
+                            }}
+                            className="btn-secondary"
+                          >
+                            <Eye className="w-4 h-4 mr-1" />
+                            Переглянути
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-center py-4">Актів поки немає</p>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="waybills" data-testid="waybills-content">
