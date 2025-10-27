@@ -218,12 +218,12 @@ class ContractServiceV2:
             story.append(PageBreak())
             
             # APPENDIX 1: SPECIFICATION
-            story.append(Paragraph("Додаток 1", styles['Heading1']))
-            story.append(Paragraph("СПЕЦИФІКАЦІЯ", styles['Title']))
+            story.append(Paragraph("Додаток 1", styles['CustomHeading1']))
+            story.append(Paragraph("СПЕЦИФІКАЦІЯ", styles['ContractTitle']))
             story.append(Spacer(1, 6*mm))
             
             spec_info = f"до Договору № {contract_number} від {contract_date}"
-            story.append(Paragraph(spec_info, styles['Normal']))
+            story.append(Paragraph(spec_info, styles['CustomNormal']))
             story.append(Spacer(1, 6*mm))
             
             # Items table
