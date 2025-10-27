@@ -378,6 +378,56 @@ class GoogleSheetsService:
             
         except Exception as e:
             logger.error(f"Error getting counterparty from main data: {str(e)}")
+    
+    def update_counterparty_in_main_data(self, edrpou: str, updated_data: Dict[str, str]) -> bool:
+        """Update counterparty data in 'Основні дані' sheet by ЄДРПОУ."""
+        try:
+            worksheet = self.spreadsheet.worksheet("Основні дані")
+            
+            # Get all values (raw data)
+            all_values = worksheet.get_all_values()
+            if not all_values or len(all_values) < 2:
+                logger.error("No data in 'Основні дані' sheet")
+                return False
+            
+            # Find the row with matching ЄДРПОУ
+            headers = all_values[0]
+            edrpou_col = 0  # ЄДРПОУ is in column A (index 0)
+            
+            for row_index, row in enumerate(all_values[1:], start=2):  # Start from row 2 (skip header)
+                if row[edrpou_col].strip() == edrpou.strip():
+                    # Found the row, update it
+                    # Map field names to column indices
+                    field_map = {
+                        'Назва': 1,
+                        'Юридична адреса': 2,
+                        'р/р(IBAN)': 3,
+                        'Банк': 4,
+                        'МФО': 5,
+                        'email': 6,
+                        'тел': 7,
+                        'Посада': 8,
+                        'В особі': 9,
+                        'Підпис': 10
+                    }
+                    
+                    # Update each field
+                    for field_name, col_index in field_map.items():
+                        if field_name in updated_data:
+                            # Update cell (row_index is 1-based, col_index needs to be 1-based too)
+                            cell_address = f"{chr(65 + col_index)}{row_index}"
+                            worksheet.update(cell_address, updated_data[field_name])
+                    
+                    logger.info(f"Updated counterparty with ЄДРПОУ {edrpou} in 'Основні дані'")
+                    return True
+            
+            logger.warning(f"Counterparty with ЄДРПОУ {edrpou} not found for update")
+            return False
+            
+        except Exception as e:
+            logger.error(f"Error updating counterparty in main data: {str(e)}")
+            return False
+
             return None
     
     def get_buyer_main_data(self) -> Dict[str, str]:
