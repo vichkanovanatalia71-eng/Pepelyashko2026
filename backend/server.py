@@ -522,8 +522,9 @@ async def generate_waybill_pdf(data: DocumentCreate):
             upload_to_drive=True
         )
         
-        # Save waybill to Google Sheets
-        sheets_service.create_waybill(waybill_data)
+        # Save waybill to Google Sheets with drive_file_id
+        drive_file_id = result.get('drive_file_id', '')
+        sheets_service.create_waybill(waybill_data, drive_file_id)
         
         return {
             'success': True,
