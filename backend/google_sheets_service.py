@@ -288,6 +288,8 @@ class GoogleSheetsService:
                 'waybills': [],
                 'contracts': []
             }
+    
+    def get_documents(self, sheet_name: str) -> List[Dict[str, Any]]:
         """Get all documents from a specific sheet."""
         try:
             worksheet = self.spreadsheet.worksheet(sheet_name)
