@@ -608,7 +608,7 @@ async def generate_contract_pdf(data: ContractGenerateRequest):
     
     try:
         # Get buyer data from "Основні дані" sheet
-        buyer_data = sheets_service.get_buyer_main_data(data.counterparty_edrpou)
+        buyer_data = sheets_service.get_counterparty_from_main_data(data.counterparty_edrpou)
         if not buyer_data or not buyer_data.get('ЄДРПОУ'):
             raise HTTPException(status_code=404, detail=f"Контрагента з ЄДРПОУ {data.counterparty_edrpou} не знайдено в 'Основні дані'")
         
