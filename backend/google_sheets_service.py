@@ -306,6 +306,10 @@ class GoogleSheetsService:
                     'total_amount': float(record['Загальна сума']) if record['Загальна сума'] else 0.0
                 }
                 
+                # Add drive_file_id if available (for Рахунки, Акти, Видаткові накладні)
+                if 'Drive File ID' in record:
+                    doc['drive_file_id'] = str(record.get('Drive File ID', ''))
+                
                 # Parse items from JSON
                 items_key = 'Товари' if sheet_name != 'Акти' else 'Роботи'
                 try:
