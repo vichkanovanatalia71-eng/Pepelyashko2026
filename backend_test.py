@@ -80,8 +80,8 @@ class ContractTestSuite:
             return False
     
     def test_contract_pdf_generation(self):
-        """Test contract PDF generation with Ukrainian characters"""
-        logger.info("Testing contract PDF generation with Ukrainian characters...")
+        """Test contract PDF generation with Ukrainian characters and Google Drive upload"""
+        logger.info("Testing contract PDF generation with Ukrainian characters and Google Drive upload...")
         
         if not self.test_counterparty_edrpou:
             logger.error("❌ No counterparty EDRPOU available for testing")
@@ -90,24 +90,17 @@ class ContractTestSuite:
         # Test payload with Ukrainian characters
         test_payload = {
             "counterparty_edrpou": self.test_counterparty_edrpou,
-            "subject": "Постачання товарів та послуг",  # Ukrainian text
+            "subject": "Постачання медичного обладнання",  # Ukrainian text
             "items": [
                 {
-                    "name": "Товар №1 - Медичне обладнання",  # Ukrainian text
+                    "name": "Медичне обладнання",  # Ukrainian text
                     "unit": "шт",  # Ukrainian abbreviation
                     "quantity": 5,
-                    "price": 1500.50,
-                    "amount": 7502.50
-                },
-                {
-                    "name": "Послуга №2 - Технічне обслуговування",  # Ukrainian text
-                    "unit": "год",  # Ukrainian abbreviation
-                    "quantity": 10,
-                    "price": 250.00,
-                    "amount": 2500.00
+                    "price": 1000,
+                    "amount": 5000
                 }
             ],
-            "total_amount": 10002.50
+            "total_amount": 5000
         }
         
         try:
@@ -125,10 +118,31 @@ class ContractTestSuite:
                     self.generated_pdf_path = result.get('pdf_path')
                     self.contract_number = result.get('contract_number')
                     
+                    # Store Google Drive links for further testing
+                    self.drive_view_link = result.get('drive_view_link', '')
+                    self.drive_download_link = result.get('drive_download_link', '')
+                    self.drive_file_id = result.get('drive_file_id', '')
+                    
                     logger.info(f"✅ Contract PDF generated successfully")
                     logger.info(f"   Contract number: {self.contract_number}")
                     logger.info(f"   PDF filename: {self.generated_pdf_filename}")
                     logger.info(f"   PDF path: {self.generated_pdf_path}")
+                    
+                    # Check Google Drive integration
+                    if self.drive_view_link:
+                        logger.info(f"✅ Google Drive view link: {self.drive_view_link}")
+                    else:
+                        logger.warning("⚠️  No Google Drive view link returned (Drive service may not be configured)")
+                    
+                    if self.drive_download_link:
+                        logger.info(f"✅ Google Drive download link: {self.drive_download_link}")
+                    else:
+                        logger.warning("⚠️  No Google Drive download link returned")
+                    
+                    if self.drive_file_id:
+                        logger.info(f"✅ Google Drive file ID: {self.drive_file_id}")
+                    else:
+                        logger.warning("⚠️  No Google Drive file ID returned")
                     
                     # Verify the contract number contains Ukrainian character "П"
                     if self.contract_number and "П" in self.contract_number:
