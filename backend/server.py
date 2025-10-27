@@ -654,7 +654,6 @@ async def generate_contract_pdf(data: ContractGenerateRequest):
             'drive_download_link': result.get('drive_download_link', ''),
             'drive_file_id': result.get('drive_file_id', '')
         }
-        }
         
     except HTTPException:
         raise
