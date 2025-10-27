@@ -118,15 +118,21 @@ class GoogleDriveService:
     def setup_folder_structure(self) -> Dict[str, str]:
         """Create or find the folder structure and return folder IDs"""
         try:
-            # Create or find root folder
-            root_folder_name = 'Документи КНП'
-            root_id = self.find_folder(root_folder_name)
-            
-            if not root_id:
-                root_id = self.create_folder(root_folder_name)
+            # If using Shared Drive, use it as root
+            if self.shared_drive_id:
+                root_id = self.shared_drive_id
+                logger.info(f"Using Shared Drive as root: {root_id}")
+            else:
+                # Create or find root folder in My Drive
+                root_folder_name = 'Документи КНП'
+                root_id = self.find_folder(root_folder_name)
+                
+                if not root_id:
+                    root_id = self.create_folder(root_folder_name)
+                
+                logger.info(f"Root folder ID: {root_id}")
             
             self.root_folder_id = root_id
-            logger.info(f"Root folder ID: {root_id}")
             
             # Create or find subfolders
             for folder_name in self.FOLDER_STRUCTURE.keys():
