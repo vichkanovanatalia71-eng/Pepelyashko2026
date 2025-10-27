@@ -25,8 +25,17 @@ class ContractService:
         self.output_dir.mkdir(exist_ok=True)
         self.drive_service = drive_service
         
-    def generate_contract_pdf(self, contract_data: Dict[str, Any]) -> str:
-        """Generate PDF contract using ReportLab and return file path"""
+    def generate_contract_pdf(
+        self, 
+        contract_data: Dict[str, Any],
+        upload_to_drive: bool = True
+    ) -> Dict[str, Any]:
+        """
+        Generate PDF contract using ReportLab and optionally upload to Google Drive
+        
+        Returns:
+            Dict with local_path and optionally drive_file_id and drive_link
+        """
         try:
             # Extract data
             contract_number = contract_data.get('contract_number', '001')
