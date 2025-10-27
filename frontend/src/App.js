@@ -1230,25 +1230,27 @@ function App() {
         
         {/* Contract PDF Preview Dialog */}
         <Dialog open={showContractPreview} onOpenChange={setShowContractPreview}>
-          <DialogContent className="sm:max-w-[900px] max-h-[90vh] bg-white">
+          <DialogContent className="sm:max-w-[1000px] max-h-[95vh] bg-white z-[100]" style={{zIndex: 9999}}>
             <DialogHeader>
               <DialogTitle className="text-gray-900 text-xl font-bold">
                 Попередній перегляд договору {contractPdfData?.contract_number}
               </DialogTitle>
               <DialogDescription className="text-gray-600">
-                Переглянь договір та надішли його на email
+                Перегляньте договір та надішліть його на email
               </DialogDescription>
             </DialogHeader>
             
-            <div className="space-y-4 py-4">
+            <div className="space-y-4 py-4 overflow-y-auto" style={{maxHeight: 'calc(95vh - 200px)'}}>
               {/* PDF Preview */}
               {contractPdfData && (
-                <div className="border rounded-lg overflow-hidden" style={{height: '400px'}}>
+                <div className="border-2 border-gray-300 rounded-lg overflow-hidden bg-gray-100" style={{height: '500px'}}>
                   <iframe
-                    src={`${API}/contracts/download/${contractPdfData.pdf_filename}`}
+                    src={`${API}/contracts/download/${contractPdfData.pdf_filename}#toolbar=0`}
                     style={{width: '100%', height: '100%', border: 'none'}}
                     title="Попередній перегляд договору"
-                  />
+                  >
+                    <p>Ваш браузер не підтримує перегляд PDF. <a href={`${API}/contracts/download/${contractPdfData.pdf_filename}`} target="_blank" rel="noopener noreferrer">Завантажити PDF</a></p>
+                  </iframe>
                 </div>
               )}
               
