@@ -1123,6 +1123,52 @@ function App() {
               handleDocumentSubmit={handleDocumentSubmit}
               loading={loading}
             />
+            
+            {/* List of all invoices */}
+            <Card className="glass-card mt-6">
+              <CardHeader>
+                <CardTitle className="text-xl">Всі рахунки ({allInvoices.length})</CardTitle>
+                <CardDescription>Останні створені рахунки</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {allInvoices.length > 0 ? (
+                  <div className="space-y-3">
+                    {allInvoices.map((doc, idx) => (
+                      <div key={idx} className="p-4 bg-green-50 rounded-lg border border-green-200 flex justify-between items-center hover:shadow-md transition-shadow">
+                        <div>
+                          <p className="font-semibold text-gray-900">Рахунок №{doc.number}</p>
+                          <p className="text-sm text-gray-600">від {doc.date}</p>
+                          <p className="text-sm text-gray-700 mt-1">{doc.counterparty_name}</p>
+                          <p className="text-sm font-medium text-green-700 mt-1">Сума: {doc.total_amount} грн</p>
+                        </div>
+                        {doc.drive_file_id && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setDocumentPdfData({
+                                drive_file_id: doc.drive_file_id,
+                                drive_view_link: `https://drive.google.com/file/d/${doc.drive_file_id}/view`,
+                                drive_download_link: `https://drive.google.com/uc?export=download&id=${doc.drive_file_id}`,
+                                invoice_number: doc.number
+                              });
+                              setCurrentDocType('invoice');
+                              setShowDocumentPreview(true);
+                            }}
+                            className="btn-secondary"
+                          >
+                            <Eye className="w-4 h-4 mr-1" />
+                            Переглянути
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-center py-4">Рахунків поки немає</p>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="acts" data-testid="acts-content">
