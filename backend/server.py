@@ -343,6 +343,106 @@ async def get_contracts():
         logging.error(f"Error getting contracts: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
+@api_router.post("/contracts/generate-pdf")
+async def generate_contract_pdf(data: ContractGenerateRequest):
+    """Generate PDF contract."""
+    if sheets_service is None:
+        raise HTTPException(status_code=503, detail="Google Sheets service not available")
+    
+    try:
+        # Get counterparty data
+        counterparty = sheets_service.get_counterparty_by_edrpou(data.counterparty_edrpou)
+        if not counterparty:
+            raise HTTPException(status_code=404, detail="Контрагента не знайдено")
+        
+        # Generate contract number if not provided
+        if not data.contract_number:
+            # Get next contract number
+            worksheet = sheets_service.spreadsheet.worksheet("Договори")
+            records = worksheet.get_all_records()
+            next_number = len(records) + 1
+            contract_number = f"П-{next_number:04d}"
+        else:
+            contract_number = data.contract_number
+        
+        # Prepare contract data
+        contract_data = {
+            'contract_number': contract_number,
+            'contract_date': datetime.now().strftime('%d.%m.%Y'),
+            'city': 'Одеса',
+            'counterparty': counterparty,
+            'subject': data.subject,
+            'items': [item.model_dump() for item in data.items],
+            'total_amount': data.total_amount
+        }
+        
+        # Generate PDF
+        pdf_path = contract_service.generate_contract_pdf(contract_data)
+        
+        # Save contract to Google Sheets
+        sheets_service.create_contract({
+            'counterparty_edrpou': data.counterparty_edrpou,
+            'subject': data.subject,
+            'amount': data.total_amount
+        })
+        
+        return {
+            'success': True,
+            'message': 'Договір успішно згенеровано',
+            'contract_number': contract_number,
+            'pdf_path': pdf_path,
+            'pdf_filename': os.path.basename(pdf_path)
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error generating contract PDF: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+@api_router.get("/contracts/download/{filename}")
+async def download_contract(filename: str):
+    """Download generated contract PDF."""
+    try:
+        contracts_dir = Path(__file__).parent / "generated_contracts"
+        file_path = contracts_dir / filename
+        
+        if not file_path.exists():
+            raise HTTPException(status_code=404, detail="Файл не знайдено")
+        
+        return FileResponse(
+            path=str(file_path),
+            media_type='application/pdf',
+            filename=filename
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error downloading contract: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@api_router.post("/contracts/send-email")
+async def send_contract_email(data: ContractSendEmailRequest):
+    """Send contract PDF via email."""
+    try:
+        success = await contract_service.send_contract_email(
+            pdf_path=data.contract_pdf_path,
+            recipient_email=data.recipient_email,
+            contract_number=data.contract_number
+        )
+        
+        if success:
+            return {
+                'success': True,
+                'message': f'Договір успішно відправлено на {data.recipient_email}'
+            }
+        else:
+            raise HTTPException(status_code=500, detail="Помилка при відправці email")
+            
+    except Exception as e:
+        logging.error(f"Error sending contract email: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
 # Include the router in the main app
 app.include_router(api_router)
 
