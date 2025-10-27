@@ -216,12 +216,13 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Contract Preview with Google Drive Viewer"
-    - "Contract Download with Drive Link"
-    - "Contract Email with Drive Link"
-  stuck_tasks: []
+    - "Google Drive Service Integration"
+    - "Contract PDF Generation with Drive Upload"
+  stuck_tasks: 
+    - "Google Drive Service Integration"
+    - "Contract PDF Generation with Drive Upload"
   test_all: false
-  test_priority: "high_first"
+  test_priority: "stuck_first"
 
 agent_communication:
   - agent: "main"
