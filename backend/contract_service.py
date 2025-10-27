@@ -2,7 +2,14 @@ from docx import Document
 from datetime import datetime
 import os
 from pathlib import Path
-from weasyprint import HTML, CSS
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import cm
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
+from reportlab.lib import colors
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_LEFT
 import logging
 import aiosmtplib
 from email.message import EmailMessage
