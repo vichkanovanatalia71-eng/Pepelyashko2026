@@ -12,6 +12,141 @@
   box-shadow: 0 12px 40px rgba(107, 191, 199, 0.25);
 }
 
+/* Tab-specific color schemes */
+
+/* Counterparties - Teal/Cyan */
+[data-testid="counterparties-content"] .glass-card {
+  box-shadow: 0 8px 32px rgba(107, 191, 199, 0.15);
+}
+
+[data-testid="counterparties-content"] .btn-primary {
+  background: linear-gradient(135deg, #6bbfc7 0%, #5ab4be 100%);
+}
+
+[data-testid="counterparties-content"] .btn-primary:hover {
+  background: linear-gradient(135deg, #5ab4be 0%, #4aa9b3 100%);
+}
+
+/* Orders - Blue/Purple */
+[data-testid="orders-content"] .glass-card {
+  box-shadow: 0 8px 32px rgba(99, 102, 241, 0.15);
+  border: 1px solid rgba(99, 102, 241, 0.1);
+}
+
+[data-testid="orders-content"] .btn-primary {
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+}
+
+[data-testid="orders-content"] .btn-primary:hover {
+  background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+}
+
+[data-testid="orders-content"] .item-card {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(129, 140, 248, 0.1) 100%);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+[data-testid="orders-content"] .item-card:hover {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(129, 140, 248, 0.15) 100%);
+  border-color: rgba(99, 102, 241, 0.3);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+}
+
+/* Invoices - Green/Emerald */
+[data-testid="invoices-content"] .glass-card {
+  box-shadow: 0 8px 32px rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.1);
+}
+
+[data-testid="invoices-content"] .btn-primary {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+[data-testid="invoices-content"] .btn-primary:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+}
+
+[data-testid="invoices-content"] .item-card {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(52, 211, 153, 0.1) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+[data-testid="invoices-content"] .item-card:hover {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(52, 211, 153, 0.15) 100%);
+  border-color: rgba(16, 185, 129, 0.3);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+}
+
+/* Acts - Purple/Violet */
+[data-testid="acts-content"] .glass-card {
+  box-shadow: 0 8px 32px rgba(139, 92, 246, 0.15);
+  border: 1px solid rgba(139, 92, 246, 0.1);
+}
+
+[data-testid="acts-content"] .btn-primary {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+}
+
+[data-testid="acts-content"] .btn-primary:hover {
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+}
+
+[data-testid="acts-content"] .item-card {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(167, 139, 250, 0.1) 100%);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+}
+
+[data-testid="acts-content"] .item-card:hover {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(167, 139, 250, 0.15) 100%);
+  border-color: rgba(139, 92, 246, 0.3);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.15);
+}
+
+/* Waybills - Orange/Amber */
+[data-testid="waybills-content"] .glass-card {
+  box-shadow: 0 8px 32px rgba(251, 146, 60, 0.15);
+  border: 1px solid rgba(251, 146, 60, 0.1);
+}
+
+[data-testid="waybills-content"] .btn-primary {
+  background: linear-gradient(135deg, #fb923c 0%, #f97316 100%);
+}
+
+[data-testid="waybills-content"] .btn-primary:hover {
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+}
+
+[data-testid="waybills-content"] .item-card {
+  background: linear-gradient(135deg, rgba(251, 146, 60, 0.1) 0%, rgba(253, 186, 116, 0.1) 100%);
+  border: 1px solid rgba(251, 146, 60, 0.2);
+}
+
+[data-testid="waybills-content"] .item-card:hover {
+  background: linear-gradient(135deg, rgba(251, 146, 60, 0.15) 0%, rgba(253, 186, 116, 0.15) 100%);
+  border-color: rgba(251, 146, 60, 0.3);
+  box-shadow: 0 4px 12px rgba(251, 146, 60, 0.15);
+}
+
+/* Contracts - Rose/Pink */
+[data-testid="contracts-content"] .glass-card {
+  box-shadow: 0 8px 32px rgba(244, 63, 94, 0.15);
+  border: 1px solid rgba(244, 63, 94, 0.1);
+}
+
+[data-testid="contracts-content"] .btn-primary {
+  background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+}
+
+[data-testid="contracts-content"] .btn-primary:hover {
+  background: linear-gradient(135deg, #e11d48 0%, #be123c 100%);
+}
+
+[data-testid="contracts-content"] input:focus,
+[data-testid="contracts-content"] textarea:focus {
+  border-color: #f43f5e;
+  box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.1);
+}
+
 .header-gradient {
   background: linear-gradient(135deg, rgba(232, 245, 247, 0.9) 0%, rgba(240, 244, 255, 0.9) 100%);
   backdrop-filter: blur(20px);
