@@ -1,15 +1,14 @@
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, HTTPException
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
 from pathlib import Path
-from pydantic import BaseModel, Field, ConfigDict
-from typing import List
-import uuid
-from datetime import datetime, timezone
-
+from pydantic import BaseModel, Field, EmailStr
+from typing import List, Optional
+from datetime import datetime
+from google_sheets_service import GoogleSheetsService
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -19,52 +18,208 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
+# Google Sheets configuration
+CREDENTIALS_PATH = ROOT_DIR / 'credentials.json'
+SPREADSHEET_ID = '1RnVWH300p5Lj8Pe53k2tDdlnSUdFSEF9dEO_eGJj8D4'
+
+# Initialize Google Sheets service
+try:
+    sheets_service = GoogleSheetsService(
+        credentials_path=str(CREDENTIALS_PATH),
+        spreadsheet_id=SPREADSHEET_ID
+    )
+    logging.info("Google Sheets service initialized successfully")
+except Exception as e:
+    logging.error(f"Failed to initialize Google Sheets service: {str(e)}")
+    sheets_service = None
+
 # Create the main app without a prefix
-app = FastAPI()
+app = FastAPI(title="Document Management System")
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
 
+# Pydantic Models
+class CounterpartyCreate(BaseModel):
+    edrpou: str = Field(..., description="Код ЄДРПОУ")
+    representative_name: str = Field(..., description="Ім'я представника")
+    email: EmailStr = Field(..., description="Email")
+    phone: str = Field(..., description="Телефон")
+    iban: str = Field(..., description="IBAN")
+    contract_type: str = Field(..., description="Тип договору: Класичний або Некласичний")
 
-# Define Models
-class StatusCheck(BaseModel):
-    model_config = ConfigDict(extra="ignore")  # Ignore MongoDB's _id field
-    
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    client_name: str
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+class Counterparty(BaseModel):
+    edrpou: str
+    representative_name: str
+    email: str
+    phone: str
+    iban: str
+    contract_type: str
 
-class StatusCheckCreate(BaseModel):
-    client_name: str
+class DocumentItem(BaseModel):
+    name: str = Field(..., description="Назва товару/роботи")
+    unit: str = Field(..., description="Одиниця виміру")
+    quantity: float = Field(..., description="Кількість")
+    price: float = Field(..., description="Ціна за одиницю")
+    amount: float = Field(..., description="Сума")
 
-# Add your routes to the router instead of directly to app
+class DocumentCreate(BaseModel):
+    counterparty_edrpou: str = Field(..., description="ЄДРПОУ контрагента")
+    items: List[DocumentItem] = Field(..., description="Список товарів/робіт")
+    total_amount: float = Field(..., description="Загальна сума")
+
+class Document(BaseModel):
+    number: str
+    date: str
+    counterparty_edrpou: str
+    counterparty_name: str
+    items: List[DocumentItem]
+    total_amount: float
+
+# API Routes
 @api_router.get("/")
 async def root():
-    return {"message": "Hello World"}
+    return {"message": "Document Management System API"}
 
-@api_router.post("/status", response_model=StatusCheck)
-async def create_status_check(input: StatusCheckCreate):
-    status_dict = input.model_dump()
-    status_obj = StatusCheck(**status_dict)
-    
-    # Convert to dict and serialize datetime to ISO string for MongoDB
-    doc = status_obj.model_dump()
-    doc['timestamp'] = doc['timestamp'].isoformat()
-    
-    _ = await db.status_checks.insert_one(doc)
-    return status_obj
+@api_router.get("/health")
+async def health_check():
+    """Health check endpoint."""
+    if sheets_service is None:
+        raise HTTPException(status_code=503, detail="Google Sheets service not available")
+    return {"status": "healthy", "sheets_connected": True}
 
-@api_router.get("/status", response_model=List[StatusCheck])
-async def get_status_checks():
-    # Exclude MongoDB's _id field from the query results
-    status_checks = await db.status_checks.find({}, {"_id": 0}).to_list(1000)
+# Counterparty endpoints
+@api_router.post("/counterparties", response_model=dict)
+async def create_counterparty(data: CounterpartyCreate):
+    """Create a new counterparty."""
+    if sheets_service is None:
+        raise HTTPException(status_code=503, detail="Google Sheets service not available")
     
-    # Convert ISO string timestamps back to datetime objects
-    for check in status_checks:
-        if isinstance(check['timestamp'], str):
-            check['timestamp'] = datetime.fromisoformat(check['timestamp'])
+    try:
+        result = sheets_service.create_counterparty(data.model_dump())
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logging.error(f"Error creating counterparty: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@api_router.get("/counterparties", response_model=List[Counterparty])
+async def get_counterparties():
+    """Get all counterparties."""
+    if sheets_service is None:
+        raise HTTPException(status_code=503, detail="Google Sheets service not available")
     
-    return status_checks
+    try:
+        counterparties = sheets_service.get_all_counterparties()
+        return counterparties
+    except Exception as e:
+        logging.error(f"Error getting counterparties: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@api_router.get("/counterparties/{edrpou}", response_model=Counterparty)
+async def get_counterparty(edrpou: str):
+    """Get counterparty by ЄДРПОУ."""
+    if sheets_service is None:
+        raise HTTPException(status_code=503, detail="Google Sheets service not available")
+    
+    try:
+        counterparty = sheets_service.get_counterparty_by_edrpou(edrpou)
+        if not counterparty:
+            raise HTTPException(status_code=404, detail="Контрагента не знайдено")
+        return counterparty
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error getting counterparty: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+# Invoice endpoints
+@api_router.post("/invoices", response_model=dict)
+async def create_invoice(data: DocumentCreate):
+    """Create a new invoice."""
+    if sheets_service is None:
+        raise HTTPException(status_code=503, detail="Google Sheets service not available")
+    
+    try:
+        result = sheets_service.create_invoice(data.model_dump())
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logging.error(f"Error creating invoice: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@api_router.get("/invoices", response_model=List[Document])
+async def get_invoices():
+    """Get all invoices."""
+    if sheets_service is None:
+        raise HTTPException(status_code=503, detail="Google Sheets service not available")
+    
+    try:
+        invoices = sheets_service.get_documents("Рахунки")
+        return invoices
+    except Exception as e:
+        logging.error(f"Error getting invoices: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+# Act endpoints
+@api_router.post("/acts", response_model=dict)
+async def create_act(data: DocumentCreate):
+    """Create a new act of completed work."""
+    if sheets_service is None:
+        raise HTTPException(status_code=503, detail="Google Sheets service not available")
+    
+    try:
+        result = sheets_service.create_act(data.model_dump())
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logging.error(f"Error creating act: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@api_router.get("/acts", response_model=List[Document])
+async def get_acts():
+    """Get all acts."""
+    if sheets_service is None:
+        raise HTTPException(status_code=503, detail="Google Sheets service not available")
+    
+    try:
+        acts = sheets_service.get_documents("Акти")
+        return acts
+    except Exception as e:
+        logging.error(f"Error getting acts: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+# Waybill endpoints
+@api_router.post("/waybills", response_model=dict)
+async def create_waybill(data: DocumentCreate):
+    """Create a new waybill."""
+    if sheets_service is None:
+        raise HTTPException(status_code=503, detail="Google Sheets service not available")
+    
+    try:
+        result = sheets_service.create_waybill(data.model_dump())
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logging.error(f"Error creating waybill: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@api_router.get("/waybills", response_model=List[Document])
+async def get_waybills():
+    """Get all waybills."""
+    if sheets_service is None:
+        raise HTTPException(status_code=503, detail="Google Sheets service not available")
+    
+    try:
+        waybills = sheets_service.get_documents("Видаткові накладні")
+        return waybills
+    except Exception as e:
+        logging.error(f"Error getting waybills: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 # Include the router in the main app
 app.include_router(api_router)
