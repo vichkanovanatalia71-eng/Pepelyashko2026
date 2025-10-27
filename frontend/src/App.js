@@ -241,6 +241,16 @@ function App() {
     counterpartyEmail: ''
   });
   
+  // Document PDF preview dialog state (for invoices, acts, waybills)
+  const [showDocumentPreview, setShowDocumentPreview] = useState(false);
+  const [documentPdfData, setDocumentPdfData] = useState(null);
+  const [documentEmailForm, setDocumentEmailForm] = useState({
+    recipient: 'counterparty',
+    customEmail: '',
+    counterpartyEmail: ''
+  });
+  const [currentDocType, setCurrentDocType] = useState(''); // 'invoice', 'act', 'waybill'
+  
   // Document creation from counterparty view
   const [showDocCreateDialog, setShowDocCreateDialog] = useState(false);
   const [docTypeToCreate, setDocTypeToCreate] = useState('');
