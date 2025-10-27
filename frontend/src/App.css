@@ -205,6 +205,37 @@
   transform: translateY(-1px);
 }
 
+/* Tab-specific button colors for document creation */
+[data-testid="counterparties-content"] .btn-secondary {
+  background: linear-gradient(135deg, #a8d5dd 0%, #b8e0e8 100%);
+  color: #2d6a73;
+}
+
+[data-testid="orders-content"] .btn-secondary {
+  background: linear-gradient(135deg, #c7d2fe 0%, #ddd6fe 100%);
+  color: #4338ca;
+}
+
+[data-testid="invoices-content"] .btn-secondary {
+  background: linear-gradient(135deg, #a7f3d0 0%, #6ee7b7 100%);
+  color: #047857;
+}
+
+[data-testid="acts-content"] .btn-secondary {
+  background: linear-gradient(135deg, #ddd6fe 0%, #e9d5ff 100%);
+  color: #6d28d9;
+}
+
+[data-testid="waybills-content"] .btn-secondary {
+  background: linear-gradient(135deg, #fed7aa 0%, #fde68a 100%);
+  color: #c2410c;
+}
+
+[data-testid="contracts-content"] .btn-secondary {
+  background: linear-gradient(135deg, #fecdd3 0%, #fda4af 100%);
+  color: #be123c;
+}
+
 .item-card {
   background: linear-gradient(135deg, rgba(168, 213, 221, 0.1) 0%, rgba(184, 224, 232, 0.1) 100%);
   border: 1px solid rgba(107, 191, 199, 0.2);
