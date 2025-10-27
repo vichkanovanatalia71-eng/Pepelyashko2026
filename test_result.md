@@ -197,15 +197,18 @@ backend:
 
   - task: "Waybill PDF Generation with Drive Upload"
     implemented: true
-    working: "needs_testing"
+    working: true
     file: "/app/backend/document_service.py, /app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "needs_testing"
         agent: "main"
         comment: "Реалізовано generate_waybill_pdf в document_service.py з повною інтеграцією Google Drive. Використовує дані з 'Мої дані' (постачальник) та 'Основні дані' (покупець). Нумерація: 4_середніх_цифри_ЄДРПОУ-послідовний_номер. Позначка 'не платник ПДВ'. Додано API endpoint POST /api/waybills/generate-pdf в server.py."
+      - working: true
+        agent: "testing"
+        comment: "✅ ТЕСТ ПРОЙДЕНО: POST /api/waybills/generate-pdf працює повністю! Генерація PDF з українськими символами успішна. Номер документа: 9681-1 (правильний формат: середні 4 цифри ЄДРПОУ-послідовність). Файл: Накладна_9681-1_40196816.pdf. Google Drive інтеграція працює: drive_view_link=https://drive.google.com/file/d/1ssYf5Ra-8Kr4xMymy9G3OomFmrUrvHd3/view?usp=drivesdk, drive_file_id=1ssYf5Ra-8Kr4xMymy9G3OomFmrUrvHd3. Файл завантажено в папку 'Видаткові накладні' на Google Drive. Позначка 'не платник ПДВ' присутня в PDF контенті."
 
   - task: "Backend API Endpoints Update"
     implemented: true
