@@ -1116,7 +1116,7 @@ function App() {
               </Button>
               <Button 
                 onClick={handleCreateDocumentsFromOrder}
-                disabled={loading || (!selectedDocs.invoice && !selectedDocs.act && !selectedDocs.waybill && !selectedDocs.contract)}
+                disabled={loading || (!selectedDocs.order && !selectedDocs.invoice && !selectedDocs.act && !selectedDocs.waybill && !selectedDocs.contract)}
                 className="btn-primary"
               >
                 {loading ? (
