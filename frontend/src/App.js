@@ -1246,10 +1246,10 @@ function App() {
                 <div className="border-2 border-gray-300 rounded-lg overflow-hidden bg-gray-100" style={{height: '500px'}}>
                   {contractPdfData.drive_view_link ? (
                     <iframe
-                      src={contractPdfData.drive_view_link}
+                      src={`https://drive.google.com/file/d/${contractPdfData.drive_file_id}/preview`}
                       style={{width: '100%', height: '100%', border: 'none'}}
                       title="Попередній перегляд договору"
-                      allow="fullscreen"
+                      allow="autoplay"
                     />
                   ) : (
                     <div className="flex items-center justify-center h-full text-gray-500">
