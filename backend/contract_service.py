@@ -228,7 +228,7 @@ class ContractService:
                     pdf_data,
                     maintype='application',
                     subtype='pdf',
-                    filename=('utf-8', '', original_filename.encode('utf-8'))
+                    filename=('utf-8', '', original_filename)
                 )
             
             # Send email with start_tls
