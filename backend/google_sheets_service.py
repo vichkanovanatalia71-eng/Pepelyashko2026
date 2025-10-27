@@ -367,6 +367,7 @@ class GoogleSheetsService:
                         'тел': str(record.get('тел', '')),
                         'Посада': str(record.get('Посада', 'Директор')),
                         'В особі': str(record.get('В особі', '')),
+                        'Підпис': str(record.get('Підпис', '')),
                         'Директор': str(record.get('В особі', ''))  # Use "В особі" as director name
                     }
                     logger.info(f"Found counterparty in 'Основні дані': {counterparty['Назва']}")
