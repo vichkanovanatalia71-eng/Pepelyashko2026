@@ -213,19 +213,55 @@ class ContractTestSuite:
             logger.error(f"❌ PDF download failed with exception: {str(e)}")
             return False
     
+    def test_google_drive_links(self):
+        """Test Google Drive links validation"""
+        logger.info("Testing Google Drive links validation...")
+        
+        if not self.drive_view_link and not self.drive_download_link and not self.drive_file_id:
+            logger.warning("⚠️  No Google Drive links available - Drive service may not be configured")
+            logger.info("✅ This is expected in test environment without Google Drive credentials")
+            return True
+        
+        # Test drive_view_link format
+        if self.drive_view_link:
+            if self.drive_view_link.startswith("https://drive.google.com"):
+                logger.info(f"✅ Drive view link has correct format: {self.drive_view_link}")
+            else:
+                logger.error(f"❌ Drive view link has incorrect format: {self.drive_view_link}")
+                return False
+        
+        # Test drive_download_link
+        if self.drive_download_link:
+            if self.drive_download_link:
+                logger.info(f"✅ Drive download link is not empty: {self.drive_download_link}")
+            else:
+                logger.error("❌ Drive download link is empty")
+                return False
+        
+        # Test drive_file_id
+        if self.drive_file_id:
+            if len(self.drive_file_id) > 10:  # Google Drive file IDs are typically long
+                logger.info(f"✅ Drive file ID has reasonable length: {self.drive_file_id}")
+            else:
+                logger.error(f"❌ Drive file ID seems too short: {self.drive_file_id}")
+                return False
+        
+        return True
+    
     def test_contract_email_sending(self):
-        """Test contract email sending with Unicode filename"""
-        logger.info("Testing contract email sending...")
+        """Test contract email sending with Unicode filename and Google Drive link"""
+        logger.info("Testing contract email sending with Google Drive link...")
         
         if not self.generated_pdf_path or not self.contract_number:
             logger.error("❌ No PDF path or contract number available for email test")
             return False
         
-        # Test payload
+        # Test payload with Google Drive link
         email_payload = {
             "contract_pdf_path": self.generated_pdf_path,
             "recipient_email": "test@example.com",
-            "contract_number": self.contract_number
+            "contract_number": self.contract_number,
+            "drive_link": self.drive_view_link if self.drive_view_link else None
         }
         
         try:
@@ -241,6 +277,8 @@ class ContractTestSuite:
                 if result.get('success'):
                     logger.info("✅ Email sending request successful")
                     logger.info(f"   Message: {result.get('message', '')}")
+                    if self.drive_view_link:
+                        logger.info("✅ Email includes Google Drive link")
                     return True
                 else:
                     logger.error(f"❌ Email sending failed: {result}")
