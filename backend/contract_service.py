@@ -145,7 +145,7 @@ class ContractService:
             story.append(Spacer(1, 0.5*cm))
             
             # Parties
-            story.append(Paragraph(f'<b>Постачальник:</b> ТОВАРИСТВО З ОБМЕЖЕНОЮ ВІДПОВІДАЛЬНІСТЮ "ВОРДКРАФТ" (ЄДРПОУ: 45906348), в особі директора Романа Колонтая, що діє на підставі Статуту, з однієї сторони, та', normal_style))
+            story.append(Paragraph(f'<b>Постачальник:</b> {supplier_name} (ЄДРПОУ: {supplier_edrpou}), в особі директора {supplier_director}, що діє на підставі Статуту, з однієї сторони, та', normal_style))
             story.append(Paragraph(f'<b>Покупець:</b> {buyer_name}, в особі директора {buyer_director}, що діє на підставі Статуту, з іншої сторони, разом по тексту цього Договору іменуються як Сторони, а кожна окремо – як Сторона, уклали цей Договір поставки (надалі – Договір) про наступне:', normal_style))
             story.append(Spacer(1, 0.4*cm))
             
