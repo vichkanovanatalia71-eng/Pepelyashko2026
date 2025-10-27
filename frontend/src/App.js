@@ -1540,7 +1540,7 @@ function App() {
 
                   <div className="space-y-2 bg-amber-50 p-4 rounded-lg border border-amber-200">
                     <Label className="text-sm font-bold text-amber-900">
-                      Загальна сума договору: {contractForm.amount.toFixed(2)} грн
+                      Загальна сума договору: {(contractForm.amount || 0).toFixed(2)} грн
                     </Label>
                   </div>
 
