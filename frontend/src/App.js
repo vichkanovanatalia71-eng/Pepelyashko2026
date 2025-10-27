@@ -1345,6 +1345,15 @@ function App() {
                         
                         // Refresh all documents list
                         fetchAllDocuments();
+                        
+                        // Reset form
+                        setContractForm({
+                          subject: '',
+                          amount: 0,
+                          items: [{ name: '', unit: 'шт', quantity: 0, price: 0, amount: 0 }]
+                        });
+                        setSearchEdrpou('');
+                        setFoundCounterparty(null);
                       }, 100);
                     }
                   } catch (error) {
