@@ -50,8 +50,8 @@ except Exception as e:
     logging.error(f"Failed to initialize Google Drive service: {str(e)}")
     drive_service = None
 
-# Initialize Contract service with Drive integration
-contract_service = ContractService(drive_service=drive_service)
+# Initialize Contract service with Drive integration and Sheets service
+contract_service = ContractService(drive_service=drive_service, sheets_service=sheets_service)
 
 # Create the main app without a prefix
 app = FastAPI(title="Document Management System")
