@@ -107,7 +107,7 @@ user_problem_statement: "Інтеграція Google Drive для зберіга
 backend:
   - task: "Google Drive Service Integration"
     implemented: true
-    working: false
+    working: true
     file: "/app/backend/google_drive_service.py"
     stuck_count: 1
     priority: "high"
@@ -122,6 +122,9 @@ backend:
       - working: false
         agent: "testing"
         comment: "❌ АРХІТЕКТУРНА ПРОБЛЕМА: Google Drive Service НЕ МОЖЕ працювати з поточною конфігурацією. Service Account не має storage quota і не може завантажувати файли в звичайні папки Drive. Помилки: 1) 'Shared drive not found' - код неправильно трактує folder ID як Shared Drive, 2) 'storageQuotaExceeded' - Service Account не може писати в звичайні папки. Folder ID 1NX_cimX_r9suNCFlb3wAhvxSyE_VABb8 - це звичайна папка My Drive, не Shared Drive. Необхідно змінити архітектуру на Shared Drive або OAuth."
+      - working: true
+        agent: "testing"
+        comment: "✅ КРИТИЧНИЙ ТЕСТ ПРОЙДЕНО: Google Drive інтеграція тепер ПРАЦЮЄ! Користувач оновив доступи Service Account до Shared Drive (ID: 0AFj2VSH7Z9sKUk9PVA). Файли успішно завантажуються на Drive. Виправлено помилку з permissions - для Shared Drive permissions наслідуються автоматично. Тест показав: drive_view_link, drive_download_link, drive_file_id всі заповнені правильно. Приклад: https://drive.google.com/file/d/1cuByMS1mNcvQHLwJstP7coOaIz9aIu2s/view?usp=drivesdk"
 
   - task: "Contract PDF Generation with Drive Upload"
     implemented: true
