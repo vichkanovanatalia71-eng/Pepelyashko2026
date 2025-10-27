@@ -264,6 +264,12 @@ function App() {
     const errors = [];
     
     try {
+      // Order is already created, just check if we need to keep it
+      if (selectedDocs.order) {
+        successCount++; // Count the order itself
+      }
+      
+      // Create invoice
       if (selectedDocs.invoice) {
         try {
           await axios.post(`${API}/invoices`, orderData);
@@ -273,6 +279,7 @@ function App() {
         }
       }
       
+      // Create act
       if (selectedDocs.act) {
         try {
           await axios.post(`${API}/acts`, orderData);
@@ -282,6 +289,7 @@ function App() {
         }
       }
       
+      // Create waybill
       if (selectedDocs.waybill) {
         try {
           await axios.post(`${API}/waybills`, orderData);
@@ -291,6 +299,7 @@ function App() {
         }
       }
       
+      // Create contract
       if (selectedDocs.contract) {
         try {
           await axios.post(`${API}/contracts`, {
@@ -315,6 +324,7 @@ function App() {
       setShowOrderDialog(false);
       setOrderData(null);
       setSelectedDocs({
+        order: true,
         invoice: false,
         act: false,
         waybill: false,
