@@ -430,6 +430,138 @@ class ContractTestSuite:
             logger.warning(f"⚠️  Error checking backend logs: {str(e)}")
             return True  # Don't fail the test if we can't check logs
     
+    def test_specific_google_drive_scenario(self):
+        """Test the specific Google Drive scenario from the review request"""
+        logger.info("Testing specific Google Drive scenario from review request...")
+        
+        if not self.test_counterparty_edrpou:
+            logger.error("❌ No counterparty EDRPOU available for testing")
+            return False
+        
+        # Test payload exactly as specified in the review request
+        test_payload = {
+            "counterparty_edrpou": self.test_counterparty_edrpou,
+            "subject": "Постачання медичного обладнання та матеріалів",
+            "items": [
+                {
+                    "name": "Медичне обладнання",
+                    "unit": "шт",
+                    "quantity": 10,
+                    "price": 2000,
+                    "amount": 20000
+                }
+            ],
+            "total_amount": 20000
+        }
+        
+        try:
+            response = requests.post(
+                f"{self.api_url}/contracts/generate-pdf",
+                json=test_payload,
+                headers={'Content-Type': 'application/json'},
+                timeout=30
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                
+                # Check all required fields from review request
+                required_fields = [
+                    'success', 'contract_number', 'drive_view_link', 
+                    'drive_download_link', 'drive_file_id', 'pdf_path', 'pdf_filename'
+                ]
+                
+                missing_fields = []
+                for field in required_fields:
+                    if field not in result:
+                        missing_fields.append(field)
+                
+                if missing_fields:
+                    logger.error(f"❌ Missing required fields in response: {missing_fields}")
+                    return False
+                
+                # Check success field
+                if not result.get('success'):
+                    logger.error(f"❌ Success field is not true: {result.get('success')}")
+                    return False
+                
+                # Check contract number format (should contain "П")
+                contract_number = result.get('contract_number', '')
+                if not contract_number.startswith('П'):
+                    logger.error(f"❌ Contract number doesn't start with 'П': {contract_number}")
+                    return False
+                
+                # Check drive_view_link format
+                drive_view_link = result.get('drive_view_link', '')
+                if drive_view_link and not drive_view_link.startswith("https://drive.google.com"):
+                    logger.error(f"❌ Drive view link doesn't start with correct URL: {drive_view_link}")
+                    return False
+                
+                # Check that drive fields are not empty (if Drive is working)
+                drive_fields = ['drive_view_link', 'drive_download_link', 'drive_file_id']
+                empty_drive_fields = [field for field in drive_fields if not result.get(field)]
+                
+                if empty_drive_fields:
+                    logger.warning(f"⚠️  Empty Google Drive fields: {empty_drive_fields}")
+                    logger.info("   This indicates Google Drive integration is not working properly")
+                    
+                    # Check backend logs for Drive upload attempts
+                    self.check_drive_upload_logs()
+                    return False  # This is a critical issue for the review request
+                else:
+                    logger.info("✅ All Google Drive fields are populated")
+                    logger.info(f"   Contract number: {contract_number}")
+                    logger.info(f"   Drive view link: {drive_view_link}")
+                    logger.info(f"   Drive download link: {result.get('drive_download_link')}")
+                    logger.info(f"   Drive file ID: {result.get('drive_file_id')}")
+                    return True
+                
+            else:
+                logger.error(f"❌ Contract generation failed: {response.status_code} - {response.text}")
+                return False
+                
+        except Exception as e:
+            logger.error(f"❌ Contract generation failed with exception: {str(e)}")
+            return False
+    
+    def check_drive_upload_logs(self):
+        """Check backend logs for Google Drive upload attempts"""
+        logger.info("Checking backend logs for Google Drive upload attempts...")
+        
+        try:
+            import subprocess
+            result = subprocess.run(
+                ['grep', '-i', 'drive\|upload', '/var/log/supervisor/backend.err.log'],
+                capture_output=True,
+                text=True,
+                timeout=10
+            )
+            
+            if result.returncode == 0:
+                log_content = result.stdout
+                
+                # Look for specific patterns
+                if 'Uploaded file' in log_content and 'to folder \'Договори\'' in log_content:
+                    logger.info("✅ Found successful Drive upload messages in logs")
+                elif 'Failed to upload to Google Drive' in log_content:
+                    logger.error("❌ Found failed Drive upload messages in logs")
+                    # Show the error details
+                    lines = log_content.split('\n')
+                    for line in lines:
+                        if 'Failed to upload to Google Drive' in line or 'Error uploading file' in line:
+                            logger.error(f"   {line.strip()}")
+                elif 'Shared drive not found' in log_content:
+                    logger.error("❌ Google Drive configuration error: Shared drive not found")
+                    logger.error("   The folder ID 1NX_cimX_r9suNCFlb3wAhvxSyE_VABb8 is being treated as Shared Drive")
+                    logger.error("   But it's actually a regular folder. This needs to be fixed.")
+                else:
+                    logger.warning("⚠️  No clear Drive upload messages found in recent logs")
+            else:
+                logger.warning("⚠️  No Drive-related messages found in logs")
+                
+        except Exception as e:
+            logger.warning(f"⚠️  Error checking Drive upload logs: {str(e)}")
+
     def run_all_tests(self):
         """Run all contract tests"""
         logger.info("=" * 60)
@@ -447,19 +579,22 @@ class ContractTestSuite:
         # Test 3: Get Counterparties
         test_results['get_counterparties'] = self.test_get_counterparties()
         
-        # Test 4: Contract PDF Generation with Drive Upload
+        # Test 4: Specific Google Drive Scenario (from review request)
+        test_results['specific_drive_scenario'] = self.test_specific_google_drive_scenario()
+        
+        # Test 5: Contract PDF Generation with Drive Upload
         test_results['pdf_generation'] = self.test_contract_pdf_generation()
         
-        # Test 5: Google Drive Links Validation
+        # Test 6: Google Drive Links Validation
         test_results['drive_links'] = self.test_google_drive_links()
         
-        # Test 6: Contract PDF Download
+        # Test 7: Contract PDF Download
         test_results['pdf_download'] = self.test_contract_pdf_download()
         
-        # Test 7: Contract Email Sending with Drive Link
+        # Test 8: Contract Email Sending with Drive Link
         test_results['email_sending'] = self.test_contract_email_sending()
         
-        # Test 8: Check for Unicode errors in logs
+        # Test 9: Check for Unicode errors in logs
         test_results['unicode_logs_check'] = self.check_backend_logs_for_unicode_errors()
         
         # Summary
