@@ -62,13 +62,19 @@ api_router = APIRouter(prefix="/api")
 # Pydantic Models
 class CounterpartyCreate(BaseModel):
     edrpou: str = Field(..., description="Код ЄДРПОУ")
-    representative_name: str = Field(..., description="Ім'я представника")
+    representative_name: str = Field(..., description="Назва")
     email: EmailStr = Field(..., description="Email")
     phone: str = Field(..., description="Телефон")
     iban: str = Field(..., description="IBAN")
-    contract_type: str = Field(..., description="Тип договору: Класичний або Некласичний")
+    contract_type: Optional[str] = Field('', description="Тип договору")
     director_position: Optional[str] = Field(None, description="Посада керівника")
     director_name: Optional[str] = Field(None, description="ПІБ керівника")
+    legal_address: Optional[str] = Field(None, description="Юридична адреса")
+    bank: Optional[str] = Field(None, description="Банк")
+    mfo: Optional[str] = Field(None, description="МФО")
+    position: Optional[str] = Field(None, description="Посада")
+    represented_by: Optional[str] = Field(None, description="В особі")
+    signature: Optional[str] = Field(None, description="Підпис")
 
 class Counterparty(BaseModel):
     edrpou: str
