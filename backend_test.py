@@ -820,6 +820,122 @@ class ContractTestSuite:
             logger.warning(f"⚠️  Error checking backend logs: {str(e)}")
             return True  # Don't fail the test if we can't check logs
     
+    def test_specific_invoice_drive_file_id_scenario(self):
+        """Test the specific invoice drive_file_id scenario from the review request"""
+        logger.info("Testing specific invoice drive_file_id scenario from review request...")
+        
+        # Test payload exactly as specified in the review request
+        test_payload = {
+            "counterparty_edrpou": "40196816",
+            "items": [
+                {
+                    "name": "Тестовий товар для перевірки",
+                    "unit": "шт",
+                    "quantity": 2,
+                    "price": 5000,
+                    "amount": 10000
+                }
+            ],
+            "total_amount": 10000
+        }
+        
+        logger.info("=" * 50)
+        logger.info("ТЕСТ СТВОРЕННЯ РАХУНКУ З ПЕРЕВІРКОЮ drive_file_id")
+        logger.info("=" * 50)
+        
+        try:
+            # Step 1: Create new invoice through POST /api/invoices/generate-pdf
+            logger.info("1. Створення нового рахунку через POST /api/invoices/generate-pdf...")
+            response = requests.post(
+                f"{self.api_url}/invoices/generate-pdf",
+                json=test_payload,
+                headers={'Content-Type': 'application/json'},
+                timeout=30
+            )
+            
+            if response.status_code != 200:
+                logger.error(f"❌ Помилка створення рахунку: {response.status_code} - {response.text}")
+                return False
+            
+            result = response.json()
+            logger.info(f"✅ Рахунок створено успішно")
+            
+            # Step 2: Check that response contains drive_file_id (not empty)
+            logger.info("2. Перевірка що response містить drive_file_id (не порожній)...")
+            
+            drive_file_id = result.get('drive_file_id', '')
+            if not drive_file_id or drive_file_id == '':
+                logger.error("❌ Response від generate-pdf НЕ містить drive_file_id або він порожній")
+                logger.error(f"   drive_file_id: '{drive_file_id}'")
+                return False
+            
+            logger.info(f"✅ Response від generate-pdf містить drive_file_id: {drive_file_id}")
+            
+            # Store invoice number for verification
+            invoice_number = result.get('invoice_number', '')
+            logger.info(f"   Номер рахунку: {invoice_number}")
+            
+            # Step 3: Get list of invoices through GET /api/invoices
+            logger.info("3. Отримання списку рахунків через GET /api/invoices...")
+            
+            # Wait a moment for the invoice to be saved
+            time.sleep(2)
+            
+            invoices_response = requests.get(
+                f"{self.api_url}/invoices",
+                timeout=30
+            )
+            
+            if invoices_response.status_code != 200:
+                logger.error(f"❌ Помилка отримання списку рахунків: {invoices_response.status_code} - {invoices_response.text}")
+                return False
+            
+            invoices_list = invoices_response.json()
+            logger.info(f"✅ Список рахунків отримано успішно ({len(invoices_list)} рахунків)")
+            
+            # Step 4: Check that newly created invoice has drive_file_id in the list
+            logger.info("4. Перевірка що новостворений рахунок має поле drive_file_id в списку...")
+            
+            found_invoice = None
+            for invoice in invoices_list:
+                if invoice.get('number') == invoice_number:
+                    found_invoice = invoice
+                    break
+            
+            if not found_invoice:
+                logger.error(f"❌ Новостворений рахунок з номером {invoice_number} не знайдено в списку")
+                return False
+            
+            # Check if the invoice in the list has drive_file_id
+            list_drive_file_id = found_invoice.get('drive_file_id', '')
+            if not list_drive_file_id or list_drive_file_id == '':
+                logger.error("❌ Новий рахунок в GET /api/invoices НЕ має drive_file_id або він порожній")
+                logger.error(f"   drive_file_id в списку: '{list_drive_file_id}'")
+                return False
+            
+            logger.info(f"✅ Новий рахунок в GET /api/invoices має drive_file_id: {list_drive_file_id}")
+            
+            # Step 5: Log results as requested
+            logger.info("=" * 50)
+            logger.info("РЕЗУЛЬТАТИ ТЕСТУВАННЯ:")
+            logger.info("=" * 50)
+            logger.info(f"✅ Response від generate-pdf містить drive_file_id: ТАК")
+            logger.info(f"   Значення drive_file_id: {drive_file_id}")
+            logger.info(f"✅ Новий рахунок в GET /api/invoices має drive_file_id: ТАК")
+            logger.info(f"   Значення drive_file_id в списку: {list_drive_file_id}")
+            
+            # Verify they match
+            if drive_file_id == list_drive_file_id:
+                logger.info(f"✅ drive_file_id співпадає в обох випадках")
+            else:
+                logger.warning(f"⚠️  drive_file_id не співпадає: response='{drive_file_id}', list='{list_drive_file_id}'")
+            
+            return True
+                
+        except Exception as e:
+            logger.error(f"❌ Тест drive_file_id провалився з помилкою: {str(e)}")
+            return False
+    
     def test_specific_google_drive_scenario(self):
         """Test the specific Google Drive scenario from the review request"""
         logger.info("Testing specific Google Drive scenario from review request...")
