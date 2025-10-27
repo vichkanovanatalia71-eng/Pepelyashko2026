@@ -252,6 +252,7 @@ metadata:
 
 test_plan:
   current_focus:
+    - "UI/UX Design Update - surdo.org.ua Style"
     - "Contract Preview with Google Drive Viewer"
     - "Contract Download with Drive Link"
     - "Contract Email with Drive Link"
@@ -260,6 +261,7 @@ test_plan:
   test_priority: "high_first"
   completed_tests:
     - "Counterparty Search by ЄДРПОУ in 'Основні дані'"
+    - "UI/UX Design Update - surdo.org.ua Style"
 
 agent_communication:
   - agent: "main"
