@@ -1,34 +1,146 @@
-.App-logo {
-    height: 40vmin;
-    pointer-events: none;
+.glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(107, 191, 199, 0.15);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-    .App-logo {
-        animation: App-logo-spin infinite 20s linear;
-    }
+.glass-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(107, 191, 199, 0.25);
 }
 
-.App-header {
-    background-color: #0f0f10;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    font-size: calc(10px + 2vmin);
-    color: white;
+.header-gradient {
+  background: linear-gradient(135deg, rgba(232, 245, 247, 0.9) 0%, rgba(240, 244, 255, 0.9) 100%);
+  backdrop-filter: blur(20px);
 }
 
-.App-link {
-    color: #61dafb;
+.icon-wrapper {
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #6bbfc7 0%, #7dd3db 100%);
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(107, 191, 199, 0.3);
 }
 
-@keyframes App-logo-spin {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
+.tabs-list {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(12px);
+  padding: 6px;
+  border-radius: 12px;
+  border: 1px solid rgba(107, 191, 199, 0.2);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #6bbfc7 0%, #5ab4be 100%);
+  color: white;
+  font-weight: 600;
+  border: none;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(107, 191, 199, 0.3);
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #5ab4be 0%, #4aa9b3 100%);
+  box-shadow: 0 6px 20px rgba(107, 191, 199, 0.4);
+  transform: translateY(-1px);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-secondary {
+  background: linear-gradient(135deg, #a8d5dd 0%, #b8e0e8 100%);
+  color: #2d6a73;
+  font-weight: 600;
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+  background: linear-gradient(135deg, #98cad6 0%, #a8d5dd 100%);
+  transform: translateY(-1px);
+}
+
+.item-card {
+  background: linear-gradient(135deg, rgba(168, 213, 221, 0.1) 0%, rgba(184, 224, 232, 0.1) 100%);
+  border: 1px solid rgba(107, 191, 199, 0.2);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.item-card:hover {
+  background: linear-gradient(135deg, rgba(168, 213, 221, 0.15) 0%, rgba(184, 224, 232, 0.15) 100%);
+  border-color: rgba(107, 191, 199, 0.3);
+  box-shadow: 0 4px 12px rgba(107, 191, 199, 0.15);
+}
+
+.counterparty-card {
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(107, 191, 199, 0.2);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.counterparty-card:hover {
+  background: rgba(255, 255, 255, 0.7);
+  border-color: rgba(107, 191, 199, 0.4);
+  box-shadow: 0 4px 16px rgba(107, 191, 199, 0.2);
+  transform: translateX(4px);
+}
+
+.contract-badge {
+  padding: 4px 12px;
+  background: linear-gradient(135deg, #6bbfc7 0%, #7dd3db 100%);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.glass-card {
+  animation: fadeIn 0.5s ease-out;
+}
+
+/* Input focus styles */
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: #6bbfc7;
+  box-shadow: 0 0 0 3px rgba(107, 191, 199, 0.1);
+}
+
+/* Button transitions */
+button {
+  transition: all 0.3s ease;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .icon-wrapper {
+    width: 48px;
+    height: 48px;
+  }
 }
