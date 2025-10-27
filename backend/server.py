@@ -632,11 +632,9 @@ async def generate_contract_pdf(data: ContractGenerateRequest):
             'amount': data.total_amount
         }
         
-        # Add Drive link to contract record if available
-        if 'drive_view_link' in result:
-            contract_record['drive_link'] = result['drive_view_link']
-        
-        sheets_service.create_contract(contract_record)
+        # Get drive_file_id from result
+        drive_file_id = result.get('drive_file_id', '')
+        sheets_service.create_contract(contract_record, drive_file_id)
         
         return {
             'success': True,
