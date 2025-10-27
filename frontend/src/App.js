@@ -232,6 +232,15 @@ function App() {
     amount: 0
   });
   
+  // Contract PDF preview dialog state
+  const [showContractPreview, setShowContractPreview] = useState(false);
+  const [contractPdfData, setContractPdfData] = useState(null);
+  const [contractEmailForm, setContractEmailForm] = useState({
+    recipient: 'counterparty', // 'counterparty', 'own', 'custom'
+    customEmail: '',
+    counterpartyEmail: ''
+  });
+  
   // Document creation from counterparty view
   const [showDocCreateDialog, setShowDocCreateDialog] = useState(false);
   const [docTypeToCreate, setDocTypeToCreate] = useState('');
