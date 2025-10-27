@@ -217,6 +217,45 @@ async def get_counterparties():
                     'signature': str(record.get('Підпис', ''))
                 })
         
+
+
+@api_router.put("/counterparties/{edrpou}", response_model=dict)
+async def update_counterparty(edrpou: str, data: CounterpartyCreate):
+    """Update counterparty in 'Основні дані' sheet."""
+    if sheets_service is None:
+        raise HTTPException(status_code=503, detail="Google Sheets service not available")
+    
+    try:
+        # Prepare update data
+        update_data = {
+            'Назва': data.representative_name,
+            'Юридична адреса': data.legal_address or '',
+            'р/р(IBAN)': data.iban,
+            'Банк': data.bank or '',
+            'МФО': data.mfo or '',
+            'email': data.email,
+            'тел': data.phone,
+            'Посада': data.position or '',
+            'В особі': data.represented_by or '',
+            'Підпис': data.signature or ''
+        }
+        
+        success = sheets_service.update_counterparty_in_main_data(edrpou, update_data)
+        
+        if success:
+            return {
+                'success': True,
+                'message': 'Контрагента успішно оновлено'
+            }
+        else:
+            raise HTTPException(status_code=404, detail="Контрагента не знайдено")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error updating counterparty: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
         return counterparties
     except Exception as e:
         logging.error(f"Error getting counterparties: {str(e)}")
