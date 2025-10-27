@@ -1322,9 +1322,7 @@ function App() {
                     const pdfResponse = await axios.post(`${API}/contracts/generate-pdf`, {
                       counterparty_edrpou: searchEdrpou,
                       subject: contractForm.subject,
-                      items: documentForm.items.length > 0 && documentForm.items[0].name 
-                        ? documentForm.items 
-                        : [{ name: contractForm.subject, unit: 'послуга', quantity: 1, price: contractForm.amount, amount: contractForm.amount }],
+                      items: contractForm.items,
                       total_amount: contractForm.amount
                     });
                     
