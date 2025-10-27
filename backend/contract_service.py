@@ -218,14 +218,17 @@ class ContractService:
 Система управління документами
             """)
             
-            # Attach PDF
+            # Attach PDF with proper Unicode filename encoding
             with open(pdf_path, 'rb') as f:
                 pdf_data = f.read()
+                # Get the filename and encode it properly for email
+                original_filename = os.path.basename(pdf_path)
+                # Use RFC 2231 encoding for the filename
                 message.add_attachment(
                     pdf_data,
                     maintype='application',
                     subtype='pdf',
-                    filename=os.path.basename(pdf_path)
+                    filename=('utf-8', '', original_filename.encode('utf-8'))
                 )
             
             # Send email with start_tls
