@@ -1462,7 +1462,7 @@ function App() {
                           placeholder="Назва товару/послуги"
                           value={item.name}
                           onChange={(e) => {
-                            const newItems = [...contractForm.items];
+                            const newItems = [...(contractForm.items || [])];
                             newItems[index].name = e.target.value;
                             setContractForm({...contractForm, items: newItems});
                           }}
