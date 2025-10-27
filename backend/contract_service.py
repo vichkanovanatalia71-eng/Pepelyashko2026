@@ -19,10 +19,11 @@ from typing import Dict, Any, Optional
 logger = logging.getLogger(__name__)
 
 class ContractService:
-    def __init__(self):
+    def __init__(self, drive_service=None):
         self.template_path = Path(__file__).parent / "contract_template.docx"
         self.output_dir = Path(__file__).parent / "generated_contracts"
         self.output_dir.mkdir(exist_ok=True)
+        self.drive_service = drive_service
         
     def generate_contract_pdf(self, contract_data: Dict[str, Any]) -> str:
         """Generate PDF contract using ReportLab and return file path"""
