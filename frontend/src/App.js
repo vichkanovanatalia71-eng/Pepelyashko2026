@@ -1011,71 +1011,73 @@ function App() {
 
         {/* Order Creation Dialog */}
         <Dialog open={showOrderDialog} onOpenChange={setShowOrderDialog}>
-          <DialogContent className="sm:max-w-[600px]">
+          <DialogContent className="sm:max-w-[600px] bg-white" data-testid="order-dialog">
             <DialogHeader>
-              <DialogTitle>Створення документів на основі замовлення</DialogTitle>
-              <DialogDescription>
+              <DialogTitle className="text-gray-900 text-xl font-bold">Створення документів на основі замовлення</DialogTitle>
+              <DialogDescription className="text-gray-600">
                 Виберіть документи, які потрібно створити на основі цього замовлення
               </DialogDescription>
             </DialogHeader>
             
             <div className="space-y-4 py-4">
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 p-3 rounded-lg hover:bg-gray-50 transition-colors">
                 <Checkbox
                   id="create-invoice"
                   checked={selectedDocs.invoice}
                   onCheckedChange={(checked) => setSelectedDocs({...selectedDocs, invoice: checked})}
                 />
-                <Label htmlFor="create-invoice" className="cursor-pointer">Створити Рахунок</Label>
+                <Label htmlFor="create-invoice" className="cursor-pointer text-gray-800 font-medium">Створити Рахунок</Label>
               </div>
               
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 p-3 rounded-lg hover:bg-gray-50 transition-colors">
                 <Checkbox
                   id="create-act"
                   checked={selectedDocs.act}
                   onCheckedChange={(checked) => setSelectedDocs({...selectedDocs, act: checked})}
                 />
-                <Label htmlFor="create-act" className="cursor-pointer">Створити Акт виконаних робіт</Label>
+                <Label htmlFor="create-act" className="cursor-pointer text-gray-800 font-medium">Створити Акт виконаних робіт</Label>
               </div>
               
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 p-3 rounded-lg hover:bg-gray-50 transition-colors">
                 <Checkbox
                   id="create-waybill"
                   checked={selectedDocs.waybill}
                   onCheckedChange={(checked) => setSelectedDocs({...selectedDocs, waybill: checked})}
                 />
-                <Label htmlFor="create-waybill" className="cursor-pointer">Створити Видаткову накладну</Label>
+                <Label htmlFor="create-waybill" className="cursor-pointer text-gray-800 font-medium">Створити Видаткову накладну</Label>
               </div>
               
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 p-3 rounded-lg hover:bg-gray-50 transition-colors">
                 <Checkbox
                   id="create-contract"
                   checked={selectedDocs.contract}
                   onCheckedChange={(checked) => setSelectedDocs({...selectedDocs, contract: checked})}
                 />
-                <Label htmlFor="create-contract" className="cursor-pointer">Створити Договір</Label>
+                <Label htmlFor="create-contract" className="cursor-pointer text-gray-800 font-medium">Створити Договір</Label>
               </div>
               
               {selectedDocs.contract && (
-                <div className="ml-6 space-y-3 p-4 bg-gray-50 rounded-lg">
+                <div className="ml-6 space-y-3 p-4 bg-blue-50 rounded-lg border border-blue-200">
                   <div className="space-y-2">
-                    <Label htmlFor="dialog-contract-subject">Предмет договору *</Label>
+                    <Label htmlFor="dialog-contract-subject" className="text-gray-800 font-medium">Предмет договору *</Label>
                     <Input
                       id="dialog-contract-subject"
                       value={contractForm.subject}
                       onChange={(e) => setContractForm({...contractForm, subject: e.target.value})}
                       placeholder="Наприклад: Постачання товарів..."
+                      className="bg-white"
                     />
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="dialog-contract-amount">Сума договору (грн)</Label>
+                    <Label htmlFor="dialog-contract-amount" className="text-gray-800 font-medium">Сума договору (грн)</Label>
                     <Input
                       id="dialog-contract-amount"
                       type="number"
                       step="0.01"
                       value={contractForm.amount || (orderData?.total_amount || 0)}
                       onChange={(e) => setContractForm({...contractForm, amount: parseFloat(e.target.value)})}
+                      className="bg-white"
                     />
                   </div>
                 </div>
