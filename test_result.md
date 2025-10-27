@@ -246,6 +246,8 @@ test_plan:
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
+  completed_tests:
+    - "Counterparty Search by ЄДРПОУ in 'Основні дані'"
 
 agent_communication:
   - agent: "main"
