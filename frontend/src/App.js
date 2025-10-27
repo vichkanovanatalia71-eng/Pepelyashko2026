@@ -1453,6 +1453,57 @@ function App() {
                 </form>
               </CardContent>
             </Card>
+            
+            {/* List of all contracts */}
+            <Card className="glass-card mt-6">
+              <CardHeader>
+                <CardTitle className="text-xl">Всі договори ({allContracts.length})</CardTitle>
+                <CardDescription>Останні створені договори</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {allContracts.length > 0 ? (
+                  <div className="space-y-3">
+                    {allContracts.map((doc, idx) => (
+                      <div key={idx} className="p-4 bg-teal-50 rounded-lg border border-teal-200 flex justify-between items-center hover:shadow-md transition-shadow">
+                        <div>
+                          <p className="font-semibold text-gray-900">Договір №{doc.number}</p>
+                          <p className="text-sm text-gray-600">від {doc.date}</p>
+                          <p className="text-sm text-gray-700 mt-1">{doc.counterparty_name}</p>
+                          <p className="text-sm text-gray-600 mt-1">{doc.subject}</p>
+                          <p className="text-sm font-medium text-teal-700 mt-1">Сума: {doc.amount} грн</p>
+                        </div>
+                        {doc.drive_file_id && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setContractPdfData({
+                                drive_file_id: doc.drive_file_id,
+                                drive_view_link: `https://drive.google.com/file/d/${doc.drive_file_id}/view`,
+                                drive_download_link: `https://drive.google.com/uc?export=download&id=${doc.drive_file_id}`,
+                                contract_number: doc.number
+                              });
+                              setContractEmailForm({
+                                recipient: 'counterparty',
+                                customEmail: '',
+                                counterpartyEmail: ''
+                              });
+                              setShowContractPreview(true);
+                            }}
+                            className="btn-secondary"
+                          >
+                            <Eye className="w-4 h-4 mr-1" />
+                            Переглянути
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-center py-4">Договорів поки немає</p>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
 
