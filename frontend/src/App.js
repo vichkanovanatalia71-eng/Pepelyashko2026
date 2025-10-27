@@ -1031,6 +1031,17 @@ function App() {
             </DialogHeader>
             
             <div className="space-y-4 py-4">
+              <div className="flex items-center space-x-2 p-3 rounded-lg bg-blue-50 border border-blue-200">
+                <Checkbox
+                  id="create-order"
+                  checked={selectedDocs.order}
+                  onCheckedChange={(checked) => setSelectedDocs({...selectedDocs, order: checked})}
+                />
+                <Label htmlFor="create-order" className="cursor-pointer text-blue-900 font-semibold">
+                  ✓ Створити замовлення (вже створено)
+                </Label>
+              </div>
+              
               <div className="flex items-center space-x-2 p-3 rounded-lg hover:bg-gray-50 transition-colors">
                 <Checkbox
                   id="create-invoice"
