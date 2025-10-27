@@ -101,3 +101,86 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: "Fix UnicodeEncodeError when generating/serving PDF contracts with Ukrainian characters in filenames. PDF preview shows 'Internal server error' and email sending fails."
+
+backend:
+  - task: "Contract PDF Generation with Unicode Support"
+    implemented: true
+    working: "needs_testing"
+    file: "/app/backend/contract_service.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "user"
+        comment: "User reported PDF preview showing 'Internal server error' and email sending failing due to UnicodeEncodeError with Ukrainian characters (П) in filename"
+      - working: "needs_testing"
+        agent: "main"
+        comment: "Fixed Unicode encoding in email attachment by using RFC 2231 encoding tuple format: filename=('utf-8', '', original_filename.encode('utf-8')). This properly handles Ukrainian characters in email attachments."
+
+  - task: "Contract PDF Download Endpoint"
+    implemented: true
+    working: "needs_testing"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "user"
+        comment: "PDF download failing with Unicode characters in filename"
+      - working: "already_fixed"
+        agent: "main"
+        comment: "Download endpoint already uses RFC 5987 encoding format: 'Content-Disposition': f'inline; filename*=UTF-8\\'\\''{encoded_filename}' which properly handles Unicode characters in HTTP headers"
+
+  - task: "Contract Email Sending"
+    implemented: true
+    working: "needs_testing"
+    file: "/app/backend/contract_service.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "user"
+        comment: "User reported 'Помилка при відправці email' (Email sending error) with screenshot showing error notification"
+      - working: "needs_testing"
+        agent: "main"
+        comment: "Fixed Unicode encoding in email attachment. The email attachment now uses proper RFC 2231 encoding for filenames with Ukrainian characters."
+
+frontend:
+  - task: "Contract Preview Dialog"
+    implemented: true
+    working: "needs_testing"
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "user"
+        comment: "Preview dialog shows {'detail':'Internal server error'} instead of PDF"
+      - working: "needs_testing"
+        agent: "main"
+        comment: "Backend fixes should resolve the internal server error. Frontend code doesn't need changes as it's correctly requesting the PDF from the backend."
+
+metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 1
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "Contract PDF Generation with Unicode Support"
+    - "Contract PDF Download Endpoint"
+    - "Contract Email Sending"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+  - agent: "main"
+    message: "Fixed Unicode encoding issues in contract_service.py by using RFC 2231 encoding for email attachments. The filename parameter now uses tuple format: ('utf-8', '', filename.encode('utf-8')) which properly encodes Ukrainian characters. The download endpoint already had proper RFC 5987 encoding. Ready for backend testing to verify: 1) PDF generation works with Ukrainian characters in contract number, 2) PDF preview loads correctly, 3) PDF download works, 4) Email sending works with Ukrainian filenames."
