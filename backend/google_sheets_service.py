@@ -325,7 +325,7 @@ class GoogleSheetsService:
             worksheet = self.spreadsheet.worksheet("Основні дані")
             
             # Define expected headers to handle duplicate empty headers
-            expected_headers = ['ЄДРПОУ', 'Назва', 'Юридична адреса', 'р/р(IBAN)', 'Банк', 'МФО', 'email', 'тел', 'Посада', 'В особі']
+            expected_headers = ['ЄДРПОУ', 'Назва', 'Юридична адреса', 'р/р(IBAN)', 'Банк', 'МФО', 'email', 'тел', 'Посада', 'В особі', 'Підпис']
             
             try:
                 records = worksheet.get_all_records(expected_headers=expected_headers)
@@ -385,7 +385,7 @@ class GoogleSheetsService:
             worksheet = self.spreadsheet.worksheet("Основні дані")
             
             # Define expected headers to handle duplicate empty headers
-            expected_headers = ['ЄДРПОУ', 'Назва', 'Юридична адреса', 'р/р(IBAN)', 'Банк', 'МФО', 'email', 'тел', 'Посада', 'В особі']
+            expected_headers = ['ЄДРПОУ', 'Назва', 'Юридична адреса', 'р/р(IBAN)', 'Банк', 'МФО', 'email', 'тел', 'Посада', 'В особі', 'Підпис']
             
             try:
                 records = worksheet.get_all_records(expected_headers=expected_headers)
