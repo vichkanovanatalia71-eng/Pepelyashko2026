@@ -1244,13 +1244,18 @@ function App() {
               {/* PDF Preview */}
               {contractPdfData && (
                 <div className="border-2 border-gray-300 rounded-lg overflow-hidden bg-gray-100" style={{height: '500px'}}>
-                  <iframe
-                    src={`${API}/contracts/download/${contractPdfData.pdf_filename}#toolbar=0`}
-                    style={{width: '100%', height: '100%', border: 'none'}}
-                    title="Попередній перегляд договору"
-                  >
-                    <p>Ваш браузер не підтримує перегляд PDF. <a href={`${API}/contracts/download/${contractPdfData.pdf_filename}`} target="_blank" rel="noopener noreferrer">Завантажити PDF</a></p>
-                  </iframe>
+                  {contractPdfData.drive_view_link ? (
+                    <iframe
+                      src={contractPdfData.drive_view_link}
+                      style={{width: '100%', height: '100%', border: 'none'}}
+                      title="Попередній перегляд договору"
+                      allow="fullscreen"
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-gray-500">
+                      <p>PDF генерується... Оновіть сторінку для перегляду</p>
+                    </div>
+                  )}
                 </div>
               )}
               
