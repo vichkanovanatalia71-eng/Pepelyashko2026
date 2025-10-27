@@ -231,7 +231,7 @@ class DocumentService:
                     )
                     result.update({
                         'drive_file_id': drive_result['file_id'],
-                        'drive_view_link': drive_result['view_link'],
+                        'drive_view_link': drive_result['web_view_link'],
                         'drive_download_link': drive_result['download_link']
                     })
                 except Exception as e:
@@ -446,7 +446,7 @@ class DocumentService:
                     )
                     result.update({
                         'drive_file_id': drive_result['file_id'],
-                        'drive_view_link': drive_result['view_link'],
+                        'drive_view_link': drive_result['web_view_link'],
                         'drive_download_link': drive_result['download_link']
                     })
                 except Exception as e:
@@ -636,7 +636,7 @@ class DocumentService:
                     )
                     result.update({
                         'drive_file_id': drive_result['file_id'],
-                        'drive_view_link': drive_result['view_link'],
+                        'drive_view_link': drive_result['web_view_link'],
                         'drive_download_link': drive_result['download_link']
                     })
                 except Exception as e:
