@@ -165,6 +165,42 @@ backend:
         agent: "testing"
         comment: "✅ Email відправка працює коректно з українськими символами та Google Drive посиланнями. Код досягає SMTP рівня без Unicode помилок. SMTP автентифікація не налаштована (очікувано в тестовому середовищі). RFC 2231 кодування для українських назв файлів працює правильно."
 
+  - task: "Invoice PDF Generation with Drive Upload"
+    implemented: true
+    working: "needs_testing"
+    file: "/app/backend/document_service.py, /app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "needs_testing"
+        agent: "main"
+        comment: "Реалізовано generate_invoice_pdf в document_service.py з повною інтеграцією Google Drive. Використовує дані з 'Мої дані' (постачальник) та 'Основні дані' (покупець). Нумерація: 4_середніх_цифри_ЄДРПОУ-послідовний_номер. Позначка 'не платник ПДВ'. Додано API endpoint POST /api/invoices/generate-pdf в server.py."
+
+  - task: "Act PDF Generation with Drive Upload"
+    implemented: true
+    working: "needs_testing"
+    file: "/app/backend/document_service.py, /app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "needs_testing"
+        agent: "main"
+        comment: "Реалізовано generate_act_pdf в document_service.py з повною інтеграцією Google Drive. Використовує дані з 'Мої дані' (постачальник) та 'Основні дані' (покупець). Нумерація: 4_середніх_цифри_ЄДРПОУ-послідовний_номер. Позначка 'не платник ПДВ'. Додано API endpoint POST /api/acts/generate-pdf в server.py."
+
+  - task: "Waybill PDF Generation with Drive Upload"
+    implemented: true
+    working: "needs_testing"
+    file: "/app/backend/document_service.py, /app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "needs_testing"
+        agent: "main"
+        comment: "Реалізовано generate_waybill_pdf в document_service.py з повною інтеграцією Google Drive. Використовує дані з 'Мої дані' (постачальник) та 'Основні дані' (покупець). Нумерація: 4_середніх_цифри_ЄДРПОУ-послідовний_номер. Позначка 'не платник ПДВ'. Додано API endpoint POST /api/waybills/generate-pdf в server.py."
+
   - task: "Backend API Endpoints Update"
     implemented: true
     working: true
