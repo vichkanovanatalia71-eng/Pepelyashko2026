@@ -366,10 +366,10 @@ async def generate_contract_pdf(data: ContractGenerateRequest):
         raise HTTPException(status_code=503, detail="Google Sheets service not available")
     
     try:
-        # Get counterparty data
-        counterparty = sheets_service.get_counterparty_by_edrpou(data.counterparty_edrpou)
-        if not counterparty:
-            raise HTTPException(status_code=404, detail="Контрагента не знайдено")
+        # Get buyer data from "Основні дані" sheet
+        buyer_data = sheets_service.get_buyer_main_data()
+        if not buyer_data or not buyer_data.get('ЄДРПОУ'):
+            raise HTTPException(status_code=404, detail="Основні дані покупця не знайдено в Google Sheets")
         
         # Generate contract number if not provided
         if not data.contract_number:
@@ -385,8 +385,7 @@ async def generate_contract_pdf(data: ContractGenerateRequest):
         contract_data = {
             'contract_number': contract_number,
             'contract_date': datetime.now().strftime('%d.%m.%Y'),
-            'city': 'Одеса',
-            'counterparty': counterparty,
+            'buyer_data': buyer_data,  # Data from "Основні дані"
             'subject': data.subject,
             'items': [item.model_dump() for item in data.items],
             'total_amount': data.total_amount
@@ -400,7 +399,7 @@ async def generate_contract_pdf(data: ContractGenerateRequest):
         
         # Save contract to Google Sheets with Drive link
         contract_record = {
-            'counterparty_edrpou': data.counterparty_edrpou,
+            'counterparty_edrpou': buyer_data.get('ЄДРПОУ', ''),
             'subject': data.subject,
             'amount': data.total_amount
         }
