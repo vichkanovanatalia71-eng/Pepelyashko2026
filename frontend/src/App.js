@@ -1447,7 +1447,7 @@ function App() {
                               variant="outline"
                               size="sm"
                               onClick={() => {
-                                const newItems = contractForm.items.filter((_, i) => i !== index);
+                                const newItems = (contractForm.items || []).filter((_, i) => i !== index);
                                 const newTotal = newItems.reduce((sum, item) => sum + (item.amount || 0), 0);
                                 setContractForm({...contractForm, items: newItems, amount: newTotal});
                               }}
