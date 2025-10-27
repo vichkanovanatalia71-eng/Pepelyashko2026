@@ -12,6 +12,7 @@ from datetime import datetime
 from google_sheets_service import GoogleSheetsService
 from google_drive_service import GoogleDriveService
 from contract_service import ContractService
+from contract_service_v2 import ContractServiceV2
 from document_service import DocumentService
 
 ROOT_DIR = Path(__file__).parent
