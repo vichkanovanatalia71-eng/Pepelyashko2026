@@ -353,7 +353,8 @@ class GoogleSheetsService:
             # Search for counterparty by ЄДРПОУ (column A)
             for record in records:
                 record_edrpou = str(record.get('ЄДРПОУ', '')).strip()
-                if record_edrpou == edrpou.strip():
+                # Skip header row
+                if record_edrpou == edrpou.strip() and record_edrpou != 'ЄДРПОУ':
                     # Convert to dict with all fields
                     counterparty = {
                         'ЄДРПОУ': record_edrpou,
