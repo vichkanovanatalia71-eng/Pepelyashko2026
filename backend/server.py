@@ -178,6 +178,35 @@ async def get_invoices():
         logging.error(f"Error getting invoices: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
+# Order endpoints
+@api_router.post("/orders", response_model=dict)
+async def create_order(data: DocumentCreate):
+    """Create a new order."""
+    if sheets_service is None:
+        raise HTTPException(status_code=503, detail="Google Sheets service not available")
+    
+    try:
+        result = sheets_service.create_order(data.model_dump())
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logging.error(f"Error creating order: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@api_router.get("/orders", response_model=List[Document])
+async def get_orders():
+    """Get all orders."""
+    if sheets_service is None:
+        raise HTTPException(status_code=503, detail="Google Sheets service not available")
+    
+    try:
+        orders = sheets_service.get_documents("Замовлення")
+        return orders
+    except Exception as e:
+        logging.error(f"Error getting orders: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
 # Act endpoints
 @api_router.post("/acts", response_model=dict)
 async def create_act(data: DocumentCreate):
