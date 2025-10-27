@@ -36,8 +36,18 @@ except Exception as e:
     logging.error(f"Failed to initialize Google Sheets service: {str(e)}")
     sheets_service = None
 
-# Initialize Contract service
-contract_service = ContractService()
+# Initialize Google Drive service
+try:
+    drive_service = GoogleDriveService(credentials_path=str(CREDENTIALS_PATH))
+    # Setup folder structure
+    drive_service.setup_folder_structure()
+    logging.info("Google Drive service initialized successfully")
+except Exception as e:
+    logging.error(f"Failed to initialize Google Drive service: {str(e)}")
+    drive_service = None
+
+# Initialize Contract service with Drive integration
+contract_service = ContractService(drive_service=drive_service)
 
 # Create the main app without a prefix
 app = FastAPI(title="Document Management System")
