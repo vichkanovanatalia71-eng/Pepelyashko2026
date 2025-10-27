@@ -100,7 +100,9 @@ class GoogleSheetsService:
                         'email': str(record['Email']),
                         'phone': str(record['Телефон']),
                         'iban': str(record['IBAN']),
-                        'contract_type': str(record['Тип договору'])
+                        'contract_type': str(record['Тип договору']),
+                        'director_position': str(record.get('Посада керівника', '')),
+                        'director_name': str(record.get('ПІБ керівника', ''))
                     }
             return None
         except Exception as e:
