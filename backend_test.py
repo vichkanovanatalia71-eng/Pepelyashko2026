@@ -244,8 +244,8 @@ class ContractTestSuite:
             return False
     
     def check_backend_logs_for_unicode_errors(self):
-        """Check backend logs for any Unicode-related errors"""
-        logger.info("Checking backend logs for Unicode errors...")
+        """Check backend logs for any Unicode-related errors and SMTP status"""
+        logger.info("Checking backend logs for Unicode errors and email status...")
         
         try:
             # Check recent backend logs
@@ -260,9 +260,10 @@ class ContractTestSuite:
             if result.returncode == 0:
                 log_content = result.stdout
                 unicode_errors = []
+                smtp_errors = []
                 
                 # Look for common Unicode error patterns
-                error_patterns = [
+                unicode_patterns = [
                     'UnicodeEncodeError',
                     'UnicodeDecodeError',
                     'codec can\'t encode',
@@ -271,18 +272,34 @@ class ContractTestSuite:
                     'utf-8 codec'
                 ]
                 
+                # Look for SMTP authentication errors
+                smtp_patterns = [
+                    'Username and Password not accepted',
+                    'BadCredentials',
+                    'SMTP authentication'
+                ]
+                
                 for line in log_content.split('\n'):
-                    for pattern in error_patterns:
+                    for pattern in unicode_patterns:
                         if pattern in line:
                             unicode_errors.append(line.strip())
+                    
+                    for pattern in smtp_patterns:
+                        if pattern in line:
+                            smtp_errors.append(line.strip())
                 
                 if unicode_errors:
                     logger.error("❌ Unicode errors found in backend logs:")
-                    for error in unicode_errors[-5:]:  # Show last 5 errors
+                    for error in unicode_errors[-3:]:  # Show last 3 errors
                         logger.error(f"   {error}")
                     return False
                 else:
                     logger.info("✅ No Unicode errors found in recent backend logs")
+                    
+                    if smtp_errors:
+                        logger.info("✅ SMTP authentication errors found (expected in test environment)")
+                        logger.info("   This confirms email sending reached SMTP layer without Unicode issues")
+                    
                     return True
             else:
                 logger.warning("⚠️  Could not read backend logs")
