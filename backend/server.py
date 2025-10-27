@@ -153,6 +153,19 @@ async def get_counterparty(edrpou: str):
         logging.error(f"Error getting counterparty: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
+@api_router.get("/counterparties/{edrpou}/documents")
+async def get_counterparty_documents(edrpou: str):
+    """Get all documents for a specific counterparty."""
+    if sheets_service is None:
+        raise HTTPException(status_code=503, detail="Google Sheets service not available")
+    
+    try:
+        documents = sheets_service.get_counterparty_documents(edrpou)
+        return documents
+    except Exception as e:
+        logging.error(f"Error getting counterparty documents: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
 # Invoice endpoints
 @api_router.post("/invoices", response_model=dict)
 async def create_invoice(data: DocumentCreate):
