@@ -208,7 +208,7 @@ backend:
         comment: "Реалізовано generate_waybill_pdf в document_service.py з повною інтеграцією Google Drive. Використовує дані з 'Мої дані' (постачальник) та 'Основні дані' (покупець). Нумерація: 4_середніх_цифри_ЄДРПОУ-послідовний_номер. Позначка 'не платник ПДВ'. Додано API endpoint POST /api/waybills/generate-pdf в server.py."
       - working: true
         agent: "testing"
-        comment: "✅ ТЕСТ ПРОЙДЕНО: POST /api/waybills/generate-pdf працює повністю! Генерація PDF з українськими символами успішна. Номер документа: 9681-1 (правильний формат: середні 4 цифри ЄДРПОУ-послідовність). Файл: Накладна_9681-1_40196816.pdf. Google Drive інтеграція працює: drive_view_link=https://drive.google.com/file/d/1ssYf5Ra-8Kr4xMymy9G3OomFmrUrvHd3/view?usp=drivesdk, drive_file_id=1ssYf5Ra-8Kr4xMymy9G3OomFmrUrvHd3. Файл завантажено в папку 'Видаткові накладні' на Google Drive. Позначка 'не платник ПДВ' присутня в PDF контенті."
+        comment: "✅ BACKEND ТЕСТУВАННЯ УСПІШНО ЗАВЕРШЕНО: Всі три PDF generation endpoints працюють коректно! POST /api/invoices/generate-pdf ✅, POST /api/acts/generate-pdf ✅, POST /api/waybills/generate-pdf ✅. Українські символи в назвах файлів (Рахунок_9681-1_40196816.pdf, Акт_9681-1_40196816.pdf, Накладна_9681-1_40196816.pdf) ✅. Нумерація документів правильна (9681-1 з ЄДРПОУ 40196816) ✅. Google Drive інтеграція працює (файли завантажуються у відповідні папки: Рахунки, Акти, Видаткові накладні) ✅. Дані беруться з правильних джерел ('Мої дані' та 'Основні дані') ✅."
 
   - task: "Backend API Endpoints Update"
     implemented: true
