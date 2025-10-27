@@ -1109,28 +1109,30 @@ function App() {
         
         {/* Document Creation Dialog from Counterparty View */}
         <Dialog open={showDocCreateDialog} onOpenChange={setShowDocCreateDialog}>
-          <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
+          <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto bg-white">
             <DialogHeader>
-              <DialogTitle>Створення {docTypeToCreate === 'contracts' ? 'договору' : 'документа'}</DialogTitle>
+              <DialogTitle className="text-gray-900 text-xl font-bold">Створення {docTypeToCreate === 'contracts' ? 'договору' : 'документа'}</DialogTitle>
             </DialogHeader>
             
             {docTypeToCreate === 'contracts' ? (
-              <div className="space-y-4">
+              <div className="space-y-4 py-4">
                 <div className="space-y-2">
-                  <Label>Предмет договору *</Label>
+                  <Label className="text-gray-800 font-medium">Предмет договору *</Label>
                   <Input
                     value={contractForm.subject}
                     onChange={(e) => setContractForm({...contractForm, subject: e.target.value})}
                     placeholder="Наприклад: Постачання товарів..."
+                    className="bg-white"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Сума договору (грн) *</Label>
+                  <Label className="text-gray-800 font-medium">Сума договору (грн) *</Label>
                   <Input
                     type="number"
                     step="0.01"
                     value={contractForm.amount}
                     onChange={(e) => setContractForm({...contractForm, amount: parseFloat(e.target.value)})}
+                    className="bg-white"
                   />
                 </div>
                 <Button 
@@ -1161,10 +1163,10 @@ function App() {
                 </Button>
               </div>
             ) : (
-              <form onSubmit={(e) => handleDocumentSubmit(e, docTypeToCreate, docTypeToCreate)} className="space-y-4">
+              <form onSubmit={(e) => handleDocumentSubmit(e, docTypeToCreate, docTypeToCreate)} className="space-y-4 py-4">
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <Label>Товари/Роботи</Label>
+                    <Label className="text-gray-800 font-medium">Товари/Роботи</Label>
                     <Button 
                       type="button" 
                       onClick={addItem} 
