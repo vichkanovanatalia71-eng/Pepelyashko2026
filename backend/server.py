@@ -608,35 +608,30 @@ async def generate_contract_pdf(data: ContractGenerateRequest):
     
     try:
         # Get buyer data from "Основні дані" sheet
-        buyer_data = sheets_service.get_buyer_main_data()
+        buyer_data = sheets_service.get_buyer_main_data(data.counterparty_edrpou)
         if not buyer_data or not buyer_data.get('ЄДРПОУ'):
-            raise HTTPException(status_code=404, detail="Основні дані покупця не знайдено в Google Sheets")
+            raise HTTPException(status_code=404, detail=f"Контрагента з ЄДРПОУ {data.counterparty_edrpou} не знайдено в 'Основні дані'")
         
-        # Generate contract number if not provided
-        if not data.contract_number:
-            # Get next contract number
-            worksheet = sheets_service.spreadsheet.worksheet("Договори")
-            records = worksheet.get_all_records()
-            next_number = len(records) + 1
-            contract_number = f"П-{next_number:04d}"
-        else:
-            contract_number = data.contract_number
+        # Get supplier data from "Мої дані" sheet
+        supplier_data = sheets_service.get_supplier_data()
+        if not supplier_data:
+            raise HTTPException(status_code=404, detail="Дані постачальника не знайдено в 'Мої дані'")
         
         # Prepare contract data
         contract_data = {
-            'contract_number': contract_number,
-            'contract_date': datetime.now().strftime('%d.%m.%Y'),
-            'buyer_data': buyer_data,  # Data from "Основні дані"
             'subject': data.subject,
-            'items': [item.model_dump() for item in data.items],
-            'total_amount': data.total_amount
         }
         
-        # Generate PDF and upload to Drive
-        result = contract_service.generate_contract_pdf(
+        # Generate PDF using new service
+        result = contract_service_v2.generate_contract_pdf(
             contract_data=contract_data,
+            supplier_data=supplier_data,
+            buyer_data=buyer_data,
+            items=[item.model_dump() for item in data.items] if data.items else [],
             upload_to_drive=True
         )
+        
+        contract_number = result['contract_number']
         
         # Save contract to Google Sheets with Drive link
         contract_record = {
@@ -658,6 +653,7 @@ async def generate_contract_pdf(data: ContractGenerateRequest):
             'drive_view_link': result.get('drive_view_link', ''),
             'drive_download_link': result.get('drive_download_link', ''),
             'drive_file_id': result.get('drive_file_id', '')
+        }
         }
         
     except HTTPException:
