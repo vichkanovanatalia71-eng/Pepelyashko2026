@@ -908,8 +908,28 @@ function App() {
                           <h4 className="font-semibold mb-2">Рахунки ({counterpartyDocuments.invoices.length})</h4>
                           <div className="space-y-2">
                             {counterpartyDocuments.invoices.map((doc, idx) => (
-                              <div key={idx} className="p-3 bg-green-50 rounded-lg">
+                              <div key={idx} className="p-3 bg-green-50 rounded-lg flex justify-between items-center">
                                 <p className="text-sm">№{doc.number} від {doc.date} | Сума: {doc.total_amount} грн</p>
+                                {doc.drive_file_id && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      setDocumentPdfData({
+                                        drive_file_id: doc.drive_file_id,
+                                        drive_view_link: `https://drive.google.com/file/d/${doc.drive_file_id}/view`,
+                                        drive_download_link: `https://drive.google.com/uc?export=download&id=${doc.drive_file_id}`,
+                                        invoice_number: doc.number
+                                      });
+                                      setCurrentDocType('invoice');
+                                      setShowDocumentPreview(true);
+                                    }}
+                                    className="btn-secondary ml-2"
+                                  >
+                                    <Eye className="w-4 h-4 mr-1" />
+                                    Переглянути
+                                  </Button>
+                                )}
                               </div>
                             ))}
                           </div>
@@ -921,8 +941,28 @@ function App() {
                           <h4 className="font-semibold mb-2">Акти ({counterpartyDocuments.acts.length})</h4>
                           <div className="space-y-2">
                             {counterpartyDocuments.acts.map((doc, idx) => (
-                              <div key={idx} className="p-3 bg-purple-50 rounded-lg">
+                              <div key={idx} className="p-3 bg-purple-50 rounded-lg flex justify-between items-center">
                                 <p className="text-sm">№{doc.number} від {doc.date} | Сума: {doc.total_amount} грн</p>
+                                {doc.drive_file_id && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      setDocumentPdfData({
+                                        drive_file_id: doc.drive_file_id,
+                                        drive_view_link: `https://drive.google.com/file/d/${doc.drive_file_id}/view`,
+                                        drive_download_link: `https://drive.google.com/uc?export=download&id=${doc.drive_file_id}`,
+                                        act_number: doc.number
+                                      });
+                                      setCurrentDocType('act');
+                                      setShowDocumentPreview(true);
+                                    }}
+                                    className="btn-secondary ml-2"
+                                  >
+                                    <Eye className="w-4 h-4 mr-1" />
+                                    Переглянути
+                                  </Button>
+                                )}
                               </div>
                             ))}
                           </div>
@@ -934,8 +974,28 @@ function App() {
                           <h4 className="font-semibold mb-2">Видаткові накладні ({counterpartyDocuments.waybills.length})</h4>
                           <div className="space-y-2">
                             {counterpartyDocuments.waybills.map((doc, idx) => (
-                              <div key={idx} className="p-3 bg-orange-50 rounded-lg">
+                              <div key={idx} className="p-3 bg-orange-50 rounded-lg flex justify-between items-center">
                                 <p className="text-sm">№{doc.number} від {doc.date} | Сума: {doc.total_amount} грн</p>
+                                {doc.drive_file_id && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      setDocumentPdfData({
+                                        drive_file_id: doc.drive_file_id,
+                                        drive_view_link: `https://drive.google.com/file/d/${doc.drive_file_id}/view`,
+                                        drive_download_link: `https://drive.google.com/uc?export=download&id=${doc.drive_file_id}`,
+                                        waybill_number: doc.number
+                                      });
+                                      setCurrentDocType('waybill');
+                                      setShowDocumentPreview(true);
+                                    }}
+                                    className="btn-secondary ml-2"
+                                  >
+                                    <Eye className="w-4 h-4 mr-1" />
+                                    Переглянути
+                                  </Button>
+                                )}
                               </div>
                             ))}
                           </div>
