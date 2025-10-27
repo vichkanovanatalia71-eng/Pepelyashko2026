@@ -68,6 +68,21 @@ class DocumentCreate(BaseModel):
     items: List[DocumentItem] = Field(..., description="Список товарів/робіт")
     total_amount: float = Field(..., description="Загальна сума")
 
+class ContractCreate(BaseModel):
+    counterparty_edrpou: str = Field(..., description="ЄДРПОУ контрагента")
+    contract_type: Optional[str] = Field(None, description="Тип договору")
+    subject: str = Field(..., description="Предмет договору")
+    amount: float = Field(..., description="Сума договору")
+
+class Contract(BaseModel):
+    number: str
+    date: str
+    counterparty_edrpou: str
+    counterparty_name: str
+    contract_type: str
+    subject: str
+    amount: float
+
 class Document(BaseModel):
     number: str
     date: str
