@@ -1307,7 +1307,8 @@ function App() {
               <Button 
                 variant="outline" 
                 onClick={() => {
-                  window.open(`${API}/contracts/download/${contractPdfData?.pdf_filename}`, '_blank');
+                  const downloadLink = contractPdfData?.drive_download_link || `${API}/contracts/download/${contractPdfData?.pdf_filename}`;
+                  window.open(downloadLink, '_blank');
                 }}
                 className="border-gray-300 text-gray-700 hover:bg-gray-100"
               >
