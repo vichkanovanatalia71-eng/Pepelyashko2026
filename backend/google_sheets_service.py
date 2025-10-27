@@ -267,15 +267,26 @@ class GoogleSheetsService:
                 
                 for record in records:
                     if str(record.get('ЄДРПОУ контрагента')) == str(edrpou):
+                        # Skip header rows
+                        try:
+                            amount = float(record['Сума договору']) if record['Сума договору'] else 0.0
+                        except (ValueError, TypeError):
+                            continue
+                            
                         contract = {
                             'number': str(record['Номер']),
                             'date': str(record['Дата']),
                             'counterparty_edrpou': str(record['ЄДРПОУ контрагента']),
                             'counterparty_name': str(record["Ім'я контрагента"]),
-                            'contract_type': str(record['Тип договору']),
+                            'contract_type': str(record.get('Тип договору', '')),
                             'subject': str(record['Предмет договору']),
-                            'amount': float(record['Сума договору']) if record['Сума договору'] else 0.0
+                            'amount': amount
                         }
+                        
+                        # Add drive_file_id if available
+                        if 'Drive File ID' in record:
+                            contract['drive_file_id'] = str(record.get('Drive File ID', ''))
+                        
                         documents['contracts'].append(contract)
             except:
                 pass
