@@ -232,7 +232,12 @@ class GoogleDriveService:
     def delete_file(self, file_id: str):
         """Delete a file from Google Drive"""
         try:
-            self.service.files().delete(fileId=file_id).execute()
+            delete_params = {'fileId': file_id}
+            
+            if self.shared_drive_id:
+                delete_params['supportsAllDrives'] = True
+            
+            self.service.files().delete(**delete_params).execute()
             logger.info(f"Deleted file with ID: {file_id}")
         except Exception as e:
             logger.error(f"Error deleting file: {str(e)}")
@@ -241,10 +246,15 @@ class GoogleDriveService:
     def get_file_link(self, file_id: str) -> Dict[str, str]:
         """Get links for a file"""
         try:
-            file = self.service.files().get(
-                fileId=file_id,
-                fields='webViewLink, webContentLink'
-            ).execute()
+            get_params = {
+                'fileId': file_id,
+                'fields': 'webViewLink, webContentLink'
+            }
+            
+            if self.shared_drive_id:
+                get_params['supportsAllDrives'] = True
+            
+            file = self.service.files().get(**get_params).execute()
             
             return {
                 'web_view_link': file.get('webViewLink', ''),
