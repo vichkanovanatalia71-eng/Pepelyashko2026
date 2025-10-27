@@ -165,7 +165,29 @@ async def get_counterparties():
     try:
         # Get all records from "Основні дані"
         worksheet = sheets_service.spreadsheet.worksheet("Основні дані")
-        records = worksheet.get_all_records()
+        
+        # Define expected headers to handle duplicate empty headers
+        expected_headers = ['ЄДРПОУ', 'Назва', 'Юридична адреса', 'р/р(IBAN)', 'Банк', 'МФО', 'email', 'тел', 'Посада', 'В особі']
+        
+        try:
+            records = worksheet.get_all_records(expected_headers=expected_headers)
+        except Exception as header_error:
+            logging.warning(f"Failed to get records with expected headers: {str(header_error)}")
+            # Fallback: get raw values and process manually
+            all_values = worksheet.get_all_values()
+            if not all_values:
+                return []
+            
+            records = []
+            for row in all_values[1:]:  # Skip header row
+                if any(cell.strip() for cell in row):  # Skip empty rows
+                    record = {}
+                    for i, header in enumerate(expected_headers):
+                        if i < len(row):
+                            record[header] = row[i].strip()
+                        else:
+                            record[header] = ''
+                    records.append(record)
         
         counterparties = []
         for record in records:
@@ -179,7 +201,7 @@ async def get_counterparties():
                     'iban': str(record.get('р/р(IBAN)', '')),
                     'contract_type': '',
                     'director_position': str(record.get('Посада', 'Директор')),
-                    'director_name': str(record.get('Директор', ''))
+                    'director_name': str(record.get('В особі', ''))
                 })
         
         return counterparties
