@@ -49,22 +49,21 @@ class ContractService:
             # Extract data
             contract_number = contract_data.get('contract_number', '001')
             contract_date = contract_data.get('contract_date', datetime.now().strftime('%d.%m.%Y'))
-            city = contract_data.get('city', 'Одеса')
             
             # Counterparty data
             counterparty = contract_data.get('counterparty', {})
-            supplier_name = counterparty.get('representative_name', '')
-            supplier_edrpou = counterparty.get('edrpou', '')
-            supplier_email = counterparty.get('email', '')
-            supplier_phone = counterparty.get('phone', '')
-            supplier_iban = counterparty.get('iban', '')
+            buyer_name = counterparty.get('representative_name', 'Назва контрагента')
+            buyer_edrpou = counterparty.get('edrpou', '')
+            buyer_email = counterparty.get('email', '')
+            buyer_phone = counterparty.get('phone', '')
+            buyer_iban = counterparty.get('iban', '')
             director_position = counterparty.get('director_position', 'Директор')
-            director_name = counterparty.get('director_name', supplier_name)
+            director_name = counterparty.get('director_name', buyer_name)
             
             # Items/specification
             items = contract_data.get('items', [])
             total_amount = contract_data.get('total_amount', 0)
-            subject = contract_data.get('subject', 'Постачання товарів')
+            subject = contract_data.get('subject', 'Товар')
             
             # Generate filename
             filename = f"contract_{contract_number}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
@@ -93,40 +92,45 @@ class ContractService:
             normal_style = ParagraphStyle(
                 'CustomNormal',
                 parent=styles['Normal'],
-                fontSize=11,
+                fontSize=10,
                 alignment=TA_JUSTIFY,
-                spaceAfter=12,
+                spaceAfter=8,
                 fontName='DejaVu'
             )
             
             heading_style = ParagraphStyle(
                 'CustomHeading',
                 parent=styles['Heading2'],
-                fontSize=12,
+                fontSize=11,
                 fontName='DejaVu-Bold',
-                spaceAfter=10
+                spaceAfter=8
+            )
+            
+            small_style = ParagraphStyle(
+                'SmallText',
+                parent=styles['Normal'],
+                fontSize=9,
+                fontName='DejaVu',
+                spaceAfter=6
             )
             
             # Title
-            story.append(Paragraph(f'ДОГОВІР ПОСТАЧАННЯ № {contract_number}', title_style))
+            story.append(Paragraph(f'Договір поставки № {contract_number}', title_style))
             date_style = ParagraphStyle(
                 'DateStyle', 
                 parent=styles['Normal'], 
-                fontSize=11, 
+                fontSize=10, 
                 alignment=TA_CENTER, 
                 spaceAfter=12,
                 fontName='DejaVu'
             )
-            story.append(Paragraph(f'{city}, {contract_date}', date_style))
+            story.append(Paragraph(contract_date, date_style))
             story.append(Spacer(1, 0.5*cm))
             
-            # Introduction
-            intro = f"""КОМУНАЛЬНЕ НЕКОМЕРЦІЙНЕ ПІДПРИЄМСТВО "МУРОВАНОКУРИЛОВЕЦЬКА ЦЕНТРАЛЬНА РАЙОННА ЛІКАРНЯ", 
-            іменоване в подальшому «Покупець», в особі директора Шевцова Анатолія Миколайовича, який діє на підставі Статуту, 
-            з однієї сторони, та <b>{supplier_name}</b>, іменований в подальшому «Постачальник», в особі {director_position} {director_name}, 
-            з іншої сторони, уклали цей Договір про наступне:"""
-            story.append(Paragraph(intro, normal_style))
-            story.append(Spacer(1, 0.5*cm))
+            # Parties
+            story.append(Paragraph(f'<b>Постачальник:</b> ТОВАРИСТВО З ОБМЕЖЕНОЮ ВІДПОВІДАЛЬНІСТЮ "ВОРДКРАФТ" (ЄДРПОУ: 45906348), в особі директора Романа Колонтая, що діє на підставі Статуту, з однієї сторони, та', normal_style))
+            story.append(Paragraph(f'<b>Покупець:</b> {buyer_name}, в особі {director_position} {director_name}, що діє на підставі Статуту, з іншої сторони, разом по тексту цього Договору іменуються як Сторони, а кожна окремо – як Сторона, уклали цей Договір поставки (надалі – Договір) про наступне:', normal_style))
+            story.append(Spacer(1, 0.4*cm))
             
             # Section 1
             story.append(Paragraph('<b>1. ПРЕДМЕТ ДОГОВОРУ</b>', heading_style))
