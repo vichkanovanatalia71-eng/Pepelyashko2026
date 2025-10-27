@@ -1474,7 +1474,7 @@ function App() {
                             placeholder="шт, кг, л"
                             value={item.unit}
                             onChange={(e) => {
-                              const newItems = [...contractForm.items];
+                              const newItems = [...(contractForm.items || [])];
                               newItems[index].unit = e.target.value;
                               setContractForm({...contractForm, items: newItems});
                             }}
@@ -1486,7 +1486,7 @@ function App() {
                             placeholder="Кількість"
                             value={item.quantity}
                             onChange={(e) => {
-                              const newItems = [...contractForm.items];
+                              const newItems = [...(contractForm.items || [])];
                               newItems[index].quantity = parseFloat(e.target.value) || 0;
                               const price = newItems[index].price || 0;
                               const quantity = parseFloat(e.target.value) || 0;
@@ -1502,7 +1502,7 @@ function App() {
                             placeholder="Ціна"
                             value={item.price}
                             onChange={(e) => {
-                              const newItems = [...contractForm.items];
+                              const newItems = [...(contractForm.items || [])];
                               newItems[index].price = parseFloat(e.target.value) || 0;
                               const price = parseFloat(e.target.value) || 0;
                               const quantity = newItems[index].quantity || 0;
