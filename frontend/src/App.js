@@ -164,9 +164,104 @@ function App() {
 
     try {
       const response = await axios.post(`${API}/${endpoint}`, documentForm);
-      toast.success(response.data.message || `${docType} успішно створено!`);
       
-      // Reset form
+      // If creating order, show dialog
+      if (endpoint === 'orders') {
+        setOrderData({
+          ...documentForm,
+          document_number: response.data.document_number
+        });
+        setShowOrderDialog(true);
+        toast.success(response.data.message || `${docType} успішно створено!`);
+      } else {
+        toast.success(response.data.message || `${docType} успішно створено!`);
+        
+        // Reset form
+        setDocumentForm({
+          counterparty_edrpou: '',
+          items: [{ name: '', unit: '', quantity: 0, price: 0, amount: 0 }],
+          total_amount: 0
+        });
+        setSearchEdrpou('');
+        setFoundCounterparty(null);
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.detail || `Помилка при створенні ${docType}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const handleCreateDocumentsFromOrder = async () => {
+    if (!orderData) return;
+    
+    setLoading(true);
+    let successCount = 0;
+    const errors = [];
+    
+    try {
+      // Create invoice
+      if (selectedDocs.invoice) {
+        try {
+          await axios.post(`${API}/invoices`, orderData);
+          successCount++;
+        } catch (e) {
+          errors.push('Рахунок');
+        }
+      }
+      
+      // Create act
+      if (selectedDocs.act) {
+        try {
+          await axios.post(`${API}/acts`, orderData);
+          successCount++;
+        } catch (e) {
+          errors.push('Акт');
+        }
+      }
+      
+      // Create waybill
+      if (selectedDocs.waybill) {
+        try {
+          await axios.post(`${API}/waybills`, orderData);
+          successCount++;
+        } catch (e) {
+          errors.push('Видаткова накладна');
+        }
+      }
+      
+      // Create contract
+      if (selectedDocs.contract) {
+        try {
+          await axios.post(`${API}/contracts`, {
+            counterparty_edrpou: orderData.counterparty_edrpou,
+            subject: contractForm.subject,
+            amount: contractForm.amount || orderData.total_amount
+          });
+          successCount++;
+        } catch (e) {
+          errors.push('Договір');
+        }
+      }
+      
+      if (successCount > 0) {
+        toast.success(`Успішно створено ${successCount} документ(ів)!`);
+      }
+      
+      if (errors.length > 0) {
+        toast.error(`Помилка при створенні: ${errors.join(', ')}`);
+      }
+      
+      // Reset and close dialog
+      setShowOrderDialog(false);
+      setOrderData(null);
+      setSelectedDocs({
+        invoice: false,
+        act: false,
+        waybill: false,
+        contract: false
+      });
+      setContractForm({ subject: '', amount: 0 });
       setDocumentForm({
         counterparty_edrpou: '',
         items: [{ name: '', unit: '', quantity: 0, price: 0, amount: 0 }],
@@ -174,8 +269,9 @@ function App() {
       });
       setSearchEdrpou('');
       setFoundCounterparty(null);
+      
     } catch (error) {
-      toast.error(error.response?.data?.detail || `Помилка при створенні ${docType}`);
+      toast.error('Помилка при створенні документів');
     } finally {
       setLoading(false);
     }
