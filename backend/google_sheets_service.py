@@ -146,7 +146,7 @@ class GoogleSheetsService:
         """Create a new waybill."""
         return self._create_document("Видаткові накладні", data, "видаткову накладну", drive_file_id)
     
-    def create_contract(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def create_contract(self, data: Dict[str, Any], drive_file_id: str = '') -> Dict[str, Any]:
         """Create a new contract."""
         try:
             worksheet = self.spreadsheet.worksheet("Договори")
@@ -167,7 +167,8 @@ class GoogleSheetsService:
                 counterparty['Назва'],
                 data.get('contract_type', ''),
                 data.get('subject', ''),
-                data.get('amount', 0)
+                data.get('amount', 0),
+                drive_file_id  # Add drive_file_id to the row
             ]
             
             worksheet.append_row(row)
