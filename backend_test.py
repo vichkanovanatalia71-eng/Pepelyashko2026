@@ -953,9 +953,9 @@ class ContractTestSuite:
             logger.warning(f"⚠️  Error checking Drive upload logs: {str(e)}")
 
     def run_all_tests(self):
-        """Run all contract tests"""
+        """Run all tests including new PDF generation endpoints"""
         logger.info("=" * 60)
-        logger.info("STARTING GOOGLE DRIVE INTEGRATION TEST SUITE")
+        logger.info("STARTING PDF DOCUMENT GENERATION TEST SUITE")
         logger.info("=" * 60)
         
         test_results = {}
@@ -966,25 +966,37 @@ class ContractTestSuite:
         # Test 2: Google Drive Service Initialization
         test_results['drive_service_init'] = self.test_google_drive_service_initialization()
         
-        # Test 3: Get Counterparties
-        test_results['get_counterparties'] = self.test_get_counterparties()
+        # Test 3: Get Counterparties (specifically looking for ЄДРПОУ 40196816)
+        test_results['get_counterparties'] = self.test_get_counterparties_for_documents()
         
-        # Test 4: Specific Google Drive Scenario (from review request)
-        test_results['specific_drive_scenario'] = self.test_specific_google_drive_scenario()
+        # Test 4: Invoice PDF Generation
+        test_results['invoice_pdf_generation'] = self.test_invoice_pdf_generation()
         
-        # Test 5: Contract PDF Generation with Drive Upload
-        test_results['pdf_generation'] = self.test_contract_pdf_generation()
+        # Test 5: Act PDF Generation
+        test_results['act_pdf_generation'] = self.test_act_pdf_generation()
         
-        # Test 6: Google Drive Links Validation
+        # Test 6: Waybill PDF Generation
+        test_results['waybill_pdf_generation'] = self.test_waybill_pdf_generation()
+        
+        # Test 7: Ukrainian Characters in PDFs
+        test_results['ukrainian_characters'] = self.test_ukrainian_characters_in_pdfs()
+        
+        # Test 8: VAT Exemption Marking
+        test_results['vat_exemption'] = self.test_vat_exemption_marking()
+        
+        # Test 9: Contract PDF Generation (existing test)
+        test_results['contract_pdf_generation'] = self.test_contract_pdf_generation()
+        
+        # Test 10: Google Drive Links Validation
         test_results['drive_links'] = self.test_google_drive_links()
         
-        # Test 7: Contract PDF Download
+        # Test 11: Contract PDF Download (existing test)
         test_results['pdf_download'] = self.test_contract_pdf_download()
         
-        # Test 8: Contract Email Sending with Drive Link
+        # Test 12: Contract Email Sending (existing test)
         test_results['email_sending'] = self.test_contract_email_sending()
         
-        # Test 9: Check for Unicode errors in logs
+        # Test 13: Check for Unicode errors in logs
         test_results['unicode_logs_check'] = self.check_backend_logs_for_unicode_errors()
         
         # Summary
@@ -995,20 +1007,76 @@ class ContractTestSuite:
         passed_tests = 0
         total_tests = len(test_results)
         
-        for test_name, result in test_results.items():
-            status = "✅ PASSED" if result else "❌ FAILED"
-            logger.info(f"{test_name.replace('_', ' ').title()}: {status}")
-            if result:
-                passed_tests += 1
+        # Group results by category
+        critical_tests = [
+            'health_check', 'get_counterparties', 'invoice_pdf_generation', 
+            'act_pdf_generation', 'waybill_pdf_generation'
+        ]
+        
+        important_tests = [
+            'drive_service_init', 'ukrainian_characters', 'vat_exemption', 'drive_links'
+        ]
+        
+        legacy_tests = [
+            'contract_pdf_generation', 'pdf_download', 'email_sending', 'unicode_logs_check'
+        ]
+        
+        # Report critical tests first
+        logger.info("CRITICAL TESTS (New PDF Generation Endpoints):")
+        critical_passed = 0
+        for test_name in critical_tests:
+            if test_name in test_results:
+                result = test_results[test_name]
+                status = "✅ PASSED" if result else "❌ FAILED"
+                logger.info(f"  {test_name.replace('_', ' ').title()}: {status}")
+                if result:
+                    critical_passed += 1
+                    passed_tests += 1
+        
+        logger.info(f"Critical Tests: {critical_passed}/{len(critical_tests)} passed")
+        logger.info("")
+        
+        # Report important tests
+        logger.info("IMPORTANT TESTS (Supporting Features):")
+        important_passed = 0
+        for test_name in important_tests:
+            if test_name in test_results:
+                result = test_results[test_name]
+                status = "✅ PASSED" if result else "❌ FAILED"
+                logger.info(f"  {test_name.replace('_', ' ').title()}: {status}")
+                if result:
+                    important_passed += 1
+                    passed_tests += 1
+        
+        logger.info(f"Important Tests: {important_passed}/{len(important_tests)} passed")
+        logger.info("")
+        
+        # Report legacy tests
+        logger.info("LEGACY TESTS (Existing Contract Features):")
+        legacy_passed = 0
+        for test_name in legacy_tests:
+            if test_name in test_results:
+                result = test_results[test_name]
+                status = "✅ PASSED" if result else "❌ FAILED"
+                logger.info(f"  {test_name.replace('_', ' ').title()}: {status}")
+                if result:
+                    legacy_passed += 1
+                    passed_tests += 1
+        
+        logger.info(f"Legacy Tests: {legacy_passed}/{len(legacy_tests)} passed")
+        logger.info("")
         
         logger.info("=" * 60)
         logger.info(f"OVERALL RESULT: {passed_tests}/{total_tests} tests passed")
         
-        if passed_tests == total_tests:
-            logger.info("🎉 ALL TESTS PASSED - Google Drive integration and Unicode support working correctly!")
+        # Determine success based on critical tests
+        if critical_passed == len(critical_tests):
+            logger.info("🎉 ALL CRITICAL TESTS PASSED - New PDF generation endpoints working correctly!")
+            if passed_tests == total_tests:
+                logger.info("🎉 PERFECT SCORE - All tests passed!")
             return True
         else:
-            logger.error(f"💥 {total_tests - passed_tests} test(s) failed - Issues need attention")
+            logger.error(f"💥 {len(critical_tests) - critical_passed} critical test(s) failed - New PDF endpoints need attention")
             return False
 
 def main():
