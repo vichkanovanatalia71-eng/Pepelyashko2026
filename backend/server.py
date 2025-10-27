@@ -413,7 +413,10 @@ async def download_contract(filename: str):
         return FileResponse(
             path=str(file_path),
             media_type='application/pdf',
-            filename=filename
+            filename=filename,
+            headers={
+                'Content-Disposition': f'inline; filename="{filename}"'
+            }
         )
     except HTTPException:
         raise
