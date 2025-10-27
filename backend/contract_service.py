@@ -164,7 +164,7 @@ class ContractService:
             # Section 4: Ціна і розрахунки
             story.append(Paragraph('<b>4. Ціна і розрахунки</b>', heading_style))
             story.append(Paragraph(f'4.1. Загальна вартість Договору: <b>{total_amount:.2f} грн</b> без ПДВ.', normal_style))
-            story.append(Paragraph(f'4.2. Покупець здійснює 100% передоплату відповідно до рахунку на оплату протягом 3 (трьох) банківських днів.', normal_style))
+            story.append(Paragraph('4.2. Покупець здійснює 100% передоплату відповідно до рахунку на оплату протягом 3 (трьох) банківських днів.', normal_style))
             story.append(Spacer(1, 0.3*cm))
             
             # Section 5: Відповідальність
