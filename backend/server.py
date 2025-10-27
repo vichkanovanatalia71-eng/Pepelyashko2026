@@ -356,7 +356,7 @@ async def get_contracts():
 
 @api_router.post("/contracts/generate-pdf")
 async def generate_contract_pdf(data: ContractGenerateRequest):
-    """Generate PDF contract."""
+    """Generate PDF contract and upload to Google Drive."""
     if sheets_service is None:
         raise HTTPException(status_code=503, detail="Google Sheets service not available")
     
@@ -387,22 +387,34 @@ async def generate_contract_pdf(data: ContractGenerateRequest):
             'total_amount': data.total_amount
         }
         
-        # Generate PDF
-        pdf_path = contract_service.generate_contract_pdf(contract_data)
+        # Generate PDF and upload to Drive
+        result = contract_service.generate_contract_pdf(
+            contract_data=contract_data,
+            upload_to_drive=True
+        )
         
-        # Save contract to Google Sheets
-        sheets_service.create_contract({
+        # Save contract to Google Sheets with Drive link
+        contract_record = {
             'counterparty_edrpou': data.counterparty_edrpou,
             'subject': data.subject,
             'amount': data.total_amount
-        })
+        }
+        
+        # Add Drive link to contract record if available
+        if 'drive_view_link' in result:
+            contract_record['drive_link'] = result['drive_view_link']
+        
+        sheets_service.create_contract(contract_record)
         
         return {
             'success': True,
-            'message': 'Договір успішно згенеровано',
+            'message': 'Договір успішно згенеровано та завантажено на Google Drive',
             'contract_number': contract_number,
-            'pdf_path': pdf_path,
-            'pdf_filename': os.path.basename(pdf_path)
+            'pdf_path': result['local_path'],
+            'pdf_filename': result['filename'],
+            'drive_view_link': result.get('drive_view_link', ''),
+            'drive_download_link': result.get('drive_download_link', ''),
+            'drive_file_id': result.get('drive_file_id', '')
         }
         
     except HTTPException:
