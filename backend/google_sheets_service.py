@@ -130,21 +130,21 @@ class GoogleSheetsService:
             logger.error(f"Error getting all counterparties: {str(e)}")
             return []
     
-    def create_invoice(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def create_invoice(self, data: Dict[str, Any], drive_file_id: str = '') -> Dict[str, Any]:
         """Create a new invoice."""
-        return self._create_document("Рахунки", data, "рахунок")
+        return self._create_document("Рахунки", data, "рахунок", drive_file_id)
     
     def create_order(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Create a new order."""
         return self._create_document("Замовлення", data, "замовлення")
     
-    def create_act(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def create_act(self, data: Dict[str, Any], drive_file_id: str = '') -> Dict[str, Any]:
         """Create a new act of completed work."""
-        return self._create_document("Акти", data, "акт")
+        return self._create_document("Акти", data, "акт", drive_file_id)
     
-    def create_waybill(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def create_waybill(self, data: Dict[str, Any], drive_file_id: str = '') -> Dict[str, Any]:
         """Create a new waybill."""
-        return self._create_document("Видаткові накладні", data, "видаткову накладну")
+        return self._create_document("Видаткові накладні", data, "видаткову накладну", drive_file_id)
     
     def create_contract(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Create a new contract."""
