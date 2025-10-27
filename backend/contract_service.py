@@ -94,9 +94,6 @@ class ContractService:
             # Container for PDF elements
             story = []
             
-            # Define styles
-            styles = getSampleStyleSheet()
-            
             title_style = ParagraphStyle(
                 'Title',
                 fontName='DejaVu-Bold',
