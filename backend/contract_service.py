@@ -168,19 +168,19 @@ class ContractService:
             story.append(Spacer(1, 0.5*cm))
             
             # Section 3
-            story.append(Paragraph('<b>3. ЦІНА ТА ПОРЯДОК РОЗРАХУНКІВ</b>', styles['Heading2']))
+            story.append(Paragraph('<b>3. ЦІНА ТА ПОРЯДОК РОЗРАХУНКІВ</b>', heading_style))
             story.append(Paragraph(f'3.1. Загальна вартість Товару за цим Договором становить: <b>{total_amount:.2f} грн</b> (без ПДВ).', normal_style))
             story.append(Paragraph('3.2. Оплата здійснюється шляхом 100% передоплати на розрахунковий рахунок Постачальника протягом 3 (трьох) банківських днів з моменту підписання цього Договору.', normal_style))
             story.append(Spacer(1, 0.5*cm))
             
             # Section 4
-            story.append(Paragraph('<b>4. СТРОК ДІЇ ДОГОВОРУ</b>', styles['Heading2']))
+            story.append(Paragraph('<b>4. СТРОК ДІЇ ДОГОВОРУ</b>', heading_style))
             story.append(Paragraph(f'4.1. Цей Договір набирає чинності з моменту його підписання Сторонами і діє до 31 грудня {datetime.now().year} року.', normal_style))
             story.append(Paragraph('4.2. Поставка Товару здійснюється протягом 7 (семи) календарних днів з моменту надходження коштів на розрахунковий рахунок Постачальника.', normal_style))
             story.append(Spacer(1, 1*cm))
             
             # Section 5 - Signatures
-            story.append(Paragraph('<b>5. РЕКВІЗИТИ ТА ПІДПИСИ СТОРІН</b>', styles['Heading2']))
+            story.append(Paragraph('<b>5. РЕКВІЗИТИ ТА ПІДПИСИ СТОРІН</b>', heading_style))
             story.append(Spacer(1, 0.5*cm))
             
             # Signatures table
