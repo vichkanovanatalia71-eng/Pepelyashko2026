@@ -167,9 +167,9 @@ backend:
 
   - task: "Invoice PDF Generation with Drive Upload"
     implemented: true
-    working: true
+    working: false
     file: "/app/backend/document_service.py, /app/backend/server.py"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
     needs_retesting: false
     status_history:
@@ -179,6 +179,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "✅ ТЕСТ ПРОЙДЕНО: POST /api/invoices/generate-pdf працює повністю! Генерація PDF з українськими символами успішна. Номер документа: 9681-1 (правильний формат: середні 4 цифри ЄДРПОУ-послідовність). Файл: Рахунок_9681-1_40196816.pdf. Google Drive інтеграція працює: drive_view_link=https://drive.google.com/file/d/16VyHNyMA_y4Sc6ozkts-LlcWTMqPa9j1/view?usp=drivesdk, drive_file_id=16VyHNyMA_y4Sc6ozkts-LlcWTMqPa9j1. Файл завантажено в папку 'Рахунки' на Google Drive. Позначка 'не платник ПДВ' присутня в PDF контенті."
+      - working: false
+        agent: "testing"
+        comment: "❌ КРИТИЧНА ПРОБЛЕМА: Google Sheets API Quota Exceeded. Тест з review request показав: 1) POST /api/invoices/generate-pdf працює ✅ - повертає drive_file_id: 11Ifgxk5ZmhoLSpvrLKIPHImYmWwvTPB3, 2) GET /api/invoices НЕ містить новостворений рахунок ❌ - жоден рахунок в списку не має drive_file_id поле. Причина: Google Sheets API quota exceeded помилки в логах backend. Рахунки не зберігаються в Google Sheets через quota обмеження. PDF генерація та Google Drive upload працюють, але персистентність даних порушена."
 
   - task: "Act PDF Generation with Drive Upload"
     implemented: true
