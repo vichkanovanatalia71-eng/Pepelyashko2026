@@ -13,6 +13,7 @@ from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_LEFT
 import logging
 import aiosmtplib
 from email.message import EmailMessage
+from email.utils import encode_rfc2231
 from typing import Dict, Any, Optional
 
 logger = logging.getLogger(__name__)
