@@ -506,6 +506,40 @@ async def get_waybills():
         logging.error(f"Error getting waybills: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
+@api_router.post("/waybills/generate-pdf")
+async def generate_waybill_pdf(data: DocumentCreate):
+    """Generate PDF waybill and upload to Google Drive."""
+    if sheets_service is None or document_service is None:
+        raise HTTPException(status_code=503, detail="Services not available")
+    
+    try:
+        # Generate PDF and upload to Drive
+        waybill_data = data.model_dump()
+        result = document_service.generate_waybill_pdf(
+            waybill_data=waybill_data,
+            upload_to_drive=True
+        )
+        
+        # Save waybill to Google Sheets
+        sheets_service.create_waybill(waybill_data)
+        
+        return {
+            'success': True,
+            'message': 'Накладна успішно згенеровано та завантажено на Google Drive',
+            'waybill_number': result['waybill_number'],
+            'pdf_path': result['pdf_path'],
+            'pdf_filename': result['pdf_filename'],
+            'drive_view_link': result.get('drive_view_link', ''),
+            'drive_download_link': result.get('drive_download_link', ''),
+            'drive_file_id': result.get('drive_file_id', '')
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error generating waybill PDF: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
 # Contract endpoints
 @api_router.post("/contracts", response_model=dict)
 async def create_contract(data: ContractCreate):
