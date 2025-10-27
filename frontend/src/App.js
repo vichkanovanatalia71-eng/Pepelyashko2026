@@ -914,19 +914,75 @@ function App() {
           </TabsContent>
 
           <TabsContent value="orders" data-testid="orders-content">
-            <DocumentForm endpoint="orders" docType="Замовлення" title="Створення Замовлення" />
+            <DocumentForm 
+              endpoint="orders" 
+              docType="Замовлення" 
+              title="Створення Замовлення"
+              searchEdrpou={searchEdrpou}
+              setSearchEdrpou={setSearchEdrpou}
+              foundCounterparty={foundCounterparty}
+              searchCounterparty={searchCounterparty}
+              documentForm={documentForm}
+              addItem={addItem}
+              removeItem={removeItem}
+              updateItem={updateItem}
+              handleDocumentSubmit={handleDocumentSubmit}
+              loading={loading}
+            />
           </TabsContent>
 
           <TabsContent value="invoices" data-testid="invoices-content">
-            <DocumentForm endpoint="invoices" docType="Рахунок" title="Створення Рахунку" />
+            <DocumentForm 
+              endpoint="invoices" 
+              docType="Рахунок" 
+              title="Створення Рахунку"
+              searchEdrpou={searchEdrpou}
+              setSearchEdrpou={setSearchEdrpou}
+              foundCounterparty={foundCounterparty}
+              searchCounterparty={searchCounterparty}
+              documentForm={documentForm}
+              addItem={addItem}
+              removeItem={removeItem}
+              updateItem={updateItem}
+              handleDocumentSubmit={handleDocumentSubmit}
+              loading={loading}
+            />
           </TabsContent>
 
           <TabsContent value="acts" data-testid="acts-content">
-            <DocumentForm endpoint="acts" docType="Акт" title="Створення Акту Виконаних Робіт" />
+            <DocumentForm 
+              endpoint="acts" 
+              docType="Акт" 
+              title="Створення Акту Виконаних Робіт"
+              searchEdrpou={searchEdrpou}
+              setSearchEdrpou={setSearchEdrpou}
+              foundCounterparty={foundCounterparty}
+              searchCounterparty={searchCounterparty}
+              documentForm={documentForm}
+              addItem={addItem}
+              removeItem={removeItem}
+              updateItem={updateItem}
+              handleDocumentSubmit={handleDocumentSubmit}
+              loading={loading}
+            />
           </TabsContent>
 
           <TabsContent value="waybills" data-testid="waybills-content">
-            <DocumentForm endpoint="waybills" docType="Видаткова Накладна" title="Створення Видаткової Накладної" />
+            <DocumentForm 
+              endpoint="waybills" 
+              docType="Видаткова Накладна" 
+              title="Створення Видаткової Накладної"
+              searchEdrpou={searchEdrpou}
+              setSearchEdrpou={setSearchEdrpou}
+              foundCounterparty={foundCounterparty}
+              searchCounterparty={searchCounterparty}
+              documentForm={documentForm}
+              addItem={addItem}
+              removeItem={removeItem}
+              updateItem={updateItem}
+              handleDocumentSubmit={handleDocumentSubmit}
+              loading={loading}
+            />
           </TabsContent>
 
           <TabsContent value="contracts" data-testid="contracts-content">
