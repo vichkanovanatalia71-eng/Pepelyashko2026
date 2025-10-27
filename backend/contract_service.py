@@ -207,14 +207,15 @@ class ContractService:
             # Signatures table
             sig_data = [
                 ['ПОКУПЕЦЬ:', 'ПОСТАЧАЛЬНИК:'],
-                ['КНП "Мурованокуриловецька ЦРЛ"', supplier_name],
-                ['Код ЄДРПОУ: 01982608', f'Код ЄДРПОУ: {supplier_edrpou}'],
-                ['', f'Email: {supplier_email}'],
-                ['', f'Тел.: {supplier_phone}'],
-                ['', f'IBAN: {supplier_iban}'],
+                [buyer_name, supplier_name],
+                [f'Код ЄДРПОУ: {buyer_edrpou}', f'Код ЄДРПОУ: {supplier_edrpou}'],
+                [f'Адреса: {buyer_address}', f'Адреса: {supplier_address}'],
+                [f'Email: {buyer_email}', f'Email: {supplier_email}'],
+                [f'Тел.: {buyer_phone}', f'Тел.: {supplier_phone}'],
+                [f'IBAN: {buyer_iban}', f'IBAN: {supplier_iban}'],
                 ['', ''],
-                ['___________ Шевцов А.М.', f'___________ {buyer_director}'],
-                ['М.П.', ''],
+                [f'___________ {buyer_director}', f'___________ {supplier_director}'],
+                ['М.П.', 'М.П.'],
             ]
             
             sig_table = Table(sig_data, colWidths=[9*cm, 9*cm])
