@@ -180,6 +180,21 @@ backend:
         agent: "testing"
         comment: "✅ API endpoints працюють коректно. /api/contracts/generate-pdf повертає правильну структуру відповіді з полями для Google Drive (навіть якщо порожні через quota обмеження). /api/contracts/send-email приймає drive_link параметр. Health endpoint працює. Всі API підтримують українські символи."
 
+  - task: "Counterparty Search by ЄДРПОУ in 'Основні дані'"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "needs_testing"
+        agent: "main"
+        comment: "Оновлено endpoints для пошуку контрагентів в аркуші 'Основні дані' замість 'Контрагенти'. GET /api/counterparties повертає список з 'Основні дані', GET /api/counterparties/{edrpou} шукає за ЄДРПОУ."
+      - working: true
+        agent: "testing"
+        comment: "✅ Пошук контрагента за ЄДРПОУ працює коректно. GET /api/counterparties повертає список з аркушу 'Основні дані', знайдено контрагента з ЄДРПОУ 40196816. GET /api/counterparties/40196816 повертає правильні дані: edrpou: '40196816', representative_name, email: 'baltapmsdbgr@gmail.com', phone: '380957786491', iban: 'UA648201720344370005000093420'. Виправлено проблему з дублікатами заголовків через fallback механізм. Функціональність працює, тимчасові проблеми з Google Sheets API quota під час тестування."
+
 frontend:
   - task: "Contract Preview with Google Drive Viewer"
     implemented: true
