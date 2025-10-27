@@ -50,20 +50,32 @@ class GoogleDriveService:
             if parent_folder_id:
                 file_metadata['parents'] = [parent_folder_id]
             
-            folder = self.service.files().create(
-                body=file_metadata,
-                fields='id, webViewLink'
-            ).execute()
+            # Add Shared Drive support
+            create_params = {
+                'body': file_metadata,
+                'fields': 'id, webViewLink'
+            }
+            
+            if self.shared_drive_id:
+                create_params['supportsAllDrives'] = True
+            
+            folder = self.service.files().create(**create_params).execute()
             
             # Make folder accessible to anyone with the link
             permission = {
                 'type': 'anyone',
                 'role': 'reader'
             }
-            self.service.permissions().create(
-                fileId=folder['id'],
-                body=permission
-            ).execute()
+            
+            perm_params = {
+                'fileId': folder['id'],
+                'body': permission
+            }
+            
+            if self.shared_drive_id:
+                perm_params['supportsAllDrives'] = True
+            
+            self.service.permissions().create(**perm_params).execute()
             
             logger.info(f"Created folder '{folder_name}' with ID: {folder['id']}")
             return folder['id']
