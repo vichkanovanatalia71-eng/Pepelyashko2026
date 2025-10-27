@@ -232,7 +232,7 @@ class DocumentService:
                     result.update({
                         'drive_file_id': drive_result['file_id'],
                         'drive_view_link': drive_result['web_view_link'],
-                        'drive_download_link': drive_result['download_link']
+                        'drive_download_link': drive_result['web_content_link']
                     })
                 except Exception as e:
                     logger.error(f"Failed to upload invoice to Google Drive: {str(e)}")
@@ -447,7 +447,7 @@ class DocumentService:
                     result.update({
                         'drive_file_id': drive_result['file_id'],
                         'drive_view_link': drive_result['web_view_link'],
-                        'drive_download_link': drive_result['download_link']
+                        'drive_download_link': drive_result['web_content_link']
                     })
                 except Exception as e:
                     logger.error(f"Failed to upload act to Google Drive: {str(e)}")
@@ -637,7 +637,7 @@ class DocumentService:
                     result.update({
                         'drive_file_id': drive_result['file_id'],
                         'drive_view_link': drive_result['web_view_link'],
-                        'drive_download_link': drive_result['download_link']
+                        'drive_download_link': drive_result['web_content_link']
                     })
                 except Exception as e:
                     logger.error(f"Failed to upload waybill to Google Drive: {str(e)}")
