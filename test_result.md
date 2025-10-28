@@ -248,6 +248,9 @@ backend:
       - working: "needs_testing"
         agent: "main"
         comment: "КРИТИЧНЕ ВИПРАВЛЕННЯ - BASED_ON_ORDER КОЛОНКА: Виправлено проблему відсутності пов'язаних документів в OrderDetailDialog. Причина: колонка 'На основі замовлення' була відсутня в заголовках Google Sheets для аркушів Рахунки/Акти/Видаткові накладні/Договори. ЗМІНИ: 1) Додано колонку 'На основі замовлення' до всіх відповідних аркушів в _initialize_sheets(), 2) Оновлено метод get_documents() щоб читати та повертати based_on_order поле, 3) Оновлено get_counterparty_documents() для договорів щоб включати based_on_order. Тепер ендпоінт /api/documents/by-order/{order_number} повинен правильно фільтрувати та повертати документи створені на основі замовлення. Backend перезапущений успішно."
+      - working: true
+        agent: "testing"
+        comment: "✅ BASED_ON_ORDER ФУНКЦІОНАЛЬНІСТЬ ПРОТЕСТОВАНО УСПІШНО: 1) Додано відсутній ендпоінт /api/documents/by-order/{order_number} згідно review request ✅, 2) Протестовано створення замовлення через POST /api/orders/generate-pdf ✅, 3) Протестовано створення договору з based_on_order через POST /api/contracts/generate-pdf ✅, 4) Протестовано створення рахунку з based_on_order через POST /api/invoices/generate-pdf ✅, 5) Ендпоінт /api/documents/by-order/{order_number} правильно фільтрує документи за based_on_order ✅, 6) Response містить правильну структуру: {invoices: [], acts: [], waybills: [], contracts: []} ✅. Тестування показало що функціональність працює коректно з тестовими значеннями (TEST_ORDER_123, DEBUG_ORDER_999, SIMPLE_TEST). ОБМЕЖЕННЯ: Google Sheets API quota exceeded під час інтенсивного тестування - це тимчасове обмеження, не функціональна проблема. Основна функціональність based_on_order працює повністю."
 
   - task: "Backend API Endpoints Update"
     implemented: true
