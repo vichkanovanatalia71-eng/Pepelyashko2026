@@ -397,7 +397,7 @@ function App() {
     const savedSettings = localStorage.getItem('contractTemplateSettings');
     
     // Current template version
-    const CURRENT_VERSION = '2.0';
+    const CURRENT_VERSION = '3.0';
     
     // Check if saved template exists and version matches
     if (savedTemplate && savedVersion === CURRENT_VERSION) {
