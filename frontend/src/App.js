@@ -262,9 +262,14 @@ function App() {
   const [allWaybills, setAllWaybills] = useState([]);
   const [allContracts, setAllContracts] = useState([]);
 
+  // Contract template
+  const [contractTemplate, setContractTemplate] = useState('');
+  const [showTemplateEditor, setShowTemplateEditor] = useState(false);
+
   useEffect(() => {
     fetchCounterparties();
     fetchAllDocuments();
+    loadContractTemplate();
   }, []);
 
   const fetchCounterparties = async () => {
