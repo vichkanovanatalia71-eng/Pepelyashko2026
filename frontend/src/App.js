@@ -2710,7 +2710,9 @@ function App() {
                 <Button 
                   onClick={() => {
                     // Save current order data for creating other documents
+                    console.log('documentPdfData:', documentPdfData);
                     const formData = documentPdfData?.order_form_data;
+                    console.log('formData:', formData);
                     if (formData) {
                       setSelectedOrderData({
                         counterparty_edrpou: formData.counterparty_edrpou,
@@ -2718,8 +2720,10 @@ function App() {
                         total_amount: formData.total_amount,
                         order_number: documentPdfData?.order_number
                       });
+                      console.log('Opening create from order dialog');
                       setShowCreateFromOrder(true);
                     } else {
+                      console.error('No form data available');
                       toast.error('Немає даних замовлення');
                     }
                   }}
