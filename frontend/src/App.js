@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { Toaster } from '@/components/ui/sonner';
-import { Plus, Trash2, Search, FileText, Users, Receipt, Loader2, Package, FileSignature, ArrowLeft, Eye, X, RefreshCw } from 'lucide-react';
+import { Plus, Trash2, Search, FileText, Users, Receipt, Loader2, Package, FileSignature, ArrowLeft, Eye, X, RefreshCw, FileCheck, Truck } from 'lucide-react';
 import '@/App.css';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
