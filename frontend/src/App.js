@@ -398,7 +398,7 @@ function App() {
     if (savedTemplate) {
       setContractTemplate(savedTemplate);
     } else {
-      // Set default template with requisites
+      // Set default template with requisites in two-column format
       const defaultTemplate = `[align:center][b]ДОГОВІР ПОСТАЧАННЯ ТОВАРІВ ТА/АБО НАДАННЯ ПОСЛУГ[/b][/align]
 
 [align:center]№ {{contract_number}} від {{contract_date}}[/align]
@@ -416,29 +416,29 @@ function App() {
 
 [align:center][b]РЕКВІЗИТИ СТОРІН[/b][/align]
 
-[b]ПОСТАЧАЛЬНИК:[/b]
-{{supplier_name}}
-Код ЄДРПОУ: {{supplier_edrpou}}
+[b]ПОСТАЧАЛЬНИК[/b]
+[b]{{supplier_name}}[/b]
 Юридична адреса: {{supplier_address}}
+Код ЄДРПОУ: {{supplier_edrpou}}
 р/р (IBAN): {{supplier_iban}}
-Банк: {{supplier_bank}}
 МФО: {{supplier_mfo}}
-Email: {{supplier_email}}
-Телефон: {{supplier_phone}}
-В особі: {{supplier_representative}}
-Підпис: {{supplier_signature}}
+{{supplier_bank}}
+email: {{supplier_email}}
+тел.: {{supplier_phone}}
+{{supplier_representative}}
+Директор: {{supplier_signature}}
 
-[b]ПОКУПЕЦЬ:[/b]
-{{buyer_name}}
-Код ЄДРПОУ: {{buyer_edrpou}}
+[b]ПОКУПЕЦЬ[/b]
+[b]{{buyer_name}}[/b]
 Юридична адреса: {{buyer_address}}
+Код ЄДРПОУ: {{buyer_edrpou}}
 р/р (IBAN): {{buyer_iban}}
-Банк: {{buyer_bank}}
 МФО: {{buyer_mfo}}
-Email: {{buyer_email}}
-Телефон: {{buyer_phone}}
-В особі: {{buyer_representative}}
-Підпис: {{buyer_signature}}`;
+{{buyer_bank}}
+email: {{buyer_email}}
+тел.: {{buyer_phone}}
+{{buyer_representative}}
+Директор: {{buyer_signature}}`;
       
       setContractTemplate(defaultTemplate);
     }
