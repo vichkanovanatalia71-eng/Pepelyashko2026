@@ -452,7 +452,13 @@ async def generate_order_pdf(data: DocumentCreate):
         
         # Save order to Google Sheets with drive_file_id
         drive_file_id = result.get('drive_file_id', '')
-        sheets_service.create_order(order_data, drive_file_id)
+        order_number = result.get('order_number', '')
+        
+        # Add order number to order_data for Google Sheets
+        order_data_with_number = order_data.copy()
+        order_data_with_number['order_number'] = order_number
+        
+        sheets_service.create_order(order_data_with_number, drive_file_id)
         
         return {
             'success': True,
