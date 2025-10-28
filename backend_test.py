@@ -1905,7 +1905,8 @@ class ContractTestSuite:
         # Group results by category
         critical_tests = [
             'health_check', 'specific_invoice_drive_file_id', 'get_counterparties', 'invoice_pdf_generation', 
-            'act_pdf_generation', 'waybill_pdf_generation', 'order_pdf_generation', 'custom_template_contract', 'new_html_template_contract'
+            'act_pdf_generation', 'waybill_pdf_generation', 'order_pdf_generation', 'custom_template_contract', 
+            'new_html_template_contract', 'based_on_order_functionality'
         ]
         
         important_tests = [
