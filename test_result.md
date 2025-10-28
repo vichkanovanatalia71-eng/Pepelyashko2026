@@ -230,6 +230,9 @@ backend:
       - working: true
         agent: "main"
         comment: "ФАЗА 2 FRONTEND ЗАМОВЛЕНЬ ЗАВЕРШЕНА: Оновлено handleDocumentSubmit для виклику /api/orders/generate-pdf (замість старого /api/orders). Додано стан allOrders та завантаження в fetchAllDocuments(). Додано список всіх замовлень у вкладку 'Замовлення' з блакитним дизайном та кнопкою 'Переглянути'. Додано кнопку 'Переглянути' для замовлень у документах контрагента з відображенням drive_file_id. Frontend успішно скомпільований. Замовлення тепер повністю інтегровані в UI аналогічно до рахунків/актів/накладних."
+      - working: true
+        agent: "main"
+        comment: "ФАЗА 3 РЕДАКТОР ШАБЛОНІВ ЗАМОВЛЕНЬ ЗАВЕРШЕНА: Додано кнопку 'Редагувати шаблон замовлення' у вкладку Замовлення. Створено повноцінний діалог редактора HTML шаблону з списком доступних змінних (supplier_name, buyer_name, order_number, order_date тощо). Додано функції saveOrderTemplate() та resetOrderTemplate() для збереження/скидання шаблону в localStorage. Додано loadOrderTemplate() для завантаження шаблону при старті. Оновлено handleDocumentSubmit для передачі custom_template при створенні замовлення. Backend приймає custom_template і передає в order_service.generate_order_pdf(). Всі сервіси запущені успішно."
 
   - task: "Backend API Endpoints Update"
     implemented: true
