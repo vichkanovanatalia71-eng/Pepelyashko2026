@@ -363,6 +363,82 @@ function App() {
     }, 0);
   };
 
+  // Function to convert number to Ukrainian text
+  const numberToUkrainianText = (num) => {
+    if (!num || num === 0) return 'нуль гривень 00 копійок';
+    
+    const hryvni = Math.floor(num);
+    const kopiiky = Math.round((num - hryvni) * 100);
+    
+    const ones = ['', 'одна', 'дві', 'три', 'чотири', 'п\'ять', 'шість', 'сім', 'вісім', 'дев\'ять'];
+    const tens = ['', '', 'двадцять', 'тридцять', 'сорок', 'п\'ятдесят', 'шістдесят', 'сімдесят', 'вісімдесят', 'дев\'яносто'];
+    const hundreds = ['', 'сто', 'двісті', 'триста', 'чотириста', 'п\'ятсот', 'шістсот', 'сімсот', 'вісімсот', 'дев\'ятсот'];
+    const teens = ['десять', 'одинадцять', 'дванадцять', 'тринадцять', 'чотирнадцять', 'п\'ятнадцять', 'шістнадцять', 'сімнадцять', 'вісімнадцять', 'дев\'ятнадцять'];
+    const thousands = ['', 'одна', 'дві', 'три', 'чотири', 'п\'ять', 'шість', 'сім', 'вісім', 'дев\'ять'];
+    
+    const getThousands = (n) => {
+      if (n === 1) return 'тисяча';
+      if (n >= 2 && n <= 4) return 'тисячі';
+      return 'тисяч';
+    };
+    
+    const getHryvni = (n) => {
+      const lastDigit = n % 10;
+      const lastTwoDigits = n % 100;
+      if (lastTwoDigits >= 11 && lastTwoDigits <= 19) return 'гривень';
+      if (lastDigit === 1) return 'гривня';
+      if (lastDigit >= 2 && lastDigit <= 4) return 'гривні';
+      return 'гривень';
+    };
+    
+    const getKopiiky = (n) => {
+      const lastDigit = n % 10;
+      const lastTwoDigits = n % 100;
+      if (lastTwoDigits >= 11 && lastTwoDigits <= 19) return 'копійок';
+      if (lastDigit === 1) return 'копійка';
+      if (lastDigit >= 2 && lastDigit <= 4) return 'копійки';
+      return 'копійок';
+    };
+    
+    let result = '';
+    
+    // Thousands
+    const thousandsNum = Math.floor(hryvni / 1000);
+    if (thousandsNum > 0) {
+      const th = thousandsNum % 10;
+      const thTens = Math.floor(thousandsNum / 10) % 10;
+      const thHundreds = Math.floor(thousandsNum / 100);
+      
+      if (thHundreds > 0) result += hundreds[thHundreds] + ' ';
+      if (thTens === 1) {
+        result += teens[th] + ' ';
+      } else {
+        if (thTens > 1) result += tens[thTens] + ' ';
+        if (th > 0) result += thousands[th] + ' ';
+      }
+      result += getThousands(thousandsNum) + ' ';
+    }
+    
+    // Hundreds, tens, ones
+    const remainder = hryvni % 1000;
+    const h = Math.floor(remainder / 100);
+    const t = Math.floor((remainder % 100) / 10);
+    const o = remainder % 10;
+    
+    if (h > 0) result += hundreds[h] + ' ';
+    if (t === 1) {
+      result += teens[o] + ' ';
+    } else {
+      if (t > 1) result += tens[t] + ' ';
+      if (o > 0) result += ones[o] + ' ';
+    }
+    
+    result += getHryvni(hryvni) + ' ';
+    result += String(kopiiky).padStart(2, '0') + ' ' + getKopiiky(kopiiky);
+    
+    return result.trim();
+  };
+
   useEffect(() => {
     fetchCounterparties();
     fetchAllDocuments();
