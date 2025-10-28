@@ -428,24 +428,24 @@ function App() {
     <p class="muted center">м. {{city}} &nbsp; «{{contract_date}}»</p>
 
     <div class="sec">
-      <p>{{subject}}</p>
-    </div>
-
-    <div class="sec">
       <h2>1. ПРЕДМЕТ ДОГОВОРУ</h2>
       <p>1.1. Виконавець зобов'язується поставити товари та/або надати послуги, визначені у Специфікації (Додаток 1), а Замовник – прийняти та оплатити їх на умовах цього Договору.</p>
       
       <p>1.2. <strong>Предмет:</strong> {{subject}}. Конкретні характеристики, обсяги та строки – у Специфікації/«Замовленні».</p>
+      
+      <p>1.3. У разі змішаного предмета (товари і послуги) застосовуються положення цього Договору для обох видів зобов'язань.</p>
     </div>
 
     <div class="sec">
       <h2>7. ЦІНА, ПОДАТКИ ТА РОЗРАХУНКИ</h2>
-      <p>7.1. Загальна вартість за Договором: <strong>{{total_amount}} грн</strong>. Деталізація по позиціях – у Специфікації.</p>
+      <p>7.1. Загальна вартість за Договором: <strong>{{total_amount}}</strong>. Деталізація по позиціях – у Специфікації.</p>
+      
+      <p>7.2. Валюта розрахунків – гривня. Податковий статус Сторін (ПДВ/не ПДВ/ЄП) застосовується згідно з їхнім статусом.</p>
     </div>
 
     <div class="sec">
       <h2>12. СТРОК ДІЇ ДОГОВОРУ</h2>
-      <p>12.1. Договір чинний з дати підписання і діє до «{{end_date}}» або до повного виконання зобов'язань.</p>
+      <p>12.1. Договір чинний з дати підписання і діє до «{{end_date}}» або до повного виконання зобов'язань, залежно від того, що настане пізніше.</p>
     </div>
 
     <div class="sec">
@@ -454,17 +454,17 @@ function App() {
         <div>
           <p class="center"><strong>ВИКОНАВЕЦЬ</strong></p>
           
-          <p><strong>ПІБ/Назва:</strong> {{supplier_name}}</p>
+          <p><strong>Назва:</strong> {{supplier_name}}</p>
           
-          <p><strong>ЄДРПОУ/РНОКПП:</strong> {{supplier_edrpou}}</p>
+          <p><strong>ЄДРПОУ:</strong> {{supplier_edrpou}}</p>
           
           <p><strong>Адреса:</strong> {{supplier_address}}</p>
           
           <p><strong>IBAN:</strong> {{supplier_iban}}</p>
           
-          <p><strong>Банк:</strong> {{supplier_bank}} <span class="nowrap">| МФО: {{supplier_mfo}}</span></p>
+          <p><strong>Банк:</strong> {{supplier_bank}} | МФО: {{supplier_mfo}}</p>
           
-          <p><strong>E-mail:</strong> {{supplier_email}} <span class="nowrap">| Тел. {{supplier_phone}}</span></p>
+          <p><strong>Email:</strong> {{supplier_email}} | Тел.: {{supplier_phone}}</p>
           
           <p><strong>Представник:</strong> {{supplier_representative}}</p>
           
@@ -473,7 +473,7 @@ function App() {
         <div>
           <p class="center"><strong>ЗАМОВНИК</strong></p>
           
-          <p><strong>Найменування:</strong> {{buyer_name}}</p>
+          <p><strong>Назва:</strong> {{buyer_name}}</p>
           
           <p><strong>ЄДРПОУ:</strong> {{buyer_edrpou}}</p>
           
@@ -481,9 +481,9 @@ function App() {
           
           <p><strong>IBAN:</strong> {{buyer_iban}}</p>
           
-          <p><strong>Банк:</strong> {{buyer_bank}} <span class="nowrap">| МФО: {{buyer_mfo}}</span></p>
+          <p><strong>Банк:</strong> {{buyer_bank}} | МФО: {{buyer_mfo}}</p>
           
-          <p><strong>E-mail:</strong> {{buyer_email}} <span class="nowrap">| Тел. {{buyer_phone}}</span></p>
+          <p><strong>Email:</strong> {{buyer_email}} | Тел.: {{buyer_phone}}</p>
           
           <p><strong>Представник:</strong> {{buyer_representative}}</p>
           
