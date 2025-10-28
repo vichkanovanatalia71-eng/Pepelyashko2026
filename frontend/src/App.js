@@ -1959,10 +1959,14 @@ function App() {
                     variant="outline"
                     size="sm"
                     onClick={() => fetchAllDocuments()}
+                    disabled={loading}
                     className="border-blue-500 text-blue-600 hover:bg-blue-50"
                   >
-                    <RefreshCw className="w-4 h-4 mr-2" />
-                    Оновити
+                    {loading ? (
+                      <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Оновлення...</>
+                    ) : (
+                      <><RefreshCw className="w-4 h-4 mr-2" /> Оновити</>
+                    )}
                   </Button>
                 </div>
               </CardHeader>
