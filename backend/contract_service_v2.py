@@ -488,9 +488,16 @@ class ContractServiceV2:
             logger.error(f"Error generating contract PDF: {str(e)}")
             raise
     
-    def _create_styles(self):
+    def _create_styles(self, template_settings: Optional[Dict[str, Any]] = None):
         """Create custom styles for the document"""
         styles = getSampleStyleSheet()
+        
+        # Get settings or use defaults
+        font_size = 11
+        line_spacing = 1.5
+        if template_settings:
+            font_size = template_settings.get('fontSize', 11)
+            line_spacing = template_settings.get('lineSpacing', 1.5)
         
         # Contract Title style (custom name to avoid conflict)
         styles.add(ParagraphStyle(
@@ -518,9 +525,9 @@ class ContractServiceV2:
         styles.add(ParagraphStyle(
             name='CustomNormal',
             fontName='DejaVu',
-            fontSize=11,
+            fontSize=font_size,
             alignment=TA_JUSTIFY,
-            leading=14,
+            leading=font_size * line_spacing,
             spaceAfter=3*mm
         ))
         
