@@ -2579,7 +2579,12 @@ function App() {
           <DialogContent className="sm:max-w-[1000px] max-h-[95vh] bg-white z-[100]" style={{zIndex: 9999}}>
             <DialogHeader>
               <DialogTitle className="text-gray-900 text-xl font-bold">
-                Попередній перегляд {currentDocType === 'invoice' ? 'рахунку' : currentDocType === 'act' ? 'акту' : 'накладної'} {documentPdfData?.[`${currentDocType}_number`]}
+                Попередній перегляд {
+                  currentDocType === 'invoice' ? 'рахунку' : 
+                  currentDocType === 'act' ? 'акту' : 
+                  currentDocType === 'waybill' ? 'накладної' :
+                  currentDocType === 'order' ? 'замовлення' : 'документу'
+                } {documentPdfData?.[`${currentDocType}_number`]}
               </DialogTitle>
               <DialogDescription className="text-gray-600">
                 Перегляньте документ та надішліть його на email
