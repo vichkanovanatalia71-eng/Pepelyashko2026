@@ -472,13 +472,21 @@ function App() {
         </div>
         <div>
           <p class="center"><strong>ЗАМОВНИК</strong></p>
+          
           <p><strong>Найменування:</strong> {{buyer_name}}</p>
+          
           <p><strong>ЄДРПОУ:</strong> {{buyer_edrpou}}</p>
+          
           <p><strong>Адреса:</strong> {{buyer_address}}</p>
+          
           <p><strong>IBAN:</strong> {{buyer_iban}}</p>
+          
           <p><strong>Банк:</strong> {{buyer_bank}} <span class="nowrap">| МФО: {{buyer_mfo}}</span></p>
+          
           <p><strong>E-mail:</strong> {{buyer_email}} <span class="nowrap">| Тел. {{buyer_phone}}</span></p>
+          
           <p><strong>Представник:</strong> {{buyer_representative}}</p>
+          
           <p><strong>Підпис:</strong> ______________________ / {{buyer_signature}} /</p>
         </div>
       </div>
