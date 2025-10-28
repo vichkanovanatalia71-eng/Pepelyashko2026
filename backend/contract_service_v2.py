@@ -472,8 +472,8 @@ class ContractServiceV2:
                 try:
                     drive_result = self.drive_service.upload_file(
                         file_path=str(filepath),
-                        file_name=filename,
-                        folder_name='Договори'
+                        folder_name='Договори',
+                        custom_name=filename
                     )
                     
                     result.update({
