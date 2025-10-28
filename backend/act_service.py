@@ -69,7 +69,7 @@ class ActService:
                 raise ValueError("Дані постачальника ('Мої дані') не знайдені")
             
             # 2. Get buyer data from "Основні дані"
-            buyer_data = self.sheets_service.get_counterparty_by_edrpou(counterparty_edrpou)
+            buyer_data = self.sheets_service.get_counterparty_from_main_data(counterparty_edrpou)
             if not buyer_data:
                 raise ValueError(f"Контрагента з ЄДРПОУ {counterparty_edrpou} не знайдено в 'Основні дані'")
             
