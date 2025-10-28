@@ -415,14 +415,14 @@ function App() {
     html,body{margin:0;padding:0;background:#fff;color:#111;font:12px/1.6 'Times New Roman',serif}
     .wrap{max-width:900px;margin:0 auto;padding:0}
     h1{text-align:center;margin:12px 0;font-size:14px;font-weight:bold}
-    h2{text-align:center;margin:8px 0;font-size:12px;font-weight:bold}
+    h2{text-align:center;margin:0;font-size:12px;font-weight:bold}
     p{margin:6px 0;text-align:justify;font-size:12px}
     .header-line{width:100%;margin-bottom:12px}
     .header-line table{width:100%;border:none}
     .header-line td{border:none;padding:0}
     .header-line .left{text-align:left}
     .header-line .right{text-align:right}
-    .sec{border:1px solid #e5e7eb;border-radius:10px;padding:12px;margin:0}
+    .sec{padding:12px 0;margin:0}
     .requisites-table{width:100%;border-collapse:collapse;margin-top:12px}
     .requisites-table td{width:50%;vertical-align:top;padding:0 20px;text-align:center}
     .center{text-align:center}
