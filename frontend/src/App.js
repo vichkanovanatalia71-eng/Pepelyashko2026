@@ -2203,11 +2203,91 @@ function App() {
                 Редактор шаблону договору
               </DialogTitle>
               <DialogDescription className="text-gray-600">
-                Редагуйте текст договору. Використовуйте змінні у форматі {`{{Назва_змінної}}`}
+                Редагуйте текст договору та налаштування форматування. Використовуйте змінні у форматі {`{{Назва_змінної}}`}
               </DialogDescription>
             </DialogHeader>
             
             <div className="space-y-4 py-4 overflow-y-auto" style={{maxHeight: 'calc(90vh - 200px)'}}>
+              {/* Formatting toolbar */}
+              <Card className="bg-gray-50 border-gray-300">
+                <CardContent className="py-3">
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* Font section */}
+                    <div className="space-y-2">
+                      <Label className="text-sm font-semibold text-gray-700">Шрифт</Label>
+                      <div className="grid grid-cols-3 gap-2">
+                        <div className="col-span-2">
+                          <select
+                            value={templateSettings.fontFamily}
+                            onChange={(e) => setTemplateSettings({...templateSettings, fontFamily: e.target.value})}
+                            className="w-full p-2 border border-gray-300 rounded text-sm"
+                          >
+                            <option value="Times New Roman">Times New Roman</option>
+                            <option value="Arial">Arial</option>
+                            <option value="Calibri">Calibri</option>
+                            <option value="DejaVu Sans">DejaVu Sans</option>
+                          </select>
+                        </div>
+                        <div>
+                          <select
+                            value={templateSettings.fontSize}
+                            onChange={(e) => setTemplateSettings({...templateSettings, fontSize: parseInt(e.target.value)})}
+                            className="w-full p-2 border border-gray-300 rounded text-sm"
+                          >
+                            {[8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24].map(size => (
+                              <option key={size} value={size}>{size}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Paragraph section */}
+                    <div className="space-y-2">
+                      <Label className="text-sm font-semibold text-gray-700">Абзац</Label>
+                      <div className="grid grid-cols-3 gap-2">
+                        <div>
+                          <Label className="text-xs text-gray-600">Вирівнювання</Label>
+                          <select
+                            value={templateSettings.alignment}
+                            onChange={(e) => setTemplateSettings({...templateSettings, alignment: e.target.value})}
+                            className="w-full p-2 border border-gray-300 rounded text-sm"
+                          >
+                            <option value="left">Ліворуч</option>
+                            <option value="center">Центр</option>
+                            <option value="right">Праворуч</option>
+                            <option value="justify">По ширині</option>
+                          </select>
+                        </div>
+                        <div>
+                          <Label className="text-xs text-gray-600">Міжрядковий інтервал</Label>
+                          <select
+                            value={templateSettings.lineSpacing}
+                            onChange={(e) => setTemplateSettings({...templateSettings, lineSpacing: parseFloat(e.target.value)})}
+                            className="w-full p-2 border border-gray-300 rounded text-sm"
+                          >
+                            <option value="1">1.0</option>
+                            <option value="1.15">1.15</option>
+                            <option value="1.5">1.5</option>
+                            <option value="2">2.0</option>
+                          </select>
+                        </div>
+                        <div>
+                          <Label className="text-xs text-gray-600">Відступ (см)</Label>
+                          <input
+                            type="number"
+                            step="0.5"
+                            value={templateSettings.indent}
+                            onChange={(e) => setTemplateSettings({...templateSettings, indent: parseFloat(e.target.value) || 0})}
+                            className="w-full p-2 border border-gray-300 rounded text-sm"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
               {/* Available variables */}
               <Card className="bg-blue-50 border-blue-200">
                 <CardHeader className="py-3">
@@ -2260,7 +2340,12 @@ function App() {
                   onChange={(e) => setContractTemplate(e.target.value)}
                   placeholder="Введіть текст договору з використанням змінних..."
                   className="w-full h-96 p-4 border border-gray-300 rounded-lg font-mono text-sm"
-                  style={{fontFamily: 'monospace'}}
+                  style={{
+                    fontFamily: templateSettings.fontFamily,
+                    fontSize: `${templateSettings.fontSize}px`,
+                    lineHeight: templateSettings.lineSpacing,
+                    textAlign: templateSettings.alignment
+                  }}
                 />
                 <p className="text-xs text-gray-500">
                   * Якщо залишити порожнім, буде використовуватись стандартний шаблон
