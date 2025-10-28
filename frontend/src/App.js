@@ -703,6 +703,21 @@ function App() {
       setLoading(false);
     }
   };
+
+  const refreshCounterpartyDocuments = async () => {
+    if (!selectedCounterparty?.edrpou) {
+      toast.error('Контрагент не обраний');
+      return;
+    }
+    
+    try {
+      const docsResponse = await axios.get(`${API}/counterparties/${selectedCounterparty.edrpou}/documents`);
+      setCounterpartyDocuments(docsResponse.data);
+      toast.success('Список документів оновлено');
+    } catch (error) {
+      toast.error('Помилка оновлення документів');
+    }
+  };
   
   const handleCreateDocFromCounterparty = (docType) => {
     setDocTypeToCreate(docType);
