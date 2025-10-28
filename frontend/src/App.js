@@ -2985,77 +2985,43 @@ function App() {
               {/* Available variables */}
               <Card className="bg-blue-50 border-blue-200">
                 <CardHeader className="py-3">
-                  <CardTitle className="text-sm font-semibold text-blue-900">Доступні змінні для замовлення:</CardTitle>
+                  <CardTitle className="text-sm font-semibold text-blue-900">Доступні змінні (клікніть для вставки):</CardTitle>
                 </CardHeader>
                 <CardContent className="py-2">
-                  <div className="grid grid-cols-3 gap-3 text-xs">
+                  <div className="grid grid-cols-2 gap-3 text-xs">
                     <div>
-                      <p className="font-semibold text-blue-800 mb-2">Постачальник:</p>
-                      <button onClick={() => {
-                        const textarea = document.querySelector('#order-template-editor');
-                        if (textarea) {
-                          const start = textarea.selectionStart;
-                          const end = textarea.selectionEnd;
-                          const text = orderTemplate;
-                          const variable = '{{supplier_name}}';
-                          setOrderTemplate(text.substring(0, start) + variable + text.substring(end));
-                          setTimeout(() => textarea.focus(), 10);
-                        }
-                      }} className="block text-left w-full px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{supplier_name}}`}</button>
-                      <button onClick={() => {
-                        const textarea = document.querySelector('#order-template-editor');
-                        if (textarea) {
-                          const start = textarea.selectionStart;
-                          const text = orderTemplate;
-                          setOrderTemplate(text.substring(0, start) + '{{supplier_edrpou}}' + text.substring(start));
-                        }
-                      }} className="block text-left w-full px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{supplier_edrpou}}`}</button>
+                      <p className="font-semibold text-blue-800 mb-2">Постачальник (Мої дані):</p>
+                      <button onClick={() => insertVariable('supplier_name', 'order-template-editor')} className="block text-left w-full px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{supplier_name}}`} - Назва</button>
+                      <button onClick={() => insertVariable('supplier_edrpou', 'order-template-editor')} className="block text-left w-full px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{supplier_edrpou}}`} - ЄДРПОУ</button>
+                      <button onClick={() => insertVariable('supplier_address', 'order-template-editor')} className="block text-left w-full px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{supplier_address}}`} - Адреса</button>
+                      <button onClick={() => insertVariable('supplier_iban', 'order-template-editor')} className="block text-left w-full px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{supplier_iban}}`} - IBAN</button>
+                      <button onClick={() => insertVariable('supplier_bank', 'order-template-editor')} className="block text-left w-full px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{supplier_bank}}`} - Банк</button>
+                      <button onClick={() => insertVariable('supplier_mfo', 'order-template-editor')} className="block text-left w-full px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{supplier_mfo}}`} - МФО</button>
+                      <button onClick={() => insertVariable('supplier_email', 'order-template-editor')} className="block text-left w-full px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{supplier_email}}`} - Email</button>
+                      <button onClick={() => insertVariable('supplier_phone', 'order-template-editor')} className="block text-left w-full px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{supplier_phone}}`} - Телефон</button>
                     </div>
                     <div>
-                      <p className="font-semibold text-blue-800 mb-2">Покупець:</p>
-                      <button onClick={() => {
-                        const textarea = document.querySelector('#order-template-editor');
-                        if (textarea) {
-                          const start = textarea.selectionStart;
-                          const text = orderTemplate;
-                          setOrderTemplate(text.substring(0, start) + '{{buyer_name}}' + text.substring(start));
-                        }
-                      }} className="block text-left w-full px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{buyer_name}}`}</button>
-                      <button onClick={() => {
-                        const textarea = document.querySelector('#order-template-editor');
-                        if (textarea) {
-                          const start = textarea.selectionStart;
-                          const text = orderTemplate;
-                          setOrderTemplate(text.substring(0, start) + '{{buyer_edrpou}}' + text.substring(start));
-                        }
-                      }} className="block text-left w-full px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{buyer_edrpou}}`}</button>
+                      <p className="font-semibold text-blue-800 mb-2">Покупець (Основні дані):</p>
+                      <button onClick={() => insertVariable('buyer_name', 'order-template-editor')} className="block text-left w-full px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{buyer_name}}`} - Назва</button>
+                      <button onClick={() => insertVariable('buyer_edrpou', 'order-template-editor')} className="block text-left w-full px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{buyer_edrpou}}`} - ЄДРПОУ</button>
+                      <button onClick={() => insertVariable('buyer_address', 'order-template-editor')} className="block text-left w-full px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{buyer_address}}`} - Адреса</button>
+                      <button onClick={() => insertVariable('buyer_iban', 'order-template-editor')} className="block text-left w-full px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{buyer_iban}}`} - IBAN</button>
+                      <button onClick={() => insertVariable('buyer_bank', 'order-template-editor')} className="block text-left w-full px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{buyer_bank}}`} - Банк</button>
+                      <button onClick={() => insertVariable('buyer_mfo', 'order-template-editor')} className="block text-left w-full px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{buyer_mfo}}`} - МФО</button>
+                      <button onClick={() => insertVariable('buyer_email', 'order-template-editor')} className="block text-left w-full px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{buyer_email}}`} - Email</button>
+                      <button onClick={() => insertVariable('buyer_phone', 'order-template-editor')} className="block text-left w-full px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{buyer_phone}}`} - Телефон</button>
                     </div>
-                    <div>
+                    <div className="col-span-2">
                       <p className="font-semibold text-blue-800 mb-2">Загальні:</p>
-                      <button onClick={() => {
-                        const textarea = document.querySelector('#order-template-editor');
-                        if (textarea) {
-                          const start = textarea.selectionStart;
-                          const text = orderTemplate;
-                          setOrderTemplate(text.substring(0, start) + '{{order_number}}' + text.substring(start));
-                        }
-                      }} className="block text-left w-full px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{order_number}}`}</button>
-                      <button onClick={() => {
-                        const textarea = document.querySelector('#order-template-editor');
-                        if (textarea) {
-                          const start = textarea.selectionStart;
-                          const text = orderTemplate;
-                          setOrderTemplate(text.substring(0, start) + '{{order_date}}' + text.substring(start));
-                        }
-                      }} className="block text-left w-full px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{order_date}}`}</button>
-                      <button onClick={() => {
-                        const textarea = document.querySelector('#order-template-editor');
-                        if (textarea) {
-                          const start = textarea.selectionStart;
-                          const text = orderTemplate;
-                          setOrderTemplate(text.substring(0, start) + '{{total_gross}}' + text.substring(start));
-                        }
-                      }} className="block text-left w-full px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{total_gross}}`}</button>
+                      <div className="grid grid-cols-4 gap-1">
+                        <button onClick={() => insertVariable('order_number', 'order-template-editor')} className="text-left px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{order_number}}`} - Номер</button>
+                        <button onClick={() => insertVariable('order_date', 'order-template-editor')} className="text-left px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{order_date}}`} - Дата</button>
+                        <button onClick={() => insertVariable('items_rows', 'order-template-editor')} className="text-left px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{items_rows}}`} - Рядки позицій</button>
+                        <button onClick={() => insertVariable('total_net', 'order-template-editor')} className="text-left px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{total_net}}`} - Сума без ПДВ</button>
+                        <button onClick={() => insertVariable('total_vat', 'order-template-editor')} className="text-left px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{total_vat}}`} - ПДВ</button>
+                        <button onClick={() => insertVariable('total_gross', 'order-template-editor')} className="text-left px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{total_gross}}`} - Всього</button>
+                        <button onClick={() => insertVariable('vat_rate', 'order-template-editor')} className="text-left px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{vat_rate}}`} - Ставка ПДВ</button>
+                      </div>
                     </div>
                   </div>
                 </CardContent>
