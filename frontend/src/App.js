@@ -277,6 +277,8 @@ function App() {
   const [showOrderTemplateEditor, setShowOrderTemplateEditor] = useState(false);
   const [showCreateFromOrder, setShowCreateFromOrder] = useState(false);
   const [selectedOrderData, setSelectedOrderData] = useState(null);
+  const [showOrderDetails, setShowOrderDetails] = useState(false);
+  const [currentOrderDetails, setCurrentOrderDetails] = useState(null);
   
   const insertAlignment = (alignType) => {
     const textarea = document.querySelector('#template-editor');
