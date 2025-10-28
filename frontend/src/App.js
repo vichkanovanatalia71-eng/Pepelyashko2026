@@ -358,6 +358,7 @@ function App() {
     fetchCounterparties();
     fetchAllDocuments();
     loadContractTemplate();
+    loadOrderTemplate();
   }, []);
 
   const fetchCounterparties = async () => {
