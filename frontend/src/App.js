@@ -966,7 +966,7 @@ function App() {
   
   const saveOrderTemplate = () => {
     localStorage.setItem('orderTemplate', orderTemplate);
-    localStorage.setItem('orderTemplateVersion', '1.0');
+    localStorage.setItem('orderTemplateVersion', '2.0');
     toast.success('Шаблон замовлення збережено!');
     setShowOrderTemplateEditor(false);
   };
