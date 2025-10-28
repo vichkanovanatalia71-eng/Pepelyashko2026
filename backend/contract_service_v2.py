@@ -9,6 +9,7 @@ from reportlab.lib import colors
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_LEFT, TA_RIGHT
+from weasyprint import HTML, CSS
 import logging
 from typing import Dict, Any, Optional, List
 
