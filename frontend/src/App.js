@@ -422,7 +422,7 @@ function App() {
     .header-line td{border:none;padding:0}
     .header-line .left{text-align:left}
     .header-line .right{text-align:right}
-    .sec{border:1px solid #e5e7eb;border-radius:10px;padding:12px;margin:8px 0}
+    .sec{border:1px solid #e5e7eb;border-radius:10px;padding:12px;margin:0}
     .requisites-table{width:100%;border-collapse:collapse;margin-top:12px}
     .requisites-table td{width:50%;vertical-align:top;padding:0 20px;text-align:center}
     .center{text-align:center}
