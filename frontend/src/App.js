@@ -1075,14 +1075,16 @@ function App() {
           
           // For orders, save the form data for creating other documents
           if (endpoint === 'orders') {
-            setDocumentPdfData({
+            const orderPdfData = {
               ...response.data,
               order_form_data: {
                 counterparty_edrpou: documentForm.counterparty_edrpou,
                 items: documentForm.items,
                 total_amount: documentForm.total_amount
               }
-            });
+            };
+            console.log('Saving order PDF data:', orderPdfData);
+            setDocumentPdfData(orderPdfData);
           } else {
             setDocumentPdfData(response.data);
           }
