@@ -2389,6 +2389,19 @@ function App() {
                     </div>
                   )}
                 </div>
+                {documentPdfData.drive_view_link && (
+                  <div className="text-center">
+                    <Button
+                      onClick={() => window.open(documentPdfData.drive_view_link, '_blank')}
+                      variant="outline"
+                      size="sm"
+                    >
+                      <FileText className="w-4 h-4 mr-2" />
+                      Відкрити у новій вкладці
+                    </Button>
+                  </div>
+                )}
+              </div>
               )}
               
               {/* Email options */}
