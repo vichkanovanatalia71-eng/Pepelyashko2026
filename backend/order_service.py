@@ -334,6 +334,7 @@ class OrderService:
                 'supplier_mfo': supplier_data.get('МФО', supplier_data.get('mfo', '')),
                 'supplier_email': supplier_data.get('email', ''),
                 'supplier_phone': supplier_data.get('тел', supplier_data.get('phone', '')),
+                'supplier_signature': supplier_data.get('Підпис', supplier_data.get('signature', '')),
                 # Buyer (Покупець - Основні дані)
                 'buyer_name': buyer_data.get('Назва', ''),
                 'buyer_edrpou': buyer_data.get('ЄДРПОУ', ''),
@@ -343,6 +344,7 @@ class OrderService:
                 'buyer_mfo': buyer_data.get('МФО', ''),
                 'buyer_email': buyer_data.get('email', ''),
                 'buyer_phone': buyer_data.get('тел', ''),
+                'buyer_signature': buyer_data.get('Підпис', ''),
                 # Items
                 'items_rows': items_rows_html,
                 # Totals
