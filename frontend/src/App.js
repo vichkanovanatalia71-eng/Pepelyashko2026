@@ -269,9 +269,31 @@ function App() {
     fontSize: 12,
     fontFamily: 'Times New Roman',
     lineSpacing: 1.5,
-    alignment: 'justify',
     indent: 0
   });
+  
+  const insertAlignment = (alignType) => {
+    const textarea = document.querySelector('#template-editor');
+    if (!textarea) return;
+    
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = contractTemplate.substring(start, end);
+    
+    if (selectedText) {
+      // Wrap selected text with alignment markers
+      const newText = contractTemplate.substring(0, start) + 
+                     `[align:${alignType}]${selectedText}[/align]` + 
+                     contractTemplate.substring(end);
+      setContractTemplate(newText);
+    } else {
+      // Insert alignment markers at cursor position
+      const newText = contractTemplate.substring(0, start) + 
+                     `[align:${alignType}]текст[/align]` + 
+                     contractTemplate.substring(start);
+      setContractTemplate(newText);
+    }
+  };
 
   useEffect(() => {
     fetchCounterparties();
