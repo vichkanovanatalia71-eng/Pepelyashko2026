@@ -64,6 +64,9 @@ document_service = DocumentService(drive_service=drive_service, sheets_service=s
 # Initialize Order service
 order_service = OrderService(drive_service=drive_service, sheets_service=sheets_service)
 
+# Initialize Act service (for acts based on orders)
+act_service = ActService(drive_service=drive_service, sheets_service=sheets_service)
+
 # Create the main app without a prefix
 app = FastAPI(title="Document Management System")
 
