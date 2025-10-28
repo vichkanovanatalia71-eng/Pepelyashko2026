@@ -659,8 +659,185 @@ function App() {
     if (savedTemplate && savedVersion === CURRENT_VERSION) {
       setOrderTemplate(savedTemplate);
     } else {
-      // If no saved template, leave empty - backend will use default
-      setOrderTemplate('');
+      // Load default template from order_template.html
+      const defaultOrderTemplate = `<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8" />
+  <title>Замовлення № {{order_number}} від {{order_date}}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    @page { size: A4; margin: 2cm 1.5cm 2cm 3cm; }
+
+    html, body {
+      margin: 0; padding: 0; background: #fff; color: #111;
+      font: 12px/1.4 "Times New Roman", serif;
+    }
+    .wrap { max-width: 17cm; margin: 0 auto; }
+
+    h1 { text-align: center; margin: 10px 0 8px; font-size: 16px; font-weight: bold; }
+
+    .meta { width: 100%; margin: 6px 0 10px; border-collapse: collapse; }
+    .meta td { padding: 2px 0; vertical-align: top; }
+
+    /* Розділи */
+    .block-title {
+      text-align: center;
+      font-weight: bold;
+      font-size: 11px;
+      margin: 10px 0 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    /* Таблиця позицій */
+    table.items {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      margin-top: 6px;
+    }
+    table.items thead { background: #f7f7f7; }
+    table.items th, table.items td {
+      border: 1px solid #cfd4d9;
+      padding: 6px 8px;
+      vertical-align: top;
+      font-size: 12px;
+    }
+    table.items th { text-align: center; font-weight: bold; }
+    .ncol   { width: 28px;  text-align: center; }
+    .name   { width: 46%;   }
+    .unit   { width: 10%;   text-align: center; }
+    .numeric{ text-align: right; }
+
+    /* Підсумки */
+    table.items tfoot td {
+      border: 1px solid #cfd4d9;
+      font-weight: bold;
+      background: #fafafa;
+    }
+    .tfoot-label { text-align: right; }
+    .tfoot-sum   { text-align: right; width: 14%; }
+
+    /* Реквізити */
+    .requisites { width: 100%; border-collapse: collapse; table-layout: fixed; margin-top: 12px; }
+    .requisites th, .requisites td {
+      border: 1px solid #cfd4d9; padding: 6px 8px; vertical-align: top; font-size: 12px;
+    }
+    .requisites th { background: #f7f7f7; text-align: center; font-weight: bold; }
+    .requisites td { width: 50%; }
+    .mono { font-family: "Courier New", monospace; white-space: nowrap; }
+
+    .signline { margin-top: 10px; }
+
+    /* Друк */
+    thead { display: table-header-group; }
+    tfoot { display: table-footer-group; }
+
+    @media print { a[href]:after { content: ""; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>ЗАМОВЛЕННЯ № {{order_number}} ВІД {{order_date}}</h1>
+
+    <table class="meta">
+      <tr>
+        <td><strong>Місце складання:</strong> м. Одеса</td>
+      </tr>
+    </table>
+
+    <div class="block-title">Сторони</div>
+    <table class="requisites">
+      <tr>
+        <th>ПОКУПЕЦЬ</th>
+        <th>ПОСТАЧАЛЬНИК</th>
+      </tr>
+      <tr>
+        <td>
+          <p><strong>Назва:</strong> {{buyer_name}}</p>
+          <p><strong>ЄДРПОУ:</strong> <span class="mono">{{buyer_edrpou}}</span></p>
+          <p><strong>Адреса:</strong> {{buyer_address}}</p>
+          <p><strong>IBAN:</strong> <span class="mono">{{buyer_iban}}</span></p>
+          <p><strong>Банк:</strong> {{buyer_bank}}</p>
+          <p><strong>МФО:</strong> <span class="mono">{{buyer_mfo}}</span></p>
+          <p><strong>Email:</strong> <span class="mono">{{buyer_email}}</span></p>
+          <p><strong>Тел.:</strong> <span class="mono">{{buyer_phone}}</span></p>
+        </td>
+        <td>
+          <p><strong>Назва:</strong> {{supplier_name}}</p>
+          <p><strong>ЄДРПОУ/РНОКПП:</strong> <span class="mono">{{supplier_edrpou}}</span></p>
+          <p><strong>Адреса:</strong> {{supplier_address}}</p>
+          <p><strong>IBAN:</strong> <span class="mono">{{supplier_iban}}</span></p>
+          <p><strong>Банк:</strong> {{supplier_bank}}</p>
+          <p><strong>МФО:</strong> <span class="mono">{{supplier_mfo}}</span></p>
+          <p><strong>Email:</strong> <span class="mono">{{supplier_email}}</span></p>
+          <p><strong>Тел.:</strong> <span class="mono">{{supplier_phone}}</span></p>
+        </td>
+      </tr>
+    </table>
+
+    <div class="block-title">Перелік позицій</div>
+    <table class="items">
+      <thead>
+        <tr>
+          <th class="ncol">№</th>
+          <th class="name">Найменування</th>
+          <th class="unit">Од. виміру</th>
+          <th class="numeric">Кількість</th>
+          <th class="numeric">Ціна, грн</th>
+          <th class="numeric">Сума, грн</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{items_rows}}
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="5" class="tfoot-label">Разом без ПДВ, грн</td>
+          <td class="tfoot-sum"><span class="mono">{{total_net}}</span></td>
+        </tr>
+        <tr>
+          <td colspan="5" class="tfoot-label">ПДВ {{vat_rate}}%, грн</td>
+          <td class="tfoot-sum"><span class="mono">{{total_vat}}</span></td>
+        </tr>
+        <tr>
+          <td colspan="5" class="tfoot-label"><strong>Всього до сплати, грн</strong></td>
+          <td class="tfoot-sum"><strong><span class="mono">{{total_gross}}</span></strong></td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <div class="block-title">Роз'яснення</div>
+    <ol style="margin:6px 0 0 18px; padding:0;">
+      <li>Даний документ є первинним погодженим Замовленням між Покупцем і Постачальником, що визначає обсяг, кількість, вартість і найменування товарів та/або послуг.</li>
+      <li>Замовлення є підставою для подальшого укладення Договору постачання товарів та/або надання послуг між Сторонами.</li>
+      <li>Ціни, зазначені в Замовленні, діють до моменту укладення Договору або письмового підтвердження змін, якщо інше не погоджено Сторонами.</li>
+      <li>Підписання цього Замовлення засвідчує намір Сторін здійснити відповідну поставку товарів або надання послуг на погоджених умовах.</li>
+      <li>Документ може підписуватись у паперовому вигляді або електронними засобами з використанням кваліфікованого електронного підпису (КЕП).</li>
+      <li>Цей документ не створює фінансових зобов'язань до моменту укладення основного Договору, але є підтвердженням узгодження номенклатури та вартості.</li>
+    </ol>
+
+    <div class="block-title" style="margin-top:14px;">Підписи сторін</div>
+    <table class="requisites">
+      <tr>
+        <td>
+          <p><strong>Від Покупця:</strong></p>
+          <p>ПІБ: ___________________________</p>
+          <p class="signline">Підпис: __________________ / ________ /</p>
+        </td>
+        <td>
+          <p><strong>Від Постачальника:</strong></p>
+          <p>ПІБ: ___________________________</p>
+          <p class="signline">Підпис: __________________ / ________ /</p>
+        </td>
+      </tr>
+    </table>
+  </div>
+</body>
+</html>`;
+      
+      setOrderTemplate(defaultOrderTemplate);
     }
   };
   
