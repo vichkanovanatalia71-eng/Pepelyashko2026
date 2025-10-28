@@ -2341,8 +2341,18 @@ function App() {
                       allow="autoplay"
                     />
                   ) : (
-                    <div className="flex items-center justify-center h-full text-gray-500">
-                      <p>PDF генерується... Оновіть сторінку для перегляду</p>
+                    <div className="flex flex-col items-center justify-center h-full text-gray-500 space-y-4">
+                      <Loader2 className="w-12 h-12 animate-spin text-blue-500" />
+                      <p className="text-lg">PDF генерується...</p>
+                      <Button
+                        onClick={() => window.location.reload()}
+                        variant="outline"
+                        size="sm"
+                        className="mt-4"
+                      >
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        Оновити перегляд
+                      </Button>
                     </div>
                   )}
                 </div>
