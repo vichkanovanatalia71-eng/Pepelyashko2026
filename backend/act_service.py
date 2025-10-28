@@ -118,7 +118,18 @@ class ActService:
             
             basis = ", ".join(basis_parts) if basis_parts else "Не вказано"
             
-            # 10. Prepare template context
+            # 10. Prepare items for Handlebars templates
+            formatted_items = []
+            for item in all_items:
+                formatted_items.append({
+                    'name': item.get('name', ''),
+                    'unit': item.get('unit', 'шт'),
+                    'qty': self.format_currency(float(item.get('quantity', 0))),
+                    'price': self.format_currency(float(item.get('price', 0))),
+                    'sum': self.format_currency(float(item.get('amount', 0)))
+                })
+            
+            # 11. Prepare template context
             context = {
                 # Act info
                 'act_number': act_number,
@@ -149,7 +160,9 @@ class ActService:
                 'buyer_phone': buyer_data.get('тел', ''),
                 'buyer_representative': buyer_data.get('В особі', ''),
                 'buyer_signature': buyer_data.get('Підпис', ''),
-                # Items
+                # Items (for Handlebars templates with {{#each}})
+                'items': formatted_items,
+                # Items rows HTML (for simple templates)
                 'items_rows': items_rows_html,
                 # Totals
                 'total_net': self.format_currency(totals['total_net']),
@@ -160,7 +173,7 @@ class ActService:
                 'vat_note': 'без ПДВ' if vat_rate == 0 else f'з ПДВ {vat_rate}%'
             }
             
-            # 11. Use custom template or default
+            # 12. Use custom template or default
             html_template = custom_template if custom_template else self.default_template
             
             # 12. Replace all {{variable}} with actual values
