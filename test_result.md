@@ -468,9 +468,9 @@ metadata:
 
 test_plan:
   current_focus:
+    - "Full System Integration Test - COMPLETED"
     - "Order Template Structure Update - Signatures Section"
-    - "Order Email Functionality"
-    - "Full System Integration Test"
+    - "Order Email Functionality - COMPLETED"
   stuck_tasks: []
   test_all: true
   test_priority: "high_first"
