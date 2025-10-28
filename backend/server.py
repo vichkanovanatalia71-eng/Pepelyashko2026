@@ -541,6 +541,33 @@ async def generate_order_pdf(data: DocumentCreate):
         logging.error(f"Error generating order PDF: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
+@api_router.post("/orders/send-email")
+async def send_order_email(data: OrderSendEmailRequest):
+    """Send order PDF via email with optional Google Drive link."""
+    if order_service is None:
+        raise HTTPException(status_code=503, detail="Order service not available")
+    
+    try:
+        # Use order_service to send email (we need to implement this method)
+        success = await order_service.send_order_email(
+            pdf_path=data.order_pdf_path,
+            recipient_email=data.recipient_email,
+            order_number=data.order_number,
+            drive_link=data.drive_link
+        )
+        
+        if success:
+            return {
+                'success': True,
+                'message': f'Замовлення успішно відправлено на {data.recipient_email}'
+            }
+        else:
+            raise HTTPException(status_code=500, detail="Помилка при відправці email")
+            
+    except Exception as e:
+        logging.error(f"Error sending order email: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
 # Act endpoints
 @api_router.post("/acts", response_model=dict)
 async def create_act(data: DocumentCreate):
