@@ -6,6 +6,7 @@ import logging
 import json
 from typing import Dict, Any, List, Optional
 import re
+from pybars import Compiler
 
 logger = logging.getLogger(__name__)
 
