@@ -2394,6 +2394,34 @@ function App() {
             </DialogHeader>
             
             <div className="space-y-4 py-4 overflow-y-auto" style={{maxHeight: 'calc(90vh - 200px)'}}>
+              {/* Formatting toolbar - Sticky */}
+              <div className="sticky top-0 z-10 bg-white pt-2 pb-2 -mt-2">
+                <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 shadow-md">
+                  <CardContent className="py-3">
+                    <div className="space-y-3">
+                      {/* HTML editing help */}
+                      <div className="flex flex-wrap gap-2 items-center border-b border-blue-200 pb-2">
+                        <Label className="text-sm font-semibold text-blue-900 mr-2">HTML редагування:</Label>
+                        <span className="text-xs text-gray-600">Використовуйте HTML теги: &lt;strong&gt;, &lt;em&gt;, &lt;p&gt;, &lt;h2&gt;</span>
+                      </div>
+                      
+                      {/* Template settings */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label className="text-sm font-semibold text-blue-900">Базові налаштування</Label>
+                          <p className="text-xs text-gray-600">Шрифт: Times New Roman, 12pt</p>
+                          <p className="text-xs text-gray-600">Міжрядковий інтервал: 1.6</p>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-sm font-semibold text-blue-900">Швидкі підказки</Label>
+                          <p className="text-xs text-gray-600">Кожен пункт в окремому &lt;p&gt;</p>
+                          <p className="text-xs text-gray-600">Використовуйте змінні {'{{'} name {'}}'}  </p>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
               
               {/* Available variables */}
               <Card className="bg-blue-50 border-blue-200">
