@@ -271,7 +271,7 @@ class OrderService:
         items: List[Dict[str, Any]],
         upload_to_drive: bool = True,
         custom_template: Optional[str] = None,
-        vat_rate: float = 20.0
+        vat_rate: float = 0.0
     ) -> Dict[str, Any]:
         """
         Generate PDF order
