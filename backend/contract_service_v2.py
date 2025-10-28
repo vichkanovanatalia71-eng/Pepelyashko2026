@@ -478,8 +478,8 @@ class ContractServiceV2:
                     
                     result.update({
                         'drive_file_id': drive_result['file_id'],
-                        'drive_view_link': drive_result['view_link'],
-                        'drive_download_link': drive_result['download_link']
+                        'drive_view_link': drive_result['web_view_link'],
+                        'drive_download_link': drive_result['web_content_link']
                     })
                     logger.info(f"Contract uploaded to Google Drive: {drive_result['file_id']}")
                 except Exception as e:
