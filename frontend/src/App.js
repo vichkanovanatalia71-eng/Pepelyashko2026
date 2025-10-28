@@ -591,8 +591,6 @@ function App() {
             
             <p><strong>Тел.:</strong> {{supplier_phone}}</p>
             
-            <p><strong>Представник:</strong> {{supplier_representative}}</p>
-            
             <p><strong>Підпис:</strong> ______________________ / {{supplier_signature}} /</p>
           </td>
           <td>
@@ -613,8 +611,6 @@ function App() {
             <p><strong>Email:</strong> {{buyer_email}}</p>
             
             <p><strong>Тел.:</strong> {{buyer_phone}}</p>
-            
-            <p><strong>Представник:</strong> {{buyer_representative}}</p>
             
             <p><strong>Підпис:</strong> ______________________ / {{buyer_signature}} /</p>
           </td>
