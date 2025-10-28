@@ -840,6 +840,40 @@ async def send_contract_email(data: ContractSendEmailRequest):
         logging.error(f"Error sending contract email: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
+# Documents by order endpoint (as mentioned in review request)
+@api_router.get("/documents/by-order/{order_number}")
+async def get_documents_by_order(order_number: str):
+    """Get all documents created based on a specific order number."""
+    if sheets_service is None:
+        raise HTTPException(status_code=503, detail="Google Sheets service not available")
+    
+    try:
+        logging.info(f"Fetching documents by order: {order_number}")
+        
+        # Get all document types
+        invoices = sheets_service.get_documents("Рахунки")
+        acts = sheets_service.get_documents("Акти")
+        waybills = sheets_service.get_documents("Видаткові накладні")
+        contracts = sheets_service.get_documents("Договори")
+        
+        logging.info(f"Total documents - Invoices: {len(invoices)}, Acts: {len(acts)}, Waybills: {len(waybills)}, Contracts: {len(contracts)}")
+        
+        # Filter documents that were created from this specific order
+        related = {
+            'invoices': [doc for doc in invoices if doc.get('based_on_order') == order_number],
+            'acts': [doc for doc in acts if doc.get('based_on_order') == order_number],
+            'waybills': [doc for doc in waybills if doc.get('based_on_order') == order_number],
+            'contracts': [doc for doc in contracts if doc.get('based_on_order') == order_number]
+        }
+        
+        logging.info(f"Filtered documents by order {order_number}: {related}")
+        
+        return related
+        
+    except Exception as e:
+        logging.error(f"Error getting documents by order: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
 # Include the router in the main app
 app.include_router(api_router)
 
