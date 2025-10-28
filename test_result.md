@@ -213,6 +213,18 @@ backend:
         agent: "testing"
         comment: "✅ BACKEND ТЕСТУВАННЯ УСПІШНО ЗАВЕРШЕНО: Всі три PDF generation endpoints працюють коректно! POST /api/invoices/generate-pdf ✅, POST /api/acts/generate-pdf ✅, POST /api/waybills/generate-pdf ✅. Українські символи в назвах файлів (Рахунок_9681-1_40196816.pdf, Акт_9681-1_40196816.pdf, Накладна_9681-1_40196816.pdf) ✅. Нумерація документів правильна (9681-1 з ЄДРПОУ 40196816) ✅. Google Drive інтеграція працює (файли завантажуються у відповідні папки: Рахунки, Акти, Видаткові накладні) ✅. Дані беруться з правильних джерел ('Мої дані' та 'Основні дані') ✅."
 
+  - task: "Order PDF Generation with Drive Upload"
+    implemented: true
+    working: "needs_testing"
+    file: "/app/backend/order_service.py, /app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "needs_testing"
+        agent: "main"
+        comment: "ФАЗА 1 BACKEND ЗАМОВЛЕНЬ ЗАВЕРШЕНА: Створено order_service.py для генерації PDF замовлень з використанням WeasyPrint та HTML шаблону. Нумерація: проста послідовна 0001, 0002, 0003... (отримується з Google Sheets). Створено файл order_template.html з наданим користувачем шаблоном. Додано ендпоінт POST /api/orders/generate-pdf в server.py. Сервіс використовує дані з 'Мої дані' (постачальник) та 'Основні дані' (покупець). Розраховує ПДВ 20%. Завантаження на Google Drive в папку 'Замовлення'. Збереження в Google Sheets аркуш 'Замовлення' з drive_file_id. Встановлено libpangoft2-1.0-0 для WeasyPrint. Backend успішно запущений."
+
   - task: "Backend API Endpoints Update"
     implemented: true
     working: true
