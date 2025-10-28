@@ -1630,6 +1630,9 @@ class ContractTestSuite:
         # Test 17: New HTML Template Contract Generation (from review request)
         test_results['new_html_template_contract'] = self.test_new_html_template_contract_generation()
         
+        # Test 18: Order PDF Generation (from review request)
+        test_results['order_pdf_generation'] = self.test_order_pdf_generation()
+        
         # Summary
         logger.info("=" * 60)
         logger.info("TEST RESULTS SUMMARY")
