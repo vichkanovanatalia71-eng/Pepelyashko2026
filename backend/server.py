@@ -425,6 +425,59 @@ async def get_orders():
         logging.error(f"Error getting orders: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
+@api_router.get("/orders/{order_number}/related-documents")
+async def get_order_related_documents(order_number: str):
+    """Get all documents created from this order."""
+    if sheets_service is None:
+        raise HTTPException(status_code=503, detail="Google Sheets service not available")
+    
+    try:
+        # Get all document types
+        invoices = sheets_service.get_documents("Рахунки")
+        acts = sheets_service.get_documents("Акти")
+        waybills = sheets_service.get_documents("Видаткові накладні")
+        contracts = sheets_service.get_documents("Договори")
+        
+        # Filter documents that reference this order number (check in subject or notes)
+        related = {
+            'invoices': [],
+            'acts': [],
+            'waybills': [],
+            'contracts': []
+        }
+        
+        # Get the order to find its counterparty
+        orders = sheets_service.get_documents("Замовлення")
+        order = next((o for o in orders if str(o.get('number', '')) == str(order_number)), None)
+        
+        if order:
+            counterparty_edrpou = order.get('counterparty_edrpou', '')
+            
+            # Find documents for the same counterparty created around the same time
+            for inv in invoices:
+                if inv.get('counterparty_edrpou') == counterparty_edrpou:
+                    related['invoices'].append(inv)
+            
+            for act in acts:
+                if act.get('counterparty_edrpou') == counterparty_edrpou:
+                    related['acts'].append(act)
+            
+            for wb in waybills:
+                if wb.get('counterparty_edrpou') == counterparty_edrpou:
+                    related['waybills'].append(wb)
+            
+            for contract in contracts:
+                # Check if contract subject mentions this order number
+                subject = contract.get('subject', '')
+                if order_number in subject or contract.get('counterparty_edrpou') == counterparty_edrpou:
+                    related['contracts'].append(contract)
+        
+        return related
+        
+    except Exception as e:
+        logging.error(f"Error getting related documents: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
 @api_router.post("/orders/generate-pdf")
 async def generate_order_pdf(data: DocumentCreate):
     """Generate PDF order and upload to Google Drive."""
