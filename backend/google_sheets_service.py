@@ -230,7 +230,8 @@ class GoogleSheetsService:
                 data.get('contract_type', ''),
                 data.get('subject', ''),
                 data.get('amount', 0),
-                drive_file_id  # Add drive_file_id to the row
+                drive_file_id,  # Add drive_file_id to the row
+                data.get('based_on_order', '')  # Add based_on_order (номер замовлення)
             ]
             
             worksheet.append_row(row)
