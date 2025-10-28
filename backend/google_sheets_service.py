@@ -2,10 +2,39 @@ import gspread
 from google.oauth2.service_account import Credentials
 from typing import List, Dict, Any, Optional
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
+import time
 
 logger = logging.getLogger(__name__)
+
+class SimpleCache:
+    """Simple in-memory cache to reduce Google Sheets API calls."""
+    def __init__(self, ttl_seconds=300):  # 5 minutes default
+        self.cache = {}
+        self.ttl_seconds = ttl_seconds
+    
+    def get(self, key):
+        """Get value from cache if not expired."""
+        if key in self.cache:
+            value, timestamp = self.cache[key]
+            if time.time() - timestamp < self.ttl_seconds:
+                logger.info(f"Cache HIT for key: {key}")
+                return value
+            else:
+                logger.info(f"Cache EXPIRED for key: {key}")
+                del self.cache[key]
+        return None
+    
+    def set(self, key, value):
+        """Set value in cache with current timestamp."""
+        self.cache[key] = (value, time.time())
+        logger.info(f"Cache SET for key: {key}")
+    
+    def clear(self):
+        """Clear all cache entries."""
+        self.cache.clear()
+        logger.info("Cache CLEARED")
 
 class GoogleSheetsService:
     def __init__(self, credentials_path: str, spreadsheet_id: str):
