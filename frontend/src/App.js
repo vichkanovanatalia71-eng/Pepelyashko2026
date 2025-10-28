@@ -2710,13 +2710,18 @@ function App() {
                 <Button 
                   onClick={() => {
                     // Save current order data for creating other documents
-                    setSelectedOrderData({
-                      counterparty_edrpou: documentForm.counterparty_edrpou,
-                      items: documentForm.items,
-                      total_amount: documentForm.total_amount,
-                      order_number: documentPdfData?.order_number
-                    });
-                    setShowCreateFromOrder(true);
+                    const formData = documentPdfData?.order_form_data;
+                    if (formData) {
+                      setSelectedOrderData({
+                        counterparty_edrpou: formData.counterparty_edrpou,
+                        items: formData.items,
+                        total_amount: formData.total_amount,
+                        order_number: documentPdfData?.order_number
+                      });
+                      setShowCreateFromOrder(true);
+                    } else {
+                      toast.error('Немає даних замовлення');
+                    }
                   }}
                   className="btn-primary bg-green-600 hover:bg-green-700"
                 >
