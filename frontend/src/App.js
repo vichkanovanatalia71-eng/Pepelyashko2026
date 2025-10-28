@@ -1415,12 +1415,17 @@ function App() {
                           <div className="space-y-2">
                             {counterpartyDocuments.waybills.map((doc, idx) => (
                               <div key={idx} className="p-3 bg-orange-50 rounded-lg flex justify-between items-center">
-                                <p className="text-sm">№{doc.number} від {doc.date} | Сума: {doc.total_amount} грн</p>
-                                {doc.drive_file_id && doc.drive_file_id !== '' && (
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => {
+                                <div>
+                                  <p className="text-sm">№{doc.number} від {doc.date} | Сума: {doc.total_amount} грн</p>
+                                  {doc.drive_file_id && (
+                                    <p className="text-xs text-gray-500 mt-1">ID: {doc.drive_file_id}</p>
+                                  )}
+                                </div>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    if (doc.drive_file_id && doc.drive_file_id !== '') {
                                       setDocumentPdfData({
                                         drive_file_id: doc.drive_file_id,
                                         drive_view_link: `https://drive.google.com/file/d/${doc.drive_file_id}/view`,
@@ -1429,13 +1434,16 @@ function App() {
                                       });
                                       setCurrentDocType('waybill');
                                       setShowDocumentPreview(true);
-                                    }}
-                                    className="btn-secondary ml-2"
-                                  >
-                                    <Eye className="w-4 h-4 mr-1" />
-                                    Переглянути
-                                  </Button>
-                                )}
+                                    } else {
+                                      toast.error('Документ ще не завантажено на Google Drive');
+                                    }
+                                  }}
+                                  className="btn-secondary ml-2"
+                                  disabled={!doc.drive_file_id || doc.drive_file_id === ''}
+                                >
+                                  <Eye className="w-4 h-4 mr-1" />
+                                  Переглянути
+                                </Button>
                               </div>
                             ))}
                           </div>
