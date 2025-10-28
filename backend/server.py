@@ -207,6 +207,13 @@ async def get_counterparties():
     if sheets_service is None:
         raise HTTPException(status_code=503, detail="Google Sheets service not available")
     
+    # Check cache first
+    cache_key = "all_counterparties_main"
+    cached = sheets_service.cache.get(cache_key)
+    if cached is not None:
+        logging.info("Returning cached counterparties list")
+        return cached
+    
     try:
         # Get all records from "Основні дані"
         worksheet = sheets_service.spreadsheet.worksheet("Основні дані")
@@ -256,6 +263,8 @@ async def get_counterparties():
                     'signature': str(record.get('Підпис', ''))
                 })
         
+        # Cache the result
+        sheets_service.cache.set(cache_key, counterparties)
         return counterparties
     except Exception as e:
         logging.error(f"Error getting counterparties: {str(e)}")
