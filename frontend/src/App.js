@@ -1684,7 +1684,12 @@ function App() {
                                         drive_file_id: doc.drive_file_id,
                                         drive_view_link: `https://drive.google.com/file/d/${doc.drive_file_id}/view`,
                                         drive_download_link: `https://drive.google.com/uc?export=download&id=${doc.drive_file_id}`,
-                                        order_number: doc.number
+                                        order_number: doc.number,
+                                        order_form_data: {
+                                          counterparty_edrpou: selectedCounterparty?.edrpou || '',
+                                          items: doc.items || [],
+                                          total_amount: parseFloat(doc.total_amount) || 0
+                                        }
                                       });
                                       setCurrentDocType('order');
                                       setShowDocumentPreview(true);
