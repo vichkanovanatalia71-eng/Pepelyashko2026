@@ -455,6 +455,12 @@ class GoogleSheetsService:
     
     def get_counterparty_from_main_data(self, edrpou: str) -> Optional[Dict[str, str]]:
         """Get counterparty data from 'Основні дані' sheet by ЄДРПОУ."""
+        # Check cache first
+        cache_key = f"counterparty_main_{edrpou}"
+        cached = self.cache.get(cache_key)
+        if cached is not None:
+            return cached
+        
         try:
             worksheet = self.spreadsheet.worksheet("Основні дані")
             
@@ -505,6 +511,8 @@ class GoogleSheetsService:
                         'Директор': str(record.get('В особі', ''))  # Use "В особі" as director name
                     }
                     logger.info(f"Found counterparty in 'Основні дані': {counterparty['Назва']}")
+                    # Cache the result
+                    self.cache.set(cache_key, counterparty)
                     return counterparty
             
             logger.warning(f"Counterparty with ЄДРПОУ {edrpou} not found in 'Основні дані'")
