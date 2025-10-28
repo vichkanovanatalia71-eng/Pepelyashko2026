@@ -134,9 +134,9 @@ class GoogleSheetsService:
         """Create a new invoice."""
         return self._create_document("Рахунки", data, "рахунок", drive_file_id)
     
-    def create_order(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def create_order(self, data: Dict[str, Any], drive_file_id: str = '') -> Dict[str, Any]:
         """Create a new order."""
-        return self._create_document("Замовлення", data, "замовлення")
+        return self._create_document("Замовлення", data, "замовлення", drive_file_id)
     
     def create_act(self, data: Dict[str, Any], drive_file_id: str = '') -> Dict[str, Any]:
         """Create a new act of completed work."""
