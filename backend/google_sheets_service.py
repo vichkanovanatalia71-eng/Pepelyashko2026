@@ -40,6 +40,7 @@ class GoogleSheetsService:
     def __init__(self, credentials_path: str, spreadsheet_id: str):
         self.spreadsheet_id = spreadsheet_id
         self.credentials_path = credentials_path
+        self.cache = SimpleCache(ttl_seconds=300)  # 5 minutes cache
         self.client = self._authenticate()
         self.spreadsheet = self.client.open_by_key(spreadsheet_id)
         self._initialize_sheets()
