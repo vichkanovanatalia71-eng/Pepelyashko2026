@@ -393,12 +393,17 @@ function App() {
   
   const loadContractTemplate = () => {
     const savedTemplate = localStorage.getItem('contractTemplate');
+    const savedVersion = localStorage.getItem('contractTemplateVersion');
     const savedSettings = localStorage.getItem('contractTemplateSettings');
     
-    if (savedTemplate) {
+    // Current template version
+    const CURRENT_VERSION = '2.0';
+    
+    // Check if saved template exists and version matches
+    if (savedTemplate && savedVersion === CURRENT_VERSION) {
       setContractTemplate(savedTemplate);
     } else {
-      // Set default HTML template
+      // Set default HTML template (new version)
       const defaultTemplate = `<!DOCTYPE html>
 <html lang="uk">
 <head>
