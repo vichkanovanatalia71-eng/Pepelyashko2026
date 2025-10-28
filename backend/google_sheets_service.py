@@ -267,7 +267,8 @@ class GoogleSheetsService:
                 counterparty['Назва'],
                 json.dumps(data['items'], ensure_ascii=False),
                 data['total_amount'],
-                drive_file_id  # Add drive_file_id to the row
+                drive_file_id,  # Add drive_file_id to the row
+                data.get('based_on_order', '')  # Add based_on_order (номер замовлення)
             ]
             
             worksheet.append_row(row)
