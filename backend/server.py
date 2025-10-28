@@ -140,6 +140,7 @@ class ContractGenerateRequest(BaseModel):
     template_settings: Optional[dict] = Field(None, description="Налаштування форматування шаблону")
     total_amount_text: Optional[str] = Field(None, description="Сума договору прописом")
     vat_note: Optional[str] = Field(None, description="Позначка про ПДВ (наприклад, 'без ПДВ')")
+    based_on_order: Optional[str] = Field(None, description="Номер замовлення (якщо створено на основі замовлення)")
 
 class ContractSendEmailRequest(BaseModel):
     contract_pdf_path: str = Field(..., description="Шлях до PDF файлу")
