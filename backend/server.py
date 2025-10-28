@@ -131,6 +131,8 @@ class ContractGenerateRequest(BaseModel):
     total_amount: float = Field(..., description="Загальна сума")
     contract_number: Optional[str] = Field(None, description="Номер договору (автоматично якщо не вказано)")
     counterparty_edrpou: Optional[str] = Field(None, description="ЄДРПОУ (не використовується, покупець береться з Основні дані)")
+    custom_template: Optional[str] = Field(None, description="Кастомний текст шаблону договору")
+    template_settings: Optional[dict] = Field(None, description="Налаштування форматування шаблону")
 
 class ContractSendEmailRequest(BaseModel):
     contract_pdf_path: str = Field(..., description="Шлях до PDF файлу")
