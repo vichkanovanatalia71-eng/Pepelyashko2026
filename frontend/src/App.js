@@ -406,29 +406,32 @@ function App() {
   <title>Договір постачання товарів та/або надання послуг № {{contract_number}}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    html,body{margin:0;padding:0;background:#fff;color:#111;font:14px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,"Noto Sans","Helvetica Neue",sans-serif}
+    html,body{margin:0;padding:0;background:#fff;color:#111;font:12px/1.6 'Times New Roman',serif}
     .wrap{max-width:900px;margin:32px auto;padding:0 24px}
-    h1,h2{text-align:center;margin:16px 0}
-    h1{font-size:22px}
-    h2{font-size:16px}
-    p{margin:8px 0;text-align:justify}
-    .muted{color:#555}
+    h1{text-align:center;margin:16px 0;font-size:14px;font-weight:bold}
+    h2{text-align:center;margin:16px 0;font-size:12px;font-weight:bold}
+    p{margin:8px 0;text-align:justify;font-size:12px}
+    .header-line{display:flex;justify-content:space-between;margin-bottom:16px}
+    .header-line .left{text-align:left}
+    .header-line .right{text-align:right}
     .sec{border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin:14px 0;break-inside:avoid}
     .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-    table{width:100%;border-collapse:collapse;margin-top:8px}
-    th,td{border:1px solid #e5e7eb;padding:8px;vertical-align:top}
     .center{text-align:center}
-    .nowrap{white-space:nowrap}
     @media print{.wrap{max-width:none;margin:0;padding:0}}
   </style>
 </head>
 <body>
   <div class="wrap">
     <h1>ДОГОВІР ПОСТАЧАННЯ ТОВАРІВ ТА/АБО НАДАННЯ ПОСЛУГ № {{contract_number}}</h1>
-    <p class="muted center">м. {{city}} &nbsp; «{{contract_date}}»</p>
+    
+    <div class="header-line">
+      <div class="left">м. {{city}}</div>
+      <div class="right">{{contract_date}} р.</div>
+    </div>
 
     <div class="sec">
       <h2>1. ПРЕДМЕТ ДОГОВОРУ</h2>
+      
       <p>1.1. Виконавець зобов'язується поставити товари та/або надати послуги, визначені у Специфікації (Додаток 1), а Замовник – прийняти та оплатити їх на умовах цього Договору.</p>
       
       <p>1.2. <strong>Предмет:</strong> {{subject}}. Конкретні характеристики, обсяги та строки – у Специфікації/«Замовленні».</p>
@@ -438,6 +441,7 @@ function App() {
 
     <div class="sec">
       <h2>7. ЦІНА, ПОДАТКИ ТА РОЗРАХУНКИ</h2>
+      
       <p>7.1. Загальна вартість за Договором: <strong>{{total_amount}}</strong>. Деталізація по позиціях – у Специфікації.</p>
       
       <p>7.2. Валюта розрахунків – гривня. Податковий статус Сторін (ПДВ/не ПДВ/ЄП) застосовується згідно з їхнім статусом.</p>
@@ -445,11 +449,13 @@ function App() {
 
     <div class="sec">
       <h2>12. СТРОК ДІЇ ДОГОВОРУ</h2>
+      
       <p>12.1. Договір чинний з дати підписання і діє до «{{end_date}}» або до повного виконання зобов'язань, залежно від того, що настане пізніше.</p>
     </div>
 
     <div class="sec">
       <h2>14. РЕКВІЗИТИ СТОРІН</h2>
+      
       <div class="grid2">
         <div>
           <p class="center"><strong>ВИКОНАВЕЦЬ</strong></p>
