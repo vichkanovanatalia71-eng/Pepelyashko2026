@@ -551,14 +551,27 @@ class GoogleSheetsService:
             # Беремо перший рядок з даними (рядок 2, після заголовків)
             supplier = records[0]
             
+            # Return with both Ukrainian and English keys for compatibility
             return {
+                # Ukrainian keys (primary)
+                'ЄДРПОУ': str(supplier.get('ЄДРПОУ', '')),
+                'Назва': str(supplier.get('Назва', '')),
+                'Юридична адреса': str(supplier.get('Юридична адреса', '')),
+                'р/р(IBAN)': str(supplier.get('р/р(IBAN)', '')),
+                'Банк': str(supplier.get('Банк', '')),
+                'МФО': str(supplier.get('МФО', '')),
+                'email': str(supplier.get('email', '')),
+                'тел': str(supplier.get('тел', '')),
+                'Посада': str(supplier.get('Посада', '')),
+                'В особі': str(supplier.get('В особі', '')),
+                'Підпис': str(supplier.get('Підпис', '')),
+                # English keys (for backward compatibility)
                 'edrpou': str(supplier.get('ЄДРПОУ', '')),
                 'name': str(supplier.get('Назва', '')),
                 'legal_address': str(supplier.get('Юридична адреса', '')),
                 'iban': str(supplier.get('р/р(IBAN)', '')),
                 'bank': str(supplier.get('Банк', '')),
                 'mfo': str(supplier.get('МФО', '')),
-                'email': str(supplier.get('email', '')),
                 'phone': str(supplier.get('тел', '')),
                 'position': str(supplier.get('Посада', '')),
                 'represented_by': str(supplier.get('В особі', '')),
@@ -566,15 +579,25 @@ class GoogleSheetsService:
             }
         except Exception as e:
             logger.error(f"Error getting supplier data: {str(e)}")
-            # Повертаємо дані за замовчуванням
+            # Повертаємо дані за замовчуванням з обома форматами ключів
             return {
+                'ЄДРПОУ': '14307529',
+                'Назва': "АКЦІОНЕРНЕ ТОВАРИСТВО 'АНТОНОВ'",
+                'Юридична адреса': '04052, Україна, місто Київ, вулиця Глибочицька, будинок, 13, офіс, 1',
+                'р/р(IBAN)': 'UA383052990000026001006812960',
+                'Банк': "в АТ КБ 'ПриватБанк'",
+                'МФО': '305299',
+                'email': 'kievtds@gmail.com',
+                'тел': '504505588',
+                'Посада': 'Заступник директора з цифрового розвитку та інфраструктури (з соціального забезпечення)',
+                'В особі': 'в особі директора Чорного Станіслава Івановича, що діє на підставі Статуту',
+                'Підпис': 'Дмитро ТИТАРЕНКО',
                 'edrpou': '14307529',
                 'name': "АКЦІОНЕРНЕ ТОВАРИСТВО 'АНТОНОВ'",
                 'legal_address': '04052, Україна, місто Київ, вулиця Глибочицька, будинок, 13, офіс, 1',
                 'iban': 'UA383052990000026001006812960',
                 'bank': "в АТ КБ 'ПриватБанк'",
                 'mfo': '305299',
-                'email': 'kievtds@gmail.com',
                 'phone': '504505588',
                 'position': 'Заступник директора з цифрового розвитку та інфраструктури (з соціального забезпечення)',
                 'represented_by': 'в особі директора Чорного Станіслава Івановича, що діє на підставі Статуту',
