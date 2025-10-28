@@ -1,23 +1,34 @@
 <analysis>
-The AI engineer's work focused on iteratively refining the application's contract generation, management, and display features. Initial efforts involved a basic text editor and Google Drive integration, evolving significantly with the adoption of  for complex HTML/CSS PDF generation, addressing critical system dependencies () and frontend caching issues. Recent development, driven by explicit user feedback, concentrated on three main areas:
-1.  **Frontend UI/UX Enhancements**: Implementing a Refresh button in the counterparty document list, ensuring document identifiers () are displayed, and making the View button consistently visible (with appropriate activation logic).
-2.  **PDF Preview and Generation Reliability**: Debugging and fixing issues where PDF previews failed to load or the refresh button reloaded the entire page instead of just the view. This involved correcting backend Google Drive integration logic (e.g.,  parameter mismatch, missing 'success' key in upload response) to ensure successful file uploads and link generation. Frontend adjustments included using Google Drive Viewer and providing a Open in new tab fallback.
-3.  **Data Consistency and Form Simplification**: Resolving a discrepancy between contract numbers in the list and generated PDFs by ensuring the full formatted number is stored and retrieved. The contract creation form was also simplified by replacing the Позиції товарів/послуг section with a single Сума договору field.
-Intermittent Google Sheets API quota issues () occasionally blocked counterparty search, requiring wait times. The process demonstrated detailed debugging and direct responsiveness to user complaints.
+The AI engineer's work primarily focused on expanding the application from contract management to include Orders functionality, making it a central point for generating other business documents. This involved a multi-phase implementation: establishing backend services for order generation and Google Sheets/Drive integration (Phase 1), integrating these features into the frontend UI (Phase 2), and developing a dedicated template editor for orders (Phase 3). Key challenges addressed included system dependencies (), ensuring correct PDF generation (VAT, table layout), and fixing critical data flow issues for template usage and related document generation. The engineer iteratively responded to user feedback, debugging issues like non-opening dialogs, incorrect template loading, and data not pulling into generated documents. The most recent efforts revolve around a persistent issue where related documents, despite being created, are not displayed in the order details view due to a suspected mismatch in Google Sheets column headers.
 </analysis>
 
 <product_requirements>
-The application facilitates dynamic business document management, starting with **Counterparty Management** via Google Sheets, with future frontend editing plans. **Document Creation** supports Invoices, Acts, Waybills, and Specifications, generated from templates using static supplier and dynamic buyer data, marked as не платник ПДВ. A dedicated **Orders** section exists. **Contracts** are a core feature, requiring highly customizable HTML/CSS-based PDF generation, populating data from Основні дані and Мої дані. Functionality includes preview, email, download, and Google Drive storage following specific folder/naming conventions. Correct Ukrainian character rendering is mandatory. Numbering for contracts is , and for other documents, . **Document Viewing** is required for all generated documents within the counterparty card, sorted by creation date, accessible via Google Drive Viewer. **Template Customization** includes a sophisticated frontend editor for contract templates, allowing text editing, variable insertion, and advanced HTML/CSS styling for precise print layouts. The UI/UX aligns with  design, featuring a blue theme, yellow/orange accents, Montserrat font, rounded cards, and clean forms.
+The application is designed for dynamic business document management. Core features include:
+-   **Counterparty Management**: Managed via Google Sheets, with future frontend editing.
+-   **Document Creation**: Supports Invoices, Acts, Waybills, Specifications, and highly customizable Contracts. Documents use static supplier and dynamic buyer data, marked as не платник ПДВ.
+-   **Contracts**: Core feature with HTML/CSS PDF generation, preview, email, download, Google Drive storage (specific folder/naming), and correct Ukrainian character rendering. Numbering: . Includes a sophisticated frontend editor.
+-   **Document Viewing**: All generated documents viewable in counterparty card via Google Drive Viewer, sorted by creation date.
+-   **UI/UX**: Blue theme, yellow/orange accents, Montserrat font, rounded cards, clean forms ( style).
+
+**Recent Developments (Orders Feature):**
+-   **Orders Tab**: A new central tab to manage Замовлення (Orders).
+-   **Order Generation**: Create PDF orders with logic and template editor similar to contracts.
+-   **Google Sheets Integration**: Store orders in an existing Замовлення sheet.
+-   **Numbering**: Sequential numbering starting from 0001.
+-   **Template Editor**: Visual HTML/CSS template editor for orders, supporting dynamic variables.
+-   **Document Creation from Order**: Ability to generate Invoices, Acts, Waybills, and Contracts directly from an existing order.
+-   **Document Details**: Order details view should display all documents created based on that specific order, with PDF preview and email options.
+-   **Refinements**: Correct table column widths, VAT 0% for orders, active View/Generate PDF buttons for all orders, contract generation using custom templates, inclusion of amount in words/numbers and без ПДВ in contracts generated from orders, and a Refresh button for the order list.
 </product_requirements>
 
 <key_technical_concepts>
--   Full-stack: React (frontend), FastAPI (backend).
--   Data Storage: Google Sheets API, Google Drive API.
--   PDF Generation:  (HTML/CSS), .
--   UI: Tailwind CSS,  icons, React , .
--   Backend: Pydantic.
--   System Libraries:  (for WeasyPrint).
--   API Quota Management: Handling Google Sheets API rate limits.
+-   **Full-stack**: React (frontend), FastAPI (backend).
+-   **Data/File Management**: Google Sheets API, Google Drive API.
+-   **PDF Generation**:  (HTML/CSS), , .
+-   **UI**: Tailwind CSS,  icons, React , , , .
+-   **Backend**: Pydantic for data validation, Python  and .
+-   **System Libraries**:  (for ).
+-   **Templating**: Handlebars (implied by ).
 </key_technical_concepts>
 
 <code_architecture>
@@ -25,39 +36,49 @@ The application follows a standard full-stack architecture with a React frontend
 
 -   ****:
     -   **Importance**: Core FastAPI application, defines all REST API endpoints.
-    -   **Changes**: Modified  endpoint to correctly pass the generated  to .
+    -   **Changes**:
+        -   Added  endpoint for order PDF generation and Google Sheets/Drive integration, handling both new creation and updating existing entries.
+        -   Added  endpoint to fetch documents related to a specific order, filtering by .
+        -   Updated  and  Pydantic models to include , , and .
+        -   Updated  Pydantic model to include .
+        -   Modified contract generation logic to pass new amount fields and  to .
+        -   Added detailed logging for debugging  filtering.
 -   ****:
     -   **Importance**: Encapsulates Google Sheets API logic for data interaction.
-    -   **Changes**:  method was updated to accept and use a provided  instead of generating a new sequential number.
--   ****:
-    -   **Importance**: New service for advanced, custom HTML contract PDF generation.
     -   **Changes**:
-        -   Removed the  argument from the  call as it was not accepted by the method.
-        -   Corrected error handling for Google Drive upload results by removing the incorrect expectation of a  key and instead checking for the presence of , , and .
+        -    method was updated to accept and use a provided .
+        -   Added  method to update  for an existing record.
+        -   Modified  method (used for invoices, acts, waybills) to explicitly include  when writing data to Google Sheets.
+        -   Modified  method to explicitly include  when writing data to Google Sheets.
 -   ****:
-    -   **Importance**: Dedicated service for Google Drive API interactions.
-    -   **Changes**: No direct changes in the trajectory, but its method signature for  (accepting , , ) was a key factor in a backend bug fix.
+    -   **Importance**: Service for custom HTML contract PDF generation.
+    -   **Changes**: Updated  (or related internal parsing logic) to include  and  in the template context.
+-   ** (NEW)**:
+    -   **Importance**: New service dedicated to generating order PDFs from HTML templates.
+    -   **Changes**: Initial creation. Implements PDF generation using  and sets  to 0 for orders.
+-   ** (NEW)**:
+    -   **Importance**: Default HTML template for order documents.
+    -   **Changes**: Initial creation based on user input, with CSS adjustments for table column widths (e.g., , , ).
 -   ****:
     -   **Importance**: Main React component managing state, routing, and UI.
     -   **Changes**:
-        -   **Document List UI**: Imported  icon. Added  function. Updated the  of Документи контрагента to include a Refresh button. Modified document display logic to show  and made the View button () consistently visible (inactive if  is missing).
-        -   **PDF Preview Modal**: Replaced Оновіть сторінку для перегляду text with an Оновити перегляд button that closes and reopens the modal. Modified iframe  to use Google Drive Viewer API format (). Added a fallback Відкрити у новій вкладці button that uses the direct . Removed Завантажити PDF buttons from both contract and general document modals.
-        -   **Contract Form Simplification**: Replaced the Позиції товарів/послуг section with a single Сума договору input field. Updated  to send an empty  array. Removed  from 's initial state.
+        -   **Order Tab**:  updated to use . Added  state and integrated fetching into . Rendered order list in Замовлення tab. Added Refresh button to order list.
+        -   **Template Editor for Orders**: Added  state, a Редагувати шаблон замовлення button, and an  . Implemented , ,  (from ). Modified  to support both contract and order template editors.
+        -   **PDF Preview & Document Generation from Order**: Updated PDF preview logic for . Added Створити документи button in order preview. Added  state and  for selecting document type. Ensured  is correctly populated with order details for document generation, fixing z-index issues for the dialog. Implemented  helper function. Passed , , , and  when creating documents (invoice, act, waybill, contract) from an order.
+        -   **Order Details View**: Introduced  state and . Replaced Згенерувати PDF with Відкрити button for orders, opening the detail view. Fetches and displays  (filtered by ) within the .
+        -   **UI/Debugging**: Updated default contract template string and variable list in contract editor. Added extensive  statements for debugging.
 </code_architecture>
 
 <pending_tasks>
--   Implement counterparty editing functionality in the frontend within the counterparty detail card.
--   Extend template editing functionality to other document types (invoices, acts, waybills).
+-   Identify and fix the Google Sheets column header mismatch that prevents related documents from being displayed in the order detail view.
 </pending_tasks>
 
 <current_work>
-Immediately before this summary request, the AI engineer was addressing the user's report that the counterparty search functionality was failing again. This issue was identified as a recurrence of the **Google Sheets API quota exceeded** error, meaning the application had made too many requests to the Google Sheets API within a short timeframe (exceeding 60 requests per minute per user).
-
-The AI engineer's action was to diagnose the problem by checking backend logs, confirming the  error message. Recognizing this as a temporary, rate-limiting issue, the AI advised the user to wait for 1-2 minutes for the quota to reset automatically. After the waiting period, the AI verified that the API was functional again by successfully performing a test search for a counterparty (e.g., ).
-
-This specific problem is a recurring environmental constraint during development and testing, and the immediate work was to troubleshoot and confirm the temporary nature of the issue, and provide instructions for the user to proceed.
+Immediately before this summary request, the AI engineer was actively debugging a persistent issue where related documents (e.g., a contract created from order #37) were not appearing in the . The user reported ні документів не знайдено (no documents found), despite having created the document.
+The AI's diagnosis, based on user-provided screenshots and internal logging, indicated that while the contract for order #37 *does* exist in Google Sheets (at row 86, column I), the frontend's fetching mechanism is not correctly retrieving it. The root cause is suspected to be a discrepancy between the expected column header name for  in the backend's  ( method) and the actual header name in the Google Sheet itself.
+The AI's immediate next action is to examine the  method to confirm and correct this column header mismatch, which is crucial for the  filtering to work as intended.
 </current_work>
 
 <optional_next_step>
-Wait for the Google Sheets API quota to reset, then instruct the user to re-attempt counterparty search.
+Investigate the Google Sheets column header for  within .
 </optional_next_step>
