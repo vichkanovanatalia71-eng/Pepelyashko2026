@@ -283,7 +283,7 @@ class OrderService:
             items: List of items/services
             upload_to_drive: Whether to upload to Google Drive
             custom_template: Custom HTML template (optional)
-            vat_rate: VAT rate percentage (default 20%)
+            vat_rate: VAT rate percentage (default 0% - не платник ПДВ)
             
         Returns:
             Dict with local_path, filename, order_number and optionally drive info
