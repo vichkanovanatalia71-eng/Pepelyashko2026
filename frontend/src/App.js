@@ -411,18 +411,21 @@ function App() {
   <title>Договір постачання товарів та/або надання послуг № {{contract_number}}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
+    @page { size: A4; margin: 2cm 1cm 2cm 3cm; }
     html,body{margin:0;padding:0;background:#fff;color:#111;font:12px/1.6 'Times New Roman',serif}
-    .wrap{max-width:900px;margin:32px auto;padding:0 24px}
+    .wrap{max-width:900px;margin:0 auto;padding:0}
     h1{text-align:center;margin:16px 0;font-size:14px;font-weight:bold}
     h2{text-align:center;margin:16px 0;font-size:12px;font-weight:bold}
     p{margin:8px 0;text-align:justify;font-size:12px}
-    .header-line{display:flex;justify-content:space-between;margin-bottom:16px}
+    .header-line{width:100%;margin-bottom:16px}
+    .header-line table{width:100%;border:none}
+    .header-line td{border:none;padding:0}
     .header-line .left{text-align:left}
     .header-line .right{text-align:right}
-    .sec{border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin:14px 0;break-inside:avoid}
-    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .sec{border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin:14px 0}
+    .requisites-table{width:100%;border-collapse:collapse;margin-top:16px}
+    .requisites-table td{width:50%;vertical-align:top;padding:0 10px}
     .center{text-align:center}
-    @media print{.wrap{max-width:none;margin:0;padding:0}}
   </style>
 </head>
 <body>
@@ -430,8 +433,12 @@ function App() {
     <h1>ДОГОВІР ПОСТАЧАННЯ ТОВАРІВ ТА/АБО НАДАННЯ ПОСЛУГ № {{contract_number}}</h1>
     
     <div class="header-line">
-      <div class="left">м. {{city}}</div>
-      <div class="right">{{contract_date}} р.</div>
+      <table>
+        <tr>
+          <td class="left">м. {{city}}</td>
+          <td class="right">{{contract_date}} р.</td>
+        </tr>
+      </table>
     </div>
 
     <div class="sec">
@@ -461,46 +468,48 @@ function App() {
     <div class="sec">
       <h2>14. РЕКВІЗИТИ СТОРІН</h2>
       
-      <div class="grid2">
-        <div>
-          <p class="center"><strong>ВИКОНАВЕЦЬ</strong></p>
-          
-          <p><strong>Назва:</strong> {{supplier_name}}</p>
-          
-          <p><strong>ЄДРПОУ:</strong> {{supplier_edrpou}}</p>
-          
-          <p><strong>Адреса:</strong> {{supplier_address}}</p>
-          
-          <p><strong>IBAN:</strong> {{supplier_iban}}</p>
-          
-          <p><strong>Банк:</strong> {{supplier_bank}} | МФО: {{supplier_mfo}}</p>
-          
-          <p><strong>Email:</strong> {{supplier_email}} | Тел.: {{supplier_phone}}</p>
-          
-          <p><strong>Представник:</strong> {{supplier_representative}}</p>
-          
-          <p><strong>Підпис:</strong> ______________________ / {{supplier_signature}} /</p>
-        </div>
-        <div>
-          <p class="center"><strong>ЗАМОВНИК</strong></p>
-          
-          <p><strong>Назва:</strong> {{buyer_name}}</p>
-          
-          <p><strong>ЄДРПОУ:</strong> {{buyer_edrpou}}</p>
-          
-          <p><strong>Адреса:</strong> {{buyer_address}}</p>
-          
-          <p><strong>IBAN:</strong> {{buyer_iban}}</p>
-          
-          <p><strong>Банк:</strong> {{buyer_bank}} | МФО: {{buyer_mfo}}</p>
-          
-          <p><strong>Email:</strong> {{buyer_email}} | Тел.: {{buyer_phone}}</p>
-          
-          <p><strong>Представник:</strong> {{buyer_representative}}</p>
-          
-          <p><strong>Підпис:</strong> ______________________ / {{buyer_signature}} /</p>
-        </div>
-      </div>
+      <table class="requisites-table">
+        <tr>
+          <td>
+            <p class="center"><strong>ВИКОНАВЕЦЬ</strong></p>
+            
+            <p><strong>Назва:</strong> {{supplier_name}}</p>
+            
+            <p><strong>ЄДРПОУ:</strong> {{supplier_edrpou}}</p>
+            
+            <p><strong>Адреса:</strong> {{supplier_address}}</p>
+            
+            <p><strong>IBAN:</strong> {{supplier_iban}}</p>
+            
+            <p><strong>Банк:</strong> {{supplier_bank}} | МФО: {{supplier_mfo}}</p>
+            
+            <p><strong>Email:</strong> {{supplier_email}} | Тел.: {{supplier_phone}}</p>
+            
+            <p><strong>Представник:</strong> {{supplier_representative}}</p>
+            
+            <p><strong>Підпис:</strong> ______________________ / {{supplier_signature}} /</p>
+          </td>
+          <td>
+            <p class="center"><strong>ЗАМОВНИК</strong></p>
+            
+            <p><strong>Назва:</strong> {{buyer_name}}</p>
+            
+            <p><strong>ЄДРПОУ:</strong> {{buyer_edrpou}}</p>
+            
+            <p><strong>Адреса:</strong> {{buyer_address}}</p>
+            
+            <p><strong>IBAN:</strong> {{buyer_iban}}</p>
+            
+            <p><strong>Банк:</strong> {{buyer_bank}} | МФО: {{buyer_mfo}}</p>
+            
+            <p><strong>Email:</strong> {{buyer_email}} | Тел.: {{buyer_phone}}</p>
+            
+            <p><strong>Представник:</strong> {{buyer_representative}}</p>
+            
+            <p><strong>Підпис:</strong> ______________________ / {{buyer_signature}} /</p>
+          </td>
+        </tr>
+      </table>
     </div>
 
   </div>
