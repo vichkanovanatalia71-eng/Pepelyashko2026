@@ -2418,6 +2418,18 @@ function App() {
           </TabsContent>
 
           <TabsContent value="acts" data-testid="acts-content">
+            {/* Act Template Editor Button */}
+            <div className="mb-4 flex justify-end">
+              <Button
+                variant="outline"
+                onClick={() => setShowActTemplateEditor(true)}
+                className="border-purple-500 text-purple-600 hover:bg-purple-50"
+              >
+                <FileText className="w-4 h-4 mr-2" />
+                Редагувати шаблон акту
+              </Button>
+            </div>
+            
             {/* New Act Creation UI */}
             <Card className="glass-card">
               <CardHeader>
