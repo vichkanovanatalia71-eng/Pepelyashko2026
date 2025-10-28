@@ -1753,7 +1753,7 @@ function App() {
                     const pdfResponse = await axios.post(`${API}/contracts/generate-pdf`, {
                       counterparty_edrpou: searchEdrpou,
                       subject: contractForm.subject,
-                      items: contractForm.items,
+                      items: [],
                       total_amount: contractForm.amount,
                       custom_template: contractTemplate || null,
                       template_settings: templateSettings
