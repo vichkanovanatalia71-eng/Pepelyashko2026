@@ -2389,19 +2389,20 @@ function App() {
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-gray-700">Текст договору:</Label>
                 <textarea
+                  id="template-editor"
                   value={contractTemplate}
                   onChange={(e) => setContractTemplate(e.target.value)}
-                  placeholder="Введіть текст договору з використанням змінних..."
+                  placeholder="Введіть текст договору з використанням змінних та маркерів вирівнювання..."
                   className="w-full h-96 p-4 border border-gray-300 rounded-lg font-mono text-sm"
                   style={{
                     fontFamily: templateSettings.fontFamily,
                     fontSize: `${templateSettings.fontSize}px`,
-                    lineHeight: templateSettings.lineSpacing,
-                    textAlign: templateSettings.alignment
+                    lineHeight: templateSettings.lineSpacing
                   }}
                 />
                 <p className="text-xs text-gray-500">
-                  * Якщо залишити порожнім, буде використовуватись стандартний шаблон
+                  * Якщо залишити порожнім, буде використовуватись стандартний шаблон<br/>
+                  * Виділіть текст і натисніть кнопку вирівнювання для додавання маркерів
                 </p>
               </div>
             </div>
