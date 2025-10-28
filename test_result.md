@@ -236,6 +236,9 @@ backend:
       - working: true
         agent: "main"
         comment: "ПОКРАЩЕННЯ РЕДАКТОРА ШАБЛОНІВ: Оновлено loadOrderTemplate() для завантаження повного дефолтного HTML шаблону замовлення (аналогічно договору). Додано всі змінні постачальника та покупця в діалог редактора (supplier_name, supplier_edrpou, supplier_address, supplier_iban, supplier_bank, supplier_mfo, supplier_email, supplier_phone, buyer_name, buyer_edrpou, buyer_address, buyer_iban, buyer_bank, buyer_mfo, buyer_email, buyer_phone). Додано змінні для позицій (items_rows, total_net, total_vat, total_gross, vat_rate). Оновлено функцію insertVariable() для підтримки обох редакторів (договорів і замовлень) через параметр editorId. Кнопки змінних тепер використовують insertVariable() з правильним editorId. Frontend успішно скомпільований."
+      - working: true
+        agent: "main"
+        comment: "ВИПРАВЛЕННЯ ЗАМОВЛЕНЬ: 1) Оптимізовано ширину колонок таблиці - .name width: 36% (замість 46%), .numeric width: 13% для коректного відображення сум і цін. Зміни в order_template.html та App.js loadOrderTemplate(). 2) ПДВ змінено на 0% (не платники ПДВ) - vat_rate: 0.0 за замовчуванням в order_service.py generate_order_pdf(). 3) Виправлено попередній перегляд замовлень - додано currentDocType === 'order' ? 'замовлення' в DialogTitle попереднього перегляду. Всі сервіси перезапущені."
 
   - task: "Backend API Endpoints Update"
     implemented: true
