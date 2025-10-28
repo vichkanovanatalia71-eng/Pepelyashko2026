@@ -2409,8 +2409,8 @@ function App() {
           </TabsContent>
 
           <TabsContent value="contracts" data-testid="contracts-content">
-            {/* Template Editor Buttons */}
-            <div className="mb-4 flex justify-end gap-3">
+            {/* Template Editor Button */}
+            <div className="mb-4 flex justify-end">
               <Button
                 variant="outline"
                 onClick={() => setShowTemplateEditor(true)}
@@ -2418,15 +2418,6 @@ function App() {
               >
                 <FileText className="w-4 h-4 mr-2" />
                 Редагувати шаблон договору
-              </Button>
-              
-              <Button
-                variant="outline"
-                onClick={() => setShowActTemplateEditor(true)}
-                className="border-purple-500 text-purple-600 hover:bg-purple-50"
-              >
-                <FileText className="w-4 h-4 mr-2" />
-                Редагувати шаблон акту
               </Button>
             </div>
 
