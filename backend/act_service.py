@@ -64,7 +64,7 @@ class ActService:
         """
         try:
             # 1. Get supplier data from "Мої дані"
-            supplier_data = self.sheets_service.get_my_data()
+            supplier_data = self.sheets_service.get_supplier_data()
             if not supplier_data:
                 raise ValueError("Дані постачальника ('Мої дані') не знайдені")
             
