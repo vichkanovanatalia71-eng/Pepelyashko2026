@@ -1072,7 +1072,21 @@ function App() {
           if (endpoint === 'waybills') docTypeKey = 'waybill';
           
           setCurrentDocType(docTypeKey);
-          setDocumentPdfData(response.data);
+          
+          // For orders, save the form data for creating other documents
+          if (endpoint === 'orders') {
+            setDocumentPdfData({
+              ...response.data,
+              order_form_data: {
+                counterparty_edrpou: documentForm.counterparty_edrpou,
+                items: documentForm.items,
+                total_amount: documentForm.total_amount
+              }
+            });
+          } else {
+            setDocumentPdfData(response.data);
+          }
+          
           setDocumentEmailForm({
             recipient: 'counterparty',
             customEmail: '',
