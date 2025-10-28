@@ -189,11 +189,12 @@ class ActService:
             logger.info(f"Act PDF generated: {filename}")
             
             # 15. Upload to Google Drive
-            drive_file_id = await self.drive_service.upload_file(
+            upload_result = self.drive_service.upload_file(
                 file_path=str(filepath),
                 folder_name='Акти',
                 custom_name=filename
             )
+            drive_file_id = upload_result.get('id', '')
             
             drive_view_link = f"https://drive.google.com/file/d/{drive_file_id}/view"
             drive_download_link = f"https://drive.google.com/uc?export=download&id={drive_file_id}"
