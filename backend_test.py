@@ -1910,7 +1910,7 @@ class ContractTestSuite:
         ]
         
         important_tests = [
-            'drive_service_init', 'ukrainian_characters', 'vat_exemption', 'drive_links', 'supplier_signature_field'
+            'drive_service_init', 'ukrainian_characters', 'vat_exemption', 'drive_links', 'supplier_signature_field', 'missing_by_order_endpoint'
         ]
         
         legacy_tests = [
