@@ -477,6 +477,8 @@ function App() {
   
   const fetchAllDocuments = async () => {
     try {
+      setLoading(true);
+      
       // Fetch orders
       const ordersResponse = await axios.get(`${API}/orders`);
       setAllOrders(ordersResponse.data.reverse()); // Newest first
@@ -500,8 +502,13 @@ function App() {
       } catch (error) {
         console.log('Contracts endpoint not available yet');
       }
+      
+      toast.success('Документи оновлено!');
     } catch (error) {
       console.error('Error fetching documents:', error);
+      toast.error('Помилка при оновленні документів: ' + (error.response?.data?.detail || error.message));
+    } finally {
+      setLoading(false);
     }
   };
   
