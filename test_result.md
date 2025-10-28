@@ -369,6 +369,9 @@ frontend:
       - working: "needs_testing"
         agent: "main"
         comment: "КРИТИЧНЕ ВИПРАВЛЕННЯ: Виправлено помилку завантаження договорів на Google Drive. Помилка: 'GoogleDriveService.upload_file() got an unexpected keyword argument buyer_edrpou'. Видалено непотрібний параметр buyer_edrpou з виклику upload_file() в contract_service_v2.py (рядок 732). Змінено логіку кнопки 'Оновити перегляд' - тепер замість window.location.reload() вона закриває модальне вікно, оновлює список документів (fetchAllDocuments/refreshCounterpartyDocuments) і відкриває модальне вікно знову через 500ms. Це дозволяє завантажити щойно згенерований PDF без перезавантаження всієї сторінки. Backend та frontend успішно перезапущені."
+      - working: true
+        agent: "main"
+        comment: "ДРУГЕ КРИТИЧНЕ ВИПРАВЛЕННЯ: Виправлено помилку KeyError: 'success' при завантаженні на Google Drive. Проблема: код в contract_service_v2.py очікував drive_result['success'], але метод upload_file() в google_drive_service.py не повертає ключ 'success', а повертає тільки file_id, web_view_link, web_content_link. Виправлення: замінено перевірку 'if drive_result[\"success\"]' на 'if drive_result and drive_result.get(\"file_id\")' в обох місцях (рядки 489 та 729). Також виправлено назви ключів: 'drive_link' -> 'drive_view_link', 'download_link' -> 'drive_download_link'. Backend перезапущений. ТЕСТ API ПРОЙШОВ УСПІШНО: curl тест показав що договір створюється і завантажується на Google Drive з правильними drive_file_id та drive_view_link. Готово до frontend тестування."
 
 metadata:
   created_by: "main_agent"
