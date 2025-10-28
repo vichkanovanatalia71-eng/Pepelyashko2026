@@ -351,6 +351,19 @@ frontend:
       - working: true
         agent: "testing"
         comment: "✅ НОВИЙ HTML ШАБЛОН ДОГОВОРУ ПРОТЕСТОВАНО УСПІШНО: POST /api/contracts/generate-pdf з новим HTML шаблоном працює ідеально. PDF файл створюється (92359 bytes), всі зміни застосовані: Times New Roman 12px ✅, header у форматі 'м. Київ' (ліворуч) та 'дата р.' (праворуч) ✅, всі пункти з нових рядків ✅, реквізити в 2 колонки ✅, total_amount має ' грн' ✅, немає дефолтної адреси '04052, Україна...' ✅. Google Drive інтеграція працює: drive_file_id=1CaUUApAMS-aPrTPYcmLVaaCed-gvz2Ze, drive_view_link=https://drive.google.com/file/d/1CaUUApAMS-aPrTPYcmLVaaCed-gvz2Ze/view. Тест з точним payload з review request пройшов успішно."
+
+  - task: "Document List UI Improvements"
+    implemented: true
+    working: "needs_testing"
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "needs_testing"
+        agent: "main"
+        comment: "Реалізовано три покращення інтерфейсу списку документів контрагента: 1) Додано кнопку 'Оновити' до CardHeader секції 'Документи контрагента' для ручного оновлення списку, 2) Додано відображення drive_file_id для кожного документа (рахунки, акти, накладні, договори), 3) Кнопка 'Переглянути' тепер завжди видима, але disabled якщо drive_file_id відсутній, з повідомленням про помилку для користувача. Створено функцію refreshCounterpartyDocuments() для оновлення документів. Frontend скомпілювався успішно без помилок."
+
 metadata:
   created_by: "main_agent"
   version: "6.0"
