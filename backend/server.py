@@ -307,11 +307,6 @@ async def update_counterparty(edrpou: str, data: CounterpartyCreate):
         logging.error(f"Error updating counterparty: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
-        return counterparties
-    except Exception as e:
-        logging.error(f"Error getting counterparties: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
-
 @api_router.get("/counterparties/{edrpou}", response_model=Counterparty)
 async def get_counterparty(edrpou: str):
     """Get counterparty by ЄДРПОУ from 'Основні дані'."""
