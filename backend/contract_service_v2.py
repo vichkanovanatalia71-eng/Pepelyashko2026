@@ -492,12 +492,13 @@ class ContractServiceV2:
                         custom_name=filename
                     )
                     
-                    result.update({
-                        'drive_file_id': drive_result['file_id'],
-                        'drive_view_link': drive_result['web_view_link'],
-                        'drive_download_link': drive_result['web_content_link']
-                    })
-                    logger.info(f"Contract uploaded to Google Drive: {drive_result['file_id']}")
+                    if drive_result and drive_result.get('file_id'):
+                        result.update({
+                            'drive_file_id': drive_result['file_id'],
+                            'drive_view_link': drive_result.get('web_view_link', ''),
+                            'drive_download_link': drive_result.get('web_content_link', '')
+                        })
+                        logger.info(f"Contract uploaded to Google Drive: {drive_result['file_id']}")
                 except Exception as e:
                     logger.error(f"Failed to upload to Google Drive: {str(e)}")
             
