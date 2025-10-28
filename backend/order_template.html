@@ -98,7 +98,16 @@
         </tr>
       </thead>
       <tbody>
-        {{items_rows}}
+        {{#each items}}
+        <tr>
+          <td class="ncol">{{inc @index}}</td>
+          <td class="name">{{this.name}}</td>
+          <td class="unit">{{this.unit}}</td>
+          <td class="numeric"><span class="mono">{{this.qty}}</span></td>
+          <td class="numeric"><span class="mono">{{this.price}}</span></td>
+          <td class="numeric"><span class="mono">{{this.sum}}</span></td>
+        </tr>
+        {{/each}}
       </tbody>
       <tfoot>
         <tr>
