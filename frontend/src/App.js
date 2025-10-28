@@ -1962,7 +1962,7 @@ function App() {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => {
+                            onClick={async () => {
                               setCurrentOrderDetails(doc);
                               setSelectedOrderData({
                                 counterparty_edrpou: doc.counterparty_edrpou || '',
@@ -1971,6 +1971,8 @@ function App() {
                                 order_number: doc.number
                               });
                               setShowOrderDetails(true);
+                              // Load related documents
+                              await loadOrderRelatedDocuments(doc.number);
                             }}
                             className="btn-secondary"
                           >
