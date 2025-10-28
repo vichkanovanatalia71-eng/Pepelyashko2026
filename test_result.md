@@ -233,6 +233,9 @@ backend:
       - working: true
         agent: "main"
         comment: "ФАЗА 3 РЕДАКТОР ШАБЛОНІВ ЗАМОВЛЕНЬ ЗАВЕРШЕНА: Додано кнопку 'Редагувати шаблон замовлення' у вкладку Замовлення. Створено повноцінний діалог редактора HTML шаблону з списком доступних змінних (supplier_name, buyer_name, order_number, order_date тощо). Додано функції saveOrderTemplate() та resetOrderTemplate() для збереження/скидання шаблону в localStorage. Додано loadOrderTemplate() для завантаження шаблону при старті. Оновлено handleDocumentSubmit для передачі custom_template при створенні замовлення. Backend приймає custom_template і передає в order_service.generate_order_pdf(). Всі сервіси запущені успішно."
+      - working: true
+        agent: "main"
+        comment: "ПОКРАЩЕННЯ РЕДАКТОРА ШАБЛОНІВ: Оновлено loadOrderTemplate() для завантаження повного дефолтного HTML шаблону замовлення (аналогічно договору). Додано всі змінні постачальника та покупця в діалог редактора (supplier_name, supplier_edrpou, supplier_address, supplier_iban, supplier_bank, supplier_mfo, supplier_email, supplier_phone, buyer_name, buyer_edrpou, buyer_address, buyer_iban, buyer_bank, buyer_mfo, buyer_email, buyer_phone). Додано змінні для позицій (items_rows, total_net, total_vat, total_gross, vat_rate). Оновлено функцію insertVariable() для підтримки обох редакторів (договорів і замовлень) через параметр editorId. Кнопки змінних тепер використовують insertVariable() з правильним editorId. Frontend успішно скомпільований."
 
   - task: "Backend API Endpoints Update"
     implemented: true
