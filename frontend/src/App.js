@@ -1345,8 +1345,36 @@ function App() {
                           <h4 className="font-semibold mb-2">Замовлення ({counterpartyDocuments.orders.length})</h4>
                           <div className="space-y-2">
                             {counterpartyDocuments.orders.map((doc, idx) => (
-                              <div key={idx} className="p-3 bg-blue-50 rounded-lg">
-                                <p className="text-sm">№{doc.number} від {doc.date} | Сума: {doc.total_amount} грн</p>
+                              <div key={idx} className="p-3 bg-blue-50 rounded-lg flex justify-between items-center">
+                                <div>
+                                  <p className="text-sm">№{doc.number} від {doc.date} | Сума: {doc.total_amount} грн</p>
+                                  {doc.drive_file_id && (
+                                    <p className="text-xs text-gray-500 mt-1">ID: {doc.drive_file_id}</p>
+                                  )}
+                                </div>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    if (doc.drive_file_id && doc.drive_file_id !== '') {
+                                      setDocumentPdfData({
+                                        drive_file_id: doc.drive_file_id,
+                                        drive_view_link: `https://drive.google.com/file/d/${doc.drive_file_id}/view`,
+                                        drive_download_link: `https://drive.google.com/uc?export=download&id=${doc.drive_file_id}`,
+                                        order_number: doc.number
+                                      });
+                                      setCurrentDocType('order');
+                                      setShowDocumentPreview(true);
+                                    } else {
+                                      toast.error('Документ ще не завантажено на Google Drive');
+                                    }
+                                  }}
+                                  className="btn-secondary ml-2"
+                                  disabled={!doc.drive_file_id || doc.drive_file_id === ''}
+                                >
+                                  <Eye className="w-4 h-4 mr-1" />
+                                  Переглянути
+                                </Button>
                               </div>
                             ))}
                           </div>
