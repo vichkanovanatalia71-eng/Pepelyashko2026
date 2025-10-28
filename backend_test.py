@@ -1457,6 +1457,9 @@ class ContractTestSuite:
         # Test 16: Supplier Data Signature Field
         test_results['supplier_signature_field'] = self.test_supplier_data_signature_field()
         
+        # Test 17: New HTML Template Contract Generation (from review request)
+        test_results['new_html_template_contract'] = self.test_new_html_template_contract_generation()
+        
         # Summary
         logger.info("=" * 60)
         logger.info("TEST RESULTS SUMMARY")
