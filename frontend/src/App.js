@@ -456,7 +456,9 @@ function App() {
 
   const loadOrderRelatedDocuments = async (orderNumber) => {
     try {
+      console.log('Loading related documents for order:', orderNumber);
       const response = await axios.get(`${API}/orders/${orderNumber}/related-documents`);
+      console.log('Related documents response:', response.data);
       setRelatedDocuments(response.data);
     } catch (error) {
       console.error('Error loading related documents:', error);
