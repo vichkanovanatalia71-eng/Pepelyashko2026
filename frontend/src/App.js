@@ -398,47 +398,86 @@ function App() {
     if (savedTemplate) {
       setContractTemplate(savedTemplate);
     } else {
-      // Set default template with requisites in two-column format
-      const defaultTemplate = `[align:center][b]ДОГОВІР ПОСТАЧАННЯ ТОВАРІВ ТА/АБО НАДАННЯ ПОСЛУГ[/b][/align]
+      // Set default HTML template
+      const defaultTemplate = `<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8" />
+  <title>Договір постачання товарів та/або надання послуг № {{contract_number}}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    html,body{margin:0;padding:0;background:#fff;color:#111;font:14px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,"Noto Sans","Helvetica Neue",sans-serif}
+    .wrap{max-width:900px;margin:32px auto;padding:0 24px}
+    h1,h2{text-align:center;margin:16px 0}
+    h1{font-size:22px}
+    h2{font-size:16px}
+    p{margin:8px 0;text-align:justify}
+    .muted{color:#555}
+    .sec{border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin:14px 0;break-inside:avoid}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    table{width:100%;border-collapse:collapse;margin-top:8px}
+    th,td{border:1px solid #e5e7eb;padding:8px;vertical-align:top}
+    .center{text-align:center}
+    .nowrap{white-space:nowrap}
+    @media print{.wrap{max-width:none;margin:0;padding:0}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>ДОГОВІР ПОСТАЧАННЯ ТОВАРІВ ТА/АБО НАДАННЯ ПОСЛУГ № {{contract_number}}</h1>
+    <p class="muted center">м. {{city}} &nbsp; «{{contract_date}}»</p>
 
-[align:center]№ {{contract_number}} від {{contract_date}}[/align]
+    <div class="sec">
+      <p>{{subject}}</p>
+    </div>
 
-[align:left]{{city}}[/align]
+    <div class="sec">
+      <h2>1. ПРЕДМЕТ ДОГОВОРУ</h2>
+      <p>1.1. Виконавець зобов'язується поставити товари та/або надати послуги, визначені у Специфікації (Додаток 1), а Замовник – прийняти та оплатити їх на умовах цього Договору.</p>
+      <p>1.2. <strong>Предмет:</strong> {{subject}}. Конкретні характеристики, обсяги та строки – у Специфікації/«Замовленні».</p>
+    </div>
 
-[align:justify]Цей договір укладено між Постачальником та Покупцем на постачання товарів та/або надання послуг.[/align]
+    <div class="sec">
+      <h2>7. ЦІНА, ПОДАТКИ ТА РОЗРАХУНКИ</h2>
+      <p>7.1. Загальна вартість за Договором: <strong>{{total_amount}} грн</strong>. Деталізація по позиціях – у Специфікації.</p>
+    </div>
 
-[b]ПРЕДМЕТ ДОГОВОРУ:[/b] {{subject}}
+    <div class="sec">
+      <h2>12. СТРОК ДІЇ ДОГОВОРУ</h2>
+      <p>12.1. Договір чинний з дати підписання і діє до «{{end_date}}» або до повного виконання зобов'язань.</p>
+    </div>
 
-[b]ЗАГАЛЬНА СУМА:[/b] {{total_amount}} грн
+    <div class="sec">
+      <h2>14. РЕКВІЗИТИ СТОРІН</h2>
+      <div class="grid2">
+        <div>
+          <p class="center"><strong>ВИКОНАВЕЦЬ</strong></p>
+          <p><strong>ПІБ/Назва:</strong> {{supplier_name}}</p>
+          <p><strong>ЄДРПОУ/РНОКПП:</strong> {{supplier_edrpou}}</p>
+          <p><strong>Адреса:</strong> {{supplier_address}}</p>
+          <p><strong>IBAN:</strong> {{supplier_iban}}</p>
+          <p><strong>Банк:</strong> {{supplier_bank}} <span class="nowrap">| МФО: {{supplier_mfo}}</span></p>
+          <p><strong>E-mail:</strong> {{supplier_email}} <span class="nowrap">| Тел. {{supplier_phone}}</span></p>
+          <p><strong>Представник:</strong> {{supplier_representative}}</p>
+          <p><strong>Підпис:</strong> ______________________ / {{supplier_signature}} /</p>
+        </div>
+        <div>
+          <p class="center"><strong>ЗАМОВНИК</strong></p>
+          <p><strong>Найменування:</strong> {{buyer_name}}</p>
+          <p><strong>ЄДРПОУ:</strong> {{buyer_edrpou}}</p>
+          <p><strong>Адреса:</strong> {{buyer_address}}</p>
+          <p><strong>IBAN:</strong> {{buyer_iban}}</p>
+          <p><strong>Банк:</strong> {{buyer_bank}} <span class="nowrap">| МФО: {{buyer_mfo}}</span></p>
+          <p><strong>E-mail:</strong> {{buyer_email}} <span class="nowrap">| Тел. {{buyer_phone}}</span></p>
+          <p><strong>Представник:</strong> {{buyer_representative}}</p>
+          <p><strong>Підпис:</strong> ______________________ / {{buyer_signature}} /</p>
+        </div>
+      </div>
+    </div>
 
-Договір діє до {{end_date}}.
-
-
-[align:center][b]РЕКВІЗИТИ СТОРІН[/b][/align]
-
-[b]ПОСТАЧАЛЬНИК[/b]
-[b]{{supplier_name}}[/b]
-Юридична адреса: {{supplier_address}}
-Код ЄДРПОУ: {{supplier_edrpou}}
-р/р (IBAN): {{supplier_iban}}
-МФО: {{supplier_mfo}}
-{{supplier_bank}}
-email: {{supplier_email}}
-тел.: {{supplier_phone}}
-{{supplier_representative}}
-Директор: {{supplier_signature}}
-
-[b]ПОКУПЕЦЬ[/b]
-[b]{{buyer_name}}[/b]
-Юридична адреса: {{buyer_address}}
-Код ЄДРПОУ: {{buyer_edrpou}}
-р/р (IBAN): {{buyer_iban}}
-МФО: {{buyer_mfo}}
-{{buyer_bank}}
-email: {{buyer_email}}
-тел.: {{buyer_phone}}
-{{buyer_representative}}
-Директор: {{buyer_signature}}`;
+  </div>
+</body>
+</html>`;
       
       setContractTemplate(defaultTemplate);
     }
