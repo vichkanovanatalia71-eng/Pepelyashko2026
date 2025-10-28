@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8" />
+  <title>Акт наданих послуг № {{act_number}} від {{act_date}}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    @page { size: A4; margin: 2cm 1.5cm 2cm 3cm; }
+    html,body{margin:0;padding:0;background:#fff;color:#111;font:12px/1.4 "Times New Roman",serif}
+    .wrap{max-width:17cm;margin:0 auto}
+
+    h1{ text-align:center; margin:10px 0 8px; font-size:16px; font-weight:bold; }
+    .block-title{ text-align:center; font-weight:bold; font-size:11px; margin:10px 0 6px; text-transform:uppercase; letter-spacing:.3px; }
+
+    .meta{width:100%;margin:6px 0 10px;border-collapse:collapse}
+    .meta td{padding:2px 0;vertical-align:top}
+
+    ol.points{ margin:6px 0 10px 18px; padding:0; }
+    ol.points li{ margin:4px 0; }
+
+    table.items{width:100%;border-collapse:collapse;table-layout:fixed;margin-top:6px}
+    table.items thead{background:#f7f7f7}
+    table.items th,table.items td{border:1px solid #cfd4d9;padding:6px 8px;vertical-align:top;font-size:12px}
+    table.items th{text-align:center;font-weight:bold}
+    .ncol{width:28px;text-align:center}
+    .name{width:46%}
+    .unit{width:10%;text-align:center}
+    .numeric{text-align:right}
+    table.items tfoot td{border:1px solid #cfd4d9;font-weight:bold;background:#fafafa}
+    .tfoot-label{text-align:right}
+    .tfoot-sum{text-align:right;width:14%}
+
+    .requisites{width:100%;border-collapse:collapse;table-layout:fixed;margin-top:12px}
+    .requisites th,.requisites td{border:1px solid #cfd4d9;padding:6px 8px;vertical-align:top;font-size:12px}
+    .requisites th{background:#f7f7f7;text-align:center;font-weight:bold}
+    .requisites td{width:50%}
+    .mono{font-family:"Courier New",monospace;white-space:nowrap}
+    .signline{margin-top:10px}
+
+    thead{display:table-header-group}
+    tfoot{display:table-footer-group}
+    @media print{a[href]:after{content:""}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>АКТ НАДАНИХ ПОСЛУГ № {{act_number}} ВІД {{act_date}}</h1>
+
+    <table class="meta">
+      <tr><td><strong>Місце складання:</strong> м. Одеса</td></tr>
+      <tr><td><strong>Підстава (за наявності):</strong> {{basis}}</td></tr>
+    </table>
+
+    <!-- Преамбула (адаптація під акт) -->
+    <div class="sec">
+      <p><strong>{{supplier_name}}</strong>, ЄДРПОУ {{supplier_edrpou}} (надалі – «Виконавець»), {{supplier_representative}}, з однієї сторони, та
+         <strong>{{buyer_name}}</strong>, ЄДРПОУ {{buyer_edrpou}} (надалі – «Замовник»), {{buyer_representative}}, з другої сторони,
+         які в подальшому разом іменуються «Сторони», а кожна окремо – «Сторона», склали цей Акт про таке:</p>
+    </div>
+
+    <!-- Пункти 1–2 перед таблицею -->
+    <ol class="points" start="1">
+      <li>Виконавець надав Замовнику послуги відповідно до погоджених умов.</li>
+      <li>Перелік, обсяг, одиниці виміру, кількість, ціна та сума наданих послуг наведені у таблиці нижче і є невід'ємною частиною цього Акта.</li>
+    </ol>
+
+    <!-- Таблиця позицій -->
+    <table class="items">
+      <thead>
+        <tr>
+          <th class="ncol">№</th>
+          <th class="name">Найменування послуги / опис робіт</th>
+          <th class="unit">Од. виміру</th>
+          <th class="numeric">Кількість</th>
+          <th class="numeric">Ціна, грн</th>
+          <th class="numeric">Сума, грн</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{items_rows}}
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="5" class="tfoot-label">Разом без ПДВ, грн</td>
+          <td class="tfoot-sum"><span class="mono">{{total_net}}</span></td>
+        </tr>
+        <tr>
+          <td colspan="5" class="tfoot-label">ПДВ {{vat_rate}}%, грн</td>
+          <td class="tfoot-sum"><span class="mono">{{total_vat}}</span></td>
+        </tr>
+        <tr>
+          <td colspan="5" class="tfoot-label"><strong>Всього до сплати, грн</strong></td>
+          <td class="tfoot-sum"><strong><span class="mono">{{total_gross}}</span></strong></td>
+        </tr>
+        <tr>
+          <td colspan="6" style="padding:8px;">
+            <strong>Сума прописом:</strong> {{total_amount_text}}.
+            <span style="margin-left:8px;"><strong>{{vat_note}}</strong></span>
+          </td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <!-- Пункти після таблиці (продовження нумерації) -->
+    <ol class="points" start="3">
+      <li>Результат наданих послуг передано Замовнику. Замовник претензій щодо обсягу, якості та строків не має.</li>
+      <li>Цей Акт є первинним документом, що підтверджує факт надання послуг, та підлягає зберіганню відповідно до законодавства України.</li>
+      <li>Акт складено українською мовою у двох примірниках з однаковою юридичною силою; може бути підписаний у паперовій формі або з використанням КЕП.</li>
+    </ol>
+
+    <!-- Об'єднаний розділ: Сторони та підписи -->
+    <div class="block-title">Сторони та підписи</div>
+    <table class="requisites">
+      <tr>
+        <th>ЗАМОВНИК (ПОКУПЕЦЬ)</th>
+        <th>ВИКОНАВЕЦЬ (ПОСТАЧАЛЬНИК)</th>
+      </tr>
+      <tr>
+        <td>
+          <p><strong>Назва:</strong> {{buyer_name}}</p>
+          <p><strong>ЄДРПОУ:</strong> <span class="mono">{{buyer_edrpou}}</span></p>
+          <p><strong>Адреса:</strong> {{buyer_address}}</p>
+          <p><strong>IBAN:</strong> <span class="mono">{{buyer_iban}}</span></p>
+          <p><strong>Банк:</strong> {{buyer_bank}}</p>
+          <p><strong>МФО:</strong> <span class="mono">{{buyer_mfo}}</span></p>
+          <p><strong>Email:</strong> <span class="mono">{{buyer_email}}</span></p>
+          <p><strong>Тел.:</strong> <span class="mono">{{buyer_phone}}</span></p>
+          <p><strong>В особі:</strong> {{buyer_representative}}</p>
+          <p class="signline" style="margin-top:12px;"><strong>Підпис:</strong> {{buyer_signature}}</p>
+        </td>
+        <td>
+          <p><strong>Назва:</strong> {{supplier_name}}</p>
+          <p><strong>ЄДРПОУ/РНОКПП:</strong> <span class="mono">{{supplier_edrpou}}</span></p>
+          <p><strong>Адреса:</strong> {{supplier_address}}</p>
+          <p><strong>IBAN:</strong> <span class="mono">{{supplier_iban}}</span></p>
+          <p><strong>Банк:</strong> {{supplier_bank}}</p>
+          <p><strong>МФО:</strong> <span class="mono">{{supplier_mfo}}</span></p>
+          <p><strong>Email:</strong> <span class="mono">{{supplier_email}}</span></p>
+          <p><strong>Тел..:</strong> <span class="mono">{{supplier_phone}}</span></p>
+          <p><strong>В особі:</strong> {{supplier_representative}}</p>
+          <p class="signline" style="margin-top:12px;"><strong>Підпис:</strong> {{supplier_signature}}</p>
+        </td>
+      </tr>
+    </table>
+  </div>
+</body>
+</html>
