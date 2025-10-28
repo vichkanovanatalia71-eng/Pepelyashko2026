@@ -2960,11 +2960,17 @@ function App() {
                       if (!selectedOrderData) return;
                       
                       setLoading(true);
+                      
+                      // Convert amount to text
+                      const amountText = numberToUkrainianText(selectedOrderData.total_amount);
+                      
                       const payload = {
                         counterparty_edrpou: selectedOrderData.counterparty_edrpou,
                         subject: `Постачання товарів згідно замовлення №${selectedOrderData.order_number}`,
                         items: [],
-                        total_amount: selectedOrderData.total_amount
+                        total_amount: selectedOrderData.total_amount,
+                        total_amount_text: amountText,
+                        vat_note: 'без ПДВ'
                       };
                       
                       // Add custom template if exists
