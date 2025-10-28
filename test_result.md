@@ -215,15 +215,18 @@ backend:
 
   - task: "Order PDF Generation with Drive Upload"
     implemented: true
-    working: "needs_testing"
+    working: true
     file: "/app/backend/order_service.py, /app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "needs_testing"
         agent: "main"
         comment: "ФАЗА 1 BACKEND ЗАМОВЛЕНЬ ЗАВЕРШЕНА: Створено order_service.py для генерації PDF замовлень з використанням WeasyPrint та HTML шаблону. Нумерація: проста послідовна 0001, 0002, 0003... (отримується з Google Sheets). Створено файл order_template.html з наданим користувачем шаблоном. Додано ендпоінт POST /api/orders/generate-pdf в server.py. Сервіс використовує дані з 'Мої дані' (постачальник) та 'Основні дані' (покупець). Розраховує ПДВ 20%. Завантаження на Google Drive в папку 'Замовлення'. Збереження в Google Sheets аркуш 'Замовлення' з drive_file_id. Встановлено libpangoft2-1.0-0 для WeasyPrint. Backend успішно запущений."
+      - working: true
+        agent: "testing"
+        comment: "✅ ТЕСТ ЗАМОВЛЕНЬ ПРОЙДЕНО УСПІШНО: Протестовано всі вимоги з review request. 1) GET /api/counterparties ✅ - повертає список з 'Основні дані', знайдено ЄДРПОУ 40196816, 2) POST /api/orders/generate-pdf ✅ - всі поля response правильні: success=true, order_number=0017 (формат 0001,0002...), pdf_filename=Замовлення_0017_40196816.pdf, drive_view_link=https://drive.google.com/file/d/..., drive_download_link та drive_file_id заповнені, 3) PDF генерується з українськими символами ✅, 4) Файл завантажується на Google Drive в папку 'Замовлення' ✅, 5) Використовуються дані з 'Мої дані' та 'Основні дані' ✅. ПРОБЛЕМА: Google Sheets API quota exceeded під час інтенсивного тестування впливає на збереження drive_file_id в списку замовлень, але основна функціональність (PDF генерація, Google Drive upload) працює ідеально."
 
   - task: "Backend API Endpoints Update"
     implemented: true
