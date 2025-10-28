@@ -435,12 +435,13 @@ frontend:
 
 metadata:
   created_by: "main_agent"
-  version: "8.0"
-  test_sequence: 8
+  version: "9.0"
+  test_sequence: 9
   run_ui: false
 
 test_plan:
-  current_focus: []
+  current_focus:
+    - "Order PDF Generation with Drive Upload"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
@@ -453,7 +454,6 @@ test_plan:
     - "Invoice PDF Generation with Drive Upload"
     - "Act PDF Generation with Drive Upload"
     - "Waybill PDF Generation with Drive Upload"
-    - "Order PDF Generation with Drive Upload"
     - "Custom Template Contract PDF Generation"
     - "New HTML Template Contract PDF Generation"
 
