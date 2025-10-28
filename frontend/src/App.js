@@ -1202,6 +1202,122 @@ function App() {
     }
   };
   
+  
+  const searchActCounterparty = async () => {
+    if (!actCounterpartyEdrpou) {
+      toast.error('Введіть код ЄДРПОУ');
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      // Find counterparty in "Основні дані"
+      const response = await axios.get(`${API}/counterparties`);
+      const counterparty = response.data.find(c => c.edrpou === actCounterpartyEdrpou);
+      
+      if (!counterparty) {
+        toast.error('Контрагента не знайдено');
+        setActFoundCounterparty(null);
+        setActAvailableOrders([]);
+        setActAvailableContracts([]);
+        return;
+      }
+      
+      setActFoundCounterparty(counterparty);
+      toast.success(`Знайдено: ${counterparty.name}`);
+      
+      // Fetch all orders for this counterparty
+      const ordersResponse = await axios.get(`${API}/orders`);
+      const counterpartyOrders = ordersResponse.data.filter(
+        order => order.counterparty_edrpou === actCounterpartyEdrpou
+      );
+      setActAvailableOrders(counterpartyOrders);
+      
+      // Fetch all contracts for this counterparty
+      const contractsResponse = await axios.get(`${API}/contracts`);
+      const counterpartyContracts = contractsResponse.data.filter(
+        contract => contract.counterparty_edrpou === actCounterpartyEdrpou
+      );
+      setActAvailableContracts(counterpartyContracts);
+      
+    } catch (error) {
+      console.error('Error searching act counterparty:', error);
+      toast.error('Помилка при пошуку контрагента');
+      setActFoundCounterparty(null);
+      setActAvailableOrders([]);
+      setActAvailableContracts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const toggleActOrder = (orderNumber) => {
+    setActSelectedOrders(prev => {
+      if (prev.includes(orderNumber)) {
+        return prev.filter(n => n !== orderNumber);
+      } else {
+        return [...prev, orderNumber];
+      }
+    });
+  };
+  
+  const handleActFromOrdersSubmit = async () => {
+    if (!actFoundCounterparty) {
+      toast.error('Спочатку знайдіть контрагента');
+      return;
+    }
+    
+    if (actType === 'with-orders' && actSelectedOrders.length === 0) {
+      toast.error('Оберіть хоча б одне замовлення');
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      // Get selected contract details if any
+      let contractNumber = '';
+      let contractDate = '';
+      
+      if (actSelectedContract) {
+        const contract = actAvailableContracts.find(c => c.number === actSelectedContract);
+        if (contract) {
+          contractNumber = contract.number;
+          contractDate = contract.date;
+        }
+      }
+      
+      const payload = {
+        counterparty_edrpou: actCounterpartyEdrpou,
+        order_numbers: actSelectedOrders,
+        contract_number: contractNumber || null,
+        contract_date: contractDate || null,
+        custom_template: actTemplate || null
+      };
+      
+      const response = await axios.post(`${API}/acts/generate-from-orders`, payload);
+      
+      if (response.data.success) {
+        toast.success('Акт успішно згенеровано на основі замовлень!');
+        
+        // Reset form
+        setActType('without-orders');
+        setActCounterpartyEdrpou('');
+        setActFoundCounterparty(null);
+        setActAvailableOrders([]);
+        setActSelectedOrders([]);
+        setActAvailableContracts([]);
+        setActSelectedContract('');
+        
+        // Refresh documents
+        fetchAllDocuments();
+      }
+    } catch (error) {
+      console.error('Error generating act from orders:', error);
+      toast.error('Помилка при генерації акту: ' + (error.response?.data?.detail || error.message));
+    } finally {
+      setLoading(false);
+    }
+  };
   const viewCounterpartyDetails = async (edrpou) => {
     setLoading(true);
     try {
