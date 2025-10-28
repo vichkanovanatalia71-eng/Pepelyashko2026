@@ -1125,7 +1125,8 @@ function App() {
           <p><strong>Email:</strong> <span class="mono">{{buyer_email}}</span></p>
           <p><strong>Тел.:</strong> <span class="mono">{{buyer_phone}}</span></p>
           <p><strong>В особі:</strong> {{buyer_representative}}</p>
-          <p class="signline" style="margin-top:12px;"><strong>Підпис:</strong> {{buyer_signature}}</p>
+          <p class="signline">Підпис: __________________ / ________ /</p>
+          <p><strong>{{buyer_signature}}</strong></p>
         </td>
         <td>
           <p><strong>Назва:</strong> {{supplier_name}}</p>
@@ -1137,7 +1138,8 @@ function App() {
           <p><strong>Email:</strong> <span class="mono">{{supplier_email}}</span></p>
           <p><strong>Тел.:</strong> <span class="mono">{{supplier_phone}}</span></p>
           <p><strong>В особі:</strong> {{supplier_representative}}</p>
-          <p class="signline" style="margin-top:12px;"><strong>Підпис:</strong> {{supplier_signature}}</p>
+          <p class="signline">Підпис: __________________ / ________ /</p>
+          <p><strong>{{supplier_signature}}</strong></p>
         </td>
       </tr>
     </table>
