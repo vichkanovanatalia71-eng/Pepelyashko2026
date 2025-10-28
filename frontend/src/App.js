@@ -2734,6 +2734,176 @@ function App() {
           </DialogContent>
         </Dialog>
         
+        {/* Dialog for creating documents from order */}
+        <Dialog open={showCreateFromOrder} onOpenChange={setShowCreateFromOrder}>
+          <DialogContent className="sm:max-w-[600px] bg-white">
+            <DialogHeader>
+              <DialogTitle className="text-gray-900 text-xl font-bold">
+                Створити документ на основі замовлення
+              </DialogTitle>
+              <DialogDescription className="text-gray-600">
+                Оберіть тип документа для автоматичного створення з даними замовлення
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4 py-6">
+              <div className="grid grid-cols-2 gap-4">
+                <Button
+                  onClick={async () => {
+                    try {
+                      if (!selectedOrderData) return;
+                      
+                      setLoading(true);
+                      const payload = {
+                        counterparty_edrpou: selectedOrderData.counterparty_edrpou,
+                        items: selectedOrderData.items,
+                        total_amount: selectedOrderData.total_amount
+                      };
+                      
+                      const response = await axios.post(`${API}/invoices/generate-pdf`, payload);
+                      
+                      if (response.data.success) {
+                        setCurrentDocType('invoice');
+                        setDocumentPdfData(response.data);
+                        setShowCreateFromOrder(false);
+                        setShowDocumentPreview(false);
+                        setTimeout(() => setShowDocumentPreview(true), 100);
+                        toast.success('Рахунок успішно створено на основі замовлення!');
+                        fetchAllDocuments();
+                      }
+                    } catch (error) {
+                      toast.error('Помилка створення рахунку: ' + (error.response?.data?.detail || error.message));
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
+                  className="h-24 flex flex-col items-center justify-center space-y-2 bg-green-50 border-2 border-green-300 hover:bg-green-100 text-green-700"
+                >
+                  <FileText className="w-8 h-8" />
+                  <span className="font-semibold">Рахунок</span>
+                </Button>
+                
+                <Button
+                  onClick={async () => {
+                    try {
+                      if (!selectedOrderData) return;
+                      
+                      setLoading(true);
+                      const payload = {
+                        counterparty_edrpou: selectedOrderData.counterparty_edrpou,
+                        items: selectedOrderData.items,
+                        total_amount: selectedOrderData.total_amount
+                      };
+                      
+                      const response = await axios.post(`${API}/acts/generate-pdf`, payload);
+                      
+                      if (response.data.success) {
+                        setCurrentDocType('act');
+                        setDocumentPdfData(response.data);
+                        setShowCreateFromOrder(false);
+                        setShowDocumentPreview(false);
+                        setTimeout(() => setShowDocumentPreview(true), 100);
+                        toast.success('Акт успішно створено на основі замовлення!');
+                        fetchAllDocuments();
+                      }
+                    } catch (error) {
+                      toast.error('Помилка створення акту: ' + (error.response?.data?.detail || error.message));
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
+                  className="h-24 flex flex-col items-center justify-center space-y-2 bg-purple-50 border-2 border-purple-300 hover:bg-purple-100 text-purple-700"
+                >
+                  <FileCheck className="w-8 h-8" />
+                  <span className="font-semibold">Акт</span>
+                </Button>
+                
+                <Button
+                  onClick={async () => {
+                    try {
+                      if (!selectedOrderData) return;
+                      
+                      setLoading(true);
+                      const payload = {
+                        counterparty_edrpou: selectedOrderData.counterparty_edrpou,
+                        items: selectedOrderData.items,
+                        total_amount: selectedOrderData.total_amount
+                      };
+                      
+                      const response = await axios.post(`${API}/waybills/generate-pdf`, payload);
+                      
+                      if (response.data.success) {
+                        setCurrentDocType('waybill');
+                        setDocumentPdfData(response.data);
+                        setShowCreateFromOrder(false);
+                        setShowDocumentPreview(false);
+                        setTimeout(() => setShowDocumentPreview(true), 100);
+                        toast.success('Накладну успішно створено на основі замовлення!');
+                        fetchAllDocuments();
+                      }
+                    } catch (error) {
+                      toast.error('Помилка створення накладної: ' + (error.response?.data?.detail || error.message));
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
+                  className="h-24 flex flex-col items-center justify-center space-y-2 bg-orange-50 border-2 border-orange-300 hover:bg-orange-100 text-orange-700"
+                >
+                  <Truck className="w-8 h-8" />
+                  <span className="font-semibold">Накладна</span>
+                </Button>
+                
+                <Button
+                  onClick={async () => {
+                    try {
+                      if (!selectedOrderData) return;
+                      
+                      setLoading(true);
+                      const payload = {
+                        counterparty_edrpou: selectedOrderData.counterparty_edrpou,
+                        subject: `Постачання товарів згідно замовлення №${selectedOrderData.order_number}`,
+                        items: [],
+                        total_amount: selectedOrderData.total_amount
+                      };
+                      
+                      const response = await axios.post(`${API}/contracts/generate-pdf`, payload);
+                      
+                      if (response.data.success) {
+                        setContractPdfData(response.data);
+                        setShowCreateFromOrder(false);
+                        setShowDocumentPreview(false);
+                        setShowContractPreview(true);
+                        toast.success('Договір успішно створено на основі замовлення!');
+                        fetchAllDocuments();
+                      }
+                    } catch (error) {
+                      toast.error('Помилка створення договору: ' + (error.response?.data?.detail || error.message));
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
+                  className="h-24 flex flex-col items-center justify-center space-y-2 bg-blue-50 border-2 border-blue-300 hover:bg-blue-100 text-blue-700"
+                >
+                  <FileSignature className="w-8 h-8" />
+                  <span className="font-semibold">Договір</span>
+                </Button>
+              </div>
+            </div>
+            
+            <DialogFooter className="bg-gray-50 -mx-6 -mb-6 px-6 py-4 rounded-b-lg">
+              <Button 
+                variant="outline"
+                onClick={() => {
+                  setShowCreateFromOrder(false);
+                  setSelectedOrderData(null);
+                }}
+              >
+                Скасувати
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        
         {/* Document Creation Dialog from Counterparty View */}
         <Dialog open={showDocCreateDialog} onOpenChange={setShowDocCreateDialog}>
           <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto bg-white">
