@@ -2891,6 +2891,11 @@ function App() {
                         total_amount: selectedOrderData.total_amount
                       };
                       
+                      // Add custom template if exists
+                      if (contractTemplate && contractTemplate.trim() !== '') {
+                        payload.custom_template = contractTemplate;
+                      }
+                      
                       const response = await axios.post(`${API}/contracts/generate-pdf`, payload);
                       
                       if (response.data.success) {
