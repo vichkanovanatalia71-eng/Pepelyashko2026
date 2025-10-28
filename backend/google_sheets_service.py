@@ -272,6 +272,10 @@ class GoogleSheetsService:
                 data.get('based_on_order', '')  # Add based_on_order (номер замовлення)
             ]
             
+            # Add based_on_contract for acts (if sheet is "Акти")
+            if sheet_name == "Акти":
+                row.append(data.get('based_on_contract', ''))  # Add based_on_contract (номер договору)
+            
             worksheet.append_row(row)
             logger.info(f"Created {doc_type} #{next_number:04d}")
             
