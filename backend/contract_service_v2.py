@@ -165,14 +165,28 @@ class ContractServiceV2:
             
             # Check if custom template is provided
             if custom_template and custom_template.strip():
-                logger.info("Using custom template for contract generation")
+                logger.info("Using custom HTML template for contract generation")
                 
-                # Parse template and replace variables
-                parsed_template = self._parse_custom_template(custom_template, context)
+                # Check if it's an HTML template (starts with <!DOCTYPE or <html)
+                is_html = custom_template.strip().startswith(('<!DOCTYPE', '<html', '<HTML'))
                 
-                # Process formatting markers and create story
-                formatted_elements = self._process_formatting_markers(parsed_template, styles['CustomNormal'])
-                story.extend(formatted_elements)
+                if is_html:
+                    # Use WeasyPrint for HTML templates
+                    return self._generate_pdf_from_html(
+                        custom_template, 
+                        context, 
+                        filename, 
+                        filepath, 
+                        buyer_data, 
+                        upload_to_drive
+                    )
+                else:
+                    # Parse template and replace variables (old marker-based template)
+                    parsed_template = self._parse_custom_template(custom_template, context)
+                    
+                    # Process formatting markers and create story
+                    formatted_elements = self._process_formatting_markers(parsed_template, styles['CustomNormal'])
+                    story.extend(formatted_elements)
                 
             else:
                 # Use standard template
