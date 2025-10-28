@@ -453,13 +453,21 @@ function App() {
       <div class="grid2">
         <div>
           <p class="center"><strong>ВИКОНАВЕЦЬ</strong></p>
+          
           <p><strong>ПІБ/Назва:</strong> {{supplier_name}}</p>
+          
           <p><strong>ЄДРПОУ/РНОКПП:</strong> {{supplier_edrpou}}</p>
+          
           <p><strong>Адреса:</strong> {{supplier_address}}</p>
+          
           <p><strong>IBAN:</strong> {{supplier_iban}}</p>
+          
           <p><strong>Банк:</strong> {{supplier_bank}} <span class="nowrap">| МФО: {{supplier_mfo}}</span></p>
+          
           <p><strong>E-mail:</strong> {{supplier_email}} <span class="nowrap">| Тел. {{supplier_phone}}</span></p>
+          
           <p><strong>Представник:</strong> {{supplier_representative}}</p>
+          
           <p><strong>Підпис:</strong> ______________________ / {{supplier_signature}} /</p>
         </div>
         <div>
