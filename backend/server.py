@@ -755,7 +755,8 @@ async def generate_contract_pdf(data: ContractGenerateRequest):
             'counterparty_edrpou': buyer_data.get('ЄДРПОУ', ''),
             'subject': data.subject,
             'amount': data.total_amount,
-            'contract_number': contract_number  # Add the actual contract number
+            'contract_number': contract_number,  # Add the actual contract number
+            'based_on_order': data.based_on_order if data.based_on_order else ''
         }
         
         # Get drive_file_id from result
