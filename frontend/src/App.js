@@ -2948,7 +2948,8 @@ function App() {
                       const payload = {
                         counterparty_edrpou: selectedOrderData.counterparty_edrpou,
                         items: selectedOrderData.items,
-                        total_amount: selectedOrderData.total_amount
+                        total_amount: selectedOrderData.total_amount,
+                        based_on_order: selectedOrderData.order_number
                       };
                       
                       const response = await axios.post(`${API}/acts/generate-pdf`, payload);
