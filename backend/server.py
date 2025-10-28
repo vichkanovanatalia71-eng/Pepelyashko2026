@@ -148,6 +148,12 @@ class ContractSendEmailRequest(BaseModel):
     contract_number: str = Field(..., description="Номер договору")
     drive_link: Optional[str] = Field(None, description="Посилання на Google Drive")
 
+class OrderSendEmailRequest(BaseModel):
+    order_pdf_path: str = Field(..., description="Шлях до PDF файлу замовлення")
+    recipient_email: EmailStr = Field(..., description="Email отримувача")
+    order_number: str = Field(..., description="Номер замовлення")
+    drive_link: Optional[str] = Field(None, description="Посилання на Google Drive")
+
 class Document(BaseModel):
     number: str
     date: str
