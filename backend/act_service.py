@@ -190,9 +190,9 @@ class ActService:
             
             # 15. Upload to Google Drive
             drive_file_id = await self.drive_service.upload_file(
-                str(filepath),
-                filename,
-                folder_name='Акти'
+                file_path=str(filepath),
+                folder_name='Акти',
+                custom_name=filename
             )
             
             drive_view_link = f"https://drive.google.com/file/d/{drive_file_id}/view"
