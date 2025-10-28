@@ -71,7 +71,9 @@ class ContractServiceV2:
         supplier_data: Dict[str, str],
         buyer_data: Dict[str, str],
         items: List[Dict[str, Any]],
-        upload_to_drive: bool = True
+        upload_to_drive: bool = True,
+        custom_template: Optional[str] = None,
+        template_settings: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """
         Generate PDF contract with new template
@@ -82,6 +84,8 @@ class ContractServiceV2:
             buyer_data: Data from "Основні дані"  
             items: List of items/services from order
             upload_to_drive: Whether to upload to Google Drive
+            custom_template: Custom template text with variables and formatting
+            template_settings: Settings like fontSize, fontFamily, lineSpacing
             
         Returns:
             Dict with local_path, filename, contract_number and optionally drive info
