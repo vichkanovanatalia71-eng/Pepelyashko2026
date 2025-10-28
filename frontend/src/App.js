@@ -363,6 +363,9 @@ function App() {
     if (editorId === 'order-template-editor') {
       const newText = orderTemplate.substring(0, start) + variable + orderTemplate.substring(start);
       setOrderTemplate(newText);
+    } else if (editorId === 'act-template-editor') {
+      const newText = actTemplate.substring(0, start) + variable + actTemplate.substring(start);
+      setActTemplate(newText);
     } else {
       const newText = contractTemplate.substring(0, start) + variable + contractTemplate.substring(start);
       setContractTemplate(newText);
