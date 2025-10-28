@@ -245,6 +245,9 @@ backend:
       - working: true
         agent: "main"
         comment: "ВИПРАВЛЕННЯ ДІАЛОГУ СТВОРЕННЯ ДОКУМЕНТІВ: Виправлено проблему з відкриттям діалогу вибору типу документа. Додано збереження order_form_data (counterparty_edrpou, items, total_amount) в documentPdfData при створенні замовлення. Оновлено обробник кнопки для використання збережених даних з documentPdfData?.order_form_data замість documentForm (який може бути вже очищений). Додано перевірку наявності даних перед відкриттям діалогу. Frontend успішно перезапущений."
+      - working: "needs_testing"
+        agent: "main"
+        comment: "КРИТИЧНЕ ВИПРАВЛЕННЯ - BASED_ON_ORDER КОЛОНКА: Виправлено проблему відсутності пов'язаних документів в OrderDetailDialog. Причина: колонка 'На основі замовлення' була відсутня в заголовках Google Sheets для аркушів Рахунки/Акти/Видаткові накладні/Договори. ЗМІНИ: 1) Додано колонку 'На основі замовлення' до всіх відповідних аркушів в _initialize_sheets(), 2) Оновлено метод get_documents() щоб читати та повертати based_on_order поле, 3) Оновлено get_counterparty_documents() для договорів щоб включати based_on_order. Тепер ендпоінт /api/documents/by-order/{order_number} повинен правильно фільтрувати та повертати документи створені на основі замовлення. Backend перезапущений успішно."
 
   - task: "Backend API Endpoints Update"
     implemented: true
