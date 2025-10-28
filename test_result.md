@@ -353,8 +353,8 @@ frontend:
         comment: "✅ НОВИЙ HTML ШАБЛОН ДОГОВОРУ ПРОТЕСТОВАНО УСПІШНО: POST /api/contracts/generate-pdf з новим HTML шаблоном працює ідеально. PDF файл створюється (92359 bytes), всі зміни застосовані: Times New Roman 12px ✅, header у форматі 'м. Київ' (ліворуч) та 'дата р.' (праворуч) ✅, всі пункти з нових рядків ✅, реквізити в 2 колонки ✅, total_amount має ' грн' ✅, немає дефолтної адреси '04052, Україна...' ✅. Google Drive інтеграція працює: drive_file_id=1CaUUApAMS-aPrTPYcmLVaaCed-gvz2Ze, drive_view_link=https://drive.google.com/file/d/1CaUUApAMS-aPrTPYcmLVaaCed-gvz2Ze/view. Тест з точним payload з review request пройшов успішно."
 metadata:
   created_by: "main_agent"
-  version: "5.0"
-  test_sequence: 5
+  version: "6.0"
+  test_sequence: 6
   run_ui: false
 
 test_plan:
