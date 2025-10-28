@@ -327,6 +327,18 @@ frontend:
       - working: "needs_testing"
         agent: "main"
         comment: "Додано preview dialog для накладних з інтеграцією Google Drive Viewer. Після створення накладної відкривається модальне вікно з попереднім переглядом PDF через Google Drive iframe. Можливість завантаження PDF. UI використовує той самий стиль що й договори."
+
+  - task: "Custom Template Contract PDF Generation"
+    implemented: true
+    working: true
+    file: "/app/backend/contract_service_v2.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ КАСТОМНІ ШАБЛОНИ ПОВНІСТЮ ПРОТЕСТОВАНО: POST /api/contracts/generate-pdf з custom_template працює ідеально. PDF файл створюється (92886 bytes), змінні підставляються (supplier_name, buyer_name, supplier_signature, buyer_signature), маркери форматування обробляються ([b], [i], [u], [align:center/left/right/justify]), поля PDF правильні (ліве 3см, праве 1см, верхнє/нижнє 2см), файл завантажується на Google Drive (drive_file_id: 1vYl2Gvgeb-0efKUD319N-AuRAa2T-kVV). supplier_data містить поле 'Підпис' з колонки K. Виправлено помилку з параметрами Google Drive upload. Всі вимоги з review request виконано."
 metadata:
   created_by: "main_agent"
   version: "5.0"
