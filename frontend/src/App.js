@@ -367,6 +367,10 @@ function App() {
   
   const fetchAllDocuments = async () => {
     try {
+      // Fetch orders
+      const ordersResponse = await axios.get(`${API}/orders`);
+      setAllOrders(ordersResponse.data.reverse()); // Newest first
+      
       // Fetch invoices
       const invoicesResponse = await axios.get(`${API}/invoices`);
       setAllInvoices(invoicesResponse.data.reverse()); // Newest first
