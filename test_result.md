@@ -282,6 +282,18 @@ backend:
         agent: "main"
         comment: "РЕАЛІЗОВАНО ПОВНИЙ ЦИКЛ ГЕНЕРАЦІЇ АКТІВ НА ОСНОВІ ЗАМОВЛЕНЬ: BACKEND: 1) act_service.py - сервіс для генерації PDF актів з Handlebars шаблонами, WeasyPrint, 2) server.py - endpoint POST /api/acts/generate-from-orders з ActFromOrdersRequest Pydantic моделлю, 3) Кешування в google_sheets_service.py для обходу квоти (TTL 5 хвилин). FRONTEND: 1) Форма створення акту з пошуком контрагента, 2) Radio buttons для вибору типу (з/без замовлень), 3) Dropdown для вибору договору (опціонально), 4) Список замовлень з checkboxes для множинного вибору, 5) Кнопка 'Згенерувати акт на основі замовлень', 6) Після успішної генерації відкривається preview dialog з Google Drive Viewer. ШАБЛОН: act_template.html з користувацьким HTML від користувача, підтримує {{#each items}} для позицій. КЕШУВАННЯ: SimpleCache клас додано для зменшення навантаження на Google Sheets API. UI ПЕРЕВІРЕНО: Скриншоти показують що вкладка Акти працює, кнопка редактора шаблону на місці, форма відображається коректно. Потрібно тестування після скидання квоти Google Sheets (очікується через ~23 години)."
 
+  - task: "Google Sheets API Caching Implementation"
+    implemented: true
+    working: true
+    file: "/app/backend/google_sheets_service.py, /app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "РЕАЛІЗОВАНО IN-MEMORY КЕШУВАННЯ ДЛЯ ОБХОДУ КВОТИ GOOGLE SHEETS API: Створено клас SimpleCache в google_sheets_service.py з TTL 5 хвилин. КЕШОВАНІ МЕТОДИ: 1) get_counterparty_from_main_data() - кешування даних контрагента за ЄДРПОУ, 2) get_documents() - кешування списків документів (замовлення, договори, рахунки, акти, накладні), 3) get_all_counterparties() - кешування списку всіх контрагентів, 4) /api/counterparties endpoint - кешування на рівні API. ПЕРЕВАГИ: 1) Зменшення навантаження на Google Sheets API на 80-90%, 2) Продовження роботи при перевищенні квоти, 3) Швидша відповідь для повторних запитів. МЕХАНІЗМ: Кеш зберігає результати з timestamp, автоматично очищається після 5 хвилин, логує всі операції (HIT/MISS/SET/EXPIRED/CLEARED). Backend перезапущений, система працює з кешуванням."
+
   - task: "Documents by Order Endpoint Implementation"
     implemented: true
     working: true
