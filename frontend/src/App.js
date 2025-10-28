@@ -583,9 +583,13 @@ function App() {
             
             <p><strong>IBAN:</strong> {{supplier_iban}}</p>
             
-            <p><strong>Банк:</strong> {{supplier_bank}} | МФО: {{supplier_mfo}}</p>
+            <p><strong>Банк:</strong> {{supplier_bank}}</p>
             
-            <p><strong>Email:</strong> {{supplier_email}} | Тел.: {{supplier_phone}}</p>
+            <p><strong>МФО:</strong> {{supplier_mfo}}</p>
+            
+            <p><strong>Email:</strong> {{supplier_email}}</p>
+            
+            <p><strong>Тел.:</strong> {{supplier_phone}}</p>
             
             <p><strong>Представник:</strong> {{supplier_representative}}</p>
             
@@ -602,9 +606,13 @@ function App() {
             
             <p><strong>IBAN:</strong> {{buyer_iban}}</p>
             
-            <p><strong>Банк:</strong> {{buyer_bank}} | МФО: {{buyer_mfo}}</p>
+            <p><strong>Банк:</strong> {{buyer_bank}}</p>
             
-            <p><strong>Email:</strong> {{buyer_email}} | Тел.: {{buyer_phone}}</p>
+            <p><strong>МФО:</strong> {{buyer_mfo}}</p>
+            
+            <p><strong>Email:</strong> {{buyer_email}}</p>
+            
+            <p><strong>Тел.:</strong> {{buyer_phone}}</p>
             
             <p><strong>Представник:</strong> {{buyer_representative}}</p>
             
