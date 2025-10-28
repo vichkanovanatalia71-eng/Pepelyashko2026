@@ -216,7 +216,7 @@ backend:
   - task: "Order PDF Generation with Drive Upload"
     implemented: true
     working: true
-    file: "/app/backend/order_service.py, /app/backend/server.py, /app/frontend/src/App.js"
+    file: "/app/backend/order_service.py, /app/backend/server.py, /app/frontend/src/App.js, /app/backend/google_sheets_service.py"
     stuck_count: 0
     priority: "high"
     needs_retesting: false
