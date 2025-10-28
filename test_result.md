@@ -385,6 +385,18 @@ frontend:
         agent: "main"
         comment: "Спрощено форму створення договору: видалено складну секцію 'Позиції товарів/послуг' (з полями назва, одиниця виміру, кількість, ціна) та замінено на просте поле 'Сума договору (грн)'. Оновлено початковий стан форми contractForm: видалено items array. Змінено логіку відправки на backend: items тепер передається як порожній масив []. Видалено кнопку 'Додати позицію' та всю пов'язану логіку розрахунку суми. Frontend успішно скомпільовано без помилок. Розмір бандлу зменшився на 411 байтів."
 
+  - task: "Contract Number Format Consistency"
+    implemented: true
+    working: "needs_testing"
+    file: "/app/backend/server.py, /app/backend/google_sheets_service.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "needs_testing"
+        agent: "main"
+        comment: "Виправлено невідповідність між номером договору в списку та в PDF документі. Проблема: метод create_contract() в google_sheets_service.py генерував простий послідовний номер (0055), тоді як contract_service_v2.py генерував правильний номер у форматі DD/MM/YY-4_middle_EDRPOU_digits-sequential_number. Виправлення: 1) В server.py додано передачу contract_number в contract_record перед викликом sheets_service.create_contract(), 2) В google_sheets_service.py оновлено метод create_contract() щоб використовувати переданий contract_number замість генерації власного простого номера. Тепер номер в списку договорів співпадає з номером в PDF документі. Backend перезапущений успішно."
+
 metadata:
   created_by: "main_agent"
   version: "6.0"
