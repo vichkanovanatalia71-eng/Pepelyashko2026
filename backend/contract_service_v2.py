@@ -110,29 +110,74 @@ class ContractServiceV2:
             # Calculate total
             total_amount = sum(item.get('amount', 0) for item in items)
             
-            # Create PDF
+            # Create PDF with correct margins (top/bottom: 2cm, left: 3cm, right: 1cm)
             filename = f"Договір_{contract_number.replace('/', '_')}_{buyer_data.get('ЄДРПОУ', '')}.pdf"
             filepath = self.output_dir / filename
             
             doc = SimpleDocTemplate(
                 str(filepath),
                 pagesize=A4,
-                rightMargin=20*mm,
-                leftMargin=20*mm,
-                topMargin=20*mm,
-                bottomMargin=20*mm
+                rightMargin=10*mm,   # 1 cm
+                leftMargin=30*mm,    # 3 cm
+                topMargin=20*mm,     # 2 cm
+                bottomMargin=20*mm   # 2 cm
             )
             
             # Build document content
             story = []
             
             # Create styles
-            styles = self._create_styles()
+            styles = self._create_styles(template_settings)
             
-            # Title
-            title_text = f"ДОГОВІР ПОСТАЧАННЯ ТОВАРІВ ТА/АБО НАДАННЯ ПОСЛУГ № {contract_number}"
-            story.append(Paragraph(title_text, styles['ContractTitle']))
-            story.append(Spacer(1, 6*mm))
+            # Prepare context for variable replacement
+            context = {
+                # Supplier (Мої дані)
+                'supplier_name': supplier_data.get('Назва', supplier_data.get('name', '')),
+                'supplier_edrpou': supplier_data.get('ЄДРПОУ', supplier_data.get('edrpou', '')),
+                'supplier_address': supplier_data.get('Юридична адреса', supplier_data.get('legal_address', '')),
+                'supplier_iban': supplier_data.get('р/р(IBAN)', supplier_data.get('iban', '')),
+                'supplier_bank': supplier_data.get('Банк', supplier_data.get('bank', '')),
+                'supplier_mfo': supplier_data.get('МФО', supplier_data.get('mfo', '')),
+                'supplier_email': supplier_data.get('email', ''),
+                'supplier_phone': supplier_data.get('тел', supplier_data.get('phone', '')),
+                'supplier_representative': supplier_data.get('В особі', supplier_data.get('represented_by', '')),
+                'supplier_signature': supplier_data.get('Підпис', supplier_data.get('signature', '')),
+                # Buyer (Основні дані)
+                'buyer_name': buyer_data.get('Назва', ''),
+                'buyer_edrpou': buyer_data.get('ЄДРПОУ', ''),
+                'buyer_address': buyer_data.get('Юридична адреса', ''),
+                'buyer_iban': buyer_data.get('р/р(IBAN)', ''),
+                'buyer_bank': buyer_data.get('Банк', ''),
+                'buyer_mfo': buyer_data.get('МФО', ''),
+                'buyer_email': buyer_data.get('email', ''),
+                'buyer_phone': buyer_data.get('тел', ''),
+                'buyer_representative': buyer_data.get('В особі', ''),
+                'buyer_signature': buyer_data.get('Підпис', ''),
+                # General
+                'contract_number': contract_number,
+                'contract_date': contract_date,
+                'city': city,
+                'end_date': end_date,
+                'total_amount': self.format_currency(total_amount),
+                'subject': contract_data.get('subject', '')
+            }
+            
+            # Check if custom template is provided
+            if custom_template and custom_template.strip():
+                logger.info("Using custom template for contract generation")
+                
+                # Parse template and replace variables
+                parsed_template = self._parse_custom_template(custom_template, context)
+                
+                # Process formatting markers and create story
+                formatted_elements = self._process_formatting_markers(parsed_template, styles['CustomNormal'])
+                story.extend(formatted_elements)
+                
+            else:
+                # Use standard template
+                logger.info("Using standard template for contract generation")
+                self._add_standard_contract_content(story, styles, context, contract_number, contract_date, contract_date_parts, city, end_date, supplier_data, buyer_data, items, total_amount)
+            
             
             # Location and date
             location_date = f"{city}  «{contract_date_parts['day']}» {contract_date_parts['month']} {contract_date_parts['year']} р."
