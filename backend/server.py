@@ -442,12 +442,17 @@ async def generate_order_pdf(data: DocumentCreate):
         
         # Generate PDF and upload to Drive
         order_data = data.model_dump()
+        
+        # Get custom template if provided
+        custom_template = order_data.get('custom_template', None)
+        
         result = order_service.generate_order_pdf(
             order_data=order_data,
             supplier_data=supplier_data,
             buyer_data=buyer_data,
             items=[item.model_dump() for item in data.items] if data.items else [],
-            upload_to_drive=True
+            upload_to_drive=True,
+            custom_template=custom_template
         )
         
         # Save order to Google Sheets with drive_file_id
