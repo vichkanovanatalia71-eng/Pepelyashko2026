@@ -1305,6 +1305,12 @@ class ContractTestSuite:
         # Test 14: Check for Unicode errors in logs
         test_results['unicode_logs_check'] = self.check_backend_logs_for_unicode_errors()
         
+        # Test 15: Custom Template Contract Generation (from review request)
+        test_results['custom_template_contract'] = self.test_custom_template_contract_generation()
+        
+        # Test 16: Supplier Data Signature Field
+        test_results['supplier_signature_field'] = self.test_supplier_data_signature_field()
+        
         # Summary
         logger.info("=" * 60)
         logger.info("TEST RESULTS SUMMARY")
