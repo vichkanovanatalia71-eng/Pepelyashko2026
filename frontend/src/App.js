@@ -2352,8 +2352,18 @@ function App() {
                     <div className="flex flex-col items-center justify-center h-full text-gray-500 space-y-4">
                       <Loader2 className="w-12 h-12 animate-spin text-blue-500" />
                       <p className="text-lg">PDF генерується...</p>
+                      <p className="text-sm text-gray-500">Зачекайте кілька секунд, або оновіть перегляд</p>
                       <Button
-                        onClick={() => window.location.reload()}
+                        onClick={() => {
+                          setShowDocumentPreview(false);
+                          if (selectedCounterparty?.edrpou) {
+                            refreshCounterpartyDocuments();
+                          }
+                          toast.info('Оновлюємо список документів...');
+                          setTimeout(() => {
+                            setShowDocumentPreview(true);
+                          }, 500);
+                        }}
                         variant="outline"
                         size="sm"
                         className="mt-4"
