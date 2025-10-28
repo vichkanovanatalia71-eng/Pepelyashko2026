@@ -3031,7 +3031,8 @@ function App() {
                         items: [],
                         total_amount: selectedOrderData.total_amount,
                         total_amount_text: amountText,
-                        vat_note: 'без ПДВ'
+                        vat_note: 'без ПДВ',
+                        based_on_order: selectedOrderData.order_number
                       };
                       
                       console.log('Contract payload:', payload);
