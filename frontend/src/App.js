@@ -3233,7 +3233,9 @@ function App() {
                         <button onClick={() => insertVariable('contract_date')} className="text-left px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{contract_date}}`} - Дата</button>
                         <button onClick={() => insertVariable('city')} className="text-left px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{city}}`} - Місто</button>
                         <button onClick={() => insertVariable('end_date')} className="text-left px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{end_date}}`} - Дата закінчення</button>
-                        <button onClick={() => insertVariable('total_amount')} className="text-left px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{total_amount}}`} - Сума</button>
+                        <button onClick={() => insertVariable('total_amount')} className="text-left px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{total_amount}}`} - Сума (цифрами)</button>
+                        <button onClick={() => insertVariable('total_amount_text')} className="text-left px-2 py-1 hover:bg-blue-100 rounded text-gray-700 font-semibold">{`{{total_amount_text}}`} - Сума прописом ⭐</button>
+                        <button onClick={() => insertVariable('vat_note')} className="text-left px-2 py-1 hover:bg-blue-100 rounded text-gray-700 font-semibold">{`{{vat_note}}`} - Позначка ПДВ ⭐</button>
                         <button onClick={() => insertVariable('subject')} className="text-left px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{subject}}`} - Предмет</button>
                       </div>
                     </div>
