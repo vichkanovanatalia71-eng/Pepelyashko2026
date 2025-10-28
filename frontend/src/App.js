@@ -1551,6 +1551,52 @@ function App() {
               handleDocumentSubmit={handleDocumentSubmit}
               loading={loading}
             />
+            
+            {/* List of all orders */}
+            <Card className="glass-card mt-6">
+              <CardHeader>
+                <CardTitle className="text-xl">Всі замовлення ({allOrders.length})</CardTitle>
+                <CardDescription>Останні створені замовлення</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {allOrders.length > 0 ? (
+                  <div className="space-y-3">
+                    {allOrders.map((doc, idx) => (
+                      <div key={idx} className="p-4 bg-blue-50 rounded-lg border border-blue-200 flex justify-between items-center hover:shadow-md transition-shadow">
+                        <div>
+                          <p className="font-semibold text-gray-900">Замовлення №{doc.number}</p>
+                          <p className="text-sm text-gray-600">від {doc.date}</p>
+                          <p className="text-sm text-gray-700 mt-1">{doc.counterparty_name}</p>
+                          <p className="text-sm font-medium text-blue-700 mt-1">Сума: {doc.total_amount} грн</p>
+                        </div>
+                        {doc.drive_file_id && doc.drive_file_id !== '' && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setDocumentPdfData({
+                                drive_file_id: doc.drive_file_id,
+                                drive_view_link: `https://drive.google.com/file/d/${doc.drive_file_id}/view`,
+                                drive_download_link: `https://drive.google.com/uc?export=download&id=${doc.drive_file_id}`,
+                                order_number: doc.number
+                              });
+                              setCurrentDocType('order');
+                              setShowDocumentPreview(true);
+                            }}
+                            className="btn-primary"
+                          >
+                            <Eye className="w-4 h-4 mr-1" />
+                            Переглянути
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-center py-4">Замовлень поки немає</p>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="invoices" data-testid="invoices-content">
