@@ -1936,12 +1936,15 @@ function App() {
                           <p className="text-sm text-gray-600">від {doc.date}</p>
                           <p className="text-sm text-gray-700 mt-1">{doc.counterparty_name}</p>
                           <p className="text-sm font-medium text-blue-700 mt-1">Сума: {doc.total_amount} грн</p>
+                          {doc.drive_file_id && (
+                            <p className="text-xs text-gray-500 mt-1">ID: {doc.drive_file_id}</p>
+                          )}
                         </div>
-                        {doc.drive_file_id && doc.drive_file_id !== '' && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            if (doc.drive_file_id && doc.drive_file_id !== '') {
                               setDocumentPdfData({
                                 drive_file_id: doc.drive_file_id,
                                 drive_view_link: `https://drive.google.com/file/d/${doc.drive_file_id}/view`,
@@ -1955,13 +1958,16 @@ function App() {
                               });
                               setCurrentDocType('order');
                               setShowDocumentPreview(true);
-                            }}
-                            className="btn-primary"
-                          >
-                            <Eye className="w-4 h-4 mr-1" />
-                            Переглянути
-                          </Button>
-                        )}
+                            } else {
+                              toast.error('Документ ще не завантажено на Google Drive');
+                            }
+                          }}
+                          className="btn-primary"
+                          disabled={!doc.drive_file_id || doc.drive_file_id === ''}
+                        >
+                          <Eye className="w-4 h-4 mr-1" />
+                          Переглянути
+                        </Button>
                       </div>
                     ))}
                   </div>
