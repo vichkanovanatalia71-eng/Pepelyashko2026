@@ -1312,6 +1312,17 @@ function App() {
       if (response.data.success) {
         toast.success('Акт успішно згенеровано на основі замовлень!');
         
+        // Open preview dialog
+        setDocumentPdfData({
+          drive_view_link: response.data.drive_view_link,
+          drive_download_link: response.data.drive_download_link,
+          drive_file_id: response.data.drive_file_id,
+          pdf_filename: response.data.pdf_filename,
+          act_number: response.data.act_number
+        });
+        setCurrentDocType('act');
+        setShowDocumentPreview(true);
+        
         // Reset form
         setActType('without-orders');
         setActCounterpartyEdrpou('');
