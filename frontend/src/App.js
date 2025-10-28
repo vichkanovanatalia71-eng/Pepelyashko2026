@@ -229,8 +229,7 @@ function App() {
   });
   const [contractForm, setContractForm] = useState({
     subject: '',
-    amount: 0,
-    items: [{ name: '', unit: 'шт', quantity: 0, price: 0, amount: 0 }]
+    amount: 0
   });
   
   // Contract PDF preview dialog state
