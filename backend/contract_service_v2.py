@@ -161,6 +161,8 @@ class ContractServiceV2:
                 'city': city,
                 'end_date': end_date,
                 'total_amount': self.format_currency(total_amount),
+                'total_amount_text': contract_data.get('total_amount_text', ''),
+                'vat_note': contract_data.get('vat_note', ''),
                 'subject': contract_data.get('subject', '')
             }
             
