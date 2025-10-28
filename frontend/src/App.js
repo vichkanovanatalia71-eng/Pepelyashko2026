@@ -1943,38 +1943,26 @@ function App() {
                           )}
                         </div>
                         <div className="flex gap-2">
-                          {(!doc.drive_file_id || doc.drive_file_id === '') ? (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={async () => {
-                                try {
-                                  setLoading(true);
-                                  // Re-generate PDF for old order
-                                  const payload = {
-                                    counterparty_edrpou: doc.counterparty_edrpou,
-                                    items: doc.items || [],
-                                    total_amount: parseFloat(doc.total_amount) || 0
-                                  };
-                                  
-                                  const response = await axios.post(`${API}/orders/generate-pdf`, payload);
-                                  
-                                  if (response.data.success) {
-                                    toast.success('PDF успішно згенеровано!');
-                                    fetchAllDocuments();
-                                  }
-                                } catch (error) {
-                                  toast.error('Помилка генерації PDF: ' + (error.response?.data?.detail || error.message));
-                                } finally {
-                                  setLoading(false);
-                                }
-                              }}
-                              className="bg-orange-500 text-white hover:bg-orange-600"
-                            >
-                              <FileText className="w-4 h-4 mr-1" />
-                              Згенерувати PDF
-                            </Button>
-                          ) : (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setCurrentOrderDetails(doc);
+                              setSelectedOrderData({
+                                counterparty_edrpou: doc.counterparty_edrpou || '',
+                                items: doc.items || [],
+                                total_amount: parseFloat(doc.total_amount) || 0,
+                                order_number: doc.number
+                              });
+                              setShowOrderDetails(true);
+                            }}
+                            className="btn-secondary"
+                          >
+                            <FileText className="w-4 h-4 mr-1" />
+                            Відкрити
+                          </Button>
+                          
+                          {doc.drive_file_id && doc.drive_file_id !== '' && (
                             <Button
                               size="sm"
                               variant="outline"
@@ -1996,7 +1984,7 @@ function App() {
                               className="btn-primary"
                             >
                               <Eye className="w-4 h-4 mr-1" />
-                              Переглянути
+                              PDF
                             </Button>
                           )}
                         </div>
