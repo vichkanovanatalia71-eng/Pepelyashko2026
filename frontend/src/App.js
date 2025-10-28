@@ -2217,10 +2217,10 @@ function App() {
                       </div>
                     )}
                   </div>
-                  {contractPdfData.drive_view_link && (
+                  {contractPdfData.drive_file_id && (
                     <div className="text-center">
                       <Button
-                        onClick={() => window.open(contractPdfData.drive_view_link, '_blank')}
+                        onClick={() => window.open(`https://drive.google.com/file/d/${contractPdfData.drive_file_id}/view`, '_blank')}
                         variant="outline"
                         size="sm"
                       >
