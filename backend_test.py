@@ -1256,6 +1256,261 @@ class ContractTestSuite:
             logger.error(f"❌ Помилка перевірки поля підпису: {str(e)}")
             return False
 
+    def test_based_on_order_functionality(self):
+        """Test the based_on_order functionality as specified in review request"""
+        logger.info("=" * 80)
+        logger.info("ТЕСТУВАННЯ BASED_ON_ORDER ФУНКЦІОНАЛЬНОСТІ")
+        logger.info("=" * 80)
+        
+        try:
+            # Test 1: Create an order first
+            logger.info("ТЕСТ 1: Створення замовлення")
+            logger.info("-" * 40)
+            
+            order_payload = {
+                "counterparty_edrpou": "40196816",
+                "items": [
+                    {
+                        "name": "Тестовий товар",
+                        "unit": "шт",
+                        "quantity": 1,
+                        "price": 1000,
+                        "amount": 1000
+                    }
+                ],
+                "total_amount": 1000
+            }
+            
+            logger.info("Створення замовлення через POST /api/orders/generate-pdf...")
+            order_response = requests.post(
+                f"{self.api_url}/orders/generate-pdf",
+                json=order_payload,
+                headers={'Content-Type': 'application/json'},
+                timeout=30
+            )
+            
+            if order_response.status_code != 200:
+                logger.error(f"❌ Помилка створення замовлення: {order_response.status_code} - {order_response.text}")
+                return False
+            
+            order_result = order_response.json()
+            order_number = order_result.get('order_number', '')
+            
+            if not order_number:
+                logger.error("❌ Не отримано номер замовлення")
+                return False
+            
+            logger.info(f"✅ Замовлення створено успішно: {order_number}")
+            
+            # Test 2: Create contract based on order
+            logger.info("\nТЕСТ 2: Створення договору на основі замовлення")
+            logger.info("-" * 50)
+            
+            contract_payload = {
+                "counterparty_edrpou": "40196816",
+                "subject": f"Договір на основі замовлення {order_number}",
+                "items": [],
+                "total_amount": 1000,
+                "based_on_order": order_number
+            }
+            
+            logger.info(f"Створення договору з based_on_order: {order_number}...")
+            contract_response = requests.post(
+                f"{self.api_url}/contracts/generate-pdf",
+                json=contract_payload,
+                headers={'Content-Type': 'application/json'},
+                timeout=30
+            )
+            
+            if contract_response.status_code != 200:
+                logger.error(f"❌ Помилка створення договору: {contract_response.status_code} - {contract_response.text}")
+                return False
+            
+            contract_result = contract_response.json()
+            contract_number = contract_result.get('contract_number', '')
+            
+            logger.info(f"✅ Договір створено успішно: {contract_number}")
+            logger.info(f"   based_on_order: {order_number}")
+            
+            # Test 3: Check by-order endpoint (using existing related-documents endpoint)
+            logger.info("\nТЕСТ 3: Перевірка ендпоінту by-order")
+            logger.info("-" * 40)
+            
+            # Note: The review request mentions /api/documents/by-order/{order_number}
+            # but the actual endpoint is /api/orders/{order_number}/related-documents
+            logger.info(f"Перевірка GET /api/orders/{order_number}/related-documents...")
+            
+            related_docs_response = requests.get(
+                f"{self.api_url}/orders/{order_number}/related-documents",
+                timeout=30
+            )
+            
+            if related_docs_response.status_code != 200:
+                logger.error(f"❌ Помилка отримання пов'язаних документів: {related_docs_response.status_code} - {related_docs_response.text}")
+                return False
+            
+            related_docs = related_docs_response.json()
+            
+            # Check response structure
+            expected_keys = ["invoices", "acts", "waybills", "contracts"]
+            for key in expected_keys:
+                if key not in related_docs:
+                    logger.error(f"❌ Відсутній ключ '{key}' в response")
+                    return False
+            
+            logger.info("✅ Response має правильну структуру: invoices, acts, waybills, contracts")
+            
+            # Check that contract is in the contracts array
+            contracts = related_docs.get('contracts', [])
+            found_contract = None
+            
+            for contract in contracts:
+                if contract.get('based_on_order') == order_number:
+                    found_contract = contract
+                    break
+            
+            if not found_contract:
+                logger.error(f"❌ Договір з based_on_order={order_number} не знайдено в contracts array")
+                logger.error(f"   Знайдено договорів: {len(contracts)}")
+                if contracts:
+                    logger.error("   Перші договори в списку:")
+                    for i, c in enumerate(contracts[:3]):
+                        logger.error(f"     {i+1}. based_on_order: {c.get('based_on_order', 'N/A')}")
+                return False
+            
+            logger.info(f"✅ Договір знайдено в contracts array з based_on_order: {order_number}")
+            
+            # Test 4: Create invoice based on order
+            logger.info("\nТЕСТ 4: Перевірка рахунку на основі замовлення")
+            logger.info("-" * 50)
+            
+            invoice_payload = {
+                "counterparty_edrpou": "40196816",
+                "items": [
+                    {
+                        "name": "Тестовий товар",
+                        "unit": "шт",
+                        "quantity": 1,
+                        "price": 1000,
+                        "amount": 1000
+                    }
+                ],
+                "total_amount": 1000,
+                "based_on_order": order_number
+            }
+            
+            logger.info(f"Створення рахунку з based_on_order: {order_number}...")
+            invoice_response = requests.post(
+                f"{self.api_url}/invoices/generate-pdf",
+                json=invoice_payload,
+                headers={'Content-Type': 'application/json'},
+                timeout=30
+            )
+            
+            if invoice_response.status_code != 200:
+                logger.error(f"❌ Помилка створення рахунку: {invoice_response.status_code} - {invoice_response.text}")
+                return False
+            
+            invoice_result = invoice_response.json()
+            invoice_number = invoice_result.get('invoice_number', '')
+            
+            logger.info(f"✅ Рахунок створено успішно: {invoice_number}")
+            logger.info(f"   based_on_order: {order_number}")
+            
+            # Test 5: Check that both contract and invoice appear in related documents
+            logger.info("\nТЕСТ 5: Перевірка що обидва документи з'являються в related-documents")
+            logger.info("-" * 70)
+            
+            # Wait a moment for documents to be saved
+            time.sleep(3)
+            
+            final_related_docs_response = requests.get(
+                f"{self.api_url}/orders/{order_number}/related-documents",
+                timeout=30
+            )
+            
+            if final_related_docs_response.status_code != 200:
+                logger.error(f"❌ Помилка отримання фінальних пов'язаних документів: {final_related_docs_response.status_code}")
+                return False
+            
+            final_related_docs = final_related_docs_response.json()
+            
+            # Check contracts
+            final_contracts = final_related_docs.get('contracts', [])
+            contract_found = any(c.get('based_on_order') == order_number for c in final_contracts)
+            
+            # Check invoices
+            final_invoices = final_related_docs.get('invoices', [])
+            invoice_found = any(i.get('based_on_order') == order_number for i in final_invoices)
+            
+            logger.info(f"Знайдено документів для замовлення {order_number}:")
+            logger.info(f"   Договорів: {len([c for c in final_contracts if c.get('based_on_order') == order_number])}")
+            logger.info(f"   Рахунків: {len([i for i in final_invoices if i.get('based_on_order') == order_number])}")
+            logger.info(f"   Актів: {len([a for a in final_related_docs.get('acts', []) if a.get('based_on_order') == order_number])}")
+            logger.info(f"   Накладних: {len([w for w in final_related_docs.get('waybills', []) if w.get('based_on_order') == order_number])}")
+            
+            if not contract_found:
+                logger.error("❌ Договір не знайдено в фінальному списку пов'язаних документів")
+                return False
+            
+            if not invoice_found:
+                logger.error("❌ Рахунок не знайдено в фінальному списку пов'язаних документів")
+                return False
+            
+            logger.info("✅ Обидва документи (договір і рахунок) знайдено в пов'язаних документах")
+            
+            # Final results summary
+            logger.info("\n" + "=" * 80)
+            logger.info("РЕЗУЛЬТАТИ ТЕСТУВАННЯ BASED_ON_ORDER:")
+            logger.info("=" * 80)
+            logger.info(f"✅ Замовлення створено: {order_number}")
+            logger.info(f"✅ Договір створено з based_on_order: {contract_number}")
+            logger.info(f"✅ Рахунок створено з based_on_order: {invoice_number}")
+            logger.info(f"✅ Ендпоінт /api/orders/{order_number}/related-documents працює")
+            logger.info(f"✅ Фільтрація документів за based_on_order працює")
+            logger.info(f"✅ Response містить правильну структуру")
+            
+            # Store results for summary
+            self.based_on_order_results = {
+                'order_number': order_number,
+                'contract_number': contract_number,
+                'invoice_number': invoice_number,
+                'related_docs_working': True
+            }
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"❌ Тест based_on_order провалився з помилкою: {str(e)}")
+            return False
+    
+    def test_missing_by_order_endpoint(self):
+        """Test for the missing /api/documents/by-order endpoint mentioned in review request"""
+        logger.info("Перевірка ендпоінту /api/documents/by-order/{order_number} з review request...")
+        
+        # The review request specifically mentions /api/documents/by-order/{order_number}
+        # but this endpoint doesn't exist in server.py
+        test_order_number = "0001"
+        
+        try:
+            response = requests.get(
+                f"{self.api_url}/documents/by-order/{test_order_number}",
+                timeout=10
+            )
+            
+            if response.status_code == 404:
+                logger.warning("⚠️  Ендпоінт /api/documents/by-order/{order_number} НЕ ІСНУЄ")
+                logger.warning("   Review request згадує цей ендпоінт, але він відсутній в server.py")
+                logger.warning("   Натомість існує /api/orders/{order_number}/related-documents")
+                return False
+            else:
+                logger.info(f"✅ Ендпоінт /api/documents/by-order/{test_order_number} існує")
+                return True
+                
+        except Exception as e:
+            logger.warning(f"⚠️  Помилка перевірки ендпоінту: {str(e)}")
+            return False
+
     def test_order_pdf_generation(self):
         """Test order PDF generation as specified in review request"""
         logger.info("Testing order PDF generation as specified in review request...")
