@@ -279,6 +279,12 @@ function App() {
   const [selectedOrderData, setSelectedOrderData] = useState(null);
   const [showOrderDetails, setShowOrderDetails] = useState(false);
   const [currentOrderDetails, setCurrentOrderDetails] = useState(null);
+  const [relatedDocuments, setRelatedDocuments] = useState({
+    invoices: [],
+    acts: [],
+    waybills: [],
+    contracts: []
+  });
   
   const insertAlignment = (alignType) => {
     const textarea = document.querySelector('#template-editor');
