@@ -765,7 +765,7 @@ function App() {
     const savedVersion = localStorage.getItem('orderTemplateVersion');
     
     // Current template version
-    const CURRENT_VERSION = '1.0';
+    const CURRENT_VERSION = '2.0';
     
     // Check if saved template exists and version matches
     if (savedTemplate && savedVersion === CURRENT_VERSION) {
@@ -859,36 +859,6 @@ function App() {
       </tr>
     </table>
 
-    <div class="block-title">Сторони</div>
-    <table class="requisites">
-      <tr>
-        <th>ПОКУПЕЦЬ</th>
-        <th>ПОСТАЧАЛЬНИК</th>
-      </tr>
-      <tr>
-        <td>
-          <p><strong>Назва:</strong> {{buyer_name}}</p>
-          <p><strong>ЄДРПОУ:</strong> <span class="mono">{{buyer_edrpou}}</span></p>
-          <p><strong>Адреса:</strong> {{buyer_address}}</p>
-          <p><strong>IBAN:</strong> <span class="mono">{{buyer_iban}}</span></p>
-          <p><strong>Банк:</strong> {{buyer_bank}}</p>
-          <p><strong>МФО:</strong> <span class="mono">{{buyer_mfo}}</span></p>
-          <p><strong>Email:</strong> <span class="mono">{{buyer_email}}</span></p>
-          <p><strong>Тел.:</strong> <span class="mono">{{buyer_phone}}</span></p>
-        </td>
-        <td>
-          <p><strong>Назва:</strong> {{supplier_name}}</p>
-          <p><strong>ЄДРПОУ/РНОКПП:</strong> <span class="mono">{{supplier_edrpou}}</span></p>
-          <p><strong>Адреса:</strong> {{supplier_address}}</p>
-          <p><strong>IBAN:</strong> <span class="mono">{{supplier_iban}}</span></p>
-          <p><strong>Банк:</strong> {{supplier_bank}}</p>
-          <p><strong>МФО:</strong> <span class="mono">{{supplier_mfo}}</span></p>
-          <p><strong>Email:</strong> <span class="mono">{{supplier_email}}</span></p>
-          <p><strong>Тел.:</strong> <span class="mono">{{supplier_phone}}</span></p>
-        </td>
-      </tr>
-    </table>
-
     <div class="block-title">Перелік позицій</div>
     <table class="items">
       <thead>
@@ -933,15 +903,31 @@ function App() {
     <div class="block-title" style="margin-top:14px;">Підписи сторін</div>
     <table class="requisites">
       <tr>
+        <th>ПОКУПЕЦЬ</th>
+        <th>ПОСТАЧАЛЬНИК</th>
+      </tr>
+      <tr>
         <td>
-          <p><strong>Від Покупця:</strong></p>
-          <p>ПІБ: ___________________________</p>
-          <p class="signline">Підпис: __________________ / ________ /</p>
+          <p><strong>Назва:</strong> {{buyer_name}}</p>
+          <p><strong>ЄДРПОУ:</strong> <span class="mono">{{buyer_edrpou}}</span></p>
+          <p><strong>Адреса:</strong> {{buyer_address}}</p>
+          <p><strong>IBAN:</strong> <span class="mono">{{buyer_iban}}</span></p>
+          <p><strong>Банк:</strong> {{buyer_bank}}</p>
+          <p><strong>МФО:</strong> <span class="mono">{{buyer_mfo}}</span></p>
+          <p><strong>Email:</strong> <span class="mono">{{buyer_email}}</span></p>
+          <p><strong>Тел.:</strong> <span class="mono">{{buyer_phone}}</span></p>
+          <p class="signline" style="margin-top:12px;"><strong>Підпис:</strong> {{buyer_signature}}</p>
         </td>
         <td>
-          <p><strong>Від Постачальника:</strong></p>
-          <p>ПІБ: ___________________________</p>
-          <p class="signline">Підпис: __________________ / ________ /</p>
+          <p><strong>Назва:</strong> {{supplier_name}}</p>
+          <p><strong>ЄДРПОУ/РНОКПП:</strong> <span class="mono">{{supplier_edrpou}}</span></p>
+          <p><strong>Адреса:</strong> {{supplier_address}}</p>
+          <p><strong>IBAN:</strong> <span class="mono">{{supplier_iban}}</span></p>
+          <p><strong>Банк:</strong> {{supplier_bank}}</p>
+          <p><strong>МФО:</strong> <span class="mono">{{supplier_mfo}}</span></p>
+          <p><strong>Email:</strong> <span class="mono">{{supplier_email}}</span></p>
+          <p><strong>Тел.:</strong> <span class="mono">{{supplier_phone}}</span></p>
+          <p class="signline" style="margin-top:12px;"><strong>Підпис:</strong> {{supplier_signature}}</p>
         </td>
       </tr>
     </table>
