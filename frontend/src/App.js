@@ -454,6 +454,16 @@ function App() {
     loadOrderTemplate();
   }, []);
 
+  const loadOrderRelatedDocuments = async (orderNumber) => {
+    try {
+      const response = await axios.get(`${API}/orders/${orderNumber}/related-documents`);
+      setRelatedDocuments(response.data);
+    } catch (error) {
+      console.error('Error loading related documents:', error);
+      toast.error('Помилка завантаження пов\'язаних документів');
+    }
+  };
+
   const fetchCounterparties = async () => {
     try {
       const response = await axios.get(`${API}/counterparties`);
