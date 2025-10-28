@@ -668,7 +668,24 @@ function App() {
         lineSpacing: 1.5,
         indent: 0
       });
-      toast.success('Шаблон скинуто до стандартного');
+      toast.success('Шаблон скинуто до стандартного!');
+    }
+  };
+  
+  const saveOrderTemplate = () => {
+    localStorage.setItem('orderTemplate', orderTemplate);
+    localStorage.setItem('orderTemplateVersion', '1.0');
+    toast.success('Шаблон замовлення збережено!');
+    setShowOrderTemplateEditor(false);
+  };
+  
+  const resetOrderTemplate = () => {
+    if (window.confirm('Ви впевнені що хочете скинути шаблон до стандартного?')) {
+      localStorage.removeItem('orderTemplate');
+      localStorage.removeItem('orderTemplateVersion');
+      // Set default template from backend
+      setOrderTemplate('');
+      toast.success('Шаблон скинуто до стандартного!');
     }
   };
   
