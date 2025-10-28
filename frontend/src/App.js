@@ -2476,25 +2476,6 @@ function App() {
                         <button onClick={() => insertVariable('subject')} className="text-left px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{subject}}`} - Предмет</button>
                       </div>
                     </div>
-                    <div className="col-span-2 mt-2 pt-2 border-t border-blue-300">
-                      <p className="font-semibold text-blue-800 mb-1">Маркери форматування:</p>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <p className="text-gray-700 font-medium mb-1">Текст:</p>
-                          <p className="text-gray-700">{`[b]текст[/b]`} - Жирний</p>
-                          <p className="text-gray-700">{`[i]текст[/i]`} - Курсив</p>
-                          <p className="text-gray-700">{`[u]текст[/u]`} - Підкреслений</p>
-                        </div>
-                        <div>
-                          <p className="text-gray-700 font-medium mb-1">Вирівнювання:</p>
-                          <p className="text-gray-700">{`[align:left]...[/align]`} - Ліворуч</p>
-                          <p className="text-gray-700">{`[align:center]...[/align]`} - По центру</p>
-                          <p className="text-gray-700">{`[align:right]...[/align]`} - Праворуч</p>
-                          <p className="text-gray-700">{`[align:justify]...[/align]`} - По ширині</p>
-                        </div>
-                      </div>
-                      <p className="text-xs text-blue-600 mt-2">💡 Виділіть текст і натисніть кнопку форматування на панелі вгорі</p>
-                    </div>
                   </div>
                 </CardContent>
               </Card>
