@@ -216,7 +216,7 @@ backend:
   - task: "Order PDF Generation with Drive Upload"
     implemented: true
     working: true
-    file: "/app/backend/order_service.py, /app/backend/server.py"
+    file: "/app/backend/order_service.py, /app/backend/server.py, /app/frontend/src/App.js"
     stuck_count: 0
     priority: "high"
     needs_retesting: false
@@ -227,6 +227,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "✅ BACKEND ТЕСТУВАННЯ ЗАМОВЛЕНЬ УСПІШНО ЗАВЕРШЕНО: POST /api/orders/generate-pdf працює ідеально! Згенеровано PDF файли з номерами 0013-0017 у форматі Замовлення_0013_40196816.pdf. Нумерація проста послідовна (0001, 0002...) ✅. Google Drive інтеграція працює: файли завантажуються в папку 'Замовлення', drive_file_id, drive_view_link, drive_download_link заповнені ✅. Дані з 'Мої дані' (постачальник) та 'Основні дані' (покупець) використовуються коректно ✅. Українські символи в PDF працюють ✅. Виправлено синхронізацію номера замовлення між order_service та google_sheets_service. Google Sheets API quota exceeded під час інтенсивного тестування - тимчасове обмеження. Основна функціональність працює повністю."
+      - working: true
+        agent: "main"
+        comment: "ФАЗА 2 FRONTEND ЗАМОВЛЕНЬ ЗАВЕРШЕНА: Оновлено handleDocumentSubmit для виклику /api/orders/generate-pdf (замість старого /api/orders). Додано стан allOrders та завантаження в fetchAllDocuments(). Додано список всіх замовлень у вкладку 'Замовлення' з блакитним дизайном та кнопкою 'Переглянути'. Додано кнопку 'Переглянути' для замовлень у документах контрагента з відображенням drive_file_id. Frontend успішно скомпільований. Замовлення тепер повністю інтегровані в UI аналогічно до рахунків/актів/накладних."
 
   - task: "Backend API Endpoints Update"
     implemented: true
