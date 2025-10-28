@@ -857,7 +857,7 @@ function App() {
   
   const saveContractTemplate = () => {
     localStorage.setItem('contractTemplate', contractTemplate);
-    localStorage.setItem('contractTemplateVersion', '4.4');
+    localStorage.setItem('contractTemplateVersion', '5.0');
     localStorage.setItem('contractTemplateSettings', JSON.stringify(templateSettings));
     toast.success('Шаблон договору збережено!');
     setShowTemplateEditor(false);
