@@ -434,11 +434,19 @@ async def get_order_related_documents(order_number: str):
         raise HTTPException(status_code=503, detail="Google Sheets service not available")
     
     try:
+        logging.info(f"Fetching related documents for order: {order_number}")
+        
         # Get all document types
         invoices = sheets_service.get_documents("Рахунки")
         acts = sheets_service.get_documents("Акти")
         waybills = sheets_service.get_documents("Видаткові накладні")
         contracts = sheets_service.get_documents("Договори")
+        
+        logging.info(f"Total documents - Invoices: {len(invoices)}, Acts: {len(acts)}, Waybills: {len(waybills)}, Contracts: {len(contracts)}")
+        
+        # Log first contract to see structure
+        if contracts:
+            logging.info(f"First contract structure: {contracts[0]}")
         
         # Filter documents that were created from this specific order
         related = {
@@ -447,6 +455,8 @@ async def get_order_related_documents(order_number: str):
             'waybills': [doc for doc in waybills if doc.get('based_on_order') == order_number],
             'contracts': [doc for doc in contracts if doc.get('based_on_order') == order_number]
         }
+        
+        logging.info(f"Filtered related documents for order {order_number}: {related}")
         
         return related
         
