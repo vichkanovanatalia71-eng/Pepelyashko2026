@@ -176,8 +176,11 @@ class ContractServiceV2:
             else:
                 # Use standard template
                 logger.info("Using standard template for contract generation")
-                self._add_standard_contract_content(story, styles, context, contract_number, contract_date, contract_date_parts, city, end_date, supplier_data, buyer_data, items, total_amount)
-            
+                
+                # Title
+                title_text = f"ДОГОВІР ПОСТАЧАННЯ ТОВАРІВ ТА/АБО НАДАННЯ ПОСЛУГ № {contract_number}"
+                story.append(Paragraph(title_text, styles['ContractTitle']))
+                story.append(Spacer(1, 6*mm))
             
             # Location and date
             location_date = f"{city}  «{contract_date_parts['day']}» {contract_date_parts['month']} {contract_date_parts['year']} р."
