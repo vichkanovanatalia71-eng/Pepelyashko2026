@@ -15,6 +15,7 @@ from contract_service import ContractService
 from contract_service_v2 import ContractServiceV2
 from document_service import DocumentService
 from order_service import OrderService
+from act_service import ActService
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
