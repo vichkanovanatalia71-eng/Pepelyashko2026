@@ -137,6 +137,8 @@ class ContractGenerateRequest(BaseModel):
     counterparty_edrpou: Optional[str] = Field(None, description="ЄДРПОУ (не використовується, покупець береться з Основні дані)")
     custom_template: Optional[str] = Field(None, description="Кастомний текст шаблону договору")
     template_settings: Optional[dict] = Field(None, description="Налаштування форматування шаблону")
+    total_amount_text: Optional[str] = Field(None, description="Сума договору прописом")
+    vat_note: Optional[str] = Field(None, description="Позначка про ПДВ (наприклад, 'без ПДВ')")
 
 class ContractSendEmailRequest(BaseModel):
     contract_pdf_path: str = Field(..., description="Шлях до PDF файлу")
