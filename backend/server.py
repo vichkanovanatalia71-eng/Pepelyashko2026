@@ -711,6 +711,10 @@ async def get_contracts():
             if 'Drive File ID' in record:
                 contract['drive_file_id'] = str(record.get('Drive File ID', ''))
             
+            # Add based_on_order if available
+            if 'На основі замовлення' in record:
+                contract['based_on_order'] = str(record.get('На основі замовлення', ''))
+            
             result.append(contract)
         
         return result
