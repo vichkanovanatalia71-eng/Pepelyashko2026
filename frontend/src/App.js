@@ -2882,23 +2882,61 @@ function App() {
               )}
               
               <Button 
-                onClick={() => {
-                  toast.info('Функція відправки email для документів буде додана незабаром');
-                  setShowDocumentPreview(false);
-                  setDocumentPdfData(null);
-                  setDocumentForm({
-                    counterparty_edrpou: '',
-                    items: [{ name: '', unit: '', quantity: 0, price: 0, amount: 0 }],
-                    total_amount: 0
-                  });
-                  setSearchEdrpou('');
-                  setFoundCounterparty(null);
-                  setShowDocCreateDialog(false);
+                onClick={async () => {
+                  if (!documentPdfData) return;
+                  
+                  let recipientEmail = '';
+                  if (documentEmailForm.recipient === 'counterparty') {
+                    recipientEmail = documentEmailForm.counterpartyEmail;
+                  } else if (documentEmailForm.recipient === 'custom') {
+                    recipientEmail = documentEmailForm.customEmail;
+                  }
+                  
+                  if (!recipientEmail) {
+                    toast.error('Вкажіть email отримувача');
+                    return;
+                  }
+                  
+                  setLoading(true);
+                  try {
+                    // Determine the endpoint and payload based on document type
+                    if (currentDocType === 'order') {
+                      await axios.post(`${API}/orders/send-email`, {
+                        order_pdf_path: documentPdfData.pdf_path,
+                        recipient_email: recipientEmail,
+                        order_number: documentPdfData.order_number,
+                        drive_link: documentPdfData.drive_view_link
+                      });
+                      toast.success(`Замовлення відправлено на ${recipientEmail}`);
+                    } else {
+                      // For other document types (invoices, acts, waybills)
+                      toast.info('Функція відправки email для цього типу документів буде додана незабаром');
+                    }
+                    
+                    setShowDocumentPreview(false);
+                    setDocumentPdfData(null);
+                    setDocumentForm({
+                      counterparty_edrpou: '',
+                      items: [{ name: '', unit: '', quantity: 0, price: 0, amount: 0 }],
+                      total_amount: 0
+                    });
+                    setSearchEdrpou('');
+                    setFoundCounterparty(null);
+                    setShowDocCreateDialog(false);
+                  } catch (error) {
+                    toast.error('Помилка при відправці email: ' + (error.response?.data?.detail || error.message));
+                  } finally {
+                    setLoading(false);
+                  }
                 }}
                 disabled={loading}
                 className="btn-primary"
               >
-                Закрити
+                {loading ? (
+                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Відправка...</>
+                ) : (
+                  'Надіслати на email'
+                )}
               </Button>
             </DialogFooter>
           </DialogContent>
