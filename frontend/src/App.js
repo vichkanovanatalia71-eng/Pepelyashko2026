@@ -1211,9 +1211,14 @@ function App() {
     
     setLoading(true);
     try {
+      console.log('Searching for counterparty:', actCounterpartyEdrpou);
+      
       // Find counterparty in "Основні дані"
       const response = await axios.get(`${API}/counterparties`);
+      console.log('Counterparties response:', response.data);
+      
       const counterparty = response.data.find(c => c.edrpou === actCounterpartyEdrpou);
+      console.log('Found counterparty:', counterparty);
       
       if (!counterparty) {
         toast.error('Контрагента не знайдено');
@@ -1227,22 +1232,30 @@ function App() {
       toast.success(`Знайдено: ${counterparty.name}`);
       
       // Fetch all orders for this counterparty
+      console.log('Fetching orders...');
       const ordersResponse = await axios.get(`${API}/orders`);
+      console.log('Orders response:', ordersResponse.data);
+      
       const counterpartyOrders = ordersResponse.data.filter(
         order => order.counterparty_edrpou === actCounterpartyEdrpou
       );
+      console.log('Filtered orders:', counterpartyOrders.length);
       setActAvailableOrders(counterpartyOrders);
       
       // Fetch all contracts for this counterparty
+      console.log('Fetching contracts...');
       const contractsResponse = await axios.get(`${API}/contracts`);
+      console.log('Contracts response:', contractsResponse.data);
+      
       const counterpartyContracts = contractsResponse.data.filter(
         contract => contract.counterparty_edrpou === actCounterpartyEdrpou
       );
+      console.log('Filtered contracts:', counterpartyContracts.length);
       setActAvailableContracts(counterpartyContracts);
       
     } catch (error) {
       console.error('Error searching act counterparty:', error);
-      toast.error('Помилка при пошуку контрагента');
+      toast.error('Помилка при пошуку контрагента: ' + (error.response?.data?.detail || error.message));
       setActFoundCounterparty(null);
       setActAvailableOrders([]);
       setActAvailableContracts([]);
