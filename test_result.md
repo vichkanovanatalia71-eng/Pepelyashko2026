@@ -453,14 +453,17 @@ frontend:
 
 metadata:
   created_by: "main_agent"
-  version: "9.0"
-  test_sequence: 9
+  version: "10.0"
+  test_sequence: 10
   run_ui: false
 
 test_plan:
-  current_focus: []
+  current_focus:
+    - "Order Template Structure Update - Signatures Section"
+    - "Order Email Functionality"
+    - "Full System Integration Test"
   stuck_tasks: []
-  test_all: false
+  test_all: true
   test_priority: "high_first"
   completed_tests:
     - "Counterparty Search by ЄДРПОУ in 'Основні дані'"
