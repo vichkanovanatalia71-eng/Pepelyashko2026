@@ -3058,6 +3058,159 @@ function App() {
           </DialogContent>
         </Dialog>
         
+        {/* Order Details Dialog */}
+        <Dialog open={showOrderDetails} onOpenChange={setShowOrderDetails}>
+          <DialogContent className="sm:max-w-[800px] bg-white">
+            <DialogHeader>
+              <DialogTitle className="text-gray-900 text-xl font-bold">
+                Деталі замовлення №{currentOrderDetails?.number}
+              </DialogTitle>
+              <DialogDescription className="text-gray-600">
+                Інформація про замовлення від {currentOrderDetails?.date}
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4 py-4">
+              {/* Order Info */}
+              <Card className="bg-blue-50 border-blue-200">
+                <CardHeader className="py-3">
+                  <CardTitle className="text-sm font-semibold text-blue-900">Основна інформація</CardTitle>
+                </CardHeader>
+                <CardContent className="py-2">
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <p className="text-gray-600">Номер:</p>
+                      <p className="font-semibold">{currentOrderDetails?.number}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-600">Дата:</p>
+                      <p className="font-semibold">{currentOrderDetails?.date}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-600">Контрагент:</p>
+                      <p className="font-semibold">{currentOrderDetails?.counterparty_name}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-600">ЄДРПОУ:</p>
+                      <p className="font-semibold">{currentOrderDetails?.counterparty_edrpou}</p>
+                    </div>
+                    <div className="col-span-2">
+                      <p className="text-gray-600">Загальна сума:</p>
+                      <p className="font-semibold text-lg text-blue-700">{currentOrderDetails?.total_amount} грн</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              {/* Items List */}
+              {currentOrderDetails?.items && currentOrderDetails.items.length > 0 && (
+                <Card>
+                  <CardHeader className="py-3">
+                    <CardTitle className="text-sm font-semibold">Позиції ({currentOrderDetails.items.length})</CardTitle>
+                  </CardHeader>
+                  <CardContent className="py-2">
+                    <div className="space-y-2">
+                      {currentOrderDetails.items.map((item, idx) => (
+                        <div key={idx} className="p-3 bg-gray-50 rounded border">
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1">
+                              <p className="font-medium">{item.name}</p>
+                              <p className="text-sm text-gray-600">
+                                {item.quantity} {item.unit} × {item.price} грн
+                              </p>
+                            </div>
+                            <p className="font-semibold text-blue-700">{item.amount} грн</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+              
+              {/* Actions */}
+              <div className="flex gap-3">
+                {currentOrderDetails?.drive_file_id ? (
+                  <Button
+                    onClick={() => {
+                      setDocumentPdfData({
+                        drive_file_id: currentOrderDetails.drive_file_id,
+                        drive_view_link: `https://drive.google.com/file/d/${currentOrderDetails.drive_file_id}/view`,
+                        drive_download_link: `https://drive.google.com/uc?export=download&id=${currentOrderDetails.drive_file_id}`,
+                        order_number: currentOrderDetails.number,
+                        order_form_data: {
+                          counterparty_edrpou: currentOrderDetails.counterparty_edrpou || '',
+                          items: currentOrderDetails.items || [],
+                          total_amount: parseFloat(currentOrderDetails.total_amount) || 0
+                        }
+                      });
+                      setCurrentDocType('order');
+                      setShowOrderDetails(false);
+                      setShowDocumentPreview(true);
+                    }}
+                    className="btn-primary flex-1"
+                  >
+                    <Eye className="w-4 h-4 mr-2" />
+                    Переглянути PDF
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={async () => {
+                      try {
+                        setLoading(true);
+                        const payload = {
+                          counterparty_edrpou: currentOrderDetails.counterparty_edrpou,
+                          items: currentOrderDetails.items || [],
+                          total_amount: parseFloat(currentOrderDetails.total_amount) || 0
+                        };
+                        
+                        const response = await axios.post(`${API}/orders/generate-pdf`, payload);
+                        
+                        if (response.data.success) {
+                          toast.success('PDF успішно згенеровано!');
+                          fetchAllDocuments();
+                          setShowOrderDetails(false);
+                        }
+                      } catch (error) {
+                        toast.error('Помилка генерації PDF: ' + (error.response?.data?.detail || error.message));
+                      } finally {
+                        setLoading(false);
+                      }
+                    }}
+                    className="bg-orange-500 text-white hover:bg-orange-600 flex-1"
+                  >
+                    <FileText className="w-4 h-4 mr-2" />
+                    Згенерувати PDF
+                  </Button>
+                )}
+                
+                <Button
+                  onClick={() => {
+                    setShowOrderDetails(false);
+                    setShowCreateFromOrder(true);
+                  }}
+                  className="btn-primary bg-green-600 hover:bg-green-700 flex-1"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Створити документи
+                </Button>
+              </div>
+            </div>
+            
+            <DialogFooter className="bg-gray-50 -mx-6 -mb-6 px-6 py-4 rounded-b-lg">
+              <Button 
+                variant="outline"
+                onClick={() => {
+                  setShowOrderDetails(false);
+                  setCurrentOrderDetails(null);
+                }}
+              >
+                Закрити
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        
         {/* Document Creation Dialog from Counterparty View */}
         <Dialog open={showDocCreateDialog} onOpenChange={setShowDocCreateDialog}>
           <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto bg-white">
