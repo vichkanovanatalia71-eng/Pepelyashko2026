@@ -393,6 +393,10 @@ class GoogleSheetsService:
                 if 'Drive File ID' in record:
                     doc['drive_file_id'] = str(record.get('Drive File ID', ''))
                 
+                # Add based_on_order if available (номер замовлення)
+                if 'На основі замовлення' in record:
+                    doc['based_on_order'] = str(record.get('На основі замовлення', ''))
+                
                 # Parse items from JSON
                 items_key = 'Товари' if sheet_name != 'Акти' else 'Роботи'
                 try:
