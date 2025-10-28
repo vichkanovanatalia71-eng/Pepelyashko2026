@@ -2371,7 +2371,7 @@ function App() {
             </DialogHeader>
             
             <div className="space-y-4 py-4 overflow-y-auto" style={{maxHeight: 'calc(90vh - 200px)'}}>
-                            
+              
               {/* Available variables */}
               <Card className="bg-blue-50 border-blue-200">
                 <CardHeader className="py-3">
