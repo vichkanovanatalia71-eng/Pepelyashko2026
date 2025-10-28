@@ -630,7 +630,9 @@ async def generate_contract_pdf(data: ContractGenerateRequest):
             supplier_data=supplier_data,
             buyer_data=buyer_data,
             items=[item.model_dump() for item in data.items] if data.items else [],
-            upload_to_drive=True
+            upload_to_drive=True,
+            custom_template=data.custom_template,
+            template_settings=data.template_settings
         )
         
         contract_number = result['contract_number']
