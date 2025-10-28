@@ -1941,8 +1941,21 @@ function App() {
             {/* List of all orders */}
             <Card className="glass-card mt-6">
               <CardHeader>
-                <CardTitle className="text-xl">Всі замовлення ({allOrders.length})</CardTitle>
-                <CardDescription>Останні створені замовлення</CardDescription>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle className="text-xl">Всі замовлення ({allOrders.length})</CardTitle>
+                    <CardDescription>Останні створені замовлення</CardDescription>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fetchAllDocuments()}
+                    className="border-blue-500 text-blue-600 hover:bg-blue-50"
+                  >
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Оновити
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 {allOrders.length > 0 ? (
