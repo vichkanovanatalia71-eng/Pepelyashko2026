@@ -2373,6 +2373,14 @@ function App() {
                       <p className="text-gray-700">{`{{total_amount}}`} - Загальна сума</p>
                       <p className="text-gray-700">{`{{subject}}`} - Предмет договору</p>
                     </div>
+                    <div className="col-span-2 mt-2 pt-2 border-t border-blue-300">
+                      <p className="font-semibold text-blue-800 mb-1">Маркери вирівнювання:</p>
+                      <p className="text-gray-700">{`[align:left]текст[/align]`} - Вирівняти ліворуч</p>
+                      <p className="text-gray-700">{`[align:center]текст[/align]`} - Вирівняти по центру</p>
+                      <p className="text-gray-700">{`[align:right]текст[/align]`} - Вирівняти праворуч</p>
+                      <p className="text-gray-700">{`[align:justify]текст[/align]`} - Вирівняти по ширині</p>
+                      <p className="text-xs text-blue-600 mt-1">* Виділіть текст і натисніть кнопку вирівнювання, або введіть маркери вручну</p>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
