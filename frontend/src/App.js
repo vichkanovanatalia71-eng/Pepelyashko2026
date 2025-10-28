@@ -2405,21 +2405,204 @@ function App() {
           </TabsContent>
 
           <TabsContent value="acts" data-testid="acts-content">
-            <DocumentForm 
-              endpoint="acts" 
-              docType="Акт" 
-              title="Створення Акту Виконаних Робіт"
-              searchEdrpou={searchEdrpou}
-              setSearchEdrpou={setSearchEdrpou}
-              foundCounterparty={foundCounterparty}
-              searchCounterparty={searchCounterparty}
-              documentForm={documentForm}
-              addItem={addItem}
-              removeItem={removeItem}
-              updateItem={updateItem}
-              handleDocumentSubmit={handleDocumentSubmit}
-              loading={loading}
-            />
+            {/* New Act Creation UI */}
+            <Card className="glass-card">
+              <CardHeader>
+                <CardTitle className="text-2xl font-bold text-gray-900">Створення Акту Наданих Послуг</CardTitle>
+                <CardDescription>Оберіть контрагента та тип акту</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Step 1: Search Counterparty */}
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium">Крок 1: Пошук контрагента</Label>
+                  <div className="flex gap-3">
+                    <Input
+                      placeholder="Введіть ЄДРПОУ контрагента"
+                      value={actCounterpartyEdrpou}
+                      onChange={(e) => setActCounterpartyEdrpou(e.target.value)}
+                      className="flex-1"
+                    />
+                    <Button 
+                      onClick={searchActCounterparty}
+                      disabled={loading}
+                      className="btn-primary"
+                    >
+                      {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Search className="w-4 h-4 mr-2" />}
+                      Пошук
+                    </Button>
+                  </div>
+                  
+                  {actFoundCounterparty && (
+                    <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                      <p className="text-sm font-medium text-green-900">✓ Знайдено контрагента:</p>
+                      <p className="text-sm text-green-700">{actFoundCounterparty.name}</p>
+                      <p className="text-xs text-green-600">ЄДРПОУ: {actFoundCounterparty.edrpou}</p>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Step 2: Select Act Type */}
+                {actFoundCounterparty && (
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">Крок 2: Тип акту</Label>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="radio"
+                          id="without-orders"
+                          name="actType"
+                          value="without-orders"
+                          checked={actType === 'without-orders'}
+                          onChange={(e) => setActType(e.target.value)}
+                          className="w-4 h-4 text-purple-600"
+                        />
+                        <label htmlFor="without-orders" className="text-sm cursor-pointer">
+                          Акт без замовлення (введу дані вручну)
+                        </label>
+                      </div>
+                      
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="radio"
+                          id="with-orders"
+                          name="actType"
+                          value="with-orders"
+                          checked={actType === 'with-orders'}
+                          onChange={(e) => setActType(e.target.value)}
+                          className="w-4 h-4 text-purple-600"
+                        />
+                        <label htmlFor="with-orders" className="text-sm cursor-pointer">
+                          Акт на основі замовлень ({actAvailableOrders.length} доступно)
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Step 3: Select Orders (if with-orders) */}
+                {actFoundCounterparty && actType === 'with-orders' && (
+                  <>
+                    {/* Optional: Select Contract */}
+                    {actAvailableContracts.length > 0 && (
+                      <div className="space-y-3">
+                        <Label className="text-sm font-medium">Крок 3 (опціонально): Оберіть договір</Label>
+                        <select
+                          value={actSelectedContract}
+                          onChange={(e) => setActSelectedContract(e.target.value)}
+                          className="w-full p-2 border border-gray-300 rounded-lg"
+                        >
+                          <option value="">Без договору</option>
+                          {actAvailableContracts.map(contract => (
+                            <option key={contract.number} value={contract.number}>
+                              Договір № {contract.number} від {contract.date}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                    
+                    {/* Select Orders */}
+                    <div className="space-y-3">
+                      <Label className="text-sm font-medium">
+                        Крок {actAvailableContracts.length > 0 ? '4' : '3'}: Оберіть замовлення ({actSelectedOrders.length} обрано)
+                      </Label>
+                      
+                      {actAvailableOrders.length > 0 ? (
+                        <div className="space-y-2 max-h-64 overflow-y-auto border border-gray-200 rounded-lg p-3">
+                          {actAvailableOrders.map(order => (
+                            <div 
+                              key={order.number}
+                              className={`p-3 border rounded-lg cursor-pointer transition-all ${
+                                actSelectedOrders.includes(order.number)
+                                  ? 'border-purple-500 bg-purple-50'
+                                  : 'border-gray-200 hover:border-purple-300'
+                              }`}
+                              onClick={() => toggleActOrder(order.number)}
+                            >
+                              <div className="flex items-start justify-between">
+                                <div className="flex items-start space-x-3">
+                                  <input
+                                    type="checkbox"
+                                    checked={actSelectedOrders.includes(order.number)}
+                                    onChange={() => toggleActOrder(order.number)}
+                                    className="mt-1 w-4 h-4 text-purple-600"
+                                  />
+                                  <div>
+                                    <p className="text-sm font-medium text-gray-900">
+                                      Замовлення № {order.number}
+                                    </p>
+                                    <p className="text-xs text-gray-500">
+                                      Дата: {order.date} | Сума: {order.total_amount} грн
+                                    </p>
+                                    <p className="text-xs text-gray-600 mt-1">
+                                      Позицій: {order.items ? order.items.length : 0}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-gray-500 text-center py-4">
+                          Немає замовлень для цього контрагента
+                        </p>
+                      )}
+                    </div>
+                    
+                    {/* Submit Button */}
+                    <div className="pt-4">
+                      <Button
+                        onClick={handleActFromOrdersSubmit}
+                        disabled={loading || actSelectedOrders.length === 0}
+                        className="w-full btn-primary"
+                      >
+                        {loading ? (
+                          <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Генерація...</>
+                        ) : (
+                          <><FileText className="w-4 h-4 mr-2" /> Згенерувати акт на основі замовлень</>
+                        )}
+                      </Button>
+                    </div>
+                  </>
+                )}
+                
+                {/* Manual Act Creation (without orders) */}
+                {actFoundCounterparty && actType === 'without-orders' && (
+                  <div className="pt-4">
+                    <p className="text-sm text-gray-600 mb-4">
+                      Для створення акту без замовлення використовуйте стару форму нижче.
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+            
+            {/* Old DocumentForm for manual act creation */}
+            {actFoundCounterparty && actType === 'without-orders' && (
+              <Card className="glass-card mt-6">
+                <CardHeader>
+                  <CardTitle>Ручне введення даних акту</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <DocumentForm 
+                    endpoint="acts" 
+                    docType="Акт" 
+                    title="Створення Акту Виконаних Робіт"
+                    searchEdrpou={searchEdrpou}
+                    setSearchEdrpou={setSearchEdrpou}
+                    foundCounterparty={foundCounterparty}
+                    searchCounterparty={searchCounterparty}
+                    documentForm={documentForm}
+                    addItem={addItem}
+                    removeItem={removeItem}
+                    updateItem={updateItem}
+                    handleDocumentSubmit={handleDocumentSubmit}
+                    loading={loading}
+                  />
+                </CardContent>
+              </Card>
+            )}
             
             {/* Act Template Editor Button */}
             <div className="mt-6 flex justify-end">
