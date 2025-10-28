@@ -1888,6 +1888,12 @@ class ContractTestSuite:
         # Test 18: Order PDF Generation (from review request)
         test_results['order_pdf_generation'] = self.test_order_pdf_generation()
         
+        # Test 19: Based on Order Functionality (from review request)
+        test_results['based_on_order_functionality'] = self.test_based_on_order_functionality()
+        
+        # Test 20: Missing by-order endpoint check
+        test_results['missing_by_order_endpoint'] = self.test_missing_by_order_endpoint()
+        
         # Summary
         logger.info("=" * 60)
         logger.info("TEST RESULTS SUMMARY")
