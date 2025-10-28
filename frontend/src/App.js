@@ -307,6 +307,27 @@ function App() {
     }
   };
   
+  const loadContractTemplate = () => {
+    const savedTemplate = localStorage.getItem('contractTemplate');
+    if (savedTemplate) {
+      setContractTemplate(savedTemplate);
+    }
+  };
+  
+  const saveContractTemplate = () => {
+    localStorage.setItem('contractTemplate', contractTemplate);
+    toast.success('Шаблон договору збережено!');
+    setShowTemplateEditor(false);
+  };
+  
+  const resetContractTemplate = () => {
+    if (window.confirm('Ви впевнені що хочете скинути шаблон до стандартного?')) {
+      setContractTemplate('');
+      localStorage.removeItem('contractTemplate');
+      toast.success('Шаблон скинуто до стандартного');
+    }
+  };
+  
   const searchAndViewCounterparty = async () => {
     if (!searchCounterpartyEdrpou) {
       toast.error('Введіть код ЄДРПОУ');
