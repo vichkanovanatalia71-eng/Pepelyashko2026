@@ -176,6 +176,26 @@ class GoogleSheetsService:
             logger.error(f"Error creating замовлення: {str(e)}")
             raise
     
+    
+    def update_order_drive_id(self, order_number: str, drive_file_id: str) -> bool:
+        """Update drive_file_id for existing order."""
+        try:
+            worksheet = self.spreadsheet.worksheet("Замовлення")
+            records = worksheet.get_all_records()
+            
+            # Find the row with this order number
+            for idx, record in enumerate(records, start=2):  # Start at 2 (header is row 1)
+                if str(record.get('Номер', '')).strip() == str(order_number).strip():
+                    # Find the column index for drive_file_id
+                    headers = worksheet.row_values(1)
+                    if 'drive_file_id' in headers:
+                        col_idx = headers.index('drive_file_id') + 1
+                        worksheet.update_cell(idx, col_idx, drive_file_id)
+                        return True
+            return False
+        except Exception as e:
+            print(f"Error updating order drive_file_id: {str(e)}")
+            return False
     def create_act(self, data: Dict[str, Any], drive_file_id: str = '') -> Dict[str, Any]:
         """Create a new act of completed work."""
         return self._create_document("Акти", data, "акт", drive_file_id)
