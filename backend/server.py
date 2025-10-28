@@ -113,6 +113,7 @@ class DocumentCreate(BaseModel):
     counterparty_edrpou: str = Field(..., description="ЄДРПОУ контрагента")
     items: List[DocumentItem] = Field(..., description="Список товарів/робіт")
     total_amount: float = Field(..., description="Загальна сума")
+    based_on_order: Optional[str] = Field(None, description="Номер замовлення (якщо створено на основі замовлення)")
 
 class ContractCreate(BaseModel):
     counterparty_edrpou: str = Field(..., description="ЄДРПОУ контрагента")
