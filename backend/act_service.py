@@ -273,15 +273,48 @@ class ActService:
     
     def _parse_template(self, template: str, context: Dict[str, Any]) -> str:
         """
-        Parse template and replace all {{variable}} with actual values
-        Simple regex-based replacement (for basic templates)
+        Parse template using Handlebars (supports {{#each}} loops)
+        Falls back to simple regex replacement if Handlebars parsing fails
         """
-        def replace_variable(match):
-            var_name = match.group(1)
-            return str(context.get(var_name, ''))
-        
-        # Replace {{variable}} patterns
-        pattern = r'\{\{([^}]+)\}\}'
-        parsed = re.sub(pattern, replace_variable, template)
-        
-        return parsed
+        try:
+            # Try Handlebars first (for templates with {{#each}})
+            compiler = Compiler()
+            
+            # Register helper for incrementing index
+            def inc_helper(this, index):
+                return str(index + 1)
+            
+            # Prepare items for Handlebars (convert to dict if needed)
+            if 'items_rows' in context:
+                # This is for simple templates - remove items_rows
+                handlebars_context = {k: v for k, v in context.items() if k != 'items_rows'}
+            else:
+                handlebars_context = context.copy()
+            
+            # Check if template has {{#each}} - use Handlebars
+            if '{{#each' in template:
+                template_func = compiler.compile(template)
+                helpers = {'inc': inc_helper}
+                parsed = template_func(handlebars_context, helpers=helpers)
+            else:
+                # Simple template - use regex replacement
+                def replace_variable(match):
+                    var_name = match.group(1)
+                    return str(context.get(var_name, ''))
+                
+                pattern = r'\{\{([^}]+)\}\}'
+                parsed = re.sub(pattern, replace_variable, template)
+            
+            return parsed
+            
+        except Exception as e:
+            logger.error(f"Handlebars parsing failed: {str(e)}, falling back to regex")
+            # Fallback to simple regex replacement
+            def replace_variable(match):
+                var_name = match.group(1)
+                return str(context.get(var_name, ''))
+            
+            pattern = r'\{\{([^}]+)\}\}'
+            parsed = re.sub(pattern, replace_variable, template)
+            
+            return parsed
