@@ -2691,6 +2691,26 @@ function App() {
             </div>
             
             <DialogFooter className="bg-gray-50 -mx-6 -mb-6 px-6 py-4 rounded-b-lg">
+              {/* Button to create documents from order */}
+              {currentDocType === 'order' && (
+                <Button 
+                  onClick={() => {
+                    // Save current order data for creating other documents
+                    setSelectedOrderData({
+                      counterparty_edrpou: documentForm.counterparty_edrpou,
+                      items: documentForm.items,
+                      total_amount: documentForm.total_amount,
+                      order_number: documentPdfData?.order_number
+                    });
+                    setShowCreateFromOrder(true);
+                  }}
+                  className="btn-primary bg-green-600 hover:bg-green-700"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Створити документи на основі замовлення
+                </Button>
+              )}
+              
               <Button 
                 onClick={() => {
                   toast.info('Функція відправки email для документів буде додана незабаром');
