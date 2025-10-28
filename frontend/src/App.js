@@ -2268,17 +2268,41 @@ function App() {
                       <Label className="text-sm font-semibold text-gray-700">Абзац</Label>
                       <div className="grid grid-cols-3 gap-2">
                         <div>
-                          <Label className="text-xs text-gray-600">Вирівнювання</Label>
-                          <select
-                            value={templateSettings.alignment}
-                            onChange={(e) => setTemplateSettings({...templateSettings, alignment: e.target.value})}
-                            className="w-full p-2 border border-gray-300 rounded text-sm"
-                          >
-                            <option value="left">Ліворуч</option>
-                            <option value="center">Центр</option>
-                            <option value="right">Праворуч</option>
-                            <option value="justify">По ширині</option>
-                          </select>
+                          <Label className="text-xs text-gray-600">Вирівнювання (для виділеного тексту)</Label>
+                          <div className="flex gap-1 mt-1">
+                            <button
+                              type="button"
+                              onClick={() => insertAlignment('left')}
+                              className="p-2 border border-gray-300 rounded hover:bg-gray-100 text-xs"
+                              title="Вирівняти ліворуч"
+                            >
+                              ←
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => insertAlignment('center')}
+                              className="p-2 border border-gray-300 rounded hover:bg-gray-100 text-xs"
+                              title="Вирівняти по центру"
+                            >
+                              ↔
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => insertAlignment('right')}
+                              className="p-2 border border-gray-300 rounded hover:bg-gray-100 text-xs"
+                              title="Вирівняти праворуч"
+                            >
+                              →
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => insertAlignment('justify')}
+                              className="p-2 border border-gray-300 rounded hover:bg-gray-100 text-xs"
+                              title="Вирівняти по ширині"
+                            >
+                              ⇔
+                            </button>
+                          </div>
                         </div>
                         <div>
                           <Label className="text-xs text-gray-600">Міжрядковий інтервал</Label>
