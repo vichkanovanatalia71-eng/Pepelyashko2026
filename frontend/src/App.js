@@ -2755,7 +2755,7 @@ function App() {
         
         {/* Dialog for creating documents from order */}
         <Dialog open={showCreateFromOrder} onOpenChange={setShowCreateFromOrder}>
-          <DialogContent className="sm:max-w-[600px] bg-white">
+          <DialogContent className="sm:max-w-[600px] bg-white" style={{zIndex: 10000}}>
             <DialogHeader>
               <DialogTitle className="text-gray-900 text-xl font-bold">
                 Створити документ на основі замовлення
