@@ -457,6 +457,7 @@ function App() {
     fetchAllDocuments();
     loadContractTemplate();
     loadOrderTemplate();
+    loadActTemplate();
   }, []);
 
   const loadOrderRelatedDocuments = async (orderNumber) => {
