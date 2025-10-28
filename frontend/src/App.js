@@ -2174,6 +2174,98 @@ function App() {
             )}
           </DialogContent>
         </Dialog>
+
+        {/* Contract Template Editor Dialog */}
+        <Dialog open={showTemplateEditor} onOpenChange={setShowTemplateEditor}>
+          <DialogContent className="sm:max-w-[1200px] max-h-[90vh] bg-white">
+            <DialogHeader>
+              <DialogTitle className="text-gray-900 text-xl font-bold">
+                Редактор шаблону договору
+              </DialogTitle>
+              <DialogDescription className="text-gray-600">
+                Редагуйте текст договору. Використовуйте змінні у форматі {`{{Назва_змінної}}`}
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4 py-4 overflow-y-auto" style={{maxHeight: 'calc(90vh - 200px)'}}>
+              {/* Available variables */}
+              <Card className="bg-blue-50 border-blue-200">
+                <CardHeader className="py-3">
+                  <CardTitle className="text-sm font-semibold text-blue-900">Доступні змінні:</CardTitle>
+                </CardHeader>
+                <CardContent className="py-2">
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <p className="font-semibold text-blue-800 mb-1">Постачальник (Мої дані):</p>
+                      <p className="text-gray-700">{`{{supplier_name}}`} - Назва</p>
+                      <p className="text-gray-700">{`{{supplier_edrpou}}`} - ЄДРПОУ</p>
+                      <p className="text-gray-700">{`{{supplier_address}}`} - Адреса</p>
+                      <p className="text-gray-700">{`{{supplier_iban}}`} - IBAN</p>
+                      <p className="text-gray-700">{`{{supplier_bank}}`} - Банк</p>
+                      <p className="text-gray-700">{`{{supplier_mfo}}`} - МФО</p>
+                      <p className="text-gray-700">{`{{supplier_email}}`} - Email</p>
+                      <p className="text-gray-700">{`{{supplier_phone}}`} - Телефон</p>
+                      <p className="text-gray-700">{`{{supplier_representative}}`} - В особі</p>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-blue-800 mb-1">Покупець (Основні дані):</p>
+                      <p className="text-gray-700">{`{{buyer_name}}`} - Назва</p>
+                      <p className="text-gray-700">{`{{buyer_edrpou}}`} - ЄДРПОУ</p>
+                      <p className="text-gray-700">{`{{buyer_address}}`} - Адреса</p>
+                      <p className="text-gray-700">{`{{buyer_iban}}`} - IBAN</p>
+                      <p className="text-gray-700">{`{{buyer_bank}}`} - Банк</p>
+                      <p className="text-gray-700">{`{{buyer_mfo}}`} - МФО</p>
+                      <p className="text-gray-700">{`{{buyer_email}}`} - Email</p>
+                      <p className="text-gray-700">{`{{buyer_phone}}`} - Телефон</p>
+                      <p className="text-gray-700">{`{{buyer_representative}}`} - В особі</p>
+                    </div>
+                    <div className="col-span-2">
+                      <p className="font-semibold text-blue-800 mb-1">Загальні:</p>
+                      <p className="text-gray-700">{`{{contract_number}}`} - Номер договору</p>
+                      <p className="text-gray-700">{`{{contract_date}}`} - Дата договору</p>
+                      <p className="text-gray-700">{`{{city}}`} - Місто</p>
+                      <p className="text-gray-700">{`{{end_date}}`} - Дата закінчення</p>
+                      <p className="text-gray-700">{`{{total_amount}}`} - Загальна сума</p>
+                      <p className="text-gray-700">{`{{subject}}`} - Предмет договору</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              {/* Template editor */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-gray-700">Текст договору:</Label>
+                <textarea
+                  value={contractTemplate}
+                  onChange={(e) => setContractTemplate(e.target.value)}
+                  placeholder="Введіть текст договору з використанням змінних..."
+                  className="w-full h-96 p-4 border border-gray-300 rounded-lg font-mono text-sm"
+                  style={{fontFamily: 'monospace'}}
+                />
+                <p className="text-xs text-gray-500">
+                  * Якщо залишити порожнім, буде використовуватись стандартний шаблон
+                </p>
+              </div>
+            </div>
+            
+            <DialogFooter className="bg-gray-50 -mx-6 -mb-6 px-6 py-4 rounded-b-lg">
+              <Button 
+                variant="outline" 
+                onClick={resetContractTemplate}
+                className="border-red-300 text-red-600 hover:bg-red-50"
+              >
+                Скинути до стандартного
+              </Button>
+              
+              <Button 
+                onClick={saveContractTemplate}
+                className="btn-primary"
+              >
+                Зберегти шаблон
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </main>
 
       <footer className="mt-16 py-6 border-t border-gray-200/50">
