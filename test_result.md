@@ -252,6 +252,18 @@ backend:
         agent: "testing"
         comment: "✅ BASED_ON_ORDER ФУНКЦІОНАЛЬНІСТЬ ПРОТЕСТОВАНО УСПІШНО: 1) Додано відсутній ендпоінт /api/documents/by-order/{order_number} згідно review request ✅, 2) Протестовано створення замовлення через POST /api/orders/generate-pdf ✅, 3) Протестовано створення договору з based_on_order через POST /api/contracts/generate-pdf ✅, 4) Протестовано створення рахунку з based_on_order через POST /api/invoices/generate-pdf ✅, 5) Ендпоінт /api/documents/by-order/{order_number} правильно фільтрує документи за based_on_order ✅, 6) Response містить правильну структуру: {invoices: [], acts: [], waybills: [], contracts: []} ✅. Тестування показало що функціональність працює коректно з тестовими значеннями (TEST_ORDER_123, DEBUG_ORDER_999, SIMPLE_TEST). ОБМЕЖЕННЯ: Google Sheets API quota exceeded під час інтенсивного тестування - це тимчасове обмеження, не функціональна проблема. Основна функціональність based_on_order працює повністю."
 
+  - task: "Documents by Order Endpoint Implementation"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ ДОДАНО ВІДСУТНІЙ ЕНДПОІНТ: Реалізовано ендпоінт GET /api/documents/by-order/{order_number} який був згаданий в review request але відсутній в коді. Ендпоінт фільтрує всі типи документів (invoices, acts, waybills, contracts) за полем based_on_order та повертає структуру {invoices: [], acts: [], waybills: [], contracts: []}. Використовує той самий метод sheets_service.get_documents() що забезпечує консистентність з іншими ендпоінтами. Протестовано успішно з різними значеннями order_number."
+
   - task: "Backend API Endpoints Update"
     implemented: true
     working: true
