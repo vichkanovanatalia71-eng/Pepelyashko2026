@@ -337,14 +337,21 @@ function App() {
     }
   };
 
-  const insertVariable = (variableName) => {
-    const textarea = document.querySelector('#template-editor');
+  const insertVariable = (variableName, editorId = 'template-editor') => {
+    const textarea = document.querySelector(`#${editorId}`);
     if (!textarea) return;
     
     const start = textarea.selectionStart;
     const variable = `{{${variableName}}}`;
-    const newText = contractTemplate.substring(0, start) + variable + contractTemplate.substring(start);
-    setContractTemplate(newText);
+    
+    // Determine which template to update based on editor ID
+    if (editorId === 'order-template-editor') {
+      const newText = orderTemplate.substring(0, start) + variable + orderTemplate.substring(start);
+      setOrderTemplate(newText);
+    } else {
+      const newText = contractTemplate.substring(0, start) + variable + contractTemplate.substring(start);
+      setContractTemplate(newText);
+    }
     
     // Restore cursor position after variable
     setTimeout(() => {
