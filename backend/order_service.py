@@ -418,3 +418,87 @@ class OrderService:
         parsed = re.sub(pattern, replace_variable, template)
         
         return parsed
+
+    async def send_order_email(
+        self, 
+        pdf_path: str, 
+        recipient_email: str,
+        order_number: str,
+        drive_link: Optional[str] = None,
+        smtp_config: Optional[Dict[str, Any]] = None
+    ) -> bool:
+        """Send order via email with optional Google Drive link"""
+        try:
+            import smtplib
+            from email.message import EmailMessage
+            from email.utils import formataddr
+            
+            if smtp_config is None:
+                # Default SMTP configuration
+                smtp_config = {
+                    'hostname': os.getenv('SMTP_HOST', 'smtp.gmail.com'),
+                    'port': int(os.getenv('SMTP_PORT', 587)),
+                    'username': os.getenv('SMTP_USERNAME'),
+                    'password': os.getenv('SMTP_PASSWORD')
+                }
+            
+            # Check if SMTP is configured
+            if not smtp_config['username'] or not smtp_config['password']:
+                logger.warning("SMTP not configured - email not sent")
+                return False
+            
+            # Create message
+            message = EmailMessage()
+            message['From'] = smtp_config['username']
+            message['To'] = recipient_email
+            message['Subject'] = f'Замовлення № {order_number}'
+            
+            # Email body with optional Drive link
+            email_body = f"""
+Доброго дня!
+
+Направляємо Вам замовлення № {order_number} для ознайомлення.
+"""
+            
+            if drive_link:
+                email_body += f"""
+Переглянути замовлення онлайн: {drive_link}
+
+"""
+            
+            email_body += """
+Замовлення у форматі PDF додано до цього листа.
+
+З повагою,
+Система управління документами
+            """
+            
+            message.set_content(email_body)
+            
+            # Attach PDF with proper Unicode filename encoding
+            with open(pdf_path, 'rb') as f:
+                pdf_data = f.read()
+                # Get the filename and encode it properly for email
+                filename = os.path.basename(pdf_path)
+                
+                # Use RFC 2231 encoding for Unicode filenames
+                message.add_attachment(
+                    pdf_data,
+                    maintype='application',
+                    subtype='pdf',
+                    filename=filename
+                )
+            
+            # Send email via SMTP
+            with smtplib.SMTP(smtp_config['hostname'], smtp_config['port']) as server:
+                server.starttls()
+                server.login(smtp_config['username'], smtp_config['password'])
+                server.send_message(message)
+            
+            logger.info(f"Order email sent successfully to {recipient_email}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error sending order email: {str(e)}")
+            return False
+
