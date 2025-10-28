@@ -2187,7 +2187,7 @@ function App() {
                 <div className="border-2 border-gray-300 rounded-lg overflow-hidden bg-gray-100" style={{height: '500px'}}>
                   {contractPdfData.drive_view_link ? (
                     <iframe
-                      src={`https://drive.google.com/file/d/${contractPdfData.drive_file_id}/preview`}
+                      src={`https://drive.google.com/viewerng/viewer?embedded=true&url=https://drive.google.com/uc?id=${contractPdfData.drive_file_id}&export=download`}
                       style={{width: '100%', height: '100%', border: 'none'}}
                       title="Попередній перегляд договору"
                       allow="autoplay"
