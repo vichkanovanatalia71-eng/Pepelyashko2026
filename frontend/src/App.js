@@ -3399,7 +3399,23 @@ function App() {
                         if (response.data.success) {
                           toast.success('PDF успішно згенеровано!');
                           fetchAllDocuments();
+                          
+                          // Open preview with generated PDF data
+                          setDocumentPdfData({
+                            drive_view_link: response.data.drive_view_link,
+                            drive_download_link: response.data.drive_download_link,
+                            drive_file_id: response.data.drive_file_id,
+                            order_number: response.data.order_number,
+                            pdf_path: response.data.pdf_path,
+                            order_form_data: {
+                              counterparty_edrpou: currentOrderDetails.counterparty_edrpou || '',
+                              items: currentOrderDetails.items || [],
+                              total_amount: parseFloat(currentOrderDetails.total_amount) || 0
+                            }
+                          });
+                          setCurrentDocType('order');
                           setShowOrderDetails(false);
+                          setShowDocumentPreview(true);
                         }
                       } catch (error) {
                         toast.error('Помилка генерації PDF: ' + (error.response?.data?.detail || error.message));
