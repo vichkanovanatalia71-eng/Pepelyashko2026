@@ -372,9 +372,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Invoice PDF Preview with Drive Viewer"
-    - "Act PDF Preview with Drive Viewer"
-    - "Waybill PDF Preview with Drive Viewer"
+    - "Document List UI Improvements"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
