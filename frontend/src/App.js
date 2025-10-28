@@ -2961,8 +2961,12 @@ function App() {
                       
                       setLoading(true);
                       
+                      console.log('selectedOrderData:', selectedOrderData);
+                      
                       // Convert amount to text
                       const amountText = numberToUkrainianText(selectedOrderData.total_amount);
+                      
+                      console.log('amountText:', amountText);
                       
                       const payload = {
                         counterparty_edrpou: selectedOrderData.counterparty_edrpou,
@@ -2972,6 +2976,8 @@ function App() {
                         total_amount_text: amountText,
                         vat_note: 'без ПДВ'
                       };
+                      
+                      console.log('Contract payload:', payload);
                       
                       // Add custom template if exists
                       if (contractTemplate && contractTemplate.trim() !== '') {
