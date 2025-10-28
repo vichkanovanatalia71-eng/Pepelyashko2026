@@ -474,9 +474,9 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Frontend UI Testing - Orders Full Flow"
+    - "JavaScript Error Fix - MutationRecord attributeName"
   stuck_tasks: []
-  test_all: true
+  test_all: false
   test_priority: "high_first"
   completed_tests:
     - "Counterparty Search by ЄДРПОУ in 'Основні дані'"
@@ -491,6 +491,7 @@ test_plan:
     - "New HTML Template Contract PDF Generation"
     - "Order PDF Generation with Drive Upload"
     - "Documents by Order Endpoint Implementation"
+    - "Frontend UI Testing - Orders Full Flow"
 
 agent_communication:
   - agent: "main"
