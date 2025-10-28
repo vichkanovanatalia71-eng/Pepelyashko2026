@@ -373,6 +373,18 @@ frontend:
         agent: "main"
         comment: "ДРУГЕ КРИТИЧНЕ ВИПРАВЛЕННЯ: Виправлено помилку KeyError: 'success' при завантаженні на Google Drive. Проблема: код в contract_service_v2.py очікував drive_result['success'], але метод upload_file() в google_drive_service.py не повертає ключ 'success', а повертає тільки file_id, web_view_link, web_content_link. Виправлення: замінено перевірку 'if drive_result[\"success\"]' на 'if drive_result and drive_result.get(\"file_id\")' в обох місцях (рядки 489 та 729). Також виправлено назви ключів: 'drive_link' -> 'drive_view_link', 'download_link' -> 'drive_download_link'. Backend перезапущений. ТЕСТ API ПРОЙШОВ УСПІШНО: curl тест показав що договір створюється і завантажується на Google Drive з правильними drive_file_id та drive_view_link. Готово до frontend тестування."
 
+  - task: "Simplified Contract Form - Remove Items Section"
+    implemented: true
+    working: "needs_testing"
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: "needs_testing"
+        agent: "main"
+        comment: "Спрощено форму створення договору: видалено складну секцію 'Позиції товарів/послуг' (з полями назва, одиниця виміру, кількість, ціна) та замінено на просте поле 'Сума договору (грн)'. Оновлено початковий стан форми contractForm: видалено items array. Змінено логіку відправки на backend: items тепер передається як порожній масив []. Видалено кнопку 'Додати позицію' та всю пов'язану логіку розрахунку суми. Frontend успішно скомпільовано без помилок. Розмір бандлу зменшився на 411 байтів."
+
 metadata:
   created_by: "main_agent"
   version: "6.0"
