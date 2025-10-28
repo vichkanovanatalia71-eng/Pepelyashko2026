@@ -648,6 +648,22 @@ function App() {
     }
   };
   
+  const loadOrderTemplate = () => {
+    const savedTemplate = localStorage.getItem('orderTemplate');
+    const savedVersion = localStorage.getItem('orderTemplateVersion');
+    
+    // Current template version
+    const CURRENT_VERSION = '1.0';
+    
+    // Check if saved template exists and version matches
+    if (savedTemplate && savedVersion === CURRENT_VERSION) {
+      setOrderTemplate(savedTemplate);
+    } else {
+      // If no saved template, leave empty - backend will use default
+      setOrderTemplate('');
+    }
+  };
+  
   const saveContractTemplate = () => {
     localStorage.setItem('contractTemplate', contractTemplate);
     localStorage.setItem('contractTemplateVersion', '5.0');
