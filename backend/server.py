@@ -687,6 +687,9 @@ async def generate_contract_pdf(data: ContractGenerateRequest):
         # Prepare contract data
         contract_data = {
             'subject': data.subject,
+            'total_amount': data.total_amount,
+            'total_amount_text': data.total_amount_text if data.total_amount_text else '',
+            'vat_note': data.vat_note if data.vat_note else ''
         }
         
         # Generate PDF using new service
