@@ -279,6 +279,11 @@ function App() {
   const [selectedOrderData, setSelectedOrderData] = useState(null);
   const [showOrderDetails, setShowOrderDetails] = useState(false);
   const [currentOrderDetails, setCurrentOrderDetails] = useState(null);
+  
+  // Act template
+  const [actTemplate, setActTemplate] = useState('');
+  const [showActTemplateEditor, setShowActTemplateEditor] = useState(false);
+  
   const [relatedDocuments, setRelatedDocuments] = useState({
     invoices: [],
     acts: [],
