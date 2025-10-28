@@ -394,9 +394,55 @@ function App() {
   const loadContractTemplate = () => {
     const savedTemplate = localStorage.getItem('contractTemplate');
     const savedSettings = localStorage.getItem('contractTemplateSettings');
+    
     if (savedTemplate) {
       setContractTemplate(savedTemplate);
+    } else {
+      // Set default template with requisites
+      const defaultTemplate = `[align:center][b]ДОГОВІР ПОСТАЧАННЯ ТОВАРІВ ТА/АБО НАДАННЯ ПОСЛУГ[/b][/align]
+
+[align:center]№ {{contract_number}} від {{contract_date}}[/align]
+
+[align:left]{{city}}[/align]
+
+[align:justify]Цей договір укладено між Постачальником та Покупцем на постачання товарів та/або надання послуг.[/align]
+
+[b]ПРЕДМЕТ ДОГОВОРУ:[/b] {{subject}}
+
+[b]ЗАГАЛЬНА СУМА:[/b] {{total_amount}} грн
+
+Договір діє до {{end_date}}.
+
+
+[align:center][b]РЕКВІЗИТИ СТОРІН[/b][/align]
+
+[b]ПОСТАЧАЛЬНИК:[/b]
+{{supplier_name}}
+Код ЄДРПОУ: {{supplier_edrpou}}
+Юридична адреса: {{supplier_address}}
+р/р (IBAN): {{supplier_iban}}
+Банк: {{supplier_bank}}
+МФО: {{supplier_mfo}}
+Email: {{supplier_email}}
+Телефон: {{supplier_phone}}
+В особі: {{supplier_representative}}
+Підпис: {{supplier_signature}}
+
+[b]ПОКУПЕЦЬ:[/b]
+{{buyer_name}}
+Код ЄДРПОУ: {{buyer_edrpou}}
+Юридична адреса: {{buyer_address}}
+р/р (IBAN): {{buyer_iban}}
+Банк: {{buyer_bank}}
+МФО: {{buyer_mfo}}
+Email: {{buyer_email}}
+Телефон: {{buyer_phone}}
+В особі: {{buyer_representative}}
+Підпис: {{buyer_signature}}`;
+      
+      setContractTemplate(defaultTemplate);
     }
+    
     if (savedSettings) {
       setTemplateSettings(JSON.parse(savedSettings));
     }
