@@ -465,7 +465,19 @@ async def generate_order_pdf(data: DocumentCreate):
         order_data_with_number = order_data.copy()
         order_data_with_number['order_number'] = order_number
         
-        sheets_service.create_order(order_data_with_number, drive_file_id)
+        # Check if this is a regeneration (order already exists in sheets)
+        # If order_number exists, update it; otherwise create new
+        existing_orders = sheets_service.get_documents("Замовлення")
+        order_exists = any(str(o.get('number', '')) == str(order_number) for o in existing_orders)
+        
+        if order_exists:
+            # Update existing order with new drive_file_id
+            sheets_service.update_order_drive_id(order_number, drive_file_id)
+            logging.info(f"Updated existing order {order_number} with new drive_file_id")
+        else:
+            # Create new order
+            sheets_service.create_order(order_data_with_number, drive_file_id)
+            logging.info(f"Created new order {order_number}")
         
         return {
             'success': True,
