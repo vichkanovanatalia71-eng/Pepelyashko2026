@@ -683,3 +683,66 @@ class ContractServiceV2:
         text = re.sub(r'\[u\](.*?)\[/u\]', r'<u>\1</u>', text, flags=re.DOTALL)
         
         return text
+    
+    def _generate_pdf_from_html(
+        self,
+        html_template: str,
+        context: Dict[str, Any],
+        filename: str,
+        filepath: Path,
+        buyer_data: Dict[str, str],
+        upload_to_drive: bool = True
+    ) -> Dict[str, Any]:
+        """
+        Generate PDF from HTML template using WeasyPrint
+        
+        Args:
+            html_template: HTML template string
+            context: Dictionary with all variables for replacement
+            filename: PDF filename
+            filepath: Full path to PDF file
+            buyer_data: Buyer data for Google Drive folder
+            upload_to_drive: Whether to upload to Google Drive
+        
+        Returns:
+            Dict with local_path, filename and optionally drive info
+        """
+        try:
+            # Replace all {{variable}} with actual values
+            parsed_html = self._parse_custom_template(html_template, context)
+            
+            # Generate PDF from HTML using WeasyPrint
+            HTML(string=parsed_html).write_pdf(str(filepath))
+            
+            logger.info(f"HTML template contract PDF generated: {filename}")
+            
+            result = {
+                'local_path': str(filepath),
+                'filename': filename,
+                'contract_number': context.get('contract_number', '')
+            }
+            
+            # Upload to Google Drive if requested
+            if upload_to_drive and self.drive_service:
+                try:
+                    drive_result = self.drive_service.upload_file(
+                        file_path=str(filepath),
+                        custom_name=filename,
+                        buyer_edrpou=buyer_data.get('ЄДРПОУ', ''),
+                        folder_name='Договори'
+                    )
+                    
+                    if drive_result['success']:
+                        result['drive_file_id'] = drive_result['file_id']
+                        result['drive_link'] = drive_result.get('web_view_link', '')
+                        result['download_link'] = drive_result.get('web_content_link', '')
+                        logger.info(f"Contract uploaded to Google Drive: {drive_result['file_id']}")
+                except Exception as drive_error:
+                    logger.error(f"Failed to upload to Google Drive: {str(drive_error)}")
+                    # Don't fail the whole operation if Drive upload fails
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"Error generating PDF from HTML: {str(e)}")
+            raise
