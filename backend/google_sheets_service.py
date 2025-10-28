@@ -142,11 +142,17 @@ class GoogleSheetsService:
     
     def get_all_counterparties(self) -> List[Dict[str, Any]]:
         """Get all counterparties."""
+        # Check cache first
+        cache_key = "all_counterparties"
+        cached = self.cache.get(cache_key)
+        if cached is not None:
+            return cached
+        
         try:
             worksheet = self.spreadsheet.worksheet("Контрагенти")
             records = worksheet.get_all_records()
             
-            return [{
+            result = [{
                 'edrpou': str(record['ЄДРПОУ']),
                 'representative_name': str(record["Ім'я представника"]),
                 'email': str(record['Email']),
@@ -156,6 +162,10 @@ class GoogleSheetsService:
                 'director_position': str(record.get('Посада керівника', '')),
                 'director_name': str(record.get('ПІБ керівника', ''))
             } for record in records]
+            
+            # Cache the result
+            self.cache.set(cache_key, result)
+            return result
         except Exception as e:
             logger.error(f"Error getting all counterparties: {str(e)}")
             return []
