@@ -4062,6 +4062,110 @@ function App() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        
+        {/* Act Template Editor Dialog */}
+        <Dialog open={showActTemplateEditor} onOpenChange={setShowActTemplateEditor}>
+          <DialogContent className="sm:max-w-[1200px] max-h-[90vh] bg-white">
+            <DialogHeader>
+              <DialogTitle className="text-gray-900 text-xl font-bold">
+                Редактор шаблону акту
+              </DialogTitle>
+              <DialogDescription className="text-gray-600">
+                Редагуйте HTML шаблон акту наданих послуг. Використовуйте змінні у форматі {`{{Назва_змінної}}`}
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4 py-4 overflow-y-auto" style={{maxHeight: 'calc(90vh - 200px)'}}>
+              
+              {/* Available variables */}
+              <Card className="bg-purple-50 border-purple-200">
+                <CardHeader className="py-3">
+                  <CardTitle className="text-sm font-semibold text-purple-900">Доступні змінні (клікніть для вставки):</CardTitle>
+                </CardHeader>
+                <CardContent className="py-2">
+                  <div className="grid grid-cols-2 gap-3 text-xs">
+                    <div>
+                      <p className="font-semibold text-purple-800 mb-2">Виконавець / Постачальник (Мої дані):</p>
+                      <button onClick={() => insertVariable('supplier_name', 'act-template-editor')} className="block text-left w-full px-2 py-1 hover:bg-purple-100 rounded text-gray-700">{`{{supplier_name}}`} - Назва</button>
+                      <button onClick={() => insertVariable('supplier_edrpou', 'act-template-editor')} className="block text-left w-full px-2 py-1 hover:bg-purple-100 rounded text-gray-700">{`{{supplier_edrpou}}`} - ЄДРПОУ</button>
+                      <button onClick={() => insertVariable('supplier_address', 'act-template-editor')} className="block text-left w-full px-2 py-1 hover:bg-purple-100 rounded text-gray-700">{`{{supplier_address}}`} - Адреса</button>
+                      <button onClick={() => insertVariable('supplier_iban', 'act-template-editor')} className="block text-left w-full px-2 py-1 hover:bg-purple-100 rounded text-gray-700">{`{{supplier_iban}}`} - IBAN</button>
+                      <button onClick={() => insertVariable('supplier_bank', 'act-template-editor')} className="block text-left w-full px-2 py-1 hover:bg-purple-100 rounded text-gray-700">{`{{supplier_bank}}`} - Банк</button>
+                      <button onClick={() => insertVariable('supplier_mfo', 'act-template-editor')} className="block text-left w-full px-2 py-1 hover:bg-purple-100 rounded text-gray-700">{`{{supplier_mfo}}`} - МФО</button>
+                      <button onClick={() => insertVariable('supplier_email', 'act-template-editor')} className="block text-left w-full px-2 py-1 hover:bg-purple-100 rounded text-gray-700">{`{{supplier_email}}`} - Email</button>
+                      <button onClick={() => insertVariable('supplier_phone', 'act-template-editor')} className="block text-left w-full px-2 py-1 hover:bg-purple-100 rounded text-gray-700">{`{{supplier_phone}}`} - Телефон</button>
+                      <button onClick={() => insertVariable('supplier_representative', 'act-template-editor')} className="block text-left w-full px-2 py-1 hover:bg-purple-100 rounded text-gray-700">{`{{supplier_representative}}`} - В особі</button>
+                      <button onClick={() => insertVariable('supplier_signature', 'act-template-editor')} className="block text-left w-full px-2 py-1 hover:bg-purple-100 rounded text-gray-700">{`{{supplier_signature}}`} - Підпис</button>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-purple-800 mb-2">Замовник / Покупець (Основні дані):</p>
+                      <button onClick={() => insertVariable('buyer_name', 'act-template-editor')} className="block text-left w-full px-2 py-1 hover:bg-purple-100 rounded text-gray-700">{`{{buyer_name}}`} - Назва</button>
+                      <button onClick={() => insertVariable('buyer_edrpou', 'act-template-editor')} className="block text-left w-full px-2 py-1 hover:bg-purple-100 rounded text-gray-700">{`{{buyer_edrpou}}`} - ЄДРПОУ</button>
+                      <button onClick={() => insertVariable('buyer_address', 'act-template-editor')} className="block text-left w-full px-2 py-1 hover:bg-purple-100 rounded text-gray-700">{`{{buyer_address}}`} - Адреса</button>
+                      <button onClick={() => insertVariable('buyer_iban', 'act-template-editor')} className="block text-left w-full px-2 py-1 hover:bg-purple-100 rounded text-gray-700">{`{{buyer_iban}}`} - IBAN</button>
+                      <button onClick={() => insertVariable('buyer_bank', 'act-template-editor')} className="block text-left w-full px-2 py-1 hover:bg-purple-100 rounded text-gray-700">{`{{buyer_bank}}`} - Банк</button>
+                      <button onClick={() => insertVariable('buyer_mfo', 'act-template-editor')} className="block text-left w-full px-2 py-1 hover:bg-purple-100 rounded text-gray-700">{`{{buyer_mfo}}`} - МФО</button>
+                      <button onClick={() => insertVariable('buyer_email', 'act-template-editor')} className="block text-left w-full px-2 py-1 hover:bg-purple-100 rounded text-gray-700">{`{{buyer_email}}`} - Email</button>
+                      <button onClick={() => insertVariable('buyer_phone', 'act-template-editor')} className="block text-left w-full px-2 py-1 hover:bg-purple-100 rounded text-gray-700">{`{{buyer_phone}}`} - Телефон</button>
+                      <button onClick={() => insertVariable('buyer_representative', 'act-template-editor')} className="block text-left w-full px-2 py-1 hover:bg-purple-100 rounded text-gray-700">{`{{buyer_representative}}`} - В особі</button>
+                      <button onClick={() => insertVariable('buyer_signature', 'act-template-editor')} className="block text-left w-full px-2 py-1 hover:bg-purple-100 rounded text-gray-700">{`{{buyer_signature}}`} - Підпис</button>
+                    </div>
+                    <div className="col-span-2">
+                      <p className="font-semibold text-purple-800 mb-2">Загальні:</p>
+                      <div className="grid grid-cols-4 gap-1">
+                        <button onClick={() => insertVariable('act_number', 'act-template-editor')} className="text-left px-2 py-1 hover:bg-purple-100 rounded text-gray-700">{`{{act_number}}`} - Номер акту</button>
+                        <button onClick={() => insertVariable('act_date', 'act-template-editor')} className="text-left px-2 py-1 hover:bg-purple-100 rounded text-gray-700">{`{{act_date}}`} - Дата</button>
+                        <button onClick={() => insertVariable('basis', 'act-template-editor')} className="text-left px-2 py-1 hover:bg-purple-100 rounded text-gray-700">{`{{basis}}`} - Підстава</button>
+                        <button onClick={() => insertVariable('items_rows', 'act-template-editor')} className="text-left px-2 py-1 hover:bg-purple-100 rounded text-gray-700">{`{{items_rows}}`} - Рядки послуг</button>
+                        <button onClick={() => insertVariable('total_net', 'act-template-editor')} className="text-left px-2 py-1 hover:bg-purple-100 rounded text-gray-700">{`{{total_net}}`} - Сума без ПДВ</button>
+                        <button onClick={() => insertVariable('total_vat', 'act-template-editor')} className="text-left px-2 py-1 hover:bg-purple-100 rounded text-gray-700">{`{{total_vat}}`} - ПДВ</button>
+                        <button onClick={() => insertVariable('total_gross', 'act-template-editor')} className="text-left px-2 py-1 hover:bg-purple-100 rounded text-gray-700">{`{{total_gross}}`} - Всього</button>
+                        <button onClick={() => insertVariable('vat_rate', 'act-template-editor')} className="text-left px-2 py-1 hover:bg-purple-100 rounded text-gray-700">{`{{vat_rate}}`} - Ставка ПДВ</button>
+                        <button onClick={() => insertVariable('total_amount_text', 'act-template-editor')} className="text-left px-2 py-1 hover:bg-purple-100 rounded text-gray-700">{`{{total_amount_text}}`} - Сума прописом</button>
+                        <button onClick={() => insertVariable('vat_note', 'act-template-editor')} className="text-left px-2 py-1 hover:bg-purple-100 rounded text-gray-700">{`{{vat_note}}`} - Примітка ПДВ</button>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              {/* Template editor */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-gray-700">HTML шаблон акту:</Label>
+                <textarea
+                  id="act-template-editor"
+                  value={actTemplate}
+                  onChange={(e) => setActTemplate(e.target.value)}
+                  placeholder="Введіть HTML шаблон акту з використанням змінних..."
+                  className="w-full h-96 p-4 border border-gray-300 rounded-lg font-mono text-sm"
+                />
+                <p className="text-xs text-gray-500">
+                  * Шаблон у форматі HTML з CSS стилями<br/>
+                  * Використовуйте змінні {'{{'} variable_name {'}}'} для підстановки даних<br/>
+                  * Після збереження шаблон застосовується для всіх нових актів<br/>
+                  * Клікніть на змінну вище для автоматичної вставки
+                </p>
+              </div>
+            </div>
+            
+            <DialogFooter className="bg-gray-50 -mx-6 -mb-6 px-6 py-4 rounded-b-lg">
+              <Button 
+                variant="outline" 
+                onClick={resetActTemplate}
+                className="border-red-300 text-red-600 hover:bg-red-50"
+              >
+                Скинути до стандартного
+              </Button>
+              
+              <Button 
+                onClick={saveActTemplate}
+                className="btn-primary"
+              >
+                Зберегти шаблон
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </main>
 
       <footer className="mt-16 py-6 border-t border-gray-200/50">
