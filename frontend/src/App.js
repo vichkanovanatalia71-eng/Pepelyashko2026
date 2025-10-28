@@ -295,6 +295,61 @@ function App() {
     }
   };
 
+  const applyFormatting = (formatType) => {
+    const textarea = document.querySelector('#template-editor');
+    if (!textarea) return;
+    
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = contractTemplate.substring(start, end);
+    
+    if (selectedText) {
+      let formattedText = '';
+      switch(formatType) {
+        case 'bold':
+          formattedText = `[b]${selectedText}[/b]`;
+          break;
+        case 'italic':
+          formattedText = `[i]${selectedText}[/i]`;
+          break;
+        case 'underline':
+          formattedText = `[u]${selectedText}[/u]`;
+          break;
+        default:
+          formattedText = selectedText;
+      }
+      
+      const newText = contractTemplate.substring(0, start) + formattedText + contractTemplate.substring(end);
+      setContractTemplate(newText);
+      
+      // Restore cursor position
+      setTimeout(() => {
+        textarea.selectionStart = start;
+        textarea.selectionEnd = start + formattedText.length;
+        textarea.focus();
+      }, 0);
+    } else {
+      toast.error('Виділіть текст для форматування');
+    }
+  };
+
+  const insertVariable = (variableName) => {
+    const textarea = document.querySelector('#template-editor');
+    if (!textarea) return;
+    
+    const start = textarea.selectionStart;
+    const variable = `{{${variableName}}}`;
+    const newText = contractTemplate.substring(0, start) + variable + contractTemplate.substring(start);
+    setContractTemplate(newText);
+    
+    // Restore cursor position after variable
+    setTimeout(() => {
+      textarea.selectionStart = start + variable.length;
+      textarea.selectionEnd = start + variable.length;
+      textarea.focus();
+    }, 0);
+  };
+
   useEffect(() => {
     fetchCounterparties();
     fetchAllDocuments();
