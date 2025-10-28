@@ -2389,10 +2389,10 @@ function App() {
                     </div>
                   )}
                 </div>
-                {documentPdfData.drive_view_link && (
+                {documentPdfData.drive_file_id && (
                   <div className="text-center">
                     <Button
-                      onClick={() => window.open(documentPdfData.drive_view_link, '_blank')}
+                      onClick={() => window.open(`https://drive.google.com/file/d/${documentPdfData.drive_file_id}/view`, '_blank')}
                       variant="outline"
                       size="sm"
                     >
