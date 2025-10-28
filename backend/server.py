@@ -423,6 +423,54 @@ async def get_orders():
         logging.error(f"Error getting orders: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
+@api_router.post("/orders/generate-pdf")
+async def generate_order_pdf(data: DocumentCreate):
+    """Generate PDF order and upload to Google Drive."""
+    if sheets_service is None or order_service is None:
+        raise HTTPException(status_code=503, detail="Services not available")
+    
+    try:
+        # Get buyer data from "Основні дані" sheet
+        buyer_data = sheets_service.get_counterparty_from_main_data(data.counterparty_edrpou)
+        if not buyer_data or not buyer_data.get('ЄДРПОУ'):
+            raise HTTPException(status_code=404, detail=f"Контрагента з ЄДРПОУ {data.counterparty_edrpou} не знайдено в 'Основні дані'")
+        
+        # Get supplier data from "Мої дані" sheet
+        supplier_data = sheets_service.get_supplier_data()
+        if not supplier_data:
+            raise HTTPException(status_code=404, detail="Дані постачальника не знайдено в 'Мої дані'")
+        
+        # Generate PDF and upload to Drive
+        order_data = data.model_dump()
+        result = order_service.generate_order_pdf(
+            order_data=order_data,
+            supplier_data=supplier_data,
+            buyer_data=buyer_data,
+            items=[item.model_dump() for item in data.items] if data.items else [],
+            upload_to_drive=True
+        )
+        
+        # Save order to Google Sheets with drive_file_id
+        drive_file_id = result.get('drive_file_id', '')
+        sheets_service.create_order(order_data, drive_file_id)
+        
+        return {
+            'success': True,
+            'message': 'Замовлення успішно згенеровано та завантажено на Google Drive',
+            'order_number': result['order_number'],
+            'pdf_path': result['pdf_path'],
+            'pdf_filename': result['filename'],
+            'drive_view_link': result.get('drive_view_link', ''),
+            'drive_download_link': result.get('drive_download_link', ''),
+            'drive_file_id': result.get('drive_file_id', '')
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error generating order PDF: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
 # Act endpoints
 @api_router.post("/acts", response_model=dict)
 async def create_act(data: DocumentCreate):
