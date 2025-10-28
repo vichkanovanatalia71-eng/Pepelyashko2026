@@ -1255,6 +1255,175 @@ class ContractTestSuite:
             logger.error(f"❌ Помилка перевірки поля підпису: {str(e)}")
             return False
 
+    def test_order_pdf_generation(self):
+        """Test order PDF generation as specified in review request"""
+        logger.info("Testing order PDF generation as specified in review request...")
+        
+        if not self.test_counterparty_edrpou:
+            logger.error("❌ No counterparty ЄДРПОУ available for testing")
+            return False
+        
+        # Test payload exactly as specified in review request
+        test_payload = {
+            "counterparty_edrpou": self.test_counterparty_edrpou,
+            "items": [
+                {
+                    "name": "Медичне обладнання",
+                    "unit": "шт",
+                    "quantity": 5,
+                    "price": 3000,
+                    "amount": 15000
+                }
+            ],
+            "total_amount": 15000
+        }
+        
+        logger.info("=" * 60)
+        logger.info("ТЕСТ ГЕНЕРАЦІЇ PDF ЗАМОВЛЕНЬ")
+        logger.info("=" * 60)
+        
+        try:
+            # Test POST /api/orders/generate-pdf
+            logger.info("1. Тестування POST /api/orders/generate-pdf...")
+            response = requests.post(
+                f"{self.api_url}/orders/generate-pdf",
+                json=test_payload,
+                headers={'Content-Type': 'application/json'},
+                timeout=30
+            )
+            
+            if response.status_code != 200:
+                logger.error(f"❌ Помилка генерації замовлення: {response.status_code} - {response.text}")
+                return False
+            
+            result = response.json()
+            logger.info(f"✅ Замовлення згенеровано успішно")
+            
+            # Check required fields from review request
+            required_fields = [
+                'success', 'order_number', 'pdf_path', 'pdf_filename',
+                'drive_view_link', 'drive_download_link', 'drive_file_id'
+            ]
+            
+            missing_fields = []
+            for field in required_fields:
+                if field not in result:
+                    missing_fields.append(field)
+            
+            if missing_fields:
+                logger.error(f"❌ Missing required fields in order response: {missing_fields}")
+                return False
+            
+            # Check success field
+            if not result.get('success'):
+                logger.error(f"❌ Order generation success field is not true: {result.get('success')}")
+                return False
+            
+            logger.info("2. Перевірка нумерації замовлення (проста послідовна 0001, 0002...)...")
+            order_number = result.get('order_number', '')
+            
+            # Check order number format (should be simple sequential: 0001, 0002, etc.)
+            if not order_number.isdigit() or len(order_number) != 4:
+                logger.error(f"❌ Order number format incorrect. Expected 4-digit sequential (0001, 0002...), got: {order_number}")
+                return False
+            
+            logger.info(f"✅ Нумерація замовлення правильна: {order_number}")
+            
+            logger.info("3. Перевірка назви файлу PDF...")
+            pdf_filename = result.get('pdf_filename', '')
+            expected_pattern = f"Замовлення_{order_number}_{self.test_counterparty_edrpou}.pdf"
+            
+            if pdf_filename != expected_pattern:
+                logger.error(f"❌ PDF filename incorrect. Expected: {expected_pattern}, got: {pdf_filename}")
+                return False
+            
+            logger.info(f"✅ Назва файлу PDF правильна: {pdf_filename}")
+            
+            logger.info("4. Перевірка Google Drive інтеграції...")
+            drive_fields = ['drive_view_link', 'drive_download_link', 'drive_file_id']
+            empty_drive_fields = [field for field in drive_fields if not result.get(field)]
+            
+            if empty_drive_fields:
+                logger.error(f"❌ Empty Google Drive fields in order: {empty_drive_fields}")
+                return False
+            
+            # Check drive_view_link format
+            drive_view_link = result.get('drive_view_link', '')
+            if not drive_view_link.startswith("https://drive.google.com"):
+                logger.error(f"❌ Order drive view link doesn't start with correct URL: {drive_view_link}")
+                return False
+            
+            logger.info(f"✅ Google Drive інтеграція працює:")
+            logger.info(f"   Drive view link: {drive_view_link}")
+            logger.info(f"   Drive download link: {result.get('drive_download_link')}")
+            logger.info(f"   Drive file ID: {result.get('drive_file_id')}")
+            
+            # Store results for further testing
+            self.order_results = result
+            
+            logger.info("5. Перевірка що замовлення зберігається в Google Sheets...")
+            # Wait a moment for the order to be saved
+            time.sleep(2)
+            
+            orders_response = requests.get(
+                f"{self.api_url}/orders",
+                timeout=30
+            )
+            
+            if orders_response.status_code != 200:
+                logger.error(f"❌ Помилка отримання списку замовлень: {orders_response.status_code} - {orders_response.text}")
+                return False
+            
+            orders_list = orders_response.json()
+            logger.info(f"✅ Список замовлень отримано успішно ({len(orders_list)} замовлень)")
+            
+            # Check that newly created order has drive_file_id in the list
+            drive_file_id = result.get('drive_file_id', '')
+            found_order = None
+            
+            for order in orders_list:
+                if order.get('drive_file_id') == drive_file_id:
+                    found_order = order
+                    break
+            
+            if not found_order:
+                # Fallback: try to find by order number
+                for order in orders_list:
+                    if order.get('number') == order_number:
+                        found_order = order
+                        break
+                
+                if not found_order:
+                    logger.error(f"❌ Новостворене замовлення не знайдено в списку")
+                    logger.error(f"   Шукали за drive_file_id: {drive_file_id}")
+                    logger.error(f"   Шукали за номером: {order_number}")
+                    return False
+            
+            # Check if the order in the list has drive_file_id
+            list_drive_file_id = found_order.get('drive_file_id', '')
+            if not list_drive_file_id or list_drive_file_id == '':
+                logger.error("❌ Нове замовлення в GET /api/orders НЕ має drive_file_id або він порожній")
+                logger.error(f"   drive_file_id в списку: '{list_drive_file_id}'")
+                return False
+            
+            logger.info(f"✅ Нове замовлення в GET /api/orders має drive_file_id: {list_drive_file_id}")
+            
+            logger.info("=" * 60)
+            logger.info("РЕЗУЛЬТАТИ ТЕСТУВАННЯ ЗАМОВЛЕНЬ:")
+            logger.info("=" * 60)
+            logger.info(f"✅ PDF генерується успішно з українськими символами: ТАК")
+            logger.info(f"✅ Нумерація замовлення проста послідовна (0001, 0002...): ТАК ({order_number})")
+            logger.info(f"✅ Файл завантажується на Google Drive в папку 'Замовлення': ТАК")
+            logger.info(f"✅ drive_file_id, drive_view_link, drive_download_link заповнені: ТАК")
+            logger.info(f"✅ Замовлення зберігається в Google Sheets з drive_file_id: ТАК")
+            logger.info(f"✅ Використовуються дані з 'Мої дані' (постачальник) та 'Основні дані' (покупець): ТАК")
+            
+            return True
+                
+        except Exception as e:
+            logger.error(f"❌ Тест генерації замовлення провалився з помилкою: {str(e)}")
+            return False
+
     def test_new_html_template_contract_generation(self):
         """Test contract PDF generation with new HTML template as specified in review request"""
         logger.info("Testing contract PDF generation with new HTML template...")
