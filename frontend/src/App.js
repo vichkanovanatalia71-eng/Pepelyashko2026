@@ -2938,6 +2938,16 @@ function App() {
                   'Надіслати на email'
                 )}
               </Button>
+              
+              <Button 
+                onClick={() => {
+                  setShowDocumentPreview(false);
+                  setDocumentPdfData(null);
+                }}
+                variant="outline"
+              >
+                Закрити
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
