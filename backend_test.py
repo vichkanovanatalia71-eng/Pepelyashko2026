@@ -1322,11 +1322,11 @@ class ContractTestSuite:
         # Group results by category
         critical_tests = [
             'health_check', 'specific_invoice_drive_file_id', 'get_counterparties', 'invoice_pdf_generation', 
-            'act_pdf_generation', 'waybill_pdf_generation'
+            'act_pdf_generation', 'waybill_pdf_generation', 'custom_template_contract'
         ]
         
         important_tests = [
-            'drive_service_init', 'ukrainian_characters', 'vat_exemption', 'drive_links'
+            'drive_service_init', 'ukrainian_characters', 'vat_exemption', 'drive_links', 'supplier_signature_field'
         ]
         
         legacy_tests = [
