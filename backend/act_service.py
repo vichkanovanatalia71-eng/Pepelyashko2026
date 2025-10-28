@@ -190,14 +190,13 @@ class ActService:
                 'date': act_date,
                 'counterparty_edrpou': counterparty_edrpou,
                 'counterparty_name': buyer_data.get('Назва', ''),
-                'items': json.dumps(all_items, ensure_ascii=False),
+                'items': all_items,  # Don't stringify here, _create_document will do it
                 'total_amount': totals['total_gross'],
-                'drive_file_id': drive_file_id,
-                'based_on_orders': ','.join(order_numbers),
+                'based_on_order': ','.join(order_numbers),  # Join multiple orders with comma
                 'based_on_contract': contract_number or ''
             }
             
-            self.sheets_service.create_act(act_record)
+            self.sheets_service.create_act(act_record, drive_file_id)
             
             return {
                 'success': True,
