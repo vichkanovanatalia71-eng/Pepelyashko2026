@@ -316,13 +316,18 @@ function App() {
   
   const loadContractTemplate = () => {
     const savedTemplate = localStorage.getItem('contractTemplate');
+    const savedSettings = localStorage.getItem('contractTemplateSettings');
     if (savedTemplate) {
       setContractTemplate(savedTemplate);
+    }
+    if (savedSettings) {
+      setTemplateSettings(JSON.parse(savedSettings));
     }
   };
   
   const saveContractTemplate = () => {
     localStorage.setItem('contractTemplate', contractTemplate);
+    localStorage.setItem('contractTemplateSettings', JSON.stringify(templateSettings));
     toast.success('Шаблон договору збережено!');
     setShowTemplateEditor(false);
   };
@@ -330,7 +335,15 @@ function App() {
   const resetContractTemplate = () => {
     if (window.confirm('Ви впевнені що хочете скинути шаблон до стандартного?')) {
       setContractTemplate('');
+      setTemplateSettings({
+        fontSize: 12,
+        fontFamily: 'Times New Roman',
+        lineSpacing: 1.5,
+        alignment: 'justify',
+        indent: 0
+      });
       localStorage.removeItem('contractTemplate');
+      localStorage.removeItem('contractTemplateSettings');
       toast.success('Шаблон скинуто до стандартного');
     }
   };
