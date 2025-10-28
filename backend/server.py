@@ -674,6 +674,8 @@ async def generate_contract_pdf(data: ContractGenerateRequest):
         raise HTTPException(status_code=503, detail="Google Sheets service not available")
     
     try:
+        logging.info(f"Received contract request: counterparty_edrpou={data.counterparty_edrpou}, total_amount={data.total_amount}, total_amount_text={data.total_amount_text}, vat_note={data.vat_note}")
+        
         # Get buyer data from "Основні дані" sheet
         buyer_data = sheets_service.get_counterparty_from_main_data(data.counterparty_edrpou)
         if not buyer_data or not buyer_data.get('ЄДРПОУ'):
@@ -691,6 +693,8 @@ async def generate_contract_pdf(data: ContractGenerateRequest):
             'total_amount_text': data.total_amount_text if data.total_amount_text else '',
             'vat_note': data.vat_note if data.vat_note else ''
         }
+        
+        logging.info(f"Contract data prepared: {contract_data}")
         
         # Generate PDF using new service
         result = contract_service_v2.generate_contract_pdf(
