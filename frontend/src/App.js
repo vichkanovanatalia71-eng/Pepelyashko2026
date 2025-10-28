@@ -272,6 +272,10 @@ function App() {
     indent: 0
   });
   
+  // Order template
+  const [orderTemplate, setOrderTemplate] = useState('');
+  const [showOrderTemplateEditor, setShowOrderTemplateEditor] = useState(false);
+  
   const insertAlignment = (alignType) => {
     const textarea = document.querySelector('#template-editor');
     if (!textarea) return;
