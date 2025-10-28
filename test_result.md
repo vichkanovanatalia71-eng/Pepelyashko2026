@@ -470,6 +470,8 @@ test_plan:
     - "Waybill PDF Generation with Drive Upload"
     - "Custom Template Contract PDF Generation"
     - "New HTML Template Contract PDF Generation"
+    - "Order PDF Generation with Drive Upload"
+    - "Documents by Order Endpoint Implementation"
 
 agent_communication:
   - agent: "main"
