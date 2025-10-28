@@ -49,6 +49,7 @@ class ContractTestSuite:
         self.invoice_results = {}
         self.act_results = {}
         self.waybill_results = {}
+        self.order_results = {}
         
     def test_health_check(self):
         """Test if the backend is running and healthy"""
