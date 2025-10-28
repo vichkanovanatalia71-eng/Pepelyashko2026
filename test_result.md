@@ -374,6 +374,8 @@ test_plan:
     - "Invoice PDF Generation with Drive Upload"
     - "Act PDF Generation with Drive Upload"
     - "Waybill PDF Generation with Drive Upload"
+    - "Custom Template Contract PDF Generation"
+    - "New HTML Template Contract PDF Generation"
 
 agent_communication:
   - agent: "main"
