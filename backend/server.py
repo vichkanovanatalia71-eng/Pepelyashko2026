@@ -686,36 +686,31 @@ async def get_contracts():
         raise HTTPException(status_code=503, detail="Google Sheets service not available")
     
     try:
-        worksheet = sheets_service.spreadsheet.worksheet("Договори")
-        records = worksheet.get_all_records()
+        # Use the same method as get_documents to ensure consistency
+        contracts = sheets_service.get_documents("Договори")
         
         result = []
-        for record in records:
-            # Skip header rows or invalid rows
-            try:
-                amount = float(record['Сума договору']) if record['Сума договору'] else 0.0
-            except (ValueError, TypeError):
-                continue
-                
-            contract = {
-                'number': str(record['Номер']),
-                'date': str(record['Дата']),
-                'counterparty_edrpou': str(record['ЄДРПОУ контрагента']),
-                'counterparty_name': str(record["Ім'я контрагента"]),
-                'contract_type': str(record.get('Тип договору', '')),
-                'subject': str(record['Предмет договору']),
-                'amount': amount
+        for contract in contracts:
+            # Convert to the expected format
+            contract_data = {
+                'number': contract.get('number', ''),
+                'date': contract.get('date', ''),
+                'counterparty_edrpou': contract.get('counterparty_edrpou', ''),
+                'counterparty_name': contract.get('counterparty_name', ''),
+                'contract_type': '',  # This field is not in get_documents output
+                'subject': '',  # This field is not in get_documents output  
+                'amount': contract.get('total_amount', 0.0)
             }
             
             # Add drive_file_id if available
-            if 'Drive File ID' in record:
-                contract['drive_file_id'] = str(record.get('Drive File ID', ''))
+            if 'drive_file_id' in contract:
+                contract_data['drive_file_id'] = contract.get('drive_file_id', '')
             
             # Add based_on_order if available
-            if 'На основі замовлення' in record:
-                contract['based_on_order'] = str(record.get('На основі замовлення', ''))
+            if 'based_on_order' in contract:
+                contract_data['based_on_order'] = contract.get('based_on_order', '')
             
-            result.append(contract)
+            result.append(contract_data)
         
         return result
     except Exception as e:
