@@ -361,7 +361,6 @@ function App() {
         fontSize: 12,
         fontFamily: 'Times New Roman',
         lineSpacing: 1.5,
-        alignment: 'justify',
         indent: 0
       });
       localStorage.removeItem('contractTemplate');
