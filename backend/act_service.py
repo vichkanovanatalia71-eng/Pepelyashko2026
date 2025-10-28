@@ -74,7 +74,7 @@ class ActService:
                 raise ValueError(f"Контрагента з ЄДРПОУ {counterparty_edrpou} не знайдено в 'Основні дані'")
             
             # 3. Fetch all orders from Google Sheets
-            all_orders = self.sheets_service.get_orders()
+            all_orders = self.sheets_service.get_documents("Замовлення")
             
             # 4. Filter selected orders
             selected_orders = [o for o in all_orders if o['number'] in order_numbers]
