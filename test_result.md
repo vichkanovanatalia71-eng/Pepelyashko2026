@@ -355,17 +355,20 @@ frontend:
   - task: "Document List UI Improvements"
     implemented: true
     working: "needs_testing"
-    file: "/app/frontend/src/App.js"
+    file: "/app/frontend/src/App.js, /app/backend/contract_service_v2.py"
     stuck_count: 0
     priority: "high"
     needs_retesting: true
     status_history:
       - working: "needs_testing"
         agent: "main"
-        comment: "Реалізовано три покращення інтерфейсу списку документів контрагента: 1) Додано кнопку 'Оновити' до CardHeader секції 'Документи контрагента' для ручного оновлення списку, 2) Додано відображення drive_file_id для кожного документа (рахунки, акти, накладні, договори), 3) Кнопка 'Переглянути' тепер завжди видима, але disabled якщо drive_file_id відсутній, з повідомленням про помилку для користувача. Створено функцію refreshCounterpartyDocuments() для оновлення документів. Frontend скомпілювався успішно без помилок."
+        comment: "Реалізовано три покращення інтерфейсу списку документів контрагента: 1) Додано кнопку 'Оновити' до CardHeader секції 'Документи контрагента' для ручного оновлення списку, 2) Додано відображення drive_file_id для кожного документа (рахунки, акти, накладні, договори), 3) Кнопка 'Переглянути' тепер завжди видима, але disabled якщо drive_file_id відсутній, з відповідним повідомленням користувачу. Створено функцію refreshCounterpartyDocuments() для оновлення документів. Frontend скомпілювався успішно без помилок."
       - working: "needs_testing"
         agent: "main"
         comment: "Додано кнопку 'Оновити перегляд' в модальне вікно попереднього перегляду договору та документів. Тепер замість простого тексту 'PDF генерується... Оновіть сторінку для перегляду' користувач бачить: анімований спінер (Loader2), текст 'PDF генерується...', та кнопку 'Оновити перегляд' з іконкою RefreshCw. Кнопка оновлює всю сторінку (window.location.reload()), що дозволяє завантажити згенерований PDF. Покращено UX для обох модальних вікон (договори та інші документи). Frontend успішно скомпільовано."
+      - working: "needs_testing"
+        agent: "main"
+        comment: "КРИТИЧНЕ ВИПРАВЛЕННЯ: Виправлено помилку завантаження договорів на Google Drive. Помилка: 'GoogleDriveService.upload_file() got an unexpected keyword argument buyer_edrpou'. Видалено непотрібний параметр buyer_edrpou з виклику upload_file() в contract_service_v2.py (рядок 732). Змінено логіку кнопки 'Оновити перегляд' - тепер замість window.location.reload() вона закриває модальне вікно, оновлює список документів (fetchAllDocuments/refreshCounterpartyDocuments) і відкриває модальне вікно знову через 500ms. Це дозволяє завантажити щойно згенерований PDF без перезавантаження всієї сторінки. Backend та frontend успішно перезапущені."
 
 metadata:
   created_by: "main_agent"
