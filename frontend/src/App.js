@@ -2766,6 +2766,137 @@ function App() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Order Template Editor Dialog */}
+        <Dialog open={showOrderTemplateEditor} onOpenChange={setShowOrderTemplateEditor}>
+          <DialogContent className="sm:max-w-[1200px] max-h-[90vh] bg-white">
+            <DialogHeader>
+              <DialogTitle className="text-gray-900 text-xl font-bold">
+                Редактор шаблону замовлення
+              </DialogTitle>
+              <DialogDescription className="text-gray-600">
+                Редагуйте HTML шаблон замовлення. Використовуйте змінні у форматі {`{{Назва_змінної}}`}
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4 py-4 overflow-y-auto" style={{maxHeight: 'calc(90vh - 200px)'}}>
+              
+              {/* Available variables */}
+              <Card className="bg-blue-50 border-blue-200">
+                <CardHeader className="py-3">
+                  <CardTitle className="text-sm font-semibold text-blue-900">Доступні змінні для замовлення:</CardTitle>
+                </CardHeader>
+                <CardContent className="py-2">
+                  <div className="grid grid-cols-3 gap-3 text-xs">
+                    <div>
+                      <p className="font-semibold text-blue-800 mb-2">Постачальник:</p>
+                      <button onClick={() => {
+                        const textarea = document.querySelector('#order-template-editor');
+                        if (textarea) {
+                          const start = textarea.selectionStart;
+                          const end = textarea.selectionEnd;
+                          const text = orderTemplate;
+                          const variable = '{{supplier_name}}';
+                          setOrderTemplate(text.substring(0, start) + variable + text.substring(end));
+                          setTimeout(() => textarea.focus(), 10);
+                        }
+                      }} className="block text-left w-full px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{supplier_name}}`}</button>
+                      <button onClick={() => {
+                        const textarea = document.querySelector('#order-template-editor');
+                        if (textarea) {
+                          const start = textarea.selectionStart;
+                          const text = orderTemplate;
+                          setOrderTemplate(text.substring(0, start) + '{{supplier_edrpou}}' + text.substring(start));
+                        }
+                      }} className="block text-left w-full px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{supplier_edrpou}}`}</button>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-blue-800 mb-2">Покупець:</p>
+                      <button onClick={() => {
+                        const textarea = document.querySelector('#order-template-editor');
+                        if (textarea) {
+                          const start = textarea.selectionStart;
+                          const text = orderTemplate;
+                          setOrderTemplate(text.substring(0, start) + '{{buyer_name}}' + text.substring(start));
+                        }
+                      }} className="block text-left w-full px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{buyer_name}}`}</button>
+                      <button onClick={() => {
+                        const textarea = document.querySelector('#order-template-editor');
+                        if (textarea) {
+                          const start = textarea.selectionStart;
+                          const text = orderTemplate;
+                          setOrderTemplate(text.substring(0, start) + '{{buyer_edrpou}}' + text.substring(start));
+                        }
+                      }} className="block text-left w-full px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{buyer_edrpou}}`}</button>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-blue-800 mb-2">Загальні:</p>
+                      <button onClick={() => {
+                        const textarea = document.querySelector('#order-template-editor');
+                        if (textarea) {
+                          const start = textarea.selectionStart;
+                          const text = orderTemplate;
+                          setOrderTemplate(text.substring(0, start) + '{{order_number}}' + text.substring(start));
+                        }
+                      }} className="block text-left w-full px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{order_number}}`}</button>
+                      <button onClick={() => {
+                        const textarea = document.querySelector('#order-template-editor');
+                        if (textarea) {
+                          const start = textarea.selectionStart;
+                          const text = orderTemplate;
+                          setOrderTemplate(text.substring(0, start) + '{{order_date}}' + text.substring(start));
+                        }
+                      }} className="block text-left w-full px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{order_date}}`}</button>
+                      <button onClick={() => {
+                        const textarea = document.querySelector('#order-template-editor');
+                        if (textarea) {
+                          const start = textarea.selectionStart;
+                          const text = orderTemplate;
+                          setOrderTemplate(text.substring(0, start) + '{{total_gross}}' + text.substring(start));
+                        }
+                      }} className="block text-left w-full px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{total_gross}}`}</button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              {/* Template editor */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-gray-700">HTML шаблон замовлення:</Label>
+                <textarea
+                  id="order-template-editor"
+                  value={orderTemplate}
+                  onChange={(e) => setOrderTemplate(e.target.value)}
+                  placeholder="Введіть HTML шаблон замовлення з використанням змінних..."
+                  className="w-full h-96 p-4 border border-gray-300 rounded-lg font-mono text-sm"
+                />
+                <p className="text-xs text-gray-500">
+                  * Шаблон у форматі HTML з CSS стилями<br/>
+                  * Використовуйте змінні {'{{'} variable_name {'}}'} для підстановки даних<br/>
+                  * Після збереження шаблон застосовується для всіх нових замовлень<br/>
+                  * Клікніть на змінну вище для автоматичної вставки
+                </p>
+              </div>
+            </div>
+            
+            <DialogFooter className="bg-gray-50 -mx-6 -mb-6 px-6 py-4 rounded-b-lg">
+              <Button 
+                variant="outline" 
+                onClick={resetOrderTemplate}
+                className="border-red-300 text-red-600 hover:bg-red-50"
+              >
+                Скинути до стандартного
+              </Button>
+              
+              <Button 
+                onClick={saveOrderTemplate}
+                className="btn-primary"
+              >
+                Зберегти шаблон
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </main>
 
       <footer className="mt-16 py-6 border-t border-gray-200/50">
