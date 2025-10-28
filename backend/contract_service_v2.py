@@ -728,9 +728,8 @@ class ContractServiceV2:
                 try:
                     drive_result = self.drive_service.upload_file(
                         file_path=str(filepath),
-                        custom_name=filename,
-                        buyer_edrpou=buyer_data.get('ЄДРПОУ', ''),
-                        folder_name='Договори'
+                        folder_name='Договори',
+                        custom_name=filename
                     )
                     
                     if drive_result['success']:
