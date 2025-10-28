@@ -732,10 +732,10 @@ class ContractServiceV2:
                         custom_name=filename
                     )
                     
-                    if drive_result['success']:
+                    if drive_result and drive_result.get('file_id'):
                         result['drive_file_id'] = drive_result['file_id']
-                        result['drive_link'] = drive_result.get('web_view_link', '')
-                        result['download_link'] = drive_result.get('web_content_link', '')
+                        result['drive_view_link'] = drive_result.get('web_view_link', '')
+                        result['drive_download_link'] = drive_result.get('web_content_link', '')
                         logger.info(f"Contract uploaded to Google Drive: {drive_result['file_id']}")
                 except Exception as drive_error:
                     logger.error(f"Failed to upload to Google Drive: {str(drive_error)}")
