@@ -1938,8 +1938,23 @@ function App() {
             {/* List of all contracts */}
             <Card className="glass-card mt-6">
               <CardHeader>
-                <CardTitle className="text-xl">Всі договори ({allContracts.length})</CardTitle>
-                <CardDescription>Останні створені договори</CardDescription>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle className="text-xl">Всі договори ({allContracts.length})</CardTitle>
+                    <CardDescription>Останні створені договори</CardDescription>
+                  </div>
+                  <Button
+                    onClick={() => {
+                      fetchAllDocuments();
+                      toast.success('Список оновлено');
+                    }}
+                    variant="outline"
+                    size="sm"
+                  >
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Оновити
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 {allContracts.length > 0 ? (
