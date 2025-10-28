@@ -869,7 +869,14 @@ function App() {
     try {
       if (['orders', 'invoices', 'acts', 'waybills'].includes(endpoint)) {
         // Generate PDF for orders, invoices, acts, and waybills
-        const response = await axios.post(`${API}/${endpoint}/generate-pdf`, documentForm);
+        const payload = { ...documentForm };
+        
+        // Add custom template for orders if available
+        if (endpoint === 'orders' && orderTemplate && orderTemplate.trim() !== '') {
+          payload.custom_template = orderTemplate;
+        }
+        
+        const response = await axios.post(`${API}/${endpoint}/generate-pdf`, payload);
         
         if (response.data.success) {
           // Set current document type for proper labeling
