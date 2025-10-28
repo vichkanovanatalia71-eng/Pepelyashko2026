@@ -2438,22 +2438,6 @@ function App() {
             
             <DialogFooter className="bg-gray-50 -mx-6 -mb-6 px-6 py-4 rounded-b-lg">
               <Button 
-                variant="outline" 
-                onClick={() => {
-                  const downloadLink = documentPdfData?.drive_download_link;
-                  if (downloadLink) {
-                    window.open(downloadLink, '_blank');
-                  } else {
-                    toast.error('Посилання для завантаження недоступне');
-                  }
-                }}
-                className="border-gray-300 text-gray-700 hover:bg-gray-100"
-              >
-                <FileText className="w-4 h-4 mr-2" />
-                Завантажити PDF
-              </Button>
-              
-              <Button 
                 onClick={() => {
                   toast.info('Функція відправки email для документів буде додана незабаром');
                   setShowDocumentPreview(false);
