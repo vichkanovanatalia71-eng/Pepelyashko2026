@@ -1450,6 +1450,15 @@ function App() {
                     setLoading(false);
                     return;
                   }
+                  
+                  // Check if template exists (if user wants to use custom template)
+                  if (!contractTemplate || contractTemplate.trim() === '') {
+                    toast.error('Спочатку створіть шаблон договору через кнопку "Редагувати шаблон договору"', {
+                      duration: 5000
+                    });
+                    setLoading(false);
+                    return;
+                  }
 
                   try {
                     // Generate PDF contract
