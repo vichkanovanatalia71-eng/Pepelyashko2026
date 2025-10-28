@@ -440,39 +440,13 @@ async def get_order_related_documents(order_number: str):
         waybills = sheets_service.get_documents("Видаткові накладні")
         contracts = sheets_service.get_documents("Договори")
         
-        # Filter documents that reference this order number (check in subject or notes)
+        # Filter documents that were created from this specific order
         related = {
-            'invoices': [],
-            'acts': [],
-            'waybills': [],
-            'contracts': []
+            'invoices': [doc for doc in invoices if doc.get('based_on_order') == order_number],
+            'acts': [doc for doc in acts if doc.get('based_on_order') == order_number],
+            'waybills': [doc for doc in waybills if doc.get('based_on_order') == order_number],
+            'contracts': [doc for doc in contracts if doc.get('based_on_order') == order_number]
         }
-        
-        # Get the order to find its counterparty
-        orders = sheets_service.get_documents("Замовлення")
-        order = next((o for o in orders if str(o.get('number', '')) == str(order_number)), None)
-        
-        if order:
-            counterparty_edrpou = order.get('counterparty_edrpou', '')
-            
-            # Find documents for the same counterparty created around the same time
-            for inv in invoices:
-                if inv.get('counterparty_edrpou') == counterparty_edrpou:
-                    related['invoices'].append(inv)
-            
-            for act in acts:
-                if act.get('counterparty_edrpou') == counterparty_edrpou:
-                    related['acts'].append(act)
-            
-            for wb in waybills:
-                if wb.get('counterparty_edrpou') == counterparty_edrpou:
-                    related['waybills'].append(wb)
-            
-            for contract in contracts:
-                # Check if contract subject mentions this order number
-                subject = contract.get('subject', '')
-                if order_number in subject or contract.get('counterparty_edrpou') == counterparty_edrpou:
-                    related['contracts'].append(contract)
         
         return related
         
