@@ -265,6 +265,13 @@ function App() {
   // Contract template
   const [contractTemplate, setContractTemplate] = useState('');
   const [showTemplateEditor, setShowTemplateEditor] = useState(false);
+  const [templateSettings, setTemplateSettings] = useState({
+    fontSize: 12,
+    fontFamily: 'Times New Roman',
+    lineSpacing: 1.5,
+    alignment: 'justify',
+    indent: 0
+  });
 
   useEffect(() => {
     fetchCounterparties();
