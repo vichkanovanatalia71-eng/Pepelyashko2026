@@ -406,6 +406,12 @@ class GoogleSheetsService:
     
     def get_documents(self, sheet_name: str) -> List[Dict[str, Any]]:
         """Get all documents from a specific sheet."""
+        # Check cache first
+        cache_key = f"documents_{sheet_name}"
+        cached = self.cache.get(cache_key)
+        if cached is not None:
+            return cached
+        
         try:
             worksheet = self.spreadsheet.worksheet(sheet_name)
             records = worksheet.get_all_records()
@@ -448,6 +454,8 @@ class GoogleSheetsService:
                 
                 result.append(doc)
             
+            # Cache the result
+            self.cache.set(cache_key, result)
             return result
         except Exception as e:
             logger.error(f"Error getting documents from {sheet_name}: {str(e)}")
