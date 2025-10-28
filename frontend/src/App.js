@@ -2354,30 +2354,31 @@ function App() {
             <div className="space-y-4 py-4 overflow-y-auto" style={{maxHeight: 'calc(95vh - 200px)'}}>
               {/* PDF Preview */}
               {documentPdfData && (
-                <div className="border-2 border-gray-300 rounded-lg overflow-hidden bg-gray-100" style={{height: '500px'}}>
-                  {documentPdfData.drive_view_link ? (
-                    <iframe
-                      src={`https://drive.google.com/viewerng/viewer?embedded=true&url=https://drive.google.com/uc?id=${documentPdfData.drive_file_id}&export=download`}
-                      style={{width: '100%', height: '100%', border: 'none'}}
-                      title="Попередній перегляд документу"
-                      allow="autoplay"
-                    />
-                  ) : (
-                    <div className="flex flex-col items-center justify-center h-full text-gray-500 space-y-4">
-                      <Loader2 className="w-12 h-12 animate-spin text-blue-500" />
-                      <p className="text-lg">PDF генерується...</p>
-                      <p className="text-sm text-gray-500">Зачекайте кілька секунд, або оновіть перегляд</p>
-                      <Button
-                        onClick={() => {
-                          setShowDocumentPreview(false);
-                          if (selectedCounterparty?.edrpou) {
-                            refreshCounterpartyDocuments();
-                          }
-                          toast.info('Оновлюємо список документів...');
-                          setTimeout(() => {
-                            setShowDocumentPreview(true);
-                          }, 500);
-                        }}
+                <div className="space-y-2">
+                  <div className="border-2 border-gray-300 rounded-lg overflow-hidden bg-gray-100" style={{height: '500px'}}>
+                    {documentPdfData.drive_view_link ? (
+                      <iframe
+                        src={`https://drive.google.com/viewerng/viewer?embedded=true&url=https://drive.google.com/uc?id=${documentPdfData.drive_file_id}&export=download`}
+                        style={{width: '100%', height: '100%', border: 'none'}}
+                        title="Попередній перегляд документу"
+                        allow="autoplay"
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center justify-center h-full text-gray-500 space-y-4">
+                        <Loader2 className="w-12 h-12 animate-spin text-blue-500" />
+                        <p className="text-lg">PDF генерується...</p>
+                        <p className="text-sm text-gray-500">Зачекайте кілька секунд, або оновіть перегляд</p>
+                        <Button
+                          onClick={() => {
+                            setShowDocumentPreview(false);
+                            if (selectedCounterparty?.edrpou) {
+                              refreshCounterpartyDocuments();
+                            }
+                            toast.info('Оновлюємо список документів...');
+                            setTimeout(() => {
+                              setShowDocumentPreview(true);
+                            }, 500);
+                          }}
                         variant="outline"
                         size="sm"
                         className="mt-4"
