@@ -63,8 +63,9 @@ class ContractServiceV2:
         return f"31 грудня {today.year}"
     
     def format_currency(self, amount: float) -> str:
-        """Format currency amount"""
-        return f"{amount:,.2f}".replace(",", " ")
+        """Format currency amount with 'грн' suffix"""
+        formatted = f"{amount:,.2f}".replace(",", " ")
+        return f"{formatted} грн"
     
     def generate_contract_pdf(
         self, 
