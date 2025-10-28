@@ -2426,50 +2426,65 @@ function App() {
               {/* Available variables */}
               <Card className="bg-blue-50 border-blue-200">
                 <CardHeader className="py-3">
-                  <CardTitle className="text-sm font-semibold text-blue-900">Доступні змінні:</CardTitle>
+                  <CardTitle className="text-sm font-semibold text-blue-900">Доступні змінні (клікніть для вставки):</CardTitle>
                 </CardHeader>
                 <CardContent className="py-2">
-                  <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="grid grid-cols-2 gap-3 text-xs">
                     <div>
-                      <p className="font-semibold text-blue-800 mb-1">Постачальник (Мої дані):</p>
-                      <p className="text-gray-700">{`{{supplier_name}}`} - Назва</p>
-                      <p className="text-gray-700">{`{{supplier_edrpou}}`} - ЄДРПОУ</p>
-                      <p className="text-gray-700">{`{{supplier_address}}`} - Адреса</p>
-                      <p className="text-gray-700">{`{{supplier_iban}}`} - IBAN</p>
-                      <p className="text-gray-700">{`{{supplier_bank}}`} - Банк</p>
-                      <p className="text-gray-700">{`{{supplier_mfo}}`} - МФО</p>
-                      <p className="text-gray-700">{`{{supplier_email}}`} - Email</p>
-                      <p className="text-gray-700">{`{{supplier_phone}}`} - Телефон</p>
-                      <p className="text-gray-700">{`{{supplier_representative}}`} - В особі</p>
+                      <p className="font-semibold text-blue-800 mb-2">Постачальник (Мої дані):</p>
+                      <button onClick={() => insertVariable('supplier_name')} className="block text-left w-full px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{supplier_name}}`} - Назва</button>
+                      <button onClick={() => insertVariable('supplier_edrpou')} className="block text-left w-full px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{supplier_edrpou}}`} - ЄДРПОУ</button>
+                      <button onClick={() => insertVariable('supplier_address')} className="block text-left w-full px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{supplier_address}}`} - Адреса</button>
+                      <button onClick={() => insertVariable('supplier_iban')} className="block text-left w-full px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{supplier_iban}}`} - IBAN</button>
+                      <button onClick={() => insertVariable('supplier_bank')} className="block text-left w-full px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{supplier_bank}}`} - Банк</button>
+                      <button onClick={() => insertVariable('supplier_mfo')} className="block text-left w-full px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{supplier_mfo}}`} - МФО</button>
+                      <button onClick={() => insertVariable('supplier_email')} className="block text-left w-full px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{supplier_email}}`} - Email</button>
+                      <button onClick={() => insertVariable('supplier_phone')} className="block text-left w-full px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{supplier_phone}}`} - Телефон</button>
+                      <button onClick={() => insertVariable('supplier_representative')} className="block text-left w-full px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{supplier_representative}}`} - В особі</button>
+                      <button onClick={() => insertVariable('supplier_signature')} className="block text-left w-full px-2 py-1 hover:bg-blue-100 rounded text-gray-700 font-semibold">{`{{supplier_signature}}`} - Підпис ⭐</button>
                     </div>
                     <div>
-                      <p className="font-semibold text-blue-800 mb-1">Покупець (Основні дані):</p>
-                      <p className="text-gray-700">{`{{buyer_name}}`} - Назва</p>
-                      <p className="text-gray-700">{`{{buyer_edrpou}}`} - ЄДРПОУ</p>
-                      <p className="text-gray-700">{`{{buyer_address}}`} - Адреса</p>
-                      <p className="text-gray-700">{`{{buyer_iban}}`} - IBAN</p>
-                      <p className="text-gray-700">{`{{buyer_bank}}`} - Банк</p>
-                      <p className="text-gray-700">{`{{buyer_mfo}}`} - МФО</p>
-                      <p className="text-gray-700">{`{{buyer_email}}`} - Email</p>
-                      <p className="text-gray-700">{`{{buyer_phone}}`} - Телефон</p>
-                      <p className="text-gray-700">{`{{buyer_representative}}`} - В особі</p>
+                      <p className="font-semibold text-blue-800 mb-2">Покупець (Основні дані):</p>
+                      <button onClick={() => insertVariable('buyer_name')} className="block text-left w-full px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{buyer_name}}`} - Назва</button>
+                      <button onClick={() => insertVariable('buyer_edrpou')} className="block text-left w-full px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{buyer_edrpou}}`} - ЄДРПОУ</button>
+                      <button onClick={() => insertVariable('buyer_address')} className="block text-left w-full px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{buyer_address}}`} - Адреса</button>
+                      <button onClick={() => insertVariable('buyer_iban')} className="block text-left w-full px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{buyer_iban}}`} - IBAN</button>
+                      <button onClick={() => insertVariable('buyer_bank')} className="block text-left w-full px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{buyer_bank}}`} - Банк</button>
+                      <button onClick={() => insertVariable('buyer_mfo')} className="block text-left w-full px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{buyer_mfo}}`} - МФО</button>
+                      <button onClick={() => insertVariable('buyer_email')} className="block text-left w-full px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{buyer_email}}`} - Email</button>
+                      <button onClick={() => insertVariable('buyer_phone')} className="block text-left w-full px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{buyer_phone}}`} - Телефон</button>
+                      <button onClick={() => insertVariable('buyer_representative')} className="block text-left w-full px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{buyer_representative}}`} - В особі</button>
+                      <button onClick={() => insertVariable('buyer_signature')} className="block text-left w-full px-2 py-1 hover:bg-blue-100 rounded text-gray-700 font-semibold">{`{{buyer_signature}}`} - Підпис ⭐</button>
                     </div>
                     <div className="col-span-2">
-                      <p className="font-semibold text-blue-800 mb-1">Загальні:</p>
-                      <p className="text-gray-700">{`{{contract_number}}`} - Номер договору</p>
-                      <p className="text-gray-700">{`{{contract_date}}`} - Дата договору</p>
-                      <p className="text-gray-700">{`{{city}}`} - Місто</p>
-                      <p className="text-gray-700">{`{{end_date}}`} - Дата закінчення</p>
-                      <p className="text-gray-700">{`{{total_amount}}`} - Загальна сума</p>
-                      <p className="text-gray-700">{`{{subject}}`} - Предмет договору</p>
+                      <p className="font-semibold text-blue-800 mb-2">Загальні:</p>
+                      <div className="grid grid-cols-3 gap-1">
+                        <button onClick={() => insertVariable('contract_number')} className="text-left px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{contract_number}}`} - Номер</button>
+                        <button onClick={() => insertVariable('contract_date')} className="text-left px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{contract_date}}`} - Дата</button>
+                        <button onClick={() => insertVariable('city')} className="text-left px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{city}}`} - Місто</button>
+                        <button onClick={() => insertVariable('end_date')} className="text-left px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{end_date}}`} - Дата закінчення</button>
+                        <button onClick={() => insertVariable('total_amount')} className="text-left px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{total_amount}}`} - Сума</button>
+                        <button onClick={() => insertVariable('subject')} className="text-left px-2 py-1 hover:bg-blue-100 rounded text-gray-700">{`{{subject}}`} - Предмет</button>
+                      </div>
                     </div>
                     <div className="col-span-2 mt-2 pt-2 border-t border-blue-300">
-                      <p className="font-semibold text-blue-800 mb-1">Маркери вирівнювання:</p>
-                      <p className="text-gray-700">{`[align:left]текст[/align]`} - Вирівняти ліворуч</p>
-                      <p className="text-gray-700">{`[align:center]текст[/align]`} - Вирівняти по центру</p>
-                      <p className="text-gray-700">{`[align:right]текст[/align]`} - Вирівняти праворуч</p>
-                      <p className="text-gray-700">{`[align:justify]текст[/align]`} - Вирівняти по ширині</p>
-                      <p className="text-xs text-blue-600 mt-1">* Виділіть текст і натисніть кнопку вирівнювання, або введіть маркери вручну</p>
+                      <p className="font-semibold text-blue-800 mb-1">Маркери форматування:</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <p className="text-gray-700 font-medium mb-1">Текст:</p>
+                          <p className="text-gray-700">{`[b]текст[/b]`} - Жирний</p>
+                          <p className="text-gray-700">{`[i]текст[/i]`} - Курсив</p>
+                          <p className="text-gray-700">{`[u]текст[/u]`} - Підкреслений</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-700 font-medium mb-1">Вирівнювання:</p>
+                          <p className="text-gray-700">{`[align:left]...[/align]`} - Ліворуч</p>
+                          <p className="text-gray-700">{`[align:center]...[/align]`} - По центру</p>
+                          <p className="text-gray-700">{`[align:right]...[/align]`} - Праворуч</p>
+                          <p className="text-gray-700">{`[align:justify]...[/align]`} - По ширині</p>
+                        </div>
+                      </div>
+                      <p className="text-xs text-blue-600 mt-2">💡 Виділіть текст і натисніть кнопку форматування на панелі вгорі</p>
                     </div>
                   </div>
                 </CardContent>
