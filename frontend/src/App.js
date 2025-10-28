@@ -1327,6 +1327,18 @@ function App() {
           </TabsContent>
 
           <TabsContent value="contracts" data-testid="contracts-content">
+            {/* Template Editor Button */}
+            <div className="mb-4 flex justify-end">
+              <Button
+                variant="outline"
+                onClick={() => setShowTemplateEditor(true)}
+                className="border-blue-500 text-blue-600 hover:bg-blue-50"
+              >
+                <FileText className="w-4 h-4 mr-2" />
+                Редагувати шаблон договору
+              </Button>
+            </div>
+
             <Card className="glass-card">
               <CardHeader>
                 <CardTitle className="text-2xl">Створення Договору</CardTitle>
