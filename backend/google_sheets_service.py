@@ -151,17 +151,21 @@ class GoogleSheetsService:
         try:
             worksheet = self.spreadsheet.worksheet("Договори")
             
-            # Get next document number
-            records = worksheet.get_all_records()
-            next_number = len(records) + 1
-            
             # Get counterparty from "Основні дані"
             counterparty = self.get_counterparty_from_main_data(data['counterparty_edrpou'])
             if not counterparty:
                 raise ValueError(f"Контрагента з ЄДРПОУ {data['counterparty_edrpou']} не знайдено в 'Основні дані'")
             
+            # Use provided contract number or generate a simple sequential number
+            contract_number = data.get('contract_number', '')
+            if not contract_number:
+                # Fallback: generate simple sequential number if not provided
+                records = worksheet.get_all_records()
+                next_number = len(records) + 1
+                contract_number = f"{next_number:04d}"
+            
             row = [
-                f"{next_number:04d}",
+                contract_number,
                 datetime.now().strftime('%Y-%m-%d'),
                 data['counterparty_edrpou'],
                 counterparty['Назва'],
@@ -172,12 +176,12 @@ class GoogleSheetsService:
             ]
             
             worksheet.append_row(row)
-            logger.info(f"Created договір #{next_number:04d}")
+            logger.info(f"Created договір #{contract_number}")
             
             return {
                 'success': True,
                 'message': 'Договір успішно створено',
-                'document_number': f"{next_number:04d}",
+                'document_number': contract_number,
                 'data': data
             }
         except Exception as e:
