@@ -525,15 +525,17 @@ function App() {
   
   const resetContractTemplate = () => {
     if (window.confirm('Ви впевнені що хочете скинути шаблон до стандартного?')) {
-      setContractTemplate('');
+      localStorage.removeItem('contractTemplate');
+      localStorage.removeItem('contractTemplateVersion');
+      localStorage.removeItem('contractTemplateSettings');
+      // Reload template
+      loadContractTemplate();
       setTemplateSettings({
         fontSize: 12,
         fontFamily: 'Times New Roman',
         lineSpacing: 1.5,
         indent: 0
       });
-      localStorage.removeItem('contractTemplate');
-      localStorage.removeItem('contractTemplateSettings');
       toast.success('Шаблон скинуто до стандартного');
     }
   };
