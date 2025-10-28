@@ -339,6 +339,18 @@ frontend:
       - working: true
         agent: "testing"
         comment: "✅ КАСТОМНІ ШАБЛОНИ ПОВНІСТЮ ПРОТЕСТОВАНО: POST /api/contracts/generate-pdf з custom_template працює ідеально. PDF файл створюється (92886 bytes), змінні підставляються (supplier_name, buyer_name, supplier_signature, buyer_signature), маркери форматування обробляються ([b], [i], [u], [align:center/left/right/justify]), поля PDF правильні (ліве 3см, праве 1см, верхнє/нижнє 2см), файл завантажується на Google Drive (drive_file_id: 1vYl2Gvgeb-0efKUD319N-AuRAa2T-kVV). supplier_data містить поле 'Підпис' з колонки K. Виправлено помилку з параметрами Google Drive upload. Всі вимоги з review request виконано."
+
+  - task: "New HTML Template Contract PDF Generation"
+    implemented: true
+    working: true
+    file: "/app/backend/contract_service_v2.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ НОВИЙ HTML ШАБЛОН ДОГОВОРУ ПРОТЕСТОВАНО УСПІШНО: POST /api/contracts/generate-pdf з новим HTML шаблоном працює ідеально. PDF файл створюється (92359 bytes), всі зміни застосовані: Times New Roman 12px ✅, header у форматі 'м. Київ' (ліворуч) та 'дата р.' (праворуч) ✅, всі пункти з нових рядків ✅, реквізити в 2 колонки ✅, total_amount має ' грн' ✅, немає дефолтної адреси '04052, Україна...' ✅. Google Drive інтеграція працює: drive_file_id=1CaUUApAMS-aPrTPYcmLVaaCed-gvz2Ze, drive_view_link=https://drive.google.com/file/d/1CaUUApAMS-aPrTPYcmLVaaCed-gvz2Ze/view. Тест з точним payload з review request пройшов успішно."
 metadata:
   created_by: "main_agent"
   version: "5.0"
