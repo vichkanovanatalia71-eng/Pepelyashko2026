@@ -260,6 +260,7 @@ function App() {
   const [allActs, setAllActs] = useState([]);
   const [allWaybills, setAllWaybills] = useState([]);
   const [allContracts, setAllContracts] = useState([]);
+  const [allOrders, setAllOrders] = useState([]);
 
   // Contract template
   const [contractTemplate, setContractTemplate] = useState('');
