@@ -1301,7 +1301,17 @@ function App() {
                 {counterpartyDocuments && (
                   <Card className="glass-card">
                     <CardHeader>
-                      <CardTitle className="text-xl">Документи контрагента</CardTitle>
+                      <div className="flex justify-between items-center">
+                        <CardTitle className="text-xl">Документи контрагента</CardTitle>
+                        <Button
+                          onClick={refreshCounterpartyDocuments}
+                          variant="outline"
+                          size="sm"
+                        >
+                          <RefreshCw className="w-4 h-4 mr-2" />
+                          Оновити
+                        </Button>
+                      </div>
                     </CardHeader>
                     <CardContent className="space-y-6">
                       {counterpartyDocuments.orders?.length > 0 && (
