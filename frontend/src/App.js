@@ -2286,109 +2286,142 @@ function App() {
             </DialogHeader>
             
             <div className="space-y-4 py-4 overflow-y-auto" style={{maxHeight: 'calc(90vh - 200px)'}}>
-              {/* Formatting toolbar */}
-              <Card className="bg-gray-50 border-gray-300">
-                <CardContent className="py-3">
-                  <div className="grid grid-cols-2 gap-4">
-                    {/* Font section */}
-                    <div className="space-y-2">
-                      <Label className="text-sm font-semibold text-gray-700">Шрифт</Label>
-                      <div className="grid grid-cols-3 gap-2">
-                        <div className="col-span-2">
-                          <select
-                            value={templateSettings.fontFamily}
-                            onChange={(e) => setTemplateSettings({...templateSettings, fontFamily: e.target.value})}
-                            className="w-full p-2 border border-gray-300 rounded text-sm"
-                          >
-                            <option value="Times New Roman">Times New Roman</option>
-                            <option value="Arial">Arial</option>
-                            <option value="Calibri">Calibri</option>
-                            <option value="DejaVu Sans">DejaVu Sans</option>
-                          </select>
-                        </div>
-                        <div>
-                          <select
-                            value={templateSettings.fontSize}
-                            onChange={(e) => setTemplateSettings({...templateSettings, fontSize: parseInt(e.target.value)})}
-                            className="w-full p-2 border border-gray-300 rounded text-sm"
-                          >
-                            {[8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24].map(size => (
-                              <option key={size} value={size}>{size}</option>
-                            ))}
-                          </select>
-                        </div>
+              {/* Formatting toolbar - Sticky */}
+              <div className="sticky top-0 z-10 bg-white pt-2 pb-2 -mt-2">
+                <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 shadow-md">
+                  <CardContent className="py-3">
+                    <div className="space-y-3">
+                      {/* Formatting buttons row */}
+                      <div className="flex flex-wrap gap-2 items-center border-b border-blue-200 pb-2">
+                        <Label className="text-sm font-semibold text-blue-900 mr-2">Форматування:</Label>
+                        <button
+                          type="button"
+                          onClick={() => applyFormatting('bold')}
+                          className="px-3 py-1.5 bg-white border-2 border-blue-300 rounded hover:bg-blue-100 font-bold text-sm"
+                          title="Жирний (виділіть текст)"
+                        >
+                          Ж
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => applyFormatting('italic')}
+                          className="px-3 py-1.5 bg-white border-2 border-blue-300 rounded hover:bg-blue-100 italic text-sm"
+                          title="Курсив (виділіть текст)"
+                        >
+                          К
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => applyFormatting('underline')}
+                          className="px-3 py-1.5 bg-white border-2 border-blue-300 rounded hover:bg-blue-100 underline text-sm"
+                          title="Підкреслення (виділіть текст)"
+                        >
+                          П
+                        </button>
+                        
+                        <div className="w-px h-6 bg-blue-300 mx-1"></div>
+                        
+                        <Label className="text-sm font-semibold text-blue-900 mr-1">Вирівнювання:</Label>
+                        <button
+                          type="button"
+                          onClick={() => insertAlignment('left')}
+                          className="px-3 py-1.5 bg-white border-2 border-blue-300 rounded hover:bg-blue-100 text-sm"
+                          title="Вирівняти ліворуч"
+                        >
+                          ←
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => insertAlignment('center')}
+                          className="px-3 py-1.5 bg-white border-2 border-blue-300 rounded hover:bg-blue-100 text-sm"
+                          title="Вирівняти по центру"
+                        >
+                          ↔
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => insertAlignment('right')}
+                          className="px-3 py-1.5 bg-white border-2 border-blue-300 rounded hover:bg-blue-100 text-sm"
+                          title="Вирівняти праворуч"
+                        >
+                          →
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => insertAlignment('justify')}
+                          className="px-3 py-1.5 bg-white border-2 border-blue-300 rounded hover:bg-blue-100 text-sm"
+                          title="Вирівняти по ширині"
+                        >
+                          ⇔
+                        </button>
                       </div>
-                    </div>
-                    
-                    {/* Paragraph section */}
-                    <div className="space-y-2">
-                      <Label className="text-sm font-semibold text-gray-700">Абзац</Label>
-                      <div className="grid grid-cols-3 gap-2">
-                        <div>
-                          <Label className="text-xs text-gray-600">Вирівнювання (для виділеного тексту)</Label>
-                          <div className="flex gap-1 mt-1">
-                            <button
-                              type="button"
-                              onClick={() => insertAlignment('left')}
-                              className="p-2 border border-gray-300 rounded hover:bg-gray-100 text-xs"
-                              title="Вирівняти ліворуч"
-                            >
-                              ←
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => insertAlignment('center')}
-                              className="p-2 border border-gray-300 rounded hover:bg-gray-100 text-xs"
-                              title="Вирівняти по центру"
-                            >
-                              ↔
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => insertAlignment('right')}
-                              className="p-2 border border-gray-300 rounded hover:bg-gray-100 text-xs"
-                              title="Вирівняти праворуч"
-                            >
-                              →
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => insertAlignment('justify')}
-                              className="p-2 border border-gray-300 rounded hover:bg-gray-100 text-xs"
-                              title="Вирівняти по ширині"
-                            >
-                              ⇔
-                            </button>
+                      
+                      {/* Font and paragraph settings row */}
+                      <div className="grid grid-cols-2 gap-4">
+                        {/* Font section */}
+                        <div className="space-y-2">
+                          <Label className="text-sm font-semibold text-blue-900">Шрифт</Label>
+                          <div className="grid grid-cols-3 gap-2">
+                            <div className="col-span-2">
+                              <select
+                                value={templateSettings.fontFamily}
+                                onChange={(e) => setTemplateSettings({...templateSettings, fontFamily: e.target.value})}
+                                className="w-full p-2 border border-blue-300 rounded text-sm bg-white"
+                              >
+                                <option value="Times New Roman">Times New Roman</option>
+                                <option value="Arial">Arial</option>
+                                <option value="Calibri">Calibri</option>
+                                <option value="DejaVu Sans">DejaVu Sans</option>
+                              </select>
+                            </div>
+                            <div>
+                              <select
+                                value={templateSettings.fontSize}
+                                onChange={(e) => setTemplateSettings({...templateSettings, fontSize: parseInt(e.target.value)})}
+                                className="w-full p-2 border border-blue-300 rounded text-sm bg-white"
+                              >
+                                {[8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24].map(size => (
+                                  <option key={size} value={size}>{size}</option>
+                                ))}
+                              </select>
+                            </div>
                           </div>
                         </div>
-                        <div>
-                          <Label className="text-xs text-gray-600">Міжрядковий інтервал</Label>
-                          <select
-                            value={templateSettings.lineSpacing}
-                            onChange={(e) => setTemplateSettings({...templateSettings, lineSpacing: parseFloat(e.target.value)})}
-                            className="w-full p-2 border border-gray-300 rounded text-sm"
-                          >
-                            <option value="1">1.0</option>
-                            <option value="1.15">1.15</option>
-                            <option value="1.5">1.5</option>
-                            <option value="2">2.0</option>
-                          </select>
-                        </div>
-                        <div>
-                          <Label className="text-xs text-gray-600">Відступ (см)</Label>
-                          <input
-                            type="number"
-                            step="0.5"
-                            value={templateSettings.indent}
-                            onChange={(e) => setTemplateSettings({...templateSettings, indent: parseFloat(e.target.value) || 0})}
-                            className="w-full p-2 border border-gray-300 rounded text-sm"
-                          />
+                        
+                        {/* Paragraph section */}
+                        <div className="space-y-2">
+                          <Label className="text-sm font-semibold text-blue-900">Абзац</Label>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <Label className="text-xs text-blue-700">Міжрядковий інтервал</Label>
+                              <select
+                                value={templateSettings.lineSpacing}
+                                onChange={(e) => setTemplateSettings({...templateSettings, lineSpacing: parseFloat(e.target.value)})}
+                                className="w-full p-2 border border-blue-300 rounded text-sm bg-white"
+                              >
+                                <option value="1">1.0</option>
+                                <option value="1.15">1.15</option>
+                                <option value="1.5">1.5</option>
+                                <option value="2">2.0</option>
+                              </select>
+                            </div>
+                            <div>
+                              <Label className="text-xs text-blue-700">Відступ (см)</Label>
+                              <input
+                                type="number"
+                                step="0.5"
+                                value={templateSettings.indent}
+                                onChange={(e) => setTemplateSettings({...templateSettings, indent: parseFloat(e.target.value) || 0})}
+                                className="w-full p-2 border border-blue-300 rounded text-sm bg-white"
+                              />
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </div>
               
               {/* Available variables */}
               <Card className="bg-blue-50 border-blue-200">
