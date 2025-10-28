@@ -1940,34 +1940,64 @@ function App() {
                             <p className="text-xs text-gray-500 mt-1">ID: {doc.drive_file_id}</p>
                           )}
                         </div>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            if (doc.drive_file_id && doc.drive_file_id !== '') {
-                              setDocumentPdfData({
-                                drive_file_id: doc.drive_file_id,
-                                drive_view_link: `https://drive.google.com/file/d/${doc.drive_file_id}/view`,
-                                drive_download_link: `https://drive.google.com/uc?export=download&id=${doc.drive_file_id}`,
-                                order_number: doc.number,
-                                order_form_data: {
-                                  counterparty_edrpou: doc.counterparty_edrpou || '',
-                                  items: doc.items || [],
-                                  total_amount: parseFloat(doc.total_amount) || 0
+                        <div className="flex gap-2">
+                          {(!doc.drive_file_id || doc.drive_file_id === '') ? (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={async () => {
+                                try {
+                                  setLoading(true);
+                                  // Re-generate PDF for old order
+                                  const payload = {
+                                    counterparty_edrpou: doc.counterparty_edrpou,
+                                    items: doc.items || [],
+                                    total_amount: parseFloat(doc.total_amount) || 0
+                                  };
+                                  
+                                  const response = await axios.post(`${API}/orders/generate-pdf`, payload);
+                                  
+                                  if (response.data.success) {
+                                    toast.success('PDF успішно згенеровано!');
+                                    fetchAllDocuments();
+                                  }
+                                } catch (error) {
+                                  toast.error('Помилка генерації PDF: ' + (error.response?.data?.detail || error.message));
+                                } finally {
+                                  setLoading(false);
                                 }
-                              });
-                              setCurrentDocType('order');
-                              setShowDocumentPreview(true);
-                            } else {
-                              toast.error('Документ ще не завантажено на Google Drive');
-                            }
-                          }}
-                          className="btn-primary"
-                          disabled={!doc.drive_file_id || doc.drive_file_id === ''}
-                        >
-                          <Eye className="w-4 h-4 mr-1" />
-                          Переглянути
-                        </Button>
+                              }}
+                              className="bg-orange-500 text-white hover:bg-orange-600"
+                            >
+                              <FileText className="w-4 h-4 mr-1" />
+                              Згенерувати PDF
+                            </Button>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setDocumentPdfData({
+                                  drive_file_id: doc.drive_file_id,
+                                  drive_view_link: `https://drive.google.com/file/d/${doc.drive_file_id}/view`,
+                                  drive_download_link: `https://drive.google.com/uc?export=download&id=${doc.drive_file_id}`,
+                                  order_number: doc.number,
+                                  order_form_data: {
+                                    counterparty_edrpou: doc.counterparty_edrpou || '',
+                                    items: doc.items || [],
+                                    total_amount: parseFloat(doc.total_amount) || 0
+                                  }
+                                });
+                                setCurrentDocType('order');
+                                setShowDocumentPreview(true);
+                              }}
+                              className="btn-primary"
+                            >
+                              <Eye className="w-4 h-4 mr-1" />
+                              Переглянути
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>
