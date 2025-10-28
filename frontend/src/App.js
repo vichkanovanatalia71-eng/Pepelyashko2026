@@ -3146,6 +3146,199 @@ function App() {
                 </Card>
               )}
               
+              {/* Related Documents */}
+              {(relatedDocuments.invoices.length > 0 || relatedDocuments.acts.length > 0 || 
+                relatedDocuments.waybills.length > 0 || relatedDocuments.contracts.length > 0) && (
+                <Card>
+                  <CardHeader className="py-3">
+                    <CardTitle className="text-sm font-semibold">
+                      Документи на основі замовлення ({
+                        relatedDocuments.invoices.length + relatedDocuments.acts.length + 
+                        relatedDocuments.waybills.length + relatedDocuments.contracts.length
+                      })
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="py-2">
+                    <div className="space-y-3">
+                      {/* Invoices */}
+                      {relatedDocuments.invoices.map((doc, idx) => (
+                        <div key={`inv-${idx}`} className="p-3 bg-green-50 rounded border border-green-200 flex justify-between items-center">
+                          <div>
+                            <p className="font-medium text-green-800">📄 Рахунок №{doc.number}</p>
+                            <p className="text-sm text-gray-600">від {doc.date} | {doc.total_amount} грн</p>
+                          </div>
+                          <div className="flex gap-2">
+                            {doc.drive_file_id && (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setDocumentPdfData({
+                                      drive_file_id: doc.drive_file_id,
+                                      drive_view_link: `https://drive.google.com/file/d/${doc.drive_file_id}/view`,
+                                      invoice_number: doc.number
+                                    });
+                                    setCurrentDocType('invoice');
+                                    setShowOrderDetails(false);
+                                    setShowDocumentPreview(true);
+                                  }}
+                                  className="text-xs"
+                                >
+                                  <Eye className="w-3 h-3 mr-1" />
+                                  PDF
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    toast.info('Функція відправки email буде додана незабаром');
+                                  }}
+                                  className="text-xs"
+                                >
+                                  📧 Email
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                      
+                      {/* Acts */}
+                      {relatedDocuments.acts.map((doc, idx) => (
+                        <div key={`act-${idx}`} className="p-3 bg-purple-50 rounded border border-purple-200 flex justify-between items-center">
+                          <div>
+                            <p className="font-medium text-purple-800">✅ Акт №{doc.number}</p>
+                            <p className="text-sm text-gray-600">від {doc.date} | {doc.total_amount} грн</p>
+                          </div>
+                          <div className="flex gap-2">
+                            {doc.drive_file_id && (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setDocumentPdfData({
+                                      drive_file_id: doc.drive_file_id,
+                                      drive_view_link: `https://drive.google.com/file/d/${doc.drive_file_id}/view`,
+                                      act_number: doc.number
+                                    });
+                                    setCurrentDocType('act');
+                                    setShowOrderDetails(false);
+                                    setShowDocumentPreview(true);
+                                  }}
+                                  className="text-xs"
+                                >
+                                  <Eye className="w-3 h-3 mr-1" />
+                                  PDF
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    toast.info('Функція відправки email буде додана незабаром');
+                                  }}
+                                  className="text-xs"
+                                >
+                                  📧 Email
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                      
+                      {/* Waybills */}
+                      {relatedDocuments.waybills.map((doc, idx) => (
+                        <div key={`wb-${idx}`} className="p-3 bg-orange-50 rounded border border-orange-200 flex justify-between items-center">
+                          <div>
+                            <p className="font-medium text-orange-800">🚚 Накладна №{doc.number}</p>
+                            <p className="text-sm text-gray-600">від {doc.date} | {doc.total_amount} грн</p>
+                          </div>
+                          <div className="flex gap-2">
+                            {doc.drive_file_id && (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setDocumentPdfData({
+                                      drive_file_id: doc.drive_file_id,
+                                      drive_view_link: `https://drive.google.com/file/d/${doc.drive_file_id}/view`,
+                                      waybill_number: doc.number
+                                    });
+                                    setCurrentDocType('waybill');
+                                    setShowOrderDetails(false);
+                                    setShowDocumentPreview(true);
+                                  }}
+                                  className="text-xs"
+                                >
+                                  <Eye className="w-3 h-3 mr-1" />
+                                  PDF
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    toast.info('Функція відправки email буде додана незабаром');
+                                  }}
+                                  className="text-xs"
+                                >
+                                  📧 Email
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                      
+                      {/* Contracts */}
+                      {relatedDocuments.contracts.map((doc, idx) => (
+                        <div key={`con-${idx}`} className="p-3 bg-blue-50 rounded border border-blue-200 flex justify-between items-center">
+                          <div>
+                            <p className="font-medium text-blue-800">📋 Договір №{doc.number}</p>
+                            <p className="text-sm text-gray-600">від {doc.date}</p>
+                          </div>
+                          <div className="flex gap-2">
+                            {doc.drive_file_id && (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setContractPdfData({
+                                      drive_file_id: doc.drive_file_id,
+                                      drive_view_link: `https://drive.google.com/file/d/${doc.drive_file_id}/view`,
+                                      contract_number: doc.number
+                                    });
+                                    setShowOrderDetails(false);
+                                    setShowContractPreview(true);
+                                  }}
+                                  className="text-xs"
+                                >
+                                  <Eye className="w-3 h-3 mr-1" />
+                                  PDF
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    toast.info('Функція відправки email буде додана незабаром');
+                                  }}
+                                  className="text-xs"
+                                >
+                                  📧 Email
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+              
               {/* Actions */}
               <div className="flex gap-3">
                 {currentOrderDetails?.drive_file_id ? (
