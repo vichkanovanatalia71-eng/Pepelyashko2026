@@ -2291,6 +2291,18 @@ function App() {
               loading={loading}
             />
             
+            {/* Act Template Editor Button */}
+            <div className="mt-6 flex justify-end">
+              <Button
+                onClick={() => setShowActTemplateEditor(true)}
+                variant="outline"
+                className="border-purple-500 text-purple-600 hover:bg-purple-50"
+              >
+                <FileText className="w-4 h-4 mr-2" />
+                Редагувати шаблон акту
+              </Button>
+            </div>
+            
             {/* List of all acts */}
             <Card className="glass-card mt-6">
               <CardHeader>
