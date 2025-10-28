@@ -1568,6 +1568,18 @@ function App() {
           </TabsContent>
 
           <TabsContent value="orders" data-testid="orders-content">
+            {/* Template Editor Button */}
+            <div className="mb-4 flex justify-end">
+              <Button
+                variant="outline"
+                onClick={() => setShowOrderTemplateEditor(true)}
+                className="border-blue-500 text-blue-600 hover:bg-blue-50"
+              >
+                <FileText className="w-4 h-4 mr-2" />
+                Редагувати шаблон замовлення
+              </Button>
+            </div>
+
             <DocumentForm 
               endpoint="orders" 
               docType="Замовлення" 
