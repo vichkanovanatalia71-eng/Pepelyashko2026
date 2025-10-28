@@ -136,7 +136,45 @@ class GoogleSheetsService:
     
     def create_order(self, data: Dict[str, Any], drive_file_id: str = '') -> Dict[str, Any]:
         """Create a new order."""
-        return self._create_document("Замовлення", data, "замовлення", drive_file_id)
+        # Orders have special handling for order numbers
+        try:
+            worksheet = self.spreadsheet.worksheet("Замовлення")
+            
+            # Use provided order number or generate a simple sequential number
+            order_number = data.get('order_number', '')
+            if not order_number:
+                # Fallback: generate simple sequential number if not provided
+                records = worksheet.get_all_records()
+                next_number = len(records) + 1
+                order_number = f"{next_number:04d}"
+            
+            # Get counterparty from "Основні дані" by ЄДРПОУ
+            counterparty = self.get_counterparty_from_main_data(data['counterparty_edrpou'])
+            if not counterparty:
+                raise ValueError(f"Контрагента з ЄДРПОУ {data['counterparty_edrpou']} не знайдено в 'Основні дані'")
+            
+            row = [
+                order_number,  # Use the provided order number
+                datetime.now().strftime('%Y-%m-%d'),
+                data['counterparty_edrpou'],
+                counterparty['Назва'],
+                json.dumps(data['items'], ensure_ascii=False),
+                data['total_amount'],
+                drive_file_id  # Add drive_file_id to the row
+            ]
+            
+            worksheet.append_row(row)
+            logger.info(f"Created замовлення #{order_number}")
+            
+            return {
+                'success': True,
+                'message': 'Замовлення успішно створено',
+                'document_number': order_number,
+                'data': data
+            }
+        except Exception as e:
+            logger.error(f"Error creating замовлення: {str(e)}")
+            raise
     
     def create_act(self, data: Dict[str, Any], drive_file_id: str = '') -> Dict[str, Any]:
         """Create a new act of completed work."""
