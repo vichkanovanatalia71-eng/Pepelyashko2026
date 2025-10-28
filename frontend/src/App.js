@@ -284,6 +284,15 @@ function App() {
   const [actTemplate, setActTemplate] = useState('');
   const [showActTemplateEditor, setShowActTemplateEditor] = useState(false);
   
+  // Act from orders
+  const [actType, setActType] = useState('without-orders'); // 'without-orders' or 'with-orders'
+  const [actCounterpartyEdrpou, setActCounterpartyEdrpou] = useState('');
+  const [actFoundCounterparty, setActFoundCounterparty] = useState(null);
+  const [actAvailableOrders, setActAvailableOrders] = useState([]);
+  const [actSelectedOrders, setActSelectedOrders] = useState([]);
+  const [actAvailableContracts, setActAvailableContracts] = useState([]);
+  const [actSelectedContract, setActSelectedContract] = useState('');
+  
   const [relatedDocuments, setRelatedDocuments] = useState({
     invoices: [],
     acts: [],
