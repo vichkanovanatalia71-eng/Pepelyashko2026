@@ -2278,18 +2278,6 @@ function App() {
             
             <DialogFooter className="bg-gray-50 -mx-6 -mb-6 px-6 py-4 rounded-b-lg">
               <Button 
-                variant="outline" 
-                onClick={() => {
-                  const downloadLink = contractPdfData?.drive_download_link || `${API}/contracts/download/${contractPdfData?.pdf_filename}`;
-                  window.open(downloadLink, '_blank');
-                }}
-                className="border-gray-300 text-gray-700 hover:bg-gray-100"
-              >
-                <FileText className="w-4 h-4 mr-2" />
-                Завантажити PDF
-              </Button>
-              
-              <Button 
                 onClick={async () => {
                   if (!contractPdfData) return;
                   
