@@ -508,3 +508,108 @@ class ContractServiceV2:
             9: 'вересня', 10: 'жовтня', 11: 'листопада', 12: 'грудня'
         }
         return months.get(month, 'січня')
+    
+    def _parse_custom_template(self, template: str, context: Dict[str, Any]) -> str:
+        """
+        Parse custom template and replace variables with actual values
+        
+        Args:
+            template: Template text with {{variables}}
+            context: Dictionary with all available variables
+        
+        Returns:
+            Parsed template with replaced variables
+        """
+        import re
+        
+        # Replace all {{variable}} with actual values
+        def replace_variable(match):
+            var_name = match.group(1)
+            return str(context.get(var_name, f'{{{{ {var_name} }}}}'))
+        
+        # Pattern to match {{variable_name}}
+        pattern = r'\{\{([^}]+)\}\}'
+        parsed = re.sub(pattern, replace_variable, template)
+        
+        return parsed
+    
+    def _process_formatting_markers(self, text: str, base_style: ParagraphStyle) -> List:
+        """
+        Process formatting markers ([b], [i], [u], [align:...]) and create formatted story elements
+        
+        Args:
+            text: Text with formatting markers
+            base_style: Base paragraph style to use
+        
+        Returns:
+            List of ReportLab story elements (Paragraphs, Spacers)
+        """
+        import re
+        
+        story_elements = []
+        
+        # Split by alignment markers first
+        align_pattern = r'\[align:(left|center|right|justify)\](.*?)\[/align\]'
+        
+        # Find all alignment blocks
+        last_end = 0
+        for match in re.finditer(align_pattern, text, re.DOTALL):
+            # Add any text before this alignment block
+            before_text = text[last_end:match.start()].strip()
+            if before_text:
+                # Process inline formatting for before_text
+                formatted_before = self._process_inline_formatting(before_text)
+                para = Paragraph(formatted_before, base_style)
+                story_elements.append(para)
+                story_elements.append(Spacer(1, 3*mm))
+            
+            # Process aligned text
+            align_type = match.group(1)
+            aligned_text = match.group(2).strip()
+            
+            # Create aligned style
+            aligned_style = ParagraphStyle(
+                f'Aligned_{align_type}',
+                parent=base_style,
+                alignment={'left': TA_LEFT, 'center': TA_CENTER, 'right': TA_RIGHT, 'justify': TA_JUSTIFY}.get(align_type, TA_JUSTIFY)
+            )
+            
+            # Process inline formatting for aligned text
+            formatted_aligned = self._process_inline_formatting(aligned_text)
+            para = Paragraph(formatted_aligned, aligned_style)
+            story_elements.append(para)
+            story_elements.append(Spacer(1, 3*mm))
+            
+            last_end = match.end()
+        
+        # Add remaining text
+        remaining_text = text[last_end:].strip()
+        if remaining_text:
+            formatted_remaining = self._process_inline_formatting(remaining_text)
+            para = Paragraph(formatted_remaining, base_style)
+            story_elements.append(para)
+        
+        return story_elements
+    
+    def _process_inline_formatting(self, text: str) -> str:
+        """
+        Process inline formatting markers ([b], [i], [u]) and convert to ReportLab XML
+        
+        Args:
+            text: Text with inline formatting markers
+        
+        Returns:
+            Text with ReportLab XML formatting tags
+        """
+        import re
+        
+        # Replace [b]text[/b] with <b>text</b>
+        text = re.sub(r'\[b\](.*?)\[/b\]', r'<b>\1</b>', text, flags=re.DOTALL)
+        
+        # Replace [i]text[/i] with <i>text</i>
+        text = re.sub(r'\[i\](.*?)\[/i\]', r'<i>\1</i>', text, flags=re.DOTALL)
+        
+        # Replace [u]text[/u] with <u>text</u>
+        text = re.sub(r'\[u\](.*?)\[/u\]', r'<u>\1</u>', text, flags=re.DOTALL)
+        
+        return text
