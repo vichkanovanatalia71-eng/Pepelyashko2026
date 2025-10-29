@@ -512,8 +512,7 @@ metadata:
   run_ui: false
 
 test_plan:
-  current_focus:
-    - "Contract Creation Based on Order"
+  current_focus: []
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
@@ -531,6 +530,7 @@ test_plan:
     - "Order PDF Generation with Drive Upload"
     - "Documents by Order Endpoint Implementation"
     - "Frontend UI Testing - Orders Full Flow"
+    - "Contract Creation Based on Order"
 
 agent_communication:
   - agent: "main"
