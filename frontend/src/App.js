@@ -1396,6 +1396,78 @@ function App() {
       setLoading(false);
     }
   };
+  
+  const handleContractFromOrderSubmit = async () => {
+    if (!foundCounterparty) {
+      toast.error('Спочатку знайдіть контрагента');
+      return;
+    }
+    
+    if (!contractSelectedOrder) {
+      toast.error('Оберіть замовлення');
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      // Find selected order data
+      const selectedOrder = contractAvailableOrders.find(o => o.number === contractSelectedOrder);
+      
+      if (!selectedOrder) {
+        toast.error('Замовлення не знайдено');
+        setLoading(false);
+        return;
+      }
+      
+      const payload = {
+        counterparty_edrpou: searchEdrpou,
+        subject: contractForm.subject || `Договір на основі замовлення №${contractSelectedOrder}`,
+        items: selectedOrder.items || [],
+        total_amount: contractForm.amount || selectedOrder.total_amount || 0,
+        custom_template: contractTemplate || null,
+        template_settings: templateSettings,
+        based_on_order: contractSelectedOrder
+      };
+      
+      const pdfResponse = await axios.post(`${API}/contracts/generate-pdf`, payload);
+      
+      if (pdfResponse.data.success) {
+        setContractPdfData({
+          ...pdfResponse.data,
+          counterpartyEmail: foundCounterparty?.email || ''
+        });
+        setContractEmailForm({
+          recipient: 'counterparty',
+          customEmail: '',
+          counterpartyEmail: foundCounterparty?.email || ''
+        });
+        
+        setTimeout(() => {
+          setShowContractPreview(true);
+          toast.success('Договір успішно згенеровано на основі замовлення!');
+          fetchAllDocuments();
+          
+          // Reset
+          setContractForm({
+            subject: '',
+            amount: 0,
+            items: []
+          });
+          setSearchEdrpou('');
+          setFoundCounterparty(null);
+          setContractBasedOnOrder(false);
+          setContractAvailableOrders([]);
+          setContractSelectedOrder('');
+        }, 100);
+      }
+    } catch (error) {
+      console.error('Contract generation from order error:', error);
+      toast.error(error.response?.data?.detail || 'Помилка при створенні договору на основі замовлення');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
   const viewCounterpartyDetails = async (edrpou) => {
     setLoading(true);
     try {
