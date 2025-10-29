@@ -1216,6 +1216,155 @@ function App() {
     }
   };
   
+  const loadInvoiceTemplate = () => {
+    const savedTemplate = localStorage.getItem('invoiceTemplate');
+    const savedVersion = localStorage.getItem('invoiceTemplateVersion');
+    
+    // Current template version
+    const CURRENT_VERSION = '1.0';
+    
+    // Check if saved template exists and version matches
+    if (savedTemplate && savedVersion === CURRENT_VERSION) {
+      setInvoiceTemplate(savedTemplate);
+    } else {
+      // Use default invoice template from backend
+      const defaultInvoiceTemplate = `<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8" />
+  <title>Рахунок на оплату № {{invoice_number}} від {{invoice_date}}</title>
+  <style>
+    @page { size: A4; margin: 2cm 1.5cm 2cm 3cm; }
+    html,body{margin:0;padding:0;background:#fff;color:#111;font:12px/1.4 "Times New Roman",serif}
+    .wrap{max-width:17cm;margin:0 auto}
+    h1{text-align:center;margin:10px 0 8px;font-size:16px;font-weight:bold}
+    .block-title{text-align:center;font-weight:bold;font-size:11px;margin:10px 0 6px;text-transform:uppercase;letter-spacing:.3px}
+    .meta{width:100%;margin:6px 0 10px;border-collapse:collapse}
+    .meta td{padding:2px 0;vertical-align:top}
+    table.items{width:100%;border-collapse:collapse;margin-top:6px;font-size:11px}
+    table.items thead{background:#f7f7f7}
+    table.items th,table.items td{border:1px solid #cfd4d9;padding:4px 6px;vertical-align:top;word-wrap:break-word}
+    table.items th{text-align:center;font-weight:bold}
+    .ncol{width:30px;text-align:center}
+    .name{width:35%}
+    .unit{width:10%;text-align:center;font-size:10px}
+    .qty{width:10%;text-align:right;font-size:10px}
+    .price{width:15%;text-align:right;font-size:10px}
+    .sum{width:15%;text-align:right;font-size:10px}
+    table.items tfoot td{border:1px solid #cfd4d9;font-weight:bold;background:#fafafa;font-size:11px}
+    .tfoot-label{text-align:right;padding-right:10px}
+    .tfoot-sum{text-align:right;padding-right:6px}
+    .requisites{width:100%;border-collapse:collapse;margin-top:12px}
+    .requisites th,.requisites td{border:1px solid #cfd4d9;padding:6px 8px;vertical-align:top;font-size:11px}
+    .requisites th{background:#f7f7f7;text-align:center;font-weight:bold}
+    .requisites td{width:50%}
+    .mono{font-family:"Courier New",monospace;font-size:10px}
+    .signline{margin-top:10px}
+    thead{display:table-header-group}
+    tfoot{display:table-footer-group}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>РАХУНОК НА ОПЛАТУ № {{invoice_number}} ВІД {{invoice_date}}</h1>
+    <table class="meta">
+      <tr><td><strong>Постачальник:</strong> {{supplier_name}}, ЄДРПОУ {{supplier_edrpou}}</td></tr>
+      <tr><td><strong>Покупець:</strong> {{buyer_name}}, ЄДРПОУ {{buyer_edrpou}}</td></tr>
+      <tr><td><strong>Підстава (за наявності):</strong> {{basis}}</td></tr>
+    </table>
+    <div class="sec">
+      <p>Просимо оплатити наступні товари/послуги:</p>
+    </div>
+    <table class="items">
+      <thead>
+        <tr>
+          <th class="ncol">№</th>
+          <th class="name">Найменування товару/послуги</th>
+          <th class="unit">Од.</th>
+          <th class="qty">Кільк.</th>
+          <th class="price">Ціна, грн</th>
+          <th class="sum">Сума, грн</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each items}}
+        <tr>
+          <td class="ncol">{{inc @index}}</td>
+          <td class="name">{{this.name}}</td>
+          <td class="unit">{{this.unit}}</td>
+          <td class="qty"><span class="mono">{{this.qty}}</span></td>
+          <td class="price"><span class="mono">{{this.price}}</span></td>
+          <td class="sum"><span class="mono">{{this.sum}}</span></td>
+        </tr>
+        {{/each}}
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="5" class="tfoot-label">Разом без ПДВ, грн</td>
+          <td class="tfoot-sum"><span class="mono">{{total_net}}</span></td>
+        </tr>
+        <tr>
+          <td colspan="5" class="tfoot-label">ПДВ {{vat_rate}}%, грн</td>
+          <td class="tfoot-sum"><span class="mono">{{total_vat}}</span></td>
+        </tr>
+        <tr>
+          <td colspan="5" class="tfoot-label"><strong>Всього до сплати, грн</strong></td>
+          <td class="tfoot-sum"><strong><span class="mono">{{total_gross}}</span></strong></td>
+        </tr>
+        <tr>
+          <td colspan="6" style="padding:8px;text-align:left;font-size:11px">
+            <strong>Сума прописом:</strong> <span style="text-transform:lowercase">{{total_amount_text}}</span>
+          </td>
+        </tr>
+      </tfoot>
+    </table>
+    <div style="margin:10px 0;line-height:1.6">
+      <p style="margin:4px 0"><strong>Умови оплати:</strong> Оплата згідно умов договору або протягом 5 банківських днів з дати виставлення рахунку.</p>
+      <p style="margin:4px 0"><strong>Примітка:</strong> {{vat_note}}</p>
+    </div>
+    <div class="block-title">Реквізити сторін</div>
+    <table class="requisites">
+      <tr>
+        <th>ПОСТАЧАЛЬНИК</th>
+        <th>ПОКУПЕЦЬ</th>
+      </tr>
+      <tr>
+        <td>
+          <p><strong>Назва:</strong> {{supplier_name}}</p>
+          <p><strong>ЄДРПОУ:</strong> <span class="mono">{{supplier_edrpou}}</span></p>
+          <p><strong>Адреса:</strong> {{supplier_address}}</p>
+          <p><strong>IBAN:</strong> <span class="mono">{{supplier_iban}}</span></p>
+          <p><strong>Банк:</strong> {{supplier_bank}}</p>
+          <p><strong>МФО:</strong> <span class="mono">{{supplier_mfo}}</span></p>
+          <p><strong>Email:</strong> <span class="mono">{{supplier_email}}</span></p>
+          <p><strong>Тел.:</strong> <span class="mono">{{supplier_phone}}</span></p>
+          <p><strong>В особі:</strong> {{supplier_representative}}</p>
+          <p class="signline">Підпис: __________________ / ________ /</p>
+          <p><strong>{{supplier_signature}}</strong></p>
+        </td>
+        <td>
+          <p><strong>Назва:</strong> {{buyer_name}}</p>
+          <p><strong>ЄДРПОУ:</strong> <span class="mono">{{buyer_edrpou}}</span></p>
+          <p><strong>Адреса:</strong> {{buyer_address}}</p>
+          <p><strong>IBAN:</strong> <span class="mono">{{buyer_iban}}</span></p>
+          <p><strong>Банк:</strong> {{buyer_bank}}</p>
+          <p><strong>МФО:</strong> <span class="mono">{{buyer_mfo}}</span></p>
+          <p><strong>Email:</strong> <span class="mono">{{buyer_email}}</span></p>
+          <p><strong>Тел.:</strong> <span class="mono">{{buyer_phone}}</span></p>
+          <p><strong>В особі:</strong> {{buyer_representative}}</p>
+          <p class="signline">Підпис: __________________ / ________ /</p>
+          <p><strong>{{buyer_signature}}</strong></p>
+        </td>
+      </tr>
+    </table>
+  </div>
+</body>
+</html>`;
+      
+      setInvoiceTemplate(defaultInvoiceTemplate);
+    }
+  };
+  
   const saveActTemplate = () => {
     localStorage.setItem('actTemplate', actTemplate);
     localStorage.setItem('actTemplateVersion', '1.0');
