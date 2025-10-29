@@ -4041,7 +4041,8 @@ function App() {
                         const payload = {
                           counterparty_edrpou: currentOrderDetails.counterparty_edrpou,
                           items: currentOrderDetails.items || [],
-                          total_amount: parseFloat(currentOrderDetails.total_amount) || 0
+                          total_amount: parseFloat(currentOrderDetails.total_amount) || 0,
+                          order_number: currentOrderDetails.number  // Use existing order number
                         };
                         
                         const response = await axios.post(`${API}/orders/generate-pdf`, payload);
