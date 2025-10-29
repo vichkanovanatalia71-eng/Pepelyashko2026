@@ -3456,12 +3456,32 @@ function App() {
                   <div className="border-2 border-gray-300 rounded-lg overflow-hidden bg-gray-100" style={{height: '500px'}}>
                     {contractPdfData.drive_view_link ? (
                       contractPdfData.is_blob ? (
-                        <embed
-                          src={contractPdfData.drive_view_link}
-                          type="application/pdf"
-                          style={{width: '100%', height: '100%'}}
-                          title="Попередній перегляд договору"
-                        />
+                        <div className="flex flex-col items-center justify-center h-full text-gray-600 space-y-4 p-6">
+                          <CheckCircle className="w-16 h-16 text-green-500" />
+                          <h3 className="text-xl font-semibold">Договір успішно створено!</h3>
+                          <p className="text-center text-gray-600">
+                            PDF документ було згенеровано та збережено локально.<br/>
+                            Номер договору: <span className="font-semibold">{contractPdfData.contract_number}</span>
+                          </p>
+                          <Button
+                            onClick={() => {
+                              const link = document.createElement('a');
+                              link.href = contractPdfData.drive_download_link || contractPdfData.drive_view_link;
+                              link.download = `Договір_${contractPdfData.contract_number}.pdf`;
+                              link.target = '_blank';
+                              link.click();
+                              toast.success('PDF завантажується...');
+                            }}
+                            className="btn-primary"
+                            size="lg"
+                          >
+                            <FileText className="w-5 h-5 mr-2" />
+                            Завантажити PDF
+                          </Button>
+                          <p className="text-sm text-gray-500">
+                            Натисніть кнопку для завантаження або відкриття PDF документу
+                          </p>
+                        </div>
                       ) : (
                         <iframe
                           src={`https://drive.google.com/viewerng/viewer?embedded=true&url=https://drive.google.com/uc?id=${contractPdfData.drive_file_id}&export=download`}
