@@ -677,6 +677,34 @@ async def generate_act_pdf(data: DocumentCreate):
         logging.error(f"Error generating act PDF: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
+@api_router.get("/acts/pdf/{act_number}")
+async def get_act_pdf(act_number: str):
+    """Serve act PDF file for preview."""
+    try:
+        # Find PDF file in generated_acts directory
+        pdf_dir = Path('/app/backend/generated_acts')
+        
+        # Look for PDF with this act number
+        pdf_files = list(pdf_dir.glob(f"Акт_{act_number}_*.pdf"))
+        
+        if not pdf_files:
+            raise HTTPException(status_code=404, detail=f"PDF для акту {act_number} не знайдено")
+        
+        # Return the most recent file
+        pdf_file = sorted(pdf_files, key=lambda f: f.stat().st_mtime, reverse=True)[0]
+        
+        return FileResponse(
+            path=str(pdf_file),
+            media_type='application/pdf',
+            filename=pdf_file.name
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error serving act PDF: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
 @api_router.post("/acts/generate-from-orders")
 async def generate_act_from_orders(data: ActFromOrdersRequest):
     """Generate Act PDF based on selected orders."""
