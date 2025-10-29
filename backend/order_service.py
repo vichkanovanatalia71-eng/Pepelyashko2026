@@ -289,8 +289,13 @@ class OrderService:
             Dict with local_path, filename, order_number and optionally drive info
         """
         try:
-            # Generate order number
-            order_number = self.generate_order_number()
+            # Generate or use existing order number
+            if 'order_number' in order_data and order_data['order_number']:
+                order_number = order_data['order_number']
+                logger.info(f"Using existing order number: {order_number}")
+            else:
+                order_number = self.generate_order_number()
+                logger.info(f"Generated new order number: {order_number}")
             
             # Get date
             today = datetime.now()
