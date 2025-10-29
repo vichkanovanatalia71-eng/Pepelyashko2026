@@ -3103,8 +3103,7 @@ function App() {
                               subject: contractForm.subject,
                               items: [],
                               total_amount: contractForm.amount || 0,
-                              // Don't send custom_template to ensure latest backend template is used
-                              custom_template: null,
+                              custom_template: contractTemplate || null,
                               template_settings: templateSettings
                             });
                             
