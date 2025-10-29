@@ -2317,7 +2317,7 @@ class ContractTestSuite:
             ("Ukrainian Characters in PDFs", self.test_ukrainian_characters_in_pdfs),
             ("VAT Exemption Marking", self.test_vat_exemption_marking),
             ("Google Drive Integration", self.test_specific_google_drive_scenario),
-            ("Based on Order Functionality", self.test_based_on_order_functionality),
+            ("Contract Creation Based on Orders", self.test_contract_creation_based_on_orders),
             ("Custom Template Contract Generation", self.test_custom_template_contract_generation),
             ("Backend Logs Unicode Check", self.check_backend_logs_for_unicode_errors),
         ]
