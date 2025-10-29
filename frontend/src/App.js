@@ -552,7 +552,7 @@ function App() {
     const savedSettings = localStorage.getItem('contractTemplateSettings');
     
     // Current template version
-    const CURRENT_VERSION = '5.0';
+    const CURRENT_VERSION = '5.1';  // Updated to force template reload with amount in words
     
     // Check if saved template exists and version matches
     if (savedTemplate && savedVersion === CURRENT_VERSION) {
