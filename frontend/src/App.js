@@ -3296,14 +3296,20 @@ function App() {
                         title="Попередній перегляд документу"
                         allow="autoplay"
                       />
+                    ) : documentPdfData.is_blob && documentPdfData.drive_view_link ? (
+                      // Blob URL - show directly in iframe
+                      <iframe
+                        src={documentPdfData.drive_view_link}
+                        style={{width: '100%', height: '100%', border: 'none'}}
+                        title="Попередній перегляд документу"
+                      />
                     ) : documentPdfData.drive_view_link ? (
-                      // Local PDF - show message with open button
+                      // Local PDF - show message with open button (fallback)
                       <div className="flex flex-col items-center justify-center h-full text-gray-500 space-y-4 p-6">
                         <FileText className="w-20 h-20 text-blue-500" />
                         <p className="text-xl font-semibold text-gray-800">PDF згенеровано успішно!</p>
                         <p className="text-sm text-gray-600 text-center">
-                          PDF було відкрито в новій вкладці.<br/>
-                          Якщо вікно не відкрилось, натисніть кнопку нижче.
+                          Натисніть кнопку нижче щоб відкрити PDF
                         </p>
                         <Button
                           onClick={() => window.open(documentPdfData.drive_view_link, '_blank')}
