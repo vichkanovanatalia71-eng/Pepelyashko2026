@@ -296,7 +296,7 @@ function App() {
   // Contract from orders
   const [contractBasedOnOrder, setContractBasedOnOrder] = useState(false);
   const [contractAvailableOrders, setContractAvailableOrders] = useState([]);
-  const [contractSelectedOrder, setContractSelectedOrder] = useState('');
+  const [contractSelectedOrders, setContractSelectedOrders] = useState([]);  // Changed to array for multiple selection
   
   const [relatedDocuments, setRelatedDocuments] = useState({
     invoices: [],
