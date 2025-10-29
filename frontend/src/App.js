@@ -1232,6 +1232,24 @@ function App() {
     }
   };
   
+  // Invoice template functions
+  const saveInvoiceTemplate = () => {
+    localStorage.setItem('invoiceTemplate', invoiceTemplate);
+    localStorage.setItem('invoiceTemplateVersion', '1.0');
+    toast.success('Шаблон рахунку збережено!');
+    setShowInvoiceTemplateEditor(false);
+  };
+  
+  const resetInvoiceTemplate = () => {
+    if (window.confirm('Ви впевнені що хочете скинути шаблон до стандартного?')) {
+      localStorage.removeItem('invoiceTemplate');
+      localStorage.removeItem('invoiceTemplateVersion');
+      setInvoiceTemplate('');
+      loadInvoiceTemplate();
+      toast.success('Шаблон рахунку скинуто до стандартного!');
+    }
+  };
+  
   const searchAndViewCounterparty = async () => {
     if (!searchCounterpartyEdrpou) {
       toast.error('Введіть код ЄДРПОУ');
