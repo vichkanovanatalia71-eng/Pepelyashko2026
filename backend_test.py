@@ -1536,7 +1536,10 @@ class ContractTestSuite:
             logger.info("✅ PDF файли створюються з українськими символами")
             logger.info("✅ based_on_order правильно зберігається та передається")
             logger.info("✅ Зв'язок між замовленням і договором працює")
-            logger.info("✅ Google Drive інтеграція працює (drive_file_id, drive_view_link заповнені)")
+            if empty_drive_fields:
+                logger.info("⚠️  Google Drive інтеграція не працює (очікувано в тестовому середовищі)")
+            else:
+                logger.info("✅ Google Drive інтеграція працює (drive_file_id, drive_view_link заповнені)")
             
             logger.info("=" * 60)
             logger.info("РЕЗУЛЬТАТИ ТЕСТУВАННЯ:")
