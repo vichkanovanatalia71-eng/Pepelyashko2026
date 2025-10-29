@@ -3307,28 +3307,17 @@ function App() {
                       )
                     ) : (
                       <div className="flex flex-col items-center justify-center h-full text-gray-500 space-y-4">
-                        <Loader2 className="w-12 h-12 animate-spin text-blue-500" />
-                        <p className="text-lg">PDF генерується...</p>
-                        <p className="text-sm text-gray-500">Зачекайте кілька секунд, або оновіть перегляд</p>
+                        <FileText className="w-16 h-16 text-blue-500" />
+                        <p className="text-lg font-semibold">PDF готовий до перегляду</p>
+                        <p className="text-sm text-gray-500">Натисніть кнопку нижче щоб відкрити PDF</p>
                         <Button
-                          onClick={() => {
-                            setShowDocumentPreview(false);
-                            if (selectedCounterparty?.edrpou) {
-                              refreshCounterpartyDocuments();
-                            }
-                            toast.info('Оновлюємо список документів...');
-                            setTimeout(() => {
-                              setShowDocumentPreview(true);
-                            }, 500);
-                          }}
-                        variant="outline"
-                        size="sm"
-                        className="mt-4"
-                      >
-                        <RefreshCw className="w-4 h-4 mr-2" />
-                        Оновити перегляд
-                      </Button>
-                    </div>
+                          onClick={() => window.open(documentPdfData.drive_view_link, '_blank')}
+                          className="bg-blue-500 text-white hover:bg-blue-600"
+                        >
+                          <FileText className="w-4 h-4 mr-2" />
+                          Відкрити PDF у новій вкладці
+                        </Button>
+                      </div>
                   )}
                 </div>
                 {documentPdfData.drive_view_link && (
