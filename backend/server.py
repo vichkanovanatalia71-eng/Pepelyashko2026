@@ -118,6 +118,8 @@ class DocumentCreate(BaseModel):
     items: List[DocumentItem] = Field(..., description="Список товарів/робіт")
     total_amount: float = Field(..., description="Загальна сума")
     based_on_order: Optional[str] = Field(None, description="Номер замовлення (якщо створено на основі замовлення)")
+    order_number: Optional[str] = Field(None, description="Номер замовлення (для регенерації існуючого)")
+    custom_template: Optional[str] = Field(None, description="Кастомний HTML шаблон")
 
 class ContractCreate(BaseModel):
     counterparty_edrpou: str = Field(..., description="ЄДРПОУ контрагента")
