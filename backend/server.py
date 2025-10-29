@@ -171,6 +171,13 @@ class ActFromOrdersRequest(BaseModel):
     contract_date: Optional[str] = Field(None, description="Дата договору (опціонально)")
     custom_template: Optional[str] = Field(None, description="Користувацький HTML шаблон")
 
+class InvoiceFromOrdersRequest(BaseModel):
+    counterparty_edrpou: str = Field(..., description="ЄДРПОУ контрагента")
+    order_numbers: List[str] = Field(..., description="Список номерів замовлень")
+    contract_number: Optional[str] = Field(None, description="Номер договору (опціонально)")
+    contract_date: Optional[str] = Field(None, description="Дата договору (опціонально)")
+    custom_template: Optional[str] = Field(None, description="Користувацький HTML шаблон")
+
 class Document(BaseModel):
     number: str
     date: str
