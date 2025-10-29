@@ -293,6 +293,11 @@ function App() {
   const [actAvailableContracts, setActAvailableContracts] = useState([]);
   const [actSelectedContract, setActSelectedContract] = useState('');
   
+  // Contract from orders
+  const [contractBasedOnOrder, setContractBasedOnOrder] = useState(false);
+  const [contractAvailableOrders, setContractAvailableOrders] = useState([]);
+  const [contractSelectedOrder, setContractSelectedOrder] = useState('');
+  
   const [relatedDocuments, setRelatedDocuments] = useState({
     invoices: [],
     acts: [],
