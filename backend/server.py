@@ -839,6 +839,34 @@ async def get_contracts():
         logging.error(f"Error getting contracts: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
+@api_router.get("/contracts/pdf/{contract_number}")
+async def get_contract_pdf(contract_number: str):
+    """Serve contract PDF file for preview."""
+    try:
+        # Find PDF file in generated_contracts directory
+        pdf_dir = Path('/app/backend/generated_contracts')
+        
+        # Look for PDF with this contract number
+        pdf_files = list(pdf_dir.glob(f"Договір_{contract_number}_*.pdf"))
+        
+        if not pdf_files:
+            raise HTTPException(status_code=404, detail=f"PDF для договору {contract_number} не знайдено")
+        
+        # Return the most recent file
+        pdf_file = sorted(pdf_files, key=lambda f: f.stat().st_mtime, reverse=True)[0]
+        
+        return FileResponse(
+            path=str(pdf_file),
+            media_type='application/pdf',
+            filename=pdf_file.name
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error serving contract PDF: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
 @api_router.post("/contracts/generate-pdf")
 async def generate_contract_pdf(data: ContractGenerateRequest):
     """Generate PDF contract and upload to Google Drive."""
