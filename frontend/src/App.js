@@ -1391,10 +1391,12 @@ function App() {
           <td><b>Всього з ПДВ:</b></td>
           <td class="num"><b><span class="mono">{{total_gross}}</span></b></td>
         </tr>
-        <tr>
-          <td colspan="2" style="padding-top:8px;white-space:nowrap"><b>Всього до сплати:</b> {{total_amount_text}} {{vat_note}}</td>
-        </tr>
       </table>
+    </div>
+
+    <!-- Всього до сплати окремо праворуч -->
+    <div class="payment-total">
+      <b>Всього до сплати:</b> {{total_amount_text}} {{vat_note}}
     </div>
 
     <!-- Підпис -->
