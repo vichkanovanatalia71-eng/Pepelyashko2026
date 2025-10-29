@@ -1222,7 +1222,7 @@ function App() {
     const savedVersion = localStorage.getItem('invoiceTemplateVersion');
     
     // Current template version - UPDATED to force reload
-    const CURRENT_VERSION = '3.0';
+    const CURRENT_VERSION = '4.0';
     
     // Check if saved template exists and version matches
     if (savedTemplate && savedVersion === CURRENT_VERSION) {
