@@ -188,16 +188,26 @@ class ActService:
             
             logger.info(f"Act PDF generated: {filename}")
             
-            # 15. Upload to Google Drive
-            upload_result = self.drive_service.upload_file(
-                file_path=str(filepath),
-                folder_name='Акти',
-                custom_name=filename
-            )
-            drive_file_id = upload_result.get('id', '')
+            # 15. Upload to Google Drive (if available)
+            drive_file_id = ''
+            drive_view_link = ''
+            drive_download_link = ''
             
-            drive_view_link = f"https://drive.google.com/file/d/{drive_file_id}/view"
-            drive_download_link = f"https://drive.google.com/uc?export=download&id={drive_file_id}"
+            if self.drive_service:
+                try:
+                    upload_result = self.drive_service.upload_file(
+                        file_path=str(filepath),
+                        folder_name='Акти',
+                        custom_name=filename
+                    )
+                    drive_file_id = upload_result.get('id', '')
+                    drive_view_link = f"https://drive.google.com/file/d/{drive_file_id}/view"
+                    drive_download_link = f"https://drive.google.com/uc?export=download&id={drive_file_id}"
+                    logger.info(f"Act uploaded to Google Drive: {drive_file_id}")
+                except Exception as drive_error:
+                    logger.warning(f"Failed to upload to Google Drive: {str(drive_error)}")
+            else:
+                logger.info("Google Drive service not available, skipping upload")
             
             # 16. Save to Google Sheets
             act_record = {
