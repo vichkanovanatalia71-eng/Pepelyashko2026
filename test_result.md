@@ -510,7 +510,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "JavaScript Error Fix - MutationRecord attributeName"
+    - "Contract Creation Based on Order"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
