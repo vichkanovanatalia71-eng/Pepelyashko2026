@@ -3747,6 +3747,13 @@ function App() {
                       
                       console.log('selectedOrderData:', selectedOrderData);
                       
+                      // Validate order_number exists
+                      if (!selectedOrderData.order_number) {
+                        toast.error('Некоректний номер замовлення. Спробуйте ще раз.');
+                        setLoading(false);
+                        return;
+                      }
+                      
                       // Validate and convert amount to number
                       const totalAmount = parseFloat(selectedOrderData.total_amount) || 0;
                       
@@ -3765,12 +3772,12 @@ function App() {
                       
                       const payload = {
                         counterparty_edrpou: selectedOrderData.counterparty_edrpou,
-                        subject: `Постачання товарів згідно замовлення №${selectedOrderData.order_number}`,
+                        subject: `Постачання товарів згідно замовлення №${selectedOrderData.order_number || 'НОВИЙ'}`,
                         items: [],
                         total_amount: totalAmount,
                         total_amount_text: amountText,
                         vat_note: 'без ПДВ',
-                        based_on_order: selectedOrderData.order_number
+                        based_on_order: selectedOrderData.order_number || null
                       };
                       
                       console.log('Contract payload:', payload);
