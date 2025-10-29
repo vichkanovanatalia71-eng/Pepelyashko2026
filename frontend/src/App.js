@@ -3456,9 +3456,10 @@ function App() {
                   <div className="border-2 border-gray-300 rounded-lg overflow-hidden bg-gray-100" style={{height: '500px'}}>
                     {contractPdfData.drive_view_link ? (
                       contractPdfData.is_blob ? (
-                        <iframe
+                        <embed
                           src={contractPdfData.drive_view_link}
-                          style={{width: '100%', height: '100%', border: 'none'}}
+                          type="application/pdf"
+                          style={{width: '100%', height: '100%'}}
                           title="Попередній перегляд договору"
                         />
                       ) : (
