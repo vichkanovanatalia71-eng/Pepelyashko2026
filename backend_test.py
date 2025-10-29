@@ -1552,7 +1552,10 @@ class ContractTestSuite:
             logger.info(f"✅ based_on_order зберігається: {order_number}")
             logger.info(f"✅ Зв'язок договору з замовленням працює")
             logger.info(f"✅ Обидва договори присутні в списку")
-            logger.info(f"✅ Google Drive інтеграція працює")
+            if empty_drive_fields:
+                logger.info(f"⚠️  Google Drive інтеграція не працює (очікувано в тестовому середовищі)")
+            else:
+                logger.info(f"✅ Google Drive інтеграція працює")
             
             # Store results for summary
             self.based_on_order_results = {
