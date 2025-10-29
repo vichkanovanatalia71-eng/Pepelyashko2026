@@ -1303,8 +1303,8 @@ function App() {
         counterparty_edrpou: actCounterpartyEdrpou,
         order_numbers: actSelectedOrders,
         contract_number: contractNumber || null,
-        contract_date: contractDate || null,
-        custom_template: actTemplate || null
+        contract_date: contractDate || null
+        // НЕ передаємо custom_template - використовуємо дефолтний з backend
       };
       
       const response = await axios.post(`${API}/acts/generate-from-orders`, payload);
