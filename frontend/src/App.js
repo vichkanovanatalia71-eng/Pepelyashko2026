@@ -1413,60 +1413,56 @@ function App() {
       return;
     }
     
-    if (!contractSelectedOrder) {
-      toast.error('Оберіть замовлення');
+    if (contractSelectedOrders.length === 0) {
+      toast.error('Оберіть хоча б одне замовлення');
       return;
     }
     
     setLoading(true);
     try {
-      // Find selected order data
-      const selectedOrder = contractAvailableOrders.find(o => o.number === contractSelectedOrder);
+      // Calculate total amount and combine items from selected orders
+      const selectedOrdersData = contractAvailableOrders.filter(o => contractSelectedOrders.includes(o.number));
       
-      if (!selectedOrder) {
-        toast.error('Замовлення не знайдено');
+      if (selectedOrdersData.length === 0) {
+        toast.error('Обрані замовлення не знайдені');
         setLoading(false);
         return;
       }
       
+      const totalAmount = selectedOrdersData.reduce((sum, order) => sum + (order.total_amount || 0), 0);
+      const allItems = selectedOrdersData.flatMap(order => order.items || []);
+      
       const payload = {
         counterparty_edrpou: searchEdrpou,
-        subject: contractForm.subject || `Договір на основі замовлення №${contractSelectedOrder}`,
-        items: selectedOrder.items || [],
-        total_amount: contractForm.amount || selectedOrder.total_amount || 0,
+        subject: contractForm.subject || `Договір на основі замовлень: ${contractSelectedOrders.join(', ')}`,
+        items: allItems,
+        total_amount: contractForm.amount || totalAmount,
         custom_template: contractTemplate || null,
         template_settings: templateSettings,
-        based_on_order: contractSelectedOrder
+        order_numbers: contractSelectedOrders  // Send multiple order numbers
       };
       
       const pdfResponse = await axios.post(`${API}/contracts/generate-pdf`, payload);
       
       if (pdfResponse.data.success) {
-        // If no drive_file_id, fetch PDF as blob from local storage
-        if (!pdfResponse.data.drive_file_id || pdfResponse.data.drive_file_id === '') {
-          try {
-            const contractNumber = pdfResponse.data.contract_number;
-            const localPdfUrl = `${API}/contracts/pdf/${contractNumber}`;
-            
-            const pdfBlob = await axios.get(localPdfUrl, { responseType: 'blob' });
-            const blobUrl = URL.createObjectURL(pdfBlob.data);
-            
-            setContractPdfData({
-              drive_view_link: blobUrl,
-              drive_download_link: localPdfUrl,
-              drive_file_id: '',
-              contract_number: contractNumber,
-              is_blob: true,
-              counterpartyEmail: foundCounterparty?.email || ''
-            });
-          } catch (blobError) {
-            console.error('Error loading contract PDF blob:', blobError);
-            setContractPdfData({
-              ...pdfResponse.data,
-              counterpartyEmail: foundCounterparty?.email || ''
-            });
-          }
-        } else {
+        // Fetch PDF as blob from local storage
+        try {
+          const contractNumber = pdfResponse.data.contract_number;
+          const localPdfUrl = `${API}/contracts/pdf/${contractNumber}`;
+          
+          const pdfBlob = await axios.get(localPdfUrl, { responseType: 'blob' });
+          const blobUrl = URL.createObjectURL(pdfBlob.data);
+          
+          setContractPdfData({
+            drive_view_link: blobUrl,
+            drive_download_link: localPdfUrl,
+            drive_file_id: '',
+            contract_number: contractNumber,
+            is_blob: true,
+            counterpartyEmail: foundCounterparty?.email || ''
+          });
+        } catch (blobError) {
+          console.error('Error loading contract PDF blob:', blobError);
           setContractPdfData({
             ...pdfResponse.data,
             counterpartyEmail: foundCounterparty?.email || ''
@@ -1481,7 +1477,7 @@ function App() {
         
         setTimeout(() => {
           setShowContractPreview(true);
-          toast.success('Договір успішно згенеровано на основі замовлення!');
+          toast.success('Договір успішно згенеровано на основі замовлень!');
           fetchAllDocuments();
           
           // Reset
@@ -1494,7 +1490,7 @@ function App() {
           setFoundCounterparty(null);
           setContractBasedOnOrder(false);
           setContractAvailableOrders([]);
-          setContractSelectedOrder('');
+          setContractSelectedOrders([]);
         }, 100);
       }
     } catch (error) {
