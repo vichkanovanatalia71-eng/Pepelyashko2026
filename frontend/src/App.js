@@ -3306,17 +3306,24 @@ function App() {
                         />
                       )
                     ) : (
-                      <div className="flex flex-col items-center justify-center h-full text-gray-500 space-y-4">
-                        <FileText className="w-16 h-16 text-blue-500" />
-                        <p className="text-lg font-semibold">PDF готовий до перегляду</p>
-                        <p className="text-sm text-gray-500">Натисніть кнопку нижче щоб відкрити PDF</p>
+                      <div className="flex flex-col items-center justify-center h-full text-gray-500 space-y-4 p-6">
+                        <FileText className="w-20 h-20 text-blue-500" />
+                        <p className="text-xl font-semibold text-gray-800">PDF згенеровано успішно!</p>
+                        <p className="text-sm text-gray-600 text-center">
+                          PDF було відкрито в новій вкладці.<br/>
+                          Якщо вікно не відкрилось, натисніть кнопку нижче.
+                        </p>
                         <Button
                           onClick={() => window.open(documentPdfData.drive_view_link, '_blank')}
-                          className="bg-blue-500 text-white hover:bg-blue-600"
+                          className="bg-blue-500 text-white hover:bg-blue-600 px-6 py-3"
+                          size="lg"
                         >
-                          <FileText className="w-4 h-4 mr-2" />
-                          Відкрити PDF у новій вкладці
+                          <FileText className="w-5 h-5 mr-2" />
+                          Відкрити PDF
                         </Button>
+                        <p className="text-xs text-gray-500 mt-4">
+                          Ви все ще можете надіслати PDF на email нижче
+                        </p>
                       </div>
                   )}
                 </div>
