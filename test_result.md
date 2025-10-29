@@ -514,7 +514,7 @@ frontend:
         agent: "main"
         comment: "BACKEND ДЛЯ РАХУНКІВ ЗАВЕРШЕНО: Створено invoice_service.py (аналогічний до act_service.py) з методом generate_invoice_from_orders. Створено invoice_template.html з базовим HTML шаблоном. Додано endpoint POST /api/invoices/generate-from-orders в server.py. Встановлено libpangoft2-1.0-0 для WeasyPrint. Backend успішно запущений. Функціонал аналогічний до актів: вибір замовлень, генерація PDF, завантаження на Google Drive, збереження в Google Sheets."
 
-  - task: "Invoice Template Final Adjustments"
+  - task: "Invoice Template - Three Blocks & Single Line"
     implemented: true
     working: "needs_testing"
     file: "/app/backend/invoice_template.html, /app/frontend/src/App.js"
@@ -524,12 +524,12 @@ frontend:
     status_history:
       - working: "needs_testing"
         agent: "main"
-        comment: "ФІНАЛЬНІ ВИПРАВЛЕННЯ ШАБЛОНУ РАХУНКУ: 1) Прибрано зовнішню рамку (border) навколо платіжного доручення. 2) Код, МФО та банк одержувача об'єднані в один рядок замість окремих клітинок. 3) Блок підстав (basis-box) замінено на простий текстовий рядок після даних покупця. 4) 'Всього до сплати' з сумою прописом перенесено в таблицю підсумків (colspan=2, на рівні з 'Всього з ПДВ'). 5) Прибрано кружечок для печатки та 'М.П.', залишено тільки підпис зліва. 6) Оновлено версію до 4.0 у backend та frontend. Всі сервіси перезапущені успішно."
+        comment: "ШАБЛОН РАХУНКУ ОСТАТОЧНО ДООПРАЦЬОВАНО: 1) 'Всього до сплати' тепер в один рядок за допомогою white-space:nowrap (запобігає розриву тексту). 2) Код, МФО та Банк одержувача розділені на три окремі блоки (клітинки) і розміщені в один рядок через payrow-split з flex. Кожен блок має свою власну рамку (border). 3) Оновлено версію до 5.0 у backend та frontend. Всі сервіси перезапущені успішно."
 
 metadata:
   created_by: "main_agent"
-  version: "15.0"
-  test_sequence: 15
+  version: "16.0"
+  test_sequence: 16
   run_ui: false
 
 test_plan:
