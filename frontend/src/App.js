@@ -1475,9 +1475,22 @@ function App() {
         counterparty_edrpou: searchEdrpou
       }));
       toast.success(`Знайдено: ${response.data.representative_name}`);
+      
+      // Fetch available orders for this counterparty (for contracts based on orders)
+      try {
+        const ordersResponse = await axios.get(`${API}/orders`);
+        const counterpartyOrders = ordersResponse.data.filter(
+          order => order.counterparty_edrpou === searchEdrpou
+        );
+        setContractAvailableOrders(counterpartyOrders);
+      } catch (ordersError) {
+        console.error('Error fetching orders:', ordersError);
+        setContractAvailableOrders([]);
+      }
     } catch (error) {
       toast.error('Контрагента не знайдено');
       setFoundCounterparty(null);
+      setContractAvailableOrders([]);
     }
   };
 
