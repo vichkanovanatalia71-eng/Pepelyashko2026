@@ -465,6 +465,17 @@ function App() {
   };
 
   useEffect(() => {
+    // Очистити старі шаблони акту при першому завантаженні
+    const actTemplateVersion = localStorage.getItem('actTemplateVersion');
+    const CURRENT_ACT_VERSION = '2.0'; // Нова версія з виправленнями
+    
+    if (actTemplateVersion !== CURRENT_ACT_VERSION) {
+      console.log('Clearing old act template from localStorage');
+      localStorage.removeItem('actTemplate');
+      localStorage.removeItem('actTemplateVersion');
+      localStorage.setItem('actTemplateVersion', CURRENT_ACT_VERSION);
+    }
+    
     fetchCounterparties();
     fetchAllDocuments();
     loadContractTemplate();
