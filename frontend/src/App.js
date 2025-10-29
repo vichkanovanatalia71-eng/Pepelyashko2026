@@ -3747,8 +3747,19 @@ function App() {
                       
                       console.log('selectedOrderData:', selectedOrderData);
                       
-                      // Convert amount to text
-                      const amountText = numberToUkrainianText(selectedOrderData.total_amount);
+                      // Validate and convert amount to number
+                      const totalAmount = parseFloat(selectedOrderData.total_amount) || 0;
+                      
+                      // Convert amount to text (only if valid)
+                      let amountText = '';
+                      if (totalAmount > 0) {
+                        try {
+                          amountText = numberToUkrainianText(totalAmount);
+                        } catch (error) {
+                          console.error('Error converting amount to text:', error);
+                          amountText = `${totalAmount} грн`;
+                        }
+                      }
                       
                       console.log('amountText:', amountText);
                       
@@ -3756,7 +3767,7 @@ function App() {
                         counterparty_edrpou: selectedOrderData.counterparty_edrpou,
                         subject: `Постачання товарів згідно замовлення №${selectedOrderData.order_number}`,
                         items: [],
-                        total_amount: selectedOrderData.total_amount,
+                        total_amount: totalAmount,
                         total_amount_text: amountText,
                         vat_note: 'без ПДВ',
                         based_on_order: selectedOrderData.order_number
