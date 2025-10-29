@@ -809,6 +809,11 @@ function App() {
 </html>`;
       
       setContractTemplate(defaultTemplate);
+      
+      // Save new template to localStorage with version 5.1
+      localStorage.setItem('contractTemplate', defaultTemplate);
+      localStorage.setItem('contractTemplateVersion', CURRENT_VERSION);
+      console.log('Loaded and saved new default contract template version 5.1');
     }
     
     if (savedSettings) {
