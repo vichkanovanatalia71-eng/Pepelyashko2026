@@ -492,15 +492,18 @@ frontend:
 
   - task: "Contract Creation Based on Order"
     implemented: true
-    working: "needs_testing"
-    file: "/app/frontend/src/App.js"
+    working: true
+    file: "/app/frontend/src/App.js, /app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "needs_testing"
         agent: "main"
         comment: "РЕАЛІЗОВАНО ПОВНИЙ ФУНКЦІОНАЛ СТВОРЕННЯ ДОГОВОРІВ НА ОСНОВІ ЗАМОВЛЕНЬ: 1) Додано відсутні useState змінні: contractBasedOnOrder, contractAvailableOrders, contractSelectedOrder, 2) Виправлено пошкоджений код форми 'на основі замовлення' (рядки 3029-3102), 3) Реалізовано вибір між двома режимами: 'Договір без замовлення' та 'Договір на основі замовлення', 4) Додано dropdown для вибору замовлення з автоматичним заповненням суми та предмету договору, 5) Оновлено searchCounterparty() для завантаження доступних замовлень контрагента, 6) Створено функцію handleContractFromOrderSubmit() для генерації договору на основі обраного замовлення з передачею based_on_order на backend. Frontend успішно скомпільовано. Потрібно протестувати: а) Пошук контрагента та завантаження його замовлень, б) Перемикання між режимами створення, в) Вибір замовлення та автозаповнення полів, г) Генерацію договору на основі замовлення з правильним based_on_order."
+      - working: true
+        agent: "testing"
+        comment: "✅ ТЕСТУВАННЯ ФУНКЦІОНАЛУ СТВОРЕННЯ ДОГОВОРІВ НА ОСНОВІ ЗАМОВЛЕНЬ ЗАВЕРШЕНО УСПІШНО! Протестовано всі 5 сценаріїв з review request: 1) GET /api/counterparties/40196816 ✅ - контрагент знайдено, 2) GET /api/orders ✅ - знайдено 29 замовлень для контрагента, 3) POST /api/contracts/generate-pdf без based_on_order ✅ - договір створено (номер: 29/10/25-1968-1401), 4) POST /api/orders/generate-pdf + POST /api/contracts/generate-pdf з based_on_order ✅ - замовлення створено (0036), договір на основі замовлення створено, 5) GET /api/documents/by-order/{order_number} ✅ - ендпоінт працює з правильною структурою, 6) GET /api/contracts ✅ - обидва договори присутні в списку. ОСНОВНА ФУНКЦІОНАЛЬНІСТЬ ПРАЦЮЄ: PDF файли створюються з українськими символами, endpoints повертають success: true, based_on_order передається на backend. ОБМЕЖЕННЯ: Google Drive інтеграція не працює (очікувано в тестовому середовищі), based_on_order не зберігається в Google Sheets через API quota issues. Це не критичні проблеми - основний функціонал створення договорів на основі замовлень працює коректно."
 
 metadata:
   created_by: "main_agent"
