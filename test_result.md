@@ -514,7 +514,7 @@ frontend:
         agent: "main"
         comment: "BACKEND ДЛЯ РАХУНКІВ ЗАВЕРШЕНО: Створено invoice_service.py (аналогічний до act_service.py) з методом generate_invoice_from_orders. Створено invoice_template.html з базовим HTML шаблоном. Додано endpoint POST /api/invoices/generate-from-orders в server.py. Встановлено libpangoft2-1.0-0 для WeasyPrint. Backend успішно запущений. Функціонал аналогічний до актів: вибір замовлень, генерація PDF, завантаження на Google Drive, збереження в Google Sheets."
 
-  - task: "Invoice Template - Table Centered"
+  - task: "Invoice Template - Center Table & Right Align Payment"
     implemented: true
     working: "needs_testing"
     file: "/app/backend/invoice_template.html, /app/frontend/src/App.js"
@@ -524,12 +524,12 @@ frontend:
     status_history:
       - working: "needs_testing"
         agent: "main"
-        comment: "ЦЕНТРУВАННЯ ТАБЛИЦІ З ПОЗИЦІЯМИ: Таблиця з товарами (items) тепер центрована відносно всього документа, ігноруючи відступ справа. Додано margin-left:-1.5cm, margin-right:-1.5cm, width:calc(100% + 3cm) для компенсації різних відступів ліворуч (3cm) та праворуч (1.5cm) сторінки. Таблиця виходить за межі .wrap контейнера і вирівнюється по центру аркуша. Оновлено версію до 7.0 у backend та frontend. Всі сервіси перезапущені успішно."
+        comment: "ЦЕНТРУВАННЯ ТАБЛИЦІ ТА ВИРІВНЮВАННЯ 'ВСЬОГО ДО СПЛАТИ': 1) Виправлено центрування таблиці - прибрано негативні відступи, додано margin:10px auto для правильного центрування в межах .wrap контейнера. 2) 'Всього до сплати' винесено з таблиці підсумків в окремий блок .payment-total з text-align:right. Тепер сума прописом розташована праворуч окремо від підсумків. Оновлено версію до 8.0 у backend та frontend. Всі сервіси перезапущені успішно."
 
 metadata:
   created_by: "main_agent"
-  version: "18.0"
-  test_sequence: 18
+  version: "19.0"
+  test_sequence: 19
   run_ui: false
 
 test_plan:
