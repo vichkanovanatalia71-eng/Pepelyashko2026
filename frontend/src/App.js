@@ -3105,14 +3105,22 @@ function App() {
                           setLoading(true);
                           
                           try {
-                            const pdfResponse = await axios.post(`${API}/contracts/generate-pdf`, {
+                            const payload = {
                               counterparty_edrpou: searchEdrpou,
                               subject: contractForm.subject,
                               items: [],
                               total_amount: contractForm.amount || 0,
                               custom_template: contractTemplate || null,
                               template_settings: templateSettings
+                            };
+                            
+                            console.log('Creating contract with payload:', {
+                              total_amount: payload.total_amount,
+                              subject: payload.subject,
+                              has_template: !!payload.custom_template
                             });
+                            
+                            const pdfResponse = await axios.post(`${API}/contracts/generate-pdf`, payload);
                             
                             if (pdfResponse.data.success) {
                               // If no drive_file_id, fetch PDF as blob from local storage
