@@ -1421,7 +1421,7 @@ function App() {
   // Invoice template functions
   const saveInvoiceTemplate = () => {
     localStorage.setItem('invoiceTemplate', invoiceTemplate);
-    localStorage.setItem('invoiceTemplateVersion', '1.0');
+    localStorage.setItem('invoiceTemplateVersion', '2.0');
     toast.success('Шаблон рахунку збережено!');
     setShowInvoiceTemplateEditor(false);
   };
