@@ -3055,10 +3055,37 @@ function App() {
                             });
                             
                             if (pdfResponse.data.success) {
-                              setContractPdfData({
-                                ...pdfResponse.data,
-                                counterpartyEmail: foundCounterparty?.email || ''
-                              });
+                              // If no drive_file_id, fetch PDF as blob from local storage
+                              if (!pdfResponse.data.drive_file_id || pdfResponse.data.drive_file_id === '') {
+                                try {
+                                  const contractNumber = pdfResponse.data.contract_number;
+                                  const localPdfUrl = `${API}/contracts/pdf/${contractNumber}`;
+                                  
+                                  const pdfBlob = await axios.get(localPdfUrl, { responseType: 'blob' });
+                                  const blobUrl = URL.createObjectURL(pdfBlob.data);
+                                  
+                                  setContractPdfData({
+                                    drive_view_link: blobUrl,
+                                    drive_download_link: localPdfUrl,
+                                    drive_file_id: '',
+                                    contract_number: contractNumber,
+                                    is_blob: true,
+                                    counterpartyEmail: foundCounterparty?.email || ''
+                                  });
+                                } catch (blobError) {
+                                  console.error('Error loading contract PDF blob:', blobError);
+                                  setContractPdfData({
+                                    ...pdfResponse.data,
+                                    counterpartyEmail: foundCounterparty?.email || ''
+                                  });
+                                }
+                              } else {
+                                setContractPdfData({
+                                  ...pdfResponse.data,
+                                  counterpartyEmail: foundCounterparty?.email || ''
+                                });
+                              }
+                              
                               setContractEmailForm({
                                 recipient: 'counterparty',
                                 customEmail: '',
