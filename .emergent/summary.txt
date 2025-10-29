@@ -1,91 +1,99 @@
 <analysis>
-The AI engineer's work followed a phased approach, initially expanding the application with an Orders functionality, integrating it with Google Sheets/Drive, and developing a dedicated template editor. A critical bug related to  not displaying related documents in order details was identified and fixed by correcting Google Sheets column headers and backend logic. Subsequently, the engineer implemented order PDF preview with email functionality and resolved a non-functional Refresh button in the orders list. The latest major feature involved implementing Acts of Provided Services, including backend services, a template editor, and a new frontend UI for selecting counterparties, contracts (optional), and multiple orders for act generation. This phase involved extensive debugging of backend service calls (e.g., , ,  arguments) and persistent  errors, which intermittently hinder full functional testing. The UI layout for the act template editor button was also refined based on user feedback.
+The AI engineer's work revolved around significantly enhancing the Contracts tab functionality, specifically addressing user requests for a multi-step UI mirroring the Acts tab (allowing creation with or without an order), accurate PDF preview, and correct rendering of monetary amounts in Ukrainian words. The initial phase involved restructuring the frontend UI in  to support conditional rendering based on contract creation mode, managing new state variables like , and implementing logic for selecting multiple orders.
+
+A major challenge was ensuring correct PDF previews, which initially failed due to local PDF handling and URL parsing issues (slashes in contract numbers). This led to modifications in both frontend (fetching blobs, dynamically creating URLs) and backend ( to correctly handle PDF paths and  for file naming). Subsequent issues focused on the  feature, requiring the  function to be integrated into  and the  to be updated. Persistent problems with old templates appearing in generated PDFs were traced to  caching, necessitating aggressive cache clearing and versioning in . Finally, a critical backend fix was implemented in  and  to correctly process  and  when  was not provided or  were empty, ensuring amounts were correctly displayed for all contract types.
 </analysis>
 
 <product_requirements>
-The application manages business documents. Initial features include: Counterparty management via Google Sheets, creation of Invoices, Acts, Waybills, Specifications, and customizable Contracts with HTML/CSS PDF generation, preview, email, download, Google Drive storage (specific folder/naming), correct Ukrainian character rendering, and a sophisticated frontend editor. Documents use  for contracts and  for orders. UI/UX emphasizes a blue theme, yellow/orange accents, Montserrat font, rounded cards, and clean forms.
+The application serves as a business document management system managing Counterparties via Google Sheets and enabling the creation of various documents like Invoices, Acts, Waybills, Specifications, and Contracts. Key functionalities include HTML/CSS based PDF generation, document preview, email distribution, download options, Google Drive integration for storage, and support for Ukrainian character rendering. The system also includes a sophisticated frontend template editor and adheres to specific document numbering formats. The UI features a blue theme with yellow/orange accents, Montserrat font, rounded cards, and clean forms.
 
-**Recent Developments (Orders & Acts):**
-The Orders feature added a central tab for Замовлення, enabling PDF creation with a template editor, Google Sheets integration, and the ability to generate other documents (Invoices, Acts, Waybills, Contracts) directly from an order. Order details now display related documents. The Acts feature requires:
-1.  Creation of Acts of Provided Services.
-2.  Selection of a counterparty.
-3.  Fetching and display of all orders linked to the selected counterparty.
-4.  Option to create an Act with or without a contract.
-5.  Selection of one or multiple orders for act creation.
-6.  Data for the act to be sourced from counterparty's Основні дані, supplier's Мої дані, and selected contract/orders.
-7.  ,  from chosen contract, ,  as comma-separated from chosen orders.
-8.  Act generation should not modify existing acts.
-9.  An Act template editor with full functionality (save, reset, variables) similar to contract/order editors.
-10. Placement of the Act template editor button on the Acts tab, at the top right before the main form title.
+**Recent Features & Focus:**
+*   **Orders (Замовлення):** Central tab for PDF creation, template editing, Google Sheets integration, and generating other documents from an order. Displays related documents within order details.
+*   **Acts (Акти):** Functionality to create Acts of Provided Services, including counterparty selection, linking to multiple orders, creating with or without a contract, data sourcing from various sheets, and a template editor.
+*   **Contracts (Договори):**
+    *   Implement a multi-step UI to choose between creating a contract based on an order or without an order, similar to the Acts tab.
+    *   Allow selection of multiple orders when creating a contract based on orders.
+    *   Ensure generated contract PDFs display correctly in a preview dialog, similar to Acts, with an Open in new tab button.
+    *   Correctly render the contract's total amount in Ukrainian words within the PDF, including 00 копійок, без ПДВ (or corresponding kopecks).
+    *   Ensure the system uses the latest template version for contract generation, including user-adapted templates from the editor, without issues from browser caching (e.g., ).
+    *   Address issues where the total amount and its word representation were not correctly populating for contracts created without orders.
+
+**Implied Requirements & Fixes (Addressed Previously):**
+*   Google Sheets API quota issues (caching, credentials).
+*   Seamless PDF preview and download (local PDFs when Drive inaccessible).
+*   Correct document numbering on regeneration.
+*   Accurate counterparty emails in previews.
+*   Correct rendering of list numbering in templates.
+*   UI improvements like scrolling in dialogs.
 </product_requirements>
 
 <key_technical_concepts>
--   **Full-stack**: React (frontend), FastAPI (backend).
--   **Data/File Management**: Google Sheets API, Google Drive API.
--   **PDF Generation**:  (HTML/CSS), , , .
--   **Templating**: Handlebars ( for Python),  for frontend template saving.
--   **UI**: Tailwind CSS,  icons, React Hooks (, ),  components.
--   **Backend**: Pydantic for data validation, Python .
+-   **Full-stack Development**: React (frontend) and FastAPI (backend).
+-   **PDF Generation**:  for HTML/CSS to PDF conversion;  for Handlebars templating.
+-   **Data Management**: Google Sheets API (with in-memory caching), local PDF file serving.
+-   **Frontend State Management**: React Hooks (, ) for dynamic UI.
+-   **UI Components**: Tailwind CSS,  for modals, radio buttons, checkboxes, dropdowns.
+-   **API Communication**:  for HTTP requests,  for serving PDFs.
+-   **Templating**: Handlebars templates (e.g., ),  for template saving/versioning.
+-   **Localization**: Ukrainian language support for UI and number-to-words conversion.
+-   **Backend Data Models**: Pydantic models for API request/response validation.
 </key_technical_concepts>
 
 <code_architecture>
-The application follows a standard full-stack architecture with a React frontend and a FastAPI backend.
+The application utilizes a React frontend and a FastAPI backend, designed for modularity and scalability.
 
 
 
 -   ****:
-    -   **Importance**: Main FastAPI application handling API routes.
+    -   **Importance**: Core FastAPI application, handles API routing, and orchestration.
     -   **Changes**:
-        -   Added  Pydantic model and  endpoint.
-        -   Added  import and initialization.
-        -   Added  Pydantic model and  endpoint for act generation from orders.
+        -   Modified  endpoint to use a  parameter and normalize  (replacing  with ) to correctly handle contract numbers with special characters, resolving 404 errors for PDF files.
+        -   Updated  processing in  to automatically generate the amount in words if  is not provided in the request payload.
 -   ****:
-    -   **Importance**: Manages Google Sheets API interactions.
+    -   **Importance**: Contains business logic for contract generation, including PDF creation and data formatting.
     -   **Changes**:
-        -   Modified  to include  in  for , , , and .
-        -   Modified  to include  in  for .
-        -   Updated  and  to retrieve  data.
-        -   Updated  to handle  for .
+        -   Integrated  function (copied and adapted from ) to convert numerical amounts to Ukrainian words, ensuring correct grammar for currency and kopecks, including the phrase , без ПДВ.
+        -   Modified  to dynamically calculate  from  if  are empty (for contracts without orders), preventing sums from defaulting to zero.
+        -   Ensured  and  (as an alias) are correctly added to the template context.
+        -   Improved  to handle floating point precision issues for amounts like X.01.
 -   ****:
-    -   **Importance**: Service for generating order PDFs.
+    -   **Importance**: HTML template used for generating contract PDFs.
     -   **Changes**:
-        -   Added  method.
-        -   Updated  to include  and  in the template context.
--   ** (NEW)**:
-    -   **Importance**: New service dedicated to generating act PDFs from HTML templates based on orders.
-    -   **Changes**: Initial creation. Implements PDF generation using  and  for Handlebars templating. Includes logic to fetch supplier and counterparty data, order details, and pass them to the template. Corrected calls to  methods (, , ) and  arguments.
--   ** (NEW)**:
-    -   **Importance**: HTML template for act documents, provided by the user.
-    -   **Changes**: Initial creation based on user input, structured with Handlebars  for service items.
+        -   Updated section 7.1 to display the total amount as , replacing old  placeholders and removing redundant грн to prevent duplication.
 -   ****:
-    -   **Importance**: Main React component managing state, routing, and UI.
+    -   **Importance**: Main React component managing application state, routing, and UI rendering.
     -   **Changes**:
-        -   **Order Details/Email**: Modified Згенерувати PDF button in  to generate and open preview. Implemented email sending logic for orders in the preview dialog and added a Закрити button.
-        -   **Refresh Button (Orders)**: Added loading indicators, toast messages (success/error), and disabled state to the Оновити button in the orders list.
-        -   **Order Template Editor**: Updated  and  with new template structure for signatures.
-        -   **Act Template Editor**: Added states (, ), , ,  functions. Updated  to support act editor. Moved Редагувати шаблон акту button to the Акти tab, positioned at the top right.
-        -   **Act Creation UI**: Replaced existing  in Акти tab with a new multi-step UI including counterparty search, radio buttons for Акт без замовлення / Акт на основі замовлень, dropdown for contract selection, and a list of orders with checkboxes. Added  function to fetch relevant data. Updated  with the user-provided Handlebars HTML for acts. Corrected Тел.: to Тел..: in default act template string.
-        -   **Debugging**: Added  statements for debugging counterparty search.
+        -   **Contract UI Refactor**: Introduced  variables (, , ).
+        -   Implemented conditional rendering for the Contracts tab, allowing users to choose between create with order (multiple selection checkboxes) and create without order (direct form input).
+        -   **Order Integration**: Updated  to fetch available orders when a counterparty is found, populating .
+        -   **Multiple Order Selection**: Changed  from string to array, added  function (similar to ) to manage selected orders via checkboxes.
+        -   **PDF Preview**: Modified  (and  specifically for contracts) to fetch generated PDFs as blobs from new backend endpoints and display them in an  within the  dialog, mirroring the Acts tab's functionality.
+        -   Added an Open in new tab button to the PDF preview dialog for contracts.
+        -   **Template Management**: Implemented aggressive  clearing and versioning (updated  to '5.1') for  in  and  to ensure the latest default or user-edited template is always used, resolving issues with stale templates.
+        -   Ensured  is correctly saved to  with the updated version after being set.
+        -   Reverted changes that prevented  from being sent to the backend if empty, ensuring user-edited templates (or the default one) are always considered.
+        -   Added console logging for contract creation payload to aid debugging  issues.
 -   ****:
-    -   **Importance**: Lists Python dependencies.
-    -   **Changes**: Added .
--   ****:
-    -   **Importance**: Internal document for tracking test results and agent communication.
-    -   **Changes**: Updated multiple times to reflect task status, test outcomes, and agent communications.
+    -   **Importance**: Provides service logic for Acts, including  which was adapted for contracts.
+    -   **Changes**: (No direct changes, but  was referenced and adapted).
 </code_architecture>
 
 <pending_tasks>
--   Resolve the persistent  issue to enable full testing of the new Act creation flow, particularly counterparty and order fetching.
--   Implement or verify the frontend logic for initiating the actual Act PDF generation and saving/emailing based on user selections in the new Act creation UI.
+There are no pending tasks explicitly mentioned or inferred from the trajectory. All identified issues and user requests regarding contract creation (UI, multi-order selection, PDF preview, amount in words, template consistency) have been addressed and confirmed by the user.
 </pending_tasks>
 
 <current_work>
-Immediately before this summary request, the AI engineer was actively working on the Acts of Provided Services feature. The new frontend UI for Act creation was implemented, allowing users to search for counterparties, choose between creating an act with or without orders, select a contract, and pick multiple orders. However, the functionality was consistently blocked by a  error, preventing the successful search for counterparties and, consequently, the full testing of the act generation workflow through the UI.
+Immediately prior to this summary, the AI engineer successfully resolved all outstanding issues related to the Contracts tab, achieving full functionality and user satisfaction. The primary focus of the work concluded with fixing the display of the contract's total amount in Ukrainian words, especially for contracts created without orders, and ensuring template consistency.
 
-The latest task involved refining the UI/UX by repositioning the Редагувати шаблон акту (Edit act template) button. The user requested to move this button to the Акти (Acts) tab, specifically to the top-right corner before the Створення Акту Наданих Послуг (Creation of an Act of Provided Services) title. This button placement was successfully implemented and confirmed via screenshots. Despite this UI fix, the underlying issue of  remains, which is critical for verifying the new Act creation logic end-to-end. Debugging efforts (e.g., adding  in ) confirmed the 503 error from Google Sheets.
+This involved:
+1.  **Backend Logic for Amount in Words**: A critical fix was implemented in  to ensure that the  (amount in words) is automatically generated by the backend if not explicitly provided by the frontend in the request payload for contract generation.
+    
+2.  **Correct  Handling**: In , the logic for calculating  was adjusted to correctly use the  provided in the  payload, rather than recalculating it from potentially empty  list (which was causing the sum to be 0 for contracts created without orders).
+    
+3.  **Template Consistency**: All  caching issues for contract templates were resolved by robust versioning and aggressive clearing in . The default template now correctly uses  and  (or its alias ).
+4.  **Full Feature Set Confirmed**: The user explicitly confirmed супер, тепер все працює (super, now everything works), indicating all previously reported issues—including the multi-step UI for contracts, PDF preview, multi-order selection, and accurate amount in words with the specified trailing phrase—have been successfully implemented and verified.
 </current_work>
 
 <optional_next_step>
-Wait for the Google Sheets API quota to reset to allow full testing of the Act creation feature.
+None. The user has confirmed that everything works and all explicit requests have been addressed.
 </optional_next_step>
-
