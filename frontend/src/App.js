@@ -3178,45 +3178,56 @@ function App() {
                       {/* Форма на основі замовлення */}
                       {contractBasedOnOrder && (
                         <div className="space-y-4">
-                          {/* Select Order Dropdown */}
+                          {/* Select Orders with Checkboxes */}
                           <div className="space-y-3">
-                            <Label className="text-sm font-medium">Оберіть замовлення</Label>
+                            <Label className="text-sm font-medium">
+                              Крок 3: Оберіть замовлення ({contractSelectedOrders.length} обрано)
+                            </Label>
                             {contractAvailableOrders.length > 0 ? (
-                              <select
-                                value={contractSelectedOrder}
-                                onChange={(e) => {
-                                  const selectedOrderNum = e.target.value;
-                                  setContractSelectedOrder(selectedOrderNum);
-                                  
-                                  // Auto-fill contract data from selected order
-                                  const order = contractAvailableOrders.find(o => o.number === selectedOrderNum);
-                                  if (order) {
-                                    setContractForm({
-                                      subject: `Договір на основі замовлення №${order.number}`,
-                                      amount: order.total_amount || 0,
-                                      items: order.items || []
-                                    });
-                                  }
-                                }}
-                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                required
-                              >
-                                <option value="">-- Оберіть замовлення --</option>
+                              <div className="space-y-2 max-h-64 overflow-y-auto border border-gray-200 rounded-lg p-3">
                                 {contractAvailableOrders.map(order => (
-                                  <option key={order.number} value={order.number}>
-                                    Замовлення № {order.number} від {order.date} - {order.total_amount} грн
-                                  </option>
+                                  <div 
+                                    key={order.number}
+                                    className={`p-3 border rounded-lg cursor-pointer transition-all ${
+                                      contractSelectedOrders.includes(order.number)
+                                        ? 'border-blue-500 bg-blue-50'
+                                        : 'border-gray-200 hover:border-blue-300'
+                                    }`}
+                                    onClick={() => toggleContractOrder(order.number)}
+                                  >
+                                    <div className="flex items-start justify-between">
+                                      <div className="flex items-start space-x-3">
+                                        <input
+                                          type="checkbox"
+                                          checked={contractSelectedOrders.includes(order.number)}
+                                          onChange={() => toggleContractOrder(order.number)}
+                                          className="mt-1 w-4 h-4 text-blue-600"
+                                        />
+                                        <div>
+                                          <p className="text-sm font-medium text-gray-900">
+                                            Замовлення № {order.number}
+                                          </p>
+                                          <p className="text-xs text-gray-500">
+                                            Дата: {order.date} | Сума: {order.total_amount} грн
+                                          </p>
+                                          <p className="text-xs text-gray-600 mt-1">
+                                            Позицій: {order.items ? order.items.length : 0}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
                                 ))}
-                              </select>
+                              </div>
                             ) : (
-                              <p className="text-sm text-gray-500 p-3 bg-gray-50 rounded-lg">
+                              <p className="text-sm text-gray-500 p-3 bg-gray-50 rounded-lg text-center">
                                 Немає доступних замовлень для цього контрагента
                               </p>
                             )}
                           </div>
 
-                          {/* Contract Subject */}
-                          {contractSelectedOrder && (
+                          {/* Contract Subject and Amount - shown only when orders selected */}
+                          {contractSelectedOrders.length > 0 && (
                             <>
                               <div className="space-y-2">
                                 <Label>Предмет договору</Label>
@@ -3234,7 +3245,7 @@ function App() {
                                 <Label>Сума договору (грн)</Label>
                                 <Input
                                   type="number"
-                                  value={contractForm.amount}
+                                  value={contractForm.amount || contractAvailableOrders.filter(o => contractSelectedOrders.includes(o.number)).reduce((sum, o) => sum + (o.total_amount || 0), 0)}
                                   onChange={(e) => setContractForm({...contractForm, amount: parseFloat(e.target.value) || 0})}
                                   placeholder="0.00"
                                   required
@@ -3242,18 +3253,21 @@ function App() {
                                   min="0"
                                   step="0.01"
                                 />
+                                <p className="text-xs text-gray-500">
+                                  Загальна сума обраних замовлень: {contractAvailableOrders.filter(o => contractSelectedOrders.includes(o.number)).reduce((sum, o) => sum + (o.total_amount || 0), 0)} грн
+                                </p>
                               </div>
 
                               {/* Submit Button */}
                               <Button 
                                 onClick={handleContractFromOrderSubmit}
                                 className="w-full btn-primary" 
-                                disabled={loading}
+                                disabled={loading || contractSelectedOrders.length === 0}
                               >
                                 {loading ? (
                                   <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Створення...</>
                                 ) : (
-                                  'Створити договір на основі замовлення'
+                                  <><FileText className="w-4 h-4 mr-2" /> Створити договір на основі замовлень</>
                                 )}
                               </Button>
                             </>
