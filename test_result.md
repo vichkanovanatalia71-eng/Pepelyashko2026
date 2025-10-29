@@ -514,7 +514,7 @@ frontend:
         agent: "main"
         comment: "BACKEND ДЛЯ РАХУНКІВ ЗАВЕРШЕНО: Створено invoice_service.py (аналогічний до act_service.py) з методом generate_invoice_from_orders. Створено invoice_template.html з базовим HTML шаблоном. Додано endpoint POST /api/invoices/generate-from-orders в server.py. Встановлено libpangoft2-1.0-0 для WeasyPrint. Backend успішно запущений. Функціонал аналогічний до актів: вибір замовлень, генерація PDF, завантаження на Google Drive, збереження в Google Sheets."
 
-  - task: "Invoice Template Implementation - Custom HTML"
+  - task: "Invoice Template Improvements - Basis Block & Signature"
     implemented: true
     working: "needs_testing"
     file: "/app/backend/invoice_template.html, /app/frontend/src/App.js"
@@ -524,12 +524,12 @@ frontend:
     status_history:
       - working: "needs_testing"
         agent: "main"
-        comment: "НОВИЙ ШАБЛОН РАХУНКУ ІМПЛЕМЕНТОВАНО: Замінено базовий шаблон на користувацький HTML з розділом 'Платіжне доручення', модернізованим дизайном, покращеною типографікою та чистішою структурою. Оновлено backend (invoice_template.html) та frontend (loadInvoiceTemplate з версією 2.0). Шаблон використовує {{items_rows}} замість {{#each items}} для простішої обробки. Всі змінні правильно замінені з act_* на invoice_*. Сервіси перезапущені успішно."
+        comment: "ШАБЛОН РАХУНКУ ПОКРАЩЕНО: 1) Додано окремий блок 'ПІДСТАВА' з рамкою перед таблицею товарів (відображає договір і замовлення). 2) Зменшено розміри колонок таблиці та font-size до 11px для кращого вміщення на сторінку. 3) Виправлено 'всього до сплати' → 'Всього до сплати' (з великої). 4) Оновлено секцію підпису: додано 'Підпис:' зліва з лінією для підпису, 'М.П.' справа з круглою рамкою (80px діаметр) для печатки. 5) Оновлено версію шаблону до 3.0 у backend та frontend. Всі сервіси перезапущені успішно."
 
 metadata:
   created_by: "main_agent"
-  version: "13.0"
-  test_sequence: 13
+  version: "14.0"
+  test_sequence: 14
   run_ui: false
 
 test_plan:
