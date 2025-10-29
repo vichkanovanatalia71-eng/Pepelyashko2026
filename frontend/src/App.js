@@ -1843,6 +1843,132 @@ function App() {
         // Refresh documents
         fetchAllDocuments();
       }
+  
+  const handleInvoiceWithoutOrdersSubmit = async () => {
+    if (!invoiceFoundCounterparty) {
+      toast.error('Спочатку знайдіть контрагента');
+      return;
+    }
+    
+    if (invoiceManualForm.items.length === 0) {
+      toast.error('Додайте хоча б одну позицію');
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      const payload = {
+        counterparty_edrpou: invoiceCounterpartyEdrpou,
+        items: invoiceManualForm.items,
+        contract_number: invoiceManualForm.contract_number || null,
+        contract_date: invoiceManualForm.contract_date || null
+      };
+      
+      const response = await axios.post(`${API}/invoices/generate-without-orders`, payload);
+      
+      if (response.data.success) {
+        toast.success('Рахунок успішно згенеровано!');
+        
+        // Get counterparty email
+        let counterpartyEmail = invoiceFoundCounterparty?.email || '';
+        
+        // If no drive_file_id, fetch PDF as blob
+        if (!response.data.drive_file_id) {
+          try {
+            const invoiceNumber = response.data.invoice_number;
+            const localPdfUrl = `${API}/invoices/pdf/${invoiceNumber}`;
+            
+            const pdfResponse = await axios.get(localPdfUrl, { responseType: 'blob' });
+            const blobUrl = URL.createObjectURL(pdfResponse.data);
+            
+            setDocumentPdfData({
+              drive_view_link: blobUrl,
+              drive_download_link: localPdfUrl,
+              drive_file_id: '',
+              invoice_number: invoiceNumber,
+              is_blob: true
+            });
+          } catch (blobError) {
+            console.error('Error loading invoice PDF blob:', blobError);
+            setDocumentPdfData({
+              drive_view_link: response.data.drive_view_link,
+              drive_download_link: response.data.drive_download_link,
+              drive_file_id: response.data.drive_file_id,
+              pdf_filename: response.data.pdf_filename,
+              invoice_number: response.data.invoice_number
+            });
+          }
+        } else {
+          setDocumentPdfData({
+            drive_view_link: response.data.drive_view_link,
+            drive_download_link: response.data.drive_download_link,
+            drive_file_id: response.data.drive_file_id,
+            pdf_filename: response.data.pdf_filename,
+            invoice_number: response.data.invoice_number
+          });
+        }
+        
+        // Set email form with counterparty email
+        setDocumentEmailForm({
+          recipient: 'counterparty',
+          customEmail: '',
+          counterpartyEmail: counterpartyEmail
+        });
+        
+        setCurrentDocType('invoice');
+        setShowDocumentPreview(true);
+        
+        // Reset form
+        setInvoiceType('without-orders');
+        setInvoiceCounterpartyEdrpou('');
+        setInvoiceFoundCounterparty(null);
+        setInvoiceManualForm({
+          contract_number: '',
+          contract_date: '',
+          items: []
+        });
+        
+        // Refresh documents
+        fetchAllDocuments();
+      }
+    } catch (error) {
+      console.error('Error generating invoice:', error);
+      toast.error('Помилка при генерації рахунку: ' + (error.response?.data?.detail || error.message));
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const addInvoiceManualItem = () => {
+    setInvoiceManualForm(prev => ({
+      ...prev,
+      items: [...prev.items, { name: '', unit: 'шт', quantity: 1, price: 0, amount: 0 }]
+    }));
+  };
+  
+  const removeInvoiceManualItem = (index) => {
+    setInvoiceManualForm(prev => ({
+      ...prev,
+      items: prev.items.filter((_, i) => i !== index)
+    }));
+  };
+  
+  const updateInvoiceManualItem = (index, field, value) => {
+    setInvoiceManualForm(prev => {
+      const newItems = [...prev.items];
+      newItems[index] = { ...newItems[index], [field]: value };
+      
+      // Auto-calculate amount
+      if (field === 'quantity' || field === 'price') {
+        const qty = field === 'quantity' ? parseFloat(value) || 0 : parseFloat(newItems[index].quantity) || 0;
+        const price = field === 'price' ? parseFloat(value) || 0 : parseFloat(newItems[index].price) || 0;
+        newItems[index].amount = qty * price;
+      }
+      
+      return { ...prev, items: newItems };
+    });
+  };
+
     } catch (error) {
       console.error('Error generating invoice from orders:', error);
       toast.error('Помилка при генерації рахунку: ' + (error.response?.data?.detail || error.message));
