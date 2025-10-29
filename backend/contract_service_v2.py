@@ -165,20 +165,21 @@ class ContractServiceV2:
             
             result = f"{words} {currency}"
             
-            if decimal_part > 0:
-                if decimal_part % 10 == 1 and decimal_part % 100 != 11:
-                    kop_currency = 'копійка'
-                elif decimal_part % 10 in [2,3,4] and decimal_part % 100 not in [12,13,14]:
-                    kop_currency = 'копійки'
-                else:
-                    kop_currency = 'копійок'
-                result += f" {decimal_part:02d} {kop_currency}"
+            # Always add kopiyky (even if 00) and "без ПДВ"
+            if decimal_part % 10 == 1 and decimal_part % 100 != 11:
+                kop_currency = 'копійка'
+            elif decimal_part % 10 in [2,3,4] and decimal_part % 100 not in [12,13,14]:
+                kop_currency = 'копійки'
+            else:
+                kop_currency = 'копійок'
+            
+            result += f", {decimal_part:02d} {kop_currency}, без ПДВ"
             
             return result.strip()
             
         except Exception as e:
             logging.error(f"Error converting number to words: {e}")
-            return f"{int(number)} гривень"
+            return f"{int(number)} гривень, без ПДВ"
     
     def generate_contract_pdf(
         self, 
