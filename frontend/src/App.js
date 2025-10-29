@@ -1284,7 +1284,7 @@ function App() {
     .totals table{width:100%;border-collapse:collapse}
     .totals td{padding:4px 0;font-size:11px}
     .totals td:first-child{text-align:right;padding-right:10px}
-    .totals .num{text-align:right}
+    .totals .num{text-align:left;padding-left:10px}
 
     /* ===== Підпис ===== */
     .sign{margin:24px 0 0 0;text-align:left}
