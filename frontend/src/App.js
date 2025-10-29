@@ -4000,25 +4000,43 @@ function App() {
                           toast.success('PDF успішно згенеровано!');
                           fetchAllDocuments();
                           
-                          // If no drive_file_id (Drive not working), open PDF directly in new tab
+                          // If no drive_file_id (Drive not working), fetch PDF as blob for preview
                           if (!response.data.drive_file_id) {
                             const localPdfUrl = `${API}/orders/pdf/${response.data.order_number}`;
-                            window.open(localPdfUrl, '_blank');
-                            toast.info('PDF відкрито в новій вкладці');
                             
-                            // Still set data for email functionality
-                            setDocumentPdfData({
-                              drive_view_link: localPdfUrl,
-                              drive_download_link: localPdfUrl,
-                              drive_file_id: '',
-                              order_number: response.data.order_number,
-                              pdf_path: response.data.pdf_path,
-                              order_form_data: {
-                                counterparty_edrpou: currentOrderDetails.counterparty_edrpou || '',
-                                items: currentOrderDetails.items || [],
-                                total_amount: parseFloat(currentOrderDetails.total_amount) || 0
-                              }
-                            });
+                            try {
+                              // Fetch PDF as blob
+                              const pdfResponse = await axios.get(localPdfUrl, {
+                                responseType: 'blob'
+                              });
+                              
+                              // Create blob URL for iframe
+                              const blobUrl = URL.createObjectURL(pdfResponse.data);
+                              
+                              // Set data with blob URL for iframe preview
+                              setDocumentPdfData({
+                                drive_view_link: blobUrl,
+                                drive_download_link: localPdfUrl,
+                                drive_file_id: '',
+                                order_number: response.data.order_number,
+                                pdf_path: response.data.pdf_path,
+                                is_blob: true, // Flag to indicate this is a blob URL
+                                order_form_data: {
+                                  counterparty_edrpou: currentOrderDetails.counterparty_edrpou || '',
+                                  items: currentOrderDetails.items || [],
+                                  total_amount: parseFloat(currentOrderDetails.total_amount) || 0
+                                }
+                              });
+                              setCurrentDocType('order');
+                              setShowOrderDetails(false);
+                              setShowDocumentPreview(true);
+                            } catch (blobError) {
+                              console.error('Error loading PDF blob:', blobError);
+                              // Fallback: just open in new tab
+                              window.open(localPdfUrl, '_blank');
+                              toast.info('PDF відкрито в новій вкладці');
+                            }
+                          } else {                            });
                             setCurrentDocType('order');
                             setShowOrderDetails(false);
                             setShowDocumentPreview(true);
