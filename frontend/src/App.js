@@ -1312,14 +1312,52 @@ function App() {
       if (response.data.success) {
         toast.success('Акт успішно згенеровано на основі замовлень!');
         
-        // Open preview dialog
-        setDocumentPdfData({
-          drive_view_link: response.data.drive_view_link,
-          drive_download_link: response.data.drive_download_link,
-          drive_file_id: response.data.drive_file_id,
-          pdf_filename: response.data.pdf_filename,
-          act_number: response.data.act_number
+        // Get counterparty email
+        let counterpartyEmail = actFoundCounterparty?.email || '';
+        
+        // If no drive_file_id, fetch PDF as blob
+        if (!response.data.drive_file_id) {
+          try {
+            const actNumber = response.data.act_number;
+            const localPdfUrl = `${API}/acts/pdf/${actNumber}`;
+            
+            const pdfResponse = await axios.get(localPdfUrl, { responseType: 'blob' });
+            const blobUrl = URL.createObjectURL(pdfResponse.data);
+            
+            setDocumentPdfData({
+              drive_view_link: blobUrl,
+              drive_download_link: localPdfUrl,
+              drive_file_id: '',
+              act_number: actNumber,
+              is_blob: true
+            });
+          } catch (blobError) {
+            console.error('Error loading act PDF blob:', blobError);
+            setDocumentPdfData({
+              drive_view_link: response.data.drive_view_link,
+              drive_download_link: response.data.drive_download_link,
+              drive_file_id: response.data.drive_file_id,
+              pdf_filename: response.data.pdf_filename,
+              act_number: response.data.act_number
+            });
+          }
+        } else {
+          setDocumentPdfData({
+            drive_view_link: response.data.drive_view_link,
+            drive_download_link: response.data.drive_download_link,
+            drive_file_id: response.data.drive_file_id,
+            pdf_filename: response.data.pdf_filename,
+            act_number: response.data.act_number
+          });
+        }
+        
+        // Set email form with counterparty email
+        setDocumentEmailForm({
+          recipient: 'counterparty',
+          customEmail: '',
+          counterpartyEmail: counterpartyEmail
         });
+        
         setCurrentDocType('act');
         setShowDocumentPreview(true);
         
