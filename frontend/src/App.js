@@ -3978,9 +3978,12 @@ function App() {
                           fetchAllDocuments();
                           
                           // Open preview with generated PDF data
+                          // If no drive_view_link, use local PDF endpoint
+                          const localPdfUrl = response.data.drive_view_link || `${API}/orders/pdf/${response.data.order_number}`;
+                          
                           setDocumentPdfData({
-                            drive_view_link: response.data.drive_view_link,
-                            drive_download_link: response.data.drive_download_link,
+                            drive_view_link: localPdfUrl,
+                            drive_download_link: response.data.drive_download_link || localPdfUrl,
                             drive_file_id: response.data.drive_file_id,
                             order_number: response.data.order_number,
                             pdf_path: response.data.pdf_path,
