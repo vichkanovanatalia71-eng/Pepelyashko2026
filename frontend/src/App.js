@@ -4036,10 +4036,6 @@ function App() {
                               window.open(localPdfUrl, '_blank');
                               toast.info('PDF відкрито в новій вкладці');
                             }
-                          } else {                            });
-                            setCurrentDocType('order');
-                            setShowOrderDetails(false);
-                            setShowDocumentPreview(true);
                           } else {
                             // With Drive, show preview dialog as usual
                             setDocumentPdfData({
