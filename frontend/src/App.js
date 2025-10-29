@@ -1456,8 +1456,7 @@ function App() {
         subject: contractForm.subject || `Договір на основі замовлень: ${contractSelectedOrders.join(', ')}`,
         items: allItems,
         total_amount: contractForm.amount || totalAmount,
-        // Don't send custom_template to ensure latest backend template is used
-        custom_template: null,
+        custom_template: contractTemplate || null,
         template_settings: templateSettings,
         order_numbers: contractSelectedOrders  // Send multiple order numbers
       };
