@@ -3584,11 +3584,42 @@ function App() {
                       const response = await axios.post(`${API}/invoices/generate-pdf`, payload);
                       
                       if (response.data.success) {
+                        // Get counterparty for email
+                        const counterpartyResponse = await axios.get(`${API}/counterparties/${selectedOrderData.counterparty_edrpou}`);
+                        const counterpartyEmail = counterpartyResponse.data?.email || '';
+                        
+                        // If no drive_file_id, fetch PDF as blob
+                        if (!response.data.drive_file_id) {
+                          try {
+                            const invoiceNumber = response.data.invoice_number;
+                            const localPdfUrl = `${API}/invoices/pdf/${invoiceNumber}`;
+                            
+                            const pdfResponse = await axios.get(localPdfUrl, { responseType: 'blob' });
+                            const blobUrl = URL.createObjectURL(pdfResponse.data);
+                            
+                            setDocumentPdfData({
+                              drive_view_link: blobUrl,
+                              drive_download_link: localPdfUrl,
+                              drive_file_id: '',
+                              invoice_number: invoiceNumber,
+                              is_blob: true
+                            });
+                          } catch (blobError) {
+                            console.error('Error loading invoice PDF blob:', blobError);
+                            setDocumentPdfData(response.data);
+                          }
+                        } else {
+                          setDocumentPdfData(response.data);
+                        }
+                        
                         setCurrentDocType('invoice');
-                        setDocumentPdfData(response.data);
+                        setDocumentEmailForm({
+                          recipient: 'counterparty',
+                          customEmail: '',
+                          counterpartyEmail: counterpartyEmail
+                        });
                         setShowCreateFromOrder(false);
-                        setShowDocumentPreview(false);
-                        setTimeout(() => setShowDocumentPreview(true), 100);
+                        setShowDocumentPreview(true);
                         toast.success('Рахунок успішно створено на основі замовлення!');
                         fetchAllDocuments();
                       }
