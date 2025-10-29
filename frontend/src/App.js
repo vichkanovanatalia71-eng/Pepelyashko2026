@@ -558,8 +558,8 @@ function App() {
   };
   
   const loadContractTemplate = () => {
-    const savedTemplate = localStorage.getItem('contractTemplate');
-    const savedVersion = localStorage.getItem('contractTemplateVersion');
+    let savedTemplate = localStorage.getItem('contractTemplate');
+    let savedVersion = localStorage.getItem('contractTemplateVersion');
     const savedSettings = localStorage.getItem('contractTemplateSettings');
     
     // Current template version
@@ -571,6 +571,9 @@ function App() {
       localStorage.removeItem('contractTemplateVersion');
       localStorage.removeItem('contractTemplateSettings');
       console.log(`Cleared old contract template version ${savedVersion}, loading new version ${CURRENT_VERSION}`);
+      // Reset variables after clearing
+      savedTemplate = null;
+      savedVersion = null;
     }
     
     // Check if saved template exists and version matches
