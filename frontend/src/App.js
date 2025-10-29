@@ -554,6 +554,14 @@ function App() {
     // Current template version
     const CURRENT_VERSION = '5.1';  // Updated to force template reload with amount in words
     
+    // Force clear old versions to ensure new template with amount_in_words is loaded
+    if (savedVersion && savedVersion !== CURRENT_VERSION) {
+      localStorage.removeItem('contractTemplate');
+      localStorage.removeItem('contractTemplateVersion');
+      localStorage.removeItem('contractTemplateSettings');
+      console.log(`Cleared old contract template version ${savedVersion}, loading new version ${CURRENT_VERSION}`);
+    }
+    
     // Check if saved template exists and version matches
     if (savedTemplate && savedVersion === CURRENT_VERSION) {
       setContractTemplate(savedTemplate);
