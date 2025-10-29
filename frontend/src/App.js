@@ -282,6 +282,7 @@ function App() {
   
   // Act template
   const [actTemplate, setActTemplate] = useState('');
+  const [invoiceTemplate, setInvoiceTemplate] = useState('');
   const [showActTemplateEditor, setShowActTemplateEditor] = useState(false);
   
   // Act from orders
