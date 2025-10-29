@@ -3620,43 +3620,10 @@ function App() {
                       const response = await axios.post(`${API}/acts/generate-pdf`, payload);
                       
                       if (response.data.success) {
-                        // Get counterparty for email
-                        const counterpartyResponse = await axios.get(`${API}/counterparties/${selectedOrderData.counterparty_edrpou}`);
-                        const counterpartyEmail = counterpartyResponse.data?.email || '';
+                        console.log('Act created successfully:', response.data);
                         
-                        // If no drive_file_id, fetch PDF as blob
-                        if (!response.data.drive_file_id) {
-                          try {
-                            const actNumber = response.data.act_number;
-                            const localPdfUrl = `${API}/acts/pdf/${actNumber}`;
-                            
-                            const pdfResponse = await axios.get(localPdfUrl, { responseType: 'blob' });
-                            const blobUrl = URL.createObjectURL(pdfResponse.data);
-                            
-                            setDocumentPdfData({
-                              drive_view_link: blobUrl,
-                              drive_download_link: localPdfUrl,
-                              drive_file_id: '',
-                              act_number: actNumber,
-                              is_blob: true
-                            });
-                          } catch (blobError) {
-                            console.error('Error loading act PDF blob:', blobError);
-                            setDocumentPdfData(response.data);
-                          }
-                        } else {
-                          setDocumentPdfData(response.data);
-                        }
-                        
-                        setCurrentDocType('act');
-                        setDocumentEmailForm({
-                          recipient: 'counterparty',
-                          customEmail: '',
-                          counterpartyEmail: counterpartyEmail
-                        });
                         setShowCreateFromOrder(false);
-                        setShowDocumentPreview(true);
-                        toast.success('Акт успішно створено на основі замовлення!');
+                        toast.success(`Акт №${response.data.act_number} успішно створено на основі замовлення!`);
                         fetchAllDocuments();
                       }
                     } catch (error) {
