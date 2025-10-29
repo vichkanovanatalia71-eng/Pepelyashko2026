@@ -386,6 +386,34 @@ async def get_invoices():
         logging.error(f"Error getting invoices: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
+@api_router.get("/invoices/pdf/{invoice_number}")
+async def get_invoice_pdf(invoice_number: str):
+    """Serve invoice PDF file for preview."""
+    try:
+        # Find PDF file in generated_invoices directory
+        pdf_dir = Path('/app/backend/generated_invoices')
+        
+        # Look for PDF with this invoice number
+        pdf_files = list(pdf_dir.glob(f"Рахунок_{invoice_number}_*.pdf"))
+        
+        if not pdf_files:
+            raise HTTPException(status_code=404, detail=f"PDF для рахунку {invoice_number} не знайдено")
+        
+        # Return the most recent file
+        pdf_file = sorted(pdf_files, key=lambda f: f.stat().st_mtime, reverse=True)[0]
+        
+        return FileResponse(
+            path=str(pdf_file),
+            media_type='application/pdf',
+            filename=pdf_file.name
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error serving invoice PDF: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
 @api_router.post("/invoices/generate-pdf")
 async def generate_invoice_pdf(data: DocumentCreate):
     """Generate PDF invoice and upload to Google Drive."""
