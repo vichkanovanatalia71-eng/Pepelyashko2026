@@ -514,22 +514,22 @@ frontend:
         agent: "main"
         comment: "BACKEND ДЛЯ РАХУНКІВ ЗАВЕРШЕНО: Створено invoice_service.py (аналогічний до act_service.py) з методом generate_invoice_from_orders. Створено invoice_template.html з базовим HTML шаблоном. Додано endpoint POST /api/invoices/generate-from-orders в server.py. Встановлено libpangoft2-1.0-0 для WeasyPrint. Backend успішно запущений. Функціонал аналогічний до актів: вибір замовлень, генерація PDF, завантаження на Google Drive, збереження в Google Sheets."
 
-  - task: "Invoice Template - Center Table & Right Align Payment"
+  - task: "Invoice Without Orders - Full Implementation"
     implemented: true
     working: "needs_testing"
-    file: "/app/backend/invoice_template.html, /app/frontend/src/App.js"
+    file: "/app/backend/invoice_service.py, /app/backend/server.py, /app/frontend/src/App.js"
     stuck_count: 0
     priority: "high"
     needs_retesting: true
     status_history:
       - working: "needs_testing"
         agent: "main"
-        comment: "ЦЕНТРУВАННЯ ТАБЛИЦІ ТА ВИРІВНЮВАННЯ 'ВСЬОГО ДО СПЛАТИ': 1) Виправлено центрування таблиці - прибрано негативні відступи, додано margin:10px auto для правильного центрування в межах .wrap контейнера. 2) 'Всього до сплати' винесено з таблиці підсумків в окремий блок .payment-total з text-align:right. Тепер сума прописом розташована праворуч окремо від підсумків. Оновлено версію до 8.0 у backend та frontend. Всі сервіси перезапущені успішно."
+        comment: "СТВОРЕННЯ РАХУНКУ БЕЗ ЗАМОВЛЕННЯ ІМПЛЕМЕНТОВАНО: Backend - додано метод generate_invoice_pdf в invoice_service.py для ручного створення рахунку, створено endpoint POST /api/invoices/generate-without-orders в server.py. Frontend - додано стани invoiceManualForm (contract_number, contract_date, items), створено функції handleInvoiceWithoutOrdersSubmit, addInvoiceManualItem, removeInvoiceManualItem, updateInvoiceManualItem. Замінено стару DocumentForm на нову форму з кроками: 1) Пошук контрагента, 2) Вибір типу, 3) Опціонально договір, 4) Ручне додавання позицій (name, unit, quantity, price з автообчисленням amount), 5) Генерація PDF. Логіка аналогічна до створення рахунку з замовленням. Всі сервіси перезапущені успішно."
 
 metadata:
   created_by: "main_agent"
-  version: "19.0"
-  test_sequence: 19
+  version: "20.0"
+  test_sequence: 20
   run_ui: false
 
 test_plan:
