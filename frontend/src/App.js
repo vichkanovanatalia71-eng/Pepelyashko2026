@@ -1432,7 +1432,7 @@ function App() {
   // Invoice template functions
   const saveInvoiceTemplate = () => {
     localStorage.setItem('invoiceTemplate', invoiceTemplate);
-    localStorage.setItem('invoiceTemplateVersion', '5.0');
+    localStorage.setItem('invoiceTemplateVersion', '6.0');
     toast.success('Шаблон рахунку збережено!');
     setShowInvoiceTemplateEditor(false);
   };
