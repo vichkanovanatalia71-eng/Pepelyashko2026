@@ -3117,79 +3117,92 @@ function App() {
 
                       {/* Форма на основі замовлення */}
                       {contractBasedOnOrder && (
+                        <div className="space-y-4">
+                          {/* Select Order Dropdown */}
+                          <div className="space-y-3">
+                            <Label className="text-sm font-medium">Оберіть замовлення</Label>
+                            {contractAvailableOrders.length > 0 ? (
+                              <select
+                                value={contractSelectedOrder}
+                                onChange={(e) => {
+                                  const selectedOrderNum = e.target.value;
+                                  setContractSelectedOrder(selectedOrderNum);
+                                  
+                                  // Auto-fill contract data from selected order
+                                  const order = contractAvailableOrders.find(o => o.number === selectedOrderNum);
+                                  if (order) {
+                                    setContractForm({
+                                      subject: `Договір на основі замовлення №${order.number}`,
+                                      amount: order.total_amount || 0,
+                                      items: order.items || []
+                                    });
+                                  }
+                                }}
+                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                required
+                              >
+                                <option value="">-- Оберіть замовлення --</option>
+                                {contractAvailableOrders.map(order => (
+                                  <option key={order.number} value={order.number}>
+                                    Замовлення № {order.number} від {order.date} - {order.total_amount} грн
+                                  </option>
+                                ))}
+                              </select>
+                            ) : (
+                              <p className="text-sm text-gray-500 p-3 bg-gray-50 rounded-lg">
+                                Немає доступних замовлень для цього контрагента
+                              </p>
+                            )}
                           </div>
-                          <div className="flex-1">
-                            <p className="text-sm font-semibold text-gray-900 mb-1">
-                              {foundCounterparty.representative_name}
-                            </p>
-                            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-600">
-                              <span className="flex items-center gap-1">
-                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                </svg>
-                                {foundCounterparty.email}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                                </svg>
-                                {foundCounterparty.phone}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                </svg>
-                                ЄДРПОУ: {foundCounterparty.edrpou}
-                              </span>
-                            </div>
-                          </div>
+
+                          {/* Contract Subject */}
+                          {contractSelectedOrder && (
+                            <>
+                              <div className="space-y-2">
+                                <Label>Предмет договору</Label>
+                                <Input
+                                  value={contractForm.subject}
+                                  onChange={(e) => setContractForm({...contractForm, subject: e.target.value})}
+                                  placeholder="Наприклад: Постачання товарів/послуг"
+                                  required
+                                  className="mt-2"
+                                />
+                              </div>
+
+                              {/* Contract Amount */}
+                              <div className="space-y-2">
+                                <Label>Сума договору (грн)</Label>
+                                <Input
+                                  type="number"
+                                  value={contractForm.amount}
+                                  onChange={(e) => setContractForm({...contractForm, amount: parseFloat(e.target.value) || 0})}
+                                  placeholder="0.00"
+                                  required
+                                  className="mt-2"
+                                  min="0"
+                                  step="0.01"
+                                />
+                              </div>
+
+                              {/* Submit Button */}
+                              <Button 
+                                onClick={handleContractFromOrderSubmit}
+                                className="w-full btn-primary" 
+                                disabled={loading}
+                              >
+                                {loading ? (
+                                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Створення...</>
+                                ) : (
+                                  'Створити договір на основі замовлення'
+                                )}
+                              </Button>
+                            </>
+                          )}
                         </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="contract-subject" className="text-sm font-medium text-gray-700">
-                      Предмет договору *
-                    </Label>
-                    <Input
-                      id="contract-subject"
-                      value={contractForm.subject}
-                      onChange={(e) => setContractForm({...contractForm, subject: e.target.value})}
-                      placeholder="Наприклад: Постачання товарів, Надання послуг..."
-                      className="shadow-sm focus:ring-2 focus:ring-amber-500"
-                      required
-                    />
-                  </div>
-
-                  {/* Contract amount */}
-                  <div className="space-y-2">
-                    <Label htmlFor="contract-amount" className="text-sm font-medium text-gray-700">Сума договору (грн) *</Label>
-                    <Input
-                      id="contract-amount"
-                      type="number"
-                      value={contractForm.amount || ''}
-                      onChange={(e) => setContractForm({...contractForm, amount: parseFloat(e.target.value) || 0})}
-                      placeholder="Введіть суму договору"
-                      className="shadow-sm focus:ring-2 focus:ring-amber-500"
-                      required
-                      min="0"
-                      step="0.01"
-                    />
-                  </div>
-
-                  <Button 
-                    type="submit" 
-                    disabled={loading || !foundCounterparty}
-                    className="w-full btn-primary text-white font-semibold py-6 text-lg rounded-lg shadow-md hover:shadow-lg transition-all"
-                  >
-                    {loading ? (
-                      <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Збереження...</>
-                    ) : (
-                      'Створити Договір'
-                    )}
-                  </Button>
-                </form>
+                      )}
+                    </>
+                  )}
+                </div>
               </CardContent>
             </Card>
             
