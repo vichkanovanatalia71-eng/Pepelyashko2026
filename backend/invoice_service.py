@@ -453,3 +453,180 @@ class InvoiceService:
             parsed = re.sub(pattern, replace_variable, template)
             
             return parsed
+    
+    async def generate_invoice_pdf(
+        self,
+        invoice_data: Dict[str, Any],
+        custom_template: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Generate Invoice PDF without orders (manual entry)
+        
+        Args:
+            invoice_data: Dictionary with invoice details including:
+                - counterparty_edrpou: ЄДРПОУ контрагента
+                - items: List of items with name, unit, quantity, price, amount
+                - contract_number: Optional contract number
+                - contract_date: Optional contract date
+            custom_template: Optional custom HTML template
+        
+        Returns:
+            Dictionary with invoice details and file paths
+        """
+        try:
+            # 1. Get supplier data from "Мої дані"
+            supplier_data = self.sheets_service.get_supplier_data()
+            if not supplier_data:
+                raise ValueError("Дані постачальника ('Мої дані') не знайдені")
+            
+            # 2. Get buyer data from "Основні дані"
+            counterparty_edrpou = invoice_data.get('counterparty_edrpou')
+            buyer_data = self.sheets_service.get_counterparty_from_main_data(counterparty_edrpou)
+            if not buyer_data:
+                raise ValueError(f"Контрагента з ЄДРПОУ {counterparty_edrpou} не знайдено в 'Основні дані'")
+            
+            # 3. Get items from invoice_data
+            items = invoice_data.get('items', [])
+            if not items:
+                raise ValueError("Немає позицій в рахунку")
+            
+            # 4. Generate invoice number
+            invoice_number = self._generate_invoice_number()
+            invoice_date = datetime.now().strftime('%d.%m.%Y')
+            
+            # 5. Calculate totals
+            vat_rate = 0.0  # не платник ПДВ
+            totals = self._calculate_totals(items, vat_rate)
+            
+            # 6. Generate items rows HTML
+            items_rows_html = self._generate_items_rows(items)
+            
+            # 7. Build "Підстава" (Basis) string
+            contract_number = invoice_data.get('contract_number', '')
+            contract_date = invoice_data.get('contract_date', '')
+            
+            basis_parts = []
+            if contract_number and contract_date:
+                basis_parts.append(f"Договір № {contract_number} від {contract_date}")
+            
+            basis = ", ".join(basis_parts) if basis_parts else "Не вказано"
+            
+            # 8. Prepare items for Handlebars templates
+            formatted_items = []
+            for item in items:
+                formatted_items.append({
+                    'name': item.get('name', ''),
+                    'unit': item.get('unit', 'шт'),
+                    'qty': self.format_currency(float(item.get('quantity', 0))),
+                    'price': self.format_currency(float(item.get('price', 0))),
+                    'sum': self.format_currency(float(item.get('amount', 0)))
+                })
+            
+            # 9. Prepare template context
+            context = {
+                # Invoice info
+                'invoice_number': invoice_number,
+                'invoice_date': invoice_date,
+                'basis': basis,
+                # Contract info (if provided)
+                'contract_number': contract_number or '',
+                'contract_date': contract_date or '',
+                # Supplier (Постачальник - Мої дані)
+                'supplier_name': supplier_data.get('Назва', supplier_data.get('name', '')),
+                'supplier_edrpou': supplier_data.get('ЄДРПОУ', supplier_data.get('edrpou', '')),
+                'supplier_address': supplier_data.get('Юридична адреса', supplier_data.get('legal_address', '')),
+                'supplier_iban': supplier_data.get('р/р(IBAN)', supplier_data.get('iban', '')),
+                'supplier_bank': supplier_data.get('Банк', supplier_data.get('bank', '')),
+                'supplier_mfo': supplier_data.get('МФО', supplier_data.get('mfo', '')),
+                'supplier_email': supplier_data.get('email', ''),
+                'supplier_phone': supplier_data.get('тел', supplier_data.get('phone', '')),
+                'supplier_representative': supplier_data.get('В особі', supplier_data.get('representative', '')),
+                'supplier_signature': supplier_data.get('Підпис', supplier_data.get('signature', '')),
+                # Buyer (Покупець - Основні дані)
+                'buyer_name': buyer_data.get('Назва', ''),
+                'buyer_edrpou': buyer_data.get('ЄДРПОУ', ''),
+                'buyer_address': buyer_data.get('Юридична адреса', ''),
+                'buyer_iban': buyer_data.get('р/р(IBAN)', ''),
+                'buyer_bank': buyer_data.get('Банк', ''),
+                'buyer_mfo': buyer_data.get('МФО', ''),
+                'buyer_email': buyer_data.get('email', ''),
+                'buyer_phone': buyer_data.get('тел', ''),
+                'buyer_representative': buyer_data.get('В особі', ''),
+                'buyer_signature': buyer_data.get('Підпис', ''),
+                # Items (for Handlebars templates with {{#each}})
+                'items': formatted_items,
+                # Items rows HTML (for simple templates)
+                'items_rows': items_rows_html,
+                # Totals
+                'total_net': self.format_currency(totals['total_net']),
+                'total_vat': self.format_currency(totals['total_vat']),
+                'total_gross': self.format_currency(totals['total_gross']),
+                'vat_rate': str(vat_rate),
+                'total_amount_text': self.number_to_words_ua(totals['total_gross']),
+                'vat_note': 'без ПДВ' if vat_rate == 0 else f'з ПДВ {vat_rate}%'
+            }
+            
+            # 10. Use custom template or default
+            html_template = custom_template if custom_template else self.default_template
+            
+            # 11. Replace all {{variable}} with actual values
+            parsed_html = self._parse_template(html_template, context)
+            
+            # 12. Create PDF filename
+            filename = f"Рахунок_{invoice_number}_{buyer_data.get('ЄДРПОУ', '')}.pdf"
+            filepath = self.output_dir / filename
+            
+            # 13. Generate PDF from HTML using WeasyPrint
+            HTML(string=parsed_html).write_pdf(str(filepath))
+            
+            logger.info(f"Invoice PDF generated: {filename}")
+            
+            # 14. Upload to Google Drive (if available)
+            drive_file_id = ''
+            drive_view_link = ''
+            drive_download_link = ''
+            
+            if self.drive_service:
+                try:
+                    upload_result = self.drive_service.upload_file(
+                        file_path=str(filepath),
+                        folder_name='Рахунки',
+                        custom_name=filename
+                    )
+                    drive_file_id = upload_result.get('id', '')
+                    drive_view_link = f"https://drive.google.com/file/d/{drive_file_id}/view"
+                    drive_download_link = f"https://drive.google.com/uc?export=download&id={drive_file_id}"
+                    logger.info(f"Invoice uploaded to Google Drive: {drive_file_id}")
+                except Exception as drive_error:
+                    logger.warning(f"Failed to upload to Google Drive: {str(drive_error)}")
+            else:
+                logger.info("Google Drive service not available, skipping upload")
+            
+            # 15. Save to Google Sheets
+            invoice_record = {
+                'number': invoice_number,
+                'date': invoice_date,
+                'counterparty_edrpou': counterparty_edrpou,
+                'counterparty_name': buyer_data.get('Назва', ''),
+                'items': items,  # Don't stringify here, _create_document will do it
+                'total_amount': totals['total_gross'],
+                'based_on_order': '',  # No order for manual invoice
+                'based_on_contract': contract_number or ''
+            }
+            
+            self.sheets_service.create_invoice(invoice_record, drive_file_id)
+            
+            return {
+                'success': True,
+                'invoice_number': invoice_number,
+                'pdf_path': str(filepath),
+                'pdf_filename': filename,
+                'drive_file_id': drive_file_id,
+                'drive_view_link': drive_view_link,
+                'drive_download_link': drive_download_link
+            }
+            
+        except Exception as e:
+            logger.error(f"Error generating invoice PDF: {str(e)}")
+            raise
+
