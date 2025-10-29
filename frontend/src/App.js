@@ -510,6 +510,7 @@ function App() {
     loadContractTemplate();
     loadOrderTemplate();
     loadActTemplate();
+    loadInvoiceTemplate();
   }, []);
 
   const loadOrderRelatedDocuments = async (orderNumber) => {
