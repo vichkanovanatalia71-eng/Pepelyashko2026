@@ -502,10 +502,22 @@ frontend:
         agent: "main"
         comment: "РЕАЛІЗОВАНО ПОВНУ ФУНКЦІОНАЛЬНІСТЬ ВИБОРУ ДЕКІЛЬКОХ ЗАМОВЛЕНЬ ДЛЯ ДОГОВОРІВ: 1) Змінено contractSelectedOrder з string на array (contractSelectedOrders) для підтримки multiple selection, 2) Додано функцію toggleContractOrder() для toggle checkboxes, 3) Замінено dropdown на checkboxes список замовлень (аналогічно до актів), 4) Оновлено handleContractFromOrderSubmit() для роботи з масивом замовлень - розрахунок загальної суми, об'єднання items, передача order_numbers на backend, 5) ВИПРАВЛЕНО PREVIEW DIALOG - тепер показує PDF в iframe (blob URL) як у актів, замість success екрану, 6) Додано автоматичний розрахунок загальної суми обраних замовлень з підказкою користувачу, 7) Кнопка 'Відкрити у новій вкладці' додана під iframe. ТЕСТУВАННЯ: Створено договір без замовлення, preview dialog показує PDF в iframe ✅, кнопка 'Відкрити у новій вкладці' працює ✅, секція email видима ✅. UI тепер повністю відповідає вигляду актів з можливістю вибору декількох замовлень через checkboxes."
 
+  - task: "Invoice Generation from Orders - Backend"
+    implemented: true
+    working: "needs_testing"
+    file: "/app/backend/invoice_service.py, /app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "needs_testing"
+        agent: "main"
+        comment: "BACKEND ДЛЯ РАХУНКІВ ЗАВЕРШЕНО: Створено invoice_service.py (аналогічний до act_service.py) з методом generate_invoice_from_orders. Створено invoice_template.html з базовим HTML шаблоном. Додано endpoint POST /api/invoices/generate-from-orders в server.py. Встановлено libpangoft2-1.0-0 для WeasyPrint. Backend успішно запущений. Функціонал аналогічний до актів: вибір замовлень, генерація PDF, завантаження на Google Drive, збереження в Google Sheets."
+
 metadata:
   created_by: "main_agent"
-  version: "10.0"
-  test_sequence: 10
+  version: "11.0"
+  test_sequence: 11
   run_ui: false
 
 test_plan:
