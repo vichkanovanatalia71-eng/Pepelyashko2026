@@ -514,10 +514,22 @@ frontend:
         agent: "main"
         comment: "BACKEND ДЛЯ РАХУНКІВ ЗАВЕРШЕНО: Створено invoice_service.py (аналогічний до act_service.py) з методом generate_invoice_from_orders. Створено invoice_template.html з базовим HTML шаблоном. Додано endpoint POST /api/invoices/generate-from-orders в server.py. Встановлено libpangoft2-1.0-0 для WeasyPrint. Backend успішно запущений. Функціонал аналогічний до актів: вибір замовлень, генерація PDF, завантаження на Google Drive, збереження в Google Sheets."
 
+  - task: "Invoice Generation from Orders - Frontend"
+    implemented: true
+    working: "needs_testing"
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "needs_testing"
+        agent: "main"
+        comment: "FRONTEND ДЛЯ РАХУНКІВ ЗАВЕРШЕНО: Додано змінні стану (invoiceType, invoiceCounterpartyEdrpou, invoiceFoundCounterparty, invoiceAvailableOrders, invoiceSelectedOrders, invoiceAvailableContracts, invoiceSelectedContract, invoiceTemplate, showInvoiceTemplateEditor). Створено функції: searchInvoiceCounterparty(), toggleInvoiceOrder(), handleInvoiceFromOrdersSubmit(), loadInvoiceTemplate(), saveInvoiceTemplate(), resetInvoiceTemplate(). Оновлено вкладку 'Рахунки' з багатокроковою формою: 1) Пошук контрагента, 2) Вибір типу (з/без замовлення), 3) Опціонально вибір договору, 4) Вибір замовлень (checkboxes для множинного вибору), 5) Генерація PDF з попереднім переглядом. Додано кнопку 'Редагувати шаблон рахунку'. Frontend успішно скомпільований і працює. Функціонал повністю аналогічний до актів."
+
 metadata:
   created_by: "main_agent"
-  version: "11.0"
-  test_sequence: 11
+  version: "12.0"
+  test_sequence: 12
   run_ui: false
 
 test_plan:
