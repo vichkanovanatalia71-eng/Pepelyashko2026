@@ -3710,10 +3710,49 @@ function App() {
                       const response = await axios.post(`${API}/contracts/generate-pdf`, payload);
                       
                       if (response.data.success) {
-                        setContractPdfData(response.data);
+                        // Get counterparty for email
+                        const counterpartyResponse = await axios.get(`${API}/counterparties/${selectedOrderData.counterparty_edrpou}`);
+                        const counterpartyEmail = counterpartyResponse.data?.email || '';
+                        
+                        // If no drive_file_id, fetch PDF as blob
+                        if (!response.data.drive_file_id) {
+                          try {
+                            const contractNumber = response.data.contract_number;
+                            const localPdfUrl = `${API}/contracts/pdf/${contractNumber}`;
+                            
+                            // Fetch PDF as blob
+                            const pdfResponse = await axios.get(localPdfUrl, {
+                              responseType: 'blob'
+                            });
+                            
+                            // Create blob URL
+                            const blobUrl = URL.createObjectURL(pdfResponse.data);
+                            
+                            setDocumentPdfData({
+                              drive_view_link: blobUrl,
+                              drive_download_link: localPdfUrl,
+                              drive_file_id: '',
+                              contract_number: contractNumber,
+                              is_blob: true
+                            });
+                          } catch (blobError) {
+                            console.error('Error loading contract PDF blob:', blobError);
+                            setDocumentPdfData(response.data);
+                          }
+                        } else {
+                          setDocumentPdfData(response.data);
+                        }
+                        
+                        // Set email form with counterparty email
+                        setDocumentEmailForm({
+                          recipient: 'counterparty',
+                          customEmail: '',
+                          counterpartyEmail: counterpartyEmail
+                        });
+                        
+                        setCurrentDocType('contract');
                         setShowCreateFromOrder(false);
-                        setShowDocumentPreview(false);
-                        setShowContractPreview(true);
+                        setShowDocumentPreview(true);
                         toast.success('Договір успішно створено на основі замовлення!');
                         fetchAllDocuments();
                       }
