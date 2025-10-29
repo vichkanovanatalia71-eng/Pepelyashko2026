@@ -895,7 +895,7 @@ async def get_contracts():
         logging.error(f"Error getting contracts: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
-@api_router.get("/contracts/pdf/{contract_number}")
+@api_router.get("/contracts/pdf/{contract_number:path}")
 async def get_contract_pdf(contract_number: str):
     """Serve contract PDF file for preview."""
     try:
