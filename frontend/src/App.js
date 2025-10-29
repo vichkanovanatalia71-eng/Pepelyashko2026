@@ -306,6 +306,13 @@ function App() {
   const [invoiceAvailableContracts, setInvoiceAvailableContracts] = useState([]);
   const [invoiceSelectedContract, setInvoiceSelectedContract] = useState('');
   
+  // Invoice without orders form
+  const [invoiceManualForm, setInvoiceManualForm] = useState({
+    contract_number: '',
+    contract_date: '',
+    items: []
+  });
+  
   // Contract from orders
   const [contractBasedOnOrder, setContractBasedOnOrder] = useState(false);
   const [contractAvailableOrders, setContractAvailableOrders] = useState([]);
