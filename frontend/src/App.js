@@ -1269,8 +1269,8 @@ function App() {
     /* ===== Підстава (простий рядок) ===== */
     .basis-simple{margin:8px 0;font-size:11px}
 
-    /* ===== Таблиця позицій ===== */
-    table.items{width:100%;border-collapse:collapse;margin-top:10px;table-layout:fixed;font-size:11px}
+    /* ===== Таблиця позицій (центрована відносно сторінки) ===== */
+    table.items{width:100%;border-collapse:collapse;margin-top:10px;margin-left:-1.5cm;margin-right:-1.5cm;width:calc(100% + 3cm);table-layout:fixed;font-size:11px}
     table.items th,table.items td{border:2px solid #000;padding:4px 6px;vertical-align:top}
     table.items thead th{background:#fff;font-weight:bold;text-align:center}
     .col-n{width:24px;text-align:center}
