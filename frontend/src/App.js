@@ -3455,12 +3455,20 @@ function App() {
                 <div className="space-y-2">
                   <div className="border-2 border-gray-300 rounded-lg overflow-hidden bg-gray-100" style={{height: '500px'}}>
                     {contractPdfData.drive_view_link ? (
-                      <iframe
-                        src={`https://drive.google.com/viewerng/viewer?embedded=true&url=https://drive.google.com/uc?id=${contractPdfData.drive_file_id}&export=download`}
-                        style={{width: '100%', height: '100%', border: 'none'}}
-                        title="Попередній перегляд договору"
-                        allow="autoplay"
-                      />
+                      contractPdfData.is_blob ? (
+                        <iframe
+                          src={contractPdfData.drive_view_link}
+                          style={{width: '100%', height: '100%', border: 'none'}}
+                          title="Попередній перегляд договору"
+                        />
+                      ) : (
+                        <iframe
+                          src={`https://drive.google.com/viewerng/viewer?embedded=true&url=https://drive.google.com/uc?id=${contractPdfData.drive_file_id}&export=download`}
+                          style={{width: '100%', height: '100%', border: 'none'}}
+                          title="Попередній перегляд договору"
+                          allow="autoplay"
+                        />
+                      )
                     ) : (
                       <div className="flex flex-col items-center justify-center h-full text-gray-500 space-y-4">
                         <Loader2 className="w-12 h-12 animate-spin text-blue-500" />
@@ -3485,15 +3493,25 @@ function App() {
                       </div>
                     )}
                   </div>
-                  {contractPdfData.drive_file_id && (
+                  {contractPdfData.drive_view_link && (
                     <div className="text-center">
                       <Button
-                        onClick={() => window.open(`https://drive.google.com/file/d/${contractPdfData.drive_file_id}/view`, '_blank')}
+                        onClick={() => {
+                          if (contractPdfData.is_blob) {
+                            // For blob URLs, create a download link
+                            const link = document.createElement('a');
+                            link.href = contractPdfData.drive_view_link;
+                            link.download = `Договір_${contractPdfData.contract_number}.pdf`;
+                            link.click();
+                          } else {
+                            window.open(`https://drive.google.com/file/d/${contractPdfData.drive_file_id}/view`, '_blank');
+                          }
+                        }}
                         variant="outline"
                         size="sm"
                       >
                         <FileText className="w-4 h-4 mr-2" />
-                        Відкрити у новій вкладці
+                        {contractPdfData.is_blob ? 'Завантажити PDF' : 'Відкрити у новій вкладці'}
                       </Button>
                     </div>
                   )}
