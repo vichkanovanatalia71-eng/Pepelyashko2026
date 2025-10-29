@@ -27,7 +27,7 @@ db = client[os.environ['DB_NAME']]
 
 # Google Sheets configuration
 CREDENTIALS_PATH = ROOT_DIR / 'credentials.json'
-SPREADSHEET_ID = '1RnVWH300p5Lj8Pe53k2tDdlnSUdFSEF9dEO_eGJj8D4'
+SPREADSHEET_ID = '1YpTEOoHf2_N69VrZpBALKix1LZVCFuHh-NC-FYMllH8'  # NEW: profound-hearth-476600-q8 project
 SHARED_DRIVE_ID = '0AFj2VSH7Z9sKUk9PVA'  # Shared Drive: Документи КНП
 
 # Initialize Google Sheets service
