@@ -3101,8 +3101,9 @@ function App() {
                               counterparty_edrpou: searchEdrpou,
                               subject: contractForm.subject,
                               items: [],
-                              total_amount: contractForm.amount,
-                              custom_template: contractTemplate || null,
+                              total_amount: contractForm.amount || 0,
+                              // Don't send custom_template to ensure latest backend template is used
+                              custom_template: null,
                               template_settings: templateSettings
                             });
                             
