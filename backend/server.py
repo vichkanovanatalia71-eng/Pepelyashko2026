@@ -902,8 +902,11 @@ async def get_contract_pdf(contract_number: str):
         # Find PDF file in generated_contracts directory
         pdf_dir = Path('/app/backend/generated_contracts')
         
+        # Replace slashes with underscores in contract number for file search
+        contract_number_for_file = contract_number.replace('/', '_')
+        
         # Look for PDF with this contract number
-        pdf_files = list(pdf_dir.glob(f"Договір_{contract_number}_*.pdf"))
+        pdf_files = list(pdf_dir.glob(f"Договір_{contract_number_for_file}_*.pdf"))
         
         if not pdf_files:
             raise HTTPException(status_code=404, detail=f"PDF для договору {contract_number} не знайдено")
