@@ -514,22 +514,22 @@ frontend:
         agent: "main"
         comment: "BACKEND ДЛЯ РАХУНКІВ ЗАВЕРШЕНО: Створено invoice_service.py (аналогічний до act_service.py) з методом generate_invoice_from_orders. Створено invoice_template.html з базовим HTML шаблоном. Додано endpoint POST /api/invoices/generate-from-orders в server.py. Встановлено libpangoft2-1.0-0 для WeasyPrint. Backend успішно запущений. Функціонал аналогічний до актів: вибір замовлень, генерація PDF, завантаження на Google Drive, збереження в Google Sheets."
 
-  - task: "Invoice Without Orders - Full Implementation"
+  - task: "Invoice Without Orders - Cache Clear Fix"
     implemented: true
     working: "needs_testing"
-    file: "/app/backend/invoice_service.py, /app/backend/server.py, /app/frontend/src/App.js"
+    file: "/app/frontend/src/App.js"
     stuck_count: 0
     priority: "high"
     needs_retesting: true
     status_history:
       - working: "needs_testing"
         agent: "main"
-        comment: "СТВОРЕННЯ РАХУНКУ БЕЗ ЗАМОВЛЕННЯ ІМПЛЕМЕНТОВАНО: Backend - додано метод generate_invoice_pdf в invoice_service.py для ручного створення рахунку, створено endpoint POST /api/invoices/generate-without-orders в server.py. Frontend - додано стани invoiceManualForm (contract_number, contract_date, items), створено функції handleInvoiceWithoutOrdersSubmit, addInvoiceManualItem, removeInvoiceManualItem, updateInvoiceManualItem. Замінено стару DocumentForm на нову форму з кроками: 1) Пошук контрагента, 2) Вибір типу, 3) Опціонально договір, 4) Ручне додавання позицій (name, unit, quantity, price з автообчисленням amount), 5) Генерація PDF. Логіка аналогічна до створення рахунку з замовленням. Всі сервіси перезапущені успішно."
+        comment: "ВИПРАВЛЕНО ПОМИЛКУ КЕШУВАННЯ FRONTEND: Очищено node_modules/.cache та перезапущено frontend для правильного завантаження нових функцій (addInvoiceManualItem, removeInvoiceManualItem, updateInvoiceManualItem). Помилка 'addInvoiceManualItem is not defined' виникала через кешування старої версії коду. Після очистки кешу та перезапуску всі функції доступні. Frontend успішно запущений і працює."
 
 metadata:
   created_by: "main_agent"
-  version: "20.0"
-  test_sequence: 20
+  version: "21.0"
+  test_sequence: 21
   run_ui: false
 
 test_plan:
