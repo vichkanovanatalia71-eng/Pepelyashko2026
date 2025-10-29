@@ -224,8 +224,11 @@ class ContractServiceV2:
             # City from supplier data
             city = self._extract_city(supplier_data.get('Юридична адреса', 'м. Київ'))
             
-            # Calculate total
-            total_amount = sum(item.get('amount', 0) for item in items)
+            # Calculate total - use contract_data total_amount if provided, otherwise sum from items
+            if 'total_amount' in contract_data and contract_data['total_amount']:
+                total_amount = contract_data['total_amount']
+            else:
+                total_amount = sum(item.get('amount', 0) for item in items)
             
             # Create PDF with correct margins (top/bottom: 2cm, left: 3cm, right: 1cm)
             filename = f"Договір_{contract_number.replace('/', '_')}_{buyer_data.get('ЄДРПОУ', '')}.pdf"
