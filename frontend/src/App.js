@@ -1310,17 +1310,19 @@ function App() {
         </div>
       </div>
       
-      <!-- Код, МФО та банк в одному рядку -->
-      <div class="payrow">
+      <!-- Код, МФО та банк в три окремі блоки в одному рядку -->
+      <div class="payrow payrow-split">
         <div class="paycell">
           <span class="paylabel">Код</span>
-          <span class="mono">{{supplier_edrpou}}</span>
-          &nbsp;&nbsp;&nbsp;
+          <div class="mono">{{supplier_edrpou}}</div>
+        </div>
+        <div class="paycell">
           <span class="paylabel">Код банку (МФО)</span>
-          <span class="mono">{{supplier_mfo}}</span>
-          &nbsp;&nbsp;&nbsp;
+          <div class="mono">{{supplier_mfo}}</div>
+        </div>
+        <div class="paycell">
           <span class="paylabel">Банк одержувача</span>
-          {{supplier_bank}}
+          <div>{{supplier_bank}}</div>
         </div>
       </div>
     </div>
