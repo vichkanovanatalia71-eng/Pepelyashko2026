@@ -490,6 +490,18 @@ frontend:
         agent: "main"
         comment: "Виправлено невідповідність між номером договору в списку та в PDF документі. Проблема: метод create_contract() в google_sheets_service.py генерував простий послідовний номер (0055), тоді як contract_service_v2.py генерував правильний номер у форматі DD/MM/YY-4_middle_EDRPOU_digits-sequential_number. Виправлення: 1) В server.py додано передачу contract_number в contract_record перед викликом sheets_service.create_contract(), 2) В google_sheets_service.py оновлено метод create_contract() щоб використовувати переданий contract_number замість генерації власного простого номера. Тепер номер в списку договорів співпадає з номером в PDF документі. Backend перезапущений успішно."
 
+  - task: "Contract Creation Based on Order"
+    implemented: true
+    working: "needs_testing"
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "needs_testing"
+        agent: "main"
+        comment: "РЕАЛІЗОВАНО ПОВНИЙ ФУНКЦІОНАЛ СТВОРЕННЯ ДОГОВОРІВ НА ОСНОВІ ЗАМОВЛЕНЬ: 1) Додано відсутні useState змінні: contractBasedOnOrder, contractAvailableOrders, contractSelectedOrder, 2) Виправлено пошкоджений код форми 'на основі замовлення' (рядки 3029-3102), 3) Реалізовано вибір між двома режимами: 'Договір без замовлення' та 'Договір на основі замовлення', 4) Додано dropdown для вибору замовлення з автоматичним заповненням суми та предмету договору, 5) Оновлено searchCounterparty() для завантаження доступних замовлень контрагента, 6) Створено функцію handleContractFromOrderSubmit() для генерації договору на основі обраного замовлення з передачею based_on_order на backend. Frontend успішно скомпільовано. Потрібно протестувати: а) Пошук контрагента та завантаження його замовлень, б) Перемикання між режимами створення, в) Вибір замовлення та автозаповнення полів, г) Генерацію договору на основі замовлення з правильним based_on_order."
+
 metadata:
   created_by: "main_agent"
   version: "10.0"
