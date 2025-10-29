@@ -814,6 +814,41 @@ async def generate_invoice_from_orders(data: InvoiceFromOrdersRequest):
         logging.error(f"Error generating invoice from orders: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
+@api_router.post("/invoices/generate-without-orders")
+async def generate_invoice_without_orders(data: DocumentCreate):
+    """Generate Invoice PDF without orders (manual entry)."""
+    if sheets_service is None or invoice_service_v2 is None:
+        raise HTTPException(status_code=503, detail="Services not available")
+    
+    try:
+        # Prepare invoice data
+        invoice_data = data.model_dump()
+        
+        # Generate Invoice PDF
+        result = await invoice_service_v2.generate_invoice_pdf(
+            invoice_data=invoice_data,
+            custom_template=invoice_data.get('custom_template')
+        )
+        
+        return {
+            'success': True,
+            'message': 'Рахунок успішно згенеровано',
+            'invoice_number': result['invoice_number'],
+            'pdf_path': result['pdf_path'],
+            'pdf_filename': result['pdf_filename'],
+            'drive_view_link': result.get('drive_view_link', ''),
+            'drive_download_link': result.get('drive_download_link', ''),
+            'drive_file_id': result.get('drive_file_id', '')
+        }
+        
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error generating invoice: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
 # Waybill endpoints
 @api_router.post("/waybills", response_model=dict)
 async def create_waybill(data: DocumentCreate):
