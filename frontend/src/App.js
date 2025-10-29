@@ -3981,25 +3981,46 @@ function App() {
                           toast.success('PDF успішно згенеровано!');
                           fetchAllDocuments();
                           
-                          // Open preview with generated PDF data
-                          // If no drive_view_link, use local PDF endpoint
-                          const localPdfUrl = response.data.drive_view_link || `${API}/orders/pdf/${response.data.order_number}`;
-                          
-                          setDocumentPdfData({
-                            drive_view_link: localPdfUrl,
-                            drive_download_link: response.data.drive_download_link || localPdfUrl,
-                            drive_file_id: response.data.drive_file_id,
-                            order_number: response.data.order_number,
-                            pdf_path: response.data.pdf_path,
-                            order_form_data: {
-                              counterparty_edrpou: currentOrderDetails.counterparty_edrpou || '',
-                              items: currentOrderDetails.items || [],
-                              total_amount: parseFloat(currentOrderDetails.total_amount) || 0
-                            }
-                          });
-                          setCurrentDocType('order');
-                          setShowOrderDetails(false);
-                          setShowDocumentPreview(true);
+                          // If no drive_file_id (Drive not working), open PDF directly in new tab
+                          if (!response.data.drive_file_id) {
+                            const localPdfUrl = `${API}/orders/pdf/${response.data.order_number}`;
+                            window.open(localPdfUrl, '_blank');
+                            toast.info('PDF відкрито в новій вкладці');
+                            
+                            // Still set data for email functionality
+                            setDocumentPdfData({
+                              drive_view_link: localPdfUrl,
+                              drive_download_link: localPdfUrl,
+                              drive_file_id: '',
+                              order_number: response.data.order_number,
+                              pdf_path: response.data.pdf_path,
+                              order_form_data: {
+                                counterparty_edrpou: currentOrderDetails.counterparty_edrpou || '',
+                                items: currentOrderDetails.items || [],
+                                total_amount: parseFloat(currentOrderDetails.total_amount) || 0
+                              }
+                            });
+                            setCurrentDocType('order');
+                            setShowOrderDetails(false);
+                            setShowDocumentPreview(true);
+                          } else {
+                            // With Drive, show preview dialog as usual
+                            setDocumentPdfData({
+                              drive_view_link: response.data.drive_view_link,
+                              drive_download_link: response.data.drive_download_link,
+                              drive_file_id: response.data.drive_file_id,
+                              order_number: response.data.order_number,
+                              pdf_path: response.data.pdf_path,
+                              order_form_data: {
+                                counterparty_edrpou: currentOrderDetails.counterparty_edrpou || '',
+                                items: currentOrderDetails.items || [],
+                                total_amount: parseFloat(currentOrderDetails.total_amount) || 0
+                              }
+                            });
+                            setCurrentDocType('order');
+                            setShowOrderDetails(false);
+                            setShowDocumentPreview(true);
+                          }
                         }
                       } catch (error) {
                         toast.error('Помилка генерації PDF: ' + (error.response?.data?.detail || error.message));
