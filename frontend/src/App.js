@@ -1446,6 +1446,184 @@ function App() {
     }
   };
   
+  // Invoice functions (аналогічні до актів)
+  const searchInvoiceCounterparty = async () => {
+    if (!invoiceCounterpartyEdrpou) {
+      toast.error('Введіть код ЄДРПОУ');
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      console.log('Searching for counterparty:', invoiceCounterpartyEdrpou);
+      
+      // Find counterparty in "Основні дані"
+      const response = await axios.get(`${API}/counterparties`);
+      console.log('Counterparties response:', response.data);
+      
+      const counterparty = response.data.find(c => c.edrpou === invoiceCounterpartyEdrpou);
+      console.log('Found counterparty:', counterparty);
+      
+      if (!counterparty) {
+        toast.error('Контрагента не знайдено');
+        setInvoiceFoundCounterparty(null);
+        setInvoiceAvailableOrders([]);
+        setInvoiceAvailableContracts([]);
+        return;
+      }
+      
+      setInvoiceFoundCounterparty(counterparty);
+      toast.success(`Знайдено: ${counterparty.name || counterparty.representative_name}`);
+      
+      // Fetch all orders for this counterparty
+      console.log('Fetching orders...');
+      const ordersResponse = await axios.get(`${API}/orders`);
+      console.log('Orders response:', ordersResponse.data);
+      
+      const counterpartyOrders = ordersResponse.data.filter(
+        order => order.counterparty_edrpou === invoiceCounterpartyEdrpou
+      );
+      console.log('Filtered orders:', counterpartyOrders.length);
+      setInvoiceAvailableOrders(counterpartyOrders);
+      
+      // Fetch all contracts for this counterparty
+      console.log('Fetching contracts...');
+      const contractsResponse = await axios.get(`${API}/contracts`);
+      console.log('Contracts response:', contractsResponse.data);
+      
+      const counterpartyContracts = contractsResponse.data.filter(
+        contract => contract.counterparty_edrpou === invoiceCounterpartyEdrpou
+      );
+      console.log('Filtered contracts:', counterpartyContracts.length);
+      setInvoiceAvailableContracts(counterpartyContracts);
+      
+    } catch (error) {
+      console.error('Error searching invoice counterparty:', error);
+      toast.error('Помилка при пошуку контрагента: ' + (error.response?.data?.detail || error.message));
+      setInvoiceFoundCounterparty(null);
+      setInvoiceAvailableOrders([]);
+      setInvoiceAvailableContracts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const toggleInvoiceOrder = (orderNumber) => {
+    setInvoiceSelectedOrders(prev => {
+      if (prev.includes(orderNumber)) {
+        return prev.filter(n => n !== orderNumber);
+      } else {
+        return [...prev, orderNumber];
+      }
+    });
+  };
+  
+  const handleInvoiceFromOrdersSubmit = async () => {
+    if (!invoiceFoundCounterparty) {
+      toast.error('Спочатку знайдіть контрагента');
+      return;
+    }
+    
+    if (invoiceType === 'with-orders' && invoiceSelectedOrders.length === 0) {
+      toast.error('Оберіть хоча б одне замовлення');
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      // Get selected contract details if any
+      let contractNumber = '';
+      let contractDate = '';
+      
+      if (invoiceSelectedContract) {
+        const contract = invoiceAvailableContracts.find(c => c.number === invoiceSelectedContract);
+        if (contract) {
+          contractNumber = contract.number;
+          contractDate = contract.date;
+        }
+      }
+      
+      const payload = {
+        counterparty_edrpou: invoiceCounterpartyEdrpou,
+        order_numbers: invoiceSelectedOrders,
+        contract_number: contractNumber || null,
+        contract_date: contractDate || null
+      };
+      
+      const response = await axios.post(`${API}/invoices/generate-from-orders`, payload);
+      
+      if (response.data.success) {
+        toast.success('Рахунок успішно згенеровано на основі замовлень!');
+        
+        // Get counterparty email
+        let counterpartyEmail = invoiceFoundCounterparty?.email || '';
+        
+        // If no drive_file_id, fetch PDF as blob
+        if (!response.data.drive_file_id) {
+          try {
+            const invoiceNumber = response.data.invoice_number;
+            const localPdfUrl = `${API}/invoices/pdf/${invoiceNumber}`;
+            
+            const pdfResponse = await axios.get(localPdfUrl, { responseType: 'blob' });
+            const blobUrl = URL.createObjectURL(pdfResponse.data);
+            
+            setDocumentPdfData({
+              drive_view_link: blobUrl,
+              drive_download_link: localPdfUrl,
+              drive_file_id: '',
+              invoice_number: invoiceNumber,
+              is_blob: true
+            });
+          } catch (blobError) {
+            console.error('Error loading invoice PDF blob:', blobError);
+            setDocumentPdfData({
+              drive_view_link: response.data.drive_view_link,
+              drive_download_link: response.data.drive_download_link,
+              drive_file_id: response.data.drive_file_id,
+              pdf_filename: response.data.pdf_filename,
+              invoice_number: response.data.invoice_number
+            });
+          }
+        } else {
+          setDocumentPdfData({
+            drive_view_link: response.data.drive_view_link,
+            drive_download_link: response.data.drive_download_link,
+            drive_file_id: response.data.drive_file_id,
+            pdf_filename: response.data.pdf_filename,
+            invoice_number: response.data.invoice_number
+          });
+        }
+        
+        // Set email form with counterparty email
+        setDocumentEmailForm({
+          recipient: 'counterparty',
+          customEmail: '',
+          counterpartyEmail: counterpartyEmail
+        });
+        
+        setCurrentDocType('invoice');
+        setShowDocumentPreview(true);
+        
+        // Reset form
+        setInvoiceType('without-orders');
+        setInvoiceCounterpartyEdrpou('');
+        setInvoiceFoundCounterparty(null);
+        setInvoiceAvailableOrders([]);
+        setInvoiceSelectedOrders([]);
+        setInvoiceAvailableContracts([]);
+        setInvoiceSelectedContract('');
+        
+        // Refresh documents
+        fetchAllDocuments();
+      }
+    } catch (error) {
+      console.error('Error generating invoice from orders:', error);
+      toast.error('Помилка при генерації рахунку: ' + (error.response?.data?.detail || error.message));
+    } finally {
+      setLoading(false);
+    }
+  };
+  
   const handleContractFromOrderSubmit = async () => {
     if (!foundCounterparty) {
       toast.error('Спочатку знайдіть контрагента');
