@@ -3765,7 +3765,7 @@ function App() {
         
         {/* Order Details Dialog */}
         <Dialog open={showOrderDetails} onOpenChange={setShowOrderDetails}>
-          <DialogContent className="sm:max-w-[800px] bg-white">
+          <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto bg-white">
             <DialogHeader>
               <DialogTitle className="text-gray-900 text-xl font-bold">
                 Деталі замовлення №{currentOrderDetails?.number}
