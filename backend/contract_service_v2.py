@@ -71,7 +71,8 @@ class ContractServiceV2:
         """Convert number to Ukrainian words"""
         try:
             integer_part = int(number)
-            decimal_part = int((number - integer_part) * 100)
+            # Fix floating point precision issue
+            decimal_part = round((number - integer_part) * 100)
             
             # Розряди
             ones = ['', 'одна', 'дві', 'три', 'чотири', "п'ять", 'шість', 'сім', 'вісім', "дев'ять"]
