@@ -556,6 +556,34 @@ async def generate_order_pdf(data: DocumentCreate):
         logging.error(f"Error generating order PDF: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
+@api_router.get("/orders/pdf/{order_number}")
+async def get_order_pdf(order_number: str):
+    """Serve order PDF file for preview."""
+    try:
+        # Find PDF file in generated_orders directory
+        pdf_dir = Path('/app/backend/generated_orders')
+        
+        # Look for PDF with this order number
+        pdf_files = list(pdf_dir.glob(f"Замовлення_{order_number}_*.pdf"))
+        
+        if not pdf_files:
+            raise HTTPException(status_code=404, detail=f"PDF для замовлення {order_number} не знайдено")
+        
+        # Return the most recent file
+        pdf_file = sorted(pdf_files, key=lambda f: f.stat().st_mtime, reverse=True)[0]
+        
+        return FileResponse(
+            path=str(pdf_file),
+            media_type='application/pdf',
+            filename=pdf_file.name
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error serving order PDF: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
 @api_router.post("/orders/send-email")
 async def send_order_email(data: OrderSendEmailRequest):
     """Send order PDF via email with optional Google Drive link."""
