@@ -956,6 +956,7 @@ async def generate_contract_pdf(data: ContractGenerateRequest):
         logging.info(f"Contract data prepared: {contract_data}")
         
         # Generate PDF using new service
+        # Note: contract_service_v2 will automatically generate total_amount_text from total_amount
         result = contract_service_v2.generate_contract_pdf(
             contract_data=contract_data,
             supplier_data=supplier_data,
