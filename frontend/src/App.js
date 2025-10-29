@@ -481,6 +481,17 @@ function App() {
       localStorage.setItem('actTemplateVersion', CURRENT_ACT_VERSION);
     }
     
+    // Force clear old contract templates to ensure version 5.1 with amount_in_words
+    const contractTemplateVersion = localStorage.getItem('contractTemplateVersion');
+    const CURRENT_CONTRACT_VERSION = '5.1';
+    
+    if (contractTemplateVersion !== CURRENT_CONTRACT_VERSION) {
+      console.log('Clearing old contract template from localStorage - updating to version 5.1');
+      localStorage.removeItem('contractTemplate');
+      localStorage.removeItem('contractTemplateVersion');
+      localStorage.removeItem('contractTemplateSettings');
+    }
+    
     fetchCounterparties();
     fetchAllDocuments();
     loadContractTemplate();
