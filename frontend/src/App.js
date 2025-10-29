@@ -1290,6 +1290,16 @@ function App() {
     });
   };
   
+  const toggleContractOrder = (orderNumber) => {
+    setContractSelectedOrders(prev => {
+      if (prev.includes(orderNumber)) {
+        return prev.filter(n => n !== orderNumber);
+      } else {
+        return [...prev, orderNumber];
+      }
+    });
+  };
+  
   const handleActFromOrdersSubmit = async () => {
     if (!actFoundCounterparty) {
       toast.error('Спочатку знайдіть контрагента');
