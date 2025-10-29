@@ -2471,7 +2471,7 @@ function App() {
                   {actFoundCounterparty && (
                     <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
                       <p className="text-sm font-medium text-green-900">✓ Знайдено контрагента:</p>
-                      <p className="text-sm text-green-700">{actFoundCounterparty.name}</p>
+                      <p className="text-sm text-green-700">{actFoundCounterparty.representative_name || actFoundCounterparty.name}</p>
                       <p className="text-xs text-green-600">ЄДРПОУ: {actFoundCounterparty.edrpou}</p>
                     </div>
                   )}
