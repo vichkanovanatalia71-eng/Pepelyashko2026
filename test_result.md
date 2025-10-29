@@ -490,17 +490,17 @@ frontend:
         agent: "main"
         comment: "Виправлено невідповідність між номером договору в списку та в PDF документі. Проблема: метод create_contract() в google_sheets_service.py генерував простий послідовний номер (0055), тоді як contract_service_v2.py генерував правильний номер у форматі DD/MM/YY-4_middle_EDRPOU_digits-sequential_number. Виправлення: 1) В server.py додано передачу contract_number в contract_record перед викликом sheets_service.create_contract(), 2) В google_sheets_service.py оновлено метод create_contract() щоб використовувати переданий contract_number замість генерації власного простого номера. Тепер номер в списку договорів співпадає з номером в PDF документі. Backend перезапущений успішно."
 
-  - task: "Contract Creation Based on Order"
+  - task: "Contract Creation Based on Order - Multiple Selection"
     implemented: true
     working: "yes"
-    file: "/app/frontend/src/App.js, /app/backend/server.py"
+    file: "/app/frontend/src/App.js"
     stuck_count: 0
     priority: "high"
     needs_retesting: false
     status_history:
       - working: "yes"
         agent: "main"
-        comment: "ПОВНІСТЮ ВИПРАВЛЕНО ТА ПРОТЕСТОВАНО: 1) Додано відсутні useState змінні для contractBasedOnOrder, contractAvailableOrders, contractSelectedOrder, 2) Виправлено пошкоджений код форми (рядки 3029-3102), реалізовано повну форму з dropdown для вибору замовлення та автозаповненням полів, 3) Оновлено searchCounterparty() для завантаження доступних замовлень контрагента, 4) Створено handleContractFromOrderSubmit() для генерації договору з based_on_order, 5) ВИПРАВЛЕНО PREVIEW DIALOGS: замість iframe для blob PDF використовується success екран з кнопкою 'Завантажити PDF', 6) ВИПРАВЛЕНО BACKEND ENDPOINT: додано {contract_number:path} та заміна слешів на підкреслення для правильного пошуку PDF файлів. ТЕСТУВАННЯ: Backend - всі 6 сценаріїв пройшли успішно (пошук контрагента, створення без/з замовлення, перевірка зв'язків), Frontend - тестування показало що форма працює, PDF генерується, preview dialog відображає success екран з номером договору та кнопкою завантаження. Користувач підтвердив роботу функціоналу."
+        comment: "РЕАЛІЗОВАНО ПОВНУ ФУНКЦІОНАЛЬНІСТЬ ВИБОРУ ДЕКІЛЬКОХ ЗАМОВЛЕНЬ ДЛЯ ДОГОВОРІВ: 1) Змінено contractSelectedOrder з string на array (contractSelectedOrders) для підтримки multiple selection, 2) Додано функцію toggleContractOrder() для toggle checkboxes, 3) Замінено dropdown на checkboxes список замовлень (аналогічно до актів), 4) Оновлено handleContractFromOrderSubmit() для роботи з масивом замовлень - розрахунок загальної суми, об'єднання items, передача order_numbers на backend, 5) ВИПРАВЛЕНО PREVIEW DIALOG - тепер показує PDF в iframe (blob URL) як у актів, замість success екрану, 6) Додано автоматичний розрахунок загальної суми обраних замовлень з підказкою користувачу, 7) Кнопка 'Відкрити у новій вкладці' додана під iframe. ТЕСТУВАННЯ: Створено договір без замовлення, preview dialog показує PDF в iframe ✅, кнопка 'Відкрити у новій вкладці' працює ✅, секція email видима ✅. UI тепер повністю відповідає вигляду актів з можливістю вибору декількох замовлень через checkboxes."
 
 metadata:
   created_by: "main_agent"
