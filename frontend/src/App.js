@@ -1389,7 +1389,7 @@ function App() {
           <td class="num"><b><span class="mono">{{total_gross}}</span></b></td>
         </tr>
         <tr>
-          <td colspan="2" style="padding-top:8px"><b>Всього до сплати:</b> {{total_amount_text}} {{vat_note}}</td>
+          <td colspan="2" style="padding-top:8px;white-space:nowrap"><b>Всього до сплати:</b> {{total_amount_text}} {{vat_note}}</td>
         </tr>
       </table>
     </div>
