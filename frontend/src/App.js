@@ -293,6 +293,18 @@ function App() {
   const [actAvailableContracts, setActAvailableContracts] = useState([]);
   const [actSelectedContract, setActSelectedContract] = useState('');
   
+  // Invoice template editor
+  const [showInvoiceTemplateEditor, setShowInvoiceTemplateEditor] = useState(false);
+  
+  // Invoice from orders
+  const [invoiceType, setInvoiceType] = useState('without-orders'); // 'without-orders' or 'with-orders'
+  const [invoiceCounterpartyEdrpou, setInvoiceCounterpartyEdrpou] = useState('');
+  const [invoiceFoundCounterparty, setInvoiceFoundCounterparty] = useState(null);
+  const [invoiceAvailableOrders, setInvoiceAvailableOrders] = useState([]);
+  const [invoiceSelectedOrders, setInvoiceSelectedOrders] = useState([]);
+  const [invoiceAvailableContracts, setInvoiceAvailableContracts] = useState([]);
+  const [invoiceSelectedContract, setInvoiceSelectedContract] = useState('');
+  
   // Contract from orders
   const [contractBasedOnOrder, setContractBasedOnOrder] = useState(false);
   const [contractAvailableOrders, setContractAvailableOrders] = useState([]);
