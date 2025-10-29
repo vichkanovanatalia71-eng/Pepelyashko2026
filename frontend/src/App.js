@@ -1221,148 +1221,183 @@ function App() {
     const savedTemplate = localStorage.getItem('invoiceTemplate');
     const savedVersion = localStorage.getItem('invoiceTemplateVersion');
     
-    // Current template version
-    const CURRENT_VERSION = '1.0';
+    // Current template version - UPDATED to force reload
+    const CURRENT_VERSION = '2.0';
     
     // Check if saved template exists and version matches
     if (savedTemplate && savedVersion === CURRENT_VERSION) {
       setInvoiceTemplate(savedTemplate);
     } else {
-      // Use default invoice template from backend
+      // Clear old template and load new one
+      localStorage.removeItem('invoiceTemplate');
+      localStorage.removeItem('invoiceTemplateVersion');
+      
+      // Use new invoice template from backend
       const defaultInvoiceTemplate = `<!DOCTYPE html>
 <html lang="uk">
 <head>
   <meta charset="utf-8" />
   <title>Рахунок на оплату № {{invoice_number}} від {{invoice_date}}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    @page { size: A4; margin: 2cm 1.5cm 2cm 3cm; }
-    html,body{margin:0;padding:0;background:#fff;color:#111;font:12px/1.4 "Times New Roman",serif}
+    @page { size: A4; margin: 2cm 1.5cm 2cm 2cm; }
+    html,body{margin:0;padding:0;background:#fff;color:#000;font:12px/1.35 "Times New Roman",serif}
     .wrap{max-width:17cm;margin:0 auto}
-    h1{text-align:center;margin:10px 0 8px;font-size:16px;font-weight:bold}
-    .block-title{text-align:center;font-weight:bold;font-size:11px;margin:10px 0 6px;text-transform:uppercase;letter-spacing:.3px}
-    .meta{width:100%;margin:6px 0 10px;border-collapse:collapse}
-    .meta td{padding:2px 0;vertical-align:top}
-    table.items{width:100%;border-collapse:collapse;margin-top:6px;font-size:11px}
-    table.items thead{background:#f7f7f7}
-    table.items th,table.items td{border:1px solid #cfd4d9;padding:4px 6px;vertical-align:top;word-wrap:break-word}
-    table.items th{text-align:center;font-weight:bold}
-    .ncol{width:30px;text-align:center}
-    .name{width:35%}
-    .unit{width:10%;text-align:center;font-size:10px}
-    .qty{width:10%;text-align:right;font-size:10px}
-    .price{width:15%;text-align:right;font-size:10px}
-    .sum{width:15%;text-align:right;font-size:10px}
-    table.items tfoot td{border:1px solid #cfd4d9;font-weight:bold;background:#fafafa;font-size:11px}
-    .tfoot-label{text-align:right;padding-right:10px}
-    .tfoot-sum{text-align:right;padding-right:6px}
-    .requisites{width:100%;border-collapse:collapse;margin-top:12px}
-    .requisites th,.requisites td{border:1px solid #cfd4d9;padding:6px 8px;vertical-align:top;font-size:11px}
-    .requisites th{background:#f7f7f7;text-align:center;font-weight:bold}
-    .requisites td{width:50%}
-    .mono{font-family:"Courier New",monospace;font-size:10px}
-    .signline{margin-top:10px}
-    thead{display:table-header-group}
-    tfoot{display:table-footer-group}
+
+    .mono{font-family:"Courier New",monospace;white-space:nowrap}
+    .muted{color:#000}
+    .lb{font-weight:bold}
+
+    /* ===== ПЛАТІЖНЕ ДОРУЧЕННЯ (як на макеті) ===== */
+    .paybox{border:2px solid #000;padding:10px;margin:0 0 14px}
+    .paytitle{font-weight:bold;text-align:center;margin:-4px 0 8px}
+    .payrow{display:flex;gap:12px;margin:6px 0}
+    .paycell{flex:1;border:2px solid #000;padding:6px 8px}
+    .paylabel{display:block;font-weight:bold;margin-bottom:2px}
+
+    /* ===== ГОЛОВНИЙ ЗАГОЛОВОК + лінія ===== */
+    .title{font-size:16px;font-weight:bold;margin:6px 0 6px}
+    .hr{border-bottom:2px solid #000;margin:0 0 10px}
+
+    /* ===== Блок сторін (як у зразку) ===== */
+    .party{margin:6px 0}
+    .party .name{font-weight:bold;text-transform:uppercase}
+    .party .line{margin:2px 0}
+
+    /* ===== Таблиця позицій ===== */
+    table.items{width:100%;border-collapse:collapse;margin-top:10px;table-layout:fixed}
+    table.items th,table.items td{border:2px solid #000;padding:6px 8px;vertical-align:top}
+    table.items thead th{background:#fff;font-weight:bold;text-align:center}
+    .col-n{width:26px;text-align:center}
+    .col-name{width:52%}
+    .col-qty{width:9%;text-align:center}
+    .col-unit{width:8%;text-align:center}
+    .col-price,.col-sum{width:15%;text-align:right}
+
+    /* ===== Підсумки праворуч як у макеті ===== */
+    .totals{width:50%;margin:12px 0 6px 50%}
+    .totals table{width:100%;border-collapse:collapse}
+    .totals td{padding:4px 0}
+    .totals td:first-child{text-align:right;padding-right:10px}
+    .totals .num{text-align:right}
+
+    /* ===== Підпис посередині нижче ===== */
+    .sign{margin:24px auto 0;text-align:center;width:70%}
+    .signline{border-bottom:1px solid #000;height:24px;margin:0 0 4px}
   </style>
 </head>
 <body>
   <div class="wrap">
-    <h1>РАХУНОК НА ОПЛАТУ № {{invoice_number}} ВІД {{invoice_date}}</h1>
-    <table class="meta">
-      <tr><td><strong>Постачальник:</strong> {{supplier_name}}, ЄДРПОУ {{supplier_edrpou}}</td></tr>
-      <tr><td><strong>Покупець:</strong> {{buyer_name}}, ЄДРПОУ {{buyer_edrpou}}</td></tr>
-      <tr><td><strong>Підстава (за наявності):</strong> {{basis}}</td></tr>
-    </table>
-    <div class="sec">
-      <p>Просимо оплатити наступні товари/послуги:</p>
+
+    <!-- Платіжне доручення -->
+    <div class="paybox">
+      <div class="paytitle">Платіжне доручення</div>
+      <div class="payrow">
+        <div class="paycell">
+          <span class="paylabel">Одержувач</span>
+          <div class="lb">{{supplier_name}}</div>
+        </div>
+        <div class="paycell">
+          <span class="paylabel">IBAN (рах.)</span>
+          <div class="mono">{{supplier_iban}}</div>
+        </div>
+      </div>
+      <div class="payrow">
+        <div class="paycell">
+          <span class="paylabel">Код</span>
+          <div class="mono">{{supplier_edrpou}}</div>
+        </div>
+        <div class="paycell">
+          <span class="paylabel">Код банку (МФО)</span>
+          <div class="mono">{{supplier_mfo}}</div>
+        </div>
+      </div>
+      <div class="payrow">
+        <div class="paycell" style="flex:1 1 100%">
+          <span class="paylabel">Банк одержувача</span>
+          <div>{{supplier_bank}}</div>
+        </div>
+      </div>
     </div>
+
+    <!-- Заголовок рахунку -->
+    <div class="title">Рахунок на оплату № {{invoice_number}} від {{invoice_date}}</div>
+    <div class="hr"></div>
+
+    <!-- Постачальник -->
+    <div class="party">
+      <div class="name">ПОСТАЧАЛЬНИК:</div>
+      <div class="lb"> {{supplier_name}} </div>
+      <div class="line">р/р <span class="mono">{{supplier_iban}}</span>, в {{supplier_bank}}, МФО <span class="mono">{{supplier_mfo}}</span></div>
+      <div class="line">{{supplier_address}}</div>
+      <div class="line">Код ЄДРПОУ/РНОКПП: <span class="mono">{{supplier_edrpou}}</span></div>
+      <div class="line">Email: <span class="mono">{{supplier_email}}</span>; Тел.: <span class="mono">{{supplier_phone}}</span></div>
+    </div>
+
+    <!-- Покупець -->
+    <div class="party" style="margin-top:10px">
+      <div class="name">ПОКУПЕЦЬ:</div>
+      <div class="lb"> {{buyer_name}} </div>
+      <div class="line">{{buyer_address}}</div>
+      <div class="line">р/р <span class="mono">{{buyer_iban}}</span> в {{buyer_bank}}</div>
+      <div class="line">МФО <span class="mono">{{buyer_mfo}}</span>; Код ЄДРПОУ: <span class="mono">{{buyer_edrpou}}</span></div>
+      <div class="line">Email: <span class="mono">{{buyer_email}}</span>; Тел.: <span class="mono">{{buyer_phone}}</span></div>
+    </div>
+
+    <!-- Таблиця позицій -->
     <table class="items">
       <thead>
         <tr>
-          <th class="ncol">№</th>
-          <th class="name">Найменування товару/послуги</th>
-          <th class="unit">Од.</th>
-          <th class="qty">Кільк.</th>
-          <th class="price">Ціна, грн</th>
-          <th class="sum">Сума, грн</th>
+          <th class="col-n">№</th>
+          <th class="col-name">Товари (роботи, послуги)</th>
+          <th class="col-qty">Кіл-сть</th>
+          <th class="col-unit">Од.</th>
+          <th class="col-price">Ціна без ПДВ</th>
+          <th class="col-sum">Сума без ПДВ</th>
         </tr>
       </thead>
       <tbody>
-        {{#each items}}
-        <tr>
-          <td class="ncol">{{inc @index}}</td>
-          <td class="name">{{this.name}}</td>
-          <td class="unit">{{this.unit}}</td>
-          <td class="qty"><span class="mono">{{this.qty}}</span></td>
-          <td class="price"><span class="mono">{{this.price}}</span></td>
-          <td class="sum"><span class="mono">{{this.sum}}</span></td>
-        </tr>
-        {{/each}}
+        {{items_rows}}
       </tbody>
-      <tfoot>
-        <tr>
-          <td colspan="5" class="tfoot-label">Разом без ПДВ, грн</td>
-          <td class="tfoot-sum"><span class="mono">{{total_net}}</span></td>
-        </tr>
-        <tr>
-          <td colspan="5" class="tfoot-label">ПДВ {{vat_rate}}%, грн</td>
-          <td class="tfoot-sum"><span class="mono">{{total_vat}}</span></td>
-        </tr>
-        <tr>
-          <td colspan="5" class="tfoot-label"><strong>Всього до сплати, грн</strong></td>
-          <td class="tfoot-sum"><strong><span class="mono">{{total_gross}}</span></strong></td>
-        </tr>
-        <tr>
-          <td colspan="6" style="padding:8px;text-align:left;font-size:11px">
-            <strong>Сума прописом:</strong> <span style="text-transform:lowercase">{{total_amount_text}}</span>
-          </td>
-        </tr>
-      </tfoot>
     </table>
-    <div style="margin:10px 0;line-height:1.6">
-      <p style="margin:4px 0"><strong>Умови оплати:</strong> Оплата згідно умов договору або протягом 5 банківських днів з дати виставлення рахунку.</p>
-      <p style="margin:4px 0"><strong>Примітка:</strong> {{vat_note}}</p>
+
+    <!-- Підсумки -->
+    <div class="totals">
+      <table>
+        <tr>
+          <td>Всього:</td>
+          <td class="num"><span class="mono">{{total_net}}</span></td>
+        </tr>
+        <tr>
+          <td>Сума ПДВ ({{vat_rate}}%):</td>
+          <td class="num"><span class="mono">{{total_vat}}</span></td>
+        </tr>
+        <tr>
+          <td><b>Всього з ПДВ:</b></td>
+          <td class="num"><b><span class="mono">{{total_gross}}</span></b></td>
+        </tr>
+      </table>
     </div>
-    <div class="block-title">Реквізити сторін</div>
-    <table class="requisites">
-      <tr>
-        <th>ПОСТАЧАЛЬНИК</th>
-        <th>ПОКУПЕЦЬ</th>
-      </tr>
-      <tr>
-        <td>
-          <p><strong>Назва:</strong> {{supplier_name}}</p>
-          <p><strong>ЄДРПОУ:</strong> <span class="mono">{{supplier_edrpou}}</span></p>
-          <p><strong>Адреса:</strong> {{supplier_address}}</p>
-          <p><strong>IBAN:</strong> <span class="mono">{{supplier_iban}}</span></p>
-          <p><strong>Банк:</strong> {{supplier_bank}}</p>
-          <p><strong>МФО:</strong> <span class="mono">{{supplier_mfo}}</span></p>
-          <p><strong>Email:</strong> <span class="mono">{{supplier_email}}</span></p>
-          <p><strong>Тел.:</strong> <span class="mono">{{supplier_phone}}</span></p>
-          <p><strong>В особі:</strong> {{supplier_representative}}</p>
-          <p class="signline">Підпис: __________________ / ________ /</p>
-          <p><strong>{{supplier_signature}}</strong></p>
-        </td>
-        <td>
-          <p><strong>Назва:</strong> {{buyer_name}}</p>
-          <p><strong>ЄДРПОУ:</strong> <span class="mono">{{buyer_edrpou}}</span></p>
-          <p><strong>Адреса:</strong> {{buyer_address}}</p>
-          <p><strong>IBAN:</strong> <span class="mono">{{buyer_iban}}</span></p>
-          <p><strong>Банк:</strong> {{buyer_bank}}</p>
-          <p><strong>МФО:</strong> <span class="mono">{{buyer_mfo}}</span></p>
-          <p><strong>Email:</strong> <span class="mono">{{buyer_email}}</span></p>
-          <p><strong>Тел.:</strong> <span class="mono">{{buyer_phone}}</span></p>
-          <p><strong>В особі:</strong> {{buyer_representative}}</p>
-          <p class="signline">Підпис: __________________ / ________ /</p>
-          <p><strong>{{buyer_signature}}</strong></p>
-        </td>
-      </tr>
-    </table>
+
+    <!-- Сума прописом і примітка ПДВ -->
+    <div class="party" style="margin-top:6px">
+      <div class="line"><b>всього до сплати: {{total_amount_text}} {{vat_note}}</b></div>
+    </div>
+
+    <!-- Підпис -->
+    <div class="sign">
+      <div class="signline"></div>
+      <div>{{supplier_signature}}</div>
+    </div>
+
   </div>
 </body>
 </html>`;
       
       setInvoiceTemplate(defaultInvoiceTemplate);
+      // Save with new version
+      localStorage.setItem('invoiceTemplate', defaultInvoiceTemplate);
+      localStorage.setItem('invoiceTemplateVersion', CURRENT_VERSION);
     }
   };
   
