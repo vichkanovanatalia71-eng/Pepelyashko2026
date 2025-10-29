@@ -1222,7 +1222,7 @@ function App() {
     const savedVersion = localStorage.getItem('invoiceTemplateVersion');
     
     // Current template version - UPDATED to force reload
-    const CURRENT_VERSION = '2.0';
+    const CURRENT_VERSION = '3.0';
     
     // Check if saved template exists and version matches
     if (savedTemplate && savedVersion === CURRENT_VERSION) {
@@ -1264,15 +1264,20 @@ function App() {
     .party .name{font-weight:bold;text-transform:uppercase}
     .party .line{margin:2px 0}
 
+    /* ===== Блок підстав ===== */
+    .basis-box{border:1px solid #000;padding:8px;margin:10px 0;background:#f9f9f9}
+    .basis-title{font-weight:bold;margin-bottom:4px}
+    .basis-line{margin:2px 0;font-size:11px}
+
     /* ===== Таблиця позицій ===== */
-    table.items{width:100%;border-collapse:collapse;margin-top:10px;table-layout:fixed}
-    table.items th,table.items td{border:2px solid #000;padding:6px 8px;vertical-align:top}
+    table.items{width:100%;border-collapse:collapse;margin-top:10px;table-layout:fixed;font-size:11px}
+    table.items th,table.items td{border:2px solid #000;padding:4px 6px;vertical-align:top}
     table.items thead th{background:#fff;font-weight:bold;text-align:center}
-    .col-n{width:26px;text-align:center}
-    .col-name{width:52%}
-    .col-qty{width:9%;text-align:center}
-    .col-unit{width:8%;text-align:center}
-    .col-price,.col-sum{width:15%;text-align:right}
+    .col-n{width:24px;text-align:center}
+    .col-name{width:48%}
+    .col-qty{width:8%;text-align:center}
+    .col-unit{width:7%;text-align:center}
+    .col-price,.col-sum{width:14%;text-align:right}
 
     /* ===== Підсумки праворуч як у макеті ===== */
     .totals{width:50%;margin:12px 0 6px 50%}
@@ -1281,9 +1286,11 @@ function App() {
     .totals td:first-child{text-align:right;padding-right:10px}
     .totals .num{text-align:right}
 
-    /* ===== Підпис посередині нижче ===== */
-    .sign{margin:24px auto 0;text-align:center;width:70%}
-    .signline{border-bottom:1px solid #000;height:24px;margin:0 0 4px}
+    /* ===== Підпис з М.П. ===== */
+    .sign{margin:24px auto 0;text-align:center;width:70%;display:flex;justify-content:space-between;align-items:flex-end}
+    .sign-left{flex:1;text-align:left}
+    .sign-right{flex:1;text-align:right}
+    .signline{border-bottom:1px solid #000;height:24px;margin:0 0 4px;display:inline-block;width:200px}
   </style>
 </head>
 <body>
@@ -1344,6 +1351,12 @@ function App() {
       <div class="line">Email: <span class="mono">{{buyer_email}}</span>; Тел.: <span class="mono">{{buyer_phone}}</span></div>
     </div>
 
+    <!-- Блок підстав -->
+    <div class="basis-box">
+      <div class="basis-title">ПІДСТАВА:</div>
+      <div class="basis-line">{{basis}}</div>
+    </div>
+
     <!-- Таблиця позицій -->
     <table class="items">
       <thead>
@@ -1381,13 +1394,20 @@ function App() {
 
     <!-- Сума прописом і примітка ПДВ -->
     <div class="party" style="margin-top:6px">
-      <div class="line"><b>всього до сплати: {{total_amount_text}} {{vat_note}}</b></div>
+      <div class="line"><b>Всього до сплати: {{total_amount_text}} {{vat_note}}</b></div>
     </div>
 
-    <!-- Підпис -->
+    <!-- Підпис з М.П. -->
     <div class="sign">
-      <div class="signline"></div>
-      <div>{{supplier_signature}}</div>
+      <div class="sign-left">
+        <div style="margin-bottom:4px"><b>Підпис:</b></div>
+        <div class="signline"></div>
+        <div style="margin-top:4px">{{supplier_signature}}</div>
+      </div>
+      <div class="sign-right">
+        <div style="margin-bottom:4px"><b>М.П.</b></div>
+        <div style="width:80px;height:80px;border:1px solid #000;border-radius:50%;margin:0 auto"></div>
+      </div>
     </div>
 
   </div>
