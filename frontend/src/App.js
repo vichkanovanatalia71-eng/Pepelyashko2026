@@ -2798,21 +2798,216 @@ function App() {
           </TabsContent>
 
           <TabsContent value="invoices" data-testid="invoices-content">
-            <DocumentForm 
-              endpoint="invoices" 
-              docType="Рахунок" 
-              title="Створення Рахунку"
-              searchEdrpou={searchEdrpou}
-              setSearchEdrpou={setSearchEdrpou}
-              foundCounterparty={foundCounterparty}
-              searchCounterparty={searchCounterparty}
-              documentForm={documentForm}
-              addItem={addItem}
-              removeItem={removeItem}
-              updateItem={updateItem}
-              handleDocumentSubmit={handleDocumentSubmit}
-              loading={loading}
-            />
+            {/* Invoice Template Editor Button */}
+            <div className="mb-4 flex justify-end">
+              <Button
+                variant="outline"
+                onClick={() => setShowInvoiceTemplateEditor(true)}
+                className="border-green-500 text-green-600 hover:bg-green-50"
+              >
+                <FileText className="w-4 h-4 mr-2" />
+                Редагувати шаблон рахунку
+              </Button>
+            </div>
+            
+            {/* New Invoice Creation UI */}
+            <Card className="glass-card">
+              <CardHeader>
+                <CardTitle className="text-2xl font-bold text-gray-900">Створення Рахунку на Оплату</CardTitle>
+                <CardDescription>Оберіть контрагента та тип рахунку</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Step 1: Search Counterparty */}
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium">Крок 1: Пошук контрагента</Label>
+                  <div className="flex gap-3">
+                    <Input
+                      placeholder="Введіть ЄДРПОУ контрагента"
+                      value={invoiceCounterpartyEdrpou}
+                      onChange={(e) => setInvoiceCounterpartyEdrpou(e.target.value)}
+                      className="flex-1"
+                    />
+                    <Button 
+                      onClick={searchInvoiceCounterparty}
+                      disabled={loading}
+                      className="btn-primary"
+                    >
+                      {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Search className="w-4 h-4 mr-2" />}
+                      Пошук
+                    </Button>
+                  </div>
+                  
+                  {invoiceFoundCounterparty && (
+                    <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                      <p className="text-sm font-medium text-green-900">✓ Знайдено контрагента:</p>
+                      <p className="text-sm text-green-700">{invoiceFoundCounterparty.representative_name || invoiceFoundCounterparty.name}</p>
+                      <p className="text-xs text-green-600">ЄДРПОУ: {invoiceFoundCounterparty.edrpou}</p>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Step 2: Select Invoice Type */}
+                {invoiceFoundCounterparty && (
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">Крок 2: Тип рахунку</Label>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="radio"
+                          id="invoice-without-orders"
+                          name="invoiceType"
+                          value="without-orders"
+                          checked={invoiceType === 'without-orders'}
+                          onChange={(e) => setInvoiceType(e.target.value)}
+                          className="w-4 h-4 text-green-600"
+                        />
+                        <label htmlFor="invoice-without-orders" className="text-sm cursor-pointer">
+                          Рахунок без замовлення (введу дані вручну)
+                        </label>
+                      </div>
+                      
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="radio"
+                          id="invoice-with-orders"
+                          name="invoiceType"
+                          value="with-orders"
+                          checked={invoiceType === 'with-orders'}
+                          onChange={(e) => setInvoiceType(e.target.value)}
+                          className="w-4 h-4 text-green-600"
+                        />
+                        <label htmlFor="invoice-with-orders" className="text-sm cursor-pointer">
+                          Рахунок на основі замовлень ({invoiceAvailableOrders.length} доступно)
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Step 3: Select Orders (if with-orders) */}
+                {invoiceFoundCounterparty && invoiceType === 'with-orders' && (
+                  <>
+                    {/* Optional: Select Contract */}
+                    {invoiceAvailableContracts.length > 0 && (
+                      <div className="space-y-3">
+                        <Label className="text-sm font-medium">Крок 3 (опціонально): Оберіть договір</Label>
+                        <select
+                          value={invoiceSelectedContract}
+                          onChange={(e) => setInvoiceSelectedContract(e.target.value)}
+                          className="w-full p-2 border border-gray-300 rounded-lg"
+                        >
+                          <option value="">Без договору</option>
+                          {invoiceAvailableContracts.map(contract => (
+                            <option key={contract.number} value={contract.number}>
+                              Договір № {contract.number} від {contract.date}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                    
+                    {/* Select Orders */}
+                    <div className="space-y-3">
+                      <Label className="text-sm font-medium">
+                        Крок {invoiceAvailableContracts.length > 0 ? '4' : '3'}: Оберіть замовлення ({invoiceSelectedOrders.length} обрано)
+                      </Label>
+                      
+                      {invoiceAvailableOrders.length > 0 ? (
+                        <div className="space-y-2 max-h-64 overflow-y-auto border border-gray-200 rounded-lg p-3">
+                          {invoiceAvailableOrders.map(order => (
+                            <div 
+                              key={order.number}
+                              className={`p-3 border rounded-lg cursor-pointer transition-all ${
+                                invoiceSelectedOrders.includes(order.number)
+                                  ? 'border-green-500 bg-green-50'
+                                  : 'border-gray-200 hover:border-green-300'
+                              }`}
+                              onClick={() => toggleInvoiceOrder(order.number)}
+                            >
+                              <div className="flex items-start justify-between">
+                                <div className="flex items-start space-x-3">
+                                  <input
+                                    type="checkbox"
+                                    checked={invoiceSelectedOrders.includes(order.number)}
+                                    onChange={() => toggleInvoiceOrder(order.number)}
+                                    className="mt-1 w-4 h-4 text-green-600"
+                                  />
+                                  <div>
+                                    <p className="text-sm font-medium text-gray-900">
+                                      Замовлення № {order.number}
+                                    </p>
+                                    <p className="text-xs text-gray-500">
+                                      Дата: {order.date} | Сума: {order.total_amount} грн
+                                    </p>
+                                    <p className="text-xs text-gray-600 mt-1">
+                                      Позицій: {order.items ? order.items.length : 0}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-gray-500 text-center py-4">
+                          Немає замовлень для цього контрагента
+                        </p>
+                      )}
+                    </div>
+                    
+                    {/* Submit Button */}
+                    <div className="pt-4">
+                      <Button
+                        onClick={handleInvoiceFromOrdersSubmit}
+                        disabled={loading || invoiceSelectedOrders.length === 0}
+                        className="w-full btn-primary"
+                      >
+                        {loading ? (
+                          <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Генерація...</>
+                        ) : (
+                          <><FileText className="w-4 h-4 mr-2" /> Згенерувати рахунок на основі замовлень</>
+                        )}
+                      </Button>
+                    </div>
+                  </>
+                )}
+                
+                {/* Manual Invoice Creation (without orders) */}
+                {invoiceFoundCounterparty && invoiceType === 'without-orders' && (
+                  <div className="pt-4">
+                    <p className="text-sm text-gray-600 mb-4">
+                      Для створення рахунку без замовлення використовуйте стару форму нижче.
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+            
+            {/* Old DocumentForm for manual invoice creation */}
+            {invoiceFoundCounterparty && invoiceType === 'without-orders' && (
+              <Card className="glass-card mt-6">
+                <CardHeader>
+                  <CardTitle>Ручне введення даних рахунку</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <DocumentForm 
+                    endpoint="invoices" 
+                    docType="Рахунок" 
+                    title="Створення Рахунку"
+                    searchEdrpou={searchEdrpou}
+                    setSearchEdrpou={setSearchEdrpou}
+                    foundCounterparty={foundCounterparty}
+                    searchCounterparty={searchCounterparty}
+                    documentForm={documentForm}
+                    addItem={addItem}
+                    removeItem={removeItem}
+                    updateItem={updateItem}
+                    handleDocumentSubmit={handleDocumentSubmit}
+                    loading={loading}
+                  />
+                </CardContent>
+              </Card>
+            )}
             
             {/* List of all invoices */}
             <Card className="glass-card mt-6">
