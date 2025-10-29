@@ -29,17 +29,117 @@ class ActService:
         return f"{value:,.2f}".replace(',', ' ')
     
     def number_to_words_ua(self, number: float) -> str:
-        """Convert number to Ukrainian words (simplified version)"""
-        # Simplified implementation - returns formatted number
-        # For production, use a proper number-to-words library
-        integer_part = int(number)
-        decimal_part = int((number - integer_part) * 100)
-        
-        # Simple formatting for now
-        if decimal_part > 0:
-            return f"{integer_part} гривень {decimal_part:02d} копійок"
-        else:
-            return f"{integer_part} гривень"
+        """Convert number to Ukrainian words"""
+        try:
+            integer_part = int(number)
+            decimal_part = int((number - integer_part) * 100)
+            
+            # Розряди
+            ones = ['', 'одна', 'дві', 'три', 'чотири', "п'ять", 'шість', 'сім', 'вісім', "дев'ять"]
+            tens = ['', '', 'двадцять', 'тридцять', 'сорок', "п'ятдесят", 'шістдесят', 'сімдесят', 'вісімдесят', "дев'яносто"]
+            hundreds = ['', 'сто', 'двісті', 'триста', 'чотириста', "п'ятсот", 'шістсот', 'сімсот', 'вісімсот', "дев'ятсот"]
+            teens = ['десять', 'одинадцять', 'дванадцять', 'тринадцять', 'чотирнадцять', "п'ятнадцять", 
+                    'шістнадцять', 'сімнадцять', 'вісімнадцять', "дев'ятнадцять"]
+            
+            def convert_group(n):
+                if n == 0:
+                    return ''
+                result = []
+                h = n // 100
+                t = (n % 100) // 10
+                o = n % 10
+                
+                if h > 0:
+                    result.append(hundreds[h])
+                if t == 1:
+                    result.append(teens[o])
+                else:
+                    if t > 0:
+                        result.append(tens[t])
+                    if o > 0:
+                        result.append(ones[o])
+                return ' '.join(result)
+            
+            if integer_part == 0:
+                words = 'нуль'
+            elif integer_part < 1000:
+                words = convert_group(integer_part)
+            elif integer_part < 1000000:
+                thousands = integer_part // 1000
+                remainder = integer_part % 1000
+                
+                th_word = convert_group(thousands)
+                # Correct feminine forms for thousands
+                th_word = th_word.replace('одна', 'одна').replace('дві', 'дві')
+                
+                if thousands % 10 == 1 and thousands % 100 != 11:
+                    th_suffix = 'тисяча'
+                elif thousands % 10 in [2,3,4] and thousands % 100 not in [12,13,14]:
+                    th_suffix = 'тисячі'
+                else:
+                    th_suffix = 'тисяч'
+                
+                parts = [th_word, th_suffix]
+                if remainder > 0:
+                    parts.append(convert_group(remainder))
+                words = ' '.join(parts)
+            else:
+                # Millions
+                millions = integer_part // 1000000
+                remainder = integer_part % 1000000
+                
+                m_word = convert_group(millions)
+                if millions % 10 == 1 and millions % 100 != 11:
+                    m_suffix = 'мільйон'
+                elif millions % 10 in [2,3,4] and millions % 100 not in [12,13,14]:
+                    m_suffix = 'мільйони'
+                else:
+                    m_suffix = 'мільйонів'
+                
+                parts = [m_word, m_suffix]
+                
+                if remainder >= 1000:
+                    thousands = remainder // 1000
+                    th_word = convert_group(thousands)
+                    th_word = th_word.replace('одна', 'одна').replace('дві', 'дві')
+                    if thousands % 10 == 1 and thousands % 100 != 11:
+                        th_suffix = 'тисяча'
+                    elif thousands % 10 in [2,3,4] and thousands % 100 not in [12,13,14]:
+                        th_suffix = 'тисячі'
+                    else:
+                        th_suffix = 'тисяч'
+                    parts.extend([th_word, th_suffix])
+                    remainder = remainder % 1000
+                
+                if remainder > 0:
+                    parts.append(convert_group(remainder))
+                
+                words = ' '.join(parts)
+            
+            # Add currency
+            if integer_part % 10 == 1 and integer_part % 100 != 11:
+                currency = 'гривня'
+            elif integer_part % 10 in [2,3,4] and integer_part % 100 not in [12,13,14]:
+                currency = 'гривні'
+            else:
+                currency = 'гривень'
+            
+            result = f"{words} {currency}"
+            
+            if decimal_part > 0:
+                if decimal_part % 10 == 1 and decimal_part % 100 != 11:
+                    kop_currency = 'копійка'
+                elif decimal_part % 10 in [2,3,4] and decimal_part % 100 not in [12,13,14]:
+                    kop_currency = 'копійки'
+                else:
+                    kop_currency = 'копійок'
+                result += f" {decimal_part:02d} {kop_currency}"
+            
+            return result.strip()
+            
+        except Exception as e:
+            logger.error(f"Error converting number to words: {e}")
+            return f"{int(number)} гривень"
     
     async def generate_act_from_orders(
         self,
