@@ -5548,6 +5548,110 @@ function App() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Invoice Template Editor Dialog */}
+        <Dialog open={showInvoiceTemplateEditor} onOpenChange={setShowInvoiceTemplateEditor}>
+          <DialogContent className="sm:max-w-[1200px] max-h-[90vh] bg-white">
+            <DialogHeader>
+              <DialogTitle className="text-gray-900 text-xl font-bold">
+                Редактор шаблону рахунку
+              </DialogTitle>
+              <DialogDescription className="text-gray-600">
+                Редагуйте HTML шаблон рахунку на оплату. Використовуйте змінні у форматі {`{{Назва_змінної}}`}
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4 py-4 overflow-y-auto" style={{maxHeight: 'calc(90vh - 200px)'}}>
+              
+              {/* Available variables */}
+              <Card className="bg-green-50 border-green-200">
+                <CardHeader className="py-3">
+                  <CardTitle className="text-sm font-semibold text-green-900">Доступні змінні (клікніть для вставки):</CardTitle>
+                </CardHeader>
+                <CardContent className="py-2">
+                  <div className="grid grid-cols-2 gap-3 text-xs">
+                    <div>
+                      <p className="font-semibold text-green-800 mb-2">Постачальник (Мої дані):</p>
+                      <button onClick={() => insertVariable('supplier_name', 'invoice-template-editor')} className="block text-left w-full px-2 py-1 hover:bg-green-100 rounded text-gray-700">{`{{supplier_name}}`} - Назва</button>
+                      <button onClick={() => insertVariable('supplier_edrpou', 'invoice-template-editor')} className="block text-left w-full px-2 py-1 hover:bg-green-100 rounded text-gray-700">{`{{supplier_edrpou}}`} - ЄДРПОУ</button>
+                      <button onClick={() => insertVariable('supplier_address', 'invoice-template-editor')} className="block text-left w-full px-2 py-1 hover:bg-green-100 rounded text-gray-700">{`{{supplier_address}}`} - Адреса</button>
+                      <button onClick={() => insertVariable('supplier_iban', 'invoice-template-editor')} className="block text-left w-full px-2 py-1 hover:bg-green-100 rounded text-gray-700">{`{{supplier_iban}}`} - IBAN</button>
+                      <button onClick={() => insertVariable('supplier_bank', 'invoice-template-editor')} className="block text-left w-full px-2 py-1 hover:bg-green-100 rounded text-gray-700">{`{{supplier_bank}}`} - Банк</button>
+                      <button onClick={() => insertVariable('supplier_mfo', 'invoice-template-editor')} className="block text-left w-full px-2 py-1 hover:bg-green-100 rounded text-gray-700">{`{{supplier_mfo}}`} - МФО</button>
+                      <button onClick={() => insertVariable('supplier_email', 'invoice-template-editor')} className="block text-left w-full px-2 py-1 hover:bg-green-100 rounded text-gray-700">{`{{supplier_email}}`} - Email</button>
+                      <button onClick={() => insertVariable('supplier_phone', 'invoice-template-editor')} className="block text-left w-full px-2 py-1 hover:bg-green-100 rounded text-gray-700">{`{{supplier_phone}}`} - Телефон</button>
+                      <button onClick={() => insertVariable('supplier_representative', 'invoice-template-editor')} className="block text-left w-full px-2 py-1 hover:bg-green-100 rounded text-gray-700">{`{{supplier_representative}}`} - В особі</button>
+                      <button onClick={() => insertVariable('supplier_signature', 'invoice-template-editor')} className="block text-left w-full px-2 py-1 hover:bg-green-100 rounded text-gray-700">{`{{supplier_signature}}`} - Підпис</button>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-green-800 mb-2">Покупець (Основні дані):</p>
+                      <button onClick={() => insertVariable('buyer_name', 'invoice-template-editor')} className="block text-left w-full px-2 py-1 hover:bg-green-100 rounded text-gray-700">{`{{buyer_name}}`} - Назва</button>
+                      <button onClick={() => insertVariable('buyer_edrpou', 'invoice-template-editor')} className="block text-left w-full px-2 py-1 hover:bg-green-100 rounded text-gray-700">{`{{buyer_edrpou}}`} - ЄДРПОУ</button>
+                      <button onClick={() => insertVariable('buyer_address', 'invoice-template-editor')} className="block text-left w-full px-2 py-1 hover:bg-green-100 rounded text-gray-700">{`{{buyer_address}}`} - Адреса</button>
+                      <button onClick={() => insertVariable('buyer_iban', 'invoice-template-editor')} className="block text-left w-full px-2 py-1 hover:bg-green-100 rounded text-gray-700">{`{{buyer_iban}}`} - IBAN</button>
+                      <button onClick={() => insertVariable('buyer_bank', 'invoice-template-editor')} className="block text-left w-full px-2 py-1 hover:bg-green-100 rounded text-gray-700">{`{{buyer_bank}}`} - Банк</button>
+                      <button onClick={() => insertVariable('buyer_mfo', 'invoice-template-editor')} className="block text-left w-full px-2 py-1 hover:bg-green-100 rounded text-gray-700">{`{{buyer_mfo}}`} - МФО</button>
+                      <button onClick={() => insertVariable('buyer_email', 'invoice-template-editor')} className="block text-left w-full px-2 py-1 hover:bg-green-100 rounded text-gray-700">{`{{buyer_email}}`} - Email</button>
+                      <button onClick={() => insertVariable('buyer_phone', 'invoice-template-editor')} className="block text-left w-full px-2 py-1 hover:bg-green-100 rounded text-gray-700">{`{{buyer_phone}}`} - Телефон</button>
+                      <button onClick={() => insertVariable('buyer_representative', 'invoice-template-editor')} className="block text-left w-full px-2 py-1 hover:bg-green-100 rounded text-gray-700">{`{{buyer_representative}}`} - В особі</button>
+                      <button onClick={() => insertVariable('buyer_signature', 'invoice-template-editor')} className="block text-left w-full px-2 py-1 hover:bg-green-100 rounded text-gray-700">{`{{buyer_signature}}`} - Підпис</button>
+                    </div>
+                    <div className="col-span-2">
+                      <p className="font-semibold text-green-800 mb-2">Загальні:</p>
+                      <div className="grid grid-cols-4 gap-1">
+                        <button onClick={() => insertVariable('invoice_number', 'invoice-template-editor')} className="text-left px-2 py-1 hover:bg-green-100 rounded text-gray-700">{`{{invoice_number}}`} - Номер рахунку</button>
+                        <button onClick={() => insertVariable('invoice_date', 'invoice-template-editor')} className="text-left px-2 py-1 hover:bg-green-100 rounded text-gray-700">{`{{invoice_date}}`} - Дата</button>
+                        <button onClick={() => insertVariable('basis', 'invoice-template-editor')} className="text-left px-2 py-1 hover:bg-green-100 rounded text-gray-700">{`{{basis}}`} - Підстава</button>
+                        <button onClick={() => insertVariable('items_rows', 'invoice-template-editor')} className="text-left px-2 py-1 hover:bg-green-100 rounded text-gray-700">{`{{items_rows}}`} - Рядки товарів</button>
+                        <button onClick={() => insertVariable('total_net', 'invoice-template-editor')} className="text-left px-2 py-1 hover:bg-green-100 rounded text-gray-700">{`{{total_net}}`} - Сума без ПДВ</button>
+                        <button onClick={() => insertVariable('total_vat', 'invoice-template-editor')} className="text-left px-2 py-1 hover:bg-green-100 rounded text-gray-700">{`{{total_vat}}`} - ПДВ</button>
+                        <button onClick={() => insertVariable('total_gross', 'invoice-template-editor')} className="text-left px-2 py-1 hover:bg-green-100 rounded text-gray-700">{`{{total_gross}}`} - Всього</button>
+                        <button onClick={() => insertVariable('vat_rate', 'invoice-template-editor')} className="text-left px-2 py-1 hover:bg-green-100 rounded text-gray-700">{`{{vat_rate}}`} - Ставка ПДВ</button>
+                        <button onClick={() => insertVariable('total_amount_text', 'invoice-template-editor')} className="text-left px-2 py-1 hover:bg-green-100 rounded text-gray-700">{`{{total_amount_text}}`} - Сума прописом</button>
+                        <button onClick={() => insertVariable('vat_note', 'invoice-template-editor')} className="text-left px-2 py-1 hover:bg-green-100 rounded text-gray-700">{`{{vat_note}}`} - Примітка ПДВ</button>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              {/* Template editor */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-gray-700">HTML шаблон рахунку:</Label>
+                <textarea
+                  id="invoice-template-editor"
+                  value={invoiceTemplate}
+                  onChange={(e) => setInvoiceTemplate(e.target.value)}
+                  placeholder="Введіть HTML шаблон рахунку з використанням змінних..."
+                  className="w-full h-96 p-4 border border-gray-300 rounded-lg font-mono text-sm"
+                />
+                <p className="text-xs text-gray-500">
+                  * Шаблон у форматі HTML з CSS стилями<br/>
+                  * Використовуйте змінні {'{{'} variable_name {'}}'} для підстановки даних<br/>
+                  * Після збереження шаблон застосовується для всіх нових рахунків<br/>
+                  * Клікніть на змінну вище для автоматичної вставки
+                </p>
+              </div>
+            </div>
+            
+            <DialogFooter className="bg-gray-50 -mx-6 -mb-6 px-6 py-4 rounded-b-lg">
+              <Button 
+                variant="outline" 
+                onClick={resetInvoiceTemplate}
+                className="border-red-300 text-red-600 hover:bg-red-50"
+              >
+                Скинути до стандартного
+              </Button>
+              
+              <Button 
+                onClick={saveInvoiceTemplate}
+                className="btn-primary"
+              >
+                Зберегти шаблон
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </main>
 
       <footer className="mt-16 py-6 border-t border-gray-200/50">
