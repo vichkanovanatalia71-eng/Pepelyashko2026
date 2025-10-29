@@ -3288,23 +3288,35 @@ function App() {
               {documentPdfData && (
                 <div className="space-y-2">
                   <div className="border-2 border-gray-300 rounded-lg overflow-hidden bg-gray-100" style={{height: '500px'}}>
-                    {documentPdfData.drive_view_link ? (
-                      documentPdfData.drive_file_id ? (
-                        // Google Drive PDF
-                        <iframe
-                          src={`https://drive.google.com/viewerng/viewer?embedded=true&url=https://drive.google.com/uc?id=${documentPdfData.drive_file_id}&export=download`}
-                          style={{width: '100%', height: '100%', border: 'none'}}
-                          title="Попередній перегляд документу"
-                          allow="autoplay"
-                        />
-                      ) : (
-                        // Local PDF
-                        <iframe
-                          src={documentPdfData.drive_view_link}
-                          style={{width: '100%', height: '100%', border: 'none'}}
-                          title="Попередній перегляд документу"
-                        />
-                      )
+                    {documentPdfData.drive_file_id ? (
+                      // Google Drive PDF - show iframe
+                      <iframe
+                        src={`https://drive.google.com/viewerng/viewer?embedded=true&url=https://drive.google.com/uc?id=${documentPdfData.drive_file_id}&export=download`}
+                        style={{width: '100%', height: '100%', border: 'none'}}
+                        title="Попередній перегляд документу"
+                        allow="autoplay"
+                      />
+                    ) : documentPdfData.drive_view_link ? (
+                      // Local PDF - show message with open button
+                      <div className="flex flex-col items-center justify-center h-full text-gray-500 space-y-4 p-6">
+                        <FileText className="w-20 h-20 text-blue-500" />
+                        <p className="text-xl font-semibold text-gray-800">PDF згенеровано успішно!</p>
+                        <p className="text-sm text-gray-600 text-center">
+                          PDF було відкрито в новій вкладці.<br/>
+                          Якщо вікно не відкрилось, натисніть кнопку нижче.
+                        </p>
+                        <Button
+                          onClick={() => window.open(documentPdfData.drive_view_link, '_blank')}
+                          className="bg-blue-500 text-white hover:bg-blue-600 px-6 py-3"
+                          size="lg"
+                        >
+                          <FileText className="w-5 h-5 mr-2" />
+                          Відкрити PDF
+                        </Button>
+                        <p className="text-xs text-gray-500 mt-4">
+                          Ви все ще можете надіслати PDF на email нижче
+                        </p>
+                      </div>
                     ) : (
                       <div className="flex flex-col items-center justify-center h-full text-gray-500 space-y-4 p-6">
                         <FileText className="w-20 h-20 text-blue-500" />
