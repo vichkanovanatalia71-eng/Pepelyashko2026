@@ -2861,72 +2861,15 @@ function App() {
             <Card className="glass-card">
               <CardHeader>
                 <CardTitle className="text-2xl">Створення Договору</CardTitle>
-                <CardDescription>Створіть новий договір з контрагентом</CardDescription>
+                <CardDescription>Створіть новий договір з контрагентом або на основі замовлення</CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={async (e) => {
-                  e.preventDefault();
-                  setLoading(true);
-                  
-                  if (!searchEdrpou) {
-                    toast.error('Спочатку знайдіть контрагента');
-                    setLoading(false);
-                    return;
-                  }
-
-                  try {
-                    // Generate PDF contract
-                    const pdfResponse = await axios.post(`${API}/contracts/generate-pdf`, {
-                      counterparty_edrpou: searchEdrpou,
-                      subject: contractForm.subject,
-                      items: [],
-                      total_amount: contractForm.amount,
-                      custom_template: contractTemplate || null,
-                      template_settings: templateSettings
-                    });
-                    
-                    if (pdfResponse.data.success) {
-                      // Set PDF data for preview
-                      setContractPdfData({
-                        ...pdfResponse.data,
-                        counterpartyEmail: foundCounterparty?.email || ''
-                      });
-                      setContractEmailForm({
-                        recipient: 'counterparty',
-                        customEmail: '',
-                        counterpartyEmail: foundCounterparty?.email || ''
-                      });
-                      
-                      // Show dialog first, then toast
-                      setTimeout(() => {
-                        setShowContractPreview(true);
-                        toast.success('Договір успішно згенеровано!');
-                        
-                        // Refresh all documents list
-                        fetchAllDocuments();
-                        
-                        // Reset form
-                        setContractForm({
-                          subject: '',
-                          amount: 0,
-                          items: [{ name: '', unit: 'шт', quantity: 0, price: 0, amount: 0 }]
-                        });
-                        setSearchEdrpou('');
-                        setFoundCounterparty(null);
-                      }, 100);
-                    }
-                  } catch (error) {
-                    console.error('Contract generation error:', error);
-                    toast.error(error.response?.data?.detail || 'Помилка при створенні договору');
-                  } finally {
-                    setLoading(false);
-                  }
-                }} className="space-y-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="contract-search-edrpou">Пошук контрагента за ЄДРПОУ</Label>
-                    <div className="flex gap-2">
+                {/* Крок 1: Пошук контрагента */}
+                <div className="space-y-4">
+                  <div>
+                    <Label>Крок 1: Пошук контрагента за ЄДРПОУ</Label>
+                    <div className="flex gap-2 mt-2">
                       <Input
-                        id="contract-search-edrpou"
                         value={searchEdrpou}
                         onChange={(e) => setSearchEdrpou(e.target.value)}
                         placeholder="Введіть код ЄДРПОУ"
@@ -2938,16 +2881,152 @@ function App() {
                         className="btn-primary"
                       >
                         <Search className="w-4 h-4 mr-2" />
-                        Знайти
+                        Пошук
                       </Button>
                     </div>
                     {foundCounterparty && (
-                      <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500 rounded-lg shadow-sm">
+                      <div className="p-4 mt-3 bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500 rounded-lg">
                         <div className="flex items-start gap-3">
-                          <div className="mt-0.5">
-                            <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
+                          <CheckCircle className="w-5 h-5 text-blue-500 mt-0.5" />
+                          <div className="flex-1">
+                            <p className="font-semibold text-gray-900">{foundCounterparty.representative_name || foundCounterparty.name}</p>
+                            <p className="text-sm text-gray-600">ЄДРПОУ: {foundCounterparty.edrpou}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {foundCounterparty && (
+                    <>
+                      {/* Крок 2: Вибір типу договору */}
+                      <div className="space-y-3">
+                        <Label>Крок 2: Оберіть тип договору</Label>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div 
+                            className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                              !contractBasedOnOrder 
+                                ? 'border-blue-500 bg-blue-50' 
+                                : 'border-gray-200 hover:border-blue-300'
+                            }`}
+                            onClick={() => setContractBasedOnOrder(false)}
+                          >
+                            <div className="flex items-start gap-3">
+                              <input
+                                type="radio"
+                                checked={!contractBasedOnOrder}
+                                onChange={() => setContractBasedOnOrder(false)}
+                                className="mt-1"
+                              />
+                              <div>
+                                <p className="font-semibold">Договір без замовлення</p>
+                                <p className="text-sm text-gray-600">Створити договір з вільним предметом</p>
+                              </div>
+                            </div>
+                          </div>
+                          <div 
+                            className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                              contractBasedOnOrder 
+                                ? 'border-blue-500 bg-blue-50' 
+                                : 'border-gray-200 hover:border-blue-300'
+                            }`}
+                            onClick={() => setContractBasedOnOrder(true)}
+                          >
+                            <div className="flex items-start gap-3">
+                              <input
+                                type="radio"
+                                checked={contractBasedOnOrder}
+                                onChange={() => setContractBasedOnOrder(true)}
+                                className="mt-1"
+                              />
+                              <div>
+                                <p className="font-semibold">Договір на основі замовлення</p>
+                                <p className="text-sm text-gray-600">Автоматично заповнити з замовлення</p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Форма без замовлення */}
+                      {!contractBasedOnOrder && (
+                        <form onSubmit={async (e) => {
+                          e.preventDefault();
+                          setLoading(true);
+                          
+                          try {
+                            const pdfResponse = await axios.post(`${API}/contracts/generate-pdf`, {
+                              counterparty_edrpou: searchEdrpou,
+                              subject: contractForm.subject,
+                              items: [],
+                              total_amount: contractForm.amount,
+                              custom_template: contractTemplate || null,
+                              template_settings: templateSettings
+                            });
+                            
+                            if (pdfResponse.data.success) {
+                              setContractPdfData({
+                                ...pdfResponse.data,
+                                counterpartyEmail: foundCounterparty?.email || ''
+                              });
+                              setContractEmailForm({
+                                recipient: 'counterparty',
+                                customEmail: '',
+                                counterpartyEmail: foundCounterparty?.email || ''
+                              });
+                              
+                              setTimeout(() => {
+                                setShowContractPreview(true);
+                                toast.success('Договір успішно згенеровано!');
+                                fetchAllDocuments();
+                                
+                                // Reset
+                                setContractForm({
+                                  subject: '',
+                                  amount: 0,
+                                  items: []
+                                });
+                                setSearchEdrpou('');
+                                setFoundCounterparty(null);
+                                setContractBasedOnOrder(false);
+                              }, 100);
+                            }
+                          } catch (error) {
+                            console.error('Contract generation error:', error);
+                            toast.error(error.response?.data?.detail || 'Помилка при створенні договору');
+                          } finally {
+                            setLoading(false);
+                          }
+                        }} className="space-y-4">
+                          <div>
+                            <Label>Предмет договору</Label>
+                            <Input
+                              value={contractForm.subject}
+                              onChange={(e) => setContractForm({...contractForm, subject: e.target.value})}
+                              placeholder="Наприклад: Постачання товарів/послуг"
+                              required
+                              className="mt-2"
+                            />
+                          </div>
+                          <div>
+                            <Label>Сума договору (грн)</Label>
+                            <Input
+                              type="number"
+                              value={contractForm.amount}
+                              onChange={(e) => setContractForm({...contractForm, amount: parseFloat(e.target.value) || 0})}
+                              placeholder="0.00"
+                              required
+                              className="mt-2"
+                            />
+                          </div>
+                          <Button type="submit" className="w-full btn-primary" disabled={loading}>
+                            {loading ? 'Створення...' : 'Створити договір'}
+                          </Button>
+                        </form>
+                      )}
+
+                      {/* Форма на основі замовлення */}
+                      {contractBasedOnOrder && (
                           </div>
                           <div className="flex-1">
                             <p className="text-sm font-semibold text-gray-900 mb-1">
