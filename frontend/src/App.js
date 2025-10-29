@@ -3462,18 +3462,20 @@ function App() {
                     console.log('documentPdfData:', documentPdfData);
                     const formData = documentPdfData?.order_form_data;
                     console.log('formData:', formData);
-                    if (formData) {
+                    console.log('order_number:', documentPdfData?.order_number);
+                    
+                    if (formData && documentPdfData?.order_number) {
                       setSelectedOrderData({
                         counterparty_edrpou: formData.counterparty_edrpou,
                         items: formData.items,
                         total_amount: formData.total_amount,
-                        order_number: documentPdfData?.order_number
+                        order_number: documentPdfData.order_number
                       });
                       console.log('Opening create from order dialog');
                       setShowCreateFromOrder(true);
                     } else {
-                      console.error('No form data available');
-                      toast.error('Немає даних замовлення');
+                      console.error('No form data or order_number available');
+                      toast.error('Немає даних замовлення. Закрийте та відкрийте замовлення знову.');
                     }
                   }}
                   className="btn-primary bg-green-600 hover:bg-green-700"
