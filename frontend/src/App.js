@@ -3514,28 +3514,6 @@ function App() {
                       </div>
                     )}
                   </div>
-                  {contractPdfData.drive_view_link && (
-                    <div className="text-center">
-                      <Button
-                        onClick={() => {
-                          if (contractPdfData.is_blob) {
-                            // For blob URLs, create a download link
-                            const link = document.createElement('a');
-                            link.href = contractPdfData.drive_view_link;
-                            link.download = `Договір_${contractPdfData.contract_number}.pdf`;
-                            link.click();
-                          } else {
-                            window.open(`https://drive.google.com/file/d/${contractPdfData.drive_file_id}/view`, '_blank');
-                          }
-                        }}
-                        variant="outline"
-                        size="sm"
-                      >
-                        <FileText className="w-4 h-4 mr-2" />
-                        {contractPdfData.is_blob ? 'Завантажити PDF' : 'Відкрити у новій вкладці'}
-                      </Button>
-                    </div>
-                  )}
                 </div>
               )}
               
