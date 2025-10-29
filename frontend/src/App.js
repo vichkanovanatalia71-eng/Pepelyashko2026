@@ -3327,40 +3327,120 @@ function App() {
                 
                 {/* Manual Invoice Creation (without orders) */}
                 {invoiceFoundCounterparty && invoiceType === 'without-orders' && (
-                  <div className="pt-4">
-                    <p className="text-sm text-gray-600 mb-4">
-                      Для створення рахунку без замовлення використовуйте стару форму нижче.
-                    </p>
-                  </div>
+                  <>
+                    {/* Contract info (optional) */}
+                    <div className="space-y-3 pt-4">
+                      <Label className="text-sm font-medium">Крок 3 (опціонально): Договір</Label>
+                      <div className="grid grid-cols-2 gap-3">
+                        <Input
+                          placeholder="Номер договору"
+                          value={invoiceManualForm.contract_number}
+                          onChange={(e) => setInvoiceManualForm(prev => ({ ...prev, contract_number: e.target.value }))}
+                        />
+                        <Input
+                          type="date"
+                          placeholder="Дата договору"
+                          value={invoiceManualForm.contract_date}
+                          onChange={(e) => setInvoiceManualForm(prev => ({ ...prev, contract_date: e.target.value }))}
+                        />
+                      </div>
+                    </div>
+                    
+                    {/* Items */}
+                    <div className="space-y-3 pt-4">
+                      <div className="flex justify-between items-center">
+                        <Label className="text-sm font-medium">Крок 4: Позиції рахунку ({invoiceManualForm.items.length})</Label>
+                        <Button
+                          type="button"
+                          onClick={addInvoiceManualItem}
+                          className="btn-secondary"
+                          size="sm"
+                        >
+                          <Plus className="w-4 h-4 mr-1" />
+                          Додати позицію
+                        </Button>
+                      </div>
+                      
+                      {invoiceManualForm.items.length > 0 ? (
+                        <div className="space-y-2 max-h-96 overflow-y-auto">
+                          {invoiceManualForm.items.map((item, index) => (
+                            <div key={index} className="p-3 border border-gray-200 rounded-lg bg-gray-50">
+                              <div className="flex justify-between items-start mb-2">
+                                <span className="text-sm font-medium text-gray-700">Позиція #{index + 1}</span>
+                                <Button
+                                  type="button"
+                                  onClick={() => removeInvoiceManualItem(index)}
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                              <div className="grid grid-cols-5 gap-2">
+                                <Input
+                                  placeholder="Назва"
+                                  value={item.name}
+                                  onChange={(e) => updateInvoiceManualItem(index, 'name', e.target.value)}
+                                  className="col-span-2"
+                                />
+                                <Input
+                                  placeholder="Од."
+                                  value={item.unit}
+                                  onChange={(e) => updateInvoiceManualItem(index, 'unit', e.target.value)}
+                                />
+                                <Input
+                                  type="number"
+                                  placeholder="Кількість"
+                                  value={item.quantity}
+                                  onChange={(e) => updateInvoiceManualItem(index, 'quantity', e.target.value)}
+                                />
+                                <Input
+                                  type="number"
+                                  placeholder="Ціна"
+                                  value={item.price}
+                                  onChange={(e) => updateInvoiceManualItem(index, 'price', e.target.value)}
+                                />
+                              </div>
+                              <div className="mt-2 text-right text-sm text-gray-700">
+                                <strong>Сума:</strong> {item.amount.toFixed(2)} грн
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-gray-500 text-center py-4">
+                          Немає позицій. Додайте хоча б одну позицію.
+                        </p>
+                      )}
+                      
+                      {invoiceManualForm.items.length > 0 && (
+                        <div className="pt-3 border-t border-gray-200">
+                          <p className="text-right text-lg font-bold text-green-700">
+                            Всього: {invoiceManualForm.items.reduce((sum, item) => sum + item.amount, 0).toFixed(2)} грн
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Submit Button */}
+                    <div className="pt-4">
+                      <Button
+                        onClick={handleInvoiceWithoutOrdersSubmit}
+                        disabled={loading || invoiceManualForm.items.length === 0}
+                        className="w-full btn-primary"
+                      >
+                        {loading ? (
+                          <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Генерація...</>
+                        ) : (
+                          <><FileText className="w-4 h-4 mr-2" /> Згенерувати рахунок</>
+                        )}
+                      </Button>
+                    </div>
+                  </>
                 )}
               </CardContent>
             </Card>
-            
-            {/* Old DocumentForm for manual invoice creation */}
-            {invoiceFoundCounterparty && invoiceType === 'without-orders' && (
-              <Card className="glass-card mt-6">
-                <CardHeader>
-                  <CardTitle>Ручне введення даних рахунку</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <DocumentForm 
-                    endpoint="invoices" 
-                    docType="Рахунок" 
-                    title="Створення Рахунку"
-                    searchEdrpou={searchEdrpou}
-                    setSearchEdrpou={setSearchEdrpou}
-                    foundCounterparty={foundCounterparty}
-                    searchCounterparty={searchCounterparty}
-                    documentForm={documentForm}
-                    addItem={addItem}
-                    removeItem={removeItem}
-                    updateItem={updateItem}
-                    handleDocumentSubmit={handleDocumentSubmit}
-                    loading={loading}
-                  />
-                </CardContent>
-              </Card>
-            )}
             
             {/* List of all invoices */}
             <Card className="glass-card mt-6">
