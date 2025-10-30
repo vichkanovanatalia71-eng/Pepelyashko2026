@@ -580,6 +580,7 @@ test_plan:
     - "Frontend UI Testing - Orders Full Flow"
     - "Contract Creation Based on Order"
     - "Invoice Without Orders - Structural Fix"
+    - "Invoice UI Consistency with Acts"
 
 agent_communication:
   - agent: "main"
