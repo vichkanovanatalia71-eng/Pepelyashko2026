@@ -531,12 +531,13 @@ frontend:
 
 metadata:
   created_by: "main_agent"
-  version: "21.0"
-  test_sequence: 21
+  version: "22.0"
+  test_sequence: 22
   run_ui: false
 
 test_plan:
-  current_focus: []
+  current_focus:
+    - "Invoice Without Orders - Structural Fix"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
