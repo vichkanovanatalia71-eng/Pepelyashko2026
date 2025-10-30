@@ -414,7 +414,7 @@ class OrderService:
         Parse template and replace variables with actual values
         
         Args:
-            template: Template text with {{variables}}
+            template: Template text with {{variables}} or {{{unescaped}}}
             context: Dictionary with all available variables
         
         Returns:
@@ -422,14 +422,23 @@ class OrderService:
         """
         import re
         
-        # Replace all {{variable}} with actual values
+        # First, replace all {{{variable}}} (unescaped) with actual values
+        def replace_unescaped_variable(match):
+            var_name = match.group(1)
+            return str(context.get(var_name, ''))
+        
+        # Pattern to match {{{variable_name}}} (3 braces)
+        unescaped_pattern = r'\{\{\{([^}]+)\}\}\}'
+        parsed = re.sub(unescaped_pattern, replace_unescaped_variable, template)
+        
+        # Then, replace all {{variable}} (escaped) with actual values
         def replace_variable(match):
             var_name = match.group(1)
             return str(context.get(var_name, ''))
         
-        # Pattern to match {{variable_name}}
+        # Pattern to match {{variable_name}} (2 braces)
         pattern = r'\{\{([^}]+)\}\}'
-        parsed = re.sub(pattern, replace_variable, template)
+        parsed = re.sub(pattern, replace_variable, parsed)
         
         return parsed
 
