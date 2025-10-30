@@ -419,7 +419,6 @@ class OrderService:
         def replace_unescaped_variable(match):
             var_name = match.group(1)
             value = str(context.get(var_name, ''))
-            print(f"DEBUG _parse_template: Replacing {{{{{{{var_name}}}}}}} with value of length {len(value)}")
             return value
         
         # Pattern to match {{{variable_name}}} (3 braces)
