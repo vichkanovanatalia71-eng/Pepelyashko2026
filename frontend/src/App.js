@@ -3243,28 +3243,27 @@ function App() {
                 {invoiceFoundCounterparty && invoiceType === 'with-orders' && (
                   <>
                     {/* Optional: Select Contract */}
-                    {invoiceAvailableContracts.length > 0 && (
-                      <div className="space-y-3">
-                        <Label className="text-sm font-medium">Крок 3 (опціонально): Оберіть договір</Label>
-                        <select
-                          value={invoiceSelectedContract}
-                          onChange={(e) => setInvoiceSelectedContract(e.target.value)}
-                          className="w-full p-2 border border-gray-300 rounded-lg"
-                        >
-                          <option value="">Без договору</option>
-                          {invoiceAvailableContracts.map(contract => (
-                            <option key={contract.number} value={contract.number}>
-                              Договір № {contract.number} від {contract.date}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
+                    {/* Always show contract selection */}
+                    <div className="space-y-3">
+                      <Label className="text-sm font-medium">Крок 3 (опціонально): Оберіть договір</Label>
+                      <select
+                        value={invoiceSelectedContract}
+                        onChange={(e) => setInvoiceSelectedContract(e.target.value)}
+                        className="w-full p-2 border border-gray-300 rounded-lg"
+                      >
+                        <option value="">Без договору</option>
+                        {invoiceAvailableContracts.map(contract => (
+                          <option key={contract.number} value={contract.number}>
+                            Договір № {contract.number} від {contract.date}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                     
                     {/* Select Orders */}
                     <div className="space-y-3">
                       <Label className="text-sm font-medium">
-                        Крок {invoiceAvailableContracts.length > 0 ? '4' : '3'}: Оберіть замовлення ({invoiceSelectedOrders.length} обрано)
+                        Крок 4: Оберіть замовлення ({invoiceSelectedOrders.length} обрано)
                       </Label>
                       
                       {invoiceAvailableOrders.length > 0 ? (
