@@ -552,12 +552,13 @@ frontend:
 
 metadata:
   created_by: "main_agent"
-  version: "23.0"
-  test_sequence: 23
+  version: "24.0"
+  test_sequence: 24
   run_ui: false
 
 test_plan:
-  current_focus: []
+  current_focus:
+    - "Invoice UI Consistency with Acts"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
