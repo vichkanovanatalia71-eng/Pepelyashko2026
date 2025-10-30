@@ -1865,11 +1865,13 @@ function App() {
     
     setLoading(true);
     try {
+      // Calculate total amount from items
+      const total_amount = invoiceManualForm.items.reduce((sum, item) => sum + (item.amount || 0), 0);
+      
       const payload = {
         counterparty_edrpou: invoiceCounterpartyEdrpou,
         items: invoiceManualForm.items,
-        contract_number: invoiceManualForm.contract_number || null,
-        contract_date: invoiceManualForm.contract_date || null
+        total_amount: total_amount
       };
       
       const response = await axios.post(`${API}/invoices/generate-without-orders`, payload);
