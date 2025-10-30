@@ -2528,6 +2528,9 @@ class ContractTestSuite:
             # БЛОК 4: КОНТРАГЕНТИ
             ("4.1 Counterparties List", self.test_counterparties_list),
             
+            # БЛОК 5: РАХУНКИ БЕЗ ЗАМОВЛЕНЬ (REVIEW REQUEST)
+            ("5.1 Invoice Generation WITHOUT Orders", self.test_invoice_generation_without_orders),
+            
             # КРИТИЧНІ ПЕРЕВІРКИ
             ("Ukrainian Characters in PDFs", self.test_ukrainian_characters_in_pdfs),
             ("VAT Exemption Marking", self.test_vat_exemption_marking),
