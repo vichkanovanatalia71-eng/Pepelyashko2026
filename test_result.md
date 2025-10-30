@@ -514,7 +514,7 @@ frontend:
         agent: "main"
         comment: "BACKEND ДЛЯ РАХУНКІВ ЗАВЕРШЕНО: Створено invoice_service.py (аналогічний до act_service.py) з методом generate_invoice_from_orders. Створено invoice_template.html з базовим HTML шаблоном. Додано endpoint POST /api/invoices/generate-from-orders в server.py. Встановлено libpangoft2-1.0-0 для WeasyPrint. Backend успішно запущений. Функціонал аналогічний до актів: вибір замовлень, генерація PDF, завантаження на Google Drive, збереження в Google Sheets."
 
-  - task: "Invoice Without Orders - Cache Clear Fix"
+  - task: "Invoice Without Orders - Structural Fix"
     implemented: true
     working: "needs_testing"
     file: "/app/frontend/src/App.js"
@@ -525,6 +525,9 @@ frontend:
       - working: "needs_testing"
         agent: "main"
         comment: "ВИПРАВЛЕНО ПОМИЛКУ КЕШУВАННЯ FRONTEND: Очищено node_modules/.cache та перезапущено frontend для правильного завантаження нових функцій (addInvoiceManualItem, removeInvoiceManualItem, updateInvoiceManualItem). Помилка 'addInvoiceManualItem is not defined' виникала через кешування старої версії коду. Після очистки кешу та перезапуску всі функції доступні. Frontend успішно запущений і працює."
+      - working: "needs_testing"
+        agent: "main"
+        comment: "ВИПРАВЛЕНО КРИТИЧНУ СТРУКТУРНУ ПОМИЛКУ: Видалено дублікат try-catch-finally блоку (рядки 1980-1986) який був неправильно вставлений після функції updateInvoiceManualItem(). Цей дублікат порушував синтаксис JavaScript та спричиняв помилку 'addInvoiceManualItem is not defined'. Функції handleInvoiceWithoutOrdersSubmit, addInvoiceManualItem, removeInvoiceManualItem, updateInvoiceManualItem тепер правильно розміщені у правильній області видимості. Frontend успішно скомпільований без помилок. Потрібно тестування функціоналу створення рахунків без замовлень."
 
 metadata:
   created_by: "main_agent"
