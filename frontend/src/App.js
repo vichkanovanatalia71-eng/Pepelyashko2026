@@ -189,6 +189,7 @@ const DocumentForm = ({
 );
 
 function App() {
+  console.log('App component loaded - version with addInvoiceManualItem');
   const [loading, setLoading] = useState(false);
   const [counterparties, setCounterparties] = useState([]);
   const [selectedCounterparty, setSelectedCounterparty] = useState(null);
