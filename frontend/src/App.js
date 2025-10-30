@@ -3329,22 +3329,21 @@ function App() {
                 {/* Manual Invoice Creation (without orders) */}
                 {invoiceFoundCounterparty && invoiceType === 'without-orders' && (
                   <>
-                    {/* Contract info (optional) */}
+                    {/* Contract selection (optional) */}
                     <div className="space-y-3 pt-4">
-                      <Label className="text-sm font-medium">Крок 3 (опціонально): Договір</Label>
-                      <div className="grid grid-cols-2 gap-3">
-                        <Input
-                          placeholder="Номер договору"
-                          value={invoiceManualForm.contract_number}
-                          onChange={(e) => setInvoiceManualForm(prev => ({ ...prev, contract_number: e.target.value }))}
-                        />
-                        <Input
-                          type="date"
-                          placeholder="Дата договору"
-                          value={invoiceManualForm.contract_date}
-                          onChange={(e) => setInvoiceManualForm(prev => ({ ...prev, contract_date: e.target.value }))}
-                        />
-                      </div>
+                      <Label className="text-sm font-medium">Крок 3 (опціонально): Оберіть договір</Label>
+                      <select
+                        value={invoiceSelectedContract}
+                        onChange={(e) => setInvoiceSelectedContract(e.target.value)}
+                        className="w-full p-2 border border-gray-300 rounded-lg"
+                      >
+                        <option value="">Без договору</option>
+                        {invoiceAvailableContracts.map(contract => (
+                          <option key={contract.number} value={contract.number}>
+                            Договір № {contract.number} від {contract.date}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                     
                     {/* Items */}
