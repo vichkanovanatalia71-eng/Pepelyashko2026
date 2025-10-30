@@ -533,26 +533,37 @@ async def create_order_without_pdf(data: DocumentCreate):
         raise HTTPException(status_code=503, detail="Services not available")
     
     try:
+        logging.info(f"Creating order without PDF for ЄДРПОУ: {data.counterparty_edrpou}")
+        
         # Get buyer data from "Основні дані" sheet
         buyer_data = sheets_service.get_counterparty_from_main_data(data.counterparty_edrpou)
         if not buyer_data or not buyer_data.get('ЄДРПОУ'):
             raise HTTPException(status_code=404, detail=f"Контрагента з ЄДРПОУ {data.counterparty_edrpou} не знайдено в 'Основні дані'")
         
+        logging.info(f"Found buyer: {buyer_data.get('Назва', 'Unknown')}")
+        
         # Generate order number
         existing_orders = sheets_service.get_documents("Замовлення")
         if existing_orders:
-            last_number = max([int(o.get('number', 0)) for o in existing_orders if o.get('number', '').isdigit()])
+            last_number = max([int(o.get('number', 0)) for o in existing_orders if str(o.get('number', '')).isdigit()])
             order_number = str(last_number + 1).zfill(4)
         else:
             order_number = "0001"
+        
+        logging.info(f"Generated order number: {order_number}")
         
         # Prepare order data for Google Sheets
         order_data = data.model_dump()
         order_data['order_number'] = order_number
         
+        logging.info(f"Saving order to Google Sheets with {len(order_data.get('items', []))} items")
+        
         # Save order to Google Sheets (without drive_file_id since no PDF yet)
-        sheets_service.create_order(order_data, drive_file_id='')
-        logging.info(f"Created new order {order_number} without PDF")
+        result = sheets_service.create_order(order_data, drive_file_id='')
+        logging.info(f"Order {order_number} saved successfully: {result}")
+        
+        # Clear cache to force refresh
+        sheets_service.cache.clear()
         
         return {
             'success': True,
@@ -564,7 +575,7 @@ async def create_order_without_pdf(data: DocumentCreate):
     except HTTPException:
         raise
     except Exception as e:
-        logging.error(f"Error creating order: {str(e)}")
+        logging.error(f"Error creating order: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 @api_router.post("/orders/{order_number}/generate-pdf")
