@@ -1976,14 +1976,6 @@ function App() {
       return { ...prev, items: newItems };
     });
   };
-
-    } catch (error) {
-      console.error('Error generating invoice from orders:', error);
-      toast.error('Помилка при генерації рахунку: ' + (error.response?.data?.detail || error.message));
-    } finally {
-      setLoading(false);
-    }
-  };
   
   const handleContractFromOrderSubmit = async () => {
     if (!foundCounterparty) {
