@@ -526,9 +526,111 @@ async def get_order_related_documents(order_number: str):
         logging.error(f"Error getting related documents: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
+@api_router.post("/orders/create")
+async def create_order(data: DocumentCreate):
+    """Create order and save to Google Sheets WITHOUT generating PDF."""
+    if sheets_service is None:
+        raise HTTPException(status_code=503, detail="Services not available")
+    
+    try:
+        # Get buyer data from "Основні дані" sheet
+        buyer_data = sheets_service.get_counterparty_from_main_data(data.counterparty_edrpou)
+        if not buyer_data or not buyer_data.get('ЄДРПОУ'):
+            raise HTTPException(status_code=404, detail=f"Контрагента з ЄДРПОУ {data.counterparty_edrpou} не знайдено в 'Основні дані'")
+        
+        # Generate order number
+        existing_orders = sheets_service.get_documents("Замовлення")
+        if existing_orders:
+            last_number = max([int(o.get('number', 0)) for o in existing_orders if o.get('number', '').isdigit()])
+            order_number = str(last_number + 1).zfill(4)
+        else:
+            order_number = "0001"
+        
+        # Prepare order data for Google Sheets
+        order_data = data.model_dump()
+        order_data['order_number'] = order_number
+        
+        # Save order to Google Sheets (without drive_file_id since no PDF yet)
+        sheets_service.create_order(order_data, drive_file_id='')
+        logging.info(f"Created new order {order_number} without PDF")
+        
+        return {
+            'success': True,
+            'message': 'Замовлення успішно створено',
+            'order_number': order_number,
+            'pdf_generated': False
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error creating order: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+@api_router.post("/orders/{order_number}/generate-pdf")
+async def generate_order_pdf_by_number(order_number: str):
+    """Generate PDF for existing order from Google Sheets data."""
+    if sheets_service is None or order_service is None:
+        raise HTTPException(status_code=503, detail="Services not available")
+    
+    try:
+        # Get order from Google Sheets
+        existing_orders = sheets_service.get_documents("Замовлення")
+        order = next((o for o in existing_orders if str(o.get('number', '')) == str(order_number)), None)
+        
+        if not order:
+            raise HTTPException(status_code=404, detail=f"Замовлення {order_number} не знайдено")
+        
+        # Get buyer data
+        buyer_data = sheets_service.get_counterparty_from_main_data(order.get('counterparty_edrpou', ''))
+        if not buyer_data:
+            raise HTTPException(status_code=404, detail="Контрагента не знайдено")
+        
+        # Get supplier data
+        supplier_data = sheets_service.get_supplier_data()
+        if not supplier_data:
+            raise HTTPException(status_code=404, detail="Дані постачальника не знайдено")
+        
+        # Generate PDF
+        order_data = {
+            'order_number': order_number,
+            'counterparty_edrpou': order.get('counterparty_edrpou', ''),
+            'total_amount': order.get('total_amount', 0)
+        }
+        
+        result = order_service.generate_order_pdf(
+            order_data=order_data,
+            supplier_data=supplier_data,
+            buyer_data=buyer_data,
+            items=order.get('items', []),
+            upload_to_drive=True,
+            custom_template=None
+        )
+        
+        # Update order with drive_file_id
+        drive_file_id = result.get('drive_file_id', '')
+        sheets_service.update_order_drive_id(order_number, drive_file_id)
+        
+        return {
+            'success': True,
+            'message': 'PDF успішно згенеровано',
+            'order_number': order_number,
+            'pdf_path': result['pdf_path'],
+            'pdf_filename': result['filename'],
+            'drive_view_link': result.get('drive_view_link', ''),
+            'drive_download_link': result.get('drive_download_link', ''),
+            'drive_file_id': drive_file_id
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error generating PDF for order {order_number}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
 @api_router.post("/orders/generate-pdf")
 async def generate_order_pdf(data: DocumentCreate):
-    """Generate PDF order and upload to Google Drive."""
+    """LEGACY: Generate PDF order and upload to Google Drive. Use /orders/create instead."""
     if sheets_service is None or order_service is None:
         raise HTTPException(status_code=503, detail="Services not available")
     
