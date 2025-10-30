@@ -314,11 +314,11 @@ class OrderService:
             
             # Build items rows HTML
             items_rows_html = ""
-            logger.info(f"Building items HTML. Items count: {len(items)}")
-            logger.info(f"Items data: {items}")
+            print(f"DEBUG: Building items HTML. Items count: {len(items)}")
+            print(f"DEBUG: Items data: {items}")
             
             for idx, item in enumerate(items, 1):
-                logger.info(f"Processing item {idx}: {item}")
+                print(f"DEBUG: Processing item {idx}: {item}")
                 items_rows_html += f"""
         <tr>
           <td class="ncol">{idx}</td>
@@ -329,8 +329,8 @@ class OrderService:
           <td class="numeric"><span class="mono">{self.format_currency(item.get('amount', 0))}</span></td>
         </tr>"""
             
-            logger.info(f"Generated items_rows_html length: {len(items_rows_html)}")
-            logger.info(f"items_rows_html content: {items_rows_html[:500]}")
+            print(f"DEBUG: Generated items_rows_html length: {len(items_rows_html)}")
+            print(f"DEBUG: First 500 chars of items_rows_html: {items_rows_html[:500]}")
             
             # Prepare context for variable replacement
             context = {
