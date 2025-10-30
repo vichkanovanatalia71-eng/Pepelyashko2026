@@ -1281,6 +1281,7 @@ class ContractTestSuite:
                     "amount": 1000.00
                 }
             ],
+            "total_amount": 2000.00,  # Sum of all items
             "contract_number": "ДГ-001/2024",
             "contract_date": "2024-01-15"
         }
