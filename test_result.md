@@ -558,8 +558,8 @@ frontend:
 
 metadata:
   created_by: "main_agent"
-  version: "25.0"
-  test_sequence: 25
+  version: "26.0"
+  test_sequence: 26
   run_ui: false
 
 test_plan:
