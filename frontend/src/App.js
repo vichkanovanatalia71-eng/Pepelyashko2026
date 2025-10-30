@@ -1844,6 +1844,13 @@ function App() {
         // Refresh documents
         fetchAllDocuments();
       }
+    } catch (error) {
+      console.error('Error generating invoice from orders:', error);
+      toast.error('Помилка при генерації рахунку: ' + (error.response?.data?.detail || error.message));
+    } finally {
+      setLoading(false);
+    }
+  };
   
   const handleInvoiceWithoutOrdersSubmit = async () => {
     if (!invoiceFoundCounterparty) {
