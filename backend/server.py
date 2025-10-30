@@ -527,7 +527,7 @@ async def get_order_related_documents(order_number: str):
         raise HTTPException(status_code=500, detail="Internal server error")
 
 @api_router.post("/orders/create")
-async def create_order(data: DocumentCreate):
+async def create_order_without_pdf(data: DocumentCreate):
     """Create order and save to Google Sheets WITHOUT generating PDF."""
     if sheets_service is None:
         raise HTTPException(status_code=503, detail="Services not available")
