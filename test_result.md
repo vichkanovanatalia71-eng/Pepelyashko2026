@@ -531,6 +531,9 @@ frontend:
       - working: true
         agent: "testing"
         comment: "✅ BACKEND ENDPOINT ТЕСТУВАННЯ ЗАВЕРШЕНО УСПІШНО: POST /api/invoices/generate-without-orders працює повністю! Протестовано з payload згідно review request: counterparty_edrpou='40196816', items=[Тестовий товар 1 x2, Тестовий товар 2 x5], total_amount=2000, contract_number='ДГ-001/2024'. РЕЗУЛЬТАТИ: 1) Endpoint існує і працює ✅, 2) Response містить всі обов'язкові поля (success, invoice_number, pdf_filename, drive_view_link, drive_download_link, drive_file_id) ✅, 3) PDF файл створюється з правильними даними (Рахунок_3075-13_40196816.pdf, 24078 bytes) ✅, 4) Рахунок зберігається в Google Sheets ⚠️ (можливі проблеми з quota), 5) Google Drive інтеграція ⚠️ (потребує налаштування Service Account в тестовому середовищі). ОСНОВНА ФУНКЦІОНАЛЬНІСТЬ ПРАЦЮЄ ПРАВИЛЬНО! Backend готовий до frontend тестування."
+      - working: "needs_testing"
+        agent: "main"
+        comment: "ВИПРАВЛЕНО FRONTEND PAYLOAD: Користувач повідомив про помилку '[object Object]' при генерації рахунку без замовлення. Проблема: frontend не відправляв обов'язкове поле total_amount. ЗМІНИ: 1) Додано автоматичний розрахунок total_amount з items перед відправкою на backend (sum of all item.amount), 2) Видалено contract_number та contract_date з payload (вони не підтримуються backend моделлю DocumentCreate). Backend curl тест підтвердив, що endpoint працює з новим payload (рахунок 3075-15 створено успішно). Frontend успішно скомпільований. Потрібно протестувати через UI."
 
 metadata:
   created_by: "main_agent"
