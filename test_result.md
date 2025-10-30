@@ -545,8 +545,7 @@ metadata:
   run_ui: false
 
 test_plan:
-  current_focus:
-    - "Invoice Without Orders - Structural Fix"
+  current_focus: []
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
@@ -565,6 +564,7 @@ test_plan:
     - "Documents by Order Endpoint Implementation"
     - "Frontend UI Testing - Orders Full Flow"
     - "Contract Creation Based on Order"
+    - "Invoice Without Orders - Structural Fix"
 
 agent_communication:
   - agent: "main"
