@@ -16,7 +16,7 @@ def test_pdf_endpoints():
     """Test the three PDF generation endpoints directly"""
     
     # Use the backend URL from frontend .env
-    backend_url = "https://pdf-contract-gen.preview.emergentagent.com/api"
+    backend_url = "https://billing-hub-9.preview.emergentagent.com/api"
     
     # Test payload as specified in review request
     test_payload = {

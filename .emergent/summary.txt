@@ -1,99 +1,109 @@
 <analysis>
-The AI engineer's work revolved around significantly enhancing the Contracts tab functionality, specifically addressing user requests for a multi-step UI mirroring the Acts tab (allowing creation with or without an order), accurate PDF preview, and correct rendering of monetary amounts in Ukrainian words. The initial phase involved restructuring the frontend UI in  to support conditional rendering based on contract creation mode, managing new state variables like , and implementing logic for selecting multiple orders.
-
-A major challenge was ensuring correct PDF previews, which initially failed due to local PDF handling and URL parsing issues (slashes in contract numbers). This led to modifications in both frontend (fetching blobs, dynamically creating URLs) and backend ( to correctly handle PDF paths and  for file naming). Subsequent issues focused on the  feature, requiring the  function to be integrated into  and the  to be updated. Persistent problems with old templates appearing in generated PDFs were traced to  caching, necessitating aggressive cache clearing and versioning in . Finally, a critical backend fix was implemented in  and  to correctly process  and  when  was not provided or  were empty, ensuring amounts were correctly displayed for all contract types.
+The previous AI engineer focused on replicating the Acts functionality for a new Invoices tab. This involved extensive work on both backend and frontend. On the backend, new services, HTML templates, and API endpoints were created. On the frontend, state management, UI components for multi-step form, and template editing capabilities were adapted from the existing Acts and Contracts implementations. A significant portion of the work involved iteratively refining the invoice HTML template based on user feedback, including layout, text formatting, and data display. Towards the end, the engineer tackled functionality for creating invoices *without* orders, which led to a persistent  error, ultimately traced to a structural error in  where a function was inserted without correctly closing a preceding block.
 </analysis>
 
 <product_requirements>
-The application serves as a business document management system managing Counterparties via Google Sheets and enabling the creation of various documents like Invoices, Acts, Waybills, Specifications, and Contracts. Key functionalities include HTML/CSS based PDF generation, document preview, email distribution, download options, Google Drive integration for storage, and support for Ukrainian character rendering. The system also includes a sophisticated frontend template editor and adheres to specific document numbering formats. The UI features a blue theme with yellow/orange accents, Montserrat font, rounded cards, and clean forms.
+The application is a business document management system for Counterparties, generating various documents (Invoices, Acts, Contracts) with HTML/CSS based PDF generation, preview, email, download, and Google Drive integration, supporting Ukrainian characters. The UI has a blue theme, Montserrat font, and rounded cards.
 
-**Recent Features & Focus:**
-*   **Orders (Замовлення):** Central tab for PDF creation, template editing, Google Sheets integration, and generating other documents from an order. Displays related documents within order details.
-*   **Acts (Акти):** Functionality to create Acts of Provided Services, including counterparty selection, linking to multiple orders, creating with or without a contract, data sourcing from various sheets, and a template editor.
-*   **Contracts (Договори):**
-    *   Implement a multi-step UI to choose between creating a contract based on an order or without an order, similar to the Acts tab.
-    *   Allow selection of multiple orders when creating a contract based on orders.
-    *   Ensure generated contract PDFs display correctly in a preview dialog, similar to Acts, with an Open in new tab button.
-    *   Correctly render the contract's total amount in Ukrainian words within the PDF, including 00 копійок, без ПДВ (or corresponding kopecks).
-    *   Ensure the system uses the latest template version for contract generation, including user-adapted templates from the editor, without issues from browser caching (e.g., ).
-    *   Address issues where the total amount and its word representation were not correctly populating for contracts created without orders.
+**Recent Features & Focus (Contracts):**
+*   Multi-step UI (with/without order).
+*   Multiple order selection.
+*   Accurate PDF preview with Open in new tab.
+*   Correct rendering of total amount in Ukrainian words (e.g., 00 копійок, без ПДВ).
+*   Template consistency, aggressive  caching management.
+*   Correct  population for contracts created without orders.
 
-**Implied Requirements & Fixes (Addressed Previously):**
-*   Google Sheets API quota issues (caching, credentials).
-*   Seamless PDF preview and download (local PDFs when Drive inaccessible).
-*   Correct document numbering on regeneration.
-*   Accurate counterparty emails in previews.
-*   Correct rendering of list numbering in templates.
-*   UI improvements like scrolling in dialogs.
+**Current Task (Invoices):**
+The current task is to implement Invoices (Рахунки) functionality analogous to the Acts tab. This includes:
+*   Replicating all UI elements, design, and logic for a multi-step form (similar to Acts) for Invoices.
+*   Allowing creation of invoices based on an order or without an order.
+*   Implementing a user-provided HTML template for invoices.
+*   Iteratively adjusting the invoice template layout and content based on user feedback, including:
+    *   Adding a підстави (grounds) block (later removed).
+    *   Ensuring table of items fits within document boundaries.
+    *   Capitalizing Всього (Total).
+    *   Adding Підпис: and М.П. (Seal).
+    *   Refining payment details layout (single line for code, bank).
+    *   Adjusting text and numeric alignments.
+    *   Centering the items table.
+    *   Correcting the placement of Всього до сплати (Total to pay).
+*   Fixing issues with creating invoices without orders.
 </product_requirements>
 
 <key_technical_concepts>
 -   **Full-stack Development**: React (frontend) and FastAPI (backend).
--   **PDF Generation**:  for HTML/CSS to PDF conversion;  for Handlebars templating.
--   **Data Management**: Google Sheets API (with in-memory caching), local PDF file serving.
--   **Frontend State Management**: React Hooks (, ) for dynamic UI.
--   **UI Components**: Tailwind CSS,  for modals, radio buttons, checkboxes, dropdowns.
--   **API Communication**:  for HTTP requests,  for serving PDFs.
--   **Templating**: Handlebars templates (e.g., ),  for template saving/versioning.
--   **Localization**: Ukrainian language support for UI and number-to-words conversion.
--   **Backend Data Models**: Pydantic models for API request/response validation.
+-   **PDF Generation**:  for HTML/CSS to PDF;  for Handlebars.
+-   **State Management**: React Hooks (, ).
+-   **UI Components**: Tabs, Dialogs, Forms, Checkboxes.
+-   **API Communication**: HTTP requests for data and PDF blobs.
+-   **Templating**: HTML templates,  for versioning.
+-   **Localization**: Ukrainian language support, number-to-words conversion.
+-   **Dependency Management**:  for WeasyPrint.
 </key_technical_concepts>
 
 <code_architecture>
-The application utilizes a React frontend and a FastAPI backend, designed for modularity and scalability.
 
 
-
 -   ****:
-    -   **Importance**: Core FastAPI application, handles API routing, and orchestration.
+    -   **Importance**: Central API router.
     -   **Changes**:
-        -   Modified  endpoint to use a  parameter and normalize  (replacing  with ) to correctly handle contract numbers with special characters, resolving 404 errors for PDF files.
-        -   Updated  processing in  to automatically generate the amount in words if  is not provided in the request payload.
--   ****:
-    -   **Importance**: Contains business logic for contract generation, including PDF creation and data formatting.
+        -   Initialized .
+        -   Added new API endpoints:
+            -    for generating invoices based on selected orders.
+            -    for generating invoices without orders (manual input).
+            -   Added Pydantic models (, ) for request validation.
+-   ****: (NEWLY CREATED)
+    -   **Importance**: Contains business logic for invoice generation.
     -   **Changes**:
-        -   Integrated  function (copied and adapted from ) to convert numerical amounts to Ukrainian words, ensuring correct grammar for currency and kopecks, including the phrase , без ПДВ.
-        -   Modified  to dynamically calculate  from  if  are empty (for contracts without orders), preventing sums from defaulting to zero.
-        -   Ensured  and  (as an alias) are correctly added to the template context.
-        -   Improved  to handle floating point precision issues for amounts like X.01.
--   ****:
-    -   **Importance**: HTML template used for generating contract PDFs.
+        -   Initial creation, mimicking .
+        -   Includes a  function (copied and adapted).
+        -    method for creating invoices based on order data.
+        -    method for creating invoices from manual data (without orders).
+-   ****: (NEWLY CREATED)
+    -   **Importance**: HTML template for invoice PDF generation.
     -   **Changes**:
-        -   Updated section 7.1 to display the total amount as , replacing old  placeholders and removing redundant грн to prevent duplication.
+        -   Initially created based on user input.
+        -   Multiple iterations of modifications:
+            -   Corrected / to /.
+            -   Added/removed підстави block as per user.
+            -   Adjusted CSS for table fitting ().
+            -   Capitalized Всього.
+            -   Added Підпис: and М.П..
+            -   Refined layout for payment details (,  structure, ).
+            -   Adjusted text alignment for numbers ( for some  elements).
+            -   Centering the items table ( for  and ).
+            -   Moved Всього до сплати block separately and styled it to align right.
 -   ****:
-    -   **Importance**: Main React component managing application state, routing, and UI rendering.
+    -   **Importance**: Main React component managing state and UI.
     -   **Changes**:
-        -   **Contract UI Refactor**: Introduced  variables (, , ).
-        -   Implemented conditional rendering for the Contracts tab, allowing users to choose between create with order (multiple selection checkboxes) and create without order (direct form input).
-        -   **Order Integration**: Updated  to fetch available orders when a counterparty is found, populating .
-        -   **Multiple Order Selection**: Changed  from string to array, added  function (similar to ) to manage selected orders via checkboxes.
-        -   **PDF Preview**: Modified  (and  specifically for contracts) to fetch generated PDFs as blobs from new backend endpoints and display them in an  within the  dialog, mirroring the Acts tab's functionality.
-        -   Added an Open in new tab button to the PDF preview dialog for contracts.
-        -   **Template Management**: Implemented aggressive  clearing and versioning (updated  to '5.1') for  in  and  to ensure the latest default or user-edited template is always used, resolving issues with stale templates.
-        -   Ensured  is correctly saved to  with the updated version after being set.
-        -   Reverted changes that prevented  from being sent to the backend if empty, ensuring user-edited templates (or the default one) are always considered.
-        -   Added console logging for contract creation payload to aid debugging  issues.
--   ****:
-    -   **Importance**: Provides service logic for Acts, including  which was adapted for contracts.
-    -   **Changes**: (No direct changes, but  was referenced and adapted).
+        -   Added new  variables for invoice-related state (e.g., , , , , ).
+        -   Implemented , ,  functions, mirroring Act functionality.
+        -   Implemented , , ,  for manual invoice creation.
+        -   Refactored Invoices tab UI to a multi-step form (select type, search counterparty, select orders/enter details).
+        -   Added template editor for invoices, including ,  functions.
+        -   Implemented template versioning () and aggressive  clearing for invoice templates (versions 2.0 to 8.0).
+        -   Added debug  for component loading.
+        -   **Identified issue**: Incorrect placement of  function, causing  to be undefined. The function was inserted without correctly closing the  block of .
+-   ****: (Referenced)
+    -   **Importance**: Provided  function for adaptation and structural inspiration.
+    -   **Changes**: No direct changes.
 </code_architecture>
 
 <pending_tasks>
-There are no pending tasks explicitly mentioned or inferred from the trajectory. All identified issues and user requests regarding contract creation (UI, multi-order selection, PDF preview, amount in words, template consistency) have been addressed and confirmed by the user.
+-   The critical issue of  needs to be resolved. This is due to incorrect function placement in .
+-   Thorough testing of the create invoice without order functionality once the above fix is implemented.
 </pending_tasks>
 
 <current_work>
-Immediately prior to this summary, the AI engineer successfully resolved all outstanding issues related to the Contracts tab, achieving full functionality and user satisfaction. The primary focus of the work concluded with fixing the display of the contract's total amount in Ukrainian words, especially for contracts created without orders, and ensuring template consistency.
+Immediately prior to this summary, the AI engineer was addressing a persistent error where  when trying to create an invoice without an order. This issue was occurring despite multiple frontend restarts and cache clearing attempts, indicating a code structure problem.
 
-This involved:
-1.  **Backend Logic for Amount in Words**: A critical fix was implemented in  to ensure that the  (amount in words) is automatically generated by the backend if not explicitly provided by the frontend in the request payload for contract generation.
-    
-2.  **Correct  Handling**: In , the logic for calculating  was adjusted to correctly use the  provided in the  payload, rather than recalculating it from potentially empty  list (which was causing the sum to be 0 for contracts created without orders).
-    
-3.  **Template Consistency**: All  caching issues for contract templates were resolved by robust versioning and aggressive clearing in . The default template now correctly uses  and  (or its alias ).
-4.  **Full Feature Set Confirmed**: The user explicitly confirmed супер, тепер все працює (super, now everything works), indicating all previously reported issues—including the multi-step UI for contracts, PDF preview, multi-order selection, and accurate amount in words with the specified trailing phrase—have been successfully implemented and verified.
+The engineer's latest action involved inspecting the  file to understand the context of the  function and the surrounding  function. The analysis revealed a critical syntax error: the  function (and subsequently,  and related functions) were inserted into  at line 1847 without correctly closing the preceding  block of . This resulted in  not being correctly scoped and accessible where it was being called in the JSX.
+
+The specific line of code being analyzed to identify the closure issue was:
+
+The engineer has just identified this specific structural problem and is about to apply a fix to correct the function placement.
 </current_work>
 
 <optional_next_step>
-None. The user has confirmed that everything works and all explicit requests have been addressed.
+Correct the placement of  and related functions in  to ensure proper scoping.
 </optional_next_step>
