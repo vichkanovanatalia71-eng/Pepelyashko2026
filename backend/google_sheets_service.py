@@ -170,9 +170,9 @@ class GoogleSheetsService:
             logger.error(f"Error getting all counterparties: {str(e)}")
             return []
     
-    def create_invoice(self, data: Dict[str, Any], drive_file_id: str = '') -> Dict[str, Any]:
+    def create_invoice(self, data: Dict[str, Any], drive_file_id: str = '', document_number: str = '') -> Dict[str, Any]:
         """Create a new invoice."""
-        return self._create_document("Рахунки", data, "рахунок", drive_file_id)
+        return self._create_document("Рахунки", data, "рахунок", drive_file_id, document_number)
     
     def create_order(self, data: Dict[str, Any], drive_file_id: str = '') -> Dict[str, Any]:
         """Create a new order."""
