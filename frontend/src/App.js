@@ -5560,6 +5560,188 @@ function App() {
           </DialogContent>
         </Dialog>
         
+        {/* Bulk Email Dialog */}
+        <Dialog open={showBulkEmailDialog} onOpenChange={setShowBulkEmailDialog}>
+          <DialogContent className="sm:max-w-[500px] bg-white">
+            <DialogHeader>
+              <DialogTitle className="text-gray-900 text-xl font-bold">
+                Надіслати документи на email
+              </DialogTitle>
+              <DialogDescription className="text-gray-600">
+                Вибрано документів: {selectedRelatedDocs.length}
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4 py-4">
+              <div className="space-y-3">
+                {/* Counterparty option */}
+                <div 
+                  onClick={() => setBulkEmailForm({...bulkEmailForm, recipient: 'counterparty'})}
+                  className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                    bulkEmailForm.recipient === 'counterparty' 
+                      ? 'bg-blue-50 border-blue-400' 
+                      : 'bg-white border-gray-200 hover:border-blue-300'
+                  }`}
+                >
+                  <div className="flex items-center space-x-3">
+                    <input
+                      type="radio"
+                      checked={bulkEmailForm.recipient === 'counterparty'}
+                      onChange={() => {}}
+                      className="w-4 h-4"
+                    />
+                    <div className="flex-1">
+                      <p className="font-semibold text-gray-900">Надіслати контрагенту</p>
+                      <p className="text-sm text-gray-600">
+                        {bulkEmailForm.counterpartyEmail || '(email не вказано)'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Custom email option */}
+                <div 
+                  onClick={() => setBulkEmailForm({...bulkEmailForm, recipient: 'custom'})}
+                  className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                    bulkEmailForm.recipient === 'custom' 
+                      ? 'bg-blue-50 border-blue-400' 
+                      : 'bg-white border-gray-200 hover:border-blue-300'
+                  }`}
+                >
+                  <div className="flex items-center space-x-3">
+                    <input
+                      type="radio"
+                      checked={bulkEmailForm.recipient === 'custom'}
+                      onChange={() => {}}
+                      className="w-4 h-4"
+                    />
+                    <div className="flex-1">
+                      <p className="font-semibold text-gray-900">Інша email адреса</p>
+                      {bulkEmailForm.recipient === 'custom' && (
+                        <input
+                          type="email"
+                          value={bulkEmailForm.customEmail}
+                          onChange={(e) => setBulkEmailForm({...bulkEmailForm, customEmail: e.target.value})}
+                          onClick={(e) => e.stopPropagation()}
+                          placeholder="example@email.com"
+                          className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-md"
+                        />
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <DialogFooter>
+              <Button 
+                variant="outline"
+                onClick={() => {
+                  setShowBulkEmailDialog(false);
+                  setBulkEmailForm({
+                    recipient: 'counterparty',
+                    customEmail: '',
+                    counterpartyEmail: ''
+                  });
+                }}
+              >
+                Скасувати
+              </Button>
+              
+              <Button
+                onClick={async () => {
+                  try {
+                    setLoading(true);
+                    
+                    // Get recipient email
+                    let recipientEmail = '';
+                    if (bulkEmailForm.recipient === 'counterparty') {
+                      recipientEmail = bulkEmailForm.counterpartyEmail;
+                      if (!recipientEmail) {
+                        toast.error('Email контрагента не вказано');
+                        return;
+                      }
+                    } else {
+                      recipientEmail = bulkEmailForm.customEmail;
+                      if (!recipientEmail) {
+                        toast.error('Введіть email адресу');
+                        return;
+                      }
+                    }
+                    
+                    // Send each document
+                    let successCount = 0;
+                    const errors = [];
+                    
+                    for (const item of selectedRelatedDocs) {
+                      try {
+                        let endpoint = '';
+                        let numberField = '';
+                        
+                        if (item.type === 'invoice') {
+                          endpoint = `${API}/invoices/send-email`;
+                          numberField = 'invoice_number';
+                        } else if (item.type === 'act') {
+                          endpoint = `${API}/acts/send-email`;
+                          numberField = 'act_number';
+                        } else if (item.type === 'waybill') {
+                          endpoint = `${API}/waybills/send-email`;
+                          numberField = 'waybill_number';
+                        } else if (item.type === 'contract') {
+                          endpoint = `${API}/contracts/send-email`;
+                          numberField = 'contract_number';
+                        }
+                        
+                        const payload = {
+                          [numberField]: item.number,
+                          recipient_email: recipientEmail
+                        };
+                        
+                        await axios.post(endpoint, payload);
+                        successCount++;
+                      } catch (error) {
+                        console.error(`Error sending ${item.type} ${item.number}:`, error);
+                        errors.push(`${item.type === 'invoice' ? 'Рахунок' : item.type === 'act' ? 'Акт' : item.type === 'waybill' ? 'Накладна' : 'Договір'} №${item.number}`);
+                      }
+                    }
+                    
+                    // Show results
+                    if (successCount > 0) {
+                      toast.success(`Успішно надіслано ${successCount} документ(ів) на ${recipientEmail}`);
+                    }
+                    
+                    if (errors.length > 0) {
+                      toast.error(`Помилка відправки: ${errors.join(', ')}`);
+                    }
+                    
+                    // Clear selection and close dialog
+                    setSelectedRelatedDocs([]);
+                    setShowBulkEmailDialog(false);
+                    setBulkEmailForm({
+                      recipient: 'counterparty',
+                      customEmail: '',
+                      counterpartyEmail: ''
+                    });
+                    
+                  } catch (error) {
+                    toast.error('Помилка: ' + error.message);
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+                disabled={loading}
+                className="btn-primary"
+              >
+                {loading ? (
+                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Відправка...</>
+                ) : (
+                  'Надіслати'
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        
         {/* Document Creation Dialog from Counterparty View */}
         <Dialog open={showDocCreateDialog} onOpenChange={setShowDocCreateDialog}>
           <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto bg-white">
