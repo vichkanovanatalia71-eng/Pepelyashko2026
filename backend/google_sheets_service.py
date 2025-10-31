@@ -236,13 +236,13 @@ class GoogleSheetsService:
         except Exception as e:
             print(f"Error updating order drive_file_id: {str(e)}")
             return False
-    def create_act(self, data: Dict[str, Any], drive_file_id: str = '') -> Dict[str, Any]:
+    def create_act(self, data: Dict[str, Any], drive_file_id: str = '', document_number: str = '') -> Dict[str, Any]:
         """Create a new act of completed work."""
-        return self._create_document("Акти", data, "акт", drive_file_id)
+        return self._create_document("Акти", data, "акт", drive_file_id, document_number)
     
-    def create_waybill(self, data: Dict[str, Any], drive_file_id: str = '') -> Dict[str, Any]:
+    def create_waybill(self, data: Dict[str, Any], drive_file_id: str = '', document_number: str = '') -> Dict[str, Any]:
         """Create a new waybill."""
-        return self._create_document("Видаткові накладні", data, "видаткову накладну", drive_file_id)
+        return self._create_document("Видаткові накладні", data, "видаткову накладну", drive_file_id, document_number)
     
     def create_contract(self, data: Dict[str, Any], drive_file_id: str = '') -> Dict[str, Any]:
         """Create a new contract."""
