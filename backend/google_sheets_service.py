@@ -312,7 +312,8 @@ class GoogleSheetsService:
                 json.dumps(data['items'], ensure_ascii=False),
                 data['total_amount'],
                 drive_file_id,  # Add drive_file_id to the row
-                data.get('based_on_order', '')  # Add based_on_order (номер замовлення)
+                data.get('based_on_order', ''),  # Add based_on_order (номер замовлення)
+                ''  # pdf_generated_at - empty when document is created without PDF
             ]
             
             # Add based_on_contract for acts (if sheet is "Акти")
