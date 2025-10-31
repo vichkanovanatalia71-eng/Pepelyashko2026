@@ -1184,6 +1184,9 @@ async def generate_contract_pdf(data: ContractGenerateRequest):
         drive_file_id = result.get('drive_file_id', '')
         sheets_service.create_contract(contract_record, drive_file_id)
         
+        # Clear cache to ensure fresh data on next request
+        sheets_service.cache.clear()
+        
         return {
             'success': True,
             'message': 'Договір успішно згенеровано та завантажено на Google Drive',
