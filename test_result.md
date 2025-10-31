@@ -567,12 +567,13 @@ frontend:
 
 metadata:
   created_by: "main_agent"
-  version: "27.0"
-  test_sequence: 27
+  version: "28.0"
+  test_sequence: 28
   run_ui: false
 
 test_plan:
-  current_focus: []
+  current_focus:
+    - "Order PDF Generation with Drive Upload - ФАЗА 1"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
