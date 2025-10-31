@@ -401,8 +401,8 @@ async def get_invoices():
 async def get_invoice_pdf(invoice_number: str):
     """Serve invoice PDF file for preview."""
     try:
-        # Find PDF file in generated_invoices directory
-        pdf_dir = Path('/app/backend/generated_invoices')
+        # Find PDF file in generated_documents directory
+        pdf_dir = Path('/app/backend/generated_documents')
         
         # Look for PDF with this invoice number
         pdf_files = list(pdf_dir.glob(f"Рахунок_{invoice_number}_*.pdf"))
