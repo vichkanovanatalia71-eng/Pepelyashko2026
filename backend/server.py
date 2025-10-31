@@ -1203,11 +1203,8 @@ async def generate_waybill_pdf_by_number(waybill_number: str):
 async def get_waybill_pdf(waybill_number: str):
     """Serve waybill PDF file for preview."""
     try:
-        # Find PDF file in generated_waybills directory
-        pdf_dir = Path('/app/backend/generated_waybills')
-        
-        # Create directory if it doesn't exist
-        pdf_dir.mkdir(parents=True, exist_ok=True)
+        # Find PDF file in generated_documents directory
+        pdf_dir = Path('/app/backend/generated_documents')
         
         # Look for PDF with this waybill number
         pdf_files = list(pdf_dir.glob(f"Накладна_{waybill_number}_*.pdf"))
