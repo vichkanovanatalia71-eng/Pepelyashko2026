@@ -1173,10 +1173,10 @@ async def generate_waybill_pdf_by_number(waybill_number: str):
             'based_on_order': waybill.get('based_on_order', None)
         }
         
-        # Generate PDF
+        # Generate PDF (locally, without Google Drive)
         result = document_service.generate_waybill_pdf(
             waybill_data=waybill_data,
-            upload_to_drive=True
+            upload_to_drive=False
         )
         
         # Update waybill with drive_file_id
