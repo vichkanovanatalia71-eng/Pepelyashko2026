@@ -1183,12 +1183,9 @@ async def generate_invoice_from_orders(data: InvoiceFromOrdersRequest):
         raise HTTPException(status_code=503, detail="Services not available")
     
     try:
-        # Get orders data
-        orders_data = []
-        for order_num in data.order_numbers:
-            order = sheets_service.get_order_by_number(order_num)
-            if order:
-                orders_data.append(order)
+        # Get all orders and filter by selected numbers
+        all_orders = sheets_service.get_documents("Замовлення")
+        orders_data = [order for order in all_orders if order.get('number') in data.order_numbers]
         
         if not orders_data:
             raise ValueError("Жодного замовлення не знайдено")
