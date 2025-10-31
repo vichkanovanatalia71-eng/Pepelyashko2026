@@ -1023,6 +1023,9 @@ async def generate_act_pdf_by_number(act_number: str):
         raise HTTPException(status_code=503, detail="Services not available")
     
     try:
+        # Clear cache to get fresh data
+        sheets_service.cache.clear()
+        
         # Get act from Google Sheets
         existing_acts = sheets_service.get_documents("Акти")
         act = None
