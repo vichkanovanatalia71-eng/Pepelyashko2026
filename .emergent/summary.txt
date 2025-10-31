@@ -1,79 +1,89 @@
 <analysis>
-The previous AI engineer focused on extending document generation capabilities, primarily replicating Acts functionality for Invoices, then fixing various issues. Initial work involved backend services, HTML templates, and frontend state/UI for invoices. Key challenges included fixing a frontend  syntax error causing , correcting invoice form data submission to the backend, unifying the invoice UI with existing Acts contract selection, and resolving issues where order PDF generation failed to display items. The latter was traced to incorrect Handlebars usage in the template and a regex issue in the backend's templating engine. The most recent major task involved refactoring the document saving logic to store data without generating PDFs initially, with PDF generation becoming an on-demand action. This refactor is partially complete for orders on the backend.
+The previous AI engineer focused on extending document generation, particularly for Invoices to mirror Acts, and refactoring core document saving logic. Initial efforts involved fixing frontend  errors (), correcting invoice form data submission, unifying the invoice UI with existing Acts contract selection, and resolving order PDF generation issues (Handlebars and regex in ).
+
+A major architectural shift was implemented for Orders to save document data without immediate PDF generation, making PDF generation an on-demand action. This involved new backend endpoints () and modifying existing ones (). The work progressed through several debugging cycles, including fixing persistent order saving, ensuring correct PDF preview fallback (blob generation when Google Drive links are absent), pulling counterparty emails for forms, and resolving an issue where related documents weren't showing due to Google Sheets caching.
+
+More recently, the engineer added multi-select checkboxes for creating and sending related documents (invoices, acts, waybills, contracts). This led to several critical bug fixes: implementing a proper dialog for bulk email sending, aligning document viewing logic (for invoices, acts, waybills) to load existing PDFs instead of regenerating them on demand (similar to contracts), correcting PDF filename search logic in backend GET endpoints, and crucially, adding *missing* email sending endpoints for invoices, acts, and waybills, along with updating the frontend to send email parameters as query strings instead of JSON bodies. The work concluded with these critical fixes, awaiting user re-verification.
 </analysis>
 
 <product_requirements>
-The application is a business document management system generating Invoices, Acts, and Contracts with HTML/CSS based PDF generation, preview, email, download, and Google Drive integration, supporting Ukrainian. The UI has a blue theme, Montserrat font, and rounded cards.
+The application is a business document management system generating Invoices, Acts, and Contracts, with HTML/CSS based PDF generation, preview, email, download, and Google Drive integration, supporting Ukrainian. The UI features a blue theme, Montserrat font, and rounded cards.
 
-Recent focus included multi-step UI, multiple order selection, accurate PDF preview with Ukrainian word totals, template consistency, and correct  population.
+Recent enhancements aimed at a multi-step UI, multiple order selection, accurate PDF preview with Ukrainian word totals, template consistency, and correct  population.
 
-The current overarching task is to implement Invoices (Рахунки) functionality mirroring Acts. This involves replicating the multi-step UI, allowing creation based on an order or without an order using a user-provided HTML template. This template requires iterative adjustments for layout, content (e.g., підстави block, Всього capitalization, Підпис:/М.П., payment details, alignment, table centering). The system also needs to resolve issues with creating invoices without orders (fixed an  error and payload mismatch) and later, a critical change: **documents (orders, invoices, acts, contracts) should save all data but NOT PDF files. PDF generation should be a separate, on-demand action.**
+The core objective is to implement Invoices functionality mirroring Acts, featuring a multi-step UI and creation based on an order or without an order using user-provided HTML templates. Iterative template adjustments are required for layout and content. A critical change involves refactoring so documents (orders, invoices, acts, contracts) save only data, with PDF generation becoming an on-demand, separate action. This implies that viewing and sending documents should retrieve already saved PDF data or generate them on the fly from stored data. The system also needs to support multi-selection of documents for mass viewing and email sending.
 </product_requirements>
 
 <key_technical_concepts>
 -   **Full-stack Development**: React (frontend) and FastAPI (backend).
--   **PDF Generation**:  for HTML/CSS to PDF;  for Handlebars.
+-   **PDF Generation**:  for HTML/CSS to PDF;  for Handlebars templates.
 -   **State Management**: React Hooks ().
 -   **API Communication**: HTTP requests for data and PDF blobs.
--   **Templating**: HTML templates (),  for versioning.
--   **Localization**: Ukrainian language support, number-to-words conversion.
--   **Data Storage**: Google Sheets for document data (orders, invoices, acts).
+-   **Data Storage**: Google Sheets for document data.
+-   **Localization**: Ukrainian language support.
 </key_technical_concepts>
 
 <code_architecture>
 
 
 -   ****:
-    -   **Importance**: Central API router for the backend.
+    -   **Importance**: Central API router for the backend. Handles all API endpoints.
     -   **Changes**:
-        -   Added new API endpoints for invoices (, ).
-        -   Defined Pydantic models (, , ).
-        -   **Latest changes**: Refactored  to only generate PDF from existing data. Added  for saving order data without PDF generation.
+        -   Refactored  to generate PDF from existing data.
+        -   Added  for saving order data without PDF generation.
+        -   Added , ,  for on-demand PDF generation from existing data.
+        -   Added  endpoint.
+        -   Modified all  endpoints to set  to decouple PDF generation from Google Drive.
+        -   Fixed  endpoints to correctly search for PDF filenames using a flexible pattern matching.
+        -   Added , ,  endpoints for sending emails, including flexible PDF filename search.
 -   ****:
-    -   **Importance**: Business logic for invoice generation.
-    -   **Changes**: Initial creation, similar to , including , , and .
--   ****:
-    -   **Importance**: HTML template for invoice PDF generation.
-    -   **Changes**: Iterative adjustments based on user feedback, including layout, text formatting, , capitalization, adding Підпис: and М.П., refining payment details, and text alignment.
--   ****:
-    -   **Importance**: Business logic for order generation.
-    -   **Changes**:
-        -   **Critical fix**: The  method's regex was updated from  to  to correctly handle both  and .
-        -   Added logic for handling optional  to update existing orders.
--   ****:
-    -   **Importance**: HTML template for order PDF generation.
-    -   **Changes**: Updated to use  instead of  to correctly display pre-rendered HTML item rows.
+    -   **Importance**: Business logic for invoice generation. No direct changes in trajectory, but implicitly used by new server endpoints.
 -   ****:
     -   **Importance**: Handles interaction with Google Sheets for data storage and retrieval.
-    -   **Changes**: Debugging and verification of  method to ensure orders are persistently saved. Implied fix for a duplicate function name  identified by the troubleshoot agent.
+    -   **Changes**: Added  after  to resolve caching issues for related documents.
 -   ****:
     -   **Importance**: Main React component managing state and UI.
     -   **Changes**:
-        -   Added  for invoice-related state.
-        -   Implemented functions for both from orders and without orders invoice creation (, , , etc.).
-        -   **Critical fix**: Corrected structural error where  and related functions were placed incorrectly, causing .
-        -   Refactored Invoices tab UI to a multi-step form and added template editor.
-        -   **Fix for invoice without orders**: Modified  to calculate  and send correct payload, excluding  and  from the API request.
-        -   **UI unification**: Modified invoice creation forms to consistently show a contract dropdown, including Без договору (Without contract) option, mirroring the Acts functionality for both based on order and without order scenarios.
-        -   Updated logic for Generate PDF button in  to correctly call the  endpoint with current order details.
+        -   Updated  to use .
+        -   Refactored Generate PDF button logic to call  and handle PDF blob preview.
+        -   Fixed counterparty email not loading into forms for orders and contracts.
+        -   Implemented multi-select checkboxes for document creation ().
+        -   Added View button for each related document (invoices, acts, waybills, contracts) to fetch existing PDFs (as blobs for preview) and pull counterparty emails.
+        -   Added  state for mass email functionality.
+        -   Replaced browser  with a custom dialog for bulk email sending.
+        -   Modified View buttons for invoices/acts/waybills to fetch existing PDFs via  endpoints (similar to contracts) instead of regenerating.
+        -   Removed PDF generation step from bulk email sending logic.
+        -   Updated bulk email sending to pass parameters as query strings for invoices/acts/waybills.
 </code_architecture>
 
 <pending_tasks>
--   **Frontend update for document saving**: Implement the new frontend logic to save document data (orders, invoices, acts, contracts) without immediately generating PDF files.
--   **Backend extension for document saving**: Extend the save without PDF and generate PDF on demand logic to Invoices and Acts.
--   **Thorough testing**: Conduct comprehensive frontend and backend testing for all document types with the new saving/PDF generation workflow.
+- Extend the save without PDF and generate PDF on demand logic to Invoices and Acts for their initial creation (currently, this is only fully implemented for Orders).
+- Implement robust error handling and user feedback for all document operations across both frontend and backend.
+- Thoroughly test all document types for creation, viewing, and email sending with the refined logic.
 </pending_tasks>
 
 <current_work>
-Immediately prior to this summary, the AI engineer was implementing a major architectural change: to save document data (like orders) without automatically generating PDF files, making PDF generation an on-demand action.
+Immediately prior to this summary, the AI engineer was addressing a critical set of issues identified by the user and  regarding document viewing and mass email functionality, particularly for invoices, acts, and waybills.
 
-Specifically, for **Orders**, the backend () has been modified:
-1.  A new endpoint  was added to save order data to Google Sheets without generating a PDF.
-2.  The existing  endpoint was updated to solely generate a PDF based on *already saved* order data (retrieved from Google Sheets) or newly provided data if an  is not supplied.
+The primary problems were:
+1.  **Missing Email Endpoints:** The backend () lacked dedicated email sending endpoints for invoices, acts, and waybills.
+2.  **Frontend Payload Mismatch:** The frontend was sending email parameters as JSON body, while the newly added backend endpoints (or existing ones) expected query parameters for invoices, acts, and waybills.
+3.  **PDF Filename Mismatch:** Backend GET endpoints for retrieving PDFs couldn't locate files due to complex filenames (e.g.,  vs. simple number search).
 
-During this implementation, an issue was encountered where newly created orders were not being persistently saved, or retrieved correctly, leading to Замовлення не знайдено errors. This was traced back to an underlying issue with the  function (previously identified by troubleshoot agent as a duplicate function name). After an implied fix (or re-diagnosis of the original fix being incomplete), the AI successfully created an order (e.g., order 0045) without a PDF and subsequently generated a PDF for this existing order. Debugging also involved adding  statements to  to confirm data flow.
+To resolve these, the following actions were taken:
+-   **Backend ()**:
+    -   Added , , and  endpoints. These endpoints were designed to:
+        -   Retrieve the correct PDF file from the  directory using a flexible filename search that can match complex numbers (e.g., ).
+        -   Send the PDF via .
+    -   The backend services were restarted after these changes.
+-   **Frontend ()**:
+    -   The logic for sending documents via the bulk email dialog was modified. For invoices, acts, and waybills, parameters are now constructed and sent as **query parameters** (e.g., ).
+    -   Contracts continue to use the JSON body for email sending, as their functionality was previously confirmed to be working.
+    -   The frontend was recompiled and services restarted.
+
+These changes aimed to enable correct viewing and sending of invoices, acts, and waybills, aligning their functionality with the already working contracts, by ensuring proper backend endpoints and correct frontend-backend communication protocols. The system is now awaiting user re-verification of these fixes.
 </current_work>
 
 <optional_next_step>
-The next step is to update the frontend to use the new  endpoint for saving orders.
+Test the viewing and bulk email sending for invoices, acts, and waybills using order №55.
 </optional_next_step>
