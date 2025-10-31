@@ -404,8 +404,21 @@ async def get_invoice_pdf(invoice_number: str):
         # Find PDF file in generated_documents directory
         pdf_dir = Path('/app/backend/generated_documents')
         
-        # Look for PDF with this invoice number
+        # Look for PDF with this invoice number (try multiple patterns)
+        # Pattern 1: Exact match
         pdf_files = list(pdf_dir.glob(f"Рахунок_{invoice_number}_*.pdf"))
+        
+        # Pattern 2: If not found, search all invoice PDFs and filter by number
+        if not pdf_files:
+            all_invoice_pdfs = list(pdf_dir.glob("Рахунок_*.pdf"))
+            for pdf_file in all_invoice_pdfs:
+                # Extract number from filename (e.g., "Рахунок_8911-1_..." -> "8911-1")
+                parts = pdf_file.stem.split('_')
+                if len(parts) >= 2:
+                    file_number = parts[1]
+                    # Match if the file_number contains or equals the requested number
+                    if file_number == invoice_number or file_number.endswith(f"-{invoice_number}"):
+                        pdf_files.append(pdf_file)
         
         if not pdf_files:
             raise HTTPException(status_code=404, detail=f"PDF для рахунку {invoice_number} не знайдено")
