@@ -517,6 +517,9 @@ async def generate_invoice_pdf_by_number(invoice_number: str):
         raise HTTPException(status_code=503, detail="Services not available")
     
     try:
+        # Clear cache to get fresh data
+        sheets_service.cache.clear()
+        
         # Get invoice from Google Sheets
         existing_invoices = sheets_service.get_documents("Рахунки")
         invoice = None
