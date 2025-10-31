@@ -571,8 +571,7 @@ async def generate_invoice_pdf_by_number(invoice_number: str):
             
             # Generate PDF using invoice_service_v2 which uses HTML templates
             result = await invoice_service_v2.generate_invoice_pdf(
-                invoice_data=invoice_data,
-                upload_to_drive=False
+                invoice_data=invoice_data
             )
             
             # Update PDF generation timestamp in Google Sheets
