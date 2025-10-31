@@ -1269,6 +1269,41 @@ async def get_waybills():
         logging.error(f"Error getting waybills: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
+
+@api_router.post("/waybills/create")
+async def create_waybill(data: DocumentCreate):
+    """Create waybill WITHOUT generating PDF - save only data."""
+    if sheets_service is None or document_service is None:
+        raise HTTPException(status_code=503, detail="Services not available")
+    
+    try:
+        waybill_data = data.model_dump()
+        
+        # Generate document number
+        counterparty_edrpou = waybill_data['counterparty_edrpou']
+        edrpou_middle = str(counterparty_edrpou)[2:6] if len(str(counterparty_edrpou)) >= 6 else str(counterparty_edrpou)[:4]
+        
+        # Get next sequential number for this counterparty
+        existing_waybills = sheets_service.get_documents_by_counterparty("Видаткові накладні", counterparty_edrpou)
+        next_seq = len(existing_waybills) + 1
+        waybill_number = f"{edrpou_middle}-{next_seq}"
+        
+        # Save waybill to Google Sheets WITHOUT PDF
+        sheets_service.create_waybill(waybill_data, drive_file_id='', document_number=waybill_number)
+        
+        return {
+            'success': True,
+            'message': 'Накладну успішно створено',
+            'waybill_number': waybill_number
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error creating waybill: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
 @api_router.post("/waybills/generate-pdf")
 async def generate_waybill_pdf(data: DocumentCreate):
     """Generate PDF waybill and upload to Google Drive."""
