@@ -250,7 +250,8 @@ class DocumentService:
     def generate_act_pdf(
         self,
         act_data: Dict[str, Any],
-        upload_to_drive: bool = True
+        upload_to_drive: bool = True,
+        document_number: str = None
     ) -> Dict[str, Any]:
         """Generate PDF for Act (Акт виконаних робіт)"""
         try:
@@ -263,12 +264,15 @@ class DocumentService:
             if not buyer_data:
                 raise ValueError(f"Покупця з ЄДРПОУ {act_data['counterparty_edrpou']} не знайдено")
             
-            # Generate document number
-            doc_number = self._generate_document_number(
-                act_data['counterparty_edrpou'],
-                'act',
-                act_data.get('sequence', 1)
-            )
+            # Use provided document_number or generate a new one
+            if document_number:
+                doc_number = document_number
+            else:
+                doc_number = self._generate_document_number(
+                    act_data['counterparty_edrpou'],
+                    'act',
+                    act_data.get('sequence', 1)
+                )
             
             # Create PDF
             filename = f"Акт_{doc_number}_{act_data['counterparty_edrpou']}.pdf"
