@@ -1145,6 +1145,61 @@ async def generate_waybill_pdf(data: DocumentCreate):
         logging.error(f"Error generating waybill PDF: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
+@api_router.post("/waybills/{waybill_number}/generate-pdf")
+async def generate_waybill_pdf_by_number(waybill_number: str):
+    """Generate PDF for existing waybill from Google Sheets data."""
+    if sheets_service is None or document_service is None:
+        raise HTTPException(status_code=503, detail="Services not available")
+    
+    try:
+        # Get waybill from Google Sheets
+        existing_waybills = sheets_service.get_documents("Накладні")
+        waybill = None
+        for wb in existing_waybills:
+            wb_num_str = str(wb.get('number', ''))
+            if (wb_num_str == str(waybill_number) or 
+                str(int(wb_num_str)) == str(int(waybill_number))):
+                waybill = wb
+                break
+        
+        if not waybill:
+            raise HTTPException(status_code=404, detail=f"Накладна {waybill_number} не знайдено")
+        
+        # Prepare waybill data for PDF generation
+        waybill_data = {
+            'counterparty_edrpou': waybill.get('counterparty_edrpou', ''),
+            'items': waybill.get('items', []),
+            'total_amount': waybill.get('total_amount', 0),
+            'based_on_order': waybill.get('based_on_order', None)
+        }
+        
+        # Generate PDF
+        result = document_service.generate_waybill_pdf(
+            waybill_data=waybill_data,
+            upload_to_drive=True
+        )
+        
+        # Update waybill with drive_file_id
+        drive_file_id = result.get('drive_file_id', '')
+        
+        return {
+            'success': True,
+            'message': 'PDF успішно згенеровано',
+            'waybill_number': waybill_number,
+            'pdf_path': result['pdf_path'],
+            'pdf_filename': result['pdf_filename'],
+            'drive_view_link': result.get('drive_view_link', ''),
+            'drive_download_link': result.get('drive_download_link', ''),
+            'drive_file_id': drive_file_id
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error generating PDF for waybill {waybill_number}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
 # Contract endpoints
 @api_router.post("/contracts", response_model=dict)
 async def create_contract(data: ContractCreate):
