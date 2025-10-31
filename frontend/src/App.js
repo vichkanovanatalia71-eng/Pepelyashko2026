@@ -5228,20 +5228,17 @@ function App() {
                               onClick={async () => {
                                 try {
                                   setLoading(true);
+                                  
+                                  // Load PDF
                                   if (!doc.drive_file_id) {
                                     const localPdfUrl = `${API}/waybills/pdf/${doc.number}`;
-                                    try {
-                                      const pdfResponse = await axios.get(localPdfUrl, { responseType: 'blob' });
-                                      const blobUrl = URL.createObjectURL(pdfResponse.data);
-                                      setDocumentPdfData({
-                                        drive_view_link: blobUrl,
-                                        waybill_number: doc.number,
-                                        is_blob: true
-                                      });
-                                    } catch (error) {
-                                      toast.error('Помилка завантаження PDF');
-                                      return;
-                                    }
+                                    const pdfResponse = await axios.get(localPdfUrl, { responseType: 'blob' });
+                                    const blobUrl = URL.createObjectURL(pdfResponse.data);
+                                    setDocumentPdfData({
+                                      drive_view_link: blobUrl,
+                                      waybill_number: doc.number,
+                                      is_blob: true
+                                    });
                                   } else {
                                     setDocumentPdfData({
                                       drive_file_id: doc.drive_file_id,
@@ -5249,8 +5246,10 @@ function App() {
                                       waybill_number: doc.number
                                     });
                                   }
+                                  
                                   setCurrentDocType('waybill');
                                   
+                                  // Load counterparty email
                                   try {
                                     const counterpartyResponse = await axios.get(`${API}/counterparties/${currentOrderDetails.counterparty_edrpou}`);
                                     setDocumentEmailForm({
@@ -5259,6 +5258,7 @@ function App() {
                                       counterpartyEmail: counterpartyResponse.data?.email || ''
                                     });
                                   } catch (error) {
+                                    console.error('Error loading counterparty email:', error);
                                     setDocumentEmailForm({
                                       recipient: 'counterparty',
                                       customEmail: '',
@@ -5269,7 +5269,8 @@ function App() {
                                   setShowOrderDetails(false);
                                   setShowDocumentPreview(true);
                                 } catch (error) {
-                                  toast.error('Помилка: ' + error.message);
+                                  console.error('Error viewing waybill:', error);
+                                  toast.error('Помилка завантаження накладної: ' + (error.response?.data?.detail || error.message));
                                 } finally {
                                   setLoading(false);
                                 }
