@@ -5184,60 +5184,22 @@ function App() {
                           // Refresh all documents
                           fetchAllDocuments();
                           
-                          // If no drive_file_id (Drive not working), fetch PDF as blob for preview
-                          if (!response.data.drive_file_id) {
-                            const localPdfUrl = `${API}/orders/pdf/${response.data.order_number}`;
-                            
-                            try {
-                              // Fetch PDF as blob
-                              const pdfResponse = await axios.get(localPdfUrl, {
-                                responseType: 'blob'
-                              });
-                              
-                              // Create blob URL for iframe
-                              const blobUrl = URL.createObjectURL(pdfResponse.data);
-                              
-                              // Set data with blob URL for iframe preview
-                              setDocumentPdfData({
-                                drive_view_link: blobUrl,
-                                drive_download_link: localPdfUrl,
-                                drive_file_id: '',
-                                order_number: response.data.order_number,
-                                pdf_path: response.data.pdf_path,
-                                is_blob: true, // Flag to indicate this is a blob URL
-                                order_form_data: {
-                                  counterparty_edrpou: currentOrderDetails.counterparty_edrpou || '',
-                                  items: currentOrderDetails.items || [],
-                                  total_amount: parseFloat(currentOrderDetails.total_amount) || 0
-                                }
-                              });
-                              setCurrentDocType('order');
-                              setShowOrderDetails(false);
-                              setShowDocumentPreview(true);
-                            } catch (blobError) {
-                              console.error('Error loading PDF blob:', blobError);
-                              // Fallback: just open in new tab
-                              window.open(localPdfUrl, '_blank');
-                              toast.info('PDF відкрито в новій вкладці');
+                          // Show preview dialog with generated PDF
+                          setDocumentPdfData({
+                            drive_view_link: response.data.drive_view_link,
+                            drive_download_link: response.data.drive_download_link,
+                            drive_file_id: response.data.drive_file_id,
+                            order_number: response.data.order_number,
+                            pdf_path: response.data.pdf_path,
+                            order_form_data: {
+                              counterparty_edrpou: currentOrderDetails.counterparty_edrpou || '',
+                              items: currentOrderDetails.items || [],
+                              total_amount: parseFloat(currentOrderDetails.total_amount) || 0
                             }
-                          } else {
-                            // With Drive, show preview dialog as usual
-                            setDocumentPdfData({
-                              drive_view_link: response.data.drive_view_link,
-                              drive_download_link: response.data.drive_download_link,
-                              drive_file_id: response.data.drive_file_id,
-                              order_number: response.data.order_number,
-                              pdf_path: response.data.pdf_path,
-                              order_form_data: {
-                                counterparty_edrpou: currentOrderDetails.counterparty_edrpou || '',
-                                items: currentOrderDetails.items || [],
-                                total_amount: parseFloat(currentOrderDetails.total_amount) || 0
-                              }
-                            });
-                            setCurrentDocType('order');
-                            setShowOrderDetails(false);
-                            setShowDocumentPreview(true);
-                          }
+                          });
+                          setCurrentDocType('order');
+                          setShowOrderDetails(false);
+                          setShowDocumentPreview(true);
                         }
                       } catch (error) {
                         toast.error('Помилка генерації PDF: ' + (error.response?.data?.detail || error.message));
