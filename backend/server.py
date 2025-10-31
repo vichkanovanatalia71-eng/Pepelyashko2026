@@ -438,6 +438,42 @@ async def get_invoice_pdf(invoice_number: str):
         logging.error(f"Error serving invoice PDF: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
+
+@api_router.post("/invoices/create")
+async def create_invoice(data: DocumentCreate):
+    """Create invoice WITHOUT generating PDF - save only data."""
+    if sheets_service is None or document_service is None:
+        raise HTTPException(status_code=503, detail="Services not available")
+    
+    try:
+        invoice_data = data.model_dump()
+        
+        # Generate document number (same format as before)
+        counterparty_edrpou = invoice_data['counterparty_edrpou']
+        # Get 4 middle digits from ЄДРПОУ
+        edrpou_middle = str(counterparty_edrpou)[2:6] if len(str(counterparty_edrpou)) >= 6 else str(counterparty_edrpou)[:4]
+        
+        # Get next sequential number for this counterparty
+        existing_invoices = sheets_service.get_documents_by_counterparty("Рахунки", counterparty_edrpou)
+        next_seq = len(existing_invoices) + 1
+        invoice_number = f"{edrpou_middle}-{next_seq}"
+        
+        # Save invoice to Google Sheets WITHOUT PDF
+        sheets_service.create_invoice(invoice_data, drive_file_id='', document_number=invoice_number)
+        
+        return {
+            'success': True,
+            'message': 'Рахунок успішно створено',
+            'invoice_number': invoice_number
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error creating invoice: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
 @api_router.post("/invoices/generate-pdf")
 async def generate_invoice_pdf(data: DocumentCreate):
     """Generate PDF invoice and upload to Google Drive."""
