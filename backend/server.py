@@ -1513,7 +1513,7 @@ async def send_invoice_email(invoice_number: str = Query(...), recipient_email: 
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 @api_router.post("/acts/send-email")
-async def send_act_email(act_number: str, recipient_email: str):
+async def send_act_email(act_number: str = Query(...), recipient_email: str = Query(...)):
     """Send act PDF via email."""
     try:
         # Find PDF file
