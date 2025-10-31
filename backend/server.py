@@ -513,7 +513,7 @@ async def generate_invoice_pdf(data: DocumentCreate):
 @api_router.post("/invoices/{invoice_number}/generate-pdf")
 async def generate_invoice_pdf_by_number(invoice_number: str):
     """Generate PDF for existing invoice from Google Sheets data."""
-    if sheets_service is None or document_service is None:
+    if sheets_service is None or invoice_service_v2 is None:
         raise HTTPException(status_code=503, detail="Services not available")
     
     try:
