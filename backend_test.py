@@ -2523,7 +2523,12 @@ class ContractTestSuite:
             ("Google Drive Service Initialization", self.test_google_drive_service_initialization),
             ("Get Counterparties for Documents", self.test_get_counterparties_for_documents),
             
-            # БЛОК 1: ЗАМОВЛЕННЯ
+            # ФАЗА 1 РЕФАКТОРИНГ ЗАМОВЛЕНЬ TESTS (PRIORITY)
+            ("ФАЗА 1: Створення замовлення БЕЗ PDF", self.test_order_creation_without_pdf),
+            ("ФАЗА 1: Генерація PDF для існуючого замовлення", self.test_order_pdf_generation_on_demand),
+            ("ФАЗА 1: Перевірка списку замовлень", self.test_order_list_verification),
+            
+            # БЛОК 1: ЗАМОВЛЕННЯ (LEGACY)
             ("1.1 Order Creation", self.test_order_creation),
             ("1.2 Order List", self.test_order_list),
             ("1.3 Order Email Sending", self.test_order_email_sending),
