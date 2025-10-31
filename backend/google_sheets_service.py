@@ -287,14 +287,17 @@ class GoogleSheetsService:
             logger.error(f"Error creating договір: {str(e)}")
             raise
     
-    def _create_document(self, sheet_name: str, data: Dict[str, Any], doc_type: str, drive_file_id: str = '') -> Dict[str, Any]:
+    def _create_document(self, sheet_name: str, data: Dict[str, Any], doc_type: str, drive_file_id: str = '', document_number: str = '') -> Dict[str, Any]:
         """Generic method to create documents (invoices, acts, waybills)."""
         try:
             worksheet = self.spreadsheet.worksheet(sheet_name)
             
-            # Get next document number
-            records = worksheet.get_all_records()
-            next_number = len(records) + 1
+            # Use provided document_number or generate a simple sequential one
+            if not document_number:
+                # Get next document number
+                records = worksheet.get_all_records()
+                next_number = len(records) + 1
+                document_number = f"{next_number:04d}"
             
             # Get counterparty from "Основні дані" by ЄДРПОУ
             counterparty = self.get_counterparty_from_main_data(data['counterparty_edrpou'])
@@ -302,7 +305,7 @@ class GoogleSheetsService:
                 raise ValueError(f"Контрагента з ЄДРПОУ {data['counterparty_edrpou']} не знайдено в 'Основні дані'")
             
             row = [
-                f"{next_number:04d}",
+                document_number,
                 datetime.now().strftime('%Y-%m-%d'),
                 data['counterparty_edrpou'],
                 counterparty['Назва'],
@@ -317,12 +320,12 @@ class GoogleSheetsService:
                 row.append(data.get('based_on_contract', ''))  # Add based_on_contract (номер договору)
             
             worksheet.append_row(row)
-            logger.info(f"Created {doc_type} #{next_number:04d}")
+            logger.info(f"Created {doc_type} #{document_number}")
             
             return {
                 'success': True,
                 'message': f'{doc_type.capitalize()} успішно створено',
-                'document_number': f"{next_number:04d}",
+                'document_number': document_number,
                 'data': data
             }
         except Exception as e:
