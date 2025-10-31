@@ -1017,7 +1017,7 @@ async def generate_act_pdf(data: DocumentCreate):
 @api_router.post("/acts/{act_number}/generate-pdf")
 async def generate_act_pdf_by_number(act_number: str):
     """Generate PDF for existing act from Google Sheets data."""
-    if sheets_service is None or document_service is None:
+    if sheets_service is None or act_service is None:
         raise HTTPException(status_code=503, detail="Services not available")
     
     try:
