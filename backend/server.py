@@ -1469,7 +1469,7 @@ async def download_contract(filename: str):
         raise HTTPException(status_code=500, detail="Internal server error")
 
 @api_router.post("/invoices/send-email")
-async def send_invoice_email(invoice_number: str, recipient_email: str):
+async def send_invoice_email(invoice_number: str = Query(...), recipient_email: str = Query(...)):
     """Send invoice PDF via email."""
     try:
         # Find PDF file
