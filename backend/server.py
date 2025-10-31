@@ -893,6 +893,61 @@ async def generate_act_pdf(data: DocumentCreate):
         logging.error(f"Error generating act PDF: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
+@api_router.post("/acts/{act_number}/generate-pdf")
+async def generate_act_pdf_by_number(act_number: str):
+    """Generate PDF for existing act from Google Sheets data."""
+    if sheets_service is None or document_service is None:
+        raise HTTPException(status_code=503, detail="Services not available")
+    
+    try:
+        # Get act from Google Sheets
+        existing_acts = sheets_service.get_documents("Акти")
+        act = None
+        for a in existing_acts:
+            act_num_str = str(a.get('number', ''))
+            if (act_num_str == str(act_number) or 
+                str(int(act_num_str)) == str(int(act_number))):
+                act = a
+                break
+        
+        if not act:
+            raise HTTPException(status_code=404, detail=f"Акт {act_number} не знайдено")
+        
+        # Prepare act data for PDF generation
+        act_data = {
+            'counterparty_edrpou': act.get('counterparty_edrpou', ''),
+            'items': act.get('items', []),
+            'total_amount': act.get('total_amount', 0),
+            'based_on_order': act.get('based_on_order', None)
+        }
+        
+        # Generate PDF
+        result = document_service.generate_act_pdf(
+            act_data=act_data,
+            upload_to_drive=True
+        )
+        
+        # Update act with drive_file_id
+        drive_file_id = result.get('drive_file_id', '')
+        
+        return {
+            'success': True,
+            'message': 'PDF успішно згенеровано',
+            'act_number': act_number,
+            'pdf_path': result['pdf_path'],
+            'pdf_filename': result['pdf_filename'],
+            'drive_view_link': result.get('drive_view_link', ''),
+            'drive_download_link': result.get('drive_download_link', ''),
+            'drive_file_id': drive_file_id
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error generating PDF for act {act_number}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
 @api_router.get("/acts/pdf/{act_number}")
 async def get_act_pdf(act_number: str):
     """Serve act PDF file for preview."""
