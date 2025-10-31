@@ -331,6 +331,7 @@ function App() {
     waybills: [],
     contracts: []
   });
+  const [selectedRelatedDocs, setSelectedRelatedDocs] = useState([]);
   
   const insertAlignment = (alignType) => {
     const textarea = document.querySelector('#template-editor');
