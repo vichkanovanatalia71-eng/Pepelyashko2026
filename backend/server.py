@@ -921,10 +921,10 @@ async def generate_act_pdf_by_number(act_number: str):
             'based_on_order': act.get('based_on_order', None)
         }
         
-        # Generate PDF
+        # Generate PDF (locally, without Google Drive)
         result = document_service.generate_act_pdf(
             act_data=act_data,
-            upload_to_drive=True
+            upload_to_drive=False
         )
         
         # Update act with drive_file_id
