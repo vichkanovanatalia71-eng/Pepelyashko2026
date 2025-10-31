@@ -2222,14 +2222,38 @@ function App() {
     }
 
     try {
-      if (['orders', 'invoices', 'acts', 'waybills'].includes(endpoint)) {
-        // Generate PDF for orders, invoices, acts, and waybills
+      if (endpoint === 'orders') {
+        // Create order without PDF first
         const payload = { ...documentForm };
         
         // Add custom template for orders if available
-        if (endpoint === 'orders' && orderTemplate && orderTemplate.trim() !== '') {
+        if (orderTemplate && orderTemplate.trim() !== '') {
           payload.custom_template = orderTemplate;
         }
+        
+        const response = await axios.post(`${API}/orders/create`, payload);
+        
+        if (response.data.success) {
+          toast.success(response.data.message || 'Замовлення успішно створено!');
+          
+          // Clear form
+          setDocumentForm({
+            counterparty_edrpou: '',
+            items: [],
+            total_amount: 0
+          });
+          setFoundCounterparty(null);
+          
+          // Refresh documents
+          fetchAllDocuments();
+          if (selectedCounterparty) {
+            const docsResponse = await axios.get(`${API}/counterparties/${selectedCounterparty.edrpou}/documents`);
+            setCounterpartyDocuments(docsResponse.data);
+          }
+        }
+      } else if (['invoices', 'acts', 'waybills'].includes(endpoint)) {
+        // Generate PDF for invoices, acts, and waybills
+        const payload = { ...documentForm };
         
         const response = await axios.post(`${API}/${endpoint}/generate-pdf`, payload);
         
