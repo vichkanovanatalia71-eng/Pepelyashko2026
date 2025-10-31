@@ -383,6 +383,25 @@ class GoogleSheetsService:
             logger.error(f"Error getting PDF timestamp: {str(e)}")
             return None
 
+
+    def get_documents_by_counterparty(self, sheet_name: str, edrpou: str) -> List[Dict[str, Any]]:
+        """Get all documents from specific sheet for a counterparty."""
+        try:
+            worksheet = self.spreadsheet.worksheet(sheet_name)
+            records = worksheet.get_all_records()
+            
+            # Filter by counterparty ЄДРПОУ
+            counterparty_docs = []
+            for record in records:
+                if str(record.get('ЄДРПОУ контрагента', '')) == str(edrpou):
+                    counterparty_docs.append(record)
+            
+            return counterparty_docs
+            
+        except Exception as e:
+            logger.error(f"Error getting documents by counterparty: {str(e)}")
+            return []
+
     def get_counterparty_documents(self, edrpou: str) -> Dict[str, List[Dict[str, Any]]]:
         """Get all documents for a specific counterparty."""
         try:
