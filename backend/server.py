@@ -522,8 +522,7 @@ async def generate_invoice_pdf_by_number(invoice_number: str):
         invoice = None
         for inv in existing_invoices:
             inv_num_str = str(inv.get('number', ''))
-            if (inv_num_str == str(invoice_number) or 
-                str(int(inv_num_str)) == str(int(invoice_number))):
+            if inv_num_str == str(invoice_number):
                 invoice = inv
                 break
         
