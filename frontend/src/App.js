@@ -2260,71 +2260,11 @@ function App() {
         if (response.data.success) {
           // Set current document type for proper labeling
           let docTypeKey = 'invoice';
-          if (endpoint === 'orders') docTypeKey = 'order';
           if (endpoint === 'acts') docTypeKey = 'act';
           if (endpoint === 'waybills') docTypeKey = 'waybill';
           
           setCurrentDocType(docTypeKey);
-          
-          // For orders, save the form data for creating other documents
-          if (endpoint === 'orders') {
-            // If no drive_file_id (Drive not working), fetch PDF as blob for preview
-            if (!response.data.drive_file_id) {
-              const localPdfUrl = `${API}/orders/pdf/${response.data.order_number}`;
-              
-              try {
-                // Fetch PDF as blob
-                const pdfResponse = await axios.get(localPdfUrl, {
-                  responseType: 'blob'
-                });
-                
-                // Create blob URL for iframe
-                const blobUrl = URL.createObjectURL(pdfResponse.data);
-                
-                const orderPdfData = {
-                  drive_view_link: blobUrl,
-                  drive_download_link: localPdfUrl,
-                  drive_file_id: '',
-                  order_number: response.data.order_number,
-                  pdf_path: response.data.pdf_path,
-                  is_blob: true,
-                  order_form_data: {
-                    counterparty_edrpou: documentForm.counterparty_edrpou,
-                    items: documentForm.items,
-                    total_amount: documentForm.total_amount
-                  }
-                };
-                console.log('Saving order PDF data with blob:', orderPdfData);
-                setDocumentPdfData(orderPdfData);
-              } catch (blobError) {
-                console.error('Error loading PDF blob:', blobError);
-                // Fallback: set data without blob
-                const orderPdfData = {
-                  ...response.data,
-                  order_form_data: {
-                    counterparty_edrpou: documentForm.counterparty_edrpou,
-                    items: documentForm.items,
-                    total_amount: documentForm.total_amount
-                  }
-                };
-                setDocumentPdfData(orderPdfData);
-              }
-            } else {
-              // With Drive file ID
-              const orderPdfData = {
-                ...response.data,
-                order_form_data: {
-                  counterparty_edrpou: documentForm.counterparty_edrpou,
-                  items: documentForm.items,
-                  total_amount: documentForm.total_amount
-                }
-              };
-              console.log('Saving order PDF data:', orderPdfData);
-              setDocumentPdfData(orderPdfData);
-            }
-          } else {
-            setDocumentPdfData(response.data);
-          }
+          setDocumentPdfData(response.data);
           
           setDocumentEmailForm({
             recipient: 'counterparty',
