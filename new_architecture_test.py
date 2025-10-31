@@ -133,20 +133,20 @@ class NewArchitectureTestSuite:
             return False
         
         try:
-            # Check that PDF file doesn't exist
+            # Check that specific invoice PDF file doesn't exist
             import subprocess
             result = subprocess.run(
-                f'ls /app/backend/generated_documents/ | grep {self.created_invoice_number}',
+                f'ls /app/backend/generated_documents/ | grep "Рахунок_{self.created_invoice_number}_"',
                 shell=True,
                 capture_output=True,
                 text=True
             )
             
             if result.returncode == 0 and result.stdout.strip():
-                logger.error(f"❌ PDF файл існує, хоча не повинен: {result.stdout.strip()}")
+                logger.error(f"❌ PDF файл рахунку існує, хоча не повинен: {result.stdout.strip()}")
                 return False
             else:
-                logger.info("✅ PDF файл НЕ створено (як очікувалося)")
+                logger.info("✅ PDF файл рахунку НЕ створено (як очікувалося)")
                 return True
         except Exception as e:
             logger.error(f"❌ Помилка перевірки PDF: {str(e)}")
