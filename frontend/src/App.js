@@ -5061,7 +5061,10 @@ function App() {
                                 try {
                                   setLoading(true);
                                   
-                                  // Simply load existing PDF (like contracts)
+                                  // First, ensure PDF is generated (will use existing if available)
+                                  await axios.post(`${API}/invoices/${doc.number}/generate-pdf`);
+                                  
+                                  // Then load the PDF
                                   const localPdfUrl = `${API}/invoices/pdf/${doc.number}`;
                                   const pdfResponse = await axios.get(localPdfUrl, { responseType: 'blob' });
                                   const blobUrl = URL.createObjectURL(pdfResponse.data);
