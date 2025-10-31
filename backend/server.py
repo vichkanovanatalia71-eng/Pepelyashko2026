@@ -1232,8 +1232,21 @@ async def get_waybill_pdf(waybill_number: str):
         # Find PDF file in generated_documents directory
         pdf_dir = Path('/app/backend/generated_documents')
         
-        # Look for PDF with this waybill number
+        # Look for PDF with this waybill number (try multiple patterns)
+        # Pattern 1: Exact match
         pdf_files = list(pdf_dir.glob(f"Накладна_{waybill_number}_*.pdf"))
+        
+        # Pattern 2: If not found, search all waybill PDFs and filter by number
+        if not pdf_files:
+            all_waybill_pdfs = list(pdf_dir.glob("Накладна_*.pdf"))
+            for pdf_file in all_waybill_pdfs:
+                # Extract number from filename (e.g., "Накладна_1234-1_..." -> "1234-1")
+                parts = pdf_file.stem.split('_')
+                if len(parts) >= 2:
+                    file_number = parts[1]
+                    # Match if the file_number contains or equals the requested number
+                    if file_number == waybill_number or file_number.endswith(f"-{waybill_number}"):
+                        pdf_files.append(pdf_file)
         
         if not pdf_files:
             raise HTTPException(status_code=404, detail=f"PDF для накладної {waybill_number} не знайдено")
