@@ -2284,38 +2284,8 @@ function App() {
             setCounterpartyDocuments(docsResponse.data);
           }
         }
-      } else if (false) {
-        // Generate PDF for invoices, acts, and waybills
-        const response = await axios.post(`${API}/${endpoint}/generate-pdf`, documentForm);
-        
-        if (response.data.success) {
-          // Set current document type for proper labeling
-          let docTypeKey = 'invoice';
-          if (endpoint === 'acts') docTypeKey = 'act';
-          if (endpoint === 'waybills') docTypeKey = 'waybill';
-          
-          setCurrentDocType(docTypeKey);
-          setDocumentPdfData(response.data);
-          setDocumentEmailForm({
-            recipient: 'counterparty',
-            customEmail: '',
-            counterpartyEmail: foundCounterparty?.email || ''
-          });
-          setShowDocumentPreview(true);
-          
-          toast.success(response.data.message || `${docType} успішно створено!`);
-          
-          // Refresh all documents list
-          fetchAllDocuments();
-          
-          // Refresh documents if viewing a counterparty
-          if (selectedCounterparty) {
-            const docsResponse = await axios.get(`${API}/counterparties/${selectedCounterparty.edrpou}/documents`);
-            setCounterpartyDocuments(docsResponse.data);
-          }
-        }
       } else {
-        // Original logic for other document types
+        // Original logic for other document types (contracts)
         const response = await axios.post(`${API}/${endpoint}`, documentForm);
         toast.success(response.data.message || `${docType} успішно створено!`);
         
