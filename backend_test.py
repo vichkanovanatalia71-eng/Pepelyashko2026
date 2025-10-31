@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Backend Test Suite for Contract PDF Generation with Unicode Support
-Tests the contract PDF generation, preview, download, and email functionality
-with focus on Ukrainian characters support.
+Backend Test Suite for New Document Architecture: "CREATE WITHOUT PDF + GENERATE ON DEMAND"
+Tests the new architecture where documents are created without PDF generation,
+and PDFs are generated on demand with 3-day caching and Google Sheets cache clearing.
 """
 
 import requests
