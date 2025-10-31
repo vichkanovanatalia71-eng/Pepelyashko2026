@@ -460,6 +460,62 @@ async def generate_invoice_pdf(data: DocumentCreate):
         logging.error(f"Error generating invoice PDF: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
+@api_router.post("/invoices/{invoice_number}/generate-pdf")
+async def generate_invoice_pdf_by_number(invoice_number: str):
+    """Generate PDF for existing invoice from Google Sheets data."""
+    if sheets_service is None or document_service is None:
+        raise HTTPException(status_code=503, detail="Services not available")
+    
+    try:
+        # Get invoice from Google Sheets
+        existing_invoices = sheets_service.get_documents("Рахунки")
+        invoice = None
+        for inv in existing_invoices:
+            inv_num_str = str(inv.get('number', ''))
+            if (inv_num_str == str(invoice_number) or 
+                str(int(inv_num_str)) == str(int(invoice_number))):
+                invoice = inv
+                break
+        
+        if not invoice:
+            raise HTTPException(status_code=404, detail=f"Рахунок {invoice_number} не знайдено")
+        
+        # Prepare invoice data for PDF generation
+        invoice_data = {
+            'counterparty_edrpou': invoice.get('counterparty_edrpou', ''),
+            'items': invoice.get('items', []),
+            'total_amount': invoice.get('total_amount', 0),
+            'based_on_order': invoice.get('based_on_order', None)
+        }
+        
+        # Generate PDF
+        result = document_service.generate_invoice_pdf(
+            invoice_data=invoice_data,
+            upload_to_drive=True
+        )
+        
+        # Update invoice with drive_file_id
+        drive_file_id = result.get('drive_file_id', '')
+        # Note: We might need to add an update method for invoices
+        
+        return {
+            'success': True,
+            'message': 'PDF успішно згенеровано',
+            'invoice_number': invoice_number,
+            'pdf_path': result['pdf_path'],
+            'pdf_filename': result['pdf_filename'],
+            'drive_view_link': result.get('drive_view_link', ''),
+            'drive_download_link': result.get('drive_download_link', ''),
+            'drive_file_id': drive_file_id
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error generating PDF for invoice {invoice_number}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
 # Order endpoints
 @api_router.post("/orders", response_model=dict)
 async def create_order(data: DocumentCreate):
