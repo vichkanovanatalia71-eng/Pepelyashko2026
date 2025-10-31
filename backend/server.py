@@ -1465,6 +1465,138 @@ async def download_contract(filename: str):
         logging.error(f"Error downloading contract: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
+@api_router.post("/invoices/send-email")
+async def send_invoice_email(invoice_number: str, recipient_email: str):
+    """Send invoice PDF via email."""
+    try:
+        # Find PDF file
+        pdf_dir = Path('/app/backend/generated_documents')
+        pdf_files = list(pdf_dir.glob(f"Рахунок_{invoice_number}_*.pdf"))
+        
+        # Try pattern matching if not found
+        if not pdf_files:
+            all_invoice_pdfs = list(pdf_dir.glob("Рахунок_*.pdf"))
+            for pdf_file in all_invoice_pdfs:
+                parts = pdf_file.stem.split('_')
+                if len(parts) >= 2:
+                    file_number = parts[1]
+                    if file_number == invoice_number or file_number.endswith(f"-{invoice_number}"):
+                        pdf_files.append(pdf_file)
+        
+        if not pdf_files:
+            raise HTTPException(status_code=404, detail=f"PDF для рахунку {invoice_number} не знайдено")
+        
+        pdf_file = sorted(pdf_files, key=lambda f: f.stat().st_mtime, reverse=True)[0]
+        
+        # Send email using document_service
+        success = await document_service.send_invoice_email(
+            pdf_path=str(pdf_file),
+            recipient_email=recipient_email,
+            invoice_number=invoice_number
+        )
+        
+        if success:
+            return {
+                'success': True,
+                'message': f'Рахунок успішно відправлено на {recipient_email}'
+            }
+        else:
+            raise HTTPException(status_code=500, detail="Помилка при відправці email")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error sending invoice email: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+@api_router.post("/acts/send-email")
+async def send_act_email(act_number: str, recipient_email: str):
+    """Send act PDF via email."""
+    try:
+        # Find PDF file
+        pdf_dir = Path('/app/backend/generated_documents')
+        pdf_files = list(pdf_dir.glob(f"Акт_{act_number}_*.pdf"))
+        
+        # Try pattern matching if not found
+        if not pdf_files:
+            all_act_pdfs = list(pdf_dir.glob("Акт_*.pdf"))
+            for pdf_file in all_act_pdfs:
+                parts = pdf_file.stem.split('_')
+                if len(parts) >= 2:
+                    file_number = parts[1]
+                    if file_number == act_number or file_number.endswith(f"-{act_number}"):
+                        pdf_files.append(pdf_file)
+        
+        if not pdf_files:
+            raise HTTPException(status_code=404, detail=f"PDF для акту {act_number} не знайдено")
+        
+        pdf_file = sorted(pdf_files, key=lambda f: f.stat().st_mtime, reverse=True)[0]
+        
+        # Send email using document_service
+        success = await document_service.send_act_email(
+            pdf_path=str(pdf_file),
+            recipient_email=recipient_email,
+            act_number=act_number
+        )
+        
+        if success:
+            return {
+                'success': True,
+                'message': f'Акт успішно відправлено на {recipient_email}'
+            }
+        else:
+            raise HTTPException(status_code=500, detail="Помилка при відправці email")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error sending act email: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+@api_router.post("/waybills/send-email")
+async def send_waybill_email(waybill_number: str, recipient_email: str):
+    """Send waybill PDF via email."""
+    try:
+        # Find PDF file
+        pdf_dir = Path('/app/backend/generated_documents')
+        pdf_files = list(pdf_dir.glob(f"Накладна_{waybill_number}_*.pdf"))
+        
+        # Try pattern matching if not found
+        if not pdf_files:
+            all_waybill_pdfs = list(pdf_dir.glob("Накладна_*.pdf"))
+            for pdf_file in all_waybill_pdfs:
+                parts = pdf_file.stem.split('_')
+                if len(parts) >= 2:
+                    file_number = parts[1]
+                    if file_number == waybill_number or file_number.endswith(f"-{waybill_number}"):
+                        pdf_files.append(pdf_file)
+        
+        if not pdf_files:
+            raise HTTPException(status_code=404, detail=f"PDF для накладної {waybill_number} не знайдено")
+        
+        pdf_file = sorted(pdf_files, key=lambda f: f.stat().st_mtime, reverse=True)[0]
+        
+        # Send email using document_service
+        success = await document_service.send_waybill_email(
+            pdf_path=str(pdf_file),
+            recipient_email=recipient_email,
+            waybill_number=waybill_number
+        )
+        
+        if success:
+            return {
+                'success': True,
+                'message': f'Накладна успішно відправлена на {recipient_email}'
+            }
+        else:
+            raise HTTPException(status_code=500, detail="Помилка при відправці email")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error sending waybill email: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
 @api_router.post("/contracts/send-email")
 async def send_contract_email(data: ContractSendEmailRequest):
     """Send contract PDF via email with optional Google Drive link."""
