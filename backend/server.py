@@ -1024,8 +1024,7 @@ async def generate_act_pdf_by_number(act_number: str):
         act = None
         for a in existing_acts:
             act_num_str = str(a.get('number', ''))
-            if (act_num_str == str(act_number) or 
-                str(int(act_num_str)) == str(int(act_number))):
+            if act_num_str == str(act_number):
                 act = a
                 break
         
