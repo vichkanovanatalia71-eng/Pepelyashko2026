@@ -5065,11 +5065,26 @@ function App() {
                                   const response = await axios.post(`${API}/invoices/${doc.number}/generate-pdf`);
                                   
                                   if (response.data.success) {
-                                    setDocumentPdfData({
-                                      drive_view_link: response.data.drive_view_link,
-                                      drive_file_id: response.data.drive_file_id,
-                                      invoice_number: doc.number
-                                    });
+                                    // Try to load PDF as blob for preview
+                                    try {
+                                      const localPdfUrl = `${API}/invoices/pdf/${doc.number}`;
+                                      const pdfResponse = await axios.get(localPdfUrl, { responseType: 'blob' });
+                                      const blobUrl = URL.createObjectURL(pdfResponse.data);
+                                      
+                                      setDocumentPdfData({
+                                        drive_view_link: blobUrl,
+                                        drive_file_id: response.data.drive_file_id,
+                                        invoice_number: doc.number,
+                                        is_blob: true
+                                      });
+                                    } catch (blobError) {
+                                      // Fallback if blob loading fails
+                                      setDocumentPdfData({
+                                        drive_view_link: response.data.drive_view_link,
+                                        drive_file_id: response.data.drive_file_id,
+                                        invoice_number: doc.number
+                                      });
+                                    }
                                     
                                     setCurrentDocType('invoice');
                                     
