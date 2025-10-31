@@ -886,14 +886,15 @@ async def generate_act_pdf(data: DocumentCreate):
             upload_to_drive=True
         )
         
-        # Save act to Google Sheets with drive_file_id
+        # Save act to Google Sheets with drive_file_id AND the generated act_number
         drive_file_id = result.get('drive_file_id', '')
-        sheets_service.create_act(act_data, drive_file_id)
+        act_number = result['act_number']
+        sheets_service.create_act(act_data, drive_file_id, act_number)
         
         return {
             'success': True,
             'message': 'Акт успішно згенеровано та завантажено на Google Drive',
-            'act_number': result['act_number'],
+            'act_number': act_number,
             'pdf_path': result['pdf_path'],
             'pdf_filename': result['pdf_filename'],
             'drive_view_link': result.get('drive_view_link', ''),
