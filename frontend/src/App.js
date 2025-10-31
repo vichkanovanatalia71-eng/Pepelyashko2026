@@ -5677,28 +5677,25 @@ function App() {
                       try {
                         // Send email
                         let emailEndpoint = '';
-                        let numberField = '';
                         
                         if (item.type === 'invoice') {
-                          emailEndpoint = `${API}/invoices/send-email`;
-                          numberField = 'invoice_number';
+                          emailEndpoint = `${API}/invoices/send-email?invoice_number=${item.number}&recipient_email=${encodeURIComponent(recipientEmail)}`;
                         } else if (item.type === 'act') {
-                          emailEndpoint = `${API}/acts/send-email`;
-                          numberField = 'act_number';
+                          emailEndpoint = `${API}/acts/send-email?act_number=${item.number}&recipient_email=${encodeURIComponent(recipientEmail)}`;
                         } else if (item.type === 'waybill') {
-                          emailEndpoint = `${API}/waybills/send-email`;
-                          numberField = 'waybill_number';
+                          emailEndpoint = `${API}/waybills/send-email?waybill_number=${item.number}&recipient_email=${encodeURIComponent(recipientEmail)}`;
                         } else if (item.type === 'contract') {
                           emailEndpoint = `${API}/contracts/send-email`;
-                          numberField = 'contract_number';
+                          // Keep old payload for contracts
+                          await axios.post(emailEndpoint, {
+                            contract_number: item.number,
+                            recipient_email: recipientEmail
+                          });
+                          successCount++;
+                          continue;
                         }
                         
-                        const payload = {
-                          [numberField]: item.number,
-                          recipient_email: recipientEmail
-                        };
-                        
-                        await axios.post(emailEndpoint, payload);
+                        await axios.post(emailEndpoint);
                         successCount++;
                       } catch (error) {
                         console.error(`Error sending ${item.type} ${item.number}:`, error);
