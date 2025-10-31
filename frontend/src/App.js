@@ -5191,91 +5191,250 @@ function App() {
                       
                       {/* Waybills */}
                       {relatedDocuments.waybills.map((doc, idx) => (
-                        <div key={`wb-${idx}`} className="p-3 bg-orange-50 rounded border border-orange-200 flex justify-between items-center">
-                          <div>
-                            <p className="font-medium text-orange-800">🚚 Накладна №{doc.number}</p>
-                            <p className="text-sm text-gray-600">від {doc.date} | {doc.total_amount} грн</p>
-                          </div>
-                          <div className="flex gap-2">
-                            {doc.drive_file_id && (
-                              <>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => {
+                        <div key={`wb-${idx}`} className="p-3 bg-orange-50 rounded border border-orange-200">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <input
+                                type="checkbox"
+                                checked={selectedRelatedDocs.some(d => d.type === 'waybill' && d.number === doc.number)}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setSelectedRelatedDocs([...selectedRelatedDocs, { type: 'waybill', number: doc.number, doc }]);
+                                  } else {
+                                    setSelectedRelatedDocs(selectedRelatedDocs.filter(d => !(d.type === 'waybill' && d.number === doc.number)));
+                                  }
+                                }}
+                                className="w-4 h-4 cursor-pointer"
+                              />
+                              <div>
+                                <p className="font-medium text-orange-800">🚚 Накладна №{doc.number}</p>
+                                <p className="text-sm text-gray-600">від {doc.date} | {doc.total_amount} грн</p>
+                              </div>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={async () => {
+                                try {
+                                  setLoading(true);
+                                  if (!doc.drive_file_id) {
+                                    const localPdfUrl = `${API}/waybills/pdf/${doc.number}`;
+                                    try {
+                                      const pdfResponse = await axios.get(localPdfUrl, { responseType: 'blob' });
+                                      const blobUrl = URL.createObjectURL(pdfResponse.data);
+                                      setDocumentPdfData({
+                                        drive_view_link: blobUrl,
+                                        waybill_number: doc.number,
+                                        is_blob: true
+                                      });
+                                    } catch (error) {
+                                      toast.error('Помилка завантаження PDF');
+                                      return;
+                                    }
+                                  } else {
                                     setDocumentPdfData({
                                       drive_file_id: doc.drive_file_id,
                                       drive_view_link: `https://drive.google.com/file/d/${doc.drive_file_id}/view`,
                                       waybill_number: doc.number
                                     });
-                                    setCurrentDocType('waybill');
-                                    setShowOrderDetails(false);
-                                    setShowDocumentPreview(true);
-                                  }}
-                                  className="text-xs"
-                                >
-                                  <Eye className="w-3 h-3 mr-1" />
-                                  PDF
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => {
-                                    toast.info('Функція відправки email буде додана незабаром');
-                                  }}
-                                  className="text-xs"
-                                >
-                                  📧 Email
-                                </Button>
-                              </>
-                            )}
+                                  }
+                                  setCurrentDocType('waybill');
+                                  
+                                  try {
+                                    const counterpartyResponse = await axios.get(`${API}/counterparties/${currentOrderDetails.counterparty_edrpou}`);
+                                    setDocumentEmailForm({
+                                      recipient: 'counterparty',
+                                      customEmail: '',
+                                      counterpartyEmail: counterpartyResponse.data?.email || ''
+                                    });
+                                  } catch (error) {
+                                    setDocumentEmailForm({
+                                      recipient: 'counterparty',
+                                      customEmail: '',
+                                      counterpartyEmail: ''
+                                    });
+                                  }
+                                  
+                                  setShowOrderDetails(false);
+                                  setShowDocumentPreview(true);
+                                } catch (error) {
+                                  toast.error('Помилка: ' + error.message);
+                                } finally {
+                                  setLoading(false);
+                                }
+                              }}
+                              className="text-xs"
+                            >
+                              <Eye className="w-3 h-3 mr-1" />
+                              Переглянути
+                            </Button>
                           </div>
                         </div>
                       ))}
                       
                       {/* Contracts */}
                       {relatedDocuments.contracts.map((doc, idx) => (
-                        <div key={`con-${idx}`} className="p-3 bg-blue-50 rounded border border-blue-200 flex justify-between items-center">
-                          <div>
-                            <p className="font-medium text-blue-800">📋 Договір №{doc.number}</p>
-                            <p className="text-sm text-gray-600">від {doc.date}</p>
-                          </div>
-                          <div className="flex gap-2">
-                            {doc.drive_file_id && (
-                              <>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => {
+                        <div key={`con-${idx}`} className="p-3 bg-blue-50 rounded border border-blue-200">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <input
+                                type="checkbox"
+                                checked={selectedRelatedDocs.some(d => d.type === 'contract' && d.number === doc.number)}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setSelectedRelatedDocs([...selectedRelatedDocs, { type: 'contract', number: doc.number, doc }]);
+                                  } else {
+                                    setSelectedRelatedDocs(selectedRelatedDocs.filter(d => !(d.type === 'contract' && d.number === doc.number)));
+                                  }
+                                }}
+                                className="w-4 h-4 cursor-pointer"
+                              />
+                              <div>
+                                <p className="font-medium text-blue-800">📋 Договір №{doc.number}</p>
+                                <p className="text-sm text-gray-600">від {doc.date}</p>
+                              </div>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={async () => {
+                                try {
+                                  setLoading(true);
+                                  if (!doc.drive_file_id) {
+                                    const localPdfUrl = `${API}/contracts/pdf/${doc.number}`;
+                                    try {
+                                      const pdfResponse = await axios.get(localPdfUrl, { responseType: 'blob' });
+                                      const blobUrl = URL.createObjectURL(pdfResponse.data);
+                                      setContractPdfData({
+                                        drive_view_link: blobUrl,
+                                        contract_number: doc.number,
+                                        is_blob: true
+                                      });
+                                    } catch (error) {
+                                      toast.error('Помилка завантаження PDF');
+                                      return;
+                                    }
+                                  } else {
                                     setContractPdfData({
                                       drive_file_id: doc.drive_file_id,
                                       drive_view_link: `https://drive.google.com/file/d/${doc.drive_file_id}/view`,
                                       contract_number: doc.number
                                     });
-                                    setShowOrderDetails(false);
-                                    setShowContractPreview(true);
-                                  }}
-                                  className="text-xs"
-                                >
-                                  <Eye className="w-3 h-3 mr-1" />
-                                  PDF
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => {
-                                    toast.info('Функція відправки email буде додана незабаром');
-                                  }}
-                                  className="text-xs"
-                                >
-                                  📧 Email
-                                </Button>
-                              </>
-                            )}
+                                  }
+                                  setShowOrderDetails(false);
+                                  setShowContractPreview(true);
+                                } catch (error) {
+                                  toast.error('Помилка: ' + error.message);
+                                } finally {
+                                  setLoading(false);
+                                }
+                              }}
+                              className="text-xs"
+                            >
+                              <Eye className="w-3 h-3 mr-1" />
+                              Переглянути
+                            </Button>
                           </div>
                         </div>
                       ))}
                     </div>
+                    
+                    {/* Bulk Email Button */}
+                    {selectedRelatedDocs.length > 0 && (
+                      <div className="mt-4 p-3 bg-gray-50 rounded border border-gray-300">
+                        <div className="flex justify-between items-center">
+                          <p className="text-sm font-medium text-gray-700">
+                            Вибрано документів: {selectedRelatedDocs.length}
+                          </p>
+                          <Button
+                            size="sm"
+                            onClick={async () => {
+                              try {
+                                setLoading(true);
+                                
+                                // Get counterparty email
+                                let counterpartyEmail = '';
+                                try {
+                                  const counterpartyResponse = await axios.get(`${API}/counterparties/${currentOrderDetails.counterparty_edrpou}`);
+                                  counterpartyEmail = counterpartyResponse.data?.email || '';
+                                } catch (error) {
+                                  console.error('Error loading counterparty:', error);
+                                }
+                                
+                                // Ask user for email preference
+                                const emailChoice = await new Promise((resolve) => {
+                                  const choice = window.confirm(
+                                    `Надіслати ${selectedRelatedDocs.length} документ(ів) на email?\n\n` +
+                                    `Натисніть OK для відправки контрагенту (${counterpartyEmail || 'email не вказано'})\n` +
+                                    `Натисніть Скасувати для введення іншої адреси`
+                                  );
+                                  resolve(choice);
+                                });
+                                
+                                let recipientEmail = '';
+                                if (emailChoice) {
+                                  recipientEmail = counterpartyEmail;
+                                  if (!recipientEmail) {
+                                    toast.error('Email контрагента не вказано');
+                                    return;
+                                  }
+                                } else {
+                                  recipientEmail = window.prompt('Введіть email для відправки:');
+                                  if (!recipientEmail) {
+                                    toast.info('Відправку скасовано');
+                                    return;
+                                  }
+                                }
+                                
+                                // Send each document
+                                let successCount = 0;
+                                const errors = [];
+                                
+                                for (const item of selectedRelatedDocs) {
+                                  try {
+                                    const endpoint = `${API}/${item.type === 'invoice' ? 'invoices' : item.type === 'act' ? 'acts' : item.type === 'waybill' ? 'waybills' : 'contracts'}/send-email`;
+                                    const payload = {
+                                      [`${item.type === 'invoice' ? 'invoice' : item.type === 'act' ? 'act' : item.type === 'waybill' ? 'waybill' : 'contract'}_number`]: item.number,
+                                      recipient_email: recipientEmail
+                                    };
+                                    
+                                    await axios.post(endpoint, payload);
+                                    successCount++;
+                                  } catch (error) {
+                                    errors.push(`${item.type} №${item.number}`);
+                                  }
+                                }
+                                
+                                // Show results
+                                if (successCount > 0) {
+                                  toast.success(`Успішно надіслано ${successCount} документ(ів) на ${recipientEmail}`);
+                                }
+                                
+                                if (errors.length > 0) {
+                                  toast.error(`Помилка відправки: ${errors.join(', ')}`);
+                                }
+                                
+                                // Clear selection
+                                setSelectedRelatedDocs([]);
+                                
+                              } catch (error) {
+                                toast.error('Помилка: ' + error.message);
+                              } finally {
+                                setLoading(false);
+                              }
+                            }}
+                            disabled={loading}
+                            className="btn-primary"
+                          >
+                            {loading ? (
+                              <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Відправка...</>
+                            ) : (
+                              <>📧 Надіслати на email</>
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               )}
