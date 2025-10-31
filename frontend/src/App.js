@@ -5200,6 +5200,25 @@ function App() {
                           setCurrentDocType('order');
                           setShowOrderDetails(false);
                           
+                          // Load counterparty data for email form
+                          try {
+                            const counterpartyResponse = await axios.get(`${API}/counterparties/${currentOrderDetails.counterparty_edrpou}`);
+                            const counterpartyEmail = counterpartyResponse.data?.email || '';
+                            
+                            setDocumentEmailForm({
+                              recipient: 'counterparty',
+                              customEmail: '',
+                              counterpartyEmail: counterpartyEmail
+                            });
+                          } catch (emailError) {
+                            console.error('Error loading counterparty email:', emailError);
+                            setDocumentEmailForm({
+                              recipient: 'counterparty',
+                              customEmail: '',
+                              counterpartyEmail: ''
+                            });
+                          }
+                          
                           // If no drive_file_id (Google Drive not working), try to load PDF as blob
                           if (!response.data.drive_file_id || !response.data.drive_view_link) {
                             const localPdfUrl = `${API}/orders/pdf/${response.data.order_number}`;
