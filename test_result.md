@@ -219,7 +219,7 @@ backend:
     file: "/app/backend/order_service.py, /app/backend/server.py, /app/frontend/src/App.js, /app/backend/google_sheets_service.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "needs_testing"
         agent: "main"
