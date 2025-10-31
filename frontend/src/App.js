@@ -5249,11 +5249,26 @@ function App() {
                                   const response = await axios.post(`${API}/waybills/${doc.number}/generate-pdf`);
                                   
                                   if (response.data.success) {
-                                    setDocumentPdfData({
-                                      drive_view_link: response.data.drive_view_link,
-                                      drive_file_id: response.data.drive_file_id,
-                                      waybill_number: doc.number
-                                    });
+                                    // Try to load PDF as blob for preview
+                                    try {
+                                      const localPdfUrl = `${API}/waybills/pdf/${doc.number}`;
+                                      const pdfResponse = await axios.get(localPdfUrl, { responseType: 'blob' });
+                                      const blobUrl = URL.createObjectURL(pdfResponse.data);
+                                      
+                                      setDocumentPdfData({
+                                        drive_view_link: blobUrl,
+                                        drive_file_id: response.data.drive_file_id,
+                                        waybill_number: doc.number,
+                                        is_blob: true
+                                      });
+                                    } catch (blobError) {
+                                      // Fallback if blob loading fails
+                                      setDocumentPdfData({
+                                        drive_view_link: response.data.drive_view_link,
+                                        drive_file_id: response.data.drive_file_id,
+                                        waybill_number: doc.number
+                                      });
+                                    }
                                     
                                     setCurrentDocType('waybill');
                                     
