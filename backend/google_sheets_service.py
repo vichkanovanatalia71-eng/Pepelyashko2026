@@ -333,6 +333,56 @@ class GoogleSheetsService:
             logger.error(f"Error creating {doc_type}: {str(e)}")
             raise
     
+
+    def update_pdf_generated_at(self, sheet_name: str, document_number: str) -> bool:
+        """Update the PDF generation timestamp for a document."""
+        try:
+            worksheet = self.spreadsheet.worksheet(sheet_name)
+            records = worksheet.get_all_records()
+            
+            # Find the document
+            for idx, record in enumerate(records):
+                if str(record.get('Номер', '')) == str(document_number):
+                    # Update PDF generated timestamp (row is idx+2 because headers are row 1, and idx is 0-based)
+                    row_num = idx + 2
+                    # Column for pdf_generated_at depends on sheet type
+                    if sheet_name == "Акти":
+                        col_num = 10  # Column J (9th column, but acts have one more column)
+                    else:
+                        col_num = 9   # Column I (8th column)
+                    
+                    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                    worksheet.update_cell(row_num, col_num, timestamp)
+                    logger.info(f"Updated PDF generated timestamp for {sheet_name} #{document_number}")
+                    self.cache.clear()  # Clear cache after update
+                    return True
+            
+            logger.warning(f"Document {document_number} not found in {sheet_name}")
+            return False
+            
+        except Exception as e:
+            logger.error(f"Error updating PDF timestamp: {str(e)}")
+            return False
+    
+    def get_pdf_generated_at(self, sheet_name: str, document_number: str) -> Optional[str]:
+        """Get the PDF generation timestamp for a document."""
+        try:
+            worksheet = self.spreadsheet.worksheet(sheet_name)
+            records = worksheet.get_all_records()
+            
+            # Find the document
+            for record in records:
+                if str(record.get('Номер', '')) == str(document_number):
+                    # Get PDF generated timestamp
+                    pdf_timestamp = record.get('PDF Generated At', '')
+                    return pdf_timestamp if pdf_timestamp else None
+            
+            return None
+            
+        except Exception as e:
+            logger.error(f"Error getting PDF timestamp: {str(e)}")
+            return None
+
     def get_counterparty_documents(self, edrpou: str) -> Dict[str, List[Dict[str, Any]]]:
         """Get all documents for a specific counterparty."""
         try:
