@@ -4932,8 +4932,6 @@ function App() {
                   'Створити вибрані документи'
                 )}
               </Button>
-                Скасувати
-              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
