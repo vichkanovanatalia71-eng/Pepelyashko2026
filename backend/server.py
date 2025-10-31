@@ -452,14 +452,15 @@ async def generate_invoice_pdf(data: DocumentCreate):
             upload_to_drive=True
         )
         
-        # Save invoice to Google Sheets with drive_file_id
+        # Save invoice to Google Sheets with drive_file_id AND the generated invoice_number
         drive_file_id = result.get('drive_file_id', '')
-        sheets_service.create_invoice(invoice_data, drive_file_id)
+        invoice_number = result['invoice_number']
+        sheets_service.create_invoice(invoice_data, drive_file_id, invoice_number)
         
         return {
             'success': True,
             'message': 'Рахунок успішно згенеровано та завантажено на Google Drive',
-            'invoice_number': result['invoice_number'],
+            'invoice_number': invoice_number,
             'pdf_path': result['pdf_path'],
             'pdf_filename': result['pdf_filename'],
             'drive_view_link': result.get('drive_view_link', ''),
