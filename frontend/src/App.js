@@ -278,6 +278,12 @@ function App() {
   const [showOrderTemplateEditor, setShowOrderTemplateEditor] = useState(false);
   const [showCreateFromOrder, setShowCreateFromOrder] = useState(false);
   const [selectedOrderData, setSelectedOrderData] = useState(null);
+  const [selectedDocTypes, setSelectedDocTypes] = useState({
+    invoice: false,
+    act: false,
+    waybill: false,
+    contract: false
+  });
   const [showOrderDetails, setShowOrderDetails] = useState(false);
   const [currentOrderDetails, setCurrentOrderDetails] = useState(null);
   
