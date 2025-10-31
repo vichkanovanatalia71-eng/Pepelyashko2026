@@ -587,7 +587,15 @@ async def generate_order_pdf_by_number(order_number: str):
     try:
         # Get order from Google Sheets
         existing_orders = sheets_service.get_documents("Замовлення")
-        order = next((o for o in existing_orders if str(o.get('number', '')) == str(order_number)), None)
+        # Handle both "0047" and "47" formats
+        order = None
+        for o in existing_orders:
+            order_num_str = str(o.get('number', ''))
+            if (order_num_str == str(order_number) or 
+                order_num_str == str(int(order_number)) or
+                str(int(order_num_str)) == str(int(order_number))):
+                order = o
+                break
         
         if not order:
             raise HTTPException(status_code=404, detail=f"Замовлення {order_number} не знайдено")
