@@ -942,6 +942,41 @@ async def get_acts():
         logging.error(f"Error getting acts: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
+
+@api_router.post("/acts/create")
+async def create_act(data: DocumentCreate):
+    """Create act WITHOUT generating PDF - save only data."""
+    if sheets_service is None or document_service is None:
+        raise HTTPException(status_code=503, detail="Services not available")
+    
+    try:
+        act_data = data.model_dump()
+        
+        # Generate document number (same format as before)
+        counterparty_edrpou = act_data['counterparty_edrpou']
+        edrpou_middle = str(counterparty_edrpou)[2:6] if len(str(counterparty_edrpou)) >= 6 else str(counterparty_edrpou)[:4]
+        
+        # Get next sequential number for this counterparty
+        existing_acts = sheets_service.get_documents_by_counterparty("Акти", counterparty_edrpou)
+        next_seq = len(existing_acts) + 1
+        act_number = f"{edrpou_middle}-{next_seq}"
+        
+        # Save act to Google Sheets WITHOUT PDF
+        sheets_service.create_act(act_data, drive_file_id='', document_number=act_number)
+        
+        return {
+            'success': True,
+            'message': 'Акт успішно створено',
+            'act_number': act_number
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error creating act: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
 @api_router.post("/acts/generate-pdf")
 async def generate_act_pdf(data: DocumentCreate):
     """Generate PDF act and upload to Google Drive."""
