@@ -591,6 +591,7 @@ test_plan:
     - "Custom Template Contract PDF Generation"
     - "New HTML Template Contract PDF Generation"
     - "Order PDF Generation with Drive Upload"
+    - "Order PDF Generation with Drive Upload - ФАЗА 1"
     - "Documents by Order Endpoint Implementation"
     - "Frontend UI Testing - Orders Full Flow"
     - "Contract Creation Based on Order"
