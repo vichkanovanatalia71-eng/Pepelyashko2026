@@ -264,10 +264,14 @@ class Phase1OrderTests:
             
             orders_list = orders_response.json()
             
-            # Find our order
+            # Find our order (handle both "0046" and "46" formats)
             found_order = None
             for order in orders_list:
-                if str(order.get('number', '')) == str(order_number):
+                order_num_str = str(order.get('number', ''))
+                # Try exact match first, then try without leading zeros
+                if (order_num_str == str(order_number) or 
+                    order_num_str == str(int(order_number)) or
+                    str(int(order_num_str)) == str(int(order_number))):
                     found_order = order
                     break
             
