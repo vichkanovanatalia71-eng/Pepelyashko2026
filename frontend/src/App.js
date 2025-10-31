@@ -5361,87 +5361,28 @@ function App() {
                             size="sm"
                             onClick={async () => {
                               try {
-                                setLoading(true);
-                                
-                                // Get counterparty email
-                                let counterpartyEmail = '';
-                                try {
-                                  const counterpartyResponse = await axios.get(`${API}/counterparties/${currentOrderDetails.counterparty_edrpou}`);
-                                  counterpartyEmail = counterpartyResponse.data?.email || '';
-                                } catch (error) {
-                                  console.error('Error loading counterparty:', error);
-                                }
-                                
-                                // Ask user for email preference
-                                const emailChoice = await new Promise((resolve) => {
-                                  const choice = window.confirm(
-                                    `Надіслати ${selectedRelatedDocs.length} документ(ів) на email?\n\n` +
-                                    `Натисніть OK для відправки контрагенту (${counterpartyEmail || 'email не вказано'})\n` +
-                                    `Натисніть Скасувати для введення іншої адреси`
-                                  );
-                                  resolve(choice);
+                                // Load counterparty email
+                                const counterpartyResponse = await axios.get(`${API}/counterparties/${currentOrderDetails.counterparty_edrpou}`);
+                                setBulkEmailForm({
+                                  recipient: 'counterparty',
+                                  customEmail: '',
+                                  counterpartyEmail: counterpartyResponse.data?.email || ''
                                 });
-                                
-                                let recipientEmail = '';
-                                if (emailChoice) {
-                                  recipientEmail = counterpartyEmail;
-                                  if (!recipientEmail) {
-                                    toast.error('Email контрагента не вказано');
-                                    return;
-                                  }
-                                } else {
-                                  recipientEmail = window.prompt('Введіть email для відправки:');
-                                  if (!recipientEmail) {
-                                    toast.info('Відправку скасовано');
-                                    return;
-                                  }
-                                }
-                                
-                                // Send each document
-                                let successCount = 0;
-                                const errors = [];
-                                
-                                for (const item of selectedRelatedDocs) {
-                                  try {
-                                    const endpoint = `${API}/${item.type === 'invoice' ? 'invoices' : item.type === 'act' ? 'acts' : item.type === 'waybill' ? 'waybills' : 'contracts'}/send-email`;
-                                    const payload = {
-                                      [`${item.type === 'invoice' ? 'invoice' : item.type === 'act' ? 'act' : item.type === 'waybill' ? 'waybill' : 'contract'}_number`]: item.number,
-                                      recipient_email: recipientEmail
-                                    };
-                                    
-                                    await axios.post(endpoint, payload);
-                                    successCount++;
-                                  } catch (error) {
-                                    errors.push(`${item.type} №${item.number}`);
-                                  }
-                                }
-                                
-                                // Show results
-                                if (successCount > 0) {
-                                  toast.success(`Успішно надіслано ${successCount} документ(ів) на ${recipientEmail}`);
-                                }
-                                
-                                if (errors.length > 0) {
-                                  toast.error(`Помилка відправки: ${errors.join(', ')}`);
-                                }
-                                
-                                // Clear selection
-                                setSelectedRelatedDocs([]);
-                                
+                                setShowBulkEmailDialog(true);
                               } catch (error) {
-                                toast.error('Помилка: ' + error.message);
-                              } finally {
-                                setLoading(false);
+                                console.error('Error loading counterparty:', error);
+                                setBulkEmailForm({
+                                  recipient: 'custom',
+                                  customEmail: '',
+                                  counterpartyEmail: ''
+                                });
+                                setShowBulkEmailDialog(true);
                               }
                             }}
                             disabled={loading}
                             className="btn-primary"
                           >
-                            {loading ? (
-                              <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Відправка...</>
-                            ) : (
-                              <>📧 Надіслати на email</>
-                            )}
+                            📧 Надіслати на email
                           </Button>
                         </div>
                       </div>
