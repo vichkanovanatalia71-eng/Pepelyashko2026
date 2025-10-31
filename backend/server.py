@@ -530,34 +530,68 @@ async def generate_invoice_pdf_by_number(invoice_number: str):
         if not invoice:
             raise HTTPException(status_code=404, detail=f"Рахунок {invoice_number} не знайдено")
         
-        # Prepare invoice data for PDF generation
-        invoice_data = {
-            'counterparty_edrpou': invoice.get('counterparty_edrpou', ''),
-            'items': invoice.get('items', []),
-            'total_amount': invoice.get('total_amount', 0),
-            'based_on_order': invoice.get('based_on_order', None)
-        }
+        # Check if PDF exists and if it's older than 3 days
+        pdf_dir = Path('/app/backend/generated_documents')
+        pdf_files = list(pdf_dir.glob(f"Рахунок_{invoice_number}_*.pdf"))
         
-        # Generate PDF (locally, without Google Drive)
-        result = document_service.generate_invoice_pdf(
-            invoice_data=invoice_data,
-            upload_to_drive=False
-        )
+        should_regenerate = True
+        if pdf_files:
+            # Get the most recent PDF
+            pdf_file = sorted(pdf_files, key=lambda f: f.stat().st_mtime, reverse=True)[0]
+            
+            # Check PDF generation timestamp from Google Sheets
+            pdf_timestamp_str = sheets_service.get_pdf_generated_at("Рахунки", invoice_number)
+            
+            if pdf_timestamp_str:
+                try:
+                    pdf_timestamp = datetime.strptime(pdf_timestamp_str, '%Y-%m-%d %H:%M:%S')
+                    days_old = (datetime.now() - pdf_timestamp).days
+                    
+                    if days_old < 3:
+                        # PDF is fresh, no need to regenerate
+                        should_regenerate = False
+                        logging.info(f"Invoice PDF {invoice_number} is {days_old} days old, using existing")
+                    else:
+                        # PDF is older than 3 days, delete it
+                        pdf_file.unlink()
+                        logging.info(f"Deleted old invoice PDF {invoice_number} ({days_old} days old)")
+                except Exception as e:
+                    logging.error(f"Error parsing timestamp: {e}")
         
-        # Update invoice with drive_file_id
-        drive_file_id = result.get('drive_file_id', '')
-        # Note: We might need to add an update method for invoices
-        
-        return {
-            'success': True,
-            'message': 'PDF успішно згенеровано',
-            'invoice_number': invoice_number,
-            'pdf_path': result['pdf_path'],
-            'pdf_filename': result['pdf_filename'],
-            'drive_view_link': result.get('drive_view_link', ''),
-            'drive_download_link': result.get('drive_download_link', ''),
-            'drive_file_id': drive_file_id
-        }
+        if should_regenerate:
+            # Prepare invoice data for PDF generation
+            invoice_data = {
+                'counterparty_edrpou': invoice.get('counterparty_edrpou', ''),
+                'items': invoice.get('items', []),
+                'total_amount': invoice.get('total_amount', 0),
+                'based_on_order': invoice.get('based_on_order', None)
+            }
+            
+            # Generate PDF (locally, without Google Drive)
+            result = document_service.generate_invoice_pdf(
+                invoice_data=invoice_data,
+                upload_to_drive=False
+            )
+            
+            # Update PDF generation timestamp in Google Sheets
+            sheets_service.update_pdf_generated_at("Рахунки", invoice_number)
+            
+            return {
+                'success': True,
+                'message': 'PDF успішно згенеровано',
+                'invoice_number': invoice_number,
+                'pdf_path': result['pdf_path'],
+                'pdf_filename': result['pdf_filename']
+            }
+        else:
+            # Return existing PDF info
+            return {
+                'success': True,
+                'message': 'PDF вже існує',
+                'invoice_number': invoice_number,
+                'pdf_path': str(pdf_file),
+                'pdf_filename': pdf_file.name
+            }
         
     except HTTPException:
         raise
