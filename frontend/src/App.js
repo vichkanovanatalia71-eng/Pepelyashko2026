@@ -4687,194 +4687,251 @@ function App() {
             </DialogHeader>
             
             <div className="space-y-4 py-6">
-              <div className="grid grid-cols-2 gap-4">
-                <Button
-                  onClick={async () => {
-                    try {
-                      if (!selectedOrderData) return;
-                      
-                      setLoading(true);
-                      const payload = {
-                        counterparty_edrpou: selectedOrderData.counterparty_edrpou,
-                        items: selectedOrderData.items,
-                        total_amount: selectedOrderData.total_amount,
-                        based_on_order: selectedOrderData.order_number
-                      };
-                      
-                      const response = await axios.post(`${API}/invoices/generate-pdf`, payload);
-                      
-                      if (response.data.success) {
-                        console.log('Invoice created successfully:', response.data);
-                        
-                        setShowCreateFromOrder(false);
-                        toast.success(`Рахунок №${response.data.invoice_number} успішно створено на основі замовлення!`);
-                        fetchAllDocuments();
-                      }
-                    } catch (error) {
-                      toast.error('Помилка створення рахунку: ' + (error.response?.data?.detail || error.message));
-                    } finally {
-                      setLoading(false);
-                    }
-                  }}
-                  className="h-24 flex flex-col items-center justify-center space-y-2 bg-green-50 border-2 border-green-300 hover:bg-green-100 text-green-700"
+              <div className="space-y-3">
+                {/* Invoice checkbox */}
+                <div 
+                  onClick={() => setSelectedDocTypes({...selectedDocTypes, invoice: !selectedDocTypes.invoice})}
+                  className={`flex items-center space-x-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                    selectedDocTypes.invoice 
+                      ? 'bg-green-50 border-green-400' 
+                      : 'bg-white border-gray-200 hover:border-green-300'
+                  }`}
                 >
-                  <FileText className="w-8 h-8" />
-                  <span className="font-semibold">Рахунок</span>
-                </Button>
-                
-                <Button
-                  onClick={async () => {
-                    try {
-                      if (!selectedOrderData) return;
-                      
-                      setLoading(true);
-                      const payload = {
-                        counterparty_edrpou: selectedOrderData.counterparty_edrpou,
-                        items: selectedOrderData.items,
-                        total_amount: selectedOrderData.total_amount,
-                        based_on_order: selectedOrderData.order_number
-                      };
-                      
-                      const response = await axios.post(`${API}/acts/generate-pdf`, payload);
-                      
-                      if (response.data.success) {
-                        console.log('Act created successfully:', response.data);
-                        
-                        setShowCreateFromOrder(false);
-                        toast.success(`Акт №${response.data.act_number} успішно створено на основі замовлення!`);
-                        fetchAllDocuments();
-                      }
-                    } catch (error) {
-                      toast.error('Помилка створення акту: ' + (error.response?.data?.detail || error.message));
-                    } finally {
-                      setLoading(false);
-                    }
-                  }}
-                  className="h-24 flex flex-col items-center justify-center space-y-2 bg-purple-50 border-2 border-purple-300 hover:bg-purple-100 text-purple-700"
+                  <input
+                    type="checkbox"
+                    checked={selectedDocTypes.invoice}
+                    onChange={() => {}}
+                    className="w-5 h-5 cursor-pointer"
+                  />
+                  <FileText className={`w-6 h-6 ${selectedDocTypes.invoice ? 'text-green-600' : 'text-gray-400'}`} />
+                  <span className={`font-semibold ${selectedDocTypes.invoice ? 'text-green-700' : 'text-gray-600'}`}>
+                    Рахунок
+                  </span>
+                </div>
+
+                {/* Act checkbox */}
+                <div 
+                  onClick={() => setSelectedDocTypes({...selectedDocTypes, act: !selectedDocTypes.act})}
+                  className={`flex items-center space-x-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                    selectedDocTypes.act 
+                      ? 'bg-purple-50 border-purple-400' 
+                      : 'bg-white border-gray-200 hover:border-purple-300'
+                  }`}
                 >
-                  <FileCheck className="w-8 h-8" />
-                  <span className="font-semibold">Акт</span>
-                </Button>
-                
-                <Button
-                  onClick={async () => {
-                    try {
-                      if (!selectedOrderData) return;
-                      
-                      setLoading(true);
-                      const payload = {
-                        counterparty_edrpou: selectedOrderData.counterparty_edrpou,
-                        items: selectedOrderData.items,
-                        total_amount: selectedOrderData.total_amount,
-                        based_on_order: selectedOrderData.order_number
-                      };
-                      
-                      const response = await axios.post(`${API}/waybills/generate-pdf`, payload);
-                      
-                      if (response.data.success) {
-                        setCurrentDocType('waybill');
-                        setDocumentPdfData(response.data);
-                        setShowCreateFromOrder(false);
-                        setShowDocumentPreview(false);
-                        setTimeout(() => setShowDocumentPreview(true), 100);
-                        toast.success('Накладну успішно створено на основі замовлення!');
-                        fetchAllDocuments();
-                      }
-                    } catch (error) {
-                      toast.error('Помилка створення накладної: ' + (error.response?.data?.detail || error.message));
-                    } finally {
-                      setLoading(false);
-                    }
-                  }}
-                  className="h-24 flex flex-col items-center justify-center space-y-2 bg-orange-50 border-2 border-orange-300 hover:bg-orange-100 text-orange-700"
+                  <input
+                    type="checkbox"
+                    checked={selectedDocTypes.act}
+                    onChange={() => {}}
+                    className="w-5 h-5 cursor-pointer"
+                  />
+                  <FileCheck className={`w-6 h-6 ${selectedDocTypes.act ? 'text-purple-600' : 'text-gray-400'}`} />
+                  <span className={`font-semibold ${selectedDocTypes.act ? 'text-purple-700' : 'text-gray-600'}`}>
+                    Акт
+                  </span>
+                </div>
+
+                {/* Waybill checkbox */}
+                <div 
+                  onClick={() => setSelectedDocTypes({...selectedDocTypes, waybill: !selectedDocTypes.waybill})}
+                  className={`flex items-center space-x-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                    selectedDocTypes.waybill 
+                      ? 'bg-orange-50 border-orange-400' 
+                      : 'bg-white border-gray-200 hover:border-orange-300'
+                  }`}
                 >
-                  <Truck className="w-8 h-8" />
-                  <span className="font-semibold">Накладна</span>
-                </Button>
-                
-                <Button
-                  onClick={async () => {
-                    try {
-                      if (!selectedOrderData) return;
-                      
-                      setLoading(true);
-                      
-                      console.log('selectedOrderData:', selectedOrderData);
-                      
-                      // Validate order_number exists
-                      if (!selectedOrderData.order_number) {
-                        toast.error('Некоректний номер замовлення. Спробуйте ще раз.');
-                        setLoading(false);
-                        return;
-                      }
-                      
-                      // Validate and convert amount to number
-                      const totalAmount = parseFloat(selectedOrderData.total_amount) || 0;
-                      
-                      // Convert amount to text (only if valid)
-                      let amountText = '';
-                      if (totalAmount > 0) {
-                        try {
-                          amountText = numberToUkrainianText(totalAmount);
-                        } catch (error) {
-                          console.error('Error converting amount to text:', error);
-                          amountText = `${totalAmount} грн`;
-                        }
-                      }
-                      
-                      console.log('amountText:', amountText);
-                      
-                      const payload = {
-                        counterparty_edrpou: selectedOrderData.counterparty_edrpou,
-                        subject: `Постачання товарів згідно замовлення №${selectedOrderData.order_number || 'НОВИЙ'}`,
-                        items: [],
-                        total_amount: totalAmount,
-                        total_amount_text: amountText,
-                        vat_note: 'без ПДВ',
-                        based_on_order: selectedOrderData.order_number || null
-                      };
-                      
-                      console.log('Contract payload:', payload);
-                      
-                      // Add custom template if exists
-                      if (contractTemplate && contractTemplate.trim() !== '') {
-                        payload.custom_template = contractTemplate;
-                      }
-                      
-                      const response = await axios.post(`${API}/contracts/generate-pdf`, payload);
-                      
-                      if (response.data.success) {
-                        console.log('Contract created successfully:', response.data);
-                        
-                        // Close dialog and show success
-                        setShowCreateFromOrder(false);
-                        toast.success(`Договір №${response.data.contract_number} успішно створено на основі замовлення!`);
-                        
-                        // Refresh documents
-                        fetchAllDocuments();
-                      }
-                    } catch (error) {
-                      toast.error('Помилка створення договору: ' + (error.response?.data?.detail || error.message));
-                    } finally {
-                      setLoading(false);
-                    }
-                  }}
-                  className="h-24 flex flex-col items-center justify-center space-y-2 bg-blue-50 border-2 border-blue-300 hover:bg-blue-100 text-blue-700"
+                  <input
+                    type="checkbox"
+                    checked={selectedDocTypes.waybill}
+                    onChange={() => {}}
+                    className="w-5 h-5 cursor-pointer"
+                  />
+                  <Truck className={`w-6 h-6 ${selectedDocTypes.waybill ? 'text-orange-600' : 'text-gray-400'}`} />
+                  <span className={`font-semibold ${selectedDocTypes.waybill ? 'text-orange-700' : 'text-gray-600'}`}>
+                    Накладна
+                  </span>
+                </div>
+
+                {/* Contract checkbox */}
+                <div 
+                  onClick={() => setSelectedDocTypes({...selectedDocTypes, contract: !selectedDocTypes.contract})}
+                  className={`flex items-center space-x-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                    selectedDocTypes.contract 
+                      ? 'bg-blue-50 border-blue-400' 
+                      : 'bg-white border-gray-200 hover:border-blue-300'
+                  }`}
                 >
-                  <FileSignature className="w-8 h-8" />
-                  <span className="font-semibold">Договір</span>
-                </Button>
+                  <input
+                    type="checkbox"
+                    checked={selectedDocTypes.contract}
+                    onChange={() => {}}
+                    className="w-5 h-5 cursor-pointer"
+                  />
+                  <FileSignature className={`w-6 h-6 ${selectedDocTypes.contract ? 'text-blue-600' : 'text-gray-400'}`} />
+                  <span className={`font-semibold ${selectedDocTypes.contract ? 'text-blue-700' : 'text-gray-600'}`}>
+                    Договір
+                  </span>
+                </div>
               </div>
             </div>
             
-            <DialogFooter className="bg-gray-50 -mx-6 -mb-6 px-6 py-4 rounded-b-lg">
+            <DialogFooter className="bg-gray-50 -mx-6 -mb-6 px-6 py-4 rounded-b-lg flex justify-between">
               <Button 
                 variant="outline"
                 onClick={() => {
                   setShowCreateFromOrder(false);
                   setSelectedOrderData(null);
+                  setSelectedDocTypes({
+                    invoice: false,
+                    act: false,
+                    waybill: false,
+                    contract: false
+                  });
                 }}
               >
+                Скасувати
+              </Button>
+              
+              <Button
+                onClick={async () => {
+                  try {
+                    if (!selectedOrderData) return;
+                    
+                    // Check if at least one document type is selected
+                    const hasSelection = Object.values(selectedDocTypes).some(v => v);
+                    if (!hasSelection) {
+                      toast.error('Оберіть хоча б один тип документа');
+                      return;
+                    }
+                    
+                    setLoading(true);
+                    let successCount = 0;
+                    const errors = [];
+                    
+                    // Create invoice
+                    if (selectedDocTypes.invoice) {
+                      try {
+                        const payload = {
+                          counterparty_edrpou: selectedOrderData.counterparty_edrpou,
+                          items: selectedOrderData.items,
+                          total_amount: selectedOrderData.total_amount,
+                          based_on_order: selectedOrderData.order_number
+                        };
+                        const response = await axios.post(`${API}/invoices/generate-pdf`, payload);
+                        if (response.data.success) {
+                          successCount++;
+                        }
+                      } catch (error) {
+                        errors.push('Рахунок');
+                      }
+                    }
+                    
+                    // Create act
+                    if (selectedDocTypes.act) {
+                      try {
+                        const payload = {
+                          counterparty_edrpou: selectedOrderData.counterparty_edrpou,
+                          items: selectedOrderData.items,
+                          total_amount: selectedOrderData.total_amount,
+                          based_on_order: selectedOrderData.order_number
+                        };
+                        const response = await axios.post(`${API}/acts/generate-pdf`, payload);
+                        if (response.data.success) {
+                          successCount++;
+                        }
+                      } catch (error) {
+                        errors.push('Акт');
+                      }
+                    }
+                    
+                    // Create waybill
+                    if (selectedDocTypes.waybill) {
+                      try {
+                        const payload = {
+                          counterparty_edrpou: selectedOrderData.counterparty_edrpou,
+                          items: selectedOrderData.items,
+                          total_amount: selectedOrderData.total_amount,
+                          based_on_order: selectedOrderData.order_number
+                        };
+                        const response = await axios.post(`${API}/waybills/generate-pdf`, payload);
+                        if (response.data.success) {
+                          successCount++;
+                        }
+                      } catch (error) {
+                        errors.push('Накладна');
+                      }
+                    }
+                    
+                    // Create contract
+                    if (selectedDocTypes.contract) {
+                      try {
+                        const totalAmount = parseFloat(selectedOrderData.total_amount) || 0;
+                        let amountText = '';
+                        if (totalAmount > 0) {
+                          try {
+                            amountText = numberToUkrainianText(totalAmount);
+                          } catch (error) {
+                            amountText = `${totalAmount} грн`;
+                          }
+                        }
+                        
+                        const payload = {
+                          counterparty_edrpou: selectedOrderData.counterparty_edrpou,
+                          subject: `Постачання товарів згідно замовлення №${selectedOrderData.order_number || 'НОВИЙ'}`,
+                          items: [],
+                          total_amount: totalAmount,
+                          total_amount_text: amountText,
+                          vat_note: 'без ПДВ',
+                          based_on_order: selectedOrderData.order_number || null
+                        };
+                        
+                        if (contractTemplate && contractTemplate.trim() !== '') {
+                          payload.custom_template = contractTemplate;
+                        }
+                        
+                        const response = await axios.post(`${API}/contracts/generate-pdf`, payload);
+                        if (response.data.success) {
+                          successCount++;
+                        }
+                      } catch (error) {
+                        errors.push('Договір');
+                      }
+                    }
+                    
+                    // Show results
+                    if (successCount > 0) {
+                      toast.success(`Успішно створено ${successCount} документ(ів) на основі замовлення!`);
+                      fetchAllDocuments();
+                    }
+                    
+                    if (errors.length > 0) {
+                      toast.error(`Помилка створення: ${errors.join(', ')}`);
+                    }
+                    
+                    // Close dialog and reset
+                    setShowCreateFromOrder(false);
+                    setSelectedOrderData(null);
+                    setSelectedDocTypes({
+                      invoice: false,
+                      act: false,
+                      waybill: false,
+                      contract: false
+                    });
+                    
+                  } catch (error) {
+                    toast.error('Помилка створення документів: ' + error.message);
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+                disabled={loading}
+                className="btn-primary"
+              >
+                {loading ? (
+                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Створення...</>
+                ) : (
+                  'Створити вибрані документи'
+                )}
+              </Button>
                 Скасувати
               </Button>
             </DialogFooter>
