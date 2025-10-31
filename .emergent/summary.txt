@@ -1,109 +1,79 @@
 <analysis>
-The previous AI engineer focused on replicating the Acts functionality for a new Invoices tab. This involved extensive work on both backend and frontend. On the backend, new services, HTML templates, and API endpoints were created. On the frontend, state management, UI components for multi-step form, and template editing capabilities were adapted from the existing Acts and Contracts implementations. A significant portion of the work involved iteratively refining the invoice HTML template based on user feedback, including layout, text formatting, and data display. Towards the end, the engineer tackled functionality for creating invoices *without* orders, which led to a persistent  error, ultimately traced to a structural error in  where a function was inserted without correctly closing a preceding block.
+The previous AI engineer focused on extending document generation capabilities, primarily replicating Acts functionality for Invoices, then fixing various issues. Initial work involved backend services, HTML templates, and frontend state/UI for invoices. Key challenges included fixing a frontend  syntax error causing , correcting invoice form data submission to the backend, unifying the invoice UI with existing Acts contract selection, and resolving issues where order PDF generation failed to display items. The latter was traced to incorrect Handlebars usage in the template and a regex issue in the backend's templating engine. The most recent major task involved refactoring the document saving logic to store data without generating PDFs initially, with PDF generation becoming an on-demand action. This refactor is partially complete for orders on the backend.
 </analysis>
 
 <product_requirements>
-The application is a business document management system for Counterparties, generating various documents (Invoices, Acts, Contracts) with HTML/CSS based PDF generation, preview, email, download, and Google Drive integration, supporting Ukrainian characters. The UI has a blue theme, Montserrat font, and rounded cards.
+The application is a business document management system generating Invoices, Acts, and Contracts with HTML/CSS based PDF generation, preview, email, download, and Google Drive integration, supporting Ukrainian. The UI has a blue theme, Montserrat font, and rounded cards.
 
-**Recent Features & Focus (Contracts):**
-*   Multi-step UI (with/without order).
-*   Multiple order selection.
-*   Accurate PDF preview with Open in new tab.
-*   Correct rendering of total amount in Ukrainian words (e.g., 00 копійок, без ПДВ).
-*   Template consistency, aggressive  caching management.
-*   Correct  population for contracts created without orders.
+Recent focus included multi-step UI, multiple order selection, accurate PDF preview with Ukrainian word totals, template consistency, and correct  population.
 
-**Current Task (Invoices):**
-The current task is to implement Invoices (Рахунки) functionality analogous to the Acts tab. This includes:
-*   Replicating all UI elements, design, and logic for a multi-step form (similar to Acts) for Invoices.
-*   Allowing creation of invoices based on an order or without an order.
-*   Implementing a user-provided HTML template for invoices.
-*   Iteratively adjusting the invoice template layout and content based on user feedback, including:
-    *   Adding a підстави (grounds) block (later removed).
-    *   Ensuring table of items fits within document boundaries.
-    *   Capitalizing Всього (Total).
-    *   Adding Підпис: and М.П. (Seal).
-    *   Refining payment details layout (single line for code, bank).
-    *   Adjusting text and numeric alignments.
-    *   Centering the items table.
-    *   Correcting the placement of Всього до сплати (Total to pay).
-*   Fixing issues with creating invoices without orders.
+The current overarching task is to implement Invoices (Рахунки) functionality mirroring Acts. This involves replicating the multi-step UI, allowing creation based on an order or without an order using a user-provided HTML template. This template requires iterative adjustments for layout, content (e.g., підстави block, Всього capitalization, Підпис:/М.П., payment details, alignment, table centering). The system also needs to resolve issues with creating invoices without orders (fixed an  error and payload mismatch) and later, a critical change: **documents (orders, invoices, acts, contracts) should save all data but NOT PDF files. PDF generation should be a separate, on-demand action.**
 </product_requirements>
 
 <key_technical_concepts>
 -   **Full-stack Development**: React (frontend) and FastAPI (backend).
 -   **PDF Generation**:  for HTML/CSS to PDF;  for Handlebars.
--   **State Management**: React Hooks (, ).
--   **UI Components**: Tabs, Dialogs, Forms, Checkboxes.
+-   **State Management**: React Hooks ().
 -   **API Communication**: HTTP requests for data and PDF blobs.
--   **Templating**: HTML templates,  for versioning.
+-   **Templating**: HTML templates (),  for versioning.
 -   **Localization**: Ukrainian language support, number-to-words conversion.
--   **Dependency Management**:  for WeasyPrint.
+-   **Data Storage**: Google Sheets for document data (orders, invoices, acts).
 </key_technical_concepts>
 
 <code_architecture>
 
 
 -   ****:
-    -   **Importance**: Central API router.
+    -   **Importance**: Central API router for the backend.
     -   **Changes**:
-        -   Initialized .
-        -   Added new API endpoints:
-            -    for generating invoices based on selected orders.
-            -    for generating invoices without orders (manual input).
-            -   Added Pydantic models (, ) for request validation.
--   ****: (NEWLY CREATED)
-    -   **Importance**: Contains business logic for invoice generation.
-    -   **Changes**:
-        -   Initial creation, mimicking .
-        -   Includes a  function (copied and adapted).
-        -    method for creating invoices based on order data.
-        -    method for creating invoices from manual data (without orders).
--   ****: (NEWLY CREATED)
+        -   Added new API endpoints for invoices (, ).
+        -   Defined Pydantic models (, , ).
+        -   **Latest changes**: Refactored  to only generate PDF from existing data. Added  for saving order data without PDF generation.
+-   ****:
+    -   **Importance**: Business logic for invoice generation.
+    -   **Changes**: Initial creation, similar to , including , , and .
+-   ****:
     -   **Importance**: HTML template for invoice PDF generation.
+    -   **Changes**: Iterative adjustments based on user feedback, including layout, text formatting, , capitalization, adding Підпис: and М.П., refining payment details, and text alignment.
+-   ****:
+    -   **Importance**: Business logic for order generation.
     -   **Changes**:
-        -   Initially created based on user input.
-        -   Multiple iterations of modifications:
-            -   Corrected / to /.
-            -   Added/removed підстави block as per user.
-            -   Adjusted CSS for table fitting ().
-            -   Capitalized Всього.
-            -   Added Підпис: and М.П..
-            -   Refined layout for payment details (,  structure, ).
-            -   Adjusted text alignment for numbers ( for some  elements).
-            -   Centering the items table ( for  and ).
-            -   Moved Всього до сплати block separately and styled it to align right.
+        -   **Critical fix**: The  method's regex was updated from  to  to correctly handle both  and .
+        -   Added logic for handling optional  to update existing orders.
+-   ****:
+    -   **Importance**: HTML template for order PDF generation.
+    -   **Changes**: Updated to use  instead of  to correctly display pre-rendered HTML item rows.
+-   ****:
+    -   **Importance**: Handles interaction with Google Sheets for data storage and retrieval.
+    -   **Changes**: Debugging and verification of  method to ensure orders are persistently saved. Implied fix for a duplicate function name  identified by the troubleshoot agent.
 -   ****:
     -   **Importance**: Main React component managing state and UI.
     -   **Changes**:
-        -   Added new  variables for invoice-related state (e.g., , , , , ).
-        -   Implemented , ,  functions, mirroring Act functionality.
-        -   Implemented , , ,  for manual invoice creation.
-        -   Refactored Invoices tab UI to a multi-step form (select type, search counterparty, select orders/enter details).
-        -   Added template editor for invoices, including ,  functions.
-        -   Implemented template versioning () and aggressive  clearing for invoice templates (versions 2.0 to 8.0).
-        -   Added debug  for component loading.
-        -   **Identified issue**: Incorrect placement of  function, causing  to be undefined. The function was inserted without correctly closing the  block of .
--   ****: (Referenced)
-    -   **Importance**: Provided  function for adaptation and structural inspiration.
-    -   **Changes**: No direct changes.
+        -   Added  for invoice-related state.
+        -   Implemented functions for both from orders and without orders invoice creation (, , , etc.).
+        -   **Critical fix**: Corrected structural error where  and related functions were placed incorrectly, causing .
+        -   Refactored Invoices tab UI to a multi-step form and added template editor.
+        -   **Fix for invoice without orders**: Modified  to calculate  and send correct payload, excluding  and  from the API request.
+        -   **UI unification**: Modified invoice creation forms to consistently show a contract dropdown, including Без договору (Without contract) option, mirroring the Acts functionality for both based on order and without order scenarios.
+        -   Updated logic for Generate PDF button in  to correctly call the  endpoint with current order details.
 </code_architecture>
 
 <pending_tasks>
--   The critical issue of  needs to be resolved. This is due to incorrect function placement in .
--   Thorough testing of the create invoice without order functionality once the above fix is implemented.
+-   **Frontend update for document saving**: Implement the new frontend logic to save document data (orders, invoices, acts, contracts) without immediately generating PDF files.
+-   **Backend extension for document saving**: Extend the save without PDF and generate PDF on demand logic to Invoices and Acts.
+-   **Thorough testing**: Conduct comprehensive frontend and backend testing for all document types with the new saving/PDF generation workflow.
 </pending_tasks>
 
 <current_work>
-Immediately prior to this summary, the AI engineer was addressing a persistent error where  when trying to create an invoice without an order. This issue was occurring despite multiple frontend restarts and cache clearing attempts, indicating a code structure problem.
+Immediately prior to this summary, the AI engineer was implementing a major architectural change: to save document data (like orders) without automatically generating PDF files, making PDF generation an on-demand action.
 
-The engineer's latest action involved inspecting the  file to understand the context of the  function and the surrounding  function. The analysis revealed a critical syntax error: the  function (and subsequently,  and related functions) were inserted into  at line 1847 without correctly closing the preceding  block of . This resulted in  not being correctly scoped and accessible where it was being called in the JSX.
+Specifically, for **Orders**, the backend () has been modified:
+1.  A new endpoint  was added to save order data to Google Sheets without generating a PDF.
+2.  The existing  endpoint was updated to solely generate a PDF based on *already saved* order data (retrieved from Google Sheets) or newly provided data if an  is not supplied.
 
-The specific line of code being analyzed to identify the closure issue was:
-
-The engineer has just identified this specific structural problem and is about to apply a fix to correct the function placement.
+During this implementation, an issue was encountered where newly created orders were not being persistently saved, or retrieved correctly, leading to Замовлення не знайдено errors. This was traced back to an underlying issue with the  function (previously identified by troubleshoot agent as a duplicate function name). After an implied fix (or re-diagnosis of the original fix being incomplete), the AI successfully created an order (e.g., order 0045) without a PDF and subsequently generated a PDF for this existing order. Debugging also involved adding  statements to  to confirm data flow.
 </current_work>
 
 <optional_next_step>
-Correct the placement of  and related functions in  to ensure proper scoping.
+The next step is to update the frontend to use the new  endpoint for saving orders.
 </optional_next_step>
