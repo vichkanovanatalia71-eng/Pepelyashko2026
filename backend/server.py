@@ -1199,6 +1199,38 @@ async def generate_waybill_pdf_by_number(waybill_number: str):
         logging.error(f"Error generating PDF for waybill {waybill_number}: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
+@api_router.get("/waybills/pdf/{waybill_number}")
+async def get_waybill_pdf(waybill_number: str):
+    """Serve waybill PDF file for preview."""
+    try:
+        # Find PDF file in generated_waybills directory
+        pdf_dir = Path('/app/backend/generated_waybills')
+        
+        # Create directory if it doesn't exist
+        pdf_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Look for PDF with this waybill number
+        pdf_files = list(pdf_dir.glob(f"Накладна_{waybill_number}_*.pdf"))
+        
+        if not pdf_files:
+            raise HTTPException(status_code=404, detail=f"PDF для накладної {waybill_number} не знайдено")
+        
+        # Return the most recent file
+        pdf_file = sorted(pdf_files, key=lambda f: f.stat().st_mtime, reverse=True)[0]
+        
+        return FileResponse(
+            path=str(pdf_file),
+            media_type='application/pdf',
+            filename=pdf_file.name
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error serving waybill PDF: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
 
 # Contract endpoints
 @api_router.post("/contracts", response_model=dict)
