@@ -1033,33 +1033,59 @@ async def generate_act_pdf_by_number(act_number: str):
         if not act:
             raise HTTPException(status_code=404, detail=f"Акт {act_number} не знайдено")
         
-        # Prepare act data for PDF generation
-        act_data = {
-            'counterparty_edrpou': act.get('counterparty_edrpou', ''),
-            'items': act.get('items', []),
-            'total_amount': act.get('total_amount', 0),
-            'based_on_order': act.get('based_on_order', None)
-        }
+        # Check if PDF exists and if it's older than 3 days
+        pdf_dir = Path('/app/backend/generated_documents')
+        pdf_files = list(pdf_dir.glob(f"Акт_{act_number}_*.pdf"))
         
-        # Generate PDF (locally, without Google Drive)
-        result = document_service.generate_act_pdf(
-            act_data=act_data,
-            upload_to_drive=False
-        )
+        should_regenerate = True
+        if pdf_files:
+            pdf_file = sorted(pdf_files, key=lambda f: f.stat().st_mtime, reverse=True)[0]
+            pdf_timestamp_str = sheets_service.get_pdf_generated_at("Акти", act_number)
+            
+            if pdf_timestamp_str:
+                try:
+                    pdf_timestamp = datetime.strptime(pdf_timestamp_str, '%Y-%m-%d %H:%M:%S')
+                    days_old = (datetime.now() - pdf_timestamp).days
+                    
+                    if days_old < 3:
+                        should_regenerate = False
+                        logging.info(f"Act PDF {act_number} is {days_old} days old, using existing")
+                    else:
+                        pdf_file.unlink()
+                        logging.info(f"Deleted old act PDF {act_number} ({days_old} days old)")
+                except Exception as e:
+                    logging.error(f"Error parsing timestamp: {e}")
         
-        # Update act with drive_file_id
-        drive_file_id = result.get('drive_file_id', '')
-        
-        return {
-            'success': True,
-            'message': 'PDF успішно згенеровано',
-            'act_number': act_number,
-            'pdf_path': result['pdf_path'],
-            'pdf_filename': result['pdf_filename'],
-            'drive_view_link': result.get('drive_view_link', ''),
-            'drive_download_link': result.get('drive_download_link', ''),
-            'drive_file_id': drive_file_id
-        }
+        if should_regenerate:
+            act_data = {
+                'counterparty_edrpou': act.get('counterparty_edrpou', ''),
+                'items': act.get('items', []),
+                'total_amount': act.get('total_amount', 0),
+                'based_on_order': act.get('based_on_order', None)
+            }
+            
+            result = document_service.generate_act_pdf(
+                act_data=act_data,
+                upload_to_drive=False
+            )
+            
+            sheets_service.update_pdf_generated_at("Акти", act_number)
+            
+            return {
+                'success': True,
+                'message': 'PDF успішно згенеровано',
+                'act_number': act_number,
+                'pdf_path': result['pdf_path'],
+                'pdf_filename': result['pdf_filename']
+            }
+        else:
+            return {
+                'success': True,
+                'message': 'PDF вже існує',
+                'act_number': act_number,
+                'pdf_path': str(pdf_file),
+                'pdf_filename': pdf_file.name
+            }
         
     except HTTPException:
         raise
