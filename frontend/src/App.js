@@ -5666,26 +5666,45 @@ function App() {
                       }
                     }
                     
-                    // Send each document
+                    // Generate PDF and send each document
                     let successCount = 0;
                     const errors = [];
                     
                     for (const item of selectedRelatedDocs) {
                       try {
-                        let endpoint = '';
+                        // First, generate PDF from Google Sheets data
+                        let generateEndpoint = '';
+                        if (item.type === 'invoice') {
+                          generateEndpoint = `${API}/invoices/${item.number}/generate-pdf`;
+                        } else if (item.type === 'act') {
+                          generateEndpoint = `${API}/acts/${item.number}/generate-pdf`;
+                        } else if (item.type === 'waybill') {
+                          generateEndpoint = `${API}/waybills/${item.number}/generate-pdf`;
+                        } else if (item.type === 'contract') {
+                          // Contracts may already have PDF, skip generation
+                          generateEndpoint = null;
+                        }
+                        
+                        // Generate PDF if needed
+                        if (generateEndpoint) {
+                          await axios.post(generateEndpoint);
+                        }
+                        
+                        // Then send email
+                        let emailEndpoint = '';
                         let numberField = '';
                         
                         if (item.type === 'invoice') {
-                          endpoint = `${API}/invoices/send-email`;
+                          emailEndpoint = `${API}/invoices/send-email`;
                           numberField = 'invoice_number';
                         } else if (item.type === 'act') {
-                          endpoint = `${API}/acts/send-email`;
+                          emailEndpoint = `${API}/acts/send-email`;
                           numberField = 'act_number';
                         } else if (item.type === 'waybill') {
-                          endpoint = `${API}/waybills/send-email`;
+                          emailEndpoint = `${API}/waybills/send-email`;
                           numberField = 'waybill_number';
                         } else if (item.type === 'contract') {
-                          endpoint = `${API}/contracts/send-email`;
+                          emailEndpoint = `${API}/contracts/send-email`;
                           numberField = 'contract_number';
                         }
                         
@@ -5694,7 +5713,7 @@ function App() {
                           recipient_email: recipientEmail
                         };
                         
-                        await axios.post(endpoint, payload);
+                        await axios.post(emailEndpoint, payload);
                         successCount++;
                       } catch (error) {
                         console.error(`Error sending ${item.type} ${item.number}:`, error);
