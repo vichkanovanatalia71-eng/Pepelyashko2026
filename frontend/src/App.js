@@ -5142,7 +5142,7 @@ function App() {
               <div className="flex gap-3">
                 {currentOrderDetails?.drive_file_id ? (
                   <Button
-                    onClick={() => {
+                    onClick={async () => {
                       setDocumentPdfData({
                         drive_file_id: currentOrderDetails.drive_file_id,
                         drive_view_link: `https://drive.google.com/file/d/${currentOrderDetails.drive_file_id}/view`,
@@ -5155,6 +5155,26 @@ function App() {
                         }
                       });
                       setCurrentDocType('order');
+                      
+                      // Load counterparty email
+                      try {
+                        const counterpartyResponse = await axios.get(`${API}/counterparties/${currentOrderDetails.counterparty_edrpou}`);
+                        const counterpartyEmail = counterpartyResponse.data?.email || '';
+                        
+                        setDocumentEmailForm({
+                          recipient: 'counterparty',
+                          customEmail: '',
+                          counterpartyEmail: counterpartyEmail
+                        });
+                      } catch (emailError) {
+                        console.error('Error loading counterparty email:', emailError);
+                        setDocumentEmailForm({
+                          recipient: 'counterparty',
+                          customEmail: '',
+                          counterpartyEmail: ''
+                        });
+                      }
+                      
                       setShowOrderDetails(false);
                       setShowDocumentPreview(true);
                     }}
