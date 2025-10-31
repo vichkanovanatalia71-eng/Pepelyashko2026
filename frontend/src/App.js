@@ -5168,17 +5168,20 @@ function App() {
                     onClick={async () => {
                       try {
                         setLoading(true);
-                        const payload = {
-                          counterparty_edrpou: currentOrderDetails.counterparty_edrpou,
-                          items: currentOrderDetails.items || [],
-                          total_amount: parseFloat(currentOrderDetails.total_amount) || 0,
-                          order_number: currentOrderDetails.number  // Use existing order number
-                        };
                         
-                        const response = await axios.post(`${API}/orders/generate-pdf`, payload);
+                        // Call the new endpoint that generates PDF from existing order data
+                        const response = await axios.post(`${API}/orders/${currentOrderDetails.number}/generate-pdf`);
                         
                         if (response.data.success) {
                           toast.success('PDF успішно згенеровано!');
+                          
+                          // Update order details with new drive_file_id
+                          setCurrentOrderDetails({
+                            ...currentOrderDetails,
+                            drive_file_id: response.data.drive_file_id
+                          });
+                          
+                          // Refresh all documents
                           fetchAllDocuments();
                           
                           // If no drive_file_id (Drive not working), fetch PDF as blob for preview
