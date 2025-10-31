@@ -1178,66 +1178,38 @@ async def generate_act_from_orders(data: ActFromOrdersRequest):
 
 @api_router.post("/invoices/generate-from-orders")
 async def generate_invoice_from_orders(data: InvoiceFromOrdersRequest):
-    """Generate Invoice based on selected orders - NEW ARCHITECTURE: creates data without PDF."""
-    if sheets_service is None or document_service is None:
+    """Generate Invoice based on selected orders - USES HTML TEMPLATE."""
+    if sheets_service is None or invoice_service_v2 is None:
         raise HTTPException(status_code=503, detail="Services not available")
     
     try:
-        # Get all orders and filter by selected numbers
-        all_orders = sheets_service.get_documents("Замовлення")
-        orders_data = [order for order in all_orders if order.get('number') in data.order_numbers]
-        
-        if not orders_data:
-            raise ValueError("Жодного замовлення не знайдено")
-        
-        # Aggregate items from all selected orders
-        all_items = []
-        total_amount = 0
-        for order in orders_data:
-            items = order.get('items', [])
-            all_items.extend(items)
-            total_amount += order.get('total_amount', 0)
-        
-        # Create invoice data
-        invoice_data = {
-            'counterparty_edrpou': data.counterparty_edrpou,
-            'items': all_items,
-            'total_amount': total_amount,
-            'based_on_order': ','.join(data.order_numbers)  # Multiple orders
-        }
-        
-        # Generate document number
-        counterparty_edrpou = data.counterparty_edrpou
-        edrpou_middle = str(counterparty_edrpou)[2:6] if len(str(counterparty_edrpou)) >= 6 else str(counterparty_edrpou)[:4]
-        
-        # Get next sequential number for this counterparty
-        existing_invoices = sheets_service.get_documents_by_counterparty("Рахунки", counterparty_edrpou)
-        next_seq = len(existing_invoices) + 1
-        invoice_number = f"{edrpou_middle}-{next_seq}"
-        
-        # Save invoice to Google Sheets WITHOUT PDF
-        sheets_service.create_invoice(invoice_data, drive_file_id='', document_number=invoice_number)
-        
-        # Now generate PDF immediately (for backward compatibility with frontend)
-        result = document_service.generate_invoice_pdf(
-            invoice_data=invoice_data,
-            upload_to_drive=False,
-            document_number=invoice_number
+        # Generate PDF using invoice_service_v2 which uses HTML templates
+        result = await invoice_service_v2.generate_invoice_from_orders(
+            counterparty_edrpou=data.counterparty_edrpou,
+            order_numbers=data.order_numbers,
+            contract_number=data.contract_number,
+            contract_date=data.contract_date,
+            custom_template=data.custom_template
         )
-        
-        # Update PDF generation timestamp
-        sheets_service.update_pdf_generated_at("Рахунки", invoice_number)
         
         return {
             'success': True,
             'message': 'Рахунок успішно створено на основі замовлень',
-            'invoice_number': invoice_number,
+            'invoice_number': result['invoice_number'],
             'pdf_path': result['pdf_path'],
             'pdf_filename': result['pdf_filename'],
-            'drive_view_link': '',
-            'drive_download_link': '',
-            'drive_file_id': ''
+            'drive_view_link': result.get('drive_view_link', ''),
+            'drive_download_link': result.get('drive_download_link', ''),
+            'drive_file_id': result.get('drive_file_id', '')
         }
+        
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error generating invoice from orders: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
         
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
