@@ -1557,7 +1557,7 @@ async def send_act_email(act_number: str = Query(...), recipient_email: str = Qu
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 @api_router.post("/waybills/send-email")
-async def send_waybill_email(waybill_number: str, recipient_email: str):
+async def send_waybill_email(waybill_number: str = Query(...), recipient_email: str = Query(...)):
     """Send waybill PDF via email."""
     try:
         # Find PDF file
