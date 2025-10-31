@@ -324,11 +324,15 @@ class Phase1OrderTests:
             orders_list = response.json()
             logger.info(f"✅ Список замовлень отримано ({len(orders_list)} замовлень)")
             
-            # Find our created order
+            # Find our created order (handle both "0046" and "46" formats)
             logger.info(f"2. Пошук створеного замовлення {order_number} в списку...")
             found_order = None
             for order in orders_list:
-                if str(order.get('number', '')) == str(order_number):
+                order_num_str = str(order.get('number', ''))
+                # Try exact match first, then try without leading zeros
+                if (order_num_str == str(order_number) or 
+                    order_num_str == str(int(order_number)) or
+                    str(int(order_num_str)) == str(int(order_number))):
                     found_order = order
                     break
             
