@@ -5215,48 +5215,41 @@ function App() {
                                 try {
                                   setLoading(true);
                                   
-                                  // Load PDF
-                                  if (!doc.drive_file_id) {
-                                    const localPdfUrl = `${API}/waybills/pdf/${doc.number}`;
-                                    const pdfResponse = await axios.get(localPdfUrl, { responseType: 'blob' });
-                                    const blobUrl = URL.createObjectURL(pdfResponse.data);
+                                  // Generate PDF from Google Sheets data
+                                  const response = await axios.post(`${API}/waybills/${doc.number}/generate-pdf`);
+                                  
+                                  if (response.data.success) {
                                     setDocumentPdfData({
-                                      drive_view_link: blobUrl,
-                                      waybill_number: doc.number,
-                                      is_blob: true
-                                    });
-                                  } else {
-                                    setDocumentPdfData({
-                                      drive_file_id: doc.drive_file_id,
-                                      drive_view_link: `https://drive.google.com/file/d/${doc.drive_file_id}/view`,
+                                      drive_view_link: response.data.drive_view_link,
+                                      drive_file_id: response.data.drive_file_id,
                                       waybill_number: doc.number
                                     });
+                                    
+                                    setCurrentDocType('waybill');
+                                    
+                                    // Load counterparty email
+                                    try {
+                                      const counterpartyResponse = await axios.get(`${API}/counterparties/${currentOrderDetails.counterparty_edrpou}`);
+                                      setDocumentEmailForm({
+                                        recipient: 'counterparty',
+                                        customEmail: '',
+                                        counterpartyEmail: counterpartyResponse.data?.email || ''
+                                      });
+                                    } catch (error) {
+                                      console.error('Error loading counterparty email:', error);
+                                      setDocumentEmailForm({
+                                        recipient: 'counterparty',
+                                        customEmail: '',
+                                        counterpartyEmail: ''
+                                      });
+                                    }
+                                    
+                                    setShowOrderDetails(false);
+                                    setShowDocumentPreview(true);
                                   }
-                                  
-                                  setCurrentDocType('waybill');
-                                  
-                                  // Load counterparty email
-                                  try {
-                                    const counterpartyResponse = await axios.get(`${API}/counterparties/${currentOrderDetails.counterparty_edrpou}`);
-                                    setDocumentEmailForm({
-                                      recipient: 'counterparty',
-                                      customEmail: '',
-                                      counterpartyEmail: counterpartyResponse.data?.email || ''
-                                    });
-                                  } catch (error) {
-                                    console.error('Error loading counterparty email:', error);
-                                    setDocumentEmailForm({
-                                      recipient: 'counterparty',
-                                      customEmail: '',
-                                      counterpartyEmail: ''
-                                    });
-                                  }
-                                  
-                                  setShowOrderDetails(false);
-                                  setShowDocumentPreview(true);
                                 } catch (error) {
-                                  console.error('Error viewing waybill:', error);
-                                  toast.error('Помилка завантаження накладної: ' + (error.response?.data?.detail || error.message));
+                                  console.error('Error generating waybill PDF:', error);
+                                  toast.error('Помилка генерації накладної: ' + (error.response?.data?.detail || error.message));
                                 } finally {
                                   setLoading(false);
                                 }
