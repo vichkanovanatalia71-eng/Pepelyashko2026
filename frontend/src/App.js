@@ -332,6 +332,12 @@ function App() {
     contracts: []
   });
   const [selectedRelatedDocs, setSelectedRelatedDocs] = useState([]);
+  const [showBulkEmailDialog, setShowBulkEmailDialog] = useState(false);
+  const [bulkEmailForm, setBulkEmailForm] = useState({
+    recipient: 'counterparty',
+    customEmail: '',
+    counterpartyEmail: ''
+  });
   
   const insertAlignment = (alignType) => {
     const textarea = document.querySelector('#template-editor');
