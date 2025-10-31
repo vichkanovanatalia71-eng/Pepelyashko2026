@@ -5332,6 +5332,23 @@ function App() {
                                       contract_number: doc.number
                                     });
                                   }
+                                  
+                                  // Load counterparty email
+                                  try {
+                                    const counterpartyResponse = await axios.get(`${API}/counterparties/${currentOrderDetails.counterparty_edrpou}`);
+                                    setContractEmailForm({
+                                      recipient: 'counterparty',
+                                      customEmail: '',
+                                      counterpartyEmail: counterpartyResponse.data?.email || ''
+                                    });
+                                  } catch (error) {
+                                    setContractEmailForm({
+                                      recipient: 'custom',
+                                      customEmail: '',
+                                      counterpartyEmail: ''
+                                    });
+                                  }
+                                  
                                   setShowOrderDetails(false);
                                   setShowContractPreview(true);
                                 } catch (error) {
