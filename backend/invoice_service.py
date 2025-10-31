@@ -16,7 +16,7 @@ class InvoiceService:
     def __init__(self, sheets_service, drive_service):
         self.sheets_service = sheets_service
         self.drive_service = drive_service
-        self.output_dir = Path('/app/backend/generated_invoices')
+        self.output_dir = Path('/app/backend/generated_documents')
         self.output_dir.mkdir(exist_ok=True)
         self.template_path = Path('/app/backend/invoice_template.html')
         
