@@ -952,8 +952,8 @@ async def generate_act_pdf_by_number(act_number: str):
 async def get_act_pdf(act_number: str):
     """Serve act PDF file for preview."""
     try:
-        # Find PDF file in generated_acts directory
-        pdf_dir = Path('/app/backend/generated_acts')
+        # Find PDF file in generated_documents directory
+        pdf_dir = Path('/app/backend/generated_documents')
         
         # Look for PDF with this act number
         pdf_files = list(pdf_dir.glob(f"Акт_{act_number}_*.pdf"))
