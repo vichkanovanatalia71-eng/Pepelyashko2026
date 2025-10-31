@@ -5199,6 +5199,33 @@ function App() {
                           });
                           setCurrentDocType('order');
                           setShowOrderDetails(false);
+                          
+                          // If no drive_file_id (Google Drive not working), try to load PDF as blob
+                          if (!response.data.drive_file_id || !response.data.drive_view_link) {
+                            const localPdfUrl = `${API}/orders/pdf/${response.data.order_number}`;
+                            
+                            try {
+                              // Fetch PDF as blob
+                              const pdfResponse = await axios.get(localPdfUrl, {
+                                responseType: 'blob'
+                              });
+                              
+                              // Create blob URL for iframe
+                              const blobUrl = URL.createObjectURL(pdfResponse.data);
+                              
+                              // Update with blob URL
+                              setDocumentPdfData(prev => ({
+                                ...prev,
+                                drive_view_link: blobUrl,
+                                is_blob: true
+                              }));
+                              console.log('PDF loaded as blob for preview');
+                            } catch (blobError) {
+                              console.error('Error loading PDF blob:', blobError);
+                              // Keep existing data, user can still download
+                            }
+                          }
+                          
                           setShowDocumentPreview(true);
                         }
                       } catch (error) {
