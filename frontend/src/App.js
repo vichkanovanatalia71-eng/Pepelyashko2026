@@ -5060,21 +5060,17 @@ function App() {
                               onClick={async () => {
                                 try {
                                   setLoading(true);
-                                  // If no drive_file_id, try to load PDF as blob
+                                  
+                                  // Load PDF
                                   if (!doc.drive_file_id) {
                                     const localPdfUrl = `${API}/invoices/pdf/${doc.number}`;
-                                    try {
-                                      const pdfResponse = await axios.get(localPdfUrl, { responseType: 'blob' });
-                                      const blobUrl = URL.createObjectURL(pdfResponse.data);
-                                      setDocumentPdfData({
-                                        drive_view_link: blobUrl,
-                                        invoice_number: doc.number,
-                                        is_blob: true
-                                      });
-                                    } catch (error) {
-                                      toast.error('Помилка завантаження PDF');
-                                      return;
-                                    }
+                                    const pdfResponse = await axios.get(localPdfUrl, { responseType: 'blob' });
+                                    const blobUrl = URL.createObjectURL(pdfResponse.data);
+                                    setDocumentPdfData({
+                                      drive_view_link: blobUrl,
+                                      invoice_number: doc.number,
+                                      is_blob: true
+                                    });
                                   } else {
                                     setDocumentPdfData({
                                       drive_file_id: doc.drive_file_id,
@@ -5082,6 +5078,7 @@ function App() {
                                       invoice_number: doc.number
                                     });
                                   }
+                                  
                                   setCurrentDocType('invoice');
                                   
                                   // Load counterparty email
@@ -5093,6 +5090,7 @@ function App() {
                                       counterpartyEmail: counterpartyResponse.data?.email || ''
                                     });
                                   } catch (error) {
+                                    console.error('Error loading counterparty email:', error);
                                     setDocumentEmailForm({
                                       recipient: 'counterparty',
                                       customEmail: '',
@@ -5103,7 +5101,8 @@ function App() {
                                   setShowOrderDetails(false);
                                   setShowDocumentPreview(true);
                                 } catch (error) {
-                                  toast.error('Помилка: ' + error.message);
+                                  console.error('Error viewing invoice:', error);
+                                  toast.error('Помилка завантаження рахунку: ' + (error.response?.data?.detail || error.message));
                                 } finally {
                                   setLoading(false);
                                 }
