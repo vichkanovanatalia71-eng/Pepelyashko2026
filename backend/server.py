@@ -1152,14 +1152,15 @@ async def generate_waybill_pdf(data: DocumentCreate):
             upload_to_drive=True
         )
         
-        # Save waybill to Google Sheets with drive_file_id
+        # Save waybill to Google Sheets with drive_file_id AND the generated waybill_number
         drive_file_id = result.get('drive_file_id', '')
-        sheets_service.create_waybill(waybill_data, drive_file_id)
+        waybill_number = result['waybill_number']
+        sheets_service.create_waybill(waybill_data, drive_file_id, waybill_number)
         
         return {
             'success': True,
             'message': 'Накладна успішно згенеровано та завантажено на Google Drive',
-            'waybill_number': result['waybill_number'],
+            'waybill_number': waybill_number,
             'pdf_path': result['pdf_path'],
             'pdf_filename': result['pdf_filename'],
             'drive_view_link': result.get('drive_view_link', ''),
