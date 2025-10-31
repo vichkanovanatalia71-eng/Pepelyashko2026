@@ -1071,7 +1071,8 @@ async def generate_act_pdf_by_number(act_number: str):
             
             result = document_service.generate_act_pdf(
                 act_data=act_data,
-                upload_to_drive=False
+                upload_to_drive=False,
+                document_number=act_number
             )
             
             sheets_service.update_pdf_generated_at("Акти", act_number)
