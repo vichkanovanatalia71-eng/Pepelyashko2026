@@ -5061,48 +5061,41 @@ function App() {
                                 try {
                                   setLoading(true);
                                   
-                                  // Load PDF
-                                  if (!doc.drive_file_id) {
-                                    const localPdfUrl = `${API}/invoices/pdf/${doc.number}`;
-                                    const pdfResponse = await axios.get(localPdfUrl, { responseType: 'blob' });
-                                    const blobUrl = URL.createObjectURL(pdfResponse.data);
+                                  // Generate PDF from Google Sheets data
+                                  const response = await axios.post(`${API}/invoices/${doc.number}/generate-pdf`);
+                                  
+                                  if (response.data.success) {
                                     setDocumentPdfData({
-                                      drive_view_link: blobUrl,
-                                      invoice_number: doc.number,
-                                      is_blob: true
-                                    });
-                                  } else {
-                                    setDocumentPdfData({
-                                      drive_file_id: doc.drive_file_id,
-                                      drive_view_link: `https://drive.google.com/file/d/${doc.drive_file_id}/view`,
+                                      drive_view_link: response.data.drive_view_link,
+                                      drive_file_id: response.data.drive_file_id,
                                       invoice_number: doc.number
                                     });
+                                    
+                                    setCurrentDocType('invoice');
+                                    
+                                    // Load counterparty email
+                                    try {
+                                      const counterpartyResponse = await axios.get(`${API}/counterparties/${currentOrderDetails.counterparty_edrpou}`);
+                                      setDocumentEmailForm({
+                                        recipient: 'counterparty',
+                                        customEmail: '',
+                                        counterpartyEmail: counterpartyResponse.data?.email || ''
+                                      });
+                                    } catch (error) {
+                                      console.error('Error loading counterparty email:', error);
+                                      setDocumentEmailForm({
+                                        recipient: 'counterparty',
+                                        customEmail: '',
+                                        counterpartyEmail: ''
+                                      });
+                                    }
+                                    
+                                    setShowOrderDetails(false);
+                                    setShowDocumentPreview(true);
                                   }
-                                  
-                                  setCurrentDocType('invoice');
-                                  
-                                  // Load counterparty email
-                                  try {
-                                    const counterpartyResponse = await axios.get(`${API}/counterparties/${currentOrderDetails.counterparty_edrpou}`);
-                                    setDocumentEmailForm({
-                                      recipient: 'counterparty',
-                                      customEmail: '',
-                                      counterpartyEmail: counterpartyResponse.data?.email || ''
-                                    });
-                                  } catch (error) {
-                                    console.error('Error loading counterparty email:', error);
-                                    setDocumentEmailForm({
-                                      recipient: 'counterparty',
-                                      customEmail: '',
-                                      counterpartyEmail: ''
-                                    });
-                                  }
-                                  
-                                  setShowOrderDetails(false);
-                                  setShowDocumentPreview(true);
                                 } catch (error) {
-                                  console.error('Error viewing invoice:', error);
-                                  toast.error('Помилка завантаження рахунку: ' + (error.response?.data?.detail || error.message));
+                                  console.error('Error generating invoice PDF:', error);
+                                  toast.error('Помилка генерації рахунку: ' + (error.response?.data?.detail || error.message));
                                 } finally {
                                   setLoading(false);
                                 }
