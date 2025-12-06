@@ -12,15 +12,13 @@ security = HTTPBearer()
 
 
 async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
-    db: Optional[AsyncIOMotorDatabase] = None
+    credentials: HTTPAuthorizationCredentials = Depends(security)
 ) -> dict:
     """
     Get current authenticated user from JWT token.
     
     Args:
         credentials: HTTP Bearer token
-        db: MongoDB database instance
     
     Returns:
         User data dictionary
@@ -47,22 +45,19 @@ async def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
     
-    # If db is provided, verify user exists
-    if db is not None:
-        user = await db.users.find_one({"_id": user_id})
-        if user is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Користувача не знайдено",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-        return user
+    # Get database from server module
+    from server import db
     
-    # Return minimal user data from token
-    return {
-        "_id": user_id,
-        "email": payload.get("email", "")
-    }
+    # Verify user exists
+    user = await db.users.find_one({"_id": user_id})
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Користувача не знайдено",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    return user
 
 
 async def get_current_active_user(
