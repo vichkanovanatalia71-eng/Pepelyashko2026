@@ -496,6 +496,15 @@ const FullDashboard = () => {
                         required
                       />
                     </div>
+                    <div className="md:col-span-2">
+                      <Label htmlFor="legal_address">Юридична адреса</Label>
+                      <Input
+                        id="legal_address"
+                        value={counterpartyForm.legal_address}
+                        onChange={(e) => setCounterpartyForm({...counterpartyForm, legal_address: e.target.value})}
+                        placeholder="Україна, м. Київ, вул. ..."
+                      />
+                    </div>
                     <div>
                       <Label htmlFor="email">Email *</Label>
                       <Input
@@ -525,11 +534,66 @@ const FullDashboard = () => {
                       />
                     </div>
                     <div>
+                      <Label htmlFor="bank">Назва банку</Label>
+                      <Input
+                        id="bank"
+                        value={counterpartyForm.bank}
+                        onChange={(e) => setCounterpartyForm({...counterpartyForm, bank: e.target.value})}
+                        placeholder="АТ КБ 'ПриватБанк'"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="mfo">МФО банку</Label>
+                      <Input
+                        id="mfo"
+                        value={counterpartyForm.mfo}
+                        onChange={(e) => setCounterpartyForm({...counterpartyForm, mfo: e.target.value})}
+                        placeholder="305299"
+                      />
+                    </div>
+                    <div>
                       <Label htmlFor="director_name">ПІБ керівника</Label>
                       <Input
                         id="director_name"
                         value={counterpartyForm.director_name}
                         onChange={(e) => setCounterpartyForm({...counterpartyForm, director_name: e.target.value})}
+                        placeholder="Петренко Петро Петрович"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="director_position">Посада керівника</Label>
+                      <Input
+                        id="director_position"
+                        value={counterpartyForm.director_position}
+                        onChange={(e) => setCounterpartyForm({...counterpartyForm, director_position: e.target.value})}
+                        placeholder="Директор"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="position">Посада</Label>
+                      <Input
+                        id="position"
+                        value={counterpartyForm.position}
+                        onChange={(e) => setCounterpartyForm({...counterpartyForm, position: e.target.value})}
+                        placeholder="Директор"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="represented_by">В особі</Label>
+                      <Input
+                        id="represented_by"
+                        value={counterpartyForm.represented_by}
+                        onChange={(e) => setCounterpartyForm({...counterpartyForm, represented_by: e.target.value})}
+                        placeholder="Директора Петренка П.П."
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="signature">Підпис</Label>
+                      <Input
+                        id="signature"
+                        value={counterpartyForm.signature}
+                        onChange={(e) => setCounterpartyForm({...counterpartyForm, signature: e.target.value})}
+                        placeholder="П.П. Петренко"
                       />
                     </div>
                   </div>
