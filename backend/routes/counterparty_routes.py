@@ -1,0 +1,192 @@
+"""Counterparty management routes."""
+
+from fastapi import APIRouter, Depends, HTTPException, status
+from typing import List
+import logging
+
+from models.counterparty import CounterpartyModel, CounterpartyCreate, CounterpartyUpdate
+from services.counterparty_service import CounterpartyService
+from auth.auth_middleware import get_current_user
+
+router = APIRouter(prefix="/counterparties", tags=["counterparties"])
+logger = logging.getLogger(__name__)
+
+
+@router.post("", response_model=CounterpartyModel, status_code=status.HTTP_201_CREATED)
+async def create_counterparty(
+    counterparty_data: CounterpartyCreate,
+    current_user: dict = Depends(get_current_user)
+):
+    """Create a new counterparty."""
+    from server import db as database
+    
+    counterparty_service = CounterpartyService(database)
+    
+    try:
+        counterparty = await counterparty_service.create_counterparty(
+            user_id=current_user["_id"],
+            counterparty_data=counterparty_data
+        )
+        logger.info(f"Counterparty created: {counterparty.edrpou} by user {current_user['_id']}")
+        return counterparty
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except Exception as e:
+        logger.error(f"Error creating counterparty: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Помилка при створенні контрагента"
+        )
+
+
+@router.get("", response_model=List[CounterpartyModel])
+async def get_all_counterparties(
+    current_user: dict = Depends(get_current_user)
+):
+    """Get all counterparties for the current user."""
+    from server import db as database
+    
+    counterparty_service = CounterpartyService(database)
+    
+    try:
+        counterparties = await counterparty_service.get_all_counterparties(
+            user_id=current_user["_id"]
+        )
+        return counterparties
+    except Exception as e:
+        logger.error(f"Error getting counterparties: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Помилка при отриманні списку контрагентів"
+        )
+
+
+@router.get("/{edrpou}", response_model=CounterpartyModel)
+async def get_counterparty_by_edrpou(
+    edrpou: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get counterparty by EDRPOU code."""
+    from server import db as database
+    
+    counterparty_service = CounterpartyService(database)
+    
+    try:
+        counterparty = await counterparty_service.get_counterparty_by_edrpou(
+            user_id=current_user["_id"],
+            edrpou=edrpou
+        )
+        
+        if not counterparty:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Контрагента з ЄДРПОУ {edrpou} не знайдено"
+            )
+        
+        return counterparty
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting counterparty: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Помилка при отриманні контрагента"
+        )
+
+
+@router.put("/{counterparty_id}", response_model=CounterpartyModel)
+async def update_counterparty(
+    counterparty_id: str,
+    counterparty_data: CounterpartyUpdate,
+    current_user: dict = Depends(get_current_user)
+):
+    """Update counterparty information."""
+    from server import db as database
+    
+    counterparty_service = CounterpartyService(database)
+    
+    try:
+        counterparty = await counterparty_service.update_counterparty(
+            user_id=current_user["_id"],
+            counterparty_id=counterparty_id,
+            counterparty_data=counterparty_data
+        )
+        
+        if not counterparty:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Контрагента не знайдено"
+            )
+        
+        logger.info(f"Counterparty updated: {counterparty_id} by user {current_user['_id']}")
+        return counterparty
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating counterparty: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Помилка при оновленні контрагента"
+        )
+
+
+@router.delete("/{counterparty_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_counterparty(
+    counterparty_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Delete counterparty."""
+    from server import db as database
+    
+    counterparty_service = CounterpartyService(database)
+    
+    try:
+        success = await counterparty_service.delete_counterparty(
+            user_id=current_user["_id"],
+            counterparty_id=counterparty_id
+        )
+        
+        if not success:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Контрагента не знайдено"
+            )
+        
+        logger.info(f"Counterparty deleted: {counterparty_id} by user {current_user['_id']}")
+        return None
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting counterparty: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Помилка при видаленні контрагента"
+        )
+
+
+@router.get("/{edrpou}/documents")
+async def get_counterparty_documents(
+    edrpou: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get all documents for a specific counterparty."""
+    from server import db as database
+    from services.document_service_mongo import DocumentServiceMongo
+    
+    document_service = DocumentServiceMongo(database)
+    
+    try:
+        documents = await document_service.get_counterparty_documents(
+            user_id=current_user["_id"],
+            counterparty_edrpou=edrpou
+        )
+        return documents
+    except Exception as e:
+        logger.error(f"Error getting counterparty documents: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Помилка при отриманні документів контрагента"
+        )
