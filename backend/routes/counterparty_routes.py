@@ -197,14 +197,19 @@ async def download_counterparty_pdf(
         # Generate PDF
         pdf_path = pdf_service.generate_pdf(counterparty_dict)
         
-        # Return file
-        filename = f"Картка_контрагента_{counterparty_dict.get('edrpou', 'unknown')}.pdf"
+        # Return file with properly encoded filename
+        from urllib.parse import quote
+        edrpou = counterparty_dict.get('edrpou', 'unknown')
+        filename = f"Kartka_kontragenta_{edrpou}.pdf"
+        filename_utf8 = f"Картка_контрагента_{edrpou}.pdf"
         
         return FileResponse(
             path=pdf_path,
             media_type='application/pdf',
             filename=filename,
-            headers={"Content-Disposition": f"attachment; filename*=UTF-8''{filename}"}
+            headers={
+                "Content-Disposition": f"attachment; filename=\"{filename}\"; filename*=UTF-8''{quote(filename_utf8)}"
+            }
         )
         
     except HTTPException:
