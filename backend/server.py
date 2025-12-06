@@ -121,11 +121,18 @@ async def search_company(request: dict):
                 data = response.json()
                 
                 # YouScore API returns data directly in root object
-                # name - company name
-                # address - legal address
+                # name - company name (object with fullName and shortName)
+                # address - legal address (string)
                 # signers - array with director info
                 
-                name = data.get("name", "")
+                # Extract name from object or string
+                name_obj = data.get("name", "")
+                if isinstance(name_obj, dict):
+                    # Use shortName if available, otherwise fullName
+                    name = name_obj.get("shortName") or name_obj.get("fullName", "")
+                else:
+                    name = name_obj
+                
                 address = data.get("address", "")
                 
                 # Get director from signers array
@@ -134,11 +141,12 @@ async def search_company(request: dict):
                 if signers and isinstance(signers, list) and len(signers) > 0:
                     first_signer = signers[0]
                     if isinstance(first_signer, dict):
-                        # Try different field names for director
+                        # Signers can be a string or object
                         director_name = (
                             first_signer.get("name") or 
                             first_signer.get("fullName") or 
                             first_signer.get("personName") or
+                            first_signer if isinstance(first_signer, str) else
                             ""
                         )
                 
