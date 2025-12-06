@@ -561,28 +561,28 @@ async def send_order_email(
         pdf_service = OrderPDFService()
         pdf_path = pdf_service.generate_pdf(order)
         
-        # Send email
+        # Send email with HTML formatting
         email_service = EmailService()
         order_number = order.get('number', 'unknown')
-        subject = f"Замовлення №{order_number}"
-        body = f"""
-Доброго дня!
-
-Надсилаємо Вам замовлення №{order_number}.
-
-Контрагент: {order.get('counterparty_name', '—')}
-Загальна сума: {order.get('total_amount', 0):.2f} грн
-
-З повагою,
-Система Управління Документами
-        """
+        order_date = order.get('date', '')
         
-        email_service.send_email_with_attachment(
+        # Format date if it's an ISO string
+        if order_date:
+            try:
+                from datetime import datetime
+                if isinstance(order_date, str):
+                    date_obj = datetime.fromisoformat(order_date.replace('Z', '+00:00'))
+                    order_date = date_obj.strftime('%d.%m.%Y')
+            except:
+                pass
+        
+        email_service.send_order_document(
             to_email=recipient_email,
-            subject=subject,
-            body=body,
-            attachment_path=pdf_path,
-            attachment_name=f"Замовлення_{order_number}.pdf"
+            order_number=order_number,
+            order_date=order_date,
+            counterparty_name=order.get('counterparty_name', '—'),
+            total_amount=order.get('total_amount', 0),
+            pdf_path=pdf_path
         )
         
         logger.info(f"Order PDF sent to {recipient_email} by user {current_user['_id']}")
