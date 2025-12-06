@@ -636,6 +636,7 @@ test_plan:
     - "Contract Creation Based on Order"
     - "Invoice Without Orders - Structural Fix"
     - "Invoice UI Consistency with Acts"
+    - "Order Management UI Testing - View and Management Functionality"
 
 agent_communication:
   - agent: "main"
