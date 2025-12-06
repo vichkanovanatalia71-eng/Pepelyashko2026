@@ -219,13 +219,20 @@ const FullDashboard = () => {
 
   const startEditingCounterparty = () => {
     if (viewingCounterparty) {
-      // Auto-regenerate "В особі" if needed (when all required fields are present)
+      // Normalize contract_type to valid dropdown values
+      const validBases = ['Статуту', 'Довіреності', 'Положення'];
+      let basis = viewingCounterparty.contract_type || 'Статуту';
+      
+      // If the stored value is not in the dropdown, default to "Статуту"
+      if (!validBases.includes(basis)) {
+        basis = 'Статуту';
+      }
+      
+      // Auto-regenerate "В особі" with current data
       let representedBy = viewingCounterparty.represented_by || '';
       
-      // If we have position, director_name, and contract_type, regenerate
+      // If we have position and director_name, always regenerate to ensure consistency
       if (viewingCounterparty.position && viewingCounterparty.director_name) {
-        // Use contract_type or default to "Статуту"
-        const basis = viewingCounterparty.contract_type || 'Статуту';
         representedBy = generateRepresentedBy(
           viewingCounterparty.position,
           viewingCounterparty.director_name,
@@ -233,9 +240,9 @@ const FullDashboard = () => {
         );
       }
       
-      // Auto-regenerate signature if needed
+      // Auto-regenerate signature if we have director_name
       let signature = viewingCounterparty.signature || '';
-      if (viewingCounterparty.director_name && !signature) {
+      if (viewingCounterparty.director_name) {
         signature = generateSignature(viewingCounterparty.director_name);
       }
       
@@ -246,7 +253,7 @@ const FullDashboard = () => {
         email: viewingCounterparty.email,
         phone: viewingCounterparty.phone,
         iban: viewingCounterparty.iban,
-        contract_type: viewingCounterparty.contract_type || 'Статуту',
+        contract_type: basis,
         director_position: viewingCounterparty.director_position || '',
         director_name: viewingCounterparty.director_name || '',
         legal_address: viewingCounterparty.legal_address || '',
