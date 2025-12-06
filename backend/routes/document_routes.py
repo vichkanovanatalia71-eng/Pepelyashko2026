@@ -589,16 +589,14 @@ async def send_order_email(
         order_number = order.get('number', 'unknown')
         order_date = order.get('date', '')
         
-        # Format date if it's an ISO string
-        if order_date:
-            try:
-                from datetime import datetime
-                if isinstance(order_date, str):
-                    date_obj = datetime.fromisoformat(order_date.replace('Z', '+00:00'))
-                    order_date = date_obj.strftime('%d.%m.%Y')
-            except:
-                pass
+        # Convert date to string if it's a datetime object
+        from datetime import datetime
+        if isinstance(order_date, datetime):
+            order_date = order_date.isoformat()
+        else:
+            order_date = str(order_date)
         
+        # Email service will format it to Ukrainian
         email_service.send_order_document(
             to_email=recipient_email,
             order_number=order_number,
