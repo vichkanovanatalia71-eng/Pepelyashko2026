@@ -334,16 +334,16 @@ class OrderPDFService:
                         <div class="party-column">
                             <div class="party-header">Постачальник</div>
                             <div class="party-info">
-                                <div><span class="label">Назва:</span> <span class="value">АКЦІОНЕРНЕ ТОВАРИСТВО "АНТОНОВ"</span></div>
-                                <div><span class="label">ЄДРПОУ/РНОКПП:</span> <span class="value">14307529</span></div>
-                                <div><span class="label">Адреса:</span> <span class="value">04052, Україна, місто Одеса, вулиця Глибочицька, будинок 13, офіс 1</span></div>
-                                <div><span class="label">IBAN:</span> <span class="value">UA383052990000026001006812960</span></div>
-                                <div><span class="label">Банк:</span> <span class="value">в АТ КБ "ПриватБанк"</span></div>
-                                <div><span class="label">МФО:</span> <span class="value">305299</span></div>
-                                <div><span class="label">Email:</span> <span class="value">kievtds@gmail.com</span></div>
-                                <div><span class="label">Тел.:</span> <span class="value">504505588</span></div>
+                                <div><span class="label">Назва:</span> <span class="value">{supplier_name}</span></div>
+                                <div><span class="label">ЄДРПОУ/РНОКПП:</span> <span class="value">{supplier_edrpou}</span></div>
+                                <div><span class="label">Адреса:</span> <span class="value">{supplier_address}</span></div>
+                                <div><span class="label">IBAN:</span> <span class="value">{supplier_iban}</span></div>
+                                <div><span class="label">Банк:</span> <span class="value">{supplier_bank}</span></div>
+                                <div><span class="label">МФО:</span> <span class="value">{supplier_mfo}</span></div>
+                                <div><span class="label">Email:</span> <span class="value">{supplier_email}</span></div>
+                                <div><span class="label">Тел.:</span> <span class="value">{supplier_phone}</span></div>
                                 <div class="signature-line">
-                                    <div>Підпис: Дмитро ТИТАРЕНКО</div>
+                                    <div>Підпис: {supplier_signature}</div>
                                 </div>
                             </div>
                         </div>
