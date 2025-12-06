@@ -358,8 +358,8 @@ const FullDashboard = () => {
   const handleEdrpouChange = (value) => {
     setCounterpartyForm(prev => ({...prev, edrpou: value}));
     
-    // Auto-search when 8 digits entered
-    if (value.length === 8 && /^\d{8}$/.test(value)) {
+    // Auto-search when 8 digits (ЮрОсоба) or 10 digits (ФОП) entered
+    if ((value.length === 8 || value.length === 10) && /^\d{8,10}$/.test(value)) {
       searchByEdrpou(value);
     }
   };
