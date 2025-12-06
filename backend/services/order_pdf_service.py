@@ -43,7 +43,14 @@ class OrderPDFService:
         """Generate HTML for order document with professional design."""
         
         # Format date in Ukrainian
-        date_str = order.get('date', datetime.now().strftime('%Y-%m-%d'))
+        date_value = order.get('date', datetime.now())
+        
+        # Convert datetime object to string if needed
+        if isinstance(date_value, datetime):
+            date_str = date_value.isoformat()
+        else:
+            date_str = str(date_value)
+        
         formatted_date = self.format_date_ukrainian(date_str)
         
         # Calculate items for table
