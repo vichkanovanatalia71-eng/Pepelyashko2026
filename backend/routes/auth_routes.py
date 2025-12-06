@@ -198,6 +198,40 @@ async def update_current_user(
         )
 
 
+@router.put("/profile", response_model=UserModel)
+async def update_user_profile(
+    user_data: UserUpdate,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Update user profile with supplier details.
+    
+    Updates user profile information including supplier/provider details.
+    """
+    from server import db as database
+    
+    user_service = UserService(database)
+    
+    try:
+        user = await user_service.update_user(current_user["_id"], user_data)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Користувача не знайдено"
+            )
+        
+        logger.info(f"User profile updated: {user.email}")
+        return user
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating user profile: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Помилка при оновленні профілю"
+        )
+
+
 @router.post("/logout")
 async def logout(current_user: dict = Depends(get_current_user)):
     """
