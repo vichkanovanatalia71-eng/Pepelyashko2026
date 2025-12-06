@@ -696,12 +696,12 @@ const FullDashboard = () => {
                           id="edrpou"
                           value={counterpartyForm.edrpou}
                           onChange={(e) => handleEdrpouChange(e.target.value)}
-                          placeholder="12345678"
-                          maxLength={8}
+                          placeholder="12345678 або 1234567890"
+                          maxLength={10}
                           required
                           disabled={searchingEdrpou}
                         />
-                        {counterpartyForm.edrpou.length === 8 && (
+                        {(counterpartyForm.edrpou.length === 8 || counterpartyForm.edrpou.length === 10) && (
                           <Button
                             type="button"
                             size="sm"
@@ -717,7 +717,7 @@ const FullDashboard = () => {
                         )}
                       </div>
                       <p className="text-xs text-gray-500 mt-1">
-                        Дані підтягуються автоматично при введенні 8 цифр
+                        Дані підтягуються автоматично при введенні 8 цифр (ЮрОсоба) або 10 цифр (ФОП)
                       </p>
                     </div>
                     <div>
