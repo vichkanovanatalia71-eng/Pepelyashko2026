@@ -485,14 +485,13 @@ async def get_order_pdf(
 ):
     """Generate and return order PDF."""
     from server import db as database
-    from bson import ObjectId
     from services.order_pdf_service import OrderPDFService
     from urllib.parse import quote
     
     try:
-        # Get order from database
+        # Get order from database (using UUID string, not ObjectId)
         order = await database.orders.find_one({
-            "_id": ObjectId(order_id),
+            "_id": order_id,
             "user_id": current_user["_id"]
         }, {"_id": 0})
         
