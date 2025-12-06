@@ -1,0 +1,35 @@
+"""Order model."""
+
+from pydantic import BaseModel, Field
+from typing import List, Optional
+from .document import DocumentModel, DocumentItem
+
+
+class OrderModel(DocumentModel):
+    """Order model for MongoDB."""
+    pass
+
+
+class OrderCreate(BaseModel):
+    """Model for creating an order."""
+    counterparty_edrpou: str = Field(..., description="ЄДРПОУ контрагента")
+    items: List[DocumentItem] = Field(..., description="Список товарів")
+    total_amount: float = Field(..., description="Загальна сума")
+    template_id: Optional[str] = Field(None, description="Custom template ID")
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "counterparty_edrpou": "12345678",
+                "items": [
+                    {
+                        "name": "Товар 1",
+                        "unit": "шт",
+                        "quantity": 10,
+                        "price": 100.0,
+                        "amount": 1000.0
+                    }
+                ],
+                "total_amount": 1000.0
+            }
+        }
