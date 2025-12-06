@@ -119,17 +119,41 @@ async def search_company(request: dict):
             
             if response.status_code == 200:
                 data = response.json()
+                logger.info(f"API Response structure: {list(data.keys()) if isinstance(data, dict) else type(data)}")
                 
-                # Extract company information from API response
-                # Structure: data.info.name, data.info.address, etc.
+                # Try different possible structures
+                # Option 1: data.info.name
                 company_info = data.get("info", {})
                 
-                name = company_info.get("name", "")
-                address = company_info.get("address", "")
+                # Option 2: direct in data
+                if not company_info:
+                    company_info = data
+                
+                # Extract name - try multiple possible field names
+                name = (
+                    company_info.get("name") or 
+                    company_info.get("full_name") or
+                    company_info.get("companyName") or
+                    company_info.get("shortName") or
+                    ""
+                )
+                
+                # Extract address - try multiple possible field names
+                address = (
+                    company_info.get("address") or
+                    company_info.get("legal_address") or
+                    company_info.get("legalAddress") or
+                    company_info.get("addressFull") or
+                    ""
+                )
                 
                 # Try to get director info if available
-                director_info = company_info.get("director", {})
-                director_name = director_info.get("name", "") if isinstance(director_info, dict) else ""
+                director_info = company_info.get("director", {}) or company_info.get("ceo", {})
+                director_name = ""
+                if isinstance(director_info, dict):
+                    director_name = director_info.get("name", "") or director_info.get("fullName", "")
+                
+                logger.info(f"Extracted - Name: {name[:50] if name else 'None'}, Address: {address[:50] if address else 'None'}")
                 
                 if name or address:
                     logger.info(f"Company found: {name}")
@@ -140,7 +164,7 @@ async def search_company(request: dict):
                         "director_name": director_name if director_name else None
                     }
                 else:
-                    logger.warning(f"Company data incomplete for EDRPOU: {edrpou}")
+                    logger.warning(f"Company data incomplete for EDRPOU: {edrpou}. Response keys: {list(company_info.keys())}")
                     return {
                         "found": False,
                         "message": "Company data incomplete"
