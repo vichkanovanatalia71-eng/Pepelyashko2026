@@ -2224,7 +2224,14 @@ const FullDashboard = () => {
       <Dialog open={showEmailDialog} onOpenChange={setShowEmailDialog}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Відправити картку на Email</DialogTitle>
+            <DialogTitle>
+              {emailType === 'order' ? 'Відправити замовлення на Email' : 'Відправити картку на Email'}
+            </DialogTitle>
+            {emailType === 'order' && viewingOrder && (
+              <DialogDescription>
+                Замовлення №{viewingOrder.number} | {viewingOrder.counterparty_name}
+              </DialogDescription>
+            )}
           </DialogHeader>
           
           <div className="space-y-4">
@@ -2239,12 +2246,22 @@ const FullDashboard = () => {
                 autoFocus
               />
               <p className="text-xs text-gray-500 mt-1">
-                {viewingCounterparty && viewingCounterparty.email ? 
+                {emailType === 'order' && emailRecipient ? 
+                  `Email контрагента: ${emailRecipient}` :
+                  viewingCounterparty && viewingCounterparty.email ? 
                   `За замовчуванням: ${viewingCounterparty.email}` : 
                   'Введіть email адресу отримувача'
                 }
               </p>
             </div>
+            
+            {emailType === 'order' && viewingOrder && (
+              <div className="bg-blue-50 p-3 rounded border border-blue-200">
+                <p className="text-sm text-blue-900">
+                  <strong>Буде відправлено:</strong> PDF замовлення з детальною інформацією про товари/послуги та загальною сумою {viewingOrder.total_amount?.toFixed(2)} грн
+                </p>
+              </div>
+            )}
           </div>
           
           <DialogFooter>
