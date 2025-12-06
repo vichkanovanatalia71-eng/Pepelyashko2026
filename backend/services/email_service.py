@@ -161,3 +161,222 @@ class EmailService:
             attachment_path=pdf_path,
             attachment_name=f"Картка_контрагента_{counterparty_name[:30]}.pdf"
         )
+    
+    def send_order_document(
+        self,
+        to_email: str,
+        order_number: str,
+        order_date: str,
+        counterparty_name: str,
+        total_amount: float,
+        pdf_path: str
+    ) -> bool:
+        """
+        Send order document PDF via email with blue-themed HTML styling.
+        
+        Args:
+            to_email: Recipient email address
+            order_number: Order number
+            order_date: Order date
+            counterparty_name: Name of the counterparty
+            total_amount: Total order amount
+            pdf_path: Path to PDF file
+            
+        Returns:
+            True if email sent successfully
+        """
+        subject = f"Замовлення №{order_number} від {order_date}"
+        
+        body = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <style>
+                body {{
+                    font-family: 'Segoe UI', Arial, sans-serif;
+                    line-height: 1.6;
+                    color: #1e293b;
+                    margin: 0;
+                    padding: 0;
+                    background-color: #f8fafc;
+                }}
+                .email-container {{
+                    max-width: 600px;
+                    margin: 20px auto;
+                    background-color: #ffffff;
+                    border-radius: 8px;
+                    overflow: hidden;
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                }}
+                .header {{
+                    background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+                    color: white;
+                    padding: 30px 40px;
+                    text-align: center;
+                }}
+                .header h1 {{
+                    margin: 0;
+                    font-size: 28px;
+                    font-weight: 600;
+                    letter-spacing: -0.5px;
+                }}
+                .header p {{
+                    margin: 10px 0 0 0;
+                    font-size: 16px;
+                    opacity: 0.95;
+                }}
+                .content {{
+                    padding: 40px;
+                }}
+                .greeting {{
+                    font-size: 18px;
+                    color: #0f172a;
+                    margin-bottom: 20px;
+                }}
+                .info-box {{
+                    background-color: #f0f9ff;
+                    border-left: 4px solid #0ea5e9;
+                    padding: 20px;
+                    margin: 25px 0;
+                    border-radius: 4px;
+                }}
+                .info-row {{
+                    display: flex;
+                    justify-content: space-between;
+                    padding: 8px 0;
+                    border-bottom: 1px solid #e0f2fe;
+                }}
+                .info-row:last-child {{
+                    border-bottom: none;
+                }}
+                .info-label {{
+                    color: #64748b;
+                    font-weight: 500;
+                    font-size: 14px;
+                }}
+                .info-value {{
+                    color: #0f172a;
+                    font-weight: 600;
+                    font-size: 14px;
+                }}
+                .total {{
+                    background-color: #e0f2fe;
+                    padding: 15px 20px;
+                    margin: 20px 0;
+                    border-radius: 6px;
+                    text-align: right;
+                }}
+                .total-label {{
+                    color: #0c4a6e;
+                    font-size: 16px;
+                    font-weight: 600;
+                }}
+                .total-amount {{
+                    color: #0369a1;
+                    font-size: 24px;
+                    font-weight: 700;
+                    margin-top: 5px;
+                }}
+                .message {{
+                    color: #475569;
+                    font-size: 15px;
+                    line-height: 1.7;
+                    margin: 20px 0;
+                }}
+                .signature {{
+                    margin-top: 30px;
+                    color: #64748b;
+                    font-size: 14px;
+                }}
+                .footer {{
+                    background-color: #f8fafc;
+                    padding: 25px 40px;
+                    text-align: center;
+                    border-top: 1px solid #e2e8f0;
+                }}
+                .footer p {{
+                    margin: 5px 0;
+                    font-size: 13px;
+                    color: #94a3b8;
+                }}
+                .attachment-notice {{
+                    background-color: #dbeafe;
+                    border: 1px solid #bfdbfe;
+                    padding: 15px;
+                    margin: 25px 0;
+                    border-radius: 6px;
+                    text-align: center;
+                }}
+                .attachment-notice p {{
+                    margin: 0;
+                    color: #1e40af;
+                    font-size: 14px;
+                    font-weight: 500;
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="email-container">
+                <div class="header">
+                    <h1>Замовлення №{order_number}</h1>
+                    <p>Система Управління Документами</p>
+                </div>
+                
+                <div class="content">
+                    <p class="greeting">Доброго дня!</p>
+                    
+                    <p class="message">
+                        Надсилаємо Вам замовлення №<strong>{order_number}</strong> від <strong>{order_date}</strong>.
+                    </p>
+                    
+                    <div class="info-box">
+                        <div class="info-row">
+                            <span class="info-label">📋 Номер замовлення:</span>
+                            <span class="info-value">№{order_number}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">📅 Дата:</span>
+                            <span class="info-value">{order_date}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">🏢 Контрагент:</span>
+                            <span class="info-value">{counterparty_name}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="total">
+                        <div class="total-label">ЗАГАЛЬНА СУМА:</div>
+                        <div class="total-amount">{total_amount:.2f} грн</div>
+                    </div>
+                    
+                    <div class="attachment-notice">
+                        <p>📎 Повна інформація про замовлення знаходиться у вкладеному PDF-документі</p>
+                    </div>
+                    
+                    <p class="message">
+                        Будь ласка, перевірте деталі замовлення та зв'яжіться з нами у разі виникнення питань.
+                    </p>
+                    
+                    <div class="signature">
+                        <p>З повагою,<br>
+                        <strong>Система Управління Документами</strong></p>
+                    </div>
+                </div>
+                
+                <div class="footer">
+                    <p>Це автоматично згенерований лист</p>
+                    <p>Будь ласка, не відповідайте на нього</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        
+        return self.send_email_with_attachment(
+            to_email=to_email,
+            subject=subject,
+            body=body,
+            attachment_path=pdf_path,
+            attachment_name=f"Замовлення_{order_number}.pdf"
+        )
