@@ -220,6 +220,14 @@ backend:
     stuck_count: 1
     priority: "high"
     needs_retesting: false
+
+  - task: "Order Editing and Save Changes Functionality"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/FullDashboard.js, /app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
     status_history:
       - working: "needs_testing"
         agent: "main"
