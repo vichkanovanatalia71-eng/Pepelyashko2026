@@ -436,6 +436,58 @@ const FullDashboard = () => {
     }
   };
 
+  const handleCreateOrder = async () => {
+    if (!selectedCounterpartyForOrder) {
+      toast.error('Оберіть контрагента');
+      return;
+    }
+    
+    // Validate items
+    const validItems = orderItems.filter(item => item.name.trim() !== '');
+    if (validItems.length === 0) {
+      toast.error('Додайте хоча б один товар/послугу');
+      return;
+    }
+    
+    setLoading(true);
+    
+    try {
+      // Generate order number
+      const nextNumber = orders.length > 0 
+        ? String(Math.max(...orders.map(o => parseInt(o.number) || 0)) + 1).padStart(4, '0')
+        : '0001';
+      
+      // Calculate total
+      const totalAmount = validItems.reduce((sum, item) => sum + item.amount, 0);
+      
+      const orderData = {
+        number: nextNumber,
+        counterparty_edrpou: selectedCounterpartyForOrder.edrpou,
+        counterparty_name: selectedCounterpartyForOrder.representative_name,
+        items: validItems,
+        total_amount: totalAmount,
+        date: new Date().toISOString().split('T')[0]
+      };
+      
+      await axios.post(`${API_URL}/api/orders`, orderData);
+      
+      toast.success(`Замовлення №${nextNumber} створено!`);
+      
+      // Reset form
+      setSelectedCounterpartyForOrder(null);
+      setOrderItems([{ name: '', unit: 'шт', quantity: 1, price: 0, amount: 0 }]);
+      
+      // Reload data
+      await loadAllData();
+      
+    } catch (error) {
+      console.error('Error creating order:', error);
+      toast.error(error.response?.data?.detail || 'Помилка створення замовлення');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Auto-fill signature from director name
   // Format: Ім'я ПРІЗВИЩЕ (e.g., "Станіслав ЧОРНИЙ")
   const generateSignature = (fullName) => {
