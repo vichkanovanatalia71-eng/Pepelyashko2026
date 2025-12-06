@@ -5,7 +5,7 @@ import { Toaster } from '@/components/ui/sonner';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import TemplateEditor from '@/pages/TemplateEditor';
-import Dashboard from '@/pages/Dashboard';
+import FullDashboard from '@/pages/FullDashboard';
 import { Loader2 } from 'lucide-react';
 
 // Protected Route wrapper
@@ -37,7 +37,7 @@ function App() {
           path="/"
           element={
             <ProtectedRoute>
-              <Dashboard />
+              <FullDashboard />
             </ProtectedRoute>
           }
         />
