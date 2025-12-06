@@ -1296,12 +1296,14 @@ const FullDashboard = () => {
       <Dialog open={showCounterpartyDialog} onOpenChange={setShowCounterpartyDialog}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-2xl">Картка Контрагента</DialogTitle>
+            <DialogTitle className="text-2xl">
+              {editingCounterparty ? 'Редагування Контрагента' : 'Картка Контрагента'}
+            </DialogTitle>
           </DialogHeader>
           
-          {viewingCounterparty && (
+          {viewingCounterparty && !editingCounterparty && (
             <div className="space-y-6">
-              {/* Counterparty Details */}
+              {/* View Mode - Counterparty Details */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label className="text-sm text-gray-600">ЄДРПОУ</Label>
