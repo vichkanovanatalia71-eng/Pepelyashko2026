@@ -1628,24 +1628,36 @@ const FullDashboard = () => {
             </div>
           )}
           
-          <DialogFooter>
+          <DialogFooter className="flex justify-between">
             {!editingCounterparty ? (
               <>
-                <Button variant="outline" onClick={startEditingCounterparty}>
-                  Редагувати
+                <Button 
+                  variant="destructive" 
+                  onClick={deleteCounterparty}
+                  disabled={loading}
+                >
+                  {loading ? 'Видалення...' : 'Видалити'}
                 </Button>
-                <Button onClick={closeCounterpartyDialog}>
-                  Закрити
-                </Button>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={startEditingCounterparty}>
+                    Редагувати
+                  </Button>
+                  <Button onClick={closeCounterpartyDialog}>
+                    Закрити
+                  </Button>
+                </div>
               </>
             ) : (
               <>
-                <Button variant="outline" onClick={cancelEditingCounterparty}>
-                  Скасувати
-                </Button>
-                <Button onClick={saveCounterpartyChanges} disabled={loading}>
-                  {loading ? 'Збереження...' : 'Зберегти зміни'}
-                </Button>
+                <div></div>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={cancelEditingCounterparty}>
+                    Скасувати
+                  </Button>
+                  <Button onClick={saveCounterpartyChanges} disabled={loading}>
+                    {loading ? 'Збереження...' : 'Зберегти зміни'}
+                  </Button>
+                </div>
               </>
             )}
           </DialogFooter>
