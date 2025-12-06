@@ -321,7 +321,7 @@ class InvoiceService:
                 'based_on_contract': contract_number or ''
             }
             
-            self.sheets_service.create_invoice(invoice_record, drive_file_id)
+            self.sheets_service.create_invoice(invoice_record, drive_file_id, invoice_number)
             
             return {
                 'success': True,
@@ -614,7 +614,7 @@ class InvoiceService:
                 'based_on_contract': contract_number or ''
             }
             
-            self.sheets_service.create_invoice(invoice_record, drive_file_id)
+            self.sheets_service.create_invoice(invoice_record, drive_file_id, invoice_number)
             
             return {
                 'success': True,
