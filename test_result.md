@@ -767,7 +767,7 @@ test_plan:
     - "Генерація PDF на вимогу з перевіркою віку (3 дні)"
     - "Frontend інтеграція: генерація перед переглядом"
   stuck_tasks: []
-  test_all: true
+  test_all: false
   test_priority: "high_first"
 
 agent_communication:
