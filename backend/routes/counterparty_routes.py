@@ -191,11 +191,14 @@ async def download_counterparty_pdf(
                 detail="Контрагента не знайдено"
             )
         
+        # Convert to dict for PDF generation
+        counterparty_dict = counterparty.model_dump() if hasattr(counterparty, 'model_dump') else dict(counterparty)
+        
         # Generate PDF
-        pdf_path = pdf_service.generate_pdf(counterparty)
+        pdf_path = pdf_service.generate_pdf(counterparty_dict)
         
         # Return file
-        filename = f"Картка_контрагента_{counterparty.get('edrpou', 'unknown')}.pdf"
+        filename = f"Картка_контрагента_{counterparty_dict.get('edrpou', 'unknown')}.pdf"
         
         return FileResponse(
             path=pdf_path,
