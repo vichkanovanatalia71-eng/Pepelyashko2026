@@ -86,6 +86,14 @@ const FullDashboard = () => {
   const [showOrderDialog, setShowOrderDialog] = useState(false);
   const [viewingOrder, setViewingOrder] = useState(null);
   const [editingOrder, setEditingOrder] = useState(false);
+  const [editOrderForm, setEditOrderForm] = useState({
+    date: '',
+    counterparty_edrpou: '',
+    counterparty_name: '',
+    items: [],
+    total_amount: 0
+  });
+  const [editingOrder, setEditingOrder] = useState(false);
   
   // Document form
   const [documentForm, setDocumentForm] = useState({
