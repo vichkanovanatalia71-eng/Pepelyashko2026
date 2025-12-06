@@ -446,6 +446,69 @@ async def get_order_related_documents(
         )
 
 
+@router.put("/orders/{order_id}", response_model=OrderModel)
+async def update_order(
+    order_id: str,
+    order_data: dict,
+    current_user: dict = Depends(get_current_user)
+):
+    """Update an order."""
+    from server import db as database
+    from datetime import datetime
+    
+    try:
+        # Get existing order
+        existing_order = await database.orders.find_one({
+            "_id": order_id,
+            "user_id": current_user["_id"]
+        })
+        
+        if not existing_order:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Замовлення не знайдено"
+            )
+        
+        # Prepare update data
+        update_data = {
+            "date": order_data.get("date", existing_order.get("date")),
+            "counterparty_edrpou": order_data.get("counterparty_edrpou", existing_order.get("counterparty_edrpou")),
+            "counterparty_name": order_data.get("counterparty_name", existing_order.get("counterparty_name")),
+            "items": order_data.get("items", existing_order.get("items")),
+            "total_amount": order_data.get("total_amount", existing_order.get("total_amount")),
+            "updated_at": datetime.utcnow()
+        }
+        
+        # Update order
+        result = await database.orders.update_one(
+            {"_id": order_id, "user_id": current_user["_id"]},
+            {"$set": update_data}
+        )
+        
+        if result.modified_count == 0 and result.matched_count == 0:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Замовлення не знайдено"
+            )
+        
+        # Get updated order
+        updated_order = await database.orders.find_one(
+            {"_id": order_id},
+            {"_id": 0}
+        )
+        
+        logger.info(f"Order updated: {order_id} by user {current_user['_id']}")
+        return updated_order
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating order: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Помилка при оновленні замовлення"
+        )
+
+
 @router.delete("/orders/{order_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_order(
     order_id: str,
