@@ -74,6 +74,13 @@ const FullDashboard = () => {
   const [showEmailDialog, setShowEmailDialog] = useState(false);
   const [emailRecipient, setEmailRecipient] = useState('');
   
+  // Order creation
+  const [creatingOrder, setCreatingOrder] = useState(false);
+  const [selectedCounterpartyForOrder, setSelectedCounterpartyForOrder] = useState(null);
+  const [orderItems, setOrderItems] = useState([
+    { name: '', unit: 'шт', quantity: 1, price: 0, amount: 0 }
+  ]);
+  
   // Document form
   const [documentForm, setDocumentForm] = useState({
     counterparty_edrpou: '',
