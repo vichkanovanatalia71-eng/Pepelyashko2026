@@ -17,21 +17,7 @@ class OrderPDFService:
         self.output_dir.mkdir(exist_ok=True)
     
     def generate_html(self, order: dict) -> str:
-        """Generate HTML for order document with modern design matching the site."""
-        
-        # Calculate items total for verification
-        items_html = ""
-        for idx, item in enumerate(order.get('items', []), 1):
-            items_html += f"""
-            <tr>
-                <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: center;">{idx}</td>
-                <td style="padding: 10px; border-bottom: 1px solid #e5e7eb;">{item.get('name', '—')}</td>
-                <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: center;">{item.get('unit', 'шт')}</td>
-                <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: right;">{item.get('quantity', 0)}</td>
-                <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: right;">{item.get('price', 0):.2f}</td>
-                <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: right; font-weight: 600;">{item.get('amount', 0):.2f}</td>
-            </tr>
-            """
+        """Generate HTML for order document with professional design."""
         
         # Format date
         date_str = order.get('date', datetime.now().strftime('%Y-%m-%d'))
@@ -40,6 +26,25 @@ class OrderPDFService:
             formatted_date = date_obj.strftime('%d.%m.%Y')
         except:
             formatted_date = date_str
+        
+        # Calculate items for table
+        items_html = ""
+        for idx, item in enumerate(order.get('items', []), 1):
+            items_html += f"""
+            <tr>
+                <td class="table-cell center">{idx}</td>
+                <td class="table-cell">{item.get('name', '—')}</td>
+                <td class="table-cell center">{item.get('unit', 'шт')}</td>
+                <td class="table-cell right">{item.get('quantity', 0):.2f}</td>
+                <td class="table-cell right">{item.get('price', 0):.2f}</td>
+                <td class="table-cell right bold">{item.get('amount', 0):.2f}</td>
+            </tr>
+            """
+        
+        # Calculate totals
+        total_without_vat = order.get('total_amount', 0)
+        vat_amount = 0.0
+        total_to_pay = total_without_vat + vat_amount
         
         # Build HTML with order information
         html_content = f"""
