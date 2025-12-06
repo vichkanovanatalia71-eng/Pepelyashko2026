@@ -94,6 +94,26 @@ const FullDashboard = () => {
     items: [],
     total_amount: 0
   });
+
+  // Profile state
+  const [profileData, setProfileData] = useState({
+    full_name: '',
+    email: '',
+    company_name: '',
+    phone: '',
+    edrpou: '',
+    representative_name: '',
+    legal_address: '',
+    iban: '',
+    bank: '',
+    mfo: '',
+    director_name: '',
+    director_position: '',
+    position: '',
+    represented_by: '',
+    signature: ''
+  });
+  const [loadingProfile, setLoadingProfile] = useState(false);
   
   // Document form
   const [documentForm, setDocumentForm] = useState({
