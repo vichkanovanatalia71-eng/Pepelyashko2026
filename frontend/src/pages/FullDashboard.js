@@ -359,6 +359,52 @@ const FullDashboard = () => {
     }
   };
 
+  const openEmailDialog = () => {
+    // Pre-fill with counterparty's email if available
+    if (viewingCounterparty && viewingCounterparty.email) {
+      setEmailRecipient(viewingCounterparty.email);
+    } else {
+      setEmailRecipient('');
+    }
+    setShowEmailDialog(true);
+  };
+
+  const closeEmailDialog = () => {
+    setShowEmailDialog(false);
+    setEmailRecipient('');
+  };
+
+  const sendCounterpartyEmail = async () => {
+    if (!viewingCounterparty || !emailRecipient) {
+      toast.error('Введіть email адресу');
+      return;
+    }
+    
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(emailRecipient)) {
+      toast.error('Введіть коректний email');
+      return;
+    }
+    
+    setLoading(true);
+    
+    try {
+      await axios.post(
+        `${API_URL}/api/counterparties/${viewingCounterparty._id}/send-email`,
+        { email: emailRecipient }
+      );
+      
+      toast.success(`Картку відправлено на ${emailRecipient}`);
+      closeEmailDialog();
+    } catch (error) {
+      console.error('Error sending email:', error);
+      toast.error(error.response?.data?.detail || 'Помилка відправки email');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Auto-fill signature from director name
   // Format: Ім'я ПРІЗВИЩЕ (e.g., "Станіслав ЧОРНИЙ")
   const generateSignature = (fullName) => {
