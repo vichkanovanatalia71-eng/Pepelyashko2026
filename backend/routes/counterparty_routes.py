@@ -248,13 +248,16 @@ async def send_counterparty_card_email(
                 detail="Контрагента не знайдено"
             )
         
+        # Convert to dict for PDF generation
+        counterparty_dict = counterparty.model_dump() if hasattr(counterparty, 'model_dump') else dict(counterparty)
+        
         # Generate PDF
-        pdf_path = pdf_service.generate_pdf(counterparty)
+        pdf_path = pdf_service.generate_pdf(counterparty_dict)
         
         # Send email
         success = email_service.send_counterparty_card(
             to_email=recipient_email,
-            counterparty_name=counterparty.get('representative_name', 'Unknown'),
+            counterparty_name=counterparty_dict.get('representative_name', 'Unknown'),
             pdf_path=pdf_path
         )
         
