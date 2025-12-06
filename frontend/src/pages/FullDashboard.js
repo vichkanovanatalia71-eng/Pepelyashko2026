@@ -1384,36 +1384,31 @@ const FullDashboard = () => {
             <Card>
               <CardHeader>
                 <CardTitle>Створити Замовлення</CardTitle>
+                <CardDescription>Номер замовлення: {orders.length > 0 ? String(Math.max(...orders.map(o => parseInt(o.number) || 0)) + 1).padStart(4, '0') : '0001'}</CardDescription>
               </CardHeader>
               <CardContent>
-                <form className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="order_counterparty_edrpou">ЄДРПОУ Контрагента *</Label>
-                      <Input
-                        id="order_counterparty_edrpou"
-                        placeholder="12345678"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="order_number">Номер Замовлення *</Label>
-                      <Input
-                        id="order_number"
-                        placeholder="0001"
-                        required
-                      />
-                    </div>
+                <div className="space-y-4">
+                  {/* Step 1: Select Counterparty */}
+                  <div>
+                    <Label htmlFor="order_counterparty">Виберіть Контрагента *</Label>
+                    <Select>
+                      <SelectTrigger id="order_counterparty">
+                        <SelectValue placeholder="Оберіть контрагента зі списку" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {counterparties.map((cp) => (
+                          <SelectItem key={cp._id} value={cp.edrpou}>
+                            {cp.representative_name} ({cp.edrpou})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   
                   <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded">
-                    ℹ️ Після введення ЄДРПОУ та номера, ви зможете додати товари/послуги до замовлення
+                    ℹ️ Оберіть контрагента зі списку. Номер замовлення буде присвоєно автоматично.
                   </div>
-                  
-                  <Button type="submit">
-                    Створити Замовлення
-                  </Button>
-                </form>
+                </div>
               </CardContent>
             </Card>
             
