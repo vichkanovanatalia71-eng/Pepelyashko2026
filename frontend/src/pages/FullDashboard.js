@@ -874,7 +874,7 @@ const FullDashboard = () => {
                     <div>
                       <Label htmlFor="signature">
                         Підпис
-                        <span className="text-xs text-gray-500 ml-2">
+                        <span className="text-xs text-teal-600 ml-2">
                           (автоматично з ПІБ)
                         </span>
                       </Label>
@@ -882,10 +882,10 @@ const FullDashboard = () => {
                         id="signature"
                         value={counterpartyForm.signature}
                         onChange={(e) => setCounterpartyForm({...counterpartyForm, signature: e.target.value})}
-                        placeholder="ПЕТРЕНКО П.П."
+                        placeholder="Станіслав ЧОРНИЙ"
                       />
                       <p className="text-xs text-gray-500 mt-1">
-                        Формат: ПРІЗВИЩЕ І.П.
+                        Формат: Ім'я ПРІЗВИЩЕ
                       </p>
                     </div>
                   </div>
