@@ -1745,6 +1745,44 @@ const FullDashboard = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Email Sending Dialog */}
+      <Dialog open={showEmailDialog} onOpenChange={setShowEmailDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Відправити картку на Email</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="email_recipient">Email адреса отримувача</Label>
+              <Input
+                id="email_recipient"
+                type="email"
+                value={emailRecipient}
+                onChange={(e) => setEmailRecipient(e.target.value)}
+                placeholder="email@example.com"
+                autoFocus
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                {viewingCounterparty && viewingCounterparty.email ? 
+                  `За замовчуванням: ${viewingCounterparty.email}` : 
+                  'Введіть email адресу отримувача'
+                }
+              </p>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={closeEmailDialog}>
+              Скасувати
+            </Button>
+            <Button onClick={sendCounterpartyEmail} disabled={loading || !emailRecipient}>
+              {loading ? 'Відправка...' : 'Відправити'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Order Selection Dialog */}
       <Dialog open={showOrderSelectionDialog} onOpenChange={setShowOrderSelectionDialog}>
         <DialogContent className="max-w-2xl">
