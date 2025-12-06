@@ -219,6 +219,26 @@ const FullDashboard = () => {
 
   const startEditingCounterparty = () => {
     if (viewingCounterparty) {
+      // Auto-regenerate "В особі" if needed (when all required fields are present)
+      let representedBy = viewingCounterparty.represented_by || '';
+      
+      // If we have position, director_name, and contract_type, regenerate
+      if (viewingCounterparty.position && viewingCounterparty.director_name) {
+        // Use contract_type or default to "Статуту"
+        const basis = viewingCounterparty.contract_type || 'Статуту';
+        representedBy = generateRepresentedBy(
+          viewingCounterparty.position,
+          viewingCounterparty.director_name,
+          basis
+        );
+      }
+      
+      // Auto-regenerate signature if needed
+      let signature = viewingCounterparty.signature || '';
+      if (viewingCounterparty.director_name && !signature) {
+        signature = generateSignature(viewingCounterparty.director_name);
+      }
+      
       // Load counterparty data into form
       setCounterpartyForm({
         edrpou: viewingCounterparty.edrpou,
@@ -226,15 +246,15 @@ const FullDashboard = () => {
         email: viewingCounterparty.email,
         phone: viewingCounterparty.phone,
         iban: viewingCounterparty.iban,
-        contract_type: viewingCounterparty.contract_type || '',
+        contract_type: viewingCounterparty.contract_type || 'Статуту',
         director_position: viewingCounterparty.director_position || '',
         director_name: viewingCounterparty.director_name || '',
         legal_address: viewingCounterparty.legal_address || '',
         bank: viewingCounterparty.bank || '',
         mfo: viewingCounterparty.mfo || '',
         position: viewingCounterparty.position || '',
-        represented_by: viewingCounterparty.represented_by || '',
-        signature: viewingCounterparty.signature || ''
+        represented_by: representedBy,
+        signature: signature
       });
       setEditingCounterparty(true);
     }
