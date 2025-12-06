@@ -351,14 +351,17 @@ const FullDashboard = () => {
     // Convert name to genitive case
     const nameGenitive = convertNameToGenitive(fullName);
     
-    // Basis text
+    // Basis text - handle both Ukrainian and English values
     let basisText = '';
-    if (basis === 'statute') {
+    if (basis === 'Статуту' || basis === 'statute') {
       basisText = 'Статуту';
-    } else if (basis === 'edr') {
-      basisText = 'запису в Єдиному державному реєстрі';
-    } else if (basis === 'power_of_attorney') {
-      basisText = 'довіреності';
+    } else if (basis === 'Довіреності' || basis === 'power_of_attorney') {
+      basisText = 'Довіреності';
+    } else if (basis === 'Виписка' || basis === 'Положення' || basis === 'edr') {
+      basisText = 'Виписки з ЄДР';
+    } else {
+      // Default: use the basis value as-is if it's already in correct form
+      basisText = basis;
     }
     
     return `${positionGenitive} ${nameGenitive}, що діє на підставі ${basisText}`;
