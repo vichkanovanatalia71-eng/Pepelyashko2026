@@ -2339,8 +2339,7 @@ const FullDashboard = () => {
                 onClick={() => {
                   if (viewingOrder) {
                     setShowOrderDialog(false);
-                    setEmailRecipient('');
-                    setShowEmailDialog(true);
+                    openOrderEmailDialog();
                   }
                 }}
               >
