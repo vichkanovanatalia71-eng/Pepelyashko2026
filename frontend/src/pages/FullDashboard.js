@@ -2195,6 +2195,126 @@ const FullDashboard = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Order Details Dialog */}
+      <Dialog open={showOrderDialog} onOpenChange={setShowOrderDialog}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl">
+              Замовлення №{viewingOrder?.number}
+            </DialogTitle>
+            <DialogDescription>
+              {viewingOrder?.counterparty_name}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {viewingOrder && (
+            <div className="space-y-6">
+              {/* Order Information */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm text-gray-600">Номер замовлення</Label>
+                  <p className="text-lg font-semibold">№{viewingOrder.number}</p>
+                </div>
+                <div>
+                  <Label className="text-sm text-gray-600">Дата</Label>
+                  <p className="text-lg font-semibold">{viewingOrder.date}</p>
+                </div>
+              </div>
+              
+              {/* Counterparty Info */}
+              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                <h3 className="font-semibold text-blue-900 mb-2">Контрагент</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-sm text-gray-600">ЄДРПОУ</Label>
+                    <p className="font-medium">{viewingOrder.counterparty_edrpou}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm text-gray-600">Назва</Label>
+                    <p className="font-medium">{viewingOrder.counterparty_name}</p>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Items Table */}
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-3">Товари та послуги</h3>
+                <div className="border rounded-lg overflow-hidden">
+                  <table className="w-full">
+                    <thead className="bg-blue-50">
+                      <tr>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-600">№</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-600">Найменування</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-600">Од.</th>
+                        <th className="px-3 py-2 text-right text-xs font-medium text-gray-600">Кільк.</th>
+                        <th className="px-3 py-2 text-right text-xs font-medium text-gray-600">Ціна</th>
+                        <th className="px-3 py-2 text-right text-xs font-medium text-gray-600">Сума</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {viewingOrder.items?.map((item, index) => (
+                        <tr key={index} className="border-t">
+                          <td className="px-3 py-2">{index + 1}</td>
+                          <td className="px-3 py-2">{item.name}</td>
+                          <td className="px-3 py-2">{item.unit}</td>
+                          <td className="px-3 py-2 text-right">{item.quantity}</td>
+                          <td className="px-3 py-2 text-right">{item.price.toFixed(2)}</td>
+                          <td className="px-3 py-2 text-right font-medium">{item.amount.toFixed(2)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot className="bg-blue-50 font-semibold">
+                      <tr>
+                        <td colSpan="5" className="px-3 py-3 text-right">Загальна сума:</td>
+                        <td className="px-3 py-3 text-right text-lg text-blue-700">
+                          {viewingOrder.total_amount?.toFixed(2)} грн
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter className="flex justify-between">
+            <Button 
+              variant="destructive" 
+              onClick={deleteOrder}
+              disabled={loading}
+            >
+              {loading ? 'Видалення...' : 'Видалити'}
+            </Button>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  if (viewingOrder) {
+                    setShowOrderDialog(false);
+                    setEmailRecipient('');
+                    setShowEmailDialog(true);
+                  }
+                }}
+              >
+                <Mail className="w-4 h-4 mr-2" />
+                Відправити Email
+              </Button>
+              <Button variant="outline" onClick={previewOrderPDF}>
+                <Eye className="w-4 h-4 mr-2" />
+                Переглянути PDF
+              </Button>
+              <Button variant="outline" onClick={downloadOrderPDF}>
+                <Download className="w-4 h-4 mr-2" />
+                Завантажити PDF
+              </Button>
+              <Button onClick={closeOrderDialog}>
+                Закрити
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Order Selection Dialog */}
       <Dialog open={showOrderSelectionDialog} onOpenChange={setShowOrderSelectionDialog}>
         <DialogContent className="max-w-2xl">
