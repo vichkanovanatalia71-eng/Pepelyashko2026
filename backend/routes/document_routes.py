@@ -534,14 +534,13 @@ async def send_order_email(
 ):
     """Send order PDF to email."""
     from server import db as database
-    from bson import ObjectId
     from services.order_pdf_service import OrderPDFService
     from services.email_service import EmailService
     
     try:
-        # Get order from database
+        # Get order from database (using UUID string, not ObjectId)
         order = await database.orders.find_one({
-            "_id": ObjectId(order_id),
+            "_id": order_id,
             "user_id": current_user["_id"]
         }, {"_id": 0})
         
