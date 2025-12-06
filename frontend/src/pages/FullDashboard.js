@@ -926,6 +926,144 @@ const FullDashboard = () => {
         </Tabs>
       </div>
 
+      {/* Counterparty Details Dialog */}
+      <Dialog open={showCounterpartyDialog} onOpenChange={setShowCounterpartyDialog}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl">Картка Контрагента</DialogTitle>
+          </DialogHeader>
+          
+          {viewingCounterparty && (
+            <div className="space-y-6">
+              {/* Counterparty Details */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm text-gray-600">ЄДРПОУ</Label>
+                  <p className="text-lg font-semibold">{viewingCounterparty.edrpou}</p>
+                </div>
+                <div>
+                  <Label className="text-sm text-gray-600">Назва</Label>
+                  <p className="text-lg font-semibold">{viewingCounterparty.representative_name}</p>
+                </div>
+                <div className="md:col-span-2">
+                  <Label className="text-sm text-gray-600">Юридична адреса</Label>
+                  <p className="text-lg">{viewingCounterparty.legal_address || 'Не вказано'}</p>
+                </div>
+                <div>
+                  <Label className="text-sm text-gray-600">р/р (IBAN)</Label>
+                  <p className="text-lg font-mono">{viewingCounterparty.iban}</p>
+                </div>
+                <div>
+                  <Label className="text-sm text-gray-600">Банк</Label>
+                  <p className="text-lg">{viewingCounterparty.bank || 'Не вказано'}</p>
+                </div>
+                <div>
+                  <Label className="text-sm text-gray-600">МФО</Label>
+                  <p className="text-lg">{viewingCounterparty.mfo || 'Не вказано'}</p>
+                </div>
+                <div>
+                  <Label className="text-sm text-gray-600">Email</Label>
+                  <p className="text-lg">{viewingCounterparty.email}</p>
+                </div>
+                <div>
+                  <Label className="text-sm text-gray-600">Телефон</Label>
+                  <p className="text-lg">{viewingCounterparty.phone}</p>
+                </div>
+                <div>
+                  <Label className="text-sm text-gray-600">ПІБ керівника</Label>
+                  <p className="text-lg">{viewingCounterparty.director_name || 'Не вказано'}</p>
+                </div>
+                <div>
+                  <Label className="text-sm text-gray-600">Посада</Label>
+                  <p className="text-lg">{viewingCounterparty.position || 'Не вказано'}</p>
+                </div>
+                <div className="md:col-span-2">
+                  <Label className="text-sm text-gray-600">В особі</Label>
+                  <p className="text-lg">{viewingCounterparty.represented_by || 'Не вказано'}</p>
+                </div>
+                <div className="md:col-span-2">
+                  <Label className="text-sm text-gray-600">Підпис</Label>
+                  <p className="text-lg">{viewingCounterparty.signature || 'Не вказано'}</p>
+                </div>
+              </div>
+
+              {/* Documents Section */}
+              {counterpartyDocuments && (
+                <div className="border-t pt-4">
+                  <h3 className="text-lg font-semibold mb-4">Документи контрагента</h3>
+                  
+                  <div className="space-y-4">
+                    {/* Orders */}
+                    {counterpartyDocuments.orders?.length > 0 && (
+                      <div>
+                        <h4 className="font-medium mb-2">Замовлення ({counterpartyDocuments.orders.length})</h4>
+                        <div className="space-y-2">
+                          {counterpartyDocuments.orders.map((order) => (
+                            <Card key={order._id}>
+                              <CardContent className="p-3">
+                                <div className="flex justify-between items-center">
+                                  <div>
+                                    <p className="font-medium">№{order.number}</p>
+                                    <p className="text-sm text-gray-600">
+                                      {new Date(order.date).toLocaleDateString('uk-UA')}
+                                    </p>
+                                  </div>
+                                  <p className="font-bold">{order.total_amount} грн</p>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Invoices */}
+                    {counterpartyDocuments.invoices?.length > 0 && (
+                      <div>
+                        <h4 className="font-medium mb-2">Рахунки ({counterpartyDocuments.invoices.length})</h4>
+                        <div className="space-y-2">
+                          {counterpartyDocuments.invoices.map((invoice) => (
+                            <Card key={invoice._id}>
+                              <CardContent className="p-3">
+                                <div className="flex justify-between items-center">
+                                  <div>
+                                    <p className="font-medium">№{invoice.number}</p>
+                                    <p className="text-sm text-gray-600">
+                                      {new Date(invoice.date).toLocaleDateString('uk-UA')}
+                                    </p>
+                                  </div>
+                                  <p className="font-bold">{invoice.total_amount} грн</p>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Acts, Waybills, Contracts similar... */}
+                    
+                    {counterpartyDocuments.orders?.length === 0 && 
+                     counterpartyDocuments.invoices?.length === 0 && 
+                     counterpartyDocuments.acts?.length === 0 && (
+                      <p className="text-center text-gray-500 py-4">
+                        Немає документів для цього контрагента
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button onClick={closeCounterpartyDialog}>
+              Закрити
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Order Selection Dialog */}
       <Dialog open={showOrderSelectionDialog} onOpenChange={setShowOrderSelectionDialog}>
         <DialogContent className="max-w-2xl">
