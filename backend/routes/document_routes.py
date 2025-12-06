@@ -453,11 +453,10 @@ async def delete_order(
 ):
     """Delete an order."""
     from server import db as database
-    from bson import ObjectId
     
     try:
         result = await database.orders.delete_one({
-            "_id": ObjectId(order_id),
+            "_id": order_id,
             "user_id": current_user["_id"]
         })
         
