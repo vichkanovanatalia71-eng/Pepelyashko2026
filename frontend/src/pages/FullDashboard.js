@@ -193,8 +193,9 @@ const FullDashboard = () => {
     }
   };
 
-  const viewCounterpartyDocuments = async (counterparty) => {
-    setSelectedCounterparty(counterparty);
+  const viewCounterpartyDetails = async (counterparty) => {
+    setViewingCounterparty(counterparty);
+    setShowCounterpartyDialog(true);
     
     try {
       const response = await axios.get(`${API_URL}/api/counterparties/${counterparty.edrpou}/documents`);
@@ -203,6 +204,12 @@ const FullDashboard = () => {
       console.error('Error loading counterparty documents:', error);
       toast.error('Помилка завантаження документів');
     }
+  };
+  
+  const closeCounterpartyDialog = () => {
+    setShowCounterpartyDialog(false);
+    setViewingCounterparty(null);
+    setCounterpartyDocuments(null);
   };
 
   // Document item management
