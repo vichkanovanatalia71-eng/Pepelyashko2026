@@ -569,6 +569,17 @@ async def send_order_email(
                 detail="Email адреса не вказана"
             )
         
+        # Get counterparty details for full information in PDF
+        counterparty_edrpou = order.get('counterparty_edrpou')
+        if counterparty_edrpou:
+            counterparty = await database.counterparties.find_one({
+                "edrpou": counterparty_edrpou,
+                "user_id": current_user["_id"]
+            }, {"_id": 0})
+            
+            if counterparty:
+                order['counterparty_details'] = counterparty
+        
         # Generate PDF
         pdf_service = OrderPDFService()
         pdf_path = pdf_service.generate_pdf(order)
