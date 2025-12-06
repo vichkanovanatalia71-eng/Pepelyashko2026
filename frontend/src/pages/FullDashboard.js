@@ -1614,9 +1614,10 @@ const FullDashboard = () => {
                         </Button>
                         <Button
                           type="button"
-                          disabled={orderItems.every(item => !item.name)}
+                          disabled={orderItems.every(item => !item.name) || loading}
+                          onClick={handleCreateOrder}
                         >
-                          Створити Замовлення
+                          {loading ? 'Створення...' : 'Створити Замовлення'}
                         </Button>
                       </div>
                     </>
