@@ -1761,23 +1761,37 @@ const FullDashboard = () => {
                 ) : (
                   <div className="space-y-2">
                     {orders.map((order) => (
-                      <Card key={order._id}>
+                      <Card key={order._id} className="cursor-pointer hover:bg-gray-50 transition-colors">
                         <CardContent className="p-4">
-                          <div className="flex justify-between">
-                            <div>
+                          <div className="flex justify-between items-center">
+                            <div className="flex-1" onClick={() => openOrderDialog(order)}>
                               <p className="font-medium">№{order.number}</p>
                               <p className="text-sm text-gray-600">{order.counterparty_name}</p>
                               <p className="font-bold">{order.total_amount} грн</p>
+                              <p className="text-xs text-gray-500">{order.date}</p>
                             </div>
-                            <Button
-                              size="sm"
-                              onClick={() => {
-                                setSelectedOrder(order);
-                                setShowOrderSelectionDialog(true);
-                              }}
-                            >
-                              Створити документи
-                            </Button>
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openOrderDialog(order);
+                                }}
+                              >
+                                Переглянути
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedOrder(order);
+                                  setShowOrderSelectionDialog(true);
+                                }}
+                              >
+                                Створити документи
+                              </Button>
+                            </div>
                           </div>
                         </CardContent>
                       </Card>
