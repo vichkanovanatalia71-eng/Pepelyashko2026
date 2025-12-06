@@ -2132,6 +2132,181 @@ const FullDashboard = () => {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* Profile Tab */}
+          <TabsContent value="profile" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Профіль користувача</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Personal Data Section */}
+                <div>
+                  <h3 className="text-lg font-semibold mb-4 pb-2 border-b">Особисті дані</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label>ПІБ</Label>
+                      <Input
+                        value={profileData.full_name}
+                        onChange={(e) => setProfileData({...profileData, full_name: e.target.value})}
+                        placeholder="Іван Іванович Іваненко"
+                      />
+                    </div>
+                    <div>
+                      <Label>Email</Label>
+                      <Input
+                        value={profileData.email}
+                        disabled
+                        className="bg-gray-100"
+                      />
+                    </div>
+                    <div>
+                      <Label>Назва компанії</Label>
+                      <Input
+                        value={profileData.company_name}
+                        onChange={(e) => setProfileData({...profileData, company_name: e.target.value})}
+                        placeholder="ТОВ Приклад"
+                      />
+                    </div>
+                    <div>
+                      <Label>Телефон</Label>
+                      <Input
+                        value={profileData.phone}
+                        onChange={(e) => setProfileData({...profileData, phone: e.target.value})}
+                        placeholder="+380501234567"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Supplier Data Section */}
+                <div>
+                  <h3 className="text-lg font-semibold mb-4 pb-2 border-b">Реквізити постачальника</h3>
+                  
+                  {/* EDRPOU with YouScore */}
+                  <div className="mb-4">
+                    <Label>Код ЄДРПОУ</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        value={profileData.edrpou}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/\D/g, '');
+                          if (value.length <= 10) {
+                            setProfileData({...profileData, edrpou: value});
+                          }
+                        }}
+                        placeholder="12345678 або 1234567890"
+                        maxLength={10}
+                      />
+                      <Button
+                        onClick={fetchYouScoreDataForProfile}
+                        disabled={loadingProfile || !profileData.edrpou || profileData.edrpou.length < 8}
+                      >
+                        {loadingProfile ? 'Завантаження...' : 'Отримати дані'}
+                      </Button>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      8 цифр для юридичної особи, 10 цифр для ФОП
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="md:col-span-2">
+                      <Label>Повна назва</Label>
+                      <Input
+                        value={profileData.representative_name}
+                        onChange={(e) => setProfileData({...profileData, representative_name: e.target.value})}
+                        placeholder="ТОВАРИСТВО З ОБМЕЖЕНОЮ ВІДПОВІДАЛЬНІСТЮ..."
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <Label>Юридична адреса</Label>
+                      <Input
+                        value={profileData.legal_address}
+                        onChange={(e) => setProfileData({...profileData, legal_address: e.target.value})}
+                        placeholder="м. Київ, вул. Хрещатик, 1"
+                      />
+                    </div>
+                    <div>
+                      <Label>IBAN</Label>
+                      <Input
+                        value={profileData.iban}
+                        onChange={(e) => setProfileData({...profileData, iban: e.target.value})}
+                        placeholder="UA123456789012345678901234567"
+                      />
+                    </div>
+                    <div>
+                      <Label>Банк</Label>
+                      <Input
+                        value={profileData.bank}
+                        onChange={(e) => setProfileData({...profileData, bank: e.target.value})}
+                        placeholder="АТ КБ ПриватБанк"
+                      />
+                    </div>
+                    <div>
+                      <Label>МФО</Label>
+                      <Input
+                        value={profileData.mfo}
+                        onChange={(e) => setProfileData({...profileData, mfo: e.target.value})}
+                        placeholder="305299"
+                      />
+                    </div>
+                    <div>
+                      <Label>ПІБ керівника</Label>
+                      <Input
+                        value={profileData.director_name}
+                        onChange={(e) => setProfileData({...profileData, director_name: e.target.value})}
+                        placeholder="Іванов Іван Іванович"
+                      />
+                    </div>
+                    <div>
+                      <Label>Посада керівника</Label>
+                      <Input
+                        value={profileData.director_position}
+                        onChange={(e) => setProfileData({...profileData, director_position: e.target.value})}
+                        placeholder="Директор"
+                      />
+                    </div>
+                    <div>
+                      <Label>Посада підписанта</Label>
+                      <Input
+                        value={profileData.position}
+                        onChange={(e) => setProfileData({...profileData, position: e.target.value})}
+                        placeholder="Директор"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <Label>В особі (автозаповнюється)</Label>
+                      <Input
+                        value={profileData.represented_by}
+                        disabled
+                        className="bg-gray-100"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <Label>Підпис</Label>
+                      <Input
+                        value={profileData.signature}
+                        onChange={(e) => setProfileData({...profileData, signature: e.target.value})}
+                        placeholder="Іванов І.І."
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Save Button */}
+                <div className="flex justify-end pt-4 border-t">
+                  <Button
+                    onClick={saveUserProfile}
+                    disabled={loadingProfile}
+                    size="lg"
+                  >
+                    {loadingProfile ? 'Збереження...' : 'Зберегти профіль'}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
       </div>
 
