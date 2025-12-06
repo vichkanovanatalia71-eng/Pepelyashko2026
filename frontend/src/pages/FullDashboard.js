@@ -708,13 +708,21 @@ const FullDashboard = () => {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="signature">Підпис</Label>
+                      <Label htmlFor="signature">
+                        Підпис
+                        <span className="text-xs text-gray-500 ml-2">
+                          (автоматично з ПІБ)
+                        </span>
+                      </Label>
                       <Input
                         id="signature"
                         value={counterpartyForm.signature}
                         onChange={(e) => setCounterpartyForm({...counterpartyForm, signature: e.target.value})}
-                        placeholder="П.П. Петренко"
+                        placeholder="ПЕТРЕНКО П.П."
                       />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Формат: ПРІЗВИЩЕ І.П.
+                      </p>
                     </div>
                   </div>
                   
