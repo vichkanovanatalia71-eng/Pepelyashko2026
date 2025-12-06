@@ -79,12 +79,27 @@ class UserUpdate(BaseModel):
     company_name: Optional[str] = None
     phone: Optional[str] = None
     
+    # Supplier/Provider details
+    edrpou: Optional[str] = None
+    representative_name: Optional[str] = None
+    legal_address: Optional[str] = None
+    iban: Optional[str] = None
+    bank: Optional[str] = None
+    mfo: Optional[str] = None
+    director_name: Optional[str] = None
+    director_position: Optional[str] = None
+    position: Optional[str] = None
+    represented_by: Optional[str] = None
+    signature: Optional[str] = None
+    
     class Config:
         json_schema_extra = {
             "example": {
                 "full_name": "Іван Петренко",
                 "company_name": "ТОВ Новий Приклад",
-                "phone": "+380501234567"
+                "phone": "+380501234567",
+                "edrpou": "12345678",
+                "representative_name": "ТОВАРИСТВО З ОБМЕЖЕНОЮ ВІДПОВІДАЛЬНІСТЮ \"ПРИКЛАД\""
             }
         }
 
