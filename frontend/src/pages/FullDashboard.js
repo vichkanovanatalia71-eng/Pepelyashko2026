@@ -356,11 +356,13 @@ const FullDashboard = () => {
 
   // Handle EDRPOU input change with auto-search
   const handleEdrpouChange = (value) => {
-    setCounterpartyForm(prev => ({...prev, edrpou: value}));
+    // Only allow digits
+    const digitOnly = value.replace(/\D/g, '');
+    setCounterpartyForm(prev => ({...prev, edrpou: digitOnly}));
     
     // Auto-search when 8 digits (ЮрОсоба) or 10 digits (ФОП) entered
-    if ((value.length === 8 || value.length === 10) && /^(\d{8}|\d{10})$/.test(value)) {
-      searchByEdrpou(value);
+    if ((digitOnly.length === 8 || digitOnly.length === 10)) {
+      searchByEdrpou(digitOnly);
     }
   };
 
