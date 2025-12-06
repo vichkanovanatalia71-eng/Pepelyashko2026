@@ -162,6 +162,31 @@ class EmailService:
             attachment_name=f"Картка_контрагента_{counterparty_name[:30]}.pdf"
         )
     
+    def format_date_ukrainian(self, date_str: str) -> str:
+        """Format date in Ukrainian format: '06 грудня 2025 року'"""
+        from datetime import datetime
+        
+        months_ukrainian = {
+            1: 'січня', 2: 'лютого', 3: 'березня', 4: 'квітня',
+            5: 'травня', 6: 'червня', 7: 'липня', 8: 'серпня',
+            9: 'вересня', 10: 'жовтня', 11: 'листопада', 12: 'грудня'
+        }
+        
+        try:
+            # Parse ISO date string
+            if 'T' in date_str:
+                date_obj = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+            else:
+                date_obj = datetime.strptime(date_str, '%Y-%m-%d')
+            
+            day = date_obj.day
+            month = months_ukrainian.get(date_obj.month, '')
+            year = date_obj.year
+            
+            return f"{day:02d} {month} {year} року"
+        except:
+            return date_str
+    
     def send_order_document(
         self,
         to_email: str,
@@ -177,7 +202,7 @@ class EmailService:
         Args:
             to_email: Recipient email address
             order_number: Order number
-            order_date: Order date
+            order_date: Order date (will be formatted to Ukrainian)
             counterparty_name: Name of the counterparty
             total_amount: Total order amount
             pdf_path: Path to PDF file
@@ -185,7 +210,10 @@ class EmailService:
         Returns:
             True if email sent successfully
         """
-        subject = f"Замовлення №{order_number} від {order_date}"
+        # Format date to Ukrainian
+        formatted_date = self.format_date_ukrainian(order_date)
+        
+        subject = f"Замовлення №{order_number} від {formatted_date}"
         
         body = f"""
         <!DOCTYPE html>
