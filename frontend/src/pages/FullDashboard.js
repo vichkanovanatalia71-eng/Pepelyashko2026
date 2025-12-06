@@ -214,6 +214,69 @@ const FullDashboard = () => {
     setShowCounterpartyDialog(false);
     setViewingCounterparty(null);
     setCounterpartyDocuments(null);
+    setEditingCounterparty(false);
+  };
+
+  const startEditingCounterparty = () => {
+    if (viewingCounterparty) {
+      // Load counterparty data into form
+      setCounterpartyForm({
+        edrpou: viewingCounterparty.edrpou,
+        representative_name: viewingCounterparty.representative_name,
+        email: viewingCounterparty.email,
+        phone: viewingCounterparty.phone,
+        iban: viewingCounterparty.iban,
+        contract_type: viewingCounterparty.contract_type || '',
+        director_position: viewingCounterparty.director_position || '',
+        director_name: viewingCounterparty.director_name || '',
+        legal_address: viewingCounterparty.legal_address || '',
+        bank: viewingCounterparty.bank || '',
+        mfo: viewingCounterparty.mfo || '',
+        position: viewingCounterparty.position || '',
+        represented_by: viewingCounterparty.represented_by || '',
+        signature: viewingCounterparty.signature || ''
+      });
+      setEditingCounterparty(true);
+    }
+  };
+
+  const saveCounterpartyChanges = async () => {
+    setLoading(true);
+    
+    try {
+      await axios.put(`${API_URL}/api/counterparties/${viewingCounterparty._id}`, counterpartyForm);
+      toast.success('Контрагента успішно оновлено!');
+      
+      // Reload data and close dialog
+      await loadAllData();
+      closeCounterpartyDialog();
+    } catch (error) {
+      console.error('Error updating counterparty:', error);
+      toast.error(error.response?.data?.detail || 'Помилка оновлення контрагента');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const cancelEditingCounterparty = () => {
+    setEditingCounterparty(false);
+    // Reset form
+    setCounterpartyForm({
+      edrpou: '',
+      representative_name: '',
+      email: '',
+      phone: '',
+      iban: '',
+      contract_type: '',
+      director_position: '',
+      director_name: '',
+      legal_address: '',
+      bank: '',
+      mfo: '',
+      position: '',
+      represented_by: '',
+      signature: ''
+    });
   };
 
   // Auto-fill signature from director name
