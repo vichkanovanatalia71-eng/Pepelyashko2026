@@ -2521,9 +2521,9 @@ const FullDashboard = () => {
                 <Eye className="w-4 h-4 mr-2" />
                 Переглянути PDF
               </Button>
-              <Button variant="outline" onClick={downloadOrderPDF}>
-                <Download className="w-4 h-4 mr-2" />
-                Завантажити PDF
+              <Button variant="outline" onClick={startEditingOrder}>
+                <Edit className="w-4 h-4 mr-2" />
+                Редагувати
               </Button>
               <Button onClick={closeOrderDialog}>
                 Закрити
