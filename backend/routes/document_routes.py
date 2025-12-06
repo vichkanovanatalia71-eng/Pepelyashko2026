@@ -469,13 +469,25 @@ async def update_order(
                 detail="Замовлення не знайдено"
             )
         
-        # Prepare update data
+        # Prepare update data - ensure numeric values are stored as numbers
+        items = order_data.get("items", existing_order.get("items"))
+        
+        # Convert string values to numbers in items
+        if items:
+            for item in items:
+                if 'quantity' in item:
+                    item['quantity'] = float(item['quantity'])
+                if 'price' in item:
+                    item['price'] = float(item['price'])
+                if 'amount' in item:
+                    item['amount'] = float(item['amount'])
+        
         update_data = {
             "date": order_data.get("date", existing_order.get("date")),
             "counterparty_edrpou": order_data.get("counterparty_edrpou", existing_order.get("counterparty_edrpou")),
             "counterparty_name": order_data.get("counterparty_name", existing_order.get("counterparty_name")),
-            "items": order_data.get("items", existing_order.get("items")),
-            "total_amount": order_data.get("total_amount", existing_order.get("total_amount")),
+            "items": items,
+            "total_amount": float(order_data.get("total_amount", existing_order.get("total_amount"))),
             "updated_at": datetime.utcnow()
         }
         
