@@ -446,6 +446,160 @@ async def get_order_related_documents(
         )
 
 
+@router.delete("/orders/{order_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_order(
+    order_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Delete an order."""
+    from server import db as database
+    from bson import ObjectId
+    
+    try:
+        result = await database.orders.delete_one({
+            "_id": ObjectId(order_id),
+            "user_id": current_user["_id"]
+        })
+        
+        if result.deleted_count == 0:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Замовлення не знайдено"
+            )
+        
+        logger.info(f"Order deleted: {order_id} by user {current_user['_id']}")
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting order: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Помилка при видаленні замовлення"
+        )
+
+
+@router.get("/orders/{order_id}/pdf")
+async def get_order_pdf(
+    order_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Generate and return order PDF."""
+    from server import db as database
+    from bson import ObjectId
+    from services.order_pdf_service import OrderPDFService
+    from urllib.parse import quote
+    
+    try:
+        # Get order from database
+        order = await database.orders.find_one({
+            "_id": ObjectId(order_id),
+            "user_id": current_user["_id"]
+        }, {"_id": 0})
+        
+        if not order:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Замовлення не знайдено"
+            )
+        
+        # Generate PDF
+        pdf_service = OrderPDFService()
+        pdf_path = pdf_service.generate_pdf(order)
+        
+        # Generate filename with proper encoding
+        filename = f"Замовлення_{order.get('number', 'unknown')}.pdf"
+        encoded_filename = quote(filename.encode('utf-8'))
+        
+        return FileResponse(
+            path=pdf_path,
+            media_type='application/pdf',
+            headers={
+                'Content-Disposition': f"attachment; filename*=UTF-8''{encoded_filename}"
+            }
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error generating order PDF: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Помилка при генерації PDF"
+        )
+
+
+@router.post("/orders/{order_id}/send-email")
+async def send_order_email(
+    order_id: str,
+    email_data: dict,
+    current_user: dict = Depends(get_current_user)
+):
+    """Send order PDF to email."""
+    from server import db as database
+    from bson import ObjectId
+    from services.order_pdf_service import OrderPDFService
+    from services.email_service import EmailService
+    
+    try:
+        # Get order from database
+        order = await database.orders.find_one({
+            "_id": ObjectId(order_id),
+            "user_id": current_user["_id"]
+        }, {"_id": 0})
+        
+        if not order:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Замовлення не знайдено"
+            )
+        
+        recipient_email = email_data.get('email')
+        if not recipient_email:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email адреса не вказана"
+            )
+        
+        # Generate PDF
+        pdf_service = OrderPDFService()
+        pdf_path = pdf_service.generate_pdf(order)
+        
+        # Send email
+        email_service = EmailService()
+        order_number = order.get('number', 'unknown')
+        subject = f"Замовлення №{order_number}"
+        body = f"""
+Доброго дня!
+
+Надсилаємо Вам замовлення №{order_number}.
+
+Контрагент: {order.get('counterparty_name', '—')}
+Загальна сума: {order.get('total_amount', 0):.2f} грн
+
+З повагою,
+Система Управління Документами
+        """
+        
+        email_service.send_email_with_attachment(
+            to_email=recipient_email,
+            subject=subject,
+            body=body,
+            attachment_path=pdf_path,
+            attachment_name=f"Замовлення_{order_number}.pdf"
+        )
+        
+        logger.info(f"Order PDF sent to {recipient_email} by user {current_user['_id']}")
+        return {"message": f"PDF відправлено на {recipient_email}"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error sending order email: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Помилка при відправці email"
+        )
+
+
 # ==================== CONTRACT ROUTES ====================
 
 @router.post("/contracts", response_model=ContractModel, status_code=status.HTTP_201_CREATED)
