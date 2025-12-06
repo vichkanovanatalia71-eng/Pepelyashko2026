@@ -292,6 +292,85 @@ async def send_counterparty_card_email(
         )
 
 
+@router.get("/youscore/{edrpou}")
+async def get_youscore_data(
+    edrpou: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get company data from YouScore API by EDRPOU."""
+    import httpx
+    
+    try:
+        if not edrpou or (len(edrpou) != 8 and len(edrpou) != 10):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid EDRPOU (must be 8 or 10 digits)"
+            )
+        
+        # Call YouScore API
+        api_url = f"https://api.youscore.com.ua/v1/usr/{edrpou}"
+        params = {
+            "showCurrentData": "true",
+            "apiKey": "4a5a000047a6e89800a306e01306c62c21b2c773"
+        }
+        
+        headers = {
+            "accept": "application/json"
+        }
+        
+        logger.info(f"Fetching YouScore data for EDRPOU: {edrpou}")
+        
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.get(api_url, params=params, headers=headers)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Extract name from object or string
+                name_obj = data.get("name", "")
+                if isinstance(name_obj, dict):
+                    name = name_obj.get("fullName") or name_obj.get("shortName", "")
+                else:
+                    name = name_obj
+                
+                address = data.get("address", "")
+                
+                # Get director from signers array
+                ceo = ""
+                signers = data.get("signers", [])
+                if signers and isinstance(signers, list) and len(signers) > 0:
+                    first_signer = signers[0]
+                    if isinstance(first_signer, dict):
+                        ceo = first_signer.get("name", "")
+                
+                return {
+                    "name": name,
+                    "address": address,
+                    "ceo": ceo
+                }
+            else:
+                logger.warning(f"YouScore API returned status {response.status_code} for EDRPOU {edrpou}")
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Дані не знайдено в YouScore"
+                )
+                
+    except httpx.TimeoutException:
+        logger.error(f"YouScore API timeout for EDRPOU {edrpou}")
+        raise HTTPException(
+            status_code=status.HTTP_408_REQUEST_TIMEOUT,
+            detail="Таймаут при запиті до YouScore API"
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching YouScore data: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Помилка при отриманні даних з YouScore"
+        )
+
+
 @router.get("/{edrpou}/documents")
 async def get_counterparty_documents(
     edrpou: str,
