@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 class OrderService:
     def __init__(self, drive_service=None, sheets_service=None):
-        self.output_dir = Path(__file__).parent / "generated_orders"
+        self.output_dir = Path(__file__).parent / "generated_documents"
         self.output_dir.mkdir(exist_ok=True)
         self.drive_service = drive_service
         self.sheets_service = sheets_service
