@@ -65,7 +65,19 @@ class OrderPDFService:
         vat_amount = 0.0
         total_to_pay = total_without_vat + vat_amount
         
-        # Build professional HTML document
+        # Get counterparty details if available
+        counterparty_data = order.get('counterparty_details', {})
+        buyer_name = counterparty_data.get('representative_name', order.get('counterparty_name', '—'))
+        buyer_edrpou = order.get('counterparty_edrpou', '—')
+        buyer_address = counterparty_data.get('legal_address', '—')
+        buyer_iban = counterparty_data.get('iban', '—')
+        buyer_bank = counterparty_data.get('bank', '—')
+        buyer_mfo = counterparty_data.get('mfo', '—')
+        buyer_email = counterparty_data.get('email', '—')
+        buyer_phone = counterparty_data.get('phone', '—')
+        buyer_signature = counterparty_data.get('signature', '—')
+        
+        # Build professional HTML document with blue design
         html_content = f"""
         <!DOCTYPE html>
         <html>
@@ -80,26 +92,34 @@ class OrderPDFService:
                     font-family: 'DejaVu Sans', Arial, sans-serif;
                     font-size: 10pt;
                     line-height: 1.4;
-                    color: #000;
+                    color: #1e293b;
                     margin: 0;
                     padding: 0;
+                    background: #f8fafc;
                 }}
                 .document {{
                     width: 100%;
                     max-width: 210mm;
+                    background: white;
+                    padding: 20px;
                 }}
                 .header {{
                     text-align: center;
                     margin-bottom: 20px;
+                    padding: 20px;
+                    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+                    border-radius: 8px;
                 }}
                 .location {{
                     font-size: 9pt;
                     margin-bottom: 10px;
+                    color: #0c4a6e;
                 }}
                 .title {{
                     font-size: 14pt;
                     font-weight: bold;
                     margin: 10px 0;
+                    color: #0369a1;
                 }}
                 .section-title {{
                     font-size: 11pt;
@@ -107,6 +127,10 @@ class OrderPDFService:
                     text-align: center;
                     margin: 20px 0 15px 0;
                     text-transform: uppercase;
+                    color: #0369a1;
+                    padding: 8px;
+                    background: #e0f2fe;
+                    border-left: 4px solid #0ea5e9;
                 }}
                 table {{
                     width: 100%;
@@ -117,17 +141,18 @@ class OrderPDFService:
                     margin-bottom: 0;
                 }}
                 table.items-table th {{
-                    background-color: #e8e8e8;
-                    padding: 8px 5px;
+                    background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+                    color: white;
+                    padding: 10px 5px;
                     font-size: 9pt;
                     font-weight: bold;
-                    border: 1px solid #000;
+                    border: 1px solid #0284c7;
                     text-align: center;
                 }}
                 table.items-table td {{
-                    padding: 6px 5px;
+                    padding: 8px 5px;
                     font-size: 9pt;
-                    border: 1px solid #000;
+                    border: 1px solid #bfdbfe;
                 }}
                 .table-cell {{
                     vertical-align: middle;
@@ -143,16 +168,22 @@ class OrderPDFService:
                 }}
                 .summary-row td {{
                     border: none;
-                    border-top: 1px solid #000;
+                    border-top: 1px solid #0284c7;
                     padding: 8px 5px;
                     font-size: 10pt;
+                    background: #f0f9ff;
                 }}
                 .summary-row.total td {{
                     font-weight: bold;
-                    border-top: 2px solid #000;
+                    border-top: 2px solid #0369a1;
+                    background: #dbeafe;
+                    color: #0c4a6e;
                 }}
                 .explanations {{
                     margin: 20px 0;
+                    padding: 15px;
+                    background: #f8fafc;
+                    border-left: 3px solid #0ea5e9;
                 }}
                 .explanations ol {{
                     margin: 10px 0 10px 20px;
@@ -169,14 +200,14 @@ class OrderPDFService:
                 .signatures-grid {{
                     display: table;
                     width: 100%;
-                    border: 1px solid #000;
+                    border: 2px solid #0ea5e9;
                 }}
                 .party-column {{
                     display: table-cell;
                     width: 50%;
                     padding: 15px;
                     vertical-align: top;
-                    border-right: 1px solid #000;
+                    border-right: 2px solid #0ea5e9;
                 }}
                 .party-column:last-child {{
                     border-right: none;
@@ -187,27 +218,32 @@ class OrderPDFService:
                     text-align: center;
                     margin-bottom: 15px;
                     text-transform: uppercase;
+                    color: white;
+                    background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+                    padding: 8px;
+                    border-radius: 4px;
                 }}
                 .party-info {{
-                    font-size: 8.5pt;
-                    line-height: 1.6;
+                    font-size: 8pt;
+                    line-height: 1.8;
                 }}
                 .party-info .label {{
                     font-weight: bold;
                     display: inline-block;
-                    width: 70px;
+                    width: 85px;
+                    color: #0c4a6e;
                 }}
                 .party-info .value {{
                     display: inline;
                 }}
                 .party-info div {{
-                    margin-bottom: 4px;
+                    margin-bottom: 5px;
                     word-wrap: break-word;
                 }}
                 .signature-line {{
-                    margin-top: 25px;
+                    margin-top: 30px;
                     padding-top: 10px;
-                    border-top: 1px solid #000;
+                    border-top: 1px solid #0ea5e9;
                     text-align: center;
                     font-size: 9pt;
                 }}
@@ -218,7 +254,7 @@ class OrderPDFService:
                 <!-- Header -->
                 <div class="header">
                     <div class="location">Місце складання: м. Одеса</div>
-                    <div class="title">ЗАМОВЛЕННЯ № {order.get('number', '—')} ВІД {formatted_date}</div>
+                    <div class="title">ЗАМОВЛЕННЯ № {order.get('number', '—')} від {formatted_date}</div>
                 </div>
                 
                 <!-- Items Table -->
@@ -271,10 +307,16 @@ class OrderPDFService:
                         <div class="party-column">
                             <div class="party-header">Покупець</div>
                             <div class="party-info">
-                                <div><span class="label">Назва:</span> <span class="value">{order.get('counterparty_name', '—')}</span></div>
-                                <div><span class="label">ЄДРПОУ:</span> <span class="value">{order.get('counterparty_edrpou', '—')}</span></div>
+                                <div><span class="label">Назва:</span> <span class="value">{buyer_name}</span></div>
+                                <div><span class="label">ЄДРПОУ/РНОКПП:</span> <span class="value">{buyer_edrpou}</span></div>
+                                <div><span class="label">Адреса:</span> <span class="value">{buyer_address}</span></div>
+                                <div><span class="label">IBAN:</span> <span class="value">{buyer_iban}</span></div>
+                                <div><span class="label">Банк:</span> <span class="value">{buyer_bank}</span></div>
+                                <div><span class="label">МФО:</span> <span class="value">{buyer_mfo}</span></div>
+                                <div><span class="label">Email:</span> <span class="value">{buyer_email}</span></div>
+                                <div><span class="label">Тел.:</span> <span class="value">{buyer_phone}</span></div>
                                 <div class="signature-line">
-                                    <div>(підпис)</div>
+                                    <div>Підпис: {buyer_signature}</div>
                                 </div>
                             </div>
                         </div>
@@ -282,9 +324,15 @@ class OrderPDFService:
                             <div class="party-header">Постачальник</div>
                             <div class="party-info">
                                 <div><span class="label">Назва:</span> <span class="value">АКЦІОНЕРНЕ ТОВАРИСТВО "АНТОНОВ"</span></div>
-                                <div><span class="label">ЄДРПОУ:</span> <span class="value">14307529</span></div>
+                                <div><span class="label">ЄДРПОУ/РНОКПП:</span> <span class="value">14307529</span></div>
+                                <div><span class="label">Адреса:</span> <span class="value">04052, Україна, місто Одеса, вулиця Глибочицька, будинок 13, офіс 1</span></div>
+                                <div><span class="label">IBAN:</span> <span class="value">UA383052990000026001006812960</span></div>
+                                <div><span class="label">Банк:</span> <span class="value">в АТ КБ "ПриватБанк"</span></div>
+                                <div><span class="label">МФО:</span> <span class="value">305299</span></div>
+                                <div><span class="label">Email:</span> <span class="value">kievtds@gmail.com</span></div>
+                                <div><span class="label">Тел.:</span> <span class="value">504505588</span></div>
                                 <div class="signature-line">
-                                    <div>(підпис)</div>
+                                    <div>Підпис: Дмитро ТИТАРЕНКО</div>
                                 </div>
                             </div>
                         </div>
