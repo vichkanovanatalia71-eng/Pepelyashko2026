@@ -128,8 +128,8 @@ async def search_company(request: dict):
                 # Extract name from object or string
                 name_obj = data.get("name", "")
                 if isinstance(name_obj, dict):
-                    # Use shortName if available, otherwise fullName
-                    name = name_obj.get("shortName") or name_obj.get("fullName", "")
+                    # Use fullName (not shortName) as requested
+                    name = name_obj.get("fullName") or name_obj.get("shortName", "")
                 else:
                     name = name_obj
                 
