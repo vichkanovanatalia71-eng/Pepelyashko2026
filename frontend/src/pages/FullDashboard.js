@@ -1462,16 +1462,22 @@ const FullDashboard = () => {
                           }}
                         >
                           <SelectTrigger id="order_counterparty">
-                            <SelectValue placeholder="Оберіть контрагента зі списку" />
+                            <SelectValue placeholder="Оберіть контрагента або введіть ЄДРПОУ" />
                           </SelectTrigger>
                           <SelectContent>
-                            {counterparties.map((cp) => (
-                              <SelectItem key={cp._id} value={cp.edrpou}>
-                                {cp.representative_name} ({cp.edrpou})
-                              </SelectItem>
-                            ))}
+                            {counterparties
+                              .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+                              .map((cp) => (
+                                <SelectItem key={cp._id} value={cp.edrpou}>
+                                  {cp.representative_name} ({cp.edrpou})
+                                </SelectItem>
+                              ))
+                            }
                           </SelectContent>
                         </Select>
+                        <p className="text-xs text-gray-500 mt-1">
+                          💡 Можна шукати за назвою або ввести ЄДРПОУ
+                        </p>
                       </div>
                       
                       <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded">
