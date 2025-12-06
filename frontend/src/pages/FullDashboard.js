@@ -2225,7 +2225,7 @@ const FullDashboard = () => {
                   <Input
                     id="edit_iban"
                     value={counterpartyForm.iban}
-                    onChange={(e) => handleIbanChange(e.target.value)}
+                    onChange={(e) => handleIBANChange(e.target.value)}
                     placeholder="UA123456789012345678901234567"
                     required
                   />
