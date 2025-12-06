@@ -215,6 +215,76 @@ const FullDashboard = () => {
     setCounterpartyDocuments(null);
   };
 
+  // Auto-fill signature from director name
+  const generateSignature = (fullName) => {
+    if (!fullName || !fullName.trim()) return '';
+    
+    const parts = fullName.trim().split(' ').filter(p => p);
+    if (parts.length === 0) return '';
+    
+    // Format: ПРІЗВИЩЕ І.П.
+    const surname = parts[0].toUpperCase();
+    const initials = parts.slice(1).map(name => name[0].toUpperCase() + '.').join('');
+    
+    return initials ? `${surname} ${initials}` : surname;
+  };
+
+  // Search company info by EDRPOU using AI
+  const searchByEdrpou = async (edrpou) => {
+    if (!edrpou || edrpou.length < 8) {
+      toast.error('Введіть коректний ЄДРПОУ (8 цифр)');
+      return;
+    }
+
+    setSearchingEdrpou(true);
+    
+    try {
+      // Using web search to find company information
+      const searchQuery = `ЄДРПОУ ${edrpou} Україна повна назва юридична адреса`;
+      
+      // Call backend to perform web search (we'll create this endpoint)
+      const response = await axios.post(`${API_URL}/api/search-company`, {
+        edrpou: edrpou
+      });
+
+      if (response.data.found) {
+        setCounterpartyForm(prev => ({
+          ...prev,
+          representative_name: response.data.name || prev.representative_name,
+          legal_address: response.data.legal_address || prev.legal_address
+        }));
+        
+        toast.success('Дані знайдено! Перевірте та відредагуйте при необхідності');
+      } else {
+        toast.info('Дані не знайдено. Введіть вручну');
+      }
+    } catch (error) {
+      console.error('Error searching company:', error);
+      toast.error('Помилка пошуку. Введіть дані вручну');
+    } finally {
+      setSearchingEdrpou(false);
+    }
+  };
+
+  // Handle EDRPOU input change with auto-search
+  const handleEdrpouChange = (value) => {
+    setCounterpartyForm(prev => ({...prev, edrpou: value}));
+    
+    // Auto-search when 8 digits entered
+    if (value.length === 8 && /^\d{8}$/.test(value)) {
+      searchByEdrpou(value);
+    }
+  };
+
+  // Handle director name change with auto-fill signature
+  const handleDirectorNameChange = (value) => {
+    setCounterpartyForm(prev => ({
+      ...prev,
+      director_name: value,
+      signature: generateSignature(value)
+    }));
+  };
+
   // Document item management
   const addItem = () => {
     setDocumentForm(prev => ({
