@@ -440,7 +440,7 @@ const FullDashboard = () => {
   const handleDirectorNameChange = (value) => {
     setCounterpartyForm(prev => {
       const newSignature = generateSignature(value);
-      const newRepresentedBy = generateRepresentedBy(prev.position, value, prev.basis);
+      const newRepresentedBy = generateRepresentedBy(prev.position, value, prev.contract_type);
       
       return {
         ...prev,
@@ -454,7 +454,7 @@ const FullDashboard = () => {
   // Handle position change with auto-update represented_by
   const handlePositionChange = (value) => {
     setCounterpartyForm(prev => {
-      const newRepresentedBy = generateRepresentedBy(value, prev.director_name, prev.basis);
+      const newRepresentedBy = generateRepresentedBy(value, prev.director_name, prev.contract_type);
       
       return {
         ...prev,
@@ -471,7 +471,7 @@ const FullDashboard = () => {
       
       return {
         ...prev,
-        basis: value,
+        contract_type: value,
         represented_by: newRepresentedBy
       };
     });
