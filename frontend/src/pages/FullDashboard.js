@@ -45,7 +45,7 @@ const FullDashboard = () => {
   const [orders, setOrders] = useState([]);
   const [contracts, setContracts] = useState([]);
   
-  // Counterparty form
+  // Counterparty form - with all fields
   const [counterpartyForm, setCounterpartyForm] = useState({
     edrpou: '',
     representative_name: '',
@@ -62,6 +62,10 @@ const FullDashboard = () => {
     represented_by: '',
     signature: ''
   });
+  
+  // Dialog for viewing counterparty details
+  const [showCounterpartyDialog, setShowCounterpartyDialog] = useState(false);
+  const [viewingCounterparty, setViewingCounterparty] = useState(null);
   
   // Document form
   const [documentForm, setDocumentForm] = useState({
