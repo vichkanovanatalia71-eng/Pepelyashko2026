@@ -359,7 +359,7 @@ const FullDashboard = () => {
     setCounterpartyForm(prev => ({...prev, edrpou: value}));
     
     // Auto-search when 8 digits (ЮрОсоба) or 10 digits (ФОП) entered
-    if ((value.length === 8 || value.length === 10) && /^\d{8,10}$/.test(value)) {
+    if ((value.length === 8 || value.length === 10) && /^(\d{8}|\d{10})$/.test(value)) {
       searchByEdrpou(value);
     }
   };
