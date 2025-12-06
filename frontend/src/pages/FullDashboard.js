@@ -330,6 +330,31 @@ const FullDashboard = () => {
     }
   };
 
+  const downloadCounterpartyPDF = async () => {
+    if (!viewingCounterparty) return;
+    
+    try {
+      const response = await axios.get(
+        `${API_URL}/api/counterparties/${viewingCounterparty._id}/pdf`,
+        { responseType: 'blob' }
+      );
+      
+      // Create download link
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Картка_контрагента_${viewingCounterparty.edrpou}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      
+      toast.success('PDF картку завантажено!');
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      toast.error('Помилка завантаження PDF');
+    }
+  };
+
   // Auto-fill signature from director name
   // Format: Ім'я ПРІЗВИЩЕ (e.g., "Станіслав ЧОРНИЙ")
   const generateSignature = (fullName) => {
