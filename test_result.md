@@ -416,6 +416,18 @@ backend:
         comment: "✅ Пошук контрагента за ЄДРПОУ працює коректно. GET /api/counterparties повертає список з аркушу 'Основні дані', знайдено контрагента з ЄДРПОУ 40196816. GET /api/counterparties/40196816 повертає правильні дані: edrpou: '40196816', representative_name, email: 'baltapmsdbgr@gmail.com', phone: '380957786491', iban: 'UA648201720344370005000093420'. Виправлено проблему з дублікатами заголовків через fallback механізм. Функціональність працює, тимчасові проблеми з Google Sheets API quota під час тестування."
 
 frontend:
+  - task: "User Profile Cabinet with Supplier Details"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/FullDashboard.js, /app/backend/routes/auth_routes.py, /app/backend/routes/counterparty_routes.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "🎉 НОВИЙ КАБІНЕТ КОРИСТУВАЧА ПРОТЕСТОВАНО УСПІШНО! Всі вимоги з review request виконано: 1) АВТОРИЗАЦІЯ ✅ - успішний вхід як user1@example.com/password123, 2) ВКЛАДКА ПРОФІЛЬ ✅ - знайдено та відкрито 7-му вкладку 'Профіль' з іконкою Settings, 3) ОСОБИСТІ ДАНІ ✅ - секція присутня з полями: ПІБ (редагується), Email (disabled, сірий фон), Назва компанії (редагується), Телефон (редагується), 4) РЕКВІЗИТИ ПОСТАЧАЛЬНИКА ✅ - секція присутня з усіма полями: Код ЄДРПОУ з кнопкою 'Отримати дані', підказка '8 цифр для юридичної особи, 10 цифр для ФОП', Повна назва, Юридична адреса, IBAN, Банк, МФО, ПІБ керівника, Посада керівника, Посада підписанта, В особі (disabled, автозаповнюється), Підпис, 5) YOUSCORE ІНТЕГРАЦІЯ ✅ - протестовано з ЄДРПОУ 43677030, поля автоматично заповнилися: 'ТОВАРИСТВО З ОБМЕЖЕНОЮ ВІДПОВІДАЛЬНІСТЮ ВОРДКРАФТ' та адреса 'Україна, 65007, Одеська обл., місто Одеса, ВУЛИЦЯ КВІТНЕВА, будинок 22', 6) КНОПКА ЗБЕРЕГТИ ✅ - велика кнопка 'Зберегти профіль' працює, з'явилося toast 'Профіль успішно оновлено!', 7) АВТОЗАПОВНЕННЯ ✅ - поле 'В особі' автоматично заповнюється та має disabled стан. ДОДАТКОВО: Виправлено відсутній import Settings іконки та додано відсутній YouScore endpoint /api/counterparties/youscore/{edrpou}."
+
   - task: "UI/UX Design Update - surdo.org.ua Style"
     implemented: true
     working: true
