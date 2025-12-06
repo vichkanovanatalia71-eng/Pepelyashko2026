@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 def comprehensive_test():
     """Run comprehensive test as specified in review request"""
     
-    backend_url = "https://bizpaper-system.preview.emergentagent.com/api"
+    backend_url = "https://doc-pdf-refactor.preview.emergentagent.com/api"
     
     logger.info("🚀 STARTING COMPREHENSIVE PDF GENERATION TEST")
     logger.info("=" * 60)
