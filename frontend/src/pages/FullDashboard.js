@@ -1714,6 +1714,9 @@ const FullDashboard = () => {
                   {loading ? 'Видалення...' : 'Видалити'}
                 </Button>
                 <div className="flex gap-2">
+                  <Button variant="outline" onClick={openEmailDialog}>
+                    Відправити на Email
+                  </Button>
                   <Button variant="outline" onClick={downloadCounterpartyPDF}>
                     Завантажити PDF
                   </Button>
