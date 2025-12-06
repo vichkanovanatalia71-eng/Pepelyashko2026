@@ -355,7 +355,7 @@ class EmailService:
                     <p class="greeting">Доброго дня!</p>
                     
                     <p class="message">
-                        Надсилаємо Вам замовлення №<strong>{order_number}</strong> від <strong>{order_date}</strong>.
+                        Надсилаємо Вам замовлення №<strong>{order_number}</strong> від <strong>{formatted_date}</strong>.
                     </p>
                     
                     <div class="info-box">
@@ -365,7 +365,7 @@ class EmailService:
                         </div>
                         <div class="info-row">
                             <span class="info-label">📅 Дата:</span>
-                            <span class="info-value">{order_date}</span>
+                            <span class="info-value">{formatted_date}</span>
                         </div>
                         <div class="info-row">
                             <span class="info-label">🏢 Контрагент:</span>
