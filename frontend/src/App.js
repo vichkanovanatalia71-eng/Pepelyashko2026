@@ -4835,11 +4835,9 @@ function App() {
                       try {
                         const payload = {
                           counterparty_edrpou: selectedOrderData.counterparty_edrpou,
-                          items: selectedOrderData.items,
-                          total_amount: selectedOrderData.total_amount,
-                          based_on_order: selectedOrderData.order_number
+                          order_numbers: [selectedOrderData.order_number]
                         };
-                        const response = await axios.post(`${API}/acts/generate-pdf`, payload);
+                        const response = await axios.post(`${API}/acts/generate-from-orders`, payload);
                         if (response.data.success) {
                           successCount++;
                         }
