@@ -220,7 +220,7 @@ const FullDashboard = () => {
   const startEditingCounterparty = () => {
     if (viewingCounterparty) {
       // Normalize contract_type to valid dropdown values
-      const validBases = ['Статуту', 'Довіреності', 'Положення'];
+      const validBases = ['Статуту', 'Довіреності', 'Виписка'];
       let basis = viewingCounterparty.contract_type || 'Статуту';
       
       // If the stored value is not in the dropdown, default to "Статуту"
