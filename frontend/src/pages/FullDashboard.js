@@ -1391,30 +1391,178 @@ const FullDashboard = () => {
             <Card>
               <CardHeader>
                 <CardTitle>Створити Замовлення</CardTitle>
-                <CardDescription>Номер замовлення: {orders.length > 0 ? String(Math.max(...orders.map(o => parseInt(o.number) || 0)) + 1).padStart(4, '0') : '0001'}</CardDescription>
+                <CardDescription>
+                  Номер замовлення: {orders.length > 0 ? String(Math.max(...orders.map(o => parseInt(o.number) || 0)) + 1).padStart(4, '0') : '0001'}
+                  {selectedCounterpartyForOrder && ` • Контрагент: ${selectedCounterpartyForOrder.representative_name}`}
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {/* Step 1: Select Counterparty */}
-                  <div>
-                    <Label htmlFor="order_counterparty">Виберіть Контрагента *</Label>
-                    <Select>
-                      <SelectTrigger id="order_counterparty">
-                        <SelectValue placeholder="Оберіть контрагента зі списку" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {counterparties.map((cp) => (
-                          <SelectItem key={cp._id} value={cp.edrpou}>
-                            {cp.representative_name} ({cp.edrpou})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded">
-                    ℹ️ Оберіть контрагента зі списку. Номер замовлення буде присвоєно автоматично.
-                  </div>
+                  {!selectedCounterpartyForOrder ? (
+                    <>
+                      {/* Step 1: Select Counterparty */}
+                      <div>
+                        <Label htmlFor="order_counterparty">Виберіть Контрагента *</Label>
+                        <Select 
+                          onValueChange={(edrpou) => {
+                            const cp = counterparties.find(c => c.edrpou === edrpou);
+                            setSelectedCounterpartyForOrder(cp);
+                          }}
+                        >
+                          <SelectTrigger id="order_counterparty">
+                            <SelectValue placeholder="Оберіть контрагента зі списку" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {counterparties.map((cp) => (
+                              <SelectItem key={cp._id} value={cp.edrpou}>
+                                {cp.representative_name} ({cp.edrpou})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded">
+                        ℹ️ Оберіть контрагента зі списку. Номер замовлення буде присвоєно автоматично.
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      {/* Step 2: Add Items */}
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center">
+                          <Label>Товари/Послуги</Label>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setOrderItems([...orderItems, { name: '', unit: 'шт', quantity: 1, price: 0, amount: 0 }])}
+                          >
+                            + Додати рядок
+                          </Button>
+                        </div>
+                        
+                        <div className="border rounded-lg overflow-hidden">
+                          <table className="w-full">
+                            <thead className="bg-gray-50">
+                              <tr>
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Назва</th>
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Од.</th>
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Кільк.</th>
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Ціна</th>
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Сума</th>
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500"></th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {orderItems.map((item, index) => (
+                                <tr key={index} className="border-t">
+                                  <td className="px-3 py-2">
+                                    <Input
+                                      value={item.name}
+                                      onChange={(e) => {
+                                        const newItems = [...orderItems];
+                                        newItems[index].name = e.target.value;
+                                        setOrderItems(newItems);
+                                      }}
+                                      placeholder="Назва товару/послуги"
+                                      className="h-8"
+                                    />
+                                  </td>
+                                  <td className="px-3 py-2">
+                                    <Input
+                                      value={item.unit}
+                                      onChange={(e) => {
+                                        const newItems = [...orderItems];
+                                        newItems[index].unit = e.target.value;
+                                        setOrderItems(newItems);
+                                      }}
+                                      placeholder="шт"
+                                      className="h-8 w-16"
+                                    />
+                                  </td>
+                                  <td className="px-3 py-2">
+                                    <Input
+                                      type="number"
+                                      value={item.quantity}
+                                      onChange={(e) => {
+                                        const newItems = [...orderItems];
+                                        newItems[index].quantity = parseFloat(e.target.value) || 0;
+                                        newItems[index].amount = newItems[index].quantity * newItems[index].price;
+                                        setOrderItems(newItems);
+                                      }}
+                                      className="h-8 w-20"
+                                    />
+                                  </td>
+                                  <td className="px-3 py-2">
+                                    <Input
+                                      type="number"
+                                      value={item.price}
+                                      onChange={(e) => {
+                                        const newItems = [...orderItems];
+                                        newItems[index].price = parseFloat(e.target.value) || 0;
+                                        newItems[index].amount = newItems[index].quantity * newItems[index].price;
+                                        setOrderItems(newItems);
+                                      }}
+                                      className="h-8 w-24"
+                                    />
+                                  </td>
+                                  <td className="px-3 py-2">
+                                    <span className="font-medium">{item.amount.toFixed(2)}</span>
+                                  </td>
+                                  <td className="px-3 py-2">
+                                    {orderItems.length > 1 && (
+                                      <Button
+                                        type="button"
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => {
+                                          const newItems = orderItems.filter((_, i) => i !== index);
+                                          setOrderItems(newItems);
+                                        }}
+                                      >
+                                        ✕
+                                      </Button>
+                                    )}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                            <tfoot className="bg-gray-50">
+                              <tr>
+                                <td colSpan="4" className="px-3 py-2 text-right font-medium">
+                                  Загальна сума:
+                                </td>
+                                <td className="px-3 py-2 font-bold">
+                                  {orderItems.reduce((sum, item) => sum + item.amount, 0).toFixed(2)} грн
+                                </td>
+                                <td></td>
+                              </tr>
+                            </tfoot>
+                          </table>
+                        </div>
+                      </div>
+                      
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => {
+                            setSelectedCounterpartyForOrder(null);
+                            setOrderItems([{ name: '', unit: 'шт', quantity: 1, price: 0, amount: 0 }]);
+                          }}
+                        >
+                          Скасувати
+                        </Button>
+                        <Button
+                          type="button"
+                          disabled={orderItems.every(item => !item.name)}
+                        >
+                          Створити Замовлення
+                        </Button>
+                      </div>
+                    </>
+                  )}
                 </div>
               </CardContent>
             </Card>
