@@ -1198,6 +1198,84 @@ const FullDashboard = () => {
     toast.success('Ви успішно вийшли з системи');
   };
 
+  // Profile functions
+  const loadUserProfile = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/auth/me`);
+      setProfileData({
+        full_name: response.data.full_name || '',
+        email: response.data.email || '',
+        company_name: response.data.company_name || '',
+        phone: response.data.phone || '',
+        edrpou: response.data.edrpou || '',
+        representative_name: response.data.representative_name || '',
+        legal_address: response.data.legal_address || '',
+        iban: response.data.iban || '',
+        bank: response.data.bank || '',
+        mfo: response.data.mfo || '',
+        director_name: response.data.director_name || '',
+        director_position: response.data.director_position || '',
+        position: response.data.position || '',
+        represented_by: response.data.represented_by || '',
+        signature: response.data.signature || ''
+      });
+    } catch (error) {
+      console.error('Error loading profile:', error);
+      toast.error('Помилка завантаження профілю');
+    }
+  };
+
+  const fetchYouScoreDataForProfile = async () => {
+    if (!profileData.edrpou || profileData.edrpou.length < 8) {
+      toast.error('Введіть коректний ЄДРПОУ (8 або 10 цифр)');
+      return;
+    }
+
+    setLoadingProfile(true);
+    try {
+      const response = await axios.get(`${API_URL}/api/counterparties/youscore/${profileData.edrpou}`);
+      
+      if (response.data) {
+        const data = response.data;
+        
+        // Handle 10-digit EDRPOU (FOP)
+        let representativeName = data.name || '';
+        if (profileData.edrpou.length === 10) {
+          representativeName = `ФІЗИЧНА ОСОБА-ПІДПРИЄМЕЦЬ ${representativeName}`;
+        }
+        
+        setProfileData(prev => ({
+          ...prev,
+          representative_name: representativeName,
+          legal_address: data.address || '',
+          director_name: data.ceo || '',
+          director_position: data.ceo ? 'Директор' : ''
+        }));
+        
+        toast.success('Дані успішно отримані!');
+      }
+    } catch (error) {
+      console.error('Error fetching YouScore data:', error);
+      toast.error(error.response?.data?.detail || 'Помилка отримання даних з YouScore');
+    } finally {
+      setLoadingProfile(false);
+    }
+  };
+
+  const saveUserProfile = async () => {
+    setLoadingProfile(true);
+    try {
+      await axios.put(`${API_URL}/api/auth/profile`, profileData);
+      toast.success('Профіль успішно оновлено!');
+      await loadUserProfile();
+    } catch (error) {
+      console.error('Error saving profile:', error);
+      toast.error(error.response?.data?.detail || 'Помилка збереження профілю');
+    } finally {
+      setLoadingProfile(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-teal-50 via-white to-cyan-50">
       {/* Header */}
