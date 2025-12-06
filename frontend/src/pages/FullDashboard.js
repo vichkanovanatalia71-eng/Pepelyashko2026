@@ -1452,36 +1452,75 @@ const FullDashboard = () => {
                 <div className="space-y-4">
                   {!selectedCounterpartyForOrder ? (
                     <>
-                      {/* Step 1: Select Counterparty */}
-                      <div>
-                        <Label htmlFor="order_counterparty">Виберіть Контрагента *</Label>
-                        <Select 
-                          onValueChange={(edrpou) => {
-                            const cp = counterparties.find(c => c.edrpou === edrpou);
-                            setSelectedCounterpartyForOrder(cp);
-                          }}
-                        >
-                          <SelectTrigger id="order_counterparty">
-                            <SelectValue placeholder="Оберіть контрагента або введіть ЄДРПОУ" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {counterparties
-                              .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-                              .map((cp) => (
-                                <SelectItem key={cp._id} value={cp.edrpou}>
-                                  {cp.representative_name} ({cp.edrpou})
-                                </SelectItem>
-                              ))
-                            }
-                          </SelectContent>
-                        </Select>
-                        <p className="text-xs text-gray-500 mt-1">
-                          💡 Можна шукати за назвою або ввести ЄДРПОУ
-                        </p>
+                      {/* Step 1: Select or Search Counterparty */}
+                      <div className="space-y-3">
+                        <div>
+                          <Label htmlFor="order_edrpou_search">Пошук за ЄДРПОУ</Label>
+                          <div className="flex gap-2">
+                            <Input
+                              id="order_edrpou_search"
+                              type="text"
+                              inputMode="numeric"
+                              placeholder="Введіть ЄДРПОУ (8 або 10 цифр)"
+                              maxLength={10}
+                              onChange={(e) => {
+                                const value = e.target.value.replace(/\D/g, '');
+                                e.target.value = value;
+                                
+                                // Auto-search when 8 or 10 digits entered
+                                if (value.length === 8 || value.length === 10) {
+                                  const cp = counterparties.find(c => c.edrpou === value);
+                                  if (cp) {
+                                    setSelectedCounterpartyForOrder(cp);
+                                    toast.success(`Знайдено: ${cp.representative_name}`);
+                                  } else {
+                                    toast.error('Контрагента з таким ЄДРПОУ не знайдено');
+                                  }
+                                }
+                              }}
+                            />
+                          </div>
+                          <p className="text-xs text-gray-500 mt-1">
+                            💡 Введіть 8 цифр (ЮрОсоба) або 10 цифр (ФОП)
+                          </p>
+                        </div>
+                        
+                        <div className="flex items-center gap-3">
+                          <div className="flex-1 border-t border-gray-300"></div>
+                          <span className="text-sm text-gray-500">або</span>
+                          <div className="flex-1 border-t border-gray-300"></div>
+                        </div>
+                        
+                        <div>
+                          <Label htmlFor="order_counterparty">Оберіть зі списку</Label>
+                          <Select 
+                            onValueChange={(edrpou) => {
+                              const cp = counterparties.find(c => c.edrpou === edrpou);
+                              setSelectedCounterpartyForOrder(cp);
+                            }}
+                          >
+                            <SelectTrigger id="order_counterparty">
+                              <SelectValue placeholder="Оберіть контрагента зі списку" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {counterparties
+                                .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+                                .map((cp) => (
+                                  <SelectItem key={cp._id} value={cp.edrpou}>
+                                    {cp.representative_name} ({cp.edrpou})
+                                  </SelectItem>
+                                ))
+                              }
+                            </SelectContent>
+                          </Select>
+                          <p className="text-xs text-gray-500 mt-1">
+                            Контрагенти відсортовані від нових до старих
+                          </p>
+                        </div>
                       </div>
                       
                       <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded">
-                        ℹ️ Оберіть контрагента зі списку. Номер замовлення буде присвоєно автоматично.
+                        ℹ️ Номер замовлення буде присвоєно автоматично після вибору контрагента
                       </div>
                     </>
                   ) : (
