@@ -119,44 +119,32 @@ async def search_company(request: dict):
             
             if response.status_code == 200:
                 data = response.json()
-                logger.info(f"API Response structure: {list(data.keys()) if isinstance(data, dict) else type(data)}")
                 
-                # Try different possible structures
-                # Option 1: data.info.name
-                company_info = data.get("info", {})
+                # YouScore API returns data directly in root object
+                # name - company name
+                # address - legal address
+                # signers - array with director info
                 
-                # Option 2: direct in data
-                if not company_info:
-                    company_info = data
+                name = data.get("name", "")
+                address = data.get("address", "")
                 
-                # Extract name - try multiple possible field names
-                name = (
-                    company_info.get("name") or 
-                    company_info.get("full_name") or
-                    company_info.get("companyName") or
-                    company_info.get("shortName") or
-                    ""
-                )
-                
-                # Extract address - try multiple possible field names
-                address = (
-                    company_info.get("address") or
-                    company_info.get("legal_address") or
-                    company_info.get("legalAddress") or
-                    company_info.get("addressFull") or
-                    ""
-                )
-                
-                # Try to get director info if available
-                director_info = company_info.get("director", {}) or company_info.get("ceo", {})
+                # Get director from signers array
                 director_name = ""
-                if isinstance(director_info, dict):
-                    director_name = director_info.get("name", "") or director_info.get("fullName", "")
+                signers = data.get("signers", [])
+                if signers and isinstance(signers, list) and len(signers) > 0:
+                    first_signer = signers[0]
+                    if isinstance(first_signer, dict):
+                        # Try different field names for director
+                        director_name = (
+                            first_signer.get("name") or 
+                            first_signer.get("fullName") or 
+                            first_signer.get("personName") or
+                            ""
+                        )
                 
-                logger.info(f"Extracted - Name: {name[:50] if name else 'None'}, Address: {address[:50] if address else 'None'}")
+                logger.info(f"Found company - Name: {name if name else 'None'}, Address: {address if address else 'None'}")
                 
                 if name or address:
-                    logger.info(f"Company found: {name}")
                     return {
                         "found": True,
                         "name": name,
@@ -164,7 +152,7 @@ async def search_company(request: dict):
                         "director_name": director_name if director_name else None
                     }
                 else:
-                    logger.warning(f"Company data incomplete for EDRPOU: {edrpou}. Response keys: {list(company_info.keys())}")
+                    logger.warning(f"Company data incomplete for EDRPOU: {edrpou}")
                     return {
                         "found": False,
                         "message": "Company data incomplete"
