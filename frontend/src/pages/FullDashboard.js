@@ -626,7 +626,11 @@ const FullDashboard = () => {
                 ) : (
                   <div className="space-y-2">
                     {counterparties.map((counterparty) => (
-                      <Card key={counterparty._id} className="hover:shadow-md transition-shadow">
+                      <Card 
+                        key={counterparty._id} 
+                        className="hover:shadow-md transition-shadow cursor-pointer"
+                        onClick={() => viewCounterpartyDetails(counterparty)}
+                      >
                         <CardContent className="p-4">
                           <div className="flex items-center justify-between">
                             <div className="flex-1">
@@ -636,13 +640,7 @@ const FullDashboard = () => {
                                 {counterparty.email} | {counterparty.phone}
                               </p>
                             </div>
-                            <Button
-                              size="sm"
-                              onClick={() => viewCounterpartyDocuments(counterparty)}
-                            >
-                              <Eye className="w-4 h-4 mr-2" />
-                              Переглянути документи
-                            </Button>
+                            <Eye className="w-5 h-5 text-gray-400" />
                           </div>
                         </CardContent>
                       </Card>
