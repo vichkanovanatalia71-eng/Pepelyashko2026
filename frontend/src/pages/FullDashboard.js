@@ -445,6 +445,10 @@ const FullDashboard = () => {
               <Users className="w-4 h-4 mr-2" />
               Контрагенти
             </TabsTrigger>
+            <TabsTrigger value="orders">
+              <FileText className="w-4 h-4 mr-2" />
+              Замовлення
+            </TabsTrigger>
             <TabsTrigger value="invoices">
               <Receipt className="w-4 h-4 mr-2" />
               Рахунки
@@ -456,10 +460,6 @@ const FullDashboard = () => {
             <TabsTrigger value="waybills">
               <Package className="w-4 h-4 mr-2" />
               Накладні
-            </TabsTrigger>
-            <TabsTrigger value="orders">
-              <FileText className="w-4 h-4 mr-2" />
-              Замовлення
             </TabsTrigger>
             <TabsTrigger value="contracts">
               <FileSignature className="w-4 h-4 mr-2" />
