@@ -945,16 +945,16 @@ const FullDashboard = () => {
                     <div>
                       <Label htmlFor="basis">Діє на підставі</Label>
                       <Select 
-                        value={counterpartyForm.basis} 
+                        value={counterpartyForm.contract_type} 
                         onValueChange={handleBasisChange}
                       >
                         <SelectTrigger id="basis">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="statute">Статуту</SelectItem>
-                          <SelectItem value="edr">Виписка з ЄДР</SelectItem>
-                          <SelectItem value="power_of_attorney">Довіреність</SelectItem>
+                          <SelectItem value="Статуту">Статуту</SelectItem>
+                          <SelectItem value="Довіреності">Довіреності</SelectItem>
+                          <SelectItem value="Виписка">Виписки з ЄДР</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
