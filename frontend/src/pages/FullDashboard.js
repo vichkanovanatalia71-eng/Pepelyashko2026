@@ -1424,10 +1424,176 @@ const FullDashboard = () => {
             </div>
           )}
           
+          {editingCounterparty && (
+            <div className="space-y-4">
+              {/* Edit Mode - Editable Form (similar to creation form) */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="edit_edrpou">ЄДРПОУ *</Label>
+                  <Input
+                    id="edit_edrpou"
+                    value={counterpartyForm.edrpou}
+                    disabled
+                    className="bg-gray-100"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">ЄДРПОУ не можна змінювати</p>
+                </div>
+                
+                <div>
+                  <Label htmlFor="edit_name">Назва *</Label>
+                  <Input
+                    id="edit_name"
+                    value={counterpartyForm.representative_name}
+                    onChange={(e) => setCounterpartyForm(prev => ({...prev, representative_name: e.target.value}))}
+                    required
+                  />
+                </div>
+                
+                <div className="md:col-span-2">
+                  <Label htmlFor="edit_address">Юридична адреса</Label>
+                  <Input
+                    id="edit_address"
+                    value={counterpartyForm.legal_address}
+                    onChange={(e) => setCounterpartyForm(prev => ({...prev, legal_address: e.target.value}))}
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="edit_email">Email *</Label>
+                  <Input
+                    id="edit_email"
+                    type="email"
+                    value={counterpartyForm.email}
+                    onChange={(e) => setCounterpartyForm(prev => ({...prev, email: e.target.value}))}
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="edit_phone">Телефон *</Label>
+                  <Input
+                    id="edit_phone"
+                    value={counterpartyForm.phone}
+                    onChange={(e) => setCounterpartyForm(prev => ({...prev, phone: e.target.value}))}
+                    placeholder="+380501234567"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="edit_iban">IBAN *</Label>
+                  <Input
+                    id="edit_iban"
+                    value={counterpartyForm.iban}
+                    onChange={(e) => handleIbanChange(e.target.value)}
+                    placeholder="UA123456789012345678901234567"
+                    required
+                  />
+                  <p className="text-xs text-gray-500 mt-1">МФО: 6 цифр після перших 4 символів</p>
+                </div>
+                
+                <div>
+                  <Label htmlFor="edit_bank">Назва банку</Label>
+                  <Input
+                    id="edit_bank"
+                    value={counterpartyForm.bank}
+                    onChange={(e) => setCounterpartyForm(prev => ({...prev, bank: e.target.value}))}
+                    placeholder="АТ КБ 'ПриватБанк'"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="edit_mfo">МФО банку (автоматично з IBAN)</Label>
+                  <Input
+                    id="edit_mfo"
+                    value={counterpartyForm.mfo}
+                    onChange={(e) => setCounterpartyForm(prev => ({...prev, mfo: e.target.value}))}
+                    placeholder="305299"
+                    maxLength={6}
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="edit_director">ПІБ керівника</Label>
+                  <Input
+                    id="edit_director"
+                    value={counterpartyForm.director_name}
+                    onChange={(e) => handleDirectorNameChange(e.target.value)}
+                    placeholder="Чорний Станіслав Іванович"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Формат: Прізвище Ім'я По-батькові</p>
+                </div>
+                
+                <div>
+                  <Label htmlFor="edit_position">Посада</Label>
+                  <Input
+                    id="edit_position"
+                    value={counterpartyForm.position}
+                    onChange={(e) => handlePositionChange(e.target.value)}
+                    placeholder="Директор"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="edit_basis">Діє на підставі</Label>
+                  <select
+                    id="edit_basis"
+                    value={counterpartyForm.contract_type}
+                    onChange={(e) => handleBasisChange(e.target.value)}
+                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  >
+                    <option value="Статуту">Статуту</option>
+                    <option value="Довіреності">Довіреності</option>
+                    <option value="Положення">Положення</option>
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">Для автозаповнення "В особі"</p>
+                </div>
+                
+                <div className="md:col-span-2">
+                  <Label htmlFor="edit_represented">В особі (формується автоматично)</Label>
+                  <Input
+                    id="edit_represented"
+                    value={counterpartyForm.represented_by}
+                    onChange={(e) => setCounterpartyForm(prev => ({...prev, represented_by: e.target.value}))}
+                    placeholder="директора Чорного Станіслава Івановича, що діє на підставі Статуту"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Автоматично: посада (родовий) + ПІБ (родовий) + підстава</p>
+                </div>
+                
+                <div className="md:col-span-2">
+                  <Label htmlFor="edit_signature">Підпис (автоматично з ПІБ)</Label>
+                  <Input
+                    id="edit_signature"
+                    value={counterpartyForm.signature}
+                    onChange={(e) => setCounterpartyForm(prev => ({...prev, signature: e.target.value}))}
+                    placeholder="Станіслав ЧОРНИЙ"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Формат: Ім'я ПРІЗВИЩЕ</p>
+                </div>
+              </div>
+            </div>
+          )}
+          
           <DialogFooter>
-            <Button onClick={closeCounterpartyDialog}>
-              Закрити
-            </Button>
+            {!editingCounterparty ? (
+              <>
+                <Button variant="outline" onClick={startEditingCounterparty}>
+                  Редагувати
+                </Button>
+                <Button onClick={closeCounterpartyDialog}>
+                  Закрити
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="outline" onClick={cancelEditingCounterparty}>
+                  Скасувати
+                </Button>
+                <Button onClick={saveCounterpartyChanges} disabled={loading}>
+                  {loading ? 'Збереження...' : 'Зберегти зміни'}
+                </Button>
+              </>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
