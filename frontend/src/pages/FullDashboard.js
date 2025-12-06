@@ -158,7 +158,7 @@ const FullDashboard = () => {
         email: '',
         phone: '',
         iban: '',
-        contract_type: '',
+        contract_type: 'Статуту',
         director_position: '',
         director_name: '',
         legal_address: '',
