@@ -77,7 +77,7 @@ class OrderPDFService:
         vat_amount = 0.0
         total_to_pay = total_without_vat + vat_amount
         
-        # Get counterparty details if available
+        # Get counterparty (buyer) details if available
         counterparty_data = order.get('counterparty_details', {})
         buyer_name = counterparty_data.get('representative_name', order.get('counterparty_name', '—'))
         buyer_edrpou = order.get('counterparty_edrpou', '—')
@@ -88,6 +88,18 @@ class OrderPDFService:
         buyer_email = counterparty_data.get('email', '—')
         buyer_phone = counterparty_data.get('phone', '—')
         buyer_signature = counterparty_data.get('signature', '—')
+        
+        # Get supplier (user) details - use from user profile instead of hardcoded
+        supplier_data = order.get('supplier_details', {})
+        supplier_name = supplier_data.get('representative_name', supplier_data.get('company_name', 'АКЦІОНЕРНЕ ТОВАРИСТВО "АНТОНОВ"'))
+        supplier_edrpou = supplier_data.get('edrpou', '14307529')
+        supplier_address = supplier_data.get('legal_address', '04052, Україна, місто Одеса, вулиця Глибочицька, будинок 13, офіс 1')
+        supplier_iban = supplier_data.get('iban', 'UA383052990000026001006812960')
+        supplier_bank = supplier_data.get('bank', 'в АТ КБ "ПриватБанк"')
+        supplier_mfo = supplier_data.get('mfo', '305299')
+        supplier_email = supplier_data.get('email', 'kievtds@gmail.com')
+        supplier_phone = supplier_data.get('phone', '504505588')
+        supplier_signature = supplier_data.get('signature', 'Дмитро ТИТАРЕНКО')
         
         # Build professional HTML document with blue design
         html_content = f"""
