@@ -491,11 +491,14 @@ async def update_order(
                 detail="Замовлення не знайдено"
             )
         
-        # Get updated order
+        # Get updated order (include _id for response)
         updated_order = await database.orders.find_one(
-            {"_id": order_id},
-            {"_id": 0}
+            {"_id": order_id}
         )
+        
+        if updated_order:
+            # Convert MongoDB _id to string for response
+            updated_order['_id'] = str(updated_order.get('_id', order_id))
         
         logger.info(f"Order updated: {order_id} by user {current_user['_id']}")
         return updated_order
