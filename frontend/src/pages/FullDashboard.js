@@ -152,6 +152,7 @@ const FullDashboard = () => {
 
   useEffect(() => {
     loadAllData();
+    loadUserProfile();
   }, []);
 
   const loadAllData = async () => {
