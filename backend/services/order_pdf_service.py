@@ -16,16 +16,35 @@ class OrderPDFService:
         self.output_dir = Path("/tmp/order_pdfs")
         self.output_dir.mkdir(exist_ok=True)
     
+    def format_date_ukrainian(self, date_str: str) -> str:
+        """Format date in Ukrainian format: '06 грудня 2025 року'"""
+        months_ukrainian = {
+            1: 'січня', 2: 'лютого', 3: 'березня', 4: 'квітня',
+            5: 'травня', 6: 'червня', 7: 'липня', 8: 'серпня',
+            9: 'вересня', 10: 'жовтня', 11: 'листопада', 12: 'грудня'
+        }
+        
+        try:
+            # Parse ISO date string
+            if 'T' in date_str:
+                date_obj = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+            else:
+                date_obj = datetime.strptime(date_str, '%Y-%m-%d')
+            
+            day = date_obj.day
+            month = months_ukrainian.get(date_obj.month, '')
+            year = date_obj.year
+            
+            return f"{day:02d} {month} {year} року"
+        except:
+            return date_str
+    
     def generate_html(self, order: dict) -> str:
         """Generate HTML for order document with professional design."""
         
-        # Format date
+        # Format date in Ukrainian
         date_str = order.get('date', datetime.now().strftime('%Y-%m-%d'))
-        try:
-            date_obj = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
-            formatted_date = date_obj.strftime('%d.%m.%Y')
-        except:
-            formatted_date = date_str
+        formatted_date = self.format_date_ukrainian(date_str)
         
         # Calculate items for table
         items_html = ""
