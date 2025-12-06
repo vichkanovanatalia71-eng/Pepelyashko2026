@@ -214,6 +214,73 @@ async def download_counterparty_pdf(
         )
 
 
+@router.post("/{counterparty_id}/send-email")
+async def send_counterparty_card_email(
+    counterparty_id: str,
+    email_data: dict,
+    current_user: dict = Depends(get_current_user)
+):
+    """Send counterparty card PDF via email."""
+    from server import db as database
+    from services.counterparty_pdf_service import CounterpartyPDFService
+    from services.email_service import EmailService
+    
+    counterparty_service = CounterpartyService(database)
+    pdf_service = CounterpartyPDFService()
+    email_service = EmailService()
+    
+    try:
+        # Get recipient email from request
+        recipient_email = email_data.get('email')
+        
+        if not recipient_email:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email адреса обов'язкова"
+            )
+        
+        # Get counterparty data
+        counterparty = await counterparty_service.get_counterparty_by_id(counterparty_id, current_user['_id'])
+        
+        if not counterparty:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Контрагента не знайдено"
+            )
+        
+        # Generate PDF
+        pdf_path = pdf_service.generate_pdf(counterparty)
+        
+        # Send email
+        success = email_service.send_counterparty_card(
+            to_email=recipient_email,
+            counterparty_name=counterparty.get('representative_name', 'Unknown'),
+            pdf_path=pdf_path
+        )
+        
+        if not success:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Помилка при відправці email"
+            )
+        
+        logger.info(f"Counterparty card sent to {recipient_email} by user {current_user['_id']}")
+        
+        return {
+            "success": True,
+            "message": f"Картку контрагента відправлено на {recipient_email}"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error sending counterparty card email: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Помилка при відправці email"
+        )
+
+
 @router.get("/{edrpou}/documents")
 async def get_counterparty_documents(
     edrpou: str,
