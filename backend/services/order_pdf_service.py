@@ -56,19 +56,24 @@ class OrderPDFService:
         # Calculate items for table
         items_html = ""
         for idx, item in enumerate(order.get('items', []), 1):
+            # Convert to float to handle both string and numeric values
+            quantity = float(item.get('quantity', 0))
+            price = float(item.get('price', 0))
+            amount = float(item.get('amount', 0))
+            
             items_html += f"""
             <tr>
                 <td class="table-cell center">{idx}</td>
                 <td class="table-cell">{item.get('name', '—')}</td>
                 <td class="table-cell center">{item.get('unit', 'шт')}</td>
-                <td class="table-cell right">{item.get('quantity', 0):.2f}</td>
-                <td class="table-cell right">{item.get('price', 0):.2f}</td>
-                <td class="table-cell right bold">{item.get('amount', 0):.2f}</td>
+                <td class="table-cell right">{quantity:.2f}</td>
+                <td class="table-cell right">{price:.2f}</td>
+                <td class="table-cell right bold">{amount:.2f}</td>
             </tr>
             """
         
-        # Calculate totals
-        total_without_vat = order.get('total_amount', 0)
+        # Calculate totals - convert to float to handle both string and numeric values
+        total_without_vat = float(order.get('total_amount', 0))
         vat_amount = 0.0
         total_to_pay = total_without_vat + vat_amount
         
