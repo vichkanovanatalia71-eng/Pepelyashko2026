@@ -321,7 +321,7 @@ class ActService:
                 'based_on_contract': contract_number or ''
             }
             
-            self.sheets_service.create_act(act_record, drive_file_id)
+            self.sheets_service.create_act(act_record, drive_file_id, act_number)
             
             return {
                 'success': True,
