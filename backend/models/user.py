@@ -13,6 +13,20 @@ class UserModel(BaseModel):
     company_name: Optional[str] = None
     phone: Optional[str] = None
     is_active: bool = True
+    
+    # Supplier/Provider details (same as counterparty)
+    edrpou: Optional[str] = Field(None, description="Код ЄДРПОУ постачальника")
+    representative_name: Optional[str] = Field(None, description="Повна назва компанії")
+    legal_address: Optional[str] = Field(None, description="Юридична адреса")
+    iban: Optional[str] = Field(None, description="IBAN")
+    bank: Optional[str] = Field(None, description="Банк")
+    mfo: Optional[str] = Field(None, description="МФО")
+    director_name: Optional[str] = Field(None, description="ПІБ керівника")
+    director_position: Optional[str] = Field(None, description="Посада керівника")
+    position: Optional[str] = Field(None, description="Посада підписанта")
+    represented_by: Optional[str] = Field(None, description="В особі")
+    signature: Optional[str] = Field(None, description="Підпис")
+    
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
     
@@ -25,7 +39,11 @@ class UserModel(BaseModel):
                 "full_name": "Іван Петренко",
                 "company_name": "ТОВ Приклад",
                 "phone": "+380501234567",
-                "is_active": True
+                "is_active": True,
+                "edrpou": "12345678",
+                "representative_name": "ТОВАРИСТВО З ОБМЕЖЕНОЮ ВІДПОВІДАЛЬНІСТЮ \"ПРИКЛАД\"",
+                "legal_address": "м. Київ, вул. Хрещатик, 1",
+                "iban": "UA123456789012345678901234567"
             }
         }
 
