@@ -773,13 +773,22 @@ const FullDashboard = () => {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="iban">IBAN *</Label>
+                      <Label htmlFor="iban">
+                        IBAN *
+                        <span className="text-xs text-gray-500 ml-2">
+                          (МФО формується автоматично)
+                        </span>
+                      </Label>
                       <Input
                         id="iban"
                         value={counterpartyForm.iban}
-                        onChange={(e) => setCounterpartyForm({...counterpartyForm, iban: e.target.value})}
+                        onChange={(e) => handleIBANChange(e.target.value)}
+                        placeholder="UA593052990000026008034909558"
                         required
                       />
+                      <p className="text-xs text-gray-500 mt-1">
+                        МФО: 6 цифр після перших 4 символів
+                      </p>
                     </div>
                     <div>
                       <Label htmlFor="bank">Назва банку</Label>
@@ -791,12 +800,18 @@ const FullDashboard = () => {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="mfo">МФО банку</Label>
+                      <Label htmlFor="mfo">
+                        МФО банку
+                        <span className="text-xs text-teal-600 ml-2">
+                          (автоматично з IBAN)
+                        </span>
+                      </Label>
                       <Input
                         id="mfo"
                         value={counterpartyForm.mfo}
                         onChange={(e) => setCounterpartyForm({...counterpartyForm, mfo: e.target.value})}
                         placeholder="305299"
+                        className="bg-gray-50"
                       />
                     </div>
                     <div>
