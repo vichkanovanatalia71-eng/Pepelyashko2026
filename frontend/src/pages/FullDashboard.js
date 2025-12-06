@@ -2236,7 +2236,7 @@ const FullDashboard = () => {
             <Button variant="outline" onClick={closeEmailDialog}>
               Скасувати
             </Button>
-            <Button onClick={sendCounterpartyEmail} disabled={loading || !emailRecipient}>
+            <Button onClick={handleSendEmail} disabled={loading || !emailRecipient}>
               {loading ? 'Відправка...' : 'Відправити'}
             </Button>
           </DialogFooter>
