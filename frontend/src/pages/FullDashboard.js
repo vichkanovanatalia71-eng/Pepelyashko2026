@@ -1664,6 +1664,9 @@ const FullDashboard = () => {
                   {loading ? 'Видалення...' : 'Видалити'}
                 </Button>
                 <div className="flex gap-2">
+                  <Button variant="outline" onClick={downloadCounterpartyPDF}>
+                    Завантажити PDF
+                  </Button>
                   <Button variant="outline" onClick={startEditingCounterparty}>
                     Редагувати
                   </Button>
