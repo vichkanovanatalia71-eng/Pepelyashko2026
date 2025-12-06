@@ -93,7 +93,6 @@ const FullDashboard = () => {
     items: [],
     total_amount: 0
   });
-  const [editingOrder, setEditingOrder] = useState(false);
   
   // Document form
   const [documentForm, setDocumentForm] = useState({
