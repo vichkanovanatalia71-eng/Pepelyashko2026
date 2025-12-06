@@ -1380,6 +1380,44 @@ const FullDashboard = () => {
           </TabsContent>
 
           <TabsContent value="orders" className="space-y-6">
+            {/* Create Order Form */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Створити Замовлення</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="order_counterparty_edrpou">ЄДРПОУ Контрагента *</Label>
+                      <Input
+                        id="order_counterparty_edrpou"
+                        placeholder="12345678"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="order_number">Номер Замовлення *</Label>
+                      <Input
+                        id="order_number"
+                        placeholder="0001"
+                        required
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded">
+                    ℹ️ Після введення ЄДРПОУ та номера, ви зможете додати товари/послуги до замовлення
+                  </div>
+                  
+                  <Button type="submit">
+                    Створити Замовлення
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+            
+            {/* Orders List */}
             <Card>
               <CardHeader>
                 <CardTitle>Список Замовлень ({orders.length})</CardTitle>
