@@ -364,12 +364,55 @@ const FullDashboard = () => {
     }
   };
 
-  // Handle director name change with auto-fill signature
+  // Handle director name change with auto-fill signature and represented_by
   const handleDirectorNameChange = (value) => {
+    setCounterpartyForm(prev => {
+      const newSignature = generateSignature(value);
+      const newRepresentedBy = generateRepresentedBy(prev.position, value, prev.basis);
+      
+      return {
+        ...prev,
+        director_name: value,
+        signature: newSignature,
+        represented_by: newRepresentedBy
+      };
+    });
+  };
+
+  // Handle position change with auto-update represented_by
+  const handlePositionChange = (value) => {
+    setCounterpartyForm(prev => {
+      const newRepresentedBy = generateRepresentedBy(value, prev.director_name, prev.basis);
+      
+      return {
+        ...prev,
+        position: value,
+        represented_by: newRepresentedBy
+      };
+    });
+  };
+
+  // Handle basis change with auto-update represented_by
+  const handleBasisChange = (value) => {
+    setCounterpartyForm(prev => {
+      const newRepresentedBy = generateRepresentedBy(prev.position, prev.director_name, value);
+      
+      return {
+        ...prev,
+        basis: value,
+        represented_by: newRepresentedBy
+      };
+    });
+  };
+
+  // Handle IBAN change with auto-extract MFO
+  const handleIBANChange = (value) => {
+    const mfo = extractMFOFromIBAN(value);
+    
     setCounterpartyForm(prev => ({
       ...prev,
-      director_name: value,
-      signature: generateSignature(value)
+      iban: value,
+      mfo: mfo
     }));
   };
 
