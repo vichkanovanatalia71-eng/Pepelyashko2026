@@ -493,6 +493,86 @@ const FullDashboard = () => {
     }
   };
 
+  const openOrderDialog = (order) => {
+    setViewingOrder(order);
+    setShowOrderDialog(true);
+  };
+
+  const closeOrderDialog = () => {
+    setShowOrderDialog(false);
+    setViewingOrder(null);
+    setEditingOrder(false);
+  };
+
+  const deleteOrder = async () => {
+    if (!viewingOrder) return;
+    
+    if (!window.confirm(`Ви впевнені, що хочете видалити замовлення №${viewingOrder.number}?`)) {
+      return;
+    }
+    
+    setLoading(true);
+    
+    try {
+      await axios.delete(`${API_URL}/api/orders/${viewingOrder._id}`);
+      toast.success('Замовлення успішно видалено!');
+      
+      await loadAllData();
+      closeOrderDialog();
+    } catch (error) {
+      console.error('Error deleting order:', error);
+      toast.error(error.response?.data?.detail || 'Помилка видалення замовлення');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const downloadOrderPDF = async () => {
+    if (!viewingOrder) return;
+    
+    try {
+      const response = await axios.get(
+        `${API_URL}/api/orders/${viewingOrder._id}/pdf`,
+        { responseType: 'blob' }
+      );
+      
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Замовлення_${viewingOrder.number}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast.success('PDF замовлення завантажено!');
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      toast.error('Помилка завантаження PDF');
+    }
+  };
+
+  const previewOrderPDF = async () => {
+    if (!viewingOrder) return;
+    
+    try {
+      const response = await axios.get(
+        `${API_URL}/api/orders/${viewingOrder._id}/pdf`,
+        { responseType: 'blob' }
+      );
+      
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+      window.open(url, '_blank');
+      
+      setTimeout(() => window.URL.revokeObjectURL(url), 100);
+      
+      toast.success('PDF відкрито для перегляду');
+    } catch (error) {
+      console.error('Error previewing PDF:', error);
+      toast.error('Помилка відкриття PDF');
+    }
+  };
+
   // Auto-fill signature from director name
   // Format: Ім'я ПРІЗВИЩЕ (e.g., "Станіслав ЧОРНИЙ")
   const generateSignature = (fullName) => {
