@@ -81,6 +81,11 @@ const FullDashboard = () => {
     { name: '', unit: 'шт', quantity: 1, price: 0, amount: 0 }
   ]);
   
+  // Order viewing/editing
+  const [showOrderDialog, setShowOrderDialog] = useState(false);
+  const [viewingOrder, setViewingOrder] = useState(null);
+  const [editingOrder, setEditingOrder] = useState(false);
+  
   // Document form
   const [documentForm, setDocumentForm] = useState({
     counterparty_edrpou: '',
