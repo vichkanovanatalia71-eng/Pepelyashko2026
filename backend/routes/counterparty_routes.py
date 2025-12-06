@@ -183,7 +183,7 @@ async def download_counterparty_pdf(
     
     try:
         # Get counterparty data
-        counterparty = await counterparty_service.get_counterparty_by_id(counterparty_id, current_user['_id'])
+        counterparty = await counterparty_service.get_counterparty_by_id(current_user['_id'], counterparty_id)
         
         if not counterparty:
             raise HTTPException(
@@ -240,7 +240,7 @@ async def send_counterparty_card_email(
             )
         
         # Get counterparty data
-        counterparty = await counterparty_service.get_counterparty_by_id(counterparty_id, current_user['_id'])
+        counterparty = await counterparty_service.get_counterparty_by_id(current_user['_id'], counterparty_id)
         
         if not counterparty:
             raise HTTPException(
