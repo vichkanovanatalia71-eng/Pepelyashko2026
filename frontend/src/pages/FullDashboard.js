@@ -696,6 +696,8 @@ const FullDashboard = () => {
                       <div className="flex gap-2">
                         <Input
                           id="edrpou"
+                          type="text"
+                          inputMode="numeric"
                           value={counterpartyForm.edrpou}
                           onChange={(e) => handleEdrpouChange(e.target.value)}
                           placeholder="12345678 або 1234567890"
