@@ -95,10 +95,10 @@ async def search_company(request: dict):
     try:
         edrpou = request.get("edrpou", "")
         
-        if not edrpou or len(edrpou) != 8:
+        if not edrpou or (len(edrpou) != 8 and len(edrpou) != 10):
             return {
                 "found": False,
-                "message": "Invalid EDRPOU"
+                "message": "Invalid EDRPOU (must be 8 or 10 digits)"
             }
         
         # Call YouScore API
