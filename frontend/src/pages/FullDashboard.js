@@ -900,7 +900,7 @@ const FullDashboard = () => {
 
       if (response.data.found) {
         // Add "ФІЗИЧНА ОСОБА-ПІДПРИЄМЕЦЬ" prefix for 10-digit EDRPOU (FOP)
-        let fullName = response.data.name || prev.representative_name;
+        let fullName = response.data.name || counterpartyForm.representative_name;
         if (edrpou.length === 10 && fullName && !fullName.startsWith('ФІЗИЧНА ОСОБА-ПІДПРИЄМЕЦЬ')) {
           fullName = 'ФІЗИЧНА ОСОБА-ПІДПРИЄМЕЦЬ ' + fullName;
         }
