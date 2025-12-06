@@ -2319,7 +2319,7 @@ const FullDashboard = () => {
                 </div>
                 <div>
                   <Label className="text-sm text-gray-600">Дата</Label>
-                  <p className="text-lg font-semibold">{viewingOrder.date}</p>
+                  <p className="text-lg font-semibold">{formatDateUkrainian(viewingOrder.date)}</p>
                 </div>
               </div>
               
