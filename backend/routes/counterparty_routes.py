@@ -167,6 +167,53 @@ async def delete_counterparty(
         )
 
 
+@router.get("/{counterparty_id}/pdf")
+async def download_counterparty_pdf(
+    counterparty_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Generate and download counterparty card as PDF."""
+    from server import db as database
+    from services.counterparty_pdf_service import CounterpartyPDFService
+    from fastapi.responses import FileResponse
+    import os
+    
+    counterparty_service = CounterpartyService(database)
+    pdf_service = CounterpartyPDFService()
+    
+    try:
+        # Get counterparty data
+        counterparty = await counterparty_service.get_counterparty_by_id(counterparty_id, current_user['_id'])
+        
+        if not counterparty:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Контрагента не знайдено"
+            )
+        
+        # Generate PDF
+        pdf_path = pdf_service.generate_pdf(counterparty)
+        
+        # Return file
+        filename = f"Картка_контрагента_{counterparty.get('edrpou', 'unknown')}.pdf"
+        
+        return FileResponse(
+            path=pdf_path,
+            media_type='application/pdf',
+            filename=filename,
+            headers={"Content-Disposition": f"attachment; filename*=UTF-8''{filename}"}
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error generating counterparty PDF: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Помилка при генерації PDF"
+        )
+
+
 @router.get("/{edrpou}/documents")
 async def get_counterparty_documents(
     edrpou: str,
