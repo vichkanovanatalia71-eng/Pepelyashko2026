@@ -1,165 +1,184 @@
 <analysis>**original_problem_statement:**
-The user initially reported that viewing and sending individual documents (invoices, acts, etc.) associated with an order was not working. Following this, the user requested a major architectural refactor: all documents should first be saved as data-only records, with PDF generation becoming an on-demand action. When a user views a document, the system must check for a PDF generated within the last 3 days; if one exists, it should be displayed, otherwise, a new one should be generated. This logic must apply to all document types.
+The user's overall goal is to build a document management system. The initial phase focused on Counterparties. This session's work was to extend that functionality to Orders and then add a Profile section for managing the user's own company details.
 
-Throughout the session, the user reported several persistent issues:
-1.  Viewing documents showed old templates (hardcoded layouts) instead of the latest editable HTML template versions.
-2.  Newly created documents (e.g., invoices, acts) based on an order were not appearing in that order's related documents list.
-3.  The PDF preview window for newly generated documents was often blank, even though the PDF could be successfully sent via email.
+The user's specific requests in this session were:
+1.  **Order Management:** Implement full CRUD (Create, Read, Update, Delete) functionality for Orders, mirroring the features already built for Counterparties. This includes viewing, deleting, emailing, and generating a PDF for each order.
+2.  **Order PDF/Email Styling:** The generated Order PDF and the accompanying email must be styled professionally, using a blue color scheme consistent with the Orders tab.
+3.  **Date Formatting:** All dates, especially in generated PDFs and emails, must be in a specific Ukrainian format: DD місяць YYYY року (e.g., 06 грудня 2025 року).
+4.  **Order Editing:** Replace the Download PDF button in the order view dialog with an Edit button and implement a full editing workflow for orders.
+5.  **Dynamic Supplier Details:** Stop hardcoding the Supplier (seller) information in documents. Instead, these details must be pulled from the user's own profile.
+6.  **User Profile Cabinet:** Create a new Profile tab where the user can enter and edit their own company/supplier details. This form should have the same advanced functionality as the counterparty creation form, including validation and data fetching from the YouScore API.
 
 **User's preferred language**:
-Ukrainian. The user explicitly requested, Перекладу на українську і в подальшому спілкуйся зі мною українською. The next agent MUST respond in Ukrainian only.
+Ukrainian. The user consistently communicates in Ukrainian. The next agent **MUST** respond in Ukrainian only.
 
 **what currently exists?**
-The application is a full-stack document management system using React, FastAPI, and Google Sheets for data storage. A significant architectural change has been partially implemented, where documents are created as data records first, and PDFs are generated on-demand with a 3-day lifecycle.
-
-Key fixes from the last session include:
-- Switching PDF generation for Invoices and Acts from a hardcoded service () to template-based services (, ), resolving the old templates issue.
-- Correcting frontend API calls to use the proper endpoints for creating related documents.
-- Fixing the root cause of related documents not appearing by correcting a column header mismatch in , which now ensures the  field is saved correctly.
+The application is a full-stack React/FastAPI/MongoDB system.
+- **Counterparty Management:** A complete module with full CRUD, PDF generation, and email functionality.
+- **Order Management:** This module is now also feature-complete. Users can create, view, edit, delete, preview PDFs, and email orders. All requested bug fixes (date formatting, type conversion) have been implemented.
+- **User Profile/Supplier Cabinet:** A new Профіль (Profile) tab exists in the dashboard. It contains a comprehensive form allowing the user to manage their own company details, which are then used as the Supplier in all generated documents (like Orders). This form includes YouScore API integration for automatic data population.
 
 **Last working item**:
-- **Last item agent was working:** The agent was fixing a critical bug where documents created based on an order were not appearing in the order's related documents list. The root cause, identified by , was a mismatch between the number of columns defined in the Google Sheets headers and the data being written, causing the  field to be silently dropped. The agent fixed this by adding the missing  column to the header definitions in  for Invoices, Acts, and Waybills.
+- **Last item agent was working:** Implementing the Profile tab to allow users to edit their own company/supplier details. The agent added the new tab, built the frontend form with YouScore integration, connected it to backend endpoints for fetching and updating the user profile, and verified its functionality with the testing agent.
 - **Status:** USER VERIFICATION PENDING
-- **Agent Testing Done:** Y (via curl commands to create a document and then verify its presence in the related documents list, which was successful).
-- **Which testing method agent to use?** Manual testing by user. If that fails, the next agent should use the screenshot tool to analyze the UI and console logs.
+- **Agent Testing Done:** Y (via testing agent)
+- **Which testing method agent to use?** Frontend testing agent. The user needs to verify the complete workflow of entering their data in the new profile tab and seeing it correctly reflected in a newly generated Order PDF.
 - **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
-- **Issue 1: (P0) User Verification for Related Documents Fix.** The final fix for making related documents appear correctly under an order is awaiting user confirmation.
-
-  - **Issues Detail:**
-    - **Issue 1:** Related documents are not visible.
-      - **Attempted fixes:** The agent identified that the  field was not being saved to Google Sheets due to a column mismatch in the   method. The  column was missing from the header definitions.
-      - **Next debug checklist:** The user needs to test creating an order, then creating an invoice/act based on it, and confirming the new document appears in the order's related documents section. If it fails, check browser cache (Ctrl+F5) and then backend logs for any Google Sheets API errors during the  or  calls.
-      - **Why fix this issue and what will be achieved with the fix?** This is a core functionality of the application. Fixing it will allow users to track all documents related to a specific order.
-      - **Status:** USER VERIFICATION PENDING
-      - **Is recurring issue?** Y
-      - **Should Test frontend/backend/both after fix?** Frontend.
-      - **Blocked on other issue:** None.
+There are no active high-priority issues. The primary pending item is user verification of the newly completed Profile feature.
 
 **In progress Task List**:
-- **Task 1: (P0) Complete the Create-then-Generate Architecture Rollout.**
-  - **Where to resume:** The architecture has been implemented for Invoices, Acts, and Orders. It needs to be implemented for **Waybills** and **Contracts**.
-  - **What will be achieved with this?** This will unify the document lifecycle across the entire application, reduce initial load times, and manage storage by keeping PDFs only for a limited time.
-  - **Status:** IN PROGRESS
-  - **Should Test frontend/backend/both after fix?** Both.
-  - **Blocked on something:** Upcoming Task 1 (creating a template for Waybills).
+- **Task 1: (P0) Await User Verification for Profile Cabinet**
+  - **Where to resume:** Ask the user to test the new Профіль (Profile) tab. They should fill in their company details, save them, then create a new Order and generate a PDF to confirm their details appear correctly as the Supplier.
+  - **What will be achieved with this?** Confirmation that the dynamic supplier details feature is working as requested.
+  - **Status:** USER VERIFICATION PENDING
+  - **Should Test frontend/backend/both after fix?** N/A
+  - **Blocked on something:** User feedback.
 
 **Upcoming and Future Tasks**
 - **Upcoming Tasks:**
-  - **(P0) Implement HTML Template for Waybills:** Waybills are the only document type (besides contracts which have a mixed implementation) still using the hardcoded  (ReportLab).
-    - Create .
-    - Create  that uses this HTML template with WeasyPrint.
-    - Update endpoints for Waybills in  to use this new service.
-  - **(P1) Verify 3-Day PDF Expiry Logic:** The logic to regenerate PDFs older than 3 days has been added but not thoroughly tested. It needs to be confirmed that the  timestamp is correctly written and read, and that the logic correctly triggers regeneration.
+  - **(P0) Implement Management for Other Documents:** The core request to view/edit/PDF/email documents needs to be implemented for the remaining tabs: , , , and . The pattern is already established from the Orders implementation.
 - **Future Tasks:**
-  - **(P1) Implement Background PDF Cleanup:** Create a cron job or scheduled task to automatically delete PDF files from  that are older than 3 days.
-  - **(P2) Refactor Service Layer:** Consolidate the numerous document services (, , , ) to reduce code duplication and clarify which service is responsible for what.
+  - **(P1) Refactor :** This file is now a massive monolith (>2400 lines) and is extremely fragile. It urgently needs to be broken down into smaller, reusable components (e.g., , , ). This is a critical piece of technical debt.
+  - **(P1) Implement Template Version History:** Allow users to roll back document templates to one of the last three versions.
+  - **(P2) Background PDF Cleanup:** Implement a scheduled task to delete old, generated PDF files from the server.
 
 **Completed work in this session**
-- **System & Backend:**
-  - Fixed a server startup crash by installing the  dependency for WeasyPrint.
-  - Unified all generated PDFs into a single  directory, removing obsolete directories.
-  - Implemented mocked email endpoints to prevent frontend errors.
-- **Core Architecture Refactor:**
-  - Implemented create-then-generate logic for Invoices and Acts, including adding  endpoints and 3-day expiry logic.
-  - Switched Invoice and Act PDF generation to use HTML templates (, ), fixing the old templates issue.
-- **Bug Fixes:**
-  - **Fixed Critical Bug:** Resolved the issue of related documents not appearing by correcting a column header mismatch in .
-  - Fixed PDF preview for Orders by pointing the API to the correct  directory.
-  - Corrected frontend API calls to use the appropriate backend endpoints () for creating related documents.
+- **Order Management Module (DONE):**
+  - Implemented a complete View, Edit, Delete, PDF, and Email feature set for Orders.
+  - Created a new  and added all necessary backend endpoints in .
+  - Built the frontend dialog for viewing and editing orders in .
+- **Critical Bug Fixes for Orders (DONE):**
+  - **Date Formatting:** Fixed a persistent bug to ensure dates in PDFs and emails consistently appear in the Ukrainian format 06 грудня 2025 року. This involved correcting  vs  handling on the backend.
+  - **Browser Caching:** Resolved an issue of stale PDFs by adding a timestamp to download/preview URLs, forcing the browser to fetch a fresh version.
+  - **Type Conversion:** Fixed a crash in PDF generation caused by edited order values (e.g., price, quantity) being saved as strings instead of numbers.
+- **Supplier Details Refactoring (DONE):**
+  - Migrated from hardcoded supplier details to dynamically fetching them from the logged-in user's profile for all generated documents and emails.
+- **User Profile Cabinet (DONE - Pending User Verification):**
+  - Added a new Профіль tab to the dashboard.
+  - Implemented a complete form for users to edit their personal and supplier details, including YouScore API integration.
 
 **Earlier issues found/mentioned but not fixed**
-- **Issue 1: Waybills use hardcoded PDF templates.**
-  - **Debug checklist:** This is a feature gap, not a bug. See Upcoming Tasks for the implementation plan.
-  - **Why to solve this issue and what will be achieved with this?** To allow users to edit the appearance of Waybills, consistent with other document types.
+- **Issue 1: Individual Document Preview is Missing (for Invoices, Acts, etc.).**
+  - **Debug checklist:** This is the main piece of functionality remaining from the user's original set of requests. The tabs for , , , and  are present in  but lack the logic for viewing, editing, or generating documents.
+  - **Why to solve this issue and what will be achieved with this?** It is a core function of the document management system and is required for feature parity across all document types.
   - **Should Test frontend/backend/both after fix:** Both.
   - **Is recurring issue?** N.
 
 **Known issue recurrence from previous fork**
-- **Issue recurrence in previous fork:** The issue of email sending not working was present at the start of this fork and was also the last thing fixed in the previous fork.
-- **Recurrence count:** 1
-- **Status:** RESOLVED (by mocking the service, as SMTP is not configured).
+  - **Issue recurrence in previous fork:** The  library, a dependency for 
+-----
+
+WeasyPrint could not import some external libraries. Please carefully follow the installation steps before reporting an issue:
+https://doc.courtbouillon.org/weasyprint/stable/first_steps.html#installation
+https://doc.courtbouillon.org/weasyprint/stable/first_steps.html#troubleshooting 
+
+----- (PDF generation), had to be reinstalled multiple times. It seems to disappear or become unavailable after some backend restarts.
+  - **Recurrence count:** 2
+  - **Status:** RESOLVED (by re-installing). If PDF generation fails with an , this should be the first suspect.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Full-stack:** React (frontend), FastAPI (backend).
-- **PDF Generation:** WeasyPrint (for HTML templates), ReportLab (legacy), pybars3 (templating).
-- **Data Storage:** Google Sheets API.
-- **API Architecture:** A create-then-generate model where data is saved first and files are generated on-demand.
-- **State Management:** React Hooks (, ).
+- **Backend Data Type Handling:** A key learning was the strict handling of data types. Frontend inputs (strings) had to be converted to numbers () before DB storage and PDF formatting.  objects from MongoDB had to be explicitly converted to formatted strings before being passed to HTML templates to avoid  defaulting to ISO format.
+- **Browser Cache Busting:** A timestamp () is now appended to file download/preview URLs to force the browser to request a fresh copy and not serve a stale, cached version. This was critical for the PDF date fix.
+- **Dynamic UI State:** Using React state () to toggle a single dialog component between a View Mode and an Edit Mode, conditionally rendering different UI elements and buttons.
+- **Dynamic Data Injection:** Refactored the app to pull supplier/seller information from the logged-in user's profile () for use in PDF and email templates, removing hardcoded values.
 
 **key DB schema**
-- **Google Sheets as DB:**
-  - Sheets: 'Рахунки', 'Акти', 'Видаткові накладні', 'Замовлення', 'Договори'
-  - Key Columns: 'number', 'date', 'counterparty_edrpou', 'items' (JSON string), 'based_on_order', 'pdf_path', 'pdf_generated_at'.
+- **users:** The schema for this collection was significantly expanded. It now contains all the fields necessary to store a user's full company details (name, edrpou, address, bank info, director, etc.), mirroring the  schema.
 
 **changes in tech stack**
-- No changes to the fundamental technologies.
+- No new technologies, but a system dependency  was installed to support the existing 
+-----
+
+WeasyPrint could not import some external libraries. Please carefully follow the installation steps before reporting an issue:
+https://doc.courtbouillon.org/weasyprint/stable/first_steps.html#installation
+https://doc.courtbouillon.org/weasyprint/stable/first_steps.html#troubleshooting 
+
+----- library.
 
 **All files of reference**
-- : The central router. Heavily modified to add new endpoints, switch to template-based services, and implement new architecture logic.
-- : The data layer. Modified to fix the critical column mismatch bug and add support for the  timestamp.
-- : The main UI component. Modified to call the correct endpoints for creating and viewing documents under the new architecture.
-- , : Business logic services modified to ensure  and  are saved correctly.
-- : Legacy service now only used for Waybills.
+- : **Central component for all changes.** Contains all UI and logic for Order management and the new Profile cabinet. **Critically needs refactoring.**
+- : Contains the new backend API endpoints for order management (PUT, DELETE, GET PDF, POST Email).
+- : Modified to include  and  endpoints.
+- : **New file.** Contains the logic and HTML template for generating styled, correctly formatted order PDFs.
+- : Modified to support sending styled HTML emails for orders with correctly formatted dates.
+- : Model was expanded to include all supplier/company fields.
 
 **Areas that need refactoring**:
-- **Service Layer:** The presence of , , and  creates confusion. These should be consolidated into a unified, DRY service structure for document management.
-- **server.py:** The main API file is becoming monolithic. The routes for different document types have very similar logic and could be refactored into a more generic pattern.
+- ** is a critical monolith.** It is now over 2400 lines long and handles all business logic for every tab (Counterparties, Orders, Invoices, Acts, etc.) plus the new Profile tab. It is extremely difficult to maintain and is a high-priority candidate for being broken down into smaller, feature-specific components.
 
 **key api endpoints**
-- : Creates a document record without a PDF. Implemented for invoices/acts.
-- : Creates a document based on an order. Refactored to use template-based services.
-- : Generates a PDF on-demand for an existing document.
-- : Fetches all documents associated with an order.
+- : Updates an existing order.
+- : Deletes an order.
+- : Generates and returns the PDF for an order.
+- : Sends the order PDF via email.
+- : Retrieves the current user's profile details.
+- : Updates the user's profile details.
 
 **Critical Info for New Agent**
-- **The related documents not showing bug was due to a silent data-saving failure in Google Sheets.** The fix was to add the  column to the headers in . Understand this context before debugging any similar issues.
-- **The old templates bug was due to calling the wrong service.** Ensure all PDF generation flows through a service that uses an HTML template (e.g., , ), not .
-- **The user is technically proficient.** Provide clear, logical explanations for your actions.
-- **The application has a fallback for Google Drive failure, but Google Sheets is critical.** Errors from the Google Sheets API must be handled carefully.
+- Your first action should be to ask the user to verify the new Profile functionality.
+- The most important technical debt to address is the monolithic  file. Propose refactoring this file to the user as a priority after they have verified the current work.
+- The  dependency for PDF generation has been unstable. If PDF generation fails with an , reinstalling it with Reading package lists...
+Building dependency tree...
+Reading state information...
+The following NEW packages will be installed:
+  libpangoft2-1.0-0
+0 upgraded, 1 newly installed, 0 to remove and 0 not upgraded.
+Need to get 44.5 kB of archives.
+After this operation, 178 kB of additional disk space will be used.
+Get:1 http://deb.debian.org/debian bookworm/main arm64 libpangoft2-1.0-0 arm64 1.50.12+ds-1 [44.5 kB]
+Fetched 44.5 kB in 0s (393 kB/s)
+Selecting previously unselected package libpangoft2-1.0-0:arm64.
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 38368 files and directories currently installed.)
+Preparing to unpack .../libpangoft2-1.0-0_1.50.12+ds-1_arm64.deb ...
+Unpacking libpangoft2-1.0-0:arm64 (1.50.12+ds-1) ...
+Setting up libpangoft2-1.0-0:arm64 (1.50.12+ds-1) ...
+Processing triggers for libc-bin (2.36-9+deb12u13) ... is the first troubleshooting step.
+- The pattern for adding management features to other document types (Invoices, Acts, etc.) is now well-established by the Order implementation. You can replicate this pattern.
+- The user provides excellent, precise, and iterative feedback. Expect to work in a tight loop of implement -> present -> refine.
 
 **documents created in this job**
-- None.
+- 
 
 **Last 10 User Messages and any pending user messages**
-1.  **User:** Previewing a newly created order doesn't show the PDF; the window is blank but emailing it works.
-2.  **Agent:** Fixed. The preview endpoint was looking in the wrong directory for the PDF.
-3.  **User:** Creating a document based on an order doesn't add it to the related documents list.
-4.  **Agent:** Fixed. The  field wasn't being saved correctly.
-5.  **User:** It's still not working. I created order #68 and a related invoice, but it doesn't show up and the preview didn't open.
-6.  **Agent:** Found the problem. The frontend was calling the wrong (old) endpoint. I've corrected it.
-7.  **User:** Still not working for order #69. I created an invoice/act, but nothing is showing up in the related documents.
-8.  **Agent:** Found the root cause via . There's a column mismatch in Google Sheets causing  to be dropped.
-9.  **Agent:** I've fixed the column headers in .
-10. **Agent:** It works now! My tests show related documents for order #69 are appearing. Ready for your verification. (Awaiting user response).
+1.  **User (325):** Requested replacing the Download PDF button with an Edit Order button. (Completed)
+2.  **User (352):** Reported an error when saving an edited order. (Resolved)
+3.  **User (365):** Reported that viewing a PDF or sending an email failed *after* an order was edited. (Resolved)
+4.  **User (382):** Made a major request: supplier details must come from the user's profile, not be hardcoded. (Completed)
+5.  **User (403):** Requested the creation of a Profile cabinet to edit user/supplier data. (Completed)
+6.  **User (message before 326):** super, everything works. (Confirmation that email date fix worked)
+7.  **User (message before 294):** super, but you need to replace the date in the html code for the letter (Email date was wrong). (Resolved)
+8.  **User (272):** everything remained as before (Reporting that the PDF date fix was not working for them). (Resolved - was a caching issue)
+9.  **User (261):** the pdf still has the name: ORDER № 0004 from 2025-12-06 17:53:57.232000 (Reporting PDF date bug). (Resolved)
+10. **User (246):** when viewing the pdf or downloading it, it gives an error. (Resolved - missing library)
+**Pending:** No pending user messages. The agent has just completed the last request. The next step is to present the work for user verification.
 
 **Project Health Check:**
 - **Broken:**
-  - PDF generation for **Waybills** still uses hardcoded layouts, not an editable HTML template.
+  - Full management features (View, Edit, Delete, PDF) are still missing for the **Invoices, Acts, Waybills, and Contracts** modules.
 - **Mocked:**
-  - All email-sending functionality is mocked. The endpoints return a success message but do not send emails.
+  - None.
 
 **3rd Party Integrations**:
-- **Google Sheets API:** Primary data store for all document metadata.
-- **Google Drive API:** Intended for PDF storage, but currently failing/disabled. The app has fallbacks.
-- **WeasyPrint:** Used for generating PDFs from HTML templates (the correct, current method).
-- **ReportLab:** Used for legacy, hardcoded PDF generation (being phased out).
+- **YouScore API:** Used to fetch Ukrainian company data by EDRPOU code. The API key  is hardcoded.
+- **SMTP (via smtplib):** Used for sending emails with PDF attachments. Credentials are in .
 
 **Testing status**
-- **Testing agent used after significant changes:** YES ( and ).
-- **Troubleshoot agent used after agent stuck in loop:** YES (multiple times, provided critical root cause analysis).
+- **Testing agent used after significant changes:** YES. The agent used the testing agent extensively to verify the complex Order management workflow, debug the date formatting issues, and confirm the functionality of the new Profile cabinet.
+- **Troubleshoot agent used after agent stuck in loop:** NO
 - **Test files created:** None.
-- **Known regressions:** None.
+- **Known regressions:** The absence of document management features for modules other than Counterparties and Orders is a known gap.
 
 **Credentials to test flow:**
-- None required.
+- **Test User:**
+  - Email: 
+  - Password: 
+- **YouScore API Key (hardcoded):** 
+- **SMTP Credentials:** Located in the  file.
 
 **What agent forgot to execute**
-- The agent has not yet created an HTML template for **Waybills** ().
-- The agent has not created a corresponding  to use the template.
-- The agent has not refactored the Waybill endpoints in  to use this new template-based service, meaning Waybills still use the old hardcoded .
-- The agent has not fully implemented the create-then-generate architecture for **Contracts**.</analysis>
+The agent successfully completed all the user's immediate requests. The remaining tasks from the original problem statement (implementing features for other document types) were correctly deferred and are listed in the Upcoming Tasks.</analysis>
