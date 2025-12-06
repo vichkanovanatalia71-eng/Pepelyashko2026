@@ -666,6 +666,14 @@ async def send_order_email(
             if counterparty:
                 order['counterparty_details'] = counterparty
         
+        # Get supplier (current user) details for PDF
+        user = await database.users.find_one({
+            "_id": current_user["_id"]
+        }, {"_id": 0, "hashed_password": 0})
+        
+        if user:
+            order['supplier_details'] = user
+        
         # Generate PDF
         pdf_service = OrderPDFService()
         pdf_path = pdf_service.generate_pdf(order)
