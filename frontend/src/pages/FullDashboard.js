@@ -504,6 +504,28 @@ const FullDashboard = () => {
     }
   };
 
+  // Format date in Ukrainian format
+  const formatDateUkrainian = (dateStr) => {
+    if (!dateStr) return '—';
+    
+    const months = {
+      1: 'січня', 2: 'лютого', 3: 'березня', 4: 'квітня',
+      5: 'травня', 6: 'червня', 7: 'липня', 8: 'серпня',
+      9: 'вересня', 10: 'жовтня', 11: 'листопада', 12: 'грудня'
+    };
+    
+    try {
+      const date = new Date(dateStr);
+      const day = date.getDate();
+      const month = months[date.getMonth() + 1];
+      const year = date.getFullYear();
+      
+      return `${day.toString().padStart(2, '0')} ${month} ${year} року`;
+    } catch (e) {
+      return dateStr;
+    }
+  };
+
   const handleCreateOrder = async () => {
     if (!selectedCounterpartyForOrder) {
       toast.error('Оберіть контрагента');
