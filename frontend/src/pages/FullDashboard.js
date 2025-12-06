@@ -1264,9 +1264,20 @@ const FullDashboard = () => {
   };
 
   const saveUserProfile = async () => {
+    // Auto-generate represented_by from director info
+    const representedBy = generateRepresentedBy(
+      profileData.director_name,
+      profileData.director_position
+    );
+    
+    const dataToSave = {
+      ...profileData,
+      represented_by: representedBy
+    };
+    
     setLoadingProfile(true);
     try {
-      await axios.put(`${API_URL}/api/auth/profile`, profileData);
+      await axios.put(`${API_URL}/api/auth/profile`, dataToSave);
       toast.success('Профіль успішно оновлено!');
       await loadUserProfile();
     } catch (error) {
@@ -1276,6 +1287,17 @@ const FullDashboard = () => {
       setLoadingProfile(false);
     }
   };
+
+  // Update represented_by when director data changes (for profile)
+  useEffect(() => {
+    if (profileData.director_name && profileData.director_position) {
+      const representedBy = generateRepresentedBy(
+        profileData.director_name,
+        profileData.director_position
+      );
+      setProfileData(prev => ({...prev, represented_by: representedBy}));
+    }
+  }, [profileData.director_name, profileData.director_position]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-teal-50 via-white to-cyan-50">
