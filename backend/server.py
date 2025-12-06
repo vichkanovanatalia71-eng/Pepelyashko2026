@@ -87,12 +87,10 @@ async def health_check():
 @app.post("/api/search-company")
 async def search_company(request: dict):
     """
-    Search company information by EDRPOU using AI web search.
+    Search company information by EDRPOU using YouScore API.
+    API: https://api.youscore.com.ua/v1/usr/{edrpou}
     """
-    from pydantic import BaseModel
-    
-    class CompanySearchRequest(BaseModel):
-        edrpou: str
+    import httpx
     
     try:
         edrpou = request.get("edrpou", "")
@@ -103,31 +101,74 @@ async def search_company(request: dict):
                 "message": "Invalid EDRPOU"
             }
         
-        # Try to find company in existing counterparties first (as demo)
-        # In production, this would call external API or web scraping
-        
-        # For now, return demo data based on EDRPOU pattern
-        # In production, integrate with real Ukrainian business registries
-        
-        # Demo implementation - simulate found data
-        if edrpou.startswith("12345"):
-            return {
-                "found": True,
-                "name": f"ТОВ 'Компанія {edrpou[-3:]}'",
-                "legal_address": f"Україна, м. Київ, вул. Хрещатик, {edrpou[-2:]}"
-            }
-        
-        # If not found in demo data, return not found
-        return {
-            "found": False,
-            "message": "Company not found in registry"
+        # Call YouScore API
+        api_url = f"https://api.youscore.com.ua/v1/usr/{edrpou}"
+        params = {
+            "showCurrentData": "true",
+            "apiKey": "4a5a000047a6e89800a306e01306c62c21b2c773"
         }
         
+        headers = {
+            "accept": "application/json"
+        }
+        
+        logger.info(f"Searching company by EDRPOU: {edrpou}")
+        
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.get(api_url, params=params, headers=headers)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Extract company information from API response
+                # Structure: data.info.name, data.info.address, etc.
+                company_info = data.get("info", {})
+                
+                name = company_info.get("name", "")
+                address = company_info.get("address", "")
+                
+                # Try to get director info if available
+                director_info = company_info.get("director", {})
+                director_name = director_info.get("name", "") if isinstance(director_info, dict) else ""
+                
+                if name or address:
+                    logger.info(f"Company found: {name}")
+                    return {
+                        "found": True,
+                        "name": name,
+                        "legal_address": address,
+                        "director_name": director_name if director_name else None
+                    }
+                else:
+                    logger.warning(f"Company data incomplete for EDRPOU: {edrpou}")
+                    return {
+                        "found": False,
+                        "message": "Company data incomplete"
+                    }
+            elif response.status_code == 404:
+                logger.warning(f"Company not found for EDRPOU: {edrpou}")
+                return {
+                    "found": False,
+                    "message": "Company not found in registry"
+                }
+            else:
+                logger.error(f"API error: {response.status_code}")
+                return {
+                    "found": False,
+                    "message": f"API error: {response.status_code}"
+                }
+        
+    except httpx.TimeoutException:
+        logger.error("API timeout")
+        return {
+            "found": False,
+            "message": "API timeout. Please try again"
+        }
     except Exception as e:
         logger.error(f"Error searching company: {str(e)}")
         return {
             "found": False,
-            "message": str(e)
+            "message": "Error connecting to registry"
         }
 
 
