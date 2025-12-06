@@ -863,8 +863,8 @@ async def generate_order_pdf(data: DocumentCreate):
 async def get_order_pdf(order_number: str):
     """Serve order PDF file for preview."""
     try:
-        # Find PDF file in generated_orders directory
-        pdf_dir = Path('/app/backend/generated_orders')
+        # Find PDF file in generated_documents directory
+        pdf_dir = Path('/app/backend/generated_documents')
         
         # Look for PDF with this order number
         pdf_files = list(pdf_dir.glob(f"Замовлення_{order_number}_*.pdf"))
