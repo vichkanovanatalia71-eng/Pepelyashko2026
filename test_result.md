@@ -827,9 +827,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Архітектура створення документів БЕЗ PDF"
-    - "Генерація PDF на вимогу з перевіркою віку (3 дні)"
-    - "Frontend інтеграція: генерація перед переглядом"
+    - "User Profile Cabinet with Supplier Details"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
