@@ -552,20 +552,57 @@ const FullDashboard = () => {
                 <form onSubmit={handleCounterpartySubmit} className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="edrpou">ЄДРПОУ *</Label>
-                      <Input
-                        id="edrpou"
-                        value={counterpartyForm.edrpou}
-                        onChange={(e) => setCounterpartyForm({...counterpartyForm, edrpou: e.target.value})}
-                        required
-                      />
+                      <Label htmlFor="edrpou">
+                        ЄДРПОУ * 
+                        {searchingEdrpou && (
+                          <span className="text-xs text-teal-600 ml-2">
+                            (пошук даних...)
+                          </span>
+                        )}
+                      </Label>
+                      <div className="flex gap-2">
+                        <Input
+                          id="edrpou"
+                          value={counterpartyForm.edrpou}
+                          onChange={(e) => handleEdrpouChange(e.target.value)}
+                          placeholder="12345678"
+                          maxLength={8}
+                          required
+                          disabled={searchingEdrpou}
+                        />
+                        {counterpartyForm.edrpou.length === 8 && (
+                          <Button
+                            type="button"
+                            size="sm"
+                            onClick={() => searchByEdrpou(counterpartyForm.edrpou)}
+                            disabled={searchingEdrpou}
+                          >
+                            {searchingEdrpou ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Search className="w-4 h-4" />
+                            )}
+                          </Button>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Дані підтягуються автоматично при введенні 8 цифр
+                      </p>
                     </div>
                     <div>
-                      <Label htmlFor="representative_name">Назва *</Label>
+                      <Label htmlFor="representative_name">
+                        Назва * 
+                        {searchingEdrpou && (
+                          <span className="text-xs text-teal-600 ml-2">
+                            (оновлюється...)
+                          </span>
+                        )}
+                      </Label>
                       <Input
                         id="representative_name"
                         value={counterpartyForm.representative_name}
                         onChange={(e) => setCounterpartyForm({...counterpartyForm, representative_name: e.target.value})}
+                        placeholder="Автоматично заповниться або введіть вручну"
                         required
                       />
                     </div>
