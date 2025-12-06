@@ -1574,7 +1574,7 @@ const FullDashboard = () => {
                   >
                     <option value="Статуту">Статуту</option>
                     <option value="Довіреності">Довіреності</option>
-                    <option value="Положення">Положення</option>
+                    <option value="Виписка">Виписки з ЄДР</option>
                   </select>
                   <p className="text-xs text-gray-500 mt-1">Для автозаповнення "В особі"</p>
                 </div>
