@@ -577,7 +577,278 @@ const FullDashboard = () => {
             </Card>
           </TabsContent>
 
-          {/* Continue with other tabs... */}
+          {/* Invoices Tab */}
+          <TabsContent value="invoices" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Створити Рахунок</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={(e) => { e.preventDefault(); createDocument('invoices', 'Рахунок'); }} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Пошук контрагента</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        value={searchEdrpou}
+                        onChange={(e) => setSearchEdrpou(e.target.value)}
+                        placeholder="ЄДРПОУ"
+                      />
+                      <Button type="button" onClick={searchCounterparty}>
+                        <Search className="w-4 h-4 mr-2" />
+                        Знайти
+                      </Button>
+                    </div>
+                    {foundCounterparty && (
+                      <div className="p-3 bg-teal-50 border rounded">
+                        <p className="font-medium">{foundCounterparty.representative_name}</p>
+                        <p className="text-sm text-gray-600">ЄДРПОУ: {foundCounterparty.edrpou}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label>Товари/Послуги</Label>
+                      <Button type="button" size="sm" onClick={addItem}>
+                        <Plus className="w-4 h-4 mr-1" />
+                        Додати
+                      </Button>
+                    </div>
+
+                    {documentForm.items.map((item, index) => (
+                      <Card key={index} className="p-4">
+                        <div className="grid grid-cols-2 gap-3 mb-3">
+                          <div>
+                            <Label className="text-xs">Назва</Label>
+                            <Input
+                              value={item.name}
+                              onChange={(e) => updateItem(index, 'name', e.target.value)}
+                              required
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-xs">Одиниця</Label>
+                            <Input
+                              value={item.unit}
+                              onChange={(e) => updateItem(index, 'unit', e.target.value)}
+                              required
+                            />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-3 gap-3">
+                          <div>
+                            <Label className="text-xs">Кількість</Label>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              value={item.quantity}
+                              onChange={(e) => updateItem(index, 'quantity', e.target.value)}
+                              required
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-xs">Ціна</Label>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              value={item.price}
+                              onChange={(e) => updateItem(index, 'price', e.target.value)}
+                              required
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-xs">Сума</Label>
+                            <Input
+                              type="number"
+                              value={item.amount.toFixed(2)}
+                              readOnly
+                              className="bg-gray-50"
+                            />
+                          </div>
+                        </div>
+                        {documentForm.items.length > 1 && (
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            className="w-full mt-2"
+                            onClick={() => removeItem(index)}
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Видалити
+                          </Button>
+                        )}
+                      </Card>
+                    ))}
+                  </div>
+
+                  <div className="p-4 bg-teal-50 border rounded">
+                    <div className="flex justify-between">
+                      <span className="font-semibold">Загальна сума:</span>
+                      <span className="text-xl font-bold text-teal-700">
+                        {documentForm.total_amount.toFixed(2)} грн
+                      </span>
+                    </div>
+                  </div>
+
+                  <Button type="submit" disabled={loading || !foundCounterparty} className="w-full">
+                    {loading ? (
+                      <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Створення...</>
+                    ) : (
+                      <>Створити Рахунок</>
+                    )}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Список Рахунків ({invoices.length})</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {invoices.length === 0 ? (
+                  <p className="text-center py-8 text-gray-500">Немає рахунків</p>
+                ) : (
+                  <div className="space-y-2">
+                    {invoices.map((invoice) => (
+                      <Card key={invoice._id}>
+                        <CardContent className="p-4">
+                          <div className="flex justify-between">
+                            <div>
+                              <p className="font-medium">№{invoice.number}</p>
+                              <p className="text-sm text-gray-600">{invoice.counterparty_name}</p>
+                              <p className="text-xs text-gray-500">
+                                {new Date(invoice.date).toLocaleDateString('uk-UA')}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="font-bold text-lg">{invoice.total_amount} грн</p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Acts, Waybills, Orders, Contracts tabs similar structure */}
+          <TabsContent value="acts" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Список Актів ({acts.length})</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {acts.length === 0 ? (
+                  <p className="text-center py-8 text-gray-500">Немає актів</p>
+                ) : (
+                  <div className="space-y-2">
+                    {acts.map((act) => (
+                      <Card key={act._id}>
+                        <CardContent className="p-4">
+                          <p className="font-medium">№{act.number}</p>
+                          <p className="text-sm text-gray-600">{act.counterparty_name}</p>
+                          <p className="font-bold">{act.total_amount} грн</p>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="waybills" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Список Накладних ({waybills.length})</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {waybills.length === 0 ? (
+                  <p className="text-center py-8 text-gray-500">Немає накладних</p>
+                ) : (
+                  <div className="space-y-2">
+                    {waybills.map((waybill) => (
+                      <Card key={waybill._id}>
+                        <CardContent className="p-4">
+                          <p className="font-medium">№{waybill.number}</p>
+                          <p className="text-sm text-gray-600">{waybill.counterparty_name}</p>
+                          <p className="font-bold">{waybill.total_amount} грн</p>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="orders" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Список Замовлень ({orders.length})</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {orders.length === 0 ? (
+                  <p className="text-center py-8 text-gray-500">Немає замовлень</p>
+                ) : (
+                  <div className="space-y-2">
+                    {orders.map((order) => (
+                      <Card key={order._id}>
+                        <CardContent className="p-4">
+                          <div className="flex justify-between">
+                            <div>
+                              <p className="font-medium">№{order.number}</p>
+                              <p className="text-sm text-gray-600">{order.counterparty_name}</p>
+                              <p className="font-bold">{order.total_amount} грн</p>
+                            </div>
+                            <Button
+                              size="sm"
+                              onClick={() => {
+                                setSelectedOrder(order);
+                                setShowOrderSelectionDialog(true);
+                              }}
+                            >
+                              Створити документи
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="contracts" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Список Договорів ({contracts.length})</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {contracts.length === 0 ? (
+                  <p className="text-center py-8 text-gray-500">Немає договорів</p>
+                ) : (
+                  <div className="space-y-2">
+                    {contracts.map((contract) => (
+                      <Card key={contract._id}>
+                        <CardContent className="p-4">
+                          <p className="font-medium">№{contract.number}</p>
+                          <p className="text-sm text-gray-600">{contract.counterparty_name}</p>
+                          <p className="text-sm">{contract.subject}</p>
+                          <p className="font-bold">{contract.amount} грн</p>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
       </div>
 
