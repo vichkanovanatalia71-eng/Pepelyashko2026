@@ -58,6 +58,18 @@ class CounterpartyCreate(BaseModel):
     position: Optional[str] = Field(None, description="Посада")
     represented_by: Optional[str] = Field(None, description="В особі")
     signature: Optional[str] = Field(None, description="Підпис")
+    
+    @field_validator('edrpou')
+    @classmethod
+    def validate_edrpou(cls, v: str) -> str:
+        """Validate EDRPOU: must be exactly 8 digits (for legal entities) or 10 digits (for FOP)."""
+        if not v:
+            raise ValueError('ЄДРПОУ обов\'язкове поле')
+        if not v.isdigit():
+            raise ValueError('ЄДРПОУ має містити лише цифри')
+        if len(v) not in [8, 10]:
+            raise ValueError('ЄДРПОУ має бути 8 цифр (для ЮрОсіб) або 10 цифр (для ФОП)')
+        return v
 
 
 class CounterpartyUpdate(BaseModel):
