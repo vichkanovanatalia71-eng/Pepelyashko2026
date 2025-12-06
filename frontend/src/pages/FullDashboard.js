@@ -597,6 +597,100 @@ const FullDashboard = () => {
     setEditingOrder(false);
   };
 
+  const startEditingOrder = () => {
+    if (!viewingOrder) return;
+    
+    // Populate edit form with current order data
+    setEditOrderForm({
+      date: viewingOrder.date ? viewingOrder.date.split('T')[0] : '',
+      counterparty_edrpou: viewingOrder.counterparty_edrpou,
+      counterparty_name: viewingOrder.counterparty_name,
+      items: viewingOrder.items.map(item => ({ ...item })),
+      total_amount: viewingOrder.total_amount
+    });
+    setEditingOrder(true);
+  };
+
+  const cancelEditingOrder = () => {
+    setEditingOrder(false);
+    setEditOrderForm({
+      date: '',
+      counterparty_edrpou: '',
+      counterparty_name: '',
+      items: [],
+      total_amount: 0
+    });
+  };
+
+  const saveEditedOrder = async () => {
+    if (!viewingOrder) return;
+    
+    setLoading(true);
+    try {
+      const response = await axios.put(
+        `${API_URL}/api/orders/${viewingOrder._id}`,
+        {
+          date: editOrderForm.date,
+          counterparty_edrpou: editOrderForm.counterparty_edrpou,
+          counterparty_name: editOrderForm.counterparty_name,
+          items: editOrderForm.items,
+          total_amount: editOrderForm.total_amount
+        }
+      );
+      
+      toast.success('Замовлення успішно оновлено!');
+      setEditingOrder(false);
+      setViewingOrder(response.data);
+      
+      // Reload orders list
+      await fetchOrders();
+    } catch (error) {
+      console.error('Error updating order:', error);
+      toast.error(error.response?.data?.detail || 'Помилка оновлення замовлення');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateEditOrderItem = (index, field, value) => {
+    const updatedItems = [...editOrderForm.items];
+    updatedItems[index] = { ...updatedItems[index], [field]: value };
+    
+    // Recalculate amount for this item
+    if (field === 'quantity' || field === 'price') {
+      const quantity = parseFloat(updatedItems[index].quantity) || 0;
+      const price = parseFloat(updatedItems[index].price) || 0;
+      updatedItems[index].amount = quantity * price;
+    }
+    
+    // Recalculate total
+    const total = updatedItems.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
+    
+    setEditOrderForm({
+      ...editOrderForm,
+      items: updatedItems,
+      total_amount: total
+    });
+  };
+
+  const addEditOrderItem = () => {
+    setEditOrderForm({
+      ...editOrderForm,
+      items: [...editOrderForm.items, { name: '', unit: 'шт', quantity: 1, price: 0, amount: 0 }]
+    });
+  };
+
+  const removeEditOrderItem = (index) => {
+    const updatedItems = editOrderForm.items.filter((_, i) => i !== index);
+    const total = updatedItems.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
+    
+    setEditOrderForm({
+      ...editOrderForm,
+      items: updatedItems,
+      total_amount: total
+    });
+  };
+
   const deleteOrder = async () => {
     if (!viewingOrder) return;
     
