@@ -52,13 +52,12 @@ const FullDashboard = () => {
     email: '',
     phone: '',
     iban: '',
-    contract_type: '',
+    contract_type: 'Статуту', // Діє на підставі: Статуту, Довіреності, Виписка
     director_name: '',
     legal_address: '',
     bank: '',
     mfo: '',
     position: '',
-    basis: 'statute', // Діє на підставі: statute, edr, power_of_attorney
     represented_by: '',
     signature: ''
   });
