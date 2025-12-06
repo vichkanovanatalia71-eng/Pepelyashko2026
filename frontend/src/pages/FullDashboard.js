@@ -305,6 +305,31 @@ const FullDashboard = () => {
     });
   };
 
+  const deleteCounterparty = async () => {
+    if (!viewingCounterparty) return;
+    
+    // Confirm deletion
+    if (!window.confirm(`Ви впевнені, що хочете видалити контрагента "${viewingCounterparty.representative_name}"?`)) {
+      return;
+    }
+    
+    setLoading(true);
+    
+    try {
+      await axios.delete(`${API_URL}/api/counterparties/${viewingCounterparty._id}`);
+      toast.success('Контрагента успішно видалено!');
+      
+      // Reload data and close dialog
+      await loadAllData();
+      closeCounterpartyDialog();
+    } catch (error) {
+      console.error('Error deleting counterparty:', error);
+      toast.error(error.response?.data?.detail || 'Помилка видалення контрагента');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Auto-fill signature from director name
   // Format: Ім'я ПРІЗВИЩЕ (e.g., "Станіслав ЧОРНИЙ")
   const generateSignature = (fullName) => {
