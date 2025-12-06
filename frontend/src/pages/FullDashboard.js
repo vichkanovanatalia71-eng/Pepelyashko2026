@@ -70,6 +70,10 @@ const FullDashboard = () => {
   const [viewingCounterparty, setViewingCounterparty] = useState(null);
   const [editingCounterparty, setEditingCounterparty] = useState(false);
   
+  // Email sending
+  const [showEmailDialog, setShowEmailDialog] = useState(false);
+  const [emailRecipient, setEmailRecipient] = useState('');
+  
   // Document form
   const [documentForm, setDocumentForm] = useState({
     counterparty_edrpou: '',
