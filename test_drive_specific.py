@@ -16,7 +16,7 @@ def test_google_drive_integration():
     """Test the specific Google Drive scenario from the review request"""
     
     # Get backend URL from frontend .env file
-    backend_url = "https://bill-wiz.preview.emergentagent.com"
+    backend_url = "https://order-manage-1.preview.emergentagent.com"
     api_url = f"{backend_url}/api"
     
     logger.info("=" * 80)
