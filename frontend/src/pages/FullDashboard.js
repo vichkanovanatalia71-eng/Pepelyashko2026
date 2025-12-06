@@ -344,18 +344,42 @@ const FullDashboard = () => {
       );
       
       // Create download link
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', `Картка_контрагента_${viewingCounterparty.edrpou}.pdf`);
       document.body.appendChild(link);
       link.click();
       link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
       
       toast.success('PDF картку завантажено!');
     } catch (error) {
       console.error('Error downloading PDF:', error);
       toast.error('Помилка завантаження PDF');
+    }
+  };
+
+  const previewCounterpartyPDF = async () => {
+    if (!viewingCounterparty) return;
+    
+    try {
+      const response = await axios.get(
+        `${API_URL}/api/counterparties/${viewingCounterparty._id}/pdf`,
+        { responseType: 'blob' }
+      );
+      
+      // Open PDF in new tab for preview
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+      window.open(url, '_blank');
+      
+      // Clean up after a delay
+      setTimeout(() => window.URL.revokeObjectURL(url), 100);
+      
+      toast.success('PDF відкрито для перегляду');
+    } catch (error) {
+      console.error('Error previewing PDF:', error);
+      toast.error('Помилка відкриття PDF');
     }
   };
 
