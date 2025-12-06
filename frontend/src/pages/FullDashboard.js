@@ -69,6 +69,7 @@ const FullDashboard = () => {
   // Dialog for viewing counterparty details
   const [showCounterpartyDialog, setShowCounterpartyDialog] = useState(false);
   const [viewingCounterparty, setViewingCounterparty] = useState(null);
+  const [editingCounterparty, setEditingCounterparty] = useState(false);
   
   // Document form
   const [documentForm, setDocumentForm] = useState({
