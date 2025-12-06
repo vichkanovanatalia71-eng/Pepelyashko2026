@@ -643,7 +643,7 @@ const FullDashboard = () => {
       setViewingOrder(response.data);
       
       // Reload orders list
-      await fetchOrders();
+      await loadAllData();
     } catch (error) {
       console.error('Error updating order:', error);
       toast.error(error.response?.data?.detail || 'Помилка оновлення замовлення');
