@@ -673,9 +673,12 @@ const FullDashboard = () => {
                       <Input
                         id="director_name"
                         value={counterpartyForm.director_name}
-                        onChange={(e) => setCounterpartyForm({...counterpartyForm, director_name: e.target.value})}
+                        onChange={(e) => handleDirectorNameChange(e.target.value)}
                         placeholder="Петренко Петро Петрович"
                       />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Підпис формується автоматично
+                      </p>
                     </div>
                     <div>
                       <Label htmlFor="director_position">Посада керівника</Label>
