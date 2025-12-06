@@ -616,9 +616,17 @@ const FullDashboard = () => {
     if (!viewingOrder) return;
     
     try {
+      // Add timestamp to prevent caching
+      const timestamp = new Date().getTime();
       const response = await axios.get(
-        `${API_URL}/api/orders/${viewingOrder._id}/pdf`,
-        { responseType: 'blob' }
+        `${API_URL}/api/orders/${viewingOrder._id}/pdf?t=${timestamp}`,
+        { 
+          responseType: 'blob',
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          }
+        }
       );
       
       const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
@@ -641,9 +649,17 @@ const FullDashboard = () => {
     if (!viewingOrder) return;
     
     try {
+      // Add timestamp to prevent caching
+      const timestamp = new Date().getTime();
       const response = await axios.get(
-        `${API_URL}/api/orders/${viewingOrder._id}/pdf`,
-        { responseType: 'blob' }
+        `${API_URL}/api/orders/${viewingOrder._id}/pdf?t=${timestamp}`,
+        { 
+          responseType: 'blob',
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          }
+        }
       );
       
       const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
