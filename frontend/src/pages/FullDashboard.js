@@ -607,12 +607,19 @@ const FullDashboard = () => {
                       />
                     </div>
                     <div className="md:col-span-2">
-                      <Label htmlFor="legal_address">Юридична адреса</Label>
+                      <Label htmlFor="legal_address">
+                        Юридична адреса
+                        {searchingEdrpou && (
+                          <span className="text-xs text-teal-600 ml-2">
+                            (оновлюється...)
+                          </span>
+                        )}
+                      </Label>
                       <Input
                         id="legal_address"
                         value={counterpartyForm.legal_address}
                         onChange={(e) => setCounterpartyForm({...counterpartyForm, legal_address: e.target.value})}
-                        placeholder="Україна, м. Київ, вул. ..."
+                        placeholder="Автоматично заповниться за ЄДРПОУ або введіть вручну"
                       />
                     </div>
                     <div>
