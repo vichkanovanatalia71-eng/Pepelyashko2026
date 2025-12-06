@@ -319,8 +319,8 @@ const FullDashboard = () => {
 
   // Search company info by EDRPOU using AI
   const searchByEdrpou = async (edrpou) => {
-    if (!edrpou || edrpou.length < 8) {
-      toast.error('Введіть коректний ЄДРПОУ (8 цифр)');
+    if (!edrpou || (edrpou.length !== 8 && edrpou.length !== 10)) {
+      toast.error('Введіть коректний ЄДРПОУ (8 цифр для ЮрОсіб або 10 цифр для ФОП)');
       return;
     }
 
