@@ -820,38 +820,56 @@ const FullDashboard = () => {
                         id="director_name"
                         value={counterpartyForm.director_name}
                         onChange={(e) => handleDirectorNameChange(e.target.value)}
-                        placeholder="Петренко Петро Петрович"
+                        placeholder="Чорний Станіслав Іванович"
                       />
                       <p className="text-xs text-gray-500 mt-1">
-                        Підпис формується автоматично
+                        Формат: Прізвище Ім'я По-батькові
                       </p>
-                    </div>
-                    <div>
-                      <Label htmlFor="director_position">Посада керівника</Label>
-                      <Input
-                        id="director_position"
-                        value={counterpartyForm.director_position}
-                        onChange={(e) => setCounterpartyForm({...counterpartyForm, director_position: e.target.value})}
-                        placeholder="Директор"
-                      />
                     </div>
                     <div>
                       <Label htmlFor="position">Посада</Label>
                       <Input
                         id="position"
                         value={counterpartyForm.position}
-                        onChange={(e) => setCounterpartyForm({...counterpartyForm, position: e.target.value})}
+                        onChange={(e) => handlePositionChange(e.target.value)}
                         placeholder="Директор"
                       />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Для автозаповнення "В особі"
+                      </p>
                     </div>
                     <div>
-                      <Label htmlFor="represented_by">В особі</Label>
+                      <Label htmlFor="basis">Діє на підставі</Label>
+                      <Select 
+                        value={counterpartyForm.basis} 
+                        onValueChange={handleBasisChange}
+                      >
+                        <SelectTrigger id="basis">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="statute">Статуту</SelectItem>
+                          <SelectItem value="edr">Виписка з ЄДР</SelectItem>
+                          <SelectItem value="power_of_attorney">Довіреність</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="md:col-span-2">
+                      <Label htmlFor="represented_by">
+                        В особі
+                        <span className="text-xs text-teal-600 ml-2">
+                          (формується автоматично)
+                        </span>
+                      </Label>
                       <Input
                         id="represented_by"
                         value={counterpartyForm.represented_by}
                         onChange={(e) => setCounterpartyForm({...counterpartyForm, represented_by: e.target.value})}
-                        placeholder="Директора Петренка П.П."
+                        placeholder="директора Чорного Станіслава Івановича, що діє на підставі Статуту"
                       />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Автоматично: посада (родовий) + ПІБ (родовий) + підстава
+                      </p>
                     </div>
                     <div>
                       <Label htmlFor="signature">
