@@ -2622,38 +2622,59 @@ const FullDashboard = () => {
           )}
           
           <DialogFooter className="flex justify-between">
-            <Button 
-              variant="destructive" 
-              onClick={deleteOrder}
-              disabled={loading}
-            >
-              {loading ? 'Видалення...' : 'Видалити'}
-            </Button>
-            <div className="flex gap-2">
-              <Button 
-                variant="outline" 
-                onClick={() => {
-                  if (viewingOrder) {
-                    setShowOrderDialog(false);
-                    openOrderEmailDialog();
-                  }
-                }}
-              >
-                <Mail className="w-4 h-4 mr-2" />
-                Відправити Email
-              </Button>
-              <Button variant="outline" onClick={previewOrderPDF}>
-                <Eye className="w-4 h-4 mr-2" />
-                Переглянути PDF
-              </Button>
-              <Button variant="outline" onClick={startEditingOrder}>
-                <Edit className="w-4 h-4 mr-2" />
-                Редагувати
-              </Button>
-              <Button onClick={closeOrderDialog}>
-                Закрити
-              </Button>
-            </div>
+            {!editingOrder && (
+              <>
+                <Button 
+                  variant="destructive" 
+                  onClick={deleteOrder}
+                  disabled={loading}
+                >
+                  {loading ? 'Видалення...' : 'Видалити'}
+                </Button>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      if (viewingOrder) {
+                        setShowOrderDialog(false);
+                        openOrderEmailDialog();
+                      }
+                    }}
+                  >
+                    <Mail className="w-4 h-4 mr-2" />
+                    Відправити Email
+                  </Button>
+                  <Button variant="outline" onClick={previewOrderPDF}>
+                    <Eye className="w-4 h-4 mr-2" />
+                    Переглянути PDF
+                  </Button>
+                  <Button variant="outline" onClick={startEditingOrder}>
+                    <Edit className="w-4 h-4 mr-2" />
+                    Редагувати
+                  </Button>
+                  <Button onClick={closeOrderDialog}>
+                    Закрити
+                  </Button>
+                </div>
+              </>
+            )}
+            {editingOrder && (
+              <>
+                <Button 
+                  variant="outline" 
+                  onClick={cancelEditingOrder}
+                  disabled={loading}
+                >
+                  Скасувати
+                </Button>
+                <Button 
+                  onClick={saveEditedOrder}
+                  disabled={loading}
+                >
+                  {loading ? 'Збереження...' : 'Зберегти зміни'}
+                </Button>
+              </>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
