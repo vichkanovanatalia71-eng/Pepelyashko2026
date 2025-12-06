@@ -1741,6 +1741,9 @@ const FullDashboard = () => {
                   <Button variant="outline" onClick={openEmailDialog}>
                     Відправити на Email
                   </Button>
+                  <Button variant="outline" onClick={previewCounterpartyPDF}>
+                    Переглянути PDF
+                  </Button>
                   <Button variant="outline" onClick={downloadCounterpartyPDF}>
                     Завантажити PDF
                   </Button>
