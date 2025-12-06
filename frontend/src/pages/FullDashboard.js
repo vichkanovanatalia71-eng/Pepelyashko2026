@@ -216,17 +216,105 @@ const FullDashboard = () => {
   };
 
   // Auto-fill signature from director name
+  // Format: Ім'я ПРІЗВИЩЕ (e.g., "Станіслав ЧОРНИЙ")
   const generateSignature = (fullName) => {
     if (!fullName || !fullName.trim()) return '';
     
     const parts = fullName.trim().split(' ').filter(p => p);
     if (parts.length === 0) return '';
     
-    // Format: ПРІЗВИЩЕ І.П.
-    const surname = parts[0].toUpperCase();
-    const initials = parts.slice(1).map(name => name[0].toUpperCase() + '.').join('');
+    // Format: Ім'я ПРІЗВИЩЕ
+    // parts[0] = Прізвище, parts[1] = Ім'я, parts[2] = По батькові
+    if (parts.length >= 2) {
+      const surname = parts[0].toUpperCase();
+      const firstName = parts[1].charAt(0).toUpperCase() + parts[1].slice(1).toLowerCase();
+      return `${firstName} ${surname}`;
+    }
     
-    return initials ? `${surname} ${initials}` : surname;
+    return parts[0].toUpperCase();
+  };
+
+  // Auto-extract MFO from IBAN
+  // Format: UA59 305299 0000026008034909558
+  // MFO is 6 digits after first 4 characters (UA59)
+  const extractMFOFromIBAN = (iban) => {
+    if (!iban || iban.length < 10) return '';
+    
+    // Remove spaces and get characters 5-10 (index 4-9)
+    const cleanIban = iban.replace(/\s/g, '');
+    if (cleanIban.length >= 10) {
+      return cleanIban.substring(4, 10);
+    }
+    
+    return '';
+  };
+
+  // Generate "В особі" text
+  // Format: "посади_родовий ПІБ_родовий, що діє на підставі ..."
+  const generateRepresentedBy = (position, fullName, basis) => {
+    if (!position || !fullName || !basis) return '';
+    
+    // Convert position to genitive case (родовий відмінок)
+    const positionGenitive = convertPositionToGenitive(position);
+    
+    // Convert name to genitive case
+    const nameGenitive = convertNameToGenitive(fullName);
+    
+    // Basis text
+    let basisText = '';
+    if (basis === 'statute') {
+      basisText = 'Статуту';
+    } else if (basis === 'edr') {
+      basisText = 'запису в Єдиному державному реєстрі';
+    } else if (basis === 'power_of_attorney') {
+      basisText = 'довіреності';
+    }
+    
+    return `${positionGenitive} ${nameGenitive}, що діє на підставі ${basisText}`;
+  };
+
+  // Helper: Convert position to genitive case
+  const convertPositionToGenitive = (position) => {
+    const pos = position.toLowerCase().trim();
+    
+    // Common positions in genitive case
+    const genitiveMap = {
+      'директор': 'директора',
+      'генеральний директор': 'генерального директора',
+      'керівник': 'керівника',
+      'президент': 'президента',
+      'голова': 'голови',
+      'заступник': 'заступника',
+      'менеджер': 'менеджера'
+    };
+    
+    return genitiveMap[pos] || position.toLowerCase();
+  };
+
+  // Helper: Convert full name to genitive case
+  const convertNameToGenitive = (fullName) => {
+    const parts = fullName.trim().split(' ').filter(p => p);
+    if (parts.length === 0) return fullName;
+    
+    // Basic genitive conversion (can be improved)
+    // Format: Прізвище Ім'я По-батькові -> Прізвище_родовий Ім'я_родовий По-батькові_родовий
+    
+    const convertWord = (word) => {
+      // Basic Ukrainian genitive rules
+      if (word.endsWith('ий') || word.endsWith('ій')) {
+        return word.slice(0, -2) + 'ого';
+      }
+      if (word.endsWith('а')) {
+        return word.slice(0, -1) + 'и';
+      }
+      if (word.endsWith('о')) {
+        return word.slice(0, -1) + 'а';
+      }
+      // Default: add 'а' for masculine names
+      return word + 'а';
+    };
+    
+    return parts.map(convertWord).join(' ');
   };
 
   // Search company info by EDRPOU using AI
