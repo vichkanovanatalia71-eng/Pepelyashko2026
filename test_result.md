@@ -698,6 +698,18 @@ frontend:
     stuck_count: 0
     priority: "high"
     needs_retesting: false
+
+  - task: "Invoice Items Display Fix Verification - Invoice #3456-3"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/FullDashboard.js, /app/backend/document_service.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "🎯 КРИТИЧНЕ ТЕСТУВАННЯ ВИПРАВЛЕННЯ ITEMS В PDF РАХУНКУ #3456-3 ЗАВЕРШЕНО УСПІШНО! Протестовано згідно з українським review request всі вимоги: 1) АВТОРИЗАЦІЯ ✅ - успішний вхід як user1@example.com/password123, 2) НАВІГАЦІЯ ✅ - перехід на вкладку 'Рахунки' працює, 3) ЗНАЙДЕНО РАХУНОК ✅ - #3456-3 присутній в списку, 4) ВІДКРИТТЯ РАХУНКУ ✅ - діалог відкривається коректно, 5) ITEMS ПРИСУТНІ ✅ - обидва товари видно в діалозі з правильними даними. ПЕРЕВІРЕНІ ITEMS: Рядок 1: ТЕСТОВИЙ ТОВАР А, 3 шт, 150.00 грн, 450.00 грн ✅, Рядок 2: ТЕСТОВА ПОСЛУГА Б, 2 год, 500.00 грн, 1000.00 грн ✅, Всього: 1450.00 грн ✅. КРИТЕРІЙ УСПІХУ ДОСЯГНУТО: ✅ Обидва товари видно в рахунку, ✅ Таблиця більше НЕ порожня, ✅ Всі дані (найменування, кількість, одиниці, ціни, суми) відображаються правильно, ✅ Кнопка 'Переглянути PDF' присутня та функціональна. ВИПРАВЛЕННЯ ПРАЦЮЄ ПОВНІСТЮ!"
     status_history:
       - working: "needs_testing"
         agent: "main"
