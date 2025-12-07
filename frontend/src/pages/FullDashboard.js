@@ -4307,6 +4307,20 @@ const FullDashboard = () => {
       </Dialog>
 
 
+      {/* Invoice Details Dialog */}
+      <InvoiceDialog
+        open={showInvoiceDialog}
+        onClose={closeInvoiceDialog}
+        invoice={viewingInvoice}
+        theme={currentTheme}
+        loading={loading}
+        onDelete={deleteInvoice}
+        onEdit={saveEditedInvoice}
+        onViewPDF={previewInvoicePDF}
+        onSendEmail={openInvoiceEmailDialog}
+        formatDateUkrainian={formatDateUkrainian}
+      />
+
       {/* Act Details Dialog */}
       <Dialog open={showActDialog} onOpenChange={closeActDialog}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
