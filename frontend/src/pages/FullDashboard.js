@@ -3734,16 +3734,27 @@ const FullDashboard = () => {
           )}
           
           <DialogFooter className="flex gap-2 justify-end">
-            <Button variant="outline" onClick={() => { setEmailType('waybill'); setShowEmailDialog(true); }}>
+            <Button 
+              variant="outline" 
+              onClick={() => { setEmailType('waybill'); setShowEmailDialog(true); }}
+              className={`border-2 ${currentTheme.border} ${currentTheme.hover} ${currentTheme.textLight} hover:scale-105 transition-all duration-300`}
+            >
               <Mail className="w-4 h-4 mr-2" /> Email
             </Button>
-            <Button variant="outline" onClick={downloadWaybillPDF}>
+            <Button 
+              variant="outline" 
+              onClick={downloadWaybillPDF}
+              className={`border-2 ${currentTheme.border} ${currentTheme.hover} ${currentTheme.textLight} hover:scale-105 transition-all duration-300`}
+            >
               <Download className="w-4 h-4 mr-2" /> Завантажити
             </Button>
-            <Button onClick={previewWaybillPDF}>
+            <Button 
+              onClick={previewWaybillPDF}
+              className={`${currentTheme.buttonBg} ${currentTheme.buttonHover} text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105`}
+            >
               <Eye className="w-4 h-4 mr-2" /> Переглянути PDF
             </Button>
-            <Button variant="destructive" onClick={deleteWaybill}>
+            <Button variant="destructive" onClick={deleteWaybill} className="hover:scale-105 transition-all duration-300">
               <Trash2 className="w-4 h-4 mr-2" /> Видалити
             </Button>
           </DialogFooter>
