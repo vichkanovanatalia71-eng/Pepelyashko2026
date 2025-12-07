@@ -126,6 +126,9 @@ class ActPDFService:
         supplier_address = supplier_data.get('legal_address', '—')
         supplier_signature = supplier_data.get('signature', '—')
         
+        # Extract city from supplier address
+        supplier_city = self.extract_city_from_address(supplier_address)
+        
         # Build professional HTML document with purple design (act-specific)
         html_content = f"""
         <!DOCTYPE html>
