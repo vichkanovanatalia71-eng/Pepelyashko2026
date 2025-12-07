@@ -938,6 +938,71 @@ const FullDashboard = () => {
     setEditingAct(false);
   };
 
+  const openContractDialog = (contract) => {
+    setViewingContract(contract);
+    setShowContractDialog(true);
+  };
+
+  const closeContractDialog = () => {
+    setShowContractDialog(false);
+    setViewingContract(null);
+    setEditingContract(false);
+  };
+
+  const deleteContract = async () => {
+    if (!viewingContract) return;
+    if (!window.confirm(`Ви впевнені, що хочете видалити договір №${viewingContract.number}?`)) return;
+    
+    setLoading(true);
+    try {
+      await axios.delete(`${API_URL}/api/contracts/${viewingContract.number}`);
+      toast.success('Договір успішно видалено!');
+      closeContractDialog();
+      await loadAllData();
+    } catch (error) {
+      console.error('Error deleting contract:', error);
+      toast.error(error.response?.data?.detail || 'Помилка видалення договору');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const viewContractPDF = async () => {
+    if (!viewingContract) return;
+    
+    try {
+      const response = await axios.get(`${API_URL}/api/contracts/${viewingContract._id}/pdf`, {
+        responseType: 'blob'
+      });
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      window.open(url, '_blank');
+    } catch (error) {
+      console.error('Error viewing contract PDF:', error);
+      toast.error('Помилка при перегляді PDF');
+    }
+  };
+
+  const sendContractEmail = async () => {
+    if (!viewingContract) return;
+    
+    const email = prompt('Введіть email отримувача:');
+    if (!email) return;
+    
+    setLoading(true);
+    try {
+      await axios.post(`${API_URL}/api/contracts/${viewingContract._id}/email`, {
+        recipient_email: email
+      });
+      toast.success('Email успішно надіслано!');
+    } catch (error) {
+      console.error('Error sending contract email:', error);
+      toast.error(error.response?.data?.detail || 'Помилка відправки email');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const deleteAct = async () => {
     if (!viewingAct) return;
     if (!window.confirm(`Ви впевнені, що хочете видалити акт №${viewingAct.number}?`)) return;
