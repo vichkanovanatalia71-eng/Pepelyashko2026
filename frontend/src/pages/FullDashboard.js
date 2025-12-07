@@ -3433,14 +3433,30 @@ const FullDashboard = () => {
                     {filterContractsByEdrpou(contracts).map((contract) => (
                       <Card 
                         key={contract._id} 
-                        className={`card-hover cursor-pointer ${currentTheme.cardBg} border-2 ${currentTheme.cardBorder} ${currentTheme.shadow} transition-all duration-300`}
-                        onClick={() => openContractDialog(contract)}
+                        className={`card-hover ${currentTheme.cardBg} border-2 ${currentTheme.cardBorder} ${currentTheme.shadow} transition-all duration-300 group`}
                       >
                         <CardContent className="p-4">
-                          <p className={`font-medium ${currentTheme.text}`}>№{contract.number}</p>
-                          <p className="text-sm text-gray-600">{contract.counterparty_name}</p>
-                          <p className="text-sm">{contract.subject}</p>
-                          <p className={`font-bold ${currentTheme.text}`}>{contract.amount} грн</p>
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1 cursor-pointer" onClick={() => openContractDialog(contract)}>
+                              <p className={`font-medium ${currentTheme.text}`}>№{contract.number}</p>
+                              <p className="text-sm text-gray-600">{contract.counterparty_name}</p>
+                              <p className="text-sm">{contract.subject}</p>
+                              <p className={`font-bold ${currentTheme.text}`}>{contract.amount} грн</p>
+                            </div>
+                            <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openContractDialog(contract);
+                                }}
+                                className="h-8 w-8 p-0"
+                              >
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
                         </CardContent>
                       </Card>
                     ))}
