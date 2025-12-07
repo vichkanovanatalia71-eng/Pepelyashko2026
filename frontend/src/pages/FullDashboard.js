@@ -112,6 +112,7 @@ const FullDashboard = () => {
   const [editingWaybill, setEditingWaybill] = useState(false);
 
   // Profile state
+  const [showProfileDialog, setShowProfileDialog] = useState(false);
   const [profileData, setProfileData] = useState({
     full_name: '',
     email: '',
@@ -127,9 +128,11 @@ const FullDashboard = () => {
     director_position: '',
     position: '',
     represented_by: '',
-    signature: ''
+    signature: '',
+    contract_type: 'Статуту'
   });
   const [loadingProfile, setLoadingProfile] = useState(false);
+  const [searchingEdrpouProfile, setSearchingEdrpouProfile] = useState(false);
   
   // Document form
   const [documentForm, setDocumentForm] = useState({
