@@ -2557,7 +2557,8 @@ const FullDashboard = () => {
           </TabsContent>
 
           {/* Profile Tab */}
-          <TabsContent value="profile" className="space-y-6">
+          {/* Profile Tab removed - now in dialog */}
+          <TabsContent value="profile_removed" className="space-y-6 hidden">
             <Card>
               <CardHeader>
                 <CardTitle>Профіль користувача</CardTitle>
