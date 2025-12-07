@@ -1367,9 +1367,41 @@ const FullDashboard = () => {
   };
 
   // Create document
+  // Function to populate form from selected order
+  const handleOrderSelection = (orderNumber) => {
+    if (!orderNumber) {
+      // Clear form if no order selected
+      setDocumentForm({
+        counterparty_edrpou: '',
+        items: [{ name: '', unit: 'шт', quantity: 1, price: 0, amount: 0 }],
+        total_amount: 0,
+        based_on_order: ''
+      });
+      setFoundCounterparty(null);
+      return;
+    }
+    
+    const order = orders.find(o => o.number === orderNumber);
+    if (!order) return;
+    
+    // Find counterparty
+    const counterparty = counterparties.find(c => c.edrpou === order.counterparty_edrpou);
+    
+    // Set form data
+    setDocumentForm({
+      counterparty_edrpou: order.counterparty_edrpou,
+      items: order.items.map(item => ({...item})),
+      total_amount: order.total_amount,
+      based_on_order: orderNumber
+    });
+    
+    setFoundCounterparty(counterparty);
+    toast.success(`Дані з замовлення №${orderNumber} завантажено`);
+  };
+
   const createDocument = async (endpoint, docType) => {
     if (!foundCounterparty) {
-      toast.error('Спочатку знайдіть контрагента');
+      toast.error('Спочатку знайдіть контрагента або оберіть замовлення');
       return;
     }
 
