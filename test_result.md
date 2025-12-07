@@ -438,16 +438,19 @@ backend:
 
 frontend:
   - task: "Document Color Themes Implementation"
-    implemented: false
+    implemented: true
     working: false
-    file: "/app/frontend/src/pages/FullDashboard.js"
-    stuck_count: 0
+    file: "/app/frontend/src/components/dialogs/ActDialog.js, /app/frontend/src/components/dialogs/WaybillDialog.js, /app/frontend/src/components/dialogs/ContractDialog.js"
+    stuck_count: 1
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: false
         agent: "testing"
         comment: "❌ КРИТИЧНА ПРОБЛЕМА З КОЛЬОРОВИМИ ТЕМАМИ: Під час UI тестування виявлено що кольорові теми для документів НЕ реалізовані згідно з review request. ПРОБЛЕМИ: 1) Акти (Acts) - відсутня фіолетова тема (bg-purple-50), контрагент бокс не має purple стилізації, 2) Накладні (Waybills) - відсутня помаранчева тема (bg-orange-50), контрагент бокс не має orange стилізації, 3) Рахунки (Invoices) - зелена тема працює коректно ✅. ВИМОГИ: Кожен тип документа повинен мати свою кольорову тему: Invoices (green), Acts (purple), Waybills (orange). Контрагент інформаційний бокс повинен мати відповідний bg-{color}-50 клас та border-{color}-200."
+      - working: false
+        agent: "testing"
+        comment: "🎯 ТЕСТУВАННЯ РЕФАКТОРИНГУ ДІАЛОГІВ ЗАВЕРШЕНО: Протестовано винесені діалоги згідно з review request. РЕЗУЛЬТАТИ: 1) ACTDIALOG ✅ - діалог відкривається успішно з заголовком 'Акт №6770-1', фіолетова тема ПРИСУТНЯ (12 елементів: bg-purple-50, text-purple-900, border-purple-200, bg-purple-100), всі кнопки присутні (Email, Завантажити, Переглянути PDF, Видалити), 2) WAYBILLDIALOG ❌ - при кліку на накладну відкривається ActDialog замість WaybillDialog, помаранчева тема ВІДСУТНЯ (0 елементів), неправильна логіка відкриття діалогів, 3) CONTRACTDIALOG ❌ - діалог НЕ відкривається при кліку на договори №0002/№0001, рожева тема не протестована через неможливість відкриття діалогу. КРИТИЧНІ ПРОБЛЕМИ: Неправильна прив'язка діалогів до типів документів - всі документи відкривають ActDialog незалежно від типу. Потрібно виправити логіку відкриття діалогів у FullDashboard.js для правильного відображення WaybillDialog та ContractDialog."
 
   - task: "User Profile Cabinet with Supplier Details"
     implemented: true
