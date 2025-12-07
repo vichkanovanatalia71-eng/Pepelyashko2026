@@ -3150,12 +3150,16 @@ const FullDashboard = () => {
                 ) : (
                   <div className="space-y-2">
                     {contracts.map((contract) => (
-                      <Card key={contract._id}>
+                      <Card 
+                        key={contract._id} 
+                        className={`card-hover cursor-pointer ${currentTheme.cardBg} border-2 ${currentTheme.cardBorder} ${currentTheme.shadow} transition-all duration-300`}
+                        onClick={() => openContractDialog(contract)}
+                      >
                         <CardContent className="p-4">
-                          <p className="font-medium">№{contract.number}</p>
+                          <p className={`font-medium ${currentTheme.text}`}>№{contract.number}</p>
                           <p className="text-sm text-gray-600">{contract.counterparty_name}</p>
                           <p className="text-sm">{contract.subject}</p>
-                          <p className="font-bold">{contract.amount} грн</p>
+                          <p className={`font-bold ${currentTheme.text}`}>{contract.amount} грн</p>
                         </CardContent>
                       </Card>
                     ))}
