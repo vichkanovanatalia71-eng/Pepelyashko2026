@@ -1568,7 +1568,7 @@ async def generate_contract_pdf(
         return FileResponse(
             pdf_path,
             media_type="application/pdf",
-            filename=f"contract_{contract.get('number', 'unknown')}.pdf"
+            filename=f"contract_{contract_dict.get('number', 'unknown')}.pdf"
         )
         
     except HTTPException:
