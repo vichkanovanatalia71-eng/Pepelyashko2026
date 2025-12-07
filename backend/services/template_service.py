@@ -157,9 +157,13 @@ class TemplateService:
             Updated template model or None
         """
         # Get current template
+        # Allow editing system templates (user_id=None) or user's own templates
         current_template = await self.collection.find_one({
             "_id": template_id,
-            "user_id": user_id  # Only owner can update (not system templates)
+            "$or": [
+                {"user_id": user_id},
+                {"user_id": None}  # Allow editing system templates
+            ]
         })
         
         if not current_template:
