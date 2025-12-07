@@ -425,6 +425,18 @@ backend:
         comment: "✅ Пошук контрагента за ЄДРПОУ працює коректно. GET /api/counterparties повертає список з аркушу 'Основні дані', знайдено контрагента з ЄДРПОУ 40196816. GET /api/counterparties/40196816 повертає правильні дані: edrpou: '40196816', representative_name, email: 'baltapmsdbgr@gmail.com', phone: '380957786491', iban: 'UA648201720344370005000093420'. Виправлено проблему з дублікатами заголовків через fallback механізм. Функціональність працює, тимчасові проблеми з Google Sheets API quota під час тестування."
 
 frontend:
+  - task: "Document Color Themes Implementation"
+    implemented: false
+    working: false
+    file: "/app/frontend/src/pages/FullDashboard.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "❌ КРИТИЧНА ПРОБЛЕМА З КОЛЬОРОВИМИ ТЕМАМИ: Під час UI тестування виявлено що кольорові теми для документів НЕ реалізовані згідно з review request. ПРОБЛЕМИ: 1) Акти (Acts) - відсутня фіолетова тема (bg-purple-50), контрагент бокс не має purple стилізації, 2) Накладні (Waybills) - відсутня помаранчева тема (bg-orange-50), контрагент бокс не має orange стилізації, 3) Рахунки (Invoices) - зелена тема працює коректно ✅. ВИМОГИ: Кожен тип документа повинен мати свою кольорову тему: Invoices (green), Acts (purple), Waybills (orange). Контрагент інформаційний бокс повинен мати відповідний bg-{color}-50 клас та border-{color}-200."
+
   - task: "User Profile Cabinet with Supplier Details"
     implemented: true
     working: true
