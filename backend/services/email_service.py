@@ -408,3 +408,474 @@ class EmailService:
             attachment_path=pdf_path,
             attachment_name=f"Замовлення_{order_number}.pdf"
         )
+    
+    def send_invoice_document(
+        self,
+        to_email: str,
+        invoice_number: str,
+        invoice_date: str,
+        counterparty_name: str,
+        total_amount: float,
+        pdf_path: str
+    ) -> bool:
+        """Send invoice document PDF via email with green-themed HTML styling."""
+        formatted_date = self.format_date_ukrainian(invoice_date)
+        
+        subject = f"Рахунок №{invoice_number} від {formatted_date}"
+        
+        body = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <style>
+                body {{
+                    font-family: 'Segoe UI', Arial, sans-serif;
+                    line-height: 1.6;
+                    color: #1e293b;
+                    margin: 0;
+                    padding: 0;
+                    background-color: #f8fafc;
+                }}
+                .email-container {{
+                    max-width: 600px;
+                    margin: 20px auto;
+                    background-color: #ffffff;
+                    border-radius: 8px;
+                    overflow: hidden;
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                }}
+                .header {{
+                    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+                    color: white;
+                    padding: 30px 40px;
+                    text-align: center;
+                }}
+                .header h1 {{
+                    margin: 0;
+                    font-size: 28px;
+                    font-weight: 600;
+                }}
+                .content {{
+                    padding: 40px;
+                }}
+                .greeting {{
+                    font-size: 18px;
+                    color: #0f172a;
+                    margin-bottom: 20px;
+                }}
+                .info-box {{
+                    background-color: #ecfdf5;
+                    border-left: 4px solid #10b981;
+                    padding: 20px;
+                    margin: 25px 0;
+                    border-radius: 4px;
+                }}
+                .info-row {{
+                    display: flex;
+                    justify-content: space-between;
+                    padding: 8px 0;
+                    border-bottom: 1px solid #d1fae5;
+                }}
+                .info-row:last-child {{
+                    border-bottom: none;
+                }}
+                .info-label {{
+                    color: #64748b;
+                    font-weight: 500;
+                    font-size: 14px;
+                }}
+                .info-value {{
+                    color: #0f172a;
+                    font-weight: 600;
+                    font-size: 14px;
+                }}
+                .total {{
+                    background-color: #d1fae5;
+                    padding: 15px 20px;
+                    margin: 20px 0;
+                    border-radius: 6px;
+                    text-align: right;
+                }}
+                .total-label {{
+                    color: #065f46;
+                    font-size: 16px;
+                    font-weight: 600;
+                }}
+                .total-amount {{
+                    color: #047857;
+                    font-size: 24px;
+                    font-weight: 700;
+                    margin-top: 5px;
+                }}
+                .attachment-notice {{
+                    background-color: #d1fae5;
+                    border: 1px solid #a7f3d0;
+                    padding: 15px;
+                    margin: 25px 0;
+                    border-radius: 6px;
+                    text-align: center;
+                }}
+                .footer {{
+                    background-color: #f8fafc;
+                    padding: 25px 40px;
+                    text-align: center;
+                    border-top: 1px solid #e2e8f0;
+                }}
+                .footer p {{
+                    margin: 5px 0;
+                    font-size: 13px;
+                    color: #94a3b8;
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="email-container">
+                <div class="header">
+                    <h1>Рахунок №{invoice_number}</h1>
+                    <p>Система Управління Документами</p>
+                </div>
+                <div class="content">
+                    <p class="greeting">Доброго дня!</p>
+                    <p>Надсилаємо Вам рахунок №<strong>{invoice_number}</strong> від <strong>{formatted_date}</strong>.</p>
+                    <div class="info-box">
+                        <div class="info-row">
+                            <span class="info-label">📋 Номер рахунку:</span>
+                            <span class="info-value">№{invoice_number}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">📅 Дата:</span>
+                            <span class="info-value">{formatted_date}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">🏢 Контрагент:</span>
+                            <span class="info-value">{counterparty_name}</span>
+                        </div>
+                    </div>
+                    <div class="total">
+                        <div class="total-label">ЗАГАЛЬНА СУМА:</div>
+                        <div class="total-amount">{total_amount:.2f} грн</div>
+                    </div>
+                    <div class="attachment-notice">
+                        <p>📎 Повна інформація про рахунок знаходиться у вкладеному PDF-документі</p>
+                    </div>
+                </div>
+                <div class="footer">
+                    <p>Це автоматично згенерований лист</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        
+        return self.send_email_with_attachment(
+            to_email=to_email,
+            subject=subject,
+            body=body,
+            attachment_path=pdf_path,
+            attachment_name=f"Рахунок_{invoice_number}.pdf"
+        )
+    
+    def send_act_document(
+        self,
+        to_email: str,
+        act_number: str,
+        act_date: str,
+        counterparty_name: str,
+        total_amount: float,
+        pdf_path: str
+    ) -> bool:
+        """Send act document PDF via email with purple-themed HTML styling."""
+        formatted_date = self.format_date_ukrainian(act_date)
+        
+        subject = f"Акт №{act_number} від {formatted_date}"
+        
+        body = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <style>
+                body {{
+                    font-family: 'Segoe UI', Arial, sans-serif;
+                    line-height: 1.6;
+                    color: #1e293b;
+                    margin: 0;
+                    padding: 0;
+                    background-color: #f8fafc;
+                }}
+                .email-container {{
+                    max-width: 600px;
+                    margin: 20px auto;
+                    background-color: #ffffff;
+                    border-radius: 8px;
+                    overflow: hidden;
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                }}
+                .header {{
+                    background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%);
+                    color: white;
+                    padding: 30px 40px;
+                    text-align: center;
+                }}
+                .header h1 {{
+                    margin: 0;
+                    font-size: 28px;
+                    font-weight: 600;
+                }}
+                .content {{
+                    padding: 40px;
+                }}
+                .info-box {{
+                    background-color: #faf5ff;
+                    border-left: 4px solid #a855f7;
+                    padding: 20px;
+                    margin: 25px 0;
+                    border-radius: 4px;
+                }}
+                .info-row {{
+                    display: flex;
+                    justify-content: space-between;
+                    padding: 8px 0;
+                    border-bottom: 1px solid #e9d5ff;
+                }}
+                .info-row:last-child {{
+                    border-bottom: none;
+                }}
+                .total {{
+                    background-color: #e9d5ff;
+                    padding: 15px 20px;
+                    margin: 20px 0;
+                    border-radius: 6px;
+                    text-align: right;
+                }}
+                .total-label {{
+                    color: #581c87;
+                    font-size: 16px;
+                    font-weight: 600;
+                }}
+                .total-amount {{
+                    color: #7c3aed;
+                    font-size: 24px;
+                    font-weight: 700;
+                    margin-top: 5px;
+                }}
+                .attachment-notice {{
+                    background-color: #e9d5ff;
+                    border: 1px solid #d8b4fe;
+                    padding: 15px;
+                    margin: 25px 0;
+                    border-radius: 6px;
+                    text-align: center;
+                }}
+                .footer {{
+                    background-color: #f8fafc;
+                    padding: 25px 40px;
+                    text-align: center;
+                    border-top: 1px solid #e2e8f0;
+                }}
+                .footer p {{
+                    margin: 5px 0;
+                    font-size: 13px;
+                    color: #94a3b8;
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="email-container">
+                <div class="header">
+                    <h1>Акт №{act_number}</h1>
+                    <p>Система Управління Документами</p>
+                </div>
+                <div class="content">
+                    <p>Доброго дня!</p>
+                    <p>Надсилаємо Вам акт прийнятих робіт №<strong>{act_number}</strong> від <strong>{formatted_date}</strong>.</p>
+                    <div class="info-box">
+                        <div class="info-row">
+                            <span>📋 Номер акту:</span>
+                            <span>№{act_number}</span>
+                        </div>
+                        <div class="info-row">
+                            <span>📅 Дата:</span>
+                            <span>{formatted_date}</span>
+                        </div>
+                        <div class="info-row">
+                            <span>🏢 Контрагент:</span>
+                            <span>{counterparty_name}</span>
+                        </div>
+                    </div>
+                    <div class="total">
+                        <div class="total-label">ЗАГАЛЬНА СУМА:</div>
+                        <div class="total-amount">{total_amount:.2f} грн</div>
+                    </div>
+                    <div class="attachment-notice">
+                        <p>📎 Повна інформація про акт знаходиться у вкладеному PDF-документі</p>
+                    </div>
+                </div>
+                <div class="footer">
+                    <p>Це автоматично згенерований лист</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        
+        return self.send_email_with_attachment(
+            to_email=to_email,
+            subject=subject,
+            body=body,
+            attachment_path=pdf_path,
+            attachment_name=f"Акт_{act_number}.pdf"
+        )
+    
+    def send_waybill_document(
+        self,
+        to_email: str,
+        waybill_number: str,
+        waybill_date: str,
+        counterparty_name: str,
+        total_amount: float,
+        pdf_path: str
+    ) -> bool:
+        """Send waybill document PDF via email with orange-themed HTML styling."""
+        formatted_date = self.format_date_ukrainian(waybill_date)
+        
+        subject = f"Видаткова накладна №{waybill_number} від {formatted_date}"
+        
+        body = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <style>
+                body {{
+                    font-family: 'Segoe UI', Arial, sans-serif;
+                    line-height: 1.6;
+                    color: #1e293b;
+                    margin: 0;
+                    padding: 0;
+                    background-color: #f8fafc;
+                }}
+                .email-container {{
+                    max-width: 600px;
+                    margin: 20px auto;
+                    background-color: #ffffff;
+                    border-radius: 8px;
+                    overflow: hidden;
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                }}
+                .header {{
+                    background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+                    color: white;
+                    padding: 30px 40px;
+                    text-align: center;
+                }}
+                .header h1 {{
+                    margin: 0;
+                    font-size: 28px;
+                    font-weight: 600;
+                }}
+                .content {{
+                    padding: 40px;
+                }}
+                .info-box {{
+                    background-color: #fff7ed;
+                    border-left: 4px solid #f97316;
+                    padding: 20px;
+                    margin: 25px 0;
+                    border-radius: 4px;
+                }}
+                .info-row {{
+                    display: flex;
+                    justify-content: space-between;
+                    padding: 8px 0;
+                    border-bottom: 1px solid #fed7aa;
+                }}
+                .info-row:last-child {{
+                    border-bottom: none;
+                }}
+                .total {{
+                    background-color: #fed7aa;
+                    padding: 15px 20px;
+                    margin: 20px 0;
+                    border-radius: 6px;
+                    text-align: right;
+                }}
+                .total-label {{
+                    color: #7c2d12;
+                    font-size: 16px;
+                    font-weight: 600;
+                }}
+                .total-amount {{
+                    color: #c2410c;
+                    font-size: 24px;
+                    font-weight: 700;
+                    margin-top: 5px;
+                }}
+                .attachment-notice {{
+                    background-color: #fed7aa;
+                    border: 1px solid #fdba74;
+                    padding: 15px;
+                    margin: 25px 0;
+                    border-radius: 6px;
+                    text-align: center;
+                }}
+                .footer {{
+                    background-color: #f8fafc;
+                    padding: 25px 40px;
+                    text-align: center;
+                    border-top: 1px solid #e2e8f0;
+                }}
+                .footer p {{
+                    margin: 5px 0;
+                    font-size: 13px;
+                    color: #94a3b8;
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="email-container">
+                <div class="header">
+                    <h1>Видаткова накладна №{waybill_number}</h1>
+                    <p>Система Управління Документами</p>
+                </div>
+                <div class="content">
+                    <p>Доброго дня!</p>
+                    <p>Надсилаємо Вам видаткову накладну №<strong>{waybill_number}</strong> від <strong>{formatted_date}</strong>.</p>
+                    <div class="info-box">
+                        <div class="info-row">
+                            <span>📋 Номер накладної:</span>
+                            <span>№{waybill_number}</span>
+                        </div>
+                        <div class="info-row">
+                            <span>📅 Дата:</span>
+                            <span>{formatted_date}</span>
+                        </div>
+                        <div class="info-row">
+                            <span>🏢 Контрагент:</span>
+                            <span>{counterparty_name}</span>
+                        </div>
+                    </div>
+                    <div class="total">
+                        <div class="total-label">ЗАГАЛЬНА СУМА:</div>
+                        <div class="total-amount">{total_amount:.2f} грн</div>
+                    </div>
+                    <div class="attachment-notice">
+                        <p>📎 Повна інформація про накладну знаходиться у вкладеному PDF-документі</p>
+                    </div>
+                </div>
+                <div class="footer">
+                    <p>Це автоматично згенерований лист</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        
+        return self.send_email_with_attachment(
+            to_email=to_email,
+            subject=subject,
+            body=body,
+            attachment_path=pdf_path,
+            attachment_name=f"Накладна_{waybill_number}.pdf"
+        )
