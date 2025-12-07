@@ -4585,84 +4585,16 @@ const FullDashboard = () => {
       </Dialog>
 
       {/* Contract Dialog */}
-      <Dialog open={showContractDialog} onOpenChange={closeContractDialog}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-2xl text-rose-700">Договір №{viewingContract?.number}</DialogTitle>
-            <DialogDescription>{viewingContract?.counterparty_name}</DialogDescription>
-          </DialogHeader>
-          
-          {viewingContract && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-sm text-gray-600">Номер договору</Label>
-                  <p className="text-lg font-semibold">№{viewingContract.number}</p>
-                </div>
-                <div>
-                  <Label className="text-sm text-gray-600">Дата</Label>
-                  <p className="text-lg font-semibold">{formatDateUkrainian(viewingContract.date)}</p>
-                </div>
-              </div>
-              
-              <div className="bg-rose-50 p-4 rounded-lg border border-rose-200">
-                <Label className="text-sm text-gray-600">Контрагент</Label>
-                <p className="text-lg font-semibold">{viewingContract.counterparty_name}</p>
-                <p className="text-sm text-gray-600">ЄДРПОУ: {viewingContract.counterparty_edrpou}</p>
-              </div>
-
-              {viewingContract.based_on_order && (
-                <div className="bg-blue-50 p-3 rounded border border-blue-200">
-                  <p className="text-sm text-blue-700">
-                    📋 Створено на основі замовлення №{viewingContract.based_on_order}
-                  </p>
-                </div>
-              )}
-              
-              <div>
-                <Label className="text-sm text-gray-600">Предмет договору</Label>
-                <p className="text-base mt-1 p-3 bg-gray-50 rounded">{viewingContract.subject}</p>
-              </div>
-
-              {viewingContract.contract_type && (
-                <div>
-                  <Label className="text-sm text-gray-600">Тип договору</Label>
-                  <p className="text-base mt-1">{viewingContract.contract_type}</p>
-                </div>
-              )}
-              
-              <div className="bg-rose-100 p-4 rounded-lg border-2 border-rose-300">
-                <Label className="text-sm text-gray-600">Загальна сума</Label>
-                <p className="text-3xl font-bold text-rose-700">{viewingContract.amount.toFixed(2)} грн</p>
-              </div>
-              
-              <div className="flex gap-2 pt-4 border-t">
-                <Button 
-                  onClick={viewContractPDF}
-                  className="flex-1 bg-rose-600 hover:bg-rose-700 text-white"
-                >
-                  <Eye className="w-4 h-4 mr-2" /> Переглянути PDF
-                </Button>
-                <Button 
-                  onClick={sendContractEmail}
-                  disabled={loading}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
-                >
-                  <Mail className="w-4 h-4 mr-2" /> Надіслати Email
-                </Button>
-                <Button 
-                  onClick={deleteContract}
-                  disabled={loading}
-                  variant="destructive"
-                  className="flex-1"
-                >
-                  <Trash2 className="w-4 h-4 mr-2" /> Видалити
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      <ContractDialog
+        open={showContractDialog}
+        onClose={closeContractDialog}
+        contract={viewingContract}
+        loading={loading}
+        onDelete={deleteContract}
+        onViewPDF={viewContractPDF}
+        onSendEmail={sendContractEmail}
+        formatDateUkrainian={formatDateUkrainian}
+      />
       </div>
     </div>
   );
