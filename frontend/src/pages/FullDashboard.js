@@ -3299,6 +3299,13 @@ const FullDashboard = () => {
             />
           </TabsContent>
 
+
+          {/* Templates Tab */}
+          <TabsContent value="templates" className="space-y-6">
+            <TemplateViewer />
+          </TabsContent>
+
+
           {/* Profile Tab */}
           {/* Profile Tab removed - now in dialog */}
           <TabsContent value="profile_removed" className="space-y-6 hidden">
