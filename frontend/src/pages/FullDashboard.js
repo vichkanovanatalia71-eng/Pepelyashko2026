@@ -2979,6 +2979,101 @@ const FullDashboard = () => {
           <TabsContent value="contracts" className="space-y-6">
             <Card>
               <CardHeader>
+                <CardTitle>Створити Договір</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={(e) => { e.preventDefault(); createContract(); }} className="space-y-4">
+                  {/* Order Selection */}
+                  <div className="space-y-2">
+                    <Label>Створити на основі замовлення (опціонально)</Label>
+                    <Select 
+                      value={contractForm.based_on_order} 
+                      onValueChange={handleOrderSelectionForContract}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Оберіть замовлення або створіть новий" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">Без замовлення (новий документ)</SelectItem>
+                        {orders.map(order => (
+                          <SelectItem key={order._id} value={order.number}>
+                            №{order.number} | {order.counterparty_name} | {order.total_amount} грн
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Пошук контрагента</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        value={searchEdrpou}
+                        onChange={(e) => setSearchEdrpou(e.target.value)}
+                        placeholder="ЄДРПОУ"
+                        disabled={!!contractForm.based_on_order}
+                      />
+                      <Button type="button" onClick={searchCounterparty} disabled={!!contractForm.based_on_order}>
+                        <Search className="w-4 h-4 mr-2" />
+                        Знайти
+                      </Button>
+                    </div>
+                    {foundCounterparty && (
+                      <div className={`p-3 ${currentTheme.cardBg} border-2 ${currentTheme.cardBorder} rounded-lg`}>
+                        <p className="font-medium">{foundCounterparty.representative_name}</p>
+                        <p className="text-sm text-gray-600">ЄДРПОУ: {foundCounterparty.edrpou}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Предмет договору</Label>
+                    <Input
+                      value={contractForm.subject}
+                      onChange={(e) => setContractForm({...contractForm, subject: e.target.value})}
+                      placeholder="Опис предмету договору"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Сума договору (грн)</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={contractForm.amount}
+                      onChange={(e) => setContractForm({...contractForm, amount: e.target.value})}
+                      placeholder="0.00"
+                      required
+                    />
+                  </div>
+
+                  <div className="p-4 bg-rose-50 border rounded">
+                    <div className="flex justify-between">
+                      <span className="font-semibold">Загальна сума:</span>
+                      <span className="text-xl font-bold text-rose-700">
+                        {parseFloat(contractForm.amount || 0).toFixed(2)} грн
+                      </span>
+                    </div>
+                  </div>
+
+                  <Button 
+                    type="submit" 
+                    disabled={loading || !foundCounterparty} 
+                    className={`w-full ${currentTheme.buttonBg} ${currentTheme.buttonHover} text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105`}
+                  >
+                    {loading ? (
+                      <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Створення...</>
+                    ) : (
+                      <>Створити Договір</>
+                    )}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
                 <CardTitle>Список Договорів ({contracts.length})</CardTitle>
               </CardHeader>
               <CardContent>
