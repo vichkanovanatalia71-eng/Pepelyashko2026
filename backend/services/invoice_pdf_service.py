@@ -296,7 +296,7 @@ class InvoicePDFService:
             <div class="document">
                 <!-- Header -->
                 <div class="header">
-                    <div class="location">Місце складання: м. Київ</div>
+                    <div class="location">Місце складання: {supplier_city}</div>
                     <div class="title">РАХУНОК № {invoice.get('number', '—')} від {formatted_date}</div>
                 </div>
                 
