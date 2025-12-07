@@ -27,8 +27,11 @@ import {
   Download,
   FileCheck,
   Edit,
-  Settings
+  Settings,
+  Sparkles
 } from 'lucide-react';
+import { documentThemes } from '../theme/documentThemes';
+import '../styles/animations.css';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
