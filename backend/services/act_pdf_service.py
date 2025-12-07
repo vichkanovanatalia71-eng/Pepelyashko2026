@@ -16,6 +16,41 @@ class ActPDFService:
         self.output_dir = Path("/tmp/act_pdfs")
         self.output_dir.mkdir(exist_ok=True)
     
+    def extract_city_from_address(self, address: str) -> str:
+        """Extract city name from Ukrainian legal address."""
+        if not address:
+            return "м. Київ"
+        
+        # Try to find city pattern: "місто Назва" or "м. Назва" or "смт Назва" or "село Назва"
+        import re
+        patterns = [
+            r'місто\s+([А-ЯІЇЄҐа-яіїєґ\'\-]+)',
+            r'м\.\s*([А-ЯІЇЄҐа-яіїєґ\'\-]+)',
+            r'смт\s+([А-ЯІЇЄҐа-яіїєґ\'\-]+)',
+            r'село\s+([А-ЯІЇЄҐа-яіїєґ\'\-]+)',
+            r'с\.\s*([А-ЯІЇЄҐа-яіїєґ\'\-]+)'
+        ]
+        
+        for pattern in patterns:
+            match = re.search(pattern, address, re.IGNORECASE)
+            if match:
+                city_name = match.group(1).capitalize()
+                # Determine prefix based on pattern
+                if 'місто' in pattern or 'м.' in pattern:
+                    return f"м. {city_name}"
+                elif 'смт' in pattern:
+                    return f"смт {city_name}"
+                elif 'село' in pattern or 'с.' in pattern:
+                    return f"с. {city_name}"
+        
+        # If no match, try to extract from comma-separated parts
+        parts = [p.strip() for p in address.split(',')]
+        for part in parts:
+            if 'місто' in part.lower() or 'м.' in part.lower():
+                return part
+        
+        return "м. Київ"
+    
     def format_date_ukrainian(self, date_str: str) -> str:
         """Format date in Ukrainian format: '06 грудня 2025 року'"""
         months_ukrainian = {
