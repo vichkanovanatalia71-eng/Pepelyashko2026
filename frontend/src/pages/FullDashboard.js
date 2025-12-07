@@ -1438,10 +1438,41 @@ const FullDashboard = () => {
     }
   };
 
+  // Function to populate contract form from selected order
+  const handleOrderSelectionForContract = (orderNumber) => {
+    if (!orderNumber) {
+      setContractForm({
+        counterparty_edrpou: '',
+        contract_type: '',
+        subject: '',
+        amount: 0,
+        based_on_order: ''
+      });
+      setFoundCounterparty(null);
+      return;
+    }
+    
+    const order = orders.find(o => o.number === orderNumber);
+    if (!order) return;
+    
+    const counterparty = counterparties.find(c => c.edrpou === order.counterparty_edrpou);
+    
+    setContractForm({
+      counterparty_edrpou: order.counterparty_edrpou,
+      contract_type: '',
+      subject: `Договір на основі замовлення ${orderNumber}`,
+      amount: order.total_amount,
+      based_on_order: orderNumber
+    });
+    
+    setFoundCounterparty(counterparty);
+    toast.success(`Дані з замовлення №${orderNumber} завантажено`);
+  };
+
   // Create contract
   const createContract = async () => {
     if (!foundCounterparty) {
-      toast.error('Спочатку знайдіть контрагента');
+      toast.error('Спочатку знайдіть контрагента або оберіть замовлення');
       return;
     }
 
