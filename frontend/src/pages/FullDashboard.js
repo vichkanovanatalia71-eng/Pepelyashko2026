@@ -544,6 +544,12 @@ const FullDashboard = () => {
   const handleSendEmail = async () => {
     if (emailType === 'order') {
       await sendOrderEmail();
+    } else if (emailType === 'invoice') {
+      await sendInvoiceEmail();
+    } else if (emailType === 'act') {
+      await sendActEmail();
+    } else if (emailType === 'waybill') {
+      await sendWaybillEmail();
     } else {
       await sendCounterpartyEmail();
     }
