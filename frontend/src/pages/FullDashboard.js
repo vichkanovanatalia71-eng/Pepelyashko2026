@@ -4601,8 +4601,8 @@ const FullDashboard = () => {
                   <Label htmlFor="profile_bank">Назва банку</Label>
                   <Input
                     id="profile_bank"
-                    value={profileData.bank}
-                    onChange={(e) => setProfileData({...profileData, bank: e.target.value})}
+                    value={profileData.bank_name || profileData.bank || ''}
+                    onChange={(e) => setProfileData({...profileData, bank_name: e.target.value, bank: e.target.value})}
                     placeholder="АТ КБ 'ПриватБанк'"
                   />
                 </div>
