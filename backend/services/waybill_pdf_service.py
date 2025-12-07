@@ -295,7 +295,7 @@ class WaybillPDFService:
             <div class="document">
                 <!-- Header -->
                 <div class="header">
-                    <div class="location">Місце складання: м. Київ</div>
+                    <div class="location">Місце складання: {supplier_city}</div>
                     <div class="title">ВИДАТКОВА НАКЛАДНА № {waybill.get('number', '—')}</div>
                     <div class="subtitle">від {formatted_date}</div>
                 </div>
