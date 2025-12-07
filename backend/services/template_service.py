@@ -96,6 +96,29 @@ class TemplateService:
                 {"is_default": True}
             ]
         })
+
+    
+    async def get_default_template(self, user_id: str, template_type: str) -> Optional[TemplateModel]:
+        """Get default template for a document type."""
+        # First try to find user's default template
+        template_doc = await self.collection.find_one({
+            "user_id": user_id,
+            "template_type": template_type,
+            "is_default": True
+        })
+        
+        # If not found, get system default
+        if not template_doc:
+            template_doc = await self.collection.find_one({
+                "user_id": None,
+                "template_type": template_type,
+                "is_default": True
+            })
+        
+        if template_doc:
+            return TemplateModel(**template_doc)
+        return None
+
         templates = []
         async for template in cursor:
             templates.append(TemplateModel(**template))
