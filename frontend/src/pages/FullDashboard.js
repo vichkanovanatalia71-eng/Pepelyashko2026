@@ -2081,7 +2081,7 @@ const FullDashboard = () => {
                 ) : (
                   <div className="space-y-2">
                     {invoices.map((invoice) => (
-                      <Card key={invoice._id}>
+                      <Card key={invoice._id} className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => openInvoiceDialog(invoice)}>
                         <CardContent className="p-4">
                           <div className="flex justify-between">
                             <div>
