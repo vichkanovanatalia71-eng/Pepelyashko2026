@@ -237,8 +237,101 @@ const TemplateViewer = () => {
                         </div>
                       )}
                       
-                      {/* Variables info */}
-                      {selectedTemplate.variables && selectedTemplate.variables.length > 0 && (
+                      {/* Variables info - ПОВНИЙ СПИСОК */}
+                      {selectedTemplate.template_type === 'invoice' && (
+                        <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                          <h4 className="font-bold mb-3 text-blue-900">📋 Доступні змінні для рахунку:</h4>
+                          
+                          <div className="space-y-4 text-sm">
+                            {/* Document info */}
+                            <div>
+                              <p className="font-semibold text-gray-700 mb-1">Документ:</p>
+                              <div className="grid grid-cols-2 gap-2">
+                                <code className="bg-white px-2 py-1 rounded text-xs border">{'{{document_number}}'}</code>
+                                <span className="text-xs text-gray-600">- Номер рахунку</span>
+                                <code className="bg-white px-2 py-1 rounded text-xs border">{'{{document_date}}'}</code>
+                                <span className="text-xs text-gray-600">- Дата рахунку</span>
+                                <code className="bg-white px-2 py-1 rounded text-xs border">{'{{items_table}}'}</code>
+                                <span className="text-xs text-gray-600">- Таблиця товарів (HTML)</span>
+                              </div>
+                            </div>
+
+                            {/* Amounts */}
+                            <div>
+                              <p className="font-semibold text-gray-700 mb-1">Суми:</p>
+                              <div className="grid grid-cols-2 gap-2">
+                                <code className="bg-white px-2 py-1 rounded text-xs border">{'{{total_amount}}'}</code>
+                                <span className="text-xs text-gray-600">- Загальна сума (число)</span>
+                                <code className="bg-white px-2 py-1 rounded text-xs border">{'{{total_amount_text}}'}</code>
+                                <span className="text-xs text-gray-600">- Сума прописом</span>
+                                <code className="bg-white px-2 py-1 rounded text-xs border">{'{{vat_note}}'}</code>
+                                <span className="text-xs text-gray-600">- Примітка про ПДВ</span>
+                              </div>
+                            </div>
+
+                            {/* Supplier */}
+                            <div>
+                              <p className="font-semibold text-gray-700 mb-1">Постачальник:</p>
+                              <div className="grid grid-cols-2 gap-2">
+                                <code className="bg-white px-2 py-1 rounded text-xs border">{'{{supplier_name}}'}</code>
+                                <span className="text-xs text-gray-600">- Назва</span>
+                                <code className="bg-white px-2 py-1 rounded text-xs border">{'{{supplier_edrpou}}'}</code>
+                                <span className="text-xs text-gray-600">- ЄДРПОУ</span>
+                                <code className="bg-white px-2 py-1 rounded text-xs border">{'{{supplier_address}}'}</code>
+                                <span className="text-xs text-gray-600">- Адреса</span>
+                                <code className="bg-white px-2 py-1 rounded text-xs border">{'{{supplier_email}}'}</code>
+                                <span className="text-xs text-gray-600">- Email</span>
+                                <code className="bg-white px-2 py-1 rounded text-xs border">{'{{supplier_phone}}'}</code>
+                                <span className="text-xs text-gray-600">- Телефон</span>
+                                <code className="bg-white px-2 py-1 rounded text-xs border">{'{{supplier_iban}}'}</code>
+                                <span className="text-xs text-gray-600">- IBAN</span>
+                                <code className="bg-white px-2 py-1 rounded text-xs border">{'{{supplier_mfo}}'}</code>
+                                <span className="text-xs text-gray-600">- МФО</span>
+                                <code className="bg-white px-2 py-1 rounded text-xs border">{'{{supplier_bank}}'}</code>
+                                <span className="text-xs text-gray-600">- Назва банку</span>
+                                <code className="bg-white px-2 py-1 rounded text-xs border">{'{{supplier_director_name}}'}</code>
+                                <span className="text-xs text-gray-600">- ПІБ директора</span>
+                                <code className="bg-white px-2 py-1 rounded text-xs border">{'{{supplier_director_position}}'}</code>
+                                <span className="text-xs text-gray-600">- Посада директора</span>
+                                <code className="bg-white px-2 py-1 rounded text-xs border">{'{{supplier_logo}}'}</code>
+                                <span className="text-xs text-gray-600">- Логотип (URL)</span>
+                              </div>
+                            </div>
+
+                            {/* Buyer/Counterparty */}
+                            <div>
+                              <p className="font-semibold text-gray-700 mb-1">Покупець (можна використовувати buyer_ або counterparty_):</p>
+                              <div className="grid grid-cols-2 gap-2">
+                                <code className="bg-white px-2 py-1 rounded text-xs border">{'{{buyer_name}}'}</code>
+                                <span className="text-xs text-gray-600">- Назва</span>
+                                <code className="bg-white px-2 py-1 rounded text-xs border">{'{{buyer_edrpou}}'}</code>
+                                <span className="text-xs text-gray-600">- ЄДРПОУ</span>
+                                <code className="bg-white px-2 py-1 rounded text-xs border">{'{{buyer_address}}'}</code>
+                                <span className="text-xs text-gray-600">- Адреса</span>
+                                <code className="bg-white px-2 py-1 rounded text-xs border">{'{{buyer_email}}'}</code>
+                                <span className="text-xs text-gray-600">- Email</span>
+                                <code className="bg-white px-2 py-1 rounded text-xs border">{'{{buyer_phone}}'}</code>
+                                <span className="text-xs text-gray-600">- Телефон</span>
+                                <code className="bg-white px-2 py-1 rounded text-xs border">{'{{buyer_iban}}'}</code>
+                                <span className="text-xs text-gray-600">- IBAN</span>
+                                <code className="bg-white px-2 py-1 rounded text-xs border">{'{{buyer_mfo}}'}</code>
+                                <span className="text-xs text-gray-600">- МФО</span>
+                                <code className="bg-white px-2 py-1 rounded text-xs border">{'{{buyer_bank}}'}</code>
+                                <span className="text-xs text-gray-600">- Назва банку</span>
+                              </div>
+                            </div>
+
+                            <div className="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded">
+                              <p className="text-xs text-yellow-800">
+                                💡 <strong>Підказка:</strong> Використовуйте <code>{'{{#if variable}}'}</code>...<code>{'{{/if}}'}</code> для умовного відображення
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* For other template types - show simple list */}
+                      {selectedTemplate.template_type !== 'invoice' && selectedTemplate.variables && selectedTemplate.variables.length > 0 && (
                         <div className="mt-4 p-4 bg-blue-50 rounded-lg">
                           <h4 className="font-semibold mb-2">Доступні змінні:</h4>
                           <div className="flex flex-wrap gap-2">
