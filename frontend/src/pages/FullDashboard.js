@@ -33,7 +33,7 @@ import {
 } from 'lucide-react';
 import { documentThemes } from '../theme/documentThemes';
 import '../styles/animations.css';
-import InvoiceDialog from '../components/dialogs/InvoiceDialog';
+import { InvoiceDialog, ActDialog, WaybillDialog, ContractDialog } from '../components/dialogs';
 import { InvoiceList, DocumentListGeneric } from '../components/documents';
 import TemplateViewer from '../components/templates/TemplateViewer';
 
