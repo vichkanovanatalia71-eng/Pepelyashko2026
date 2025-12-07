@@ -204,6 +204,15 @@ async def startup_event():
         logger.info("MongoDB connection successful")
     except Exception as e:
         logger.error(f"MongoDB connection failed: {str(e)}")
+    
+    # Initialize default templates
+    try:
+        from services.template_service import TemplateService
+        template_service = TemplateService(db)
+        await template_service.initialize_default_templates()
+        logger.info("Default templates initialized")
+    except Exception as e:
+        logger.error(f"Failed to initialize default templates: {str(e)}")
 
 
 @app.on_event("shutdown")
