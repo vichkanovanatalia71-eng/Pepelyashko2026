@@ -315,7 +315,7 @@ class OrderPDFService:
             <div class="document">
                 <!-- Header -->
                 <div class="header">
-                    <div class="location">Місце складання: м. Одеса</div>
+                    <div class="location">Місце складання: {supplier_city}</div>
                     <div class="title">ЗАМОВЛЕННЯ № {order.get('number', '—')} від {formatted_date}</div>
                 </div>
                 
