@@ -3422,6 +3422,7 @@ const FullDashboard = () => {
                 <Button 
                   onClick={saveEditedOrder}
                   disabled={loading}
+                  className={`${currentTheme.buttonBg} ${currentTheme.buttonHover} text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300`}
                 >
                   {loading ? 'Збереження...' : 'Зберегти зміни'}
                 </Button>
