@@ -2547,13 +2547,16 @@ const FullDashboard = () => {
                 ) : (
                   <div className="space-y-2">
                     {orders.map((order) => (
-                      <Card key={order._id} className="cursor-pointer hover:bg-gray-50 transition-colors">
+                      <Card 
+                        key={order._id} 
+                        className={`card-hover ${currentTheme.cardBg} border-2 ${currentTheme.cardBorder} ${currentTheme.shadow} transition-all duration-300`}
+                      >
                         <CardContent className="p-4">
                           <div className="flex justify-between items-center">
-                            <div className="flex-1" onClick={() => openOrderDialog(order)}>
-                              <p className="font-medium">№{order.number}</p>
+                            <div className="flex-1 cursor-pointer" onClick={() => openOrderDialog(order)}>
+                              <p className={`font-medium ${currentTheme.text}`}>№{order.number}</p>
                               <p className="text-sm text-gray-600">{order.counterparty_name}</p>
-                              <p className="font-bold">{order.total_amount} грн</p>
+                              <p className={`font-bold ${currentTheme.text}`}>{order.total_amount} грн</p>
                               <p className="text-xs text-gray-500">{order.date}</p>
                             </div>
                             <div className="flex gap-2">
