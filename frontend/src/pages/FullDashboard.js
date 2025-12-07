@@ -2222,18 +2222,22 @@ const FullDashboard = () => {
                 ) : (
                   <div className="space-y-2">
                     {invoices.map((invoice) => (
-                      <Card key={invoice._id} className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => openInvoiceDialog(invoice)}>
+                      <Card 
+                        key={invoice._id} 
+                        className={`card-hover cursor-pointer ${currentTheme.cardBg} border-2 ${currentTheme.cardBorder} ${currentTheme.shadow} transition-all duration-300`} 
+                        onClick={() => openInvoiceDialog(invoice)}
+                      >
                         <CardContent className="p-4">
                           <div className="flex justify-between">
                             <div>
-                              <p className="font-medium">№{invoice.number}</p>
+                              <p className={`font-medium ${currentTheme.text}`}>№{invoice.number}</p>
                               <p className="text-sm text-gray-600">{invoice.counterparty_name}</p>
                               <p className="text-xs text-gray-500">
                                 {new Date(invoice.date).toLocaleDateString('uk-UA')}
                               </p>
                             </div>
                             <div className="text-right">
-                              <p className="font-bold text-lg">{invoice.total_amount} грн</p>
+                              <p className={`font-bold text-lg ${currentTheme.text}`}>{invoice.total_amount} грн</p>
                             </div>
                           </div>
                         </CardContent>
