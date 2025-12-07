@@ -295,7 +295,7 @@ class ActPDFService:
             <div class="document">
                 <!-- Header -->
                 <div class="header">
-                    <div class="location">Місце складання: м. Київ</div>
+                    <div class="location">Місце складання: {supplier_city}</div>
                     <div class="title">АКТ ПРИЙНЯТИХ РОБІТ (ПОСЛУГ) № {act.get('number', '—')}</div>
                     <div class="subtitle">від {formatted_date}</div>
                 </div>
