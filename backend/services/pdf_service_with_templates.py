@@ -78,6 +78,32 @@ class PDFServiceWithTemplates:
             logger.error(f"Error generating invoice PDF: {str(e)}")
             raise
     
+    def _get_logo_file_path(self, logo_url: str) -> str:
+        """
+        Convert logo URL to local file path for WeasyPrint.
+        
+        Args:
+            logo_url: URL like '/api/uploads/filename.png'
+            
+        Returns:
+            Local file path like 'file:///app/backend/uploads/filename.png' or empty string
+        """
+        if not logo_url:
+            return ''
+        
+        # Extract filename from URL
+        # URL format: /api/uploads/filename.png
+        if logo_url.startswith('/api/uploads/'):
+            filename = logo_url.replace('/api/uploads/', '')
+            local_path = Path('/app/backend/uploads') / filename
+            
+            # Check if file exists
+            if local_path.exists():
+                # Return as file:// URL for WeasyPrint
+                return f"file://{local_path}"
+        
+        return ''
+    
     def _prepare_invoice_context(
         self,
         invoice: Dict[str, Any],
@@ -109,6 +135,9 @@ class PDFServiceWithTemplates:
         # Amount in words
         total_amount_text = self.renderer.number_to_words_ua(total_with_vat)
         
+        # Get logo file path for WeasyPrint
+        logo_file_path = self._get_logo_file_path(supplier.get('logo_url', ''))
+        
         # Prepare context
         context = {
             # Document info
@@ -132,10 +161,10 @@ class PDFServiceWithTemplates:
             'supplier_phone': supplier.get('phone', ''),
             'supplier_iban': supplier.get('bank_account', supplier.get('iban', '')),
             'supplier_mfo': supplier.get('mfo', ''),
-            'supplier_bank': supplier.get('bank_name', ''),
+            'supplier_bank': supplier.get('bank_name', supplier.get('bank', '')),
             'supplier_director_name': supplier.get('director_name', ''),
             'supplier_director_position': supplier.get('director_position', 'Директор'),
-            'supplier_logo': supplier.get('logo_url', ''),
+            'supplier_logo': logo_file_path,
             
             # Counterparty info
             'counterparty_name': counterparty.get('representative_name', invoice.get('counterparty_name', '')),
