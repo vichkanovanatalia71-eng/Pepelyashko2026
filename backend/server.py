@@ -56,6 +56,20 @@ app.include_router(document_router, prefix="/api")
 app.include_router(upload_router, prefix="/api")
 
 
+@app.get("/api/uploads/{filename}")
+async def serve_upload(filename: str):
+    """Serve uploaded files."""
+    from fastapi.responses import FileResponse
+    from pathlib import Path
+    
+    file_path = Path("/app/backend/uploads") / filename
+    
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="File not found")
+    
+    return FileResponse(file_path)
+
+
 @app.get("/")
 async def root():
     """Root endpoint."""
