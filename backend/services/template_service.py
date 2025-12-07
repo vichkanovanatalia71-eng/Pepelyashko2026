@@ -344,3 +344,42 @@ class TemplateService:
         pattern = r'\{\{\s*(\w+)\s*\}\}'
         variables = re.findall(pattern, content)
         return list(set(variables))  # Return unique variables
+
+    
+    async def initialize_default_templates(self):
+        """Create default system templates if they don't exist."""
+        import os
+        
+        # Check if default invoice template exists
+        existing = await self.collection.find_one({
+            "user_id": None,
+            "template_type": "invoice",
+            "is_default": True
+        })
+        
+        if not existing:
+            # Load default template from file
+            template_path = "/app/backend/templates/default_invoice_template.html"
+            if os.path.exists(template_path):
+                with open(template_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                
+                default_template = {
+                    "_id": str(uuid.uuid4()),
+                    "user_id": None,
+                    "is_default": True,
+                    "template_type": "invoice",
+                    "name": "Стандартний шаблон рахунку",
+                    "content": content,
+                    "variables": self._extract_variables(content),
+                    "version_history": [],
+                    "current_version": 1,
+                    "created_at": datetime.utcnow(),
+                    "updated_at": datetime.utcnow()
+                }
+                
+                await self.collection.insert_one(default_template)
+                logger.info("✅ Default invoice template created")
+            else:
+                logger.warning(f"Default template file not found: {template_path}")
+
