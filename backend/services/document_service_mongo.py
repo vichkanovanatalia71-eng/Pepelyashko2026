@@ -382,7 +382,7 @@ class DocumentServiceMongo:
         }
         
         collection = collection_map.get(doc_type)
-        if not collection:
+        if collection is None:
             return f"{edrpou_middle}-1"
         
         count = await collection.count_documents({
