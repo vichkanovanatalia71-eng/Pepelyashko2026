@@ -1798,7 +1798,7 @@ const FullDashboard = () => {
             </TabsTrigger>
             <TabsTrigger 
               value="contracts"
-              className="data-[state=active]:bg-gradient-to-br data-[state=active]:from-indigo-500 data-[state=active]:to-violet-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:scale-105 transition-all duration-300 rounded-lg"
+              className="data-[state=active]:bg-gradient-to-br data-[state=active]:from-rose-500 data-[state=active]:to-pink-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:scale-105 transition-all duration-300 rounded-lg"
             >
               <FileSignature className="w-4 h-4 mr-2" />
               Договори
