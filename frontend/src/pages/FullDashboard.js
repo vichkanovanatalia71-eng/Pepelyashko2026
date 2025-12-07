@@ -1709,7 +1709,7 @@ const FullDashboard = () => {
   }, [profileData.director_name, profileData.director_position]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-teal-50 via-white to-cyan-50">
+    <div className="min-h-screen">
       {/* Header with Modern Gradient */}
       <div className="sticky top-0 z-50 bg-gradient-to-r from-slate-900 via-purple-900 to-slate-900 shadow-2xl border-b border-purple-500/20">
         <div className="container mx-auto px-4">
