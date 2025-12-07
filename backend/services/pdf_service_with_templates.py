@@ -141,6 +141,8 @@ class PDFServiceWithTemplates:
             'document_number': invoice.get('number', ''),
             'document_date': formatted_date,
             'items_table': items_html,
+            'based_on_order': invoice.get('based_on_order', ''),
+            'based_on_document': invoice.get('based_on_order', ''),  # Alias for template
             
             # Amounts (БЕЗ ПДВ - новий шаблон)
             'total_amount': f"{total_amount:.2f}",
