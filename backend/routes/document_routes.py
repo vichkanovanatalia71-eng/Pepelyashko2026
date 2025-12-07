@@ -1603,6 +1603,9 @@ async def email_contract(
                 detail="Договір не знайдено"
             )
         
+        
+        # Convert Pydantic model to dict
+        contract_dict = contract.model_dump()
         # Get supplier details
         supplier = await database.users.find_one(
             {"_id": current_user["_id"]},
