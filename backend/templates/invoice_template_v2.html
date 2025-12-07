@@ -102,6 +102,11 @@
 
     <!-- Заголовок -->
     <div class="title">Рахунок на оплату № {{document_number}} від {{document_date}}</div>
+    {{#if based_on_order}}
+    <div style="text-align:center;font-size:11px;color:#555;margin:4px 0">
+      Підстава: Замовлення №{{based_on_order}}
+    </div>
+    {{/if}}
     <div class="hr"></div>
 
     <!-- ПОСТАЧАЛЬНИК -->
