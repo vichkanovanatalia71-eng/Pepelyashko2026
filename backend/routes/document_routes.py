@@ -308,9 +308,9 @@ async def send_invoice_email(
     email_data: dict,
     current_user: dict = Depends(get_current_user)
 ):
-    """Send invoice PDF to email."""
+    """Send invoice PDF to email using template."""
     from server import db as database
-    from services.invoice_pdf_service import InvoicePDFService
+    from services.pdf_service_with_templates import PDFServiceWithTemplates
     from services.email_service import EmailService
     
     try:
@@ -335,26 +335,34 @@ async def send_invoice_email(
         
         # Get counterparty details
         counterparty_edrpou = invoice.get('counterparty_edrpou')
+        counterparty = {}
         if counterparty_edrpou:
-            counterparty = await database.counterparties.find_one({
+            cp = await database.counterparties.find_one({
                 "edrpou": counterparty_edrpou,
                 "user_id": current_user["_id"]
             }, {"_id": 0})
             
-            if counterparty:
-                invoice['counterparty_details'] = counterparty
+            if cp:
+                counterparty = cp
         
-        # Get supplier details
+        # Get supplier (user) details
         user = await database.users.find_one({
             "_id": current_user["_id"]
         }, {"_id": 0, "hashed_password": 0})
         
-        if user:
-            invoice['supplier_details'] = user
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
         
-        # Generate PDF
-        pdf_service = InvoicePDFService()
-        pdf_path = pdf_service.generate_pdf(invoice)
+        # Generate PDF using NEW template service
+        pdf_service = PDFServiceWithTemplates(database)
+        pdf_path = await pdf_service.generate_invoice_pdf(
+            invoice, 
+            user, 
+            counterparty
+        )
         
         # Send email
         email_service = EmailService()
