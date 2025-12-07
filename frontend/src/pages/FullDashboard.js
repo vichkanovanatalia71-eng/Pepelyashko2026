@@ -2540,78 +2540,15 @@ const FullDashboard = () => {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Список Рахунків ({filterInvoicesByEdrpou(invoices).length})</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {/* Search by EDRPOU */}
-                <div className="mb-4">
-                  <Label className="text-sm text-gray-600">Пошук за ЄДРПОУ</Label>
-                  <Input
-                    value={searchEdrpouInvoices}
-                    onChange={(e) => setSearchEdrpouInvoices(e.target.value)}
-                    placeholder="Введіть ЄДРПОУ контрагента"
-                    className="max-w-md"
-                  />
-                </div>
-
-                {filterInvoicesByEdrpou(invoices).length === 0 ? (
-                  <p className="text-center py-8 text-gray-500">
-                    {searchEdrpouInvoices ? 'Рахунків з таким ЄДРПОУ не знайдено' : 'Немає рахунків'}
-                  </p>
-                ) : (
-                  <div className="space-y-2">
-                    {filterInvoicesByEdrpou(invoices).map((invoice) => (
-                      <Card 
-                        key={invoice._id} 
-                        className={`card-hover ${currentTheme.cardBg} border-2 ${currentTheme.cardBorder} ${currentTheme.shadow} transition-all duration-300 group`}
-                      >
-                        <CardContent className="p-4">
-                          <div className="flex justify-between items-start">
-                            <div className="flex-1 cursor-pointer" onClick={() => openInvoiceDialog(invoice)}>
-                              <p className={`font-medium ${currentTheme.text}`}>№{invoice.number}</p>
-                              <p className="text-sm text-gray-600">{invoice.counterparty_name}</p>
-                              <p className="text-xs text-gray-500">
-                                {new Date(invoice.date).toLocaleDateString('uk-UA')}
-                              </p>
-                            </div>
-                            <div className="text-right">
-                              <p className={`font-bold text-lg ${currentTheme.text}`}>{invoice.total_amount} грн</p>
-                              <div className="flex gap-2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    openInvoiceDialog(invoice);
-                                  }}
-                                  className="h-8 w-8 p-0"
-                                >
-                                  <Eye className="w-4 h-4" />
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    openInvoiceDialog(invoice);
-                                    setTimeout(() => startEditingInvoice(), 100);
-                                  }}
-                                  className="h-8 w-8 p-0"
-                                >
-                                  <Edit2 className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <InvoiceList
+              invoices={invoices}
+              searchValue={searchEdrpouInvoices}
+              onSearchChange={setSearchEdrpouInvoices}
+              onViewInvoice={openInvoiceDialog}
+              onEditInvoice={startEditingInvoice}
+              theme={currentTheme}
+              filterByEdrpou={filterInvoicesByEdrpou}
+            />
           </TabsContent>
 
           {/* Acts, Waybills, Orders, Contracts tabs similar structure */}
