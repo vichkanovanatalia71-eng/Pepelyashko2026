@@ -3976,8 +3976,8 @@ const FullDashboard = () => {
         </DialogContent>
       </Dialog>
         </Tabs>
+        </div>
       </div>
-    </div>
   );
 };
 
