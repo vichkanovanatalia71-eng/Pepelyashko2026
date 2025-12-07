@@ -2026,7 +2026,11 @@ const FullDashboard = () => {
                     </div>
                   </div>
                   
-                  <Button type="submit" disabled={loading} className="w-full">
+                  <Button 
+                    type="submit" 
+                    disabled={loading} 
+                    className={`w-full ${currentTheme.buttonBg} ${currentTheme.buttonHover} text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105`}
+                  >
                     {loading ? (
                       <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Збереження...</>
                     ) : (
