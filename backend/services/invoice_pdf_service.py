@@ -132,6 +132,9 @@ class InvoicePDFService:
         supplier_mfo = supplier_data.get('mfo', '—')
         supplier_signature = supplier_data.get('signature', '—')
         
+        # Extract city from supplier address
+        supplier_city = self.extract_city_from_address(supplier_address)
+        
         # Build professional HTML document with green design (invoice-specific)
         html_content = f"""
         <!DOCTYPE html>
