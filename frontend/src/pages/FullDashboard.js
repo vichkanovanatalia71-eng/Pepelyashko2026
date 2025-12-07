@@ -2110,6 +2110,13 @@ const FullDashboard = () => {
               <FileSignature className="w-4 h-4 mr-2" />
               Договори
             </TabsTrigger>
+            <TabsTrigger 
+              value="templates"
+              className="data-[state=active]:bg-gradient-to-br data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:scale-105 transition-all duration-300 rounded-lg"
+            >
+              <FileText className="w-4 h-4 mr-2" />
+              Шаблони
+            </TabsTrigger>
           </TabsList>
 
           {/* Counterparties Tab */}
