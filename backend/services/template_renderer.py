@@ -24,15 +24,15 @@ class TemplateRenderer:
             pattern = r'\{\{\s*' + re.escape(key) + r'\s*\}\}'
             # Convert value to string
             if value is None:
-                value = ''
+                value_str = ''
             elif isinstance(value, (list, dict)):
-                value = str(value)
+                value_str = str(value)
             else:
-                value = str(value)
+                value_str = str(value)
             
-            # Use lambda to prevent backslash interpretation
-            # This ensures HTML tags are NOT escaped
-            result = re.sub(pattern, lambda m: value, result)
+            # Use lambda with default argument to capture current value
+            # This ensures HTML tags are NOT escaped and value is captured correctly
+            result = re.sub(pattern, lambda m, v=value_str: v, result)
         
         # Clean up any remaining unmatched variables
         result = re.sub(r'\{\{[^}]+\}\}', '', result)
