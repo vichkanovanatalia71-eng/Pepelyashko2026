@@ -2539,14 +2539,27 @@ const FullDashboard = () => {
 
             <Card>
               <CardHeader>
-                <CardTitle>Список Рахунків ({invoices.length})</CardTitle>
+                <CardTitle>Список Рахунків ({filterInvoicesByEdrpou(invoices).length})</CardTitle>
               </CardHeader>
               <CardContent>
-                {invoices.length === 0 ? (
-                  <p className="text-center py-8 text-gray-500">Немає рахунків</p>
+                {/* Search by EDRPOU */}
+                <div className="mb-4">
+                  <Label className="text-sm text-gray-600">Пошук за ЄДРПОУ</Label>
+                  <Input
+                    value={searchEdrpouInvoices}
+                    onChange={(e) => setSearchEdrpouInvoices(e.target.value)}
+                    placeholder="Введіть ЄДРПОУ контрагента"
+                    className="max-w-md"
+                  />
+                </div>
+
+                {filterInvoicesByEdrpou(invoices).length === 0 ? (
+                  <p className="text-center py-8 text-gray-500">
+                    {searchEdrpouInvoices ? 'Рахунків з таким ЄДРПОУ не знайдено' : 'Немає рахунків'}
+                  </p>
                 ) : (
                   <div className="space-y-2">
-                    {invoices.map((invoice) => (
+                    {filterInvoicesByEdrpou(invoices).map((invoice) => (
                       <Card 
                         key={invoice._id} 
                         className={`card-hover cursor-pointer ${currentTheme.cardBg} border-2 ${currentTheme.cardBorder} ${currentTheme.shadow} transition-all duration-300`} 
