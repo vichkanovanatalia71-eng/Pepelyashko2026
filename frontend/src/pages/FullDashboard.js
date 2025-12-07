@@ -3648,16 +3648,27 @@ const FullDashboard = () => {
           )}
           
           <DialogFooter className="flex gap-2 justify-end">
-            <Button variant="outline" onClick={() => { setEmailType('act'); setShowEmailDialog(true); }}>
+            <Button 
+              variant="outline" 
+              onClick={() => { setEmailType('act'); setShowEmailDialog(true); }}
+              className={`border-2 ${currentTheme.border} ${currentTheme.hover} ${currentTheme.textLight} hover:scale-105 transition-all duration-300`}
+            >
               <Mail className="w-4 h-4 mr-2" /> Email
             </Button>
-            <Button variant="outline" onClick={downloadActPDF}>
+            <Button 
+              variant="outline" 
+              onClick={downloadActPDF}
+              className={`border-2 ${currentTheme.border} ${currentTheme.hover} ${currentTheme.textLight} hover:scale-105 transition-all duration-300`}
+            >
               <Download className="w-4 h-4 mr-2" /> Завантажити
             </Button>
-            <Button onClick={previewActPDF}>
+            <Button 
+              onClick={previewActPDF}
+              className={`${currentTheme.buttonBg} ${currentTheme.buttonHover} text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105`}
+            >
               <Eye className="w-4 h-4 mr-2" /> Переглянути PDF
             </Button>
-            <Button variant="destructive" onClick={deleteAct}>
+            <Button variant="destructive" onClick={deleteAct} className="hover:scale-105 transition-all duration-300">
               <Trash2 className="w-4 h-4 mr-2" /> Видалити
             </Button>
           </DialogFooter>
