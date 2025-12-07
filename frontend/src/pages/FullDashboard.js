@@ -2567,6 +2567,7 @@ const FullDashboard = () => {
                                   e.stopPropagation();
                                   openOrderDialog(order);
                                 }}
+                                className={`border-2 ${currentTheme.border} ${currentTheme.hover} ${currentTheme.textLight} hover:scale-105 transition-all duration-300`}
                               >
                                 Переглянути
                               </Button>
@@ -2577,6 +2578,7 @@ const FullDashboard = () => {
                                   setSelectedOrder(order);
                                   setShowOrderSelectionDialog(true);
                                 }}
+                                className={`${currentTheme.buttonBg} ${currentTheme.buttonHover} text-white hover:scale-105 transition-all duration-300`}
                               >
                                 Створити документи
                               </Button>
