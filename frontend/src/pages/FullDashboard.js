@@ -4505,6 +4505,77 @@ const FullDashboard = () => {
               </div>
             </div>
 
+            {/* Logo Upload */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold pb-2 border-b">Логотип компанії</h3>
+              <div className="flex items-start gap-4">
+                {profileData.logo_url ? (
+                  <div className="relative">
+                    <img 
+                      src={`${API_URL}${profileData.logo_url}`} 
+                      alt="Логотип" 
+                      className="w-32 h-32 object-contain border-2 border-gray-200 rounded-lg p-2"
+                    />
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      className="absolute top-0 right-0"
+                      onClick={async () => {
+                        try {
+                          await axios.delete(`${API_URL}/api/upload/logo`);
+                          setProfileData({...profileData, logo_url: null});
+                          toast.success('Логотип видалено');
+                        } catch (error) {
+                          toast.error('Помилка видалення логотипу');
+                        }
+                      }}
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center text-gray-400">
+                    <span className="text-xs text-center">Місце для<br/>логотипу</span>
+                  </div>
+                )}
+                <div className="flex-1">
+                  <Label htmlFor="logo_upload">Завантажити логотип</Label>
+                  <Input
+                    id="logo_upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={async (e) => {
+                      const file = e.target.files[0];
+                      if (!file) return;
+                      
+                      setLoadingProfile(true);
+                      try {
+                        const formData = new FormData();
+                        formData.append('file', file);
+                        
+                        const response = await axios.post(`${API_URL}/api/upload/logo`, formData, {
+                          headers: {
+                            'Content-Type': 'multipart/form-data'
+                          }
+                        });
+                        
+                        setProfileData({...profileData, logo_url: response.data.logo_url});
+                        toast.success('Логотип завантажено');
+                      } catch (error) {
+                        console.error('Error uploading logo:', error);
+                        toast.error(error.response?.data?.detail || 'Помилка завантаження');
+                      } finally {
+                        setLoadingProfile(false);
+                      }
+                    }}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    PNG, JPG, GIF до 5MB. Буде відображатись на рахунках та інших документах.
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {/* Banking Details */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold pb-2 border-b">Банківські реквізити</h3>
