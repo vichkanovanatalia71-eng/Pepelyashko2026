@@ -78,7 +78,11 @@ const FullDashboard = () => {
   // Email sending
   const [showEmailDialog, setShowEmailDialog] = useState(false);
   const [emailRecipient, setEmailRecipient] = useState('');
-  const [emailType, setEmailType] = useState('counterparty'); // 'counterparty' or 'order'
+  const [emailType, setEmailType] = useState('counterparty');
+  
+  // Active tab for theme management
+  const [activeTab, setActiveTab] = useState('counterparties');
+  const currentTheme = documentThemes[activeTab] || documentThemes.counterparties; // 'counterparty' or 'order'
   
   // Order creation
   const [creatingOrder, setCreatingOrder] = useState(false);
