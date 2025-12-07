@@ -2123,6 +2123,27 @@ const FullDashboard = () => {
               </CardHeader>
               <CardContent>
                 <form onSubmit={(e) => { e.preventDefault(); createDocument('invoices', 'Рахунок'); }} className="space-y-4">
+                  {/* Order Selection */}
+                  <div className="space-y-2">
+                    <Label>Створити на основі замовлення (опціонально)</Label>
+                    <Select 
+                      value={documentForm.based_on_order} 
+                      onValueChange={handleOrderSelection}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Оберіть замовлення або створіть нове" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">Без замовлення (новий документ)</SelectItem>
+                        {orders.map(order => (
+                          <SelectItem key={order._id} value={order.number}>
+                            №{order.number} | {order.counterparty_name} | {order.total_amount} грн
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
                   <div className="space-y-2">
                     <Label>Пошук контрагента</Label>
                     <div className="flex gap-2">
@@ -2130,8 +2151,9 @@ const FullDashboard = () => {
                         value={searchEdrpou}
                         onChange={(e) => setSearchEdrpou(e.target.value)}
                         placeholder="ЄДРПОУ"
+                        disabled={!!documentForm.based_on_order}
                       />
-                      <Button type="button" onClick={searchCounterparty}>
+                      <Button type="button" onClick={searchCounterparty} disabled={!!documentForm.based_on_order}>
                         <Search className="w-4 h-4 mr-2" />
                         Знайти
                       </Button>
