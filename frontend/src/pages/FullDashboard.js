@@ -3353,14 +3353,27 @@ const FullDashboard = () => {
 
             <Card>
               <CardHeader>
-                <CardTitle>Список Договорів ({contracts.length})</CardTitle>
+                <CardTitle>Список Договорів ({filterContractsByEdrpou(contracts).length})</CardTitle>
               </CardHeader>
               <CardContent>
-                {contracts.length === 0 ? (
-                  <p className="text-center py-8 text-gray-500">Немає договорів</p>
+                {/* Search by EDRPOU */}
+                <div className="mb-4">
+                  <Label className="text-sm text-gray-600">Пошук за ЄДРПОУ</Label>
+                  <Input
+                    value={searchEdrpouContracts}
+                    onChange={(e) => setSearchEdrpouContracts(e.target.value)}
+                    placeholder="Введіть ЄДРПОУ контрагента"
+                    className="max-w-md"
+                  />
+                </div>
+
+                {filterContractsByEdrpou(contracts).length === 0 ? (
+                  <p className="text-center py-8 text-gray-500">
+                    {searchEdrpouContracts ? 'Договорів з таким ЄДРПОУ не знайдено' : 'Немає договорів'}
+                  </p>
                 ) : (
                   <div className="space-y-2">
-                    {contracts.map((contract) => (
+                    {filterContractsByEdrpou(contracts).map((contract) => (
                       <Card 
                         key={contract._id} 
                         className={`card-hover cursor-pointer ${currentTheme.cardBg} border-2 ${currentTheme.cardBorder} ${currentTheme.shadow} transition-all duration-300`}
