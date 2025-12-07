@@ -3097,7 +3097,11 @@ const FullDashboard = () => {
                   <Button variant="outline" onClick={cancelEditingCounterparty}>
                     Скасувати
                   </Button>
-                  <Button onClick={saveCounterpartyChanges} disabled={loading}>
+                  <Button 
+                    onClick={saveCounterpartyChanges} 
+                    disabled={loading}
+                    className={`${currentTheme.buttonBg} ${currentTheme.buttonHover} text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300`}
+                  >
                     {loading ? 'Збереження...' : 'Зберегти зміни'}
                   </Button>
                 </div>
