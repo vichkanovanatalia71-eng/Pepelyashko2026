@@ -1706,23 +1706,27 @@ const FullDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-teal-50 via-white to-cyan-50">
-      {/* Header */}
-      <div className="bg-white border-b shadow-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                Система Управління Документами
-              </h1>
-              <p className="text-sm text-gray-600">
-                Вітаємо, {user?.full_name || user?.email}
-                {user?.company_name && ` | ${user.company_name}`}
-              </p>
+      {/* Header with Modern Gradient */}
+      <div className="sticky top-0 z-50 bg-gradient-to-r from-slate-900 via-purple-900 to-slate-900 shadow-2xl border-b border-purple-500/20">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-between py-5">
+            <div className="flex items-center gap-3 slide-up">
+              <div className="relative">
+                <FileText className="w-10 h-10 text-purple-400 drop-shadow-lg" />
+                <Sparkles className="w-4 h-4 text-yellow-400 absolute -top-1 -right-1 animate-pulse" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-200 via-pink-200 to-purple-200 bg-clip-text text-transparent">
+                  Система Управління Документами
+                </h1>
+                <p className="text-xs text-purple-300/70">Професійний документообіг</p>
+              </div>
             </div>
             <div className="flex gap-2">
               <Button
                 variant="outline"
                 onClick={() => navigate('/templates')}
+                className="btn-scale border-purple-400/30 hover:border-purple-400 hover:bg-purple-500/10 text-purple-100 hover:text-white transition-all duration-300"
               >
                 <Code className="w-4 h-4 mr-2" />
                 Шаблони
@@ -1730,6 +1734,7 @@ const FullDashboard = () => {
               <Button
                 variant="outline"
                 onClick={() => setShowProfileDialog(true)}
+                className="btn-scale border-pink-400/30 hover:border-pink-400 hover:bg-pink-500/10 text-pink-100 hover:text-white transition-all duration-300"
               >
                 <Settings className="w-4 h-4 mr-2" />
                 Профіль
@@ -1737,6 +1742,7 @@ const FullDashboard = () => {
               <Button
                 variant="outline"
                 onClick={handleLogout}
+                className="btn-scale border-red-400/30 hover:border-red-400 hover:bg-red-500/10 text-red-100 hover:text-white transition-all duration-300"
               >
                 <LogOut className="w-4 h-4 mr-2" />
                 Вийти
