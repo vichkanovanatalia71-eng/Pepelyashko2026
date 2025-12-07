@@ -2141,7 +2141,7 @@ const FullDashboard = () => {
                 ) : (
                   <div className="space-y-2">
                     {waybills.map((waybill) => (
-                      <Card key={waybill._id}>
+                      <Card key={waybill._id} className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => openWaybillDialog(waybill)}>
                         <CardContent className="p-4">
                           <p className="font-medium">№{waybill.number}</p>
                           <p className="text-sm text-gray-600">{waybill.counterparty_name}</p>
