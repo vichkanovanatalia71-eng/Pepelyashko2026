@@ -1530,7 +1530,7 @@ async def generate_contract_pdf(
     
     try:
         # Get contract details
-        contract = await document_service.get_contract_by_id(contract_id, current_user["_id"])
+        contract = await document_service.get_contract_by_id(current_user["_id"], contract_id)
         if not contract:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -1593,7 +1593,7 @@ async def email_contract(
     
     try:
         # Get contract details
-        contract = await document_service.get_contract_by_id(contract_id, current_user["_id"])
+        contract = await document_service.get_contract_by_id(current_user["_id"], contract_id)
         if not contract:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
