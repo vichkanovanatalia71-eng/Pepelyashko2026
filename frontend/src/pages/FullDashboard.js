@@ -873,26 +873,98 @@ const FullDashboard = () => {
     }
   };
 
-  const downloadInvoicePDF = async () => {
+  const startEditingInvoice = () => {
     if (!viewingInvoice) return;
+    
+    // Prepare edit form with current invoice data
+    const dateStr = viewingInvoice.date ? 
+      (viewingInvoice.date.split('T')[0]) : 
+      new Date().toISOString().split('T')[0];
+    
+    setEditInvoiceForm({
+      date: dateStr,
+      items: viewingInvoice.items.map(item => ({...item})),
+      total_amount: viewingInvoice.total_amount
+    });
+    setEditingInvoice(true);
+  };
+
+  const cancelEditingInvoice = () => {
+    setEditingInvoice(false);
+    setEditInvoiceForm({
+      date: '',
+      items: [],
+      total_amount: 0
+    });
+  };
+
+  const updateInvoiceItem = (index, field, value) => {
+    const updatedItems = [...editInvoiceForm.items];
+    updatedItems[index][field] = value;
+    
+    // Calculate amount if quantity or price changed
+    if (field === 'quantity' || field === 'price') {
+      const quantity = parseFloat(updatedItems[index].quantity) || 0;
+      const price = parseFloat(updatedItems[index].price) || 0;
+      updatedItems[index].amount = quantity * price;
+    }
+    
+    // Calculate total
+    const total = updatedItems.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
+    
+    setEditInvoiceForm({
+      ...editInvoiceForm,
+      items: updatedItems,
+      total_amount: total
+    });
+  };
+
+  const addInvoiceItem = () => {
+    setEditInvoiceForm({
+      ...editInvoiceForm,
+      items: [...editInvoiceForm.items, { name: '', unit: 'шт', quantity: 1, price: 0, amount: 0 }]
+    });
+  };
+
+  const removeInvoiceItem = (index) => {
+    const updatedItems = editInvoiceForm.items.filter((_, i) => i !== index);
+    const total = updatedItems.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
+    
+    setEditInvoiceForm({
+      ...editInvoiceForm,
+      items: updatedItems,
+      total_amount: total
+    });
+  };
+
+  const saveEditedInvoice = async () => {
+    if (!viewingInvoice) return;
+    
+    setLoading(true);
     try {
-      const timestamp = new Date().getTime();
-      const response = await axios.get(
-        `${API_URL}/api/invoices/pdf/${viewingInvoice.number}?t=${timestamp}`,
-        { responseType: 'blob', headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' } }
-      );
-      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `Рахунок_${viewingInvoice.number}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.parentNode.removeChild(link);
-      window.URL.revokeObjectURL(url);
-      toast.success('PDF рахунку завантажено!');
+      await axios.put(`${API_URL}/api/invoices/${viewingInvoice.number}`, {
+        date: editInvoiceForm.date,
+        items: editInvoiceForm.items,
+        total_amount: editInvoiceForm.total_amount
+      });
+      
+      toast.success('Рахунок успішно оновлено!');
+      setEditingInvoice(false);
+      await loadAllData();
+      
+      // Update viewing invoice with new data
+      const updatedInvoice = {
+        ...viewingInvoice,
+        date: editInvoiceForm.date,
+        items: editInvoiceForm.items,
+        total_amount: editInvoiceForm.total_amount
+      };
+      setViewingInvoice(updatedInvoice);
     } catch (error) {
-      console.error('Error downloading PDF:', error);
-      toast.error('Помилка завантаження PDF');
+      console.error('Error updating invoice:', error);
+      toast.error(error.response?.data?.detail || 'Помилка оновлення рахунку');
+    } finally {
+      setLoading(false);
     }
   };
 
