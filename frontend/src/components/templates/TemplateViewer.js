@@ -209,13 +209,25 @@ const TemplateViewer = () => {
                       </div>
                     </CardHeader>
                     <CardContent>
-                      {viewMode === 'preview' ? (
+                      {viewMode === 'preview' && !isEditing ? (
                         <div className="border rounded-lg p-4 bg-white">
                           <iframe
                             srcDoc={selectedTemplate.content}
                             className="w-full h-[600px] border-0"
                             title="Template Preview"
                           />
+                        </div>
+                      ) : isEditing ? (
+                        <div>
+                          <textarea
+                            value={editedContent}
+                            onChange={(e) => setEditedContent(e.target.value)}
+                            className="w-full h-[600px] p-4 bg-gray-900 text-gray-100 font-mono text-xs rounded-lg border border-gray-700 focus:border-blue-500 focus:outline-none"
+                            placeholder="Введіть HTML код шаблону..."
+                          />
+                          <p className="text-xs text-gray-500 mt-2">
+                            💡 Використовуйте змінні у форматі {`{{variable_name}}`} для динамічних даних
+                          </p>
                         </div>
                       ) : (
                         <div className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-auto h-[600px]">
