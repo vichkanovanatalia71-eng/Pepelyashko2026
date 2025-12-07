@@ -136,6 +136,9 @@ class OrderPDFService:
         supplier_phone = supplier_data.get('phone', '504505588')
         supplier_signature = supplier_data.get('signature', 'Дмитро ТИТАРЕНКО')
         
+        # Extract city from supplier address
+        supplier_city = self.extract_city_from_address(supplier_address)
+        
         # Build professional HTML document with blue design
         html_content = f"""
         <!DOCTYPE html>
