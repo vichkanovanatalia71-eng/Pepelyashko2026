@@ -476,6 +476,66 @@ const FullDashboard = () => {
     setShowEmailDialog(true);
   };
 
+  const openInvoiceEmailDialog = async () => {
+    if (viewingInvoice && viewingInvoice.counterparty_edrpou) {
+      try {
+        const counterparty = counterparties.find(cp => cp.edrpou === viewingInvoice.counterparty_edrpou);
+        if (counterparty && counterparty.email) {
+          setEmailRecipient(counterparty.email);
+        } else {
+          setEmailRecipient('');
+        }
+      } catch (error) {
+        console.error('Error fetching counterparty email:', error);
+        setEmailRecipient('');
+      }
+    } else {
+      setEmailRecipient('');
+    }
+    setEmailType('invoice');
+    setShowEmailDialog(true);
+  };
+
+  const openActEmailDialog = async () => {
+    if (viewingAct && viewingAct.counterparty_edrpou) {
+      try {
+        const counterparty = counterparties.find(cp => cp.edrpou === viewingAct.counterparty_edrpou);
+        if (counterparty && counterparty.email) {
+          setEmailRecipient(counterparty.email);
+        } else {
+          setEmailRecipient('');
+        }
+      } catch (error) {
+        console.error('Error fetching counterparty email:', error);
+        setEmailRecipient('');
+      }
+    } else {
+      setEmailRecipient('');
+    }
+    setEmailType('act');
+    setShowEmailDialog(true);
+  };
+
+  const openWaybillEmailDialog = async () => {
+    if (viewingWaybill && viewingWaybill.counterparty_edrpou) {
+      try {
+        const counterparty = counterparties.find(cp => cp.edrpou === viewingWaybill.counterparty_edrpou);
+        if (counterparty && counterparty.email) {
+          setEmailRecipient(counterparty.email);
+        } else {
+          setEmailRecipient('');
+        }
+      } catch (error) {
+        console.error('Error fetching counterparty email:', error);
+        setEmailRecipient('');
+      }
+    } else {
+      setEmailRecipient('');
+    }
+    setEmailType('waybill');
+    setShowEmailDialog(true);
+  };
+
   const openOrderEmailDialog = async () => {
     // Try to get counterparty email for this order
     if (viewingOrder && viewingOrder.counterparty_edrpou) {
