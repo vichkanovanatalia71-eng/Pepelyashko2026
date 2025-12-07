@@ -96,7 +96,11 @@ class TemplateService:
                 {"is_default": True}
             ]
         })
-
+        
+        templates = []
+        async for template in cursor:
+            templates.append(TemplateModel(**template))
+        return templates
     
     async def get_default_template(self, user_id: str, template_type: str) -> Optional[TemplateModel]:
         """Get default template for a document type."""
@@ -118,11 +122,6 @@ class TemplateService:
         if template_doc:
             return TemplateModel(**template_doc)
         return None
-
-        templates = []
-        async for template in cursor:
-            templates.append(TemplateModel(**template))
-        return templates
     
     async def get_all_templates(self, user_id: str) -> List[TemplateModel]:
         """
