@@ -2994,7 +2994,7 @@ const FullDashboard = () => {
                         <SelectValue placeholder="Оберіть замовлення або створіть новий" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Без замовлення (новий документ)</SelectItem>
+                        <SelectItem value="none">Без замовлення (новий документ)</SelectItem>
                         {orders.map(order => (
                           <SelectItem key={order._id} value={order.number}>
                             №{order.number} | {order.counterparty_name} | {order.total_amount} грн
