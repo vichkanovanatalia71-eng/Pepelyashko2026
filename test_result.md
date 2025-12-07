@@ -668,6 +668,8 @@ frontend:
     file: "/app/frontend/src/App.js, /app/backend/server.py"
     stuck_count: 0
     priority: "high"
+    -agent: "testing"
+    -message: "🎯 ТЕСТУВАННЯ РЕФАКТОРИНГУ ДІАЛОГІВ ЗАВЕРШЕНО: Винесені діалоги (ActDialog, WaybillDialog, ContractDialog) створені правильно з відповідними кольоровими темами в коді. ПРОБЛЕМА: Неправильна логіка відкриття діалогів у FullDashboard.js - всі документи відкривають ActDialog незалежно від типу. ActDialog працює ідеально з фіолетовою темою (12 елементів). WaybillDialog та ContractDialog не відкриваються через помилки в event handlers. Потрібно виправити методи openWaybillDialog() та openContractDialog() для правильного відображення відповідних діалогів при кліку на накладні та договори."
     needs_retesting: false
     status_history:
       - working: "needs_testing"
