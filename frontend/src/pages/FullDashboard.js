@@ -1653,9 +1653,7 @@ const FullDashboard = () => {
   const updateProfileRepresentedBy = (directorName, position, basis) => {
     if (!directorName || !position || !basis) return;
     
-    const positionGenitive = generateGenitivePosition(position);
-    const nameGenitive = generateGenitiveName(directorName);
-    const represented = `${positionGenitive} ${nameGenitive}, що діє на підставі ${basis}`;
+    const represented = generateRepresentedBy(position, directorName, basis);
     
     setProfileData(prev => ({...prev, represented_by: represented}));
   };
