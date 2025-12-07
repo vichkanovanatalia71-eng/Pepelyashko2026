@@ -88,6 +88,7 @@ class UserUpdate(BaseModel):
     legal_address: Optional[str] = None
     iban: Optional[str] = None
     bank: Optional[str] = None
+    bank_name: Optional[str] = None
     mfo: Optional[str] = None
     director_name: Optional[str] = None
     director_position: Optional[str] = None
