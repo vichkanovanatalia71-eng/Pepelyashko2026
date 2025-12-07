@@ -866,10 +866,43 @@ metadata:
 
 test_plan:
   current_focus:
-    - "User Profile Cabinet with Supplier Details"
+    - "Profile Logo and Banking Details Feature"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
+  
+new_testing_request:
+  feature: "Profile Logo Upload and Banking Details in PDF"
+  description: |
+    Test the complete flow of uploading a company logo and banking details through the profile, 
+    then verify these appear correctly in generated invoice PDFs.
+  test_scenarios:
+    1. Login as user1@example.com/password123
+    2. Open Profile dialog (Профіль button in header)
+    3. Verify logo upload field is present
+    4. Upload a test image (PNG/JPG)
+    5. Verify banking fields (IBAN, Bank Name, MFO) are present and editable
+    6. Fill in banking details:
+       - IBAN: UA593052990000026008034909558
+       - Bank Name: АТ КБ ПриватБанк
+       - MFO: 305299
+    7. Save profile and verify success toast
+    8. Navigate to Invoices tab
+    9. Open or create an invoice
+    10. Generate PDF for the invoice
+    11. Verify PDF opens successfully
+    12. Check that logo appears in PDF header
+    13. Verify banking details appear in supplier information section
+  success_criteria:
+    - Logo file uploads successfully
+    - Banking details save to profile
+    - Generated invoice PDF shows the uploaded logo
+    - Banking details (IBAN, Bank, MFO) appear in PDF
+  files_to_test:
+    - /app/backend/routes/upload_routes.py
+    - /app/backend/models/user.py
+    - /app/backend/services/pdf_service_with_templates.py
+    - /app/frontend/src/pages/FullDashboard.js
 
 agent_communication:
   - agent: "testing"
