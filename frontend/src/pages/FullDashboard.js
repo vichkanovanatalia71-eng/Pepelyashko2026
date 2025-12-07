@@ -1628,34 +1628,41 @@ const FullDashboard = () => {
   };
 
   const handleProfileDirectorNameChange = (value) => {
-    setProfileData({...profileData, director_name: value});
-    
-    // Auto-generate signature
-    if (value) {
-      const sig = generateSignature(value);
-      setProfileData(prev => ({...prev, signature: sig}));
-    }
-    
-    // Update represented_by
-    updateProfileRepresentedBy(value, profileData.position, profileData.contract_type);
+    setProfileData(prev => {
+      const sig = value ? generateSignature(value) : '';
+      const represented = generateRepresentedBy(prev.position, value, prev.contract_type);
+      
+      return {
+        ...prev,
+        director_name: value,
+        signature: sig,
+        represented_by: represented
+      };
+    });
   };
 
   const handleProfilePositionChange = (value) => {
-    setProfileData({...profileData, position: value});
-    updateProfileRepresentedBy(profileData.director_name, value, profileData.contract_type);
+    setProfileData(prev => {
+      const represented = generateRepresentedBy(value, prev.director_name, prev.contract_type);
+      
+      return {
+        ...prev,
+        position: value,
+        represented_by: represented
+      };
+    });
   };
 
   const handleProfileBasisChange = (value) => {
-    setProfileData({...profileData, contract_type: value});
-    updateProfileRepresentedBy(profileData.director_name, profileData.position, value);
-  };
-
-  const updateProfileRepresentedBy = (directorName, position, basis) => {
-    if (!directorName || !position || !basis) return;
-    
-    const represented = generateRepresentedBy(position, directorName, basis);
-    
-    setProfileData(prev => ({...prev, represented_by: represented}));
+    setProfileData(prev => {
+      const represented = generateRepresentedBy(prev.position, prev.director_name, value);
+      
+      return {
+        ...prev,
+        contract_type: value,
+        represented_by: represented
+      };
+    });
   };
 
   const saveUserProfile = async () => {
