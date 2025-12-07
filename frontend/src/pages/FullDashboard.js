@@ -1440,7 +1440,7 @@ const FullDashboard = () => {
 
   // Function to populate contract form from selected order
   const handleOrderSelectionForContract = (orderNumber) => {
-    if (!orderNumber) {
+    if (!orderNumber || orderNumber === 'none') {
       setContractForm({
         counterparty_edrpou: '',
         contract_type: '',
