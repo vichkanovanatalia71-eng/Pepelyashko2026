@@ -12,6 +12,7 @@ class TemplateRenderer:
         """
         Render template with context variables.
         Supports {{variable}} syntax and simple conditionals.
+        Variables containing HTML (like items_table) are inserted as-is without escaping.
         """
         result = template
         
@@ -29,7 +30,9 @@ class TemplateRenderer:
             else:
                 value = str(value)
             
-            result = re.sub(pattern, value, result)
+            # Use lambda to prevent backslash interpretation
+            # This ensures HTML tags are NOT escaped
+            result = re.sub(pattern, lambda m: value, result)
         
         # Clean up any remaining unmatched variables
         result = re.sub(r'\{\{[^}]+\}\}', '', result)
