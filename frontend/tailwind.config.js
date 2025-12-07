@@ -6,18 +6,31 @@ module.exports = {
     "./public/index.html"
   ],
   safelist: [
-    'bg-green-50',
-    'bg-green-100',
-    'border-green-200',
-    'text-green-900',
-    'bg-purple-50',
-    'bg-purple-100',
-    'border-purple-200',
-    'text-purple-900',
-    'bg-orange-50',
-    'bg-orange-100',
-    'border-orange-200',
-    'text-orange-900'
+    // Greens
+    'bg-green-50', 'bg-green-100', 'border-green-200', 'text-green-900',
+    'bg-emerald-50', 'bg-emerald-100', 'border-emerald-200', 'text-emerald-900',
+    // Purples
+    'bg-purple-50', 'bg-purple-100', 'border-purple-200', 'text-purple-900',
+    'bg-fuchsia-50', 'bg-fuchsia-100', 'border-fuchsia-200', 'text-fuchsia-900',
+    // Oranges
+    'bg-orange-50', 'bg-orange-100', 'border-orange-200', 'text-orange-900',
+    'bg-amber-50', 'bg-amber-100', 'border-amber-200', 'text-amber-900',
+    // Blues
+    'bg-blue-50', 'bg-blue-100', 'border-blue-200', 'text-blue-900',
+    'bg-indigo-50', 'bg-indigo-100', 'border-indigo-200', 'text-indigo-900',
+    // Teals
+    'bg-teal-50', 'bg-teal-100', 'border-teal-200', 'text-teal-900',
+    'bg-cyan-50', 'bg-cyan-100', 'border-cyan-200', 'text-cyan-900',
+    // Violets
+    'bg-violet-50', 'bg-violet-100', 'border-violet-200', 'text-violet-900',
+    // Gradients
+    'from-teal-500', 'to-cyan-600', 'from-blue-500', 'to-indigo-600',
+    'from-emerald-500', 'to-green-600', 'from-purple-500', 'to-fuchsia-600',
+    'from-orange-500', 'to-amber-600', 'from-indigo-500', 'to-violet-600',
+    // Backgrounds
+    'from-teal-50', 'to-cyan-50', 'from-blue-50', 'to-indigo-50',
+    'from-emerald-50', 'to-green-50', 'from-purple-50', 'to-fuchsia-50',
+    'from-orange-50', 'to-amber-50', 'from-indigo-50', 'to-violet-50'
   ],
   theme: {
   	extend: {
