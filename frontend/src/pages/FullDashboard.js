@@ -968,6 +968,35 @@ const FullDashboard = () => {
     }
   };
 
+  // Filter functions for search
+  const filterInvoicesByEdrpou = (invoices) => {
+    if (!searchEdrpouInvoices) return invoices;
+    return invoices.filter(inv => 
+      inv.counterparty_edrpou.includes(searchEdrpouInvoices)
+    );
+  };
+
+  const filterActsByEdrpou = (acts) => {
+    if (!searchEdrpouActs) return acts;
+    return acts.filter(act => 
+      act.counterparty_edrpou.includes(searchEdrpouActs)
+    );
+  };
+
+  const filterWaybillsByEdrpou = (waybills) => {
+    if (!searchEdrpouWaybills) return waybills;
+    return waybills.filter(wb => 
+      wb.counterparty_edrpou.includes(searchEdrpouWaybills)
+    );
+  };
+
+  const filterContractsByEdrpou = (contracts) => {
+    if (!searchEdrpouContracts) return contracts;
+    return contracts.filter(contract => 
+      contract.counterparty_edrpou.includes(searchEdrpouContracts)
+    );
+  };
+
   const previewInvoicePDF = async () => {
     if (!viewingInvoice) return;
     try {
