@@ -96,6 +96,21 @@ const FullDashboard = () => {
     total_amount: 0
   });
 
+  // Invoice viewing/editing
+  const [showInvoiceDialog, setShowInvoiceDialog] = useState(false);
+  const [viewingInvoice, setViewingInvoice] = useState(null);
+  const [editingInvoice, setEditingInvoice] = useState(false);
+
+  // Act viewing/editing
+  const [showActDialog, setShowActDialog] = useState(false);
+  const [viewingAct, setViewingAct] = useState(null);
+  const [editingAct, setEditingAct] = useState(false);
+
+  // Waybill viewing/editing
+  const [showWaybillDialog, setShowWaybillDialog] = useState(false);
+  const [viewingWaybill, setViewingWaybill] = useState(null);
+  const [editingWaybill, setEditingWaybill] = useState(false);
+
   // Profile state
   const [profileData, setProfileData] = useState({
     full_name: '',
