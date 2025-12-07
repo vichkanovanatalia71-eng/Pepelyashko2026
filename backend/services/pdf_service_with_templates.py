@@ -142,13 +142,10 @@ class PDFServiceWithTemplates:
             'document_date': formatted_date,
             'items_table': items_html,
             
-            # Amounts
+            # Amounts (БЕЗ ПДВ - новий шаблон)
             'total_amount': f"{total_amount:.2f}",
-            'vat_rate': f"{vat_rate:.0f}",
-            'vat_amount': f"{vat_amount:.2f}",
-            'total_with_vat': f"{total_with_vat:.2f}",
             'total_amount_text': total_amount_text,
-            'vat_note': f"у т.ч. ПДВ {vat_rate:.0f}%",
+            'vat_note': "не платник ПДВ",
             
             # Supplier info (from profile)
             'supplier_name': supplier.get('representative_name', ''),
