@@ -1756,9 +1756,10 @@ const FullDashboard = () => {
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="container mx-auto px-4 py-8">
-        <Tabs defaultValue="counterparties" className="space-y-6">
+      {/* Main Content with Dynamic Background */}
+      <div className={`min-h-screen bg-gradient-to-br ${currentTheme.bgGradient} transition-all duration-500`}>
+        <div className="container mx-auto px-4 py-8">
+        <Tabs defaultValue="counterparties" onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-6 bg-gradient-to-r from-gray-50 to-gray-100 p-2 rounded-xl shadow-lg gap-2">
             <TabsTrigger 
               value="counterparties"
