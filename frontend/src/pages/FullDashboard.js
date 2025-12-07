@@ -27,6 +27,7 @@ import {
   Download,
   FileCheck,
   Edit,
+  Edit2,
   Settings,
   Sparkles
 } from 'lucide-react';
