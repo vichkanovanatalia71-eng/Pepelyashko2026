@@ -2165,7 +2165,7 @@ const FullDashboard = () => {
                         <SelectValue placeholder="Оберіть замовлення або створіть нове" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Без замовлення (новий документ)</SelectItem>
+                        <SelectItem value="none">Без замовлення (новий документ)</SelectItem>
                         {orders.map(order => (
                           <SelectItem key={order._id} value={order.number}>
                             №{order.number} | {order.counterparty_name} | {order.total_amount} грн
@@ -2182,7 +2182,7 @@ const FullDashboard = () => {
                         value={searchEdrpou}
                         onChange={(e) => setSearchEdrpou(e.target.value)}
                         placeholder="ЄДРПОУ"
-                        disabled={!!documentForm.based_on_order}
+                        disabled={!!documentForm.based_on_order && documentForm.based_on_order !== 'none'}
                       />
                       <Button type="button" onClick={searchCounterparty} disabled={!!documentForm.based_on_order}>
                         <Search className="w-4 h-4 mr-2" />
@@ -2353,7 +2353,7 @@ const FullDashboard = () => {
                         <SelectValue placeholder="Оберіть замовлення або створіть новий" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Без замовлення (новий документ)</SelectItem>
+                        <SelectItem value="none">Без замовлення (новий документ)</SelectItem>
                         {orders.map(order => (
                           <SelectItem key={order._id} value={order.number}>
                             №{order.number} | {order.counterparty_name} | {order.total_amount} грн
@@ -2370,7 +2370,7 @@ const FullDashboard = () => {
                         value={searchEdrpou}
                         onChange={(e) => setSearchEdrpou(e.target.value)}
                         placeholder="ЄДРПОУ"
-                        disabled={!!documentForm.based_on_order}
+                        disabled={!!documentForm.based_on_order && documentForm.based_on_order !== 'none'}
                       />
                       <Button type="button" onClick={searchCounterparty} disabled={!!documentForm.based_on_order}>
                         <Search className="w-4 h-4 mr-2" />
@@ -2531,7 +2531,7 @@ const FullDashboard = () => {
                         <SelectValue placeholder="Оберіть замовлення або створіть нову" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Без замовлення (новий документ)</SelectItem>
+                        <SelectItem value="none">Без замовлення (новий документ)</SelectItem>
                         {orders.map(order => (
                           <SelectItem key={order._id} value={order.number}>
                             №{order.number} | {order.counterparty_name} | {order.total_amount} грн
@@ -2548,7 +2548,7 @@ const FullDashboard = () => {
                         value={searchEdrpou}
                         onChange={(e) => setSearchEdrpou(e.target.value)}
                         placeholder="ЄДРПОУ"
-                        disabled={!!documentForm.based_on_order}
+                        disabled={!!documentForm.based_on_order && documentForm.based_on_order !== 'none'}
                       />
                       <Button type="button" onClick={searchCounterparty} disabled={!!documentForm.based_on_order}>
                         <Search className="w-4 h-4 mr-2" />
