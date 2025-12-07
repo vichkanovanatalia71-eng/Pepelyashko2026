@@ -2513,6 +2513,7 @@ const FullDashboard = () => {
                           type="button"
                           disabled={orderItems.every(item => !item.name) || loading}
                           onClick={handleCreateOrder}
+                          className={`${currentTheme.buttonBg} ${currentTheme.buttonHover} text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105`}
                         >
                           {loading ? 'Створення...' : 'Створити Замовлення'}
                         </Button>
