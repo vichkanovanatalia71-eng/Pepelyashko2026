@@ -111,6 +111,9 @@ const FullDashboard = () => {
   // Act viewing/editing
   const [showActDialog, setShowActDialog] = useState(false);
   const [viewingAct, setViewingAct] = useState(null);
+  const [showContractDialog, setShowContractDialog] = useState(false);
+  const [viewingContract, setViewingContract] = useState(null);
+  const [editingContract, setEditingContract] = useState(false);
   const [editingAct, setEditingAct] = useState(false);
 
   // Waybill viewing/editing
