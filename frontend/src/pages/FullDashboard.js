@@ -1628,6 +1628,13 @@ const FullDashboard = () => {
               </Button>
               <Button
                 variant="outline"
+                onClick={() => setShowProfileDialog(true)}
+              >
+                <Settings className="w-4 h-4 mr-2" />
+                Профіль
+              </Button>
+              <Button
+                variant="outline"
                 onClick={handleLogout}
               >
                 <LogOut className="w-4 h-4 mr-2" />
@@ -1641,7 +1648,7 @@ const FullDashboard = () => {
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
         <Tabs defaultValue="counterparties" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-7">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="counterparties">
               <Users className="w-4 h-4 mr-2" />
               Контрагенти
@@ -1665,10 +1672,6 @@ const FullDashboard = () => {
             <TabsTrigger value="contracts">
               <FileSignature className="w-4 h-4 mr-2" />
               Договори
-            </TabsTrigger>
-            <TabsTrigger value="profile">
-              <Settings className="w-4 h-4 mr-2" />
-              Профіль
             </TabsTrigger>
           </TabsList>
 
