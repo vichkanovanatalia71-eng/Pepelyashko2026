@@ -123,17 +123,14 @@ class PDFServiceWithTemplates:
         
         formatted_date = invoice_date.strftime('%d.%m.%Y')
         
-        # Calculate totals
+        # Calculate totals (БЕЗ ПДВ за вимогою користувача)
         total_amount = float(invoice.get('total_amount', 0))
-        vat_rate = 20.0  # Default VAT rate
-        vat_amount = total_amount * (vat_rate / 100)
-        total_with_vat = total_amount + vat_amount
         
         # Generate items table HTML
         items_html = self.renderer.generate_items_table_html(invoice.get('items', []))
         
-        # Amount in words
-        total_amount_text = self.renderer.number_to_words_ua(total_with_vat)
+        # Amount in words (без ПДВ)
+        total_amount_text = self.renderer.number_to_words_ua(total_amount)
         
         # Get logo file path for WeasyPrint
         logo_file_path = self._get_logo_file_path(supplier.get('logo_url', ''))
