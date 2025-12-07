@@ -2036,14 +2036,6 @@ const FullDashboard = () => {
             <div className="flex gap-2">
               <Button
                 variant="outline"
-                onClick={() => navigate('/templates')}
-                className="btn-scale border-purple-400/30 hover:border-purple-400 hover:bg-purple-500/10 text-purple-100 hover:text-white transition-all duration-300"
-              >
-                <Code className="w-4 h-4 mr-2" />
-                Шаблони
-              </Button>
-              <Button
-                variant="outline"
                 onClick={() => setShowProfileDialog(true)}
                 className="btn-scale border-pink-400/30 hover:border-pink-400 hover:bg-pink-500/10 text-pink-100 hover:text-white transition-all duration-300"
               >
