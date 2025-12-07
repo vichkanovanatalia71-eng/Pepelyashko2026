@@ -476,6 +476,254 @@ async def get_act(
         )
 
 
+@router.get("/acts/pdf/{act_number}")
+async def get_act_pdf(
+    act_number: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Generate and return act PDF."""
+    from server import db as database
+    from services.act_pdf_service import ActPDFService
+    from urllib.parse import quote
+    
+    try:
+        # Get act from database
+        act = await database.acts.find_one({
+            "number": act_number,
+            "user_id": current_user["_id"]
+        }, {"_id": 0})
+        
+        if not act:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Акт {act_number} не знайдено"
+            )
+        
+        # Get counterparty details
+        counterparty_edrpou = act.get('counterparty_edrpou')
+        if counterparty_edrpou:
+            counterparty = await database.counterparties.find_one({
+                "edrpou": counterparty_edrpou,
+                "user_id": current_user["_id"]
+            }, {"_id": 0})
+            
+            if counterparty:
+                act['counterparty_details'] = counterparty
+        
+        # Get supplier details
+        user = await database.users.find_one({
+            "_id": current_user["_id"]
+        }, {"_id": 0, "hashed_password": 0})
+        
+        if user:
+            act['supplier_details'] = user
+        
+        # Generate PDF
+        pdf_service = ActPDFService()
+        pdf_path = pdf_service.generate_pdf(act)
+        
+        filename = f"Акт_{act_number}.pdf"
+        encoded_filename = quote(filename.encode('utf-8'))
+        
+        return FileResponse(
+            path=pdf_path,
+            media_type='application/pdf',
+            headers={
+                'Content-Disposition': f"attachment; filename*=UTF-8''{encoded_filename}"
+            }
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error generating act PDF: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Помилка при генерації PDF"
+        )
+
+
+@router.put("/acts/{act_number}")
+async def update_act(
+    act_number: str,
+    act_data: dict,
+    current_user: dict = Depends(get_current_user)
+):
+    """Update an act."""
+    from server import db as database
+    from datetime import datetime
+    
+    try:
+        existing_act = await database.acts.find_one({
+            "number": act_number,
+            "user_id": current_user["_id"]
+        })
+        
+        if not existing_act:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Акт не знайдено"
+            )
+        
+        items = act_data.get("items", existing_act.get("items"))
+        
+        if items:
+            for item in items:
+                if 'quantity' in item:
+                    item['quantity'] = float(item['quantity'])
+                if 'price' in item:
+                    item['price'] = float(item['price'])
+                if 'amount' in item:
+                    item['amount'] = float(item['amount'])
+        
+        update_data = {
+            "date": act_data.get("date", existing_act.get("date")),
+            "counterparty_edrpou": act_data.get("counterparty_edrpou", existing_act.get("counterparty_edrpou")),
+            "counterparty_name": act_data.get("counterparty_name", existing_act.get("counterparty_name")),
+            "items": items,
+            "total_amount": float(act_data.get("total_amount", existing_act.get("total_amount"))),
+            "updated_at": datetime.utcnow()
+        }
+        
+        result = await database.acts.update_one(
+            {"number": act_number, "user_id": current_user["_id"]},
+            {"$set": update_data}
+        )
+        
+        if result.modified_count == 0 and result.matched_count == 0:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Акт не знайдено"
+            )
+        
+        updated_act = await database.acts.find_one(
+            {"number": act_number, "user_id": current_user["_id"]},
+            {"_id": 0}
+        )
+        
+        logger.info(f"Act updated: {act_number} by user {current_user['_id']}")
+        return updated_act
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating act: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Помилка при оновленні акту"
+        )
+
+
+@router.delete("/acts/{act_number}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_act(
+    act_number: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Delete an act."""
+    from server import db as database
+    
+    try:
+        result = await database.acts.delete_one({
+            "number": act_number,
+            "user_id": current_user["_id"]
+        })
+        
+        if result.deleted_count == 0:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Акт не знайдено"
+            )
+        
+        logger.info(f"Act deleted: {act_number} by user {current_user['_id']}")
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting act: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Помилка при видаленні акту"
+        )
+
+
+@router.post("/acts/{act_number}/send-email")
+async def send_act_email(
+    act_number: str,
+    email_data: dict,
+    current_user: dict = Depends(get_current_user)
+):
+    """Send act PDF to email."""
+    from server import db as database
+    from services.act_pdf_service import ActPDFService
+    from services.email_service import EmailService
+    
+    try:
+        act = await database.acts.find_one({
+            "number": act_number,
+            "user_id": current_user["_id"]
+        }, {"_id": 0})
+        
+        if not act:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Акт не знайдено"
+            )
+        
+        recipient_email = email_data.get('email')
+        if not recipient_email:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email адреса не вказана"
+            )
+        
+        counterparty_edrpou = act.get('counterparty_edrpou')
+        if counterparty_edrpou:
+            counterparty = await database.counterparties.find_one({
+                "edrpou": counterparty_edrpou,
+                "user_id": current_user["_id"]
+            }, {"_id": 0})
+            
+            if counterparty:
+                act['counterparty_details'] = counterparty
+        
+        user = await database.users.find_one({
+            "_id": current_user["_id"]
+        }, {"_id": 0, "hashed_password": 0})
+        
+        if user:
+            act['supplier_details'] = user
+        
+        pdf_service = ActPDFService()
+        pdf_path = pdf_service.generate_pdf(act)
+        
+        email_service = EmailService()
+        act_date = act.get('date', '')
+        
+        from datetime import datetime
+        if isinstance(act_date, datetime):
+            act_date = act_date.isoformat()
+        else:
+            act_date = str(act_date)
+        
+        email_service.send_act_document(
+            to_email=recipient_email,
+            act_number=act_number,
+            act_date=act_date,
+            counterparty_name=act.get('counterparty_name', '—'),
+            total_amount=act.get('total_amount', 0),
+            pdf_path=pdf_path
+        )
+        
+        logger.info(f"Act PDF sent to {recipient_email} by user {current_user['_id']}")
+        return {"message": f"PDF відправлено на {recipient_email}"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error sending act email: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Помилка при відправці email"
+        )
+
+
 # ==================== WAYBILL ROUTES ====================
 
 @router.post("/waybills", response_model=WaybillModel, status_code=status.HTTP_201_CREATED)
