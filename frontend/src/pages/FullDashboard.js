@@ -3676,6 +3676,268 @@ const FullDashboard = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Profile Dialog */}
+      <Dialog open={showProfileDialog} onOpenChange={setShowProfileDialog}>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl">Профіль користувача</DialogTitle>
+            <DialogDescription>Заповніть дані вашої компанії для генерації документів</DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6 py-4">
+            {/* EDRPOU Section with YouScore */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold pb-2 border-b">Код ЄДРПОУ</h3>
+              <div>
+                <Label htmlFor="profile_edrpou">
+                  ЄДРПОУ * 
+                  {searchingEdrpouProfile && (
+                    <span className="text-xs text-teal-600 ml-2">
+                      (пошук даних...)
+                    </span>
+                  )}
+                </Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="profile_edrpou"
+                    type="text"
+                    inputMode="numeric"
+                    value={profileData.edrpou}
+                    onChange={(e) => handleProfileEdrpouChange(e.target.value)}
+                    placeholder="12345678 або 1234567890"
+                    maxLength={10}
+                    disabled={searchingEdrpouProfile}
+                  />
+                  {(profileData.edrpou.length === 8 || profileData.edrpou.length === 10) && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => searchByEdrpouProfile(profileData.edrpou)}
+                      disabled={searchingEdrpouProfile}
+                    >
+                      {searchingEdrpouProfile ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Search className="w-4 h-4" />
+                      )}
+                    </Button>
+                  )}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Дані підтягуються автоматично при введенні 8 цифр (ЮрОсоба) або 10 цифр (ФОП)
+                </p>
+              </div>
+            </div>
+
+            {/* Company Details */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold pb-2 border-b">Дані компанії</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="md:col-span-2">
+                  <Label htmlFor="profile_representative_name">
+                    Повна назва * 
+                    {searchingEdrpouProfile && (
+                      <span className="text-xs text-teal-600 ml-2">
+                        (оновлюється...)
+                      </span>
+                    )}
+                  </Label>
+                  <Input
+                    id="profile_representative_name"
+                    value={profileData.representative_name}
+                    onChange={(e) => setProfileData({...profileData, representative_name: e.target.value})}
+                    placeholder="ТОВАРИСТВО З ОБМЕЖЕНОЮ ВІДПОВІДАЛЬНІСТЮ..."
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <Label htmlFor="profile_legal_address">
+                    Юридична адреса *
+                    {searchingEdrpouProfile && (
+                      <span className="text-xs text-teal-600 ml-2">
+                        (оновлюється...)
+                      </span>
+                    )}
+                  </Label>
+                  <Input
+                    id="profile_legal_address"
+                    value={profileData.legal_address}
+                    onChange={(e) => setProfileData({...profileData, legal_address: e.target.value})}
+                    placeholder="Автоматично заповниться за ЄДРПОУ або введіть вручну"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="profile_email">Email *</Label>
+                  <Input
+                    id="profile_email"
+                    type="email"
+                    value={profileData.email}
+                    disabled
+                    className="bg-gray-100"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="profile_phone">Телефон *</Label>
+                  <Input
+                    id="profile_phone"
+                    value={profileData.phone}
+                    onChange={(e) => setProfileData({...profileData, phone: e.target.value})}
+                    placeholder="+380501234567"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Banking Details */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold pb-2 border-b">Банківські реквізити</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="profile_iban">
+                    IBAN *
+                    <span className="text-xs text-gray-500 ml-2">
+                      (МФО формується автоматично)
+                    </span>
+                  </Label>
+                  <Input
+                    id="profile_iban"
+                    value={profileData.iban}
+                    onChange={(e) => handleProfileIBANChange(e.target.value)}
+                    placeholder="UA593052990000026008034909558"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    МФО: 6 цифр після перших 4 символів
+                  </p>
+                </div>
+                <div>
+                  <Label htmlFor="profile_bank">Назва банку</Label>
+                  <Input
+                    id="profile_bank"
+                    value={profileData.bank}
+                    onChange={(e) => setProfileData({...profileData, bank: e.target.value})}
+                    placeholder="АТ КБ 'ПриватБанк'"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="profile_mfo">
+                    МФО банку
+                    <span className="text-xs text-teal-600 ml-2">
+                      (автоматично з IBAN)
+                    </span>
+                  </Label>
+                  <Input
+                    id="profile_mfo"
+                    value={profileData.mfo}
+                    onChange={(e) => setProfileData({...profileData, mfo: e.target.value})}
+                    placeholder="305299"
+                    className="bg-gray-50"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Director & Legal Info */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold pb-2 border-b">Керівництво та підписи</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="profile_director_name">ПІБ керівника</Label>
+                  <Input
+                    id="profile_director_name"
+                    value={profileData.director_name}
+                    onChange={(e) => handleProfileDirectorNameChange(e.target.value)}
+                    placeholder="Чорний Станіслав Іванович"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Формат: Прізвище Ім'я По-батькові
+                  </p>
+                </div>
+                <div>
+                  <Label htmlFor="profile_position">Посада</Label>
+                  <Input
+                    id="profile_position"
+                    value={profileData.position}
+                    onChange={(e) => handleProfilePositionChange(e.target.value)}
+                    placeholder="Директор"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Для автозаповнення "В особі"
+                  </p>
+                </div>
+                <div>
+                  <Label htmlFor="profile_basis">Діє на підставі</Label>
+                  <Select 
+                    value={profileData.contract_type} 
+                    onValueChange={handleProfileBasisChange}
+                  >
+                    <SelectTrigger id="profile_basis">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Статуту">Статуту</SelectItem>
+                      <SelectItem value="Довіреності">Довіреності</SelectItem>
+                      <SelectItem value="Виписка">Виписки з ЄДР</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="md:col-span-2">
+                  <Label htmlFor="profile_represented_by">
+                    В особі
+                    <span className="text-xs text-teal-600 ml-2">
+                      (формується автоматично)
+                    </span>
+                  </Label>
+                  <Input
+                    id="profile_represented_by"
+                    value={profileData.represented_by}
+                    onChange={(e) => setProfileData({...profileData, represented_by: e.target.value})}
+                    placeholder="директора Чорного Станіслава Івановича, що діє на підставі Статуту"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Автоматично: посада (родовий) + ПІБ (родовий) + підстава
+                  </p>
+                </div>
+                <div>
+                  <Label htmlFor="profile_signature">
+                    Підпис
+                    <span className="text-xs text-teal-600 ml-2">
+                      (автоматично з ПІБ)
+                    </span>
+                  </Label>
+                  <Input
+                    id="profile_signature"
+                    value={profileData.signature}
+                    onChange={(e) => setProfileData({...profileData, signature: e.target.value})}
+                    placeholder="Станіслав ЧОРНИЙ"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Формат: Ім'я ПРІЗВИЩЕ
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowProfileDialog(false)}
+            >
+              Скасувати
+            </Button>
+            <Button
+              onClick={saveUserProfile}
+              disabled={loadingProfile}
+            >
+              {loadingProfile ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Збереження...</>
+              ) : (
+                'Зберегти профіль'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
