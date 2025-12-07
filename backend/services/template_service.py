@@ -157,24 +157,17 @@ class TemplateService:
             Updated template model or None
         """
         # Get current template by ID first
-        print(f"DEBUG: Looking for template_id={template_id}, user_id={user_id}")
         current_template = await self.collection.find_one({"_id": template_id})
-        print(f"DEBUG: Found template: {current_template is not None}")
         
         if not current_template:
-            print(f"DEBUG: Template not found in DB")
             return None
         
         # Check permissions: allow if user owns it OR if it's a system template
         template_user_id = current_template.get("user_id")
-        print(f"DEBUG: template_user_id={template_user_id}, user_id={user_id}")
         
         if template_user_id is not None and template_user_id != user_id:
             # Template belongs to another user - deny access
-            print(f"DEBUG: Permission denied - template belongs to another user")
             return None
-        
-        print(f"DEBUG: Permission granted - proceeding with update")
         
         update_dict = template_data.model_dump(exclude_unset=True)
         if not update_dict:
