@@ -2105,7 +2105,7 @@ const FullDashboard = () => {
                       </Button>
                     </div>
                     {foundCounterparty && (
-                      <div className="p-3 bg-teal-50 border rounded">
+                      <div className={`p-3 ${currentTheme.cardBg} border-2 ${currentTheme.cardBorder} rounded-lg`}>
                         <p className="font-medium">{foundCounterparty.representative_name}</p>
                         <p className="text-sm text-gray-600">ЄДРПОУ: {foundCounterparty.edrpou}</p>
                       </div>
