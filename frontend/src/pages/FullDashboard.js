@@ -2740,14 +2740,27 @@ const FullDashboard = () => {
 
             <Card>
               <CardHeader>
-                <CardTitle>Список Актів ({acts.length})</CardTitle>
+                <CardTitle>Список Актів ({filterActsByEdrpou(acts).length})</CardTitle>
               </CardHeader>
               <CardContent>
-                {acts.length === 0 ? (
-                  <p className="text-center py-8 text-gray-500">Немає актів</p>
+                {/* Search by EDRPOU */}
+                <div className="mb-4">
+                  <Label className="text-sm text-gray-600">Пошук за ЄДРПОУ</Label>
+                  <Input
+                    value={searchEdrpouActs}
+                    onChange={(e) => setSearchEdrpouActs(e.target.value)}
+                    placeholder="Введіть ЄДРПОУ контрагента"
+                    className="max-w-md"
+                  />
+                </div>
+
+                {filterActsByEdrpou(acts).length === 0 ? (
+                  <p className="text-center py-8 text-gray-500">
+                    {searchEdrpouActs ? 'Актів з таким ЄДРПОУ не знайдено' : 'Немає актів'}
+                  </p>
                 ) : (
                   <div className="space-y-2">
-                    {acts.map((act) => (
+                    {filterActsByEdrpou(acts).map((act) => (
                       <Card 
                         key={act._id} 
                         className={`card-hover cursor-pointer ${currentTheme.cardBg} border-2 ${currentTheme.cardBorder} ${currentTheme.shadow} transition-all duration-300`} 
