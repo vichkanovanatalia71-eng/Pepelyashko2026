@@ -1554,7 +1554,7 @@ async def generate_contract_pdf(
         
         # Prepare contract data for PDF
         contract_data = {
-            **contract,
+            **contract_dict,
             "supplier_details": supplier,
             "counterparty_details": counterparty or {}
         }
@@ -1620,7 +1620,7 @@ async def email_contract(
         
         # Prepare contract data for PDF
         contract_data = {
-            **contract,
+            **contract_dict,
             "supplier_details": supplier,
             "counterparty_details": counterparty or {}
         }
