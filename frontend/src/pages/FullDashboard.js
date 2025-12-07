@@ -2931,14 +2931,27 @@ const FullDashboard = () => {
 
             <Card>
               <CardHeader>
-                <CardTitle>Список Накладних ({waybills.length})</CardTitle>
+                <CardTitle>Список Накладних ({filterWaybillsByEdrpou(waybills).length})</CardTitle>
               </CardHeader>
               <CardContent>
-                {waybills.length === 0 ? (
-                  <p className="text-center py-8 text-gray-500">Немає накладних</p>
+                {/* Search by EDRPOU */}
+                <div className="mb-4">
+                  <Label className="text-sm text-gray-600">Пошук за ЄДРПОУ</Label>
+                  <Input
+                    value={searchEdrpouWaybills}
+                    onChange={(e) => setSearchEdrpouWaybills(e.target.value)}
+                    placeholder="Введіть ЄДРПОУ контрагента"
+                    className="max-w-md"
+                  />
+                </div>
+
+                {filterWaybillsByEdrpou(waybills).length === 0 ? (
+                  <p className="text-center py-8 text-gray-500">
+                    {searchEdrpouWaybills ? 'Накладних з таким ЄДРПОУ не знайдено' : 'Немає накладних'}
+                  </p>
                 ) : (
                   <div className="space-y-2">
-                    {waybills.map((waybill) => (
+                    {filterWaybillsByEdrpou(waybills).map((waybill) => (
                       <Card 
                         key={waybill._id} 
                         className={`card-hover cursor-pointer ${currentTheme.cardBg} border-2 ${currentTheme.cardBorder} ${currentTheme.shadow} transition-all duration-300`} 
