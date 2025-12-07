@@ -2261,11 +2261,15 @@ const FullDashboard = () => {
                 ) : (
                   <div className="space-y-2">
                     {acts.map((act) => (
-                      <Card key={act._id} className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => openActDialog(act)}>
+                      <Card 
+                        key={act._id} 
+                        className={`card-hover cursor-pointer ${currentTheme.cardBg} border-2 ${currentTheme.cardBorder} ${currentTheme.shadow} transition-all duration-300`} 
+                        onClick={() => openActDialog(act)}
+                      >
                         <CardContent className="p-4">
-                          <p className="font-medium">№{act.number}</p>
+                          <p className={`font-medium ${currentTheme.text}`}>№{act.number}</p>
                           <p className="text-sm text-gray-600">{act.counterparty_name}</p>
-                          <p className="font-bold">{act.total_amount} грн</p>
+                          <p className={`font-bold ${currentTheme.text}`}>{act.total_amount} грн</p>
                         </CardContent>
                       </Card>
                     ))}
