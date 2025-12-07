@@ -2056,19 +2056,19 @@ const FullDashboard = () => {
                     {counterparties.map((counterparty) => (
                       <Card 
                         key={counterparty._id} 
-                        className="hover:shadow-md transition-shadow cursor-pointer"
+                        className={`card-hover cursor-pointer ${currentTheme.cardBg} border-2 ${currentTheme.cardBorder} ${currentTheme.shadow} transition-all duration-300`}
                         onClick={() => viewCounterpartyDetails(counterparty)}
                       >
                         <CardContent className="p-4">
                           <div className="flex items-center justify-between">
                             <div className="flex-1">
-                              <p className="font-semibold text-lg">{counterparty.representative_name}</p>
-                              <p className="text-sm text-gray-600">ЄДРПОУ: {counterparty.edrpou}</p>
+                              <p className={`font-semibold text-lg ${currentTheme.text}`}>{counterparty.representative_name}</p>
+                              <p className={`text-sm ${currentTheme.textLight}`}>ЄДРПОУ: {counterparty.edrpou}</p>
                               <p className="text-sm text-gray-600">
                                 {counterparty.email} | {counterparty.phone}
                               </p>
                             </div>
-                            <Eye className="w-5 h-5 text-gray-400" />
+                            <Eye className={`w-5 h-5 ${currentTheme.textLight}`} />
                           </div>
                         </CardContent>
                       </Card>
