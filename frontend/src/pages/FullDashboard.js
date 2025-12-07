@@ -35,6 +35,7 @@ import { documentThemes } from '../theme/documentThemes';
 import '../styles/animations.css';
 import InvoiceDialog from '../components/dialogs/InvoiceDialog';
 import { InvoiceList, DocumentListGeneric } from '../components/documents';
+import TemplateViewer from '../components/templates/TemplateViewer';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
