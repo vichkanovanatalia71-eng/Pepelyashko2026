@@ -1515,3 +1515,139 @@ async def get_all_contracts(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Помилка при отриманні договорів"
         )
+
+
+@router.get("/contracts/{contract_id}/pdf")
+async def generate_contract_pdf(
+    contract_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Generate PDF for a specific contract."""
+    from server import db as database
+    from services.contract_pdf_service import ContractPDFService
+    
+    document_service = DocumentServiceMongo(database)
+    
+    try:
+        # Get contract details
+        contract = await document_service.get_contract_by_id(contract_id, current_user["_id"])
+        if not contract:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Договір не знайдено"
+            )
+        
+        # Get supplier details
+        supplier = await database.users.find_one(
+            {"_id": current_user["_id"]},
+            {"_id": 0}
+        )
+        
+        # Get counterparty details
+        counterparty = await database.counterparties.find_one(
+            {"edrpou": contract.get("counterparty_edrpou"), "user_id": current_user["_id"]},
+            {"_id": 0}
+        )
+        
+        # Prepare contract data for PDF
+        contract_data = {
+            **contract,
+            "supplier_details": supplier,
+            "counterparty_details": counterparty or {}
+        }
+        
+        # Generate PDF
+        pdf_service = ContractPDFService()
+        pdf_path = pdf_service.generate_pdf(contract_data)
+        
+        # Return PDF file
+        from fastapi.responses import FileResponse
+        return FileResponse(
+            pdf_path,
+            media_type="application/pdf",
+            filename=f"contract_{contract.get('number', 'unknown')}.pdf"
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error generating contract PDF: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Помилка при генерації PDF: {str(e)}"
+        )
+
+
+@router.post("/contracts/{contract_id}/email")
+async def email_contract(
+    contract_id: str,
+    email_data: dict,
+    current_user: dict = Depends(get_current_user)
+):
+    """Send contract PDF via email."""
+    from server import db as database
+    from services.contract_pdf_service import ContractPDFService
+    from services.email_service import EmailService
+    
+    document_service = DocumentServiceMongo(database)
+    
+    try:
+        # Get contract details
+        contract = await document_service.get_contract_by_id(contract_id, current_user["_id"])
+        if not contract:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Договір не знайдено"
+            )
+        
+        # Get supplier details
+        supplier = await database.users.find_one(
+            {"_id": current_user["_id"]},
+            {"_id": 0}
+        )
+        
+        # Get counterparty details
+        counterparty = await database.counterparties.find_one(
+            {"edrpou": contract.get("counterparty_edrpou"), "user_id": current_user["_id"]},
+            {"_id": 0}
+        )
+        
+        # Prepare contract data for PDF
+        contract_data = {
+            **contract,
+            "supplier_details": supplier,
+            "counterparty_details": counterparty or {}
+        }
+        
+        # Generate PDF
+        pdf_service = ContractPDFService()
+        pdf_path = pdf_service.generate_pdf(contract_data)
+        
+        # Send email
+        email_service = EmailService()
+        recipient_email = email_data.get("recipient_email")
+        
+        if not recipient_email:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email отримувача не вказано"
+            )
+        
+        await email_service.send_document_email(
+            recipient_email=recipient_email,
+            subject=f"Договір №{contract.get('number', 'N/A')}",
+            body=f"Доброго дня!\n\nНадсилаємо Вам договір №{contract.get('number', 'N/A')}.\n\nЗ повагою,\n{supplier.get('representative_name', 'Постачальник')}",
+            attachment_path=pdf_path,
+            attachment_name=f"contract_{contract.get('number', 'unknown')}.pdf"
+        )
+        
+        return {"message": "Email успішно надіслано"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error sending contract email: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Помилка при відправці email: {str(e)}"
+        )
