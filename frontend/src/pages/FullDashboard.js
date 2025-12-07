@@ -4272,11 +4272,11 @@ const FullDashboard = () => {
       <Dialog open={showInvoiceDialog} onOpenChange={closeInvoiceDialog}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-2xl">Рахунок №{viewingInvoice?.number}</DialogTitle>
+            <DialogTitle className="text-2xl text-green-700">Рахунок №{viewingInvoice?.number}</DialogTitle>
             <DialogDescription>{viewingInvoice?.counterparty_name}</DialogDescription>
           </DialogHeader>
           
-          {viewingInvoice && (
+          {viewingInvoice && !editingInvoice && (
             <div className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div><Label className="text-sm text-gray-600">Номер рахунку</Label><p className="text-lg font-semibold">№{viewingInvoice.number}</p></div>
@@ -4325,31 +4325,160 @@ const FullDashboard = () => {
               </div>
             </div>
           )}
+
+          {/* Edit Mode */}
+          {editingInvoice && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Номер рахунку</Label>
+                  <Input value={viewingInvoice.number} disabled className="bg-gray-100" />
+                </div>
+                <div>
+                  <Label>Дата</Label>
+                  <Input
+                    type="date"
+                    value={editInvoiceForm.date}
+                    onChange={(e) => setEditInvoiceForm({...editInvoiceForm, date: e.target.value})}
+                  />
+                </div>
+              </div>
+
+              <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                <h3 className="font-semibold text-green-900 mb-2">Контрагент (не редагується)</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><Label className="text-sm">ЄДРПОУ</Label><Input value={viewingInvoice.counterparty_edrpou} disabled className="bg-white" /></div>
+                  <div><Label className="text-sm">Назва</Label><Input value={viewingInvoice.counterparty_name} disabled className="bg-white" /></div>
+                </div>
+              </div>
+
+              <div>
+                <div className="flex justify-between items-center mb-3">
+                  <h3 className="font-semibold">Позиції</h3>
+                  <Button type="button" size="sm" onClick={addInvoiceItem}>
+                    <Plus className="w-4 h-4 mr-1" /> Додати
+                  </Button>
+                </div>
+                
+                {editInvoiceForm.items.map((item, index) => (
+                  <Card key={index} className="p-4 mb-3">
+                    <div className="grid grid-cols-2 gap-3 mb-3">
+                      <div>
+                        <Label className="text-xs">Найменування</Label>
+                        <Input
+                          value={item.name}
+                          onChange={(e) => updateInvoiceItem(index, 'name', e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Одиниця</Label>
+                        <Input
+                          value={item.unit}
+                          onChange={(e) => updateInvoiceItem(index, 'unit', e.target.value)}
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div>
+                        <Label className="text-xs">Кількість</Label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={item.quantity}
+                          onChange={(e) => updateInvoiceItem(index, 'quantity', e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Ціна</Label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={item.price}
+                          onChange={(e) => updateInvoiceItem(index, 'price', e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Сума</Label>
+                        <Input
+                          type="number"
+                          value={item.amount.toFixed(2)}
+                          readOnly
+                          className="bg-gray-50"
+                        />
+                      </div>
+                    </div>
+                    {editInvoiceForm.items.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        className="w-full mt-2"
+                        onClick={() => removeInvoiceItem(index)}
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" /> Видалити
+                      </Button>
+                    )}
+                  </Card>
+                ))}
+
+                <div className="bg-green-50 p-4 rounded border border-green-200 mt-4">
+                  <div className="flex justify-between">
+                    <span className="font-semibold">Загальна сума:</span>
+                    <span className="text-xl font-bold text-green-700">
+                      {editInvoiceForm.total_amount.toFixed(2)} грн
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
           
           <DialogFooter className="flex gap-2 justify-end">
-            <Button 
-              variant="outline" 
-              onClick={() => { setEmailType('invoice'); setShowEmailDialog(true); }}
-              className={`border-2 ${currentTheme.border} ${currentTheme.hover} ${currentTheme.textLight} hover:scale-105 transition-all duration-300`}
-            >
-              <Mail className="w-4 h-4 mr-2" /> Email
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={downloadInvoicePDF}
-              className={`border-2 ${currentTheme.border} ${currentTheme.hover} ${currentTheme.textLight} hover:scale-105 transition-all duration-300`}
-            >
-              <Download className="w-4 h-4 mr-2" /> Завантажити
-            </Button>
-            <Button 
-              onClick={previewInvoicePDF}
-              className={`${currentTheme.buttonBg} ${currentTheme.buttonHover} text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105`}
-            >
-              <Eye className="w-4 h-4 mr-2" /> Переглянути PDF
-            </Button>
-            <Button variant="destructive" onClick={deleteInvoice} className="hover:scale-105 transition-all duration-300">
-              <Trash2 className="w-4 h-4 mr-2" /> Видалити
-            </Button>
+            {!editingInvoice && (
+              <>
+                <Button 
+                  variant="outline" 
+                  onClick={openInvoiceEmailDialog}
+                  className={`border-2 ${currentTheme.border} ${currentTheme.hover} ${currentTheme.textLight} hover:scale-105 transition-all duration-300`}
+                >
+                  <Mail className="w-4 h-4 mr-2" /> Email
+                </Button>
+                <Button 
+                  onClick={previewInvoicePDF}
+                  className={`${currentTheme.buttonBg} ${currentTheme.buttonHover} text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105`}
+                >
+                  <Eye className="w-4 h-4 mr-2" /> Переглянути PDF
+                </Button>
+                <Button variant="outline" onClick={startEditingInvoice}>
+                  <Edit className="w-4 h-4 mr-2" /> Редагувати
+                </Button>
+                <Button variant="destructive" onClick={deleteInvoice} className="hover:scale-105 transition-all duration-300">
+                  <Trash2 className="w-4 h-4 mr-2" /> Видалити
+                </Button>
+              </>
+            )}
+            {editingInvoice && (
+              <>
+                <Button 
+                  variant="outline" 
+                  onClick={cancelEditingInvoice}
+                  disabled={loading}
+                >
+                  Скасувати
+                </Button>
+                <Button 
+                  onClick={saveEditedInvoice}
+                  disabled={loading}
+                  className={`${currentTheme.buttonBg} ${currentTheme.buttonHover} text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300`}
+                >
+                  {loading ? 'Збереження...' : 'Зберегти зміни'}
+                </Button>
+              </>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
