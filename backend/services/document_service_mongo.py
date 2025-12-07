@@ -333,6 +333,13 @@ class DocumentServiceMongo:
         
         return ContractModel(**contract_dict)
     
+    async def get_contract_by_id(self, user_id: str, contract_id: str) -> Optional[ContractModel]:
+        """Get contract by ID."""
+        contract = await self.contracts.find_one({"_id": contract_id, "user_id": user_id})
+        if contract:
+            return ContractModel(**contract)
+        return None
+    
     async def get_contract_by_number(self, user_id: str, contract_number: str) -> Optional[ContractModel]:
         """Get contract by number."""
         contract = await self.contracts.find_one({"number": contract_number, "user_id": user_id})
