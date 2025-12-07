@@ -49,6 +49,51 @@ const TemplateViewer = () => {
     return labels[type] || type;
   };
 
+  const handleEdit = () => {
+    setIsEditing(true);
+    setEditedContent(selectedTemplate.content);
+    setViewMode('code');
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setEditedContent('');
+  };
+
+  const handleSaveTemplate = async () => {
+    if (!selectedTemplate || !editedContent.trim()) {
+      toast.error('Шаблон не може бути порожнім');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(
+        `${API_URL}/api/templates/${selectedTemplate._id}`,
+        { content: editedContent },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      toast.success('Шаблон успішно оновлено!');
+      setIsEditing(false);
+      
+      // Reload templates
+      await loadTemplates();
+      
+      // Re-select updated template
+      const updated = templates.find(t => t._id === selectedTemplate._id);
+      if (updated) {
+        setSelectedTemplate({...updated, content: editedContent});
+      }
+    } catch (error) {
+      console.error('Error saving template:', error);
+      toast.error(error.response?.data?.detail || 'Помилка збереження шаблону');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <Card>
