@@ -1369,7 +1369,7 @@ const FullDashboard = () => {
   // Create document
   // Function to populate form from selected order
   const handleOrderSelection = (orderNumber) => {
-    if (!orderNumber) {
+    if (!orderNumber || orderNumber === 'none') {
       // Clear form if no order selected
       setDocumentForm({
         counterparty_edrpou: '',
