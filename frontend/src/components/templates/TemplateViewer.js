@@ -253,6 +253,10 @@ const TemplateViewer = () => {
                                 <span className="text-xs text-gray-600">- Дата рахунку</span>
                                 <code className="bg-white px-2 py-1 rounded text-xs border">{'{{items_table}}'}</code>
                                 <span className="text-xs text-gray-600">- Таблиця товарів (HTML)</span>
+                                <code className="bg-white px-2 py-1 rounded text-xs border">{'{{based_on_order}}'}</code>
+                                <span className="text-xs text-gray-600">- Підстава (Замовлення №)</span>
+                                <code className="bg-white px-2 py-1 rounded text-xs border">{'{{based_on_document}}'}</code>
+                                <span className="text-xs text-gray-600">- Підстава (альтернатива)</span>
                               </div>
                             </div>
 
