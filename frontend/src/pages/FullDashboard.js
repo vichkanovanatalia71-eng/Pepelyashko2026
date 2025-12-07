@@ -3990,6 +3990,7 @@ const FullDashboard = () => {
             <Button
               onClick={saveUserProfile}
               disabled={loadingProfile}
+              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
             >
               {loadingProfile ? (
                 <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Збереження...</>
