@@ -789,6 +789,281 @@ async def get_all_waybills(
         )
 
 
+@router.get("/waybills/{waybill_number}")
+async def get_waybill(
+    waybill_number: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get waybill by number."""
+    from server import db as database
+    
+    try:
+        waybill = await database.waybills.find_one({
+            "number": waybill_number,
+            "user_id": current_user["_id"]
+        }, {"_id": 0})
+        
+        if not waybill:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Накладну {waybill_number} не знайдено"
+            )
+        
+        return waybill
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting waybill: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Помилка при отриманні накладної"
+        )
+
+
+@router.get("/waybills/pdf/{waybill_number}")
+async def get_waybill_pdf(
+    waybill_number: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Generate and return waybill PDF."""
+    from server import db as database
+    from services.waybill_pdf_service import WaybillPDFService
+    from urllib.parse import quote
+    
+    try:
+        waybill = await database.waybills.find_one({
+            "number": waybill_number,
+            "user_id": current_user["_id"]
+        }, {"_id": 0})
+        
+        if not waybill:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Накладну {waybill_number} не знайдено"
+            )
+        
+        counterparty_edrpou = waybill.get('counterparty_edrpou')
+        if counterparty_edrpou:
+            counterparty = await database.counterparties.find_one({
+                "edrpou": counterparty_edrpou,
+                "user_id": current_user["_id"]
+            }, {"_id": 0})
+            
+            if counterparty:
+                waybill['counterparty_details'] = counterparty
+        
+        user = await database.users.find_one({
+            "_id": current_user["_id"]
+        }, {"_id": 0, "hashed_password": 0})
+        
+        if user:
+            waybill['supplier_details'] = user
+        
+        pdf_service = WaybillPDFService()
+        pdf_path = pdf_service.generate_pdf(waybill)
+        
+        filename = f"Накладна_{waybill_number}.pdf"
+        encoded_filename = quote(filename.encode('utf-8'))
+        
+        return FileResponse(
+            path=pdf_path,
+            media_type='application/pdf',
+            headers={
+                'Content-Disposition': f"attachment; filename*=UTF-8''{encoded_filename}"
+            }
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error generating waybill PDF: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Помилка при генерації PDF"
+        )
+
+
+@router.put("/waybills/{waybill_number}")
+async def update_waybill(
+    waybill_number: str,
+    waybill_data: dict,
+    current_user: dict = Depends(get_current_user)
+):
+    """Update a waybill."""
+    from server import db as database
+    from datetime import datetime
+    
+    try:
+        existing_waybill = await database.waybills.find_one({
+            "number": waybill_number,
+            "user_id": current_user["_id"]
+        })
+        
+        if not existing_waybill:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Накладну не знайдено"
+            )
+        
+        items = waybill_data.get("items", existing_waybill.get("items"))
+        
+        if items:
+            for item in items:
+                if 'quantity' in item:
+                    item['quantity'] = float(item['quantity'])
+                if 'price' in item:
+                    item['price'] = float(item['price'])
+                if 'amount' in item:
+                    item['amount'] = float(item['amount'])
+        
+        update_data = {
+            "date": waybill_data.get("date", existing_waybill.get("date")),
+            "counterparty_edrpou": waybill_data.get("counterparty_edrpou", existing_waybill.get("counterparty_edrpou")),
+            "counterparty_name": waybill_data.get("counterparty_name", existing_waybill.get("counterparty_name")),
+            "items": items,
+            "total_amount": float(waybill_data.get("total_amount", existing_waybill.get("total_amount"))),
+            "updated_at": datetime.utcnow()
+        }
+        
+        result = await database.waybills.update_one(
+            {"number": waybill_number, "user_id": current_user["_id"]},
+            {"$set": update_data}
+        )
+        
+        if result.modified_count == 0 and result.matched_count == 0:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Накладну не знайдено"
+            )
+        
+        updated_waybill = await database.waybills.find_one(
+            {"number": waybill_number, "user_id": current_user["_id"]},
+            {"_id": 0}
+        )
+        
+        logger.info(f"Waybill updated: {waybill_number} by user {current_user['_id']}")
+        return updated_waybill
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating waybill: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Помилка при оновленні накладної"
+        )
+
+
+@router.delete("/waybills/{waybill_number}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_waybill(
+    waybill_number: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Delete a waybill."""
+    from server import db as database
+    
+    try:
+        result = await database.waybills.delete_one({
+            "number": waybill_number,
+            "user_id": current_user["_id"]
+        })
+        
+        if result.deleted_count == 0:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Накладну не знайдено"
+            )
+        
+        logger.info(f"Waybill deleted: {waybill_number} by user {current_user['_id']}")
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting waybill: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Помилка при видаленні накладної"
+        )
+
+
+@router.post("/waybills/{waybill_number}/send-email")
+async def send_waybill_email(
+    waybill_number: str,
+    email_data: dict,
+    current_user: dict = Depends(get_current_user)
+):
+    """Send waybill PDF to email."""
+    from server import db as database
+    from services.waybill_pdf_service import WaybillPDFService
+    from services.email_service import EmailService
+    
+    try:
+        waybill = await database.waybills.find_one({
+            "number": waybill_number,
+            "user_id": current_user["_id"]
+        }, {"_id": 0})
+        
+        if not waybill:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Накладну не знайдено"
+            )
+        
+        recipient_email = email_data.get('email')
+        if not recipient_email:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email адреса не вказана"
+            )
+        
+        counterparty_edrpou = waybill.get('counterparty_edrpou')
+        if counterparty_edrpou:
+            counterparty = await database.counterparties.find_one({
+                "edrpou": counterparty_edrpou,
+                "user_id": current_user["_id"]
+            }, {"_id": 0})
+            
+            if counterparty:
+                waybill['counterparty_details'] = counterparty
+        
+        user = await database.users.find_one({
+            "_id": current_user["_id"]
+        }, {"_id": 0, "hashed_password": 0})
+        
+        if user:
+            waybill['supplier_details'] = user
+        
+        pdf_service = WaybillPDFService()
+        pdf_path = pdf_service.generate_pdf(waybill)
+        
+        email_service = EmailService()
+        waybill_date = waybill.get('date', '')
+        
+        from datetime import datetime
+        if isinstance(waybill_date, datetime):
+            waybill_date = waybill_date.isoformat()
+        else:
+            waybill_date = str(waybill_date)
+        
+        email_service.send_waybill_document(
+            to_email=recipient_email,
+            waybill_number=waybill_number,
+            waybill_date=waybill_date,
+            counterparty_name=waybill.get('counterparty_name', '—'),
+            total_amount=waybill.get('total_amount', 0),
+            pdf_path=pdf_path
+        )
+        
+        logger.info(f"Waybill PDF sent to {recipient_email} by user {current_user['_id']}")
+        return {"message": f"PDF відправлено на {recipient_email}"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error sending waybill email: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Помилка при відправці email"
+        )
+
+
 # ==================== ORDER ROUTES ====================
 
 @router.post("/orders", response_model=OrderModel, status_code=status.HTTP_201_CREATED)
