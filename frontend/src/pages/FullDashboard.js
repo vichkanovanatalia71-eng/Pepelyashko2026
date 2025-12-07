@@ -813,6 +813,288 @@ const FullDashboard = () => {
     }
   };
 
+  // ==================== INVOICE FUNCTIONS ====================
+  const openInvoiceDialog = (invoice) => {
+    setViewingInvoice(invoice);
+    setShowInvoiceDialog(true);
+  };
+
+  const closeInvoiceDialog = () => {
+    setShowInvoiceDialog(false);
+    setViewingInvoice(null);
+    setEditingInvoice(false);
+  };
+
+  const deleteInvoice = async () => {
+    if (!viewingInvoice) return;
+    if (!window.confirm(`Ви впевнені, що хочете видалити рахунок №${viewingInvoice.number}?`)) return;
+    
+    setLoading(true);
+    try {
+      await axios.delete(`${API_URL}/api/invoices/${viewingInvoice.number}`);
+      toast.success('Рахунок успішно видалено!');
+      await loadAllData();
+      closeInvoiceDialog();
+    } catch (error) {
+      console.error('Error deleting invoice:', error);
+      toast.error(error.response?.data?.detail || 'Помилка видалення рахунку');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const downloadInvoicePDF = async () => {
+    if (!viewingInvoice) return;
+    try {
+      const timestamp = new Date().getTime();
+      const response = await axios.get(
+        `${API_URL}/api/invoices/pdf/${viewingInvoice.number}?t=${timestamp}`,
+        { responseType: 'blob', headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' } }
+      );
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Рахунок_${viewingInvoice.number}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast.success('PDF рахунку завантажено!');
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      toast.error('Помилка завантаження PDF');
+    }
+  };
+
+  const previewInvoicePDF = async () => {
+    if (!viewingInvoice) return;
+    try {
+      const timestamp = new Date().getTime();
+      const response = await axios.get(
+        `${API_URL}/api/invoices/pdf/${viewingInvoice.number}?t=${timestamp}`,
+        { responseType: 'blob', headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' } }
+      );
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+      window.open(url, '_blank');
+      setTimeout(() => window.URL.revokeObjectURL(url), 100);
+      toast.success('PDF відкрито для перегляду');
+    } catch (error) {
+      console.error('Error previewing PDF:', error);
+      toast.error('Помилка відкриття PDF');
+    }
+  };
+
+  const sendInvoiceEmail = async () => {
+    if (!viewingInvoice || !emailRecipient) {
+      toast.error('Вкажіть email для відправки');
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      await axios.post(
+        `${API_URL}/api/invoices/${viewingInvoice.number}/send-email`,
+        { email: emailRecipient }
+      );
+      toast.success(`PDF відправлено на ${emailRecipient}`);
+      setShowEmailDialog(false);
+      setEmailRecipient('');
+    } catch (error) {
+      console.error('Error sending email:', error);
+      toast.error(error.response?.data?.detail || 'Помилка відправки email');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ==================== ACT FUNCTIONS ====================
+  const openActDialog = (act) => {
+    setViewingAct(act);
+    setShowActDialog(true);
+  };
+
+  const closeActDialog = () => {
+    setShowActDialog(false);
+    setViewingAct(null);
+    setEditingAct(false);
+  };
+
+  const deleteAct = async () => {
+    if (!viewingAct) return;
+    if (!window.confirm(`Ви впевнені, що хочете видалити акт №${viewingAct.number}?`)) return;
+    
+    setLoading(true);
+    try {
+      await axios.delete(`${API_URL}/api/acts/${viewingAct.number}`);
+      toast.success('Акт успішно видалено!');
+      await loadAllData();
+      closeActDialog();
+    } catch (error) {
+      console.error('Error deleting act:', error);
+      toast.error(error.response?.data?.detail || 'Помилка видалення акту');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const downloadActPDF = async () => {
+    if (!viewingAct) return;
+    try {
+      const timestamp = new Date().getTime();
+      const response = await axios.get(
+        `${API_URL}/api/acts/pdf/${viewingAct.number}?t=${timestamp}`,
+        { responseType: 'blob', headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' } }
+      );
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Акт_${viewingAct.number}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast.success('PDF акту завантажено!');
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      toast.error('Помилка завантаження PDF');
+    }
+  };
+
+  const previewActPDF = async () => {
+    if (!viewingAct) return;
+    try {
+      const timestamp = new Date().getTime();
+      const response = await axios.get(
+        `${API_URL}/api/acts/pdf/${viewingAct.number}?t=${timestamp}`,
+        { responseType: 'blob', headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' } }
+      );
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+      window.open(url, '_blank');
+      setTimeout(() => window.URL.revokeObjectURL(url), 100);
+      toast.success('PDF відкрито для перегляду');
+    } catch (error) {
+      console.error('Error previewing PDF:', error);
+      toast.error('Помилка відкриття PDF');
+    }
+  };
+
+  const sendActEmail = async () => {
+    if (!viewingAct || !emailRecipient) {
+      toast.error('Вкажіть email для відправки');
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      await axios.post(
+        `${API_URL}/api/acts/${viewingAct.number}/send-email`,
+        { email: emailRecipient }
+      );
+      toast.success(`PDF відправлено на ${emailRecipient}`);
+      setShowEmailDialog(false);
+      setEmailRecipient('');
+    } catch (error) {
+      console.error('Error sending email:', error);
+      toast.error(error.response?.data?.detail || 'Помилка відправки email');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ==================== WAYBILL FUNCTIONS ====================
+  const openWaybillDialog = (waybill) => {
+    setViewingWaybill(waybill);
+    setShowWaybillDialog(true);
+  };
+
+  const closeWaybillDialog = () => {
+    setShowWaybillDialog(false);
+    setViewingWaybill(null);
+    setEditingWaybill(false);
+  };
+
+  const deleteWaybill = async () => {
+    if (!viewingWaybill) return;
+    if (!window.confirm(`Ви впевнені, що хочете видалити накладну №${viewingWaybill.number}?`)) return;
+    
+    setLoading(true);
+    try {
+      await axios.delete(`${API_URL}/api/waybills/${viewingWaybill.number}`);
+      toast.success('Накладну успішно видалено!');
+      await loadAllData();
+      closeWaybillDialog();
+    } catch (error) {
+      console.error('Error deleting waybill:', error);
+      toast.error(error.response?.data?.detail || 'Помилка видалення накладної');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const downloadWaybillPDF = async () => {
+    if (!viewingWaybill) return;
+    try {
+      const timestamp = new Date().getTime();
+      const response = await axios.get(
+        `${API_URL}/api/waybills/pdf/${viewingWaybill.number}?t=${timestamp}`,
+        { responseType: 'blob', headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' } }
+      );
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Накладна_${viewingWaybill.number}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast.success('PDF накладної завантажено!');
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      toast.error('Помилка завантаження PDF');
+    }
+  };
+
+  const previewWaybillPDF = async () => {
+    if (!viewingWaybill) return;
+    try {
+      const timestamp = new Date().getTime();
+      const response = await axios.get(
+        `${API_URL}/api/waybills/pdf/${viewingWaybill.number}?t=${timestamp}`,
+        { responseType: 'blob', headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' } }
+      );
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+      window.open(url, '_blank');
+      setTimeout(() => window.URL.revokeObjectURL(url), 100);
+      toast.success('PDF відкрито для перегляду');
+    } catch (error) {
+      console.error('Error previewing PDF:', error);
+      toast.error('Помилка відкриття PDF');
+    }
+  };
+
+  const sendWaybillEmail = async () => {
+    if (!viewingWaybill || !emailRecipient) {
+      toast.error('Вкажіть email для відправки');
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      await axios.post(
+        `${API_URL}/api/waybills/${viewingWaybill.number}/send-email`,
+        { email: emailRecipient }
+      );
+      toast.success(`PDF відправлено на ${emailRecipient}`);
+      setShowEmailDialog(false);
+      setEmailRecipient('');
+    } catch (error) {
+      console.error('Error sending email:', error);
+      toast.error(error.response?.data?.detail || 'Помилка відправки email');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Auto-fill signature from director name
   // Format: Ім'я ПРІЗВИЩЕ (e.g., "Станіслав ЧОРНИЙ")
   const generateSignature = (fullName) => {
