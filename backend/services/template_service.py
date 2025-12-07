@@ -204,8 +204,9 @@ class TemplateService:
         
         update_dict["updated_at"] = datetime.utcnow()
         
+        # Update by _id only (permissions already checked above)
         result = await self.collection.update_one(
-            {"_id": template_id, "user_id": user_id},
+            {"_id": template_id},
             {"$set": update_dict}
         )
         
