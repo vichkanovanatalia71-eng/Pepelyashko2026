@@ -3011,7 +3011,7 @@ const FullDashboard = () => {
                         value={searchEdrpou}
                         onChange={(e) => setSearchEdrpou(e.target.value)}
                         placeholder="ЄДРПОУ"
-                        disabled={!!contractForm.based_on_order}
+                        disabled={!!contractForm.based_on_order && contractForm.based_on_order !== 'none'}
                       />
                       <Button type="button" onClick={searchCounterparty} disabled={!!contractForm.based_on_order}>
                         <Search className="w-4 h-4 mr-2" />
