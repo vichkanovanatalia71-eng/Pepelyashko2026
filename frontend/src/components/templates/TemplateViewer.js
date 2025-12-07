@@ -13,6 +13,8 @@ const TemplateViewer = () => {
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [loading, setLoading] = useState(false);
   const [viewMode, setViewMode] = useState('preview'); // 'preview' or 'code'
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedContent, setEditedContent] = useState('');
 
   useEffect(() => {
     loadTemplates();
