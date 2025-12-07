@@ -2788,13 +2788,29 @@ const FullDashboard = () => {
                     {filterActsByEdrpou(acts).map((act) => (
                       <Card 
                         key={act._id} 
-                        className={`card-hover cursor-pointer ${currentTheme.cardBg} border-2 ${currentTheme.cardBorder} ${currentTheme.shadow} transition-all duration-300`} 
-                        onClick={() => openActDialog(act)}
+                        className={`card-hover ${currentTheme.cardBg} border-2 ${currentTheme.cardBorder} ${currentTheme.shadow} transition-all duration-300 group`}
                       >
                         <CardContent className="p-4">
-                          <p className={`font-medium ${currentTheme.text}`}>№{act.number}</p>
-                          <p className="text-sm text-gray-600">{act.counterparty_name}</p>
-                          <p className={`font-bold ${currentTheme.text}`}>{act.total_amount} грн</p>
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1 cursor-pointer" onClick={() => openActDialog(act)}>
+                              <p className={`font-medium ${currentTheme.text}`}>№{act.number}</p>
+                              <p className="text-sm text-gray-600">{act.counterparty_name}</p>
+                              <p className={`font-bold ${currentTheme.text}`}>{act.total_amount} грн</p>
+                            </div>
+                            <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openActDialog(act);
+                                }}
+                                className="h-8 w-8 p-0"
+                              >
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
                         </CardContent>
                       </Card>
                     ))}
