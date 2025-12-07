@@ -1548,7 +1548,7 @@ async def generate_contract_pdf(
         
         # Get counterparty details
         counterparty = await database.counterparties.find_one(
-            {"edrpou": contract.get("counterparty_edrpou"), "user_id": current_user["_id"]},
+            {"edrpou": contract_dict.get("counterparty_edrpou"), "user_id": current_user["_id"]},
             {"_id": 0}
         )
         
@@ -1614,7 +1614,7 @@ async def email_contract(
         
         # Get counterparty details
         counterparty = await database.counterparties.find_one(
-            {"edrpou": contract.get("counterparty_edrpou"), "user_id": current_user["_id"]},
+            {"edrpou": contract_dict.get("counterparty_edrpou"), "user_id": current_user["_id"]},
             {"_id": 0}
         )
         
@@ -1641,10 +1641,10 @@ async def email_contract(
         
         await email_service.send_document_email(
             recipient_email=recipient_email,
-            subject=f"Договір №{contract.get('number', 'N/A')}",
-            body=f"Доброго дня!\n\nНадсилаємо Вам договір №{contract.get('number', 'N/A')}.\n\nЗ повагою,\n{supplier.get('representative_name', 'Постачальник')}",
+            subject=f"Договір №{contract_dict.get('number', 'N/A')}",
+            body=f"Доброго дня!\n\nНадсилаємо Вам договір №{contract_dict.get('number', 'N/A')}.\n\nЗ повагою,\n{supplier.get('representative_name', 'Постачальник')}",
             attachment_path=pdf_path,
-            attachment_name=f"contract_{contract.get('number', 'unknown')}.pdf"
+            attachment_name=f"contract_{contract_dict.get('number', 'unknown')}.pdf"
         )
         
         return {"message": "Email успішно надіслано"}
