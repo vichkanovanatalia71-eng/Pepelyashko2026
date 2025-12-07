@@ -160,9 +160,20 @@ const FullDashboard = () => {
     amount: 0,
     based_on_order: ''
   });
+
+  // Edit invoice form
+  const [editInvoiceForm, setEditInvoiceForm] = useState({
+    date: '',
+    items: [],
+    total_amount: 0
+  });
   
   // Search states
   const [searchEdrpou, setSearchEdrpou] = useState('');
+  const [searchEdrpouInvoices, setSearchEdrpouInvoices] = useState('');
+  const [searchEdrpouActs, setSearchEdrpouActs] = useState('');
+  const [searchEdrpouWaybills, setSearchEdrpouWaybills] = useState('');
+  const [searchEdrpouContracts, setSearchEdrpouContracts] = useState('');
   const [foundCounterparty, setFoundCounterparty] = useState(null);
   
   // Selected counterparty for viewing documents
