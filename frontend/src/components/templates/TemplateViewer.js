@@ -156,22 +156,55 @@ const TemplateViewer = () => {
                           </CardDescription>
                         </div>
                         <div className="flex gap-2">
-                          <Button
-                            variant={viewMode === 'preview' ? 'default' : 'outline'}
-                            size="sm"
-                            onClick={() => setViewMode('preview')}
-                          >
-                            <Eye className="w-4 h-4 mr-2" />
-                            Попередній перегляд
-                          </Button>
-                          <Button
-                            variant={viewMode === 'code' ? 'default' : 'outline'}
-                            size="sm"
-                            onClick={() => setViewMode('code')}
-                          >
-                            <Code className="w-4 h-4 mr-2" />
-                            HTML код
-                          </Button>
+                          {!isEditing ? (
+                            <>
+                              <Button
+                                variant={viewMode === 'preview' ? 'default' : 'outline'}
+                                size="sm"
+                                onClick={() => setViewMode('preview')}
+                              >
+                                <Eye className="w-4 h-4 mr-2" />
+                                Попередній перегляд
+                              </Button>
+                              <Button
+                                variant={viewMode === 'code' ? 'default' : 'outline'}
+                                size="sm"
+                                onClick={() => setViewMode('code')}
+                              >
+                                <Code className="w-4 h-4 mr-2" />
+                                HTML код
+                              </Button>
+                              <Button
+                                variant="default"
+                                size="sm"
+                                onClick={handleEdit}
+                                className="bg-blue-600 hover:bg-blue-700"
+                              >
+                                <Edit className="w-4 h-4 mr-2" />
+                                Редагувати
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleCancelEdit}
+                                disabled={loading}
+                              >
+                                Скасувати
+                              </Button>
+                              <Button
+                                variant="default"
+                                size="sm"
+                                onClick={handleSaveTemplate}
+                                disabled={loading}
+                                className="bg-green-600 hover:bg-green-700"
+                              >
+                                {loading ? 'Збереження...' : 'Зберегти'}
+                              </Button>
+                            </>
+                          )}
                         </div>
                       </div>
                     </CardHeader>
