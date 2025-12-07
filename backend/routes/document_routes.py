@@ -123,16 +123,17 @@ async def get_invoice_pdf(
     invoice_number: str,
     current_user: dict = Depends(get_current_user)
 ):
-    """Serve invoice PDF file."""
+    """Generate and return invoice PDF."""
     from server import db as database
-    
-    document_service = DocumentServiceMongo(database)
+    from services.invoice_pdf_service import InvoicePDFService
+    from urllib.parse import quote
     
     try:
-        invoice = await document_service.get_invoice_by_number(
-            user_id=current_user["_id"],
-            invoice_number=invoice_number
-        )
+        # Get invoice from database
+        invoice = await database.invoices.find_one({
+            "number": invoice_number,
+            "user_id": current_user["_id"]
+        }, {"_id": 0})
         
         if not invoice:
             raise HTTPException(
@@ -140,24 +141,240 @@ async def get_invoice_pdf(
                 detail=f"Рахунок {invoice_number} не знайдено"
             )
         
-        if not invoice.pdf_path or not Path(invoice.pdf_path).exists():
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"PDF для рахунку {invoice_number} не знайдено"
-            )
+        # Get counterparty details
+        counterparty_edrpou = invoice.get('counterparty_edrpou')
+        if counterparty_edrpou:
+            counterparty = await database.counterparties.find_one({
+                "edrpou": counterparty_edrpou,
+                "user_id": current_user["_id"]
+            }, {"_id": 0})
+            
+            if counterparty:
+                invoice['counterparty_details'] = counterparty
+        
+        # Get supplier (current user) details
+        user = await database.users.find_one({
+            "_id": current_user["_id"]
+        }, {"_id": 0, "hashed_password": 0})
+        
+        if user:
+            invoice['supplier_details'] = user
+        
+        # Generate PDF
+        pdf_service = InvoicePDFService()
+        pdf_path = pdf_service.generate_pdf(invoice)
+        
+        # Generate filename with proper encoding
+        filename = f"Рахунок_{invoice_number}.pdf"
+        encoded_filename = quote(filename.encode('utf-8'))
         
         return FileResponse(
-            path=invoice.pdf_path,
+            path=pdf_path,
             media_type='application/pdf',
-            filename=Path(invoice.pdf_path).name
+            headers={
+                'Content-Disposition': f"attachment; filename*=UTF-8''{encoded_filename}"
+            }
         )
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error serving invoice PDF: {str(e)}")
+        logger.error(f"Error generating invoice PDF: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Помилка при отриманні PDF"
+            detail="Помилка при генерації PDF"
+        )
+
+
+@router.put("/invoices/{invoice_number}")
+async def update_invoice(
+    invoice_number: str,
+    invoice_data: dict,
+    current_user: dict = Depends(get_current_user)
+):
+    """Update an invoice."""
+    from server import db as database
+    from datetime import datetime
+    
+    try:
+        # Get existing invoice
+        existing_invoice = await database.invoices.find_one({
+            "number": invoice_number,
+            "user_id": current_user["_id"]
+        })
+        
+        if not existing_invoice:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Рахунок не знайдено"
+            )
+        
+        # Prepare update data - ensure numeric values are stored as numbers
+        items = invoice_data.get("items", existing_invoice.get("items"))
+        
+        # Convert string values to numbers in items
+        if items:
+            for item in items:
+                if 'quantity' in item:
+                    item['quantity'] = float(item['quantity'])
+                if 'price' in item:
+                    item['price'] = float(item['price'])
+                if 'amount' in item:
+                    item['amount'] = float(item['amount'])
+        
+        update_data = {
+            "date": invoice_data.get("date", existing_invoice.get("date")),
+            "counterparty_edrpou": invoice_data.get("counterparty_edrpou", existing_invoice.get("counterparty_edrpou")),
+            "counterparty_name": invoice_data.get("counterparty_name", existing_invoice.get("counterparty_name")),
+            "items": items,
+            "total_amount": float(invoice_data.get("total_amount", existing_invoice.get("total_amount"))),
+            "updated_at": datetime.utcnow()
+        }
+        
+        # Update invoice
+        result = await database.invoices.update_one(
+            {"number": invoice_number, "user_id": current_user["_id"]},
+            {"$set": update_data}
+        )
+        
+        if result.modified_count == 0 and result.matched_count == 0:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Рахунок не знайдено"
+            )
+        
+        # Get updated invoice
+        updated_invoice = await database.invoices.find_one(
+            {"number": invoice_number, "user_id": current_user["_id"]},
+            {"_id": 0}
+        )
+        
+        logger.info(f"Invoice updated: {invoice_number} by user {current_user['_id']}")
+        return updated_invoice
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating invoice: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Помилка при оновленні рахунку"
+        )
+
+
+@router.delete("/invoices/{invoice_number}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_invoice(
+    invoice_number: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Delete an invoice."""
+    from server import db as database
+    
+    try:
+        result = await database.invoices.delete_one({
+            "number": invoice_number,
+            "user_id": current_user["_id"]
+        })
+        
+        if result.deleted_count == 0:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Рахунок не знайдено"
+            )
+        
+        logger.info(f"Invoice deleted: {invoice_number} by user {current_user['_id']}")
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting invoice: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Помилка при видаленні рахунку"
+        )
+
+
+@router.post("/invoices/{invoice_number}/send-email")
+async def send_invoice_email(
+    invoice_number: str,
+    email_data: dict,
+    current_user: dict = Depends(get_current_user)
+):
+    """Send invoice PDF to email."""
+    from server import db as database
+    from services.invoice_pdf_service import InvoicePDFService
+    from services.email_service import EmailService
+    
+    try:
+        # Get invoice from database
+        invoice = await database.invoices.find_one({
+            "number": invoice_number,
+            "user_id": current_user["_id"]
+        }, {"_id": 0})
+        
+        if not invoice:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Рахунок не знайдено"
+            )
+        
+        recipient_email = email_data.get('email')
+        if not recipient_email:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email адреса не вказана"
+            )
+        
+        # Get counterparty details
+        counterparty_edrpou = invoice.get('counterparty_edrpou')
+        if counterparty_edrpou:
+            counterparty = await database.counterparties.find_one({
+                "edrpou": counterparty_edrpou,
+                "user_id": current_user["_id"]
+            }, {"_id": 0})
+            
+            if counterparty:
+                invoice['counterparty_details'] = counterparty
+        
+        # Get supplier details
+        user = await database.users.find_one({
+            "_id": current_user["_id"]
+        }, {"_id": 0, "hashed_password": 0})
+        
+        if user:
+            invoice['supplier_details'] = user
+        
+        # Generate PDF
+        pdf_service = InvoicePDFService()
+        pdf_path = pdf_service.generate_pdf(invoice)
+        
+        # Send email
+        email_service = EmailService()
+        invoice_date = invoice.get('date', '')
+        
+        # Convert date to string if it's a datetime object
+        from datetime import datetime
+        if isinstance(invoice_date, datetime):
+            invoice_date = invoice_date.isoformat()
+        else:
+            invoice_date = str(invoice_date)
+        
+        email_service.send_invoice_document(
+            to_email=recipient_email,
+            invoice_number=invoice_number,
+            invoice_date=invoice_date,
+            counterparty_name=invoice.get('counterparty_name', '—'),
+            total_amount=invoice.get('total_amount', 0),
+            pdf_path=pdf_path
+        )
+        
+        logger.info(f"Invoice PDF sent to {recipient_email} by user {current_user['_id']}")
+        return {"message": f"PDF відправлено на {recipient_email}"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error sending invoice email: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Помилка при відправці email"
         )
 
 
