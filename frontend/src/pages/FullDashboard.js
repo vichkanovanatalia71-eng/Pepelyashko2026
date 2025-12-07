@@ -1570,6 +1570,96 @@ const FullDashboard = () => {
     }
   };
 
+  // Profile-specific handlers (same logic as counterparty form)
+  const handleProfileEdrpouChange = (value) => {
+    const filtered = value.replace(/\D/g, '');
+    if (filtered.length <= 10) {
+      setProfileData({...profileData, edrpou: filtered});
+      
+      // Auto-search when 8 or 10 digits
+      if (filtered.length === 8 || filtered.length === 10) {
+        searchByEdrpouProfile(filtered);
+      }
+    }
+  };
+
+  const searchByEdrpouProfile = async (edrpou) => {
+    setSearchingEdrpouProfile(true);
+    try {
+      const response = await axios.get(`${API_URL}/api/counterparties/youscore/${edrpou}`);
+      if (response.data) {
+        const data = response.data;
+        let representativeName = data.name || '';
+        if (edrpou.length === 10) {
+          representativeName = `ФІЗИЧНА ОСОБА-ПІДПРИЄМЕЦЬ ${representativeName}`;
+        }
+        
+        setProfileData(prev => ({
+          ...prev,
+          representative_name: representativeName,
+          legal_address: data.address || '',
+          director_name: data.ceo || '',
+          position: data.ceo ? 'Директор' : prev.position
+        }));
+        
+        // Auto-generate signature if director name was filled
+        if (data.ceo) {
+          const sig = generateSignature(data.ceo);
+          setProfileData(prev => ({...prev, signature: sig}));
+        }
+        
+        toast.success('Дані отримано з YouScore');
+      }
+    } catch (error) {
+      console.error('Error fetching YouScore:', error);
+    } finally {
+      setSearchingEdrpouProfile(false);
+    }
+  };
+
+  const handleProfileIBANChange = (value) => {
+    const upper = value.toUpperCase();
+    setProfileData({...profileData, iban: upper});
+    
+    if (upper.length >= 10) {
+      const mfo = upper.substring(4, 10);
+      setProfileData(prev => ({...prev, iban: upper, mfo: mfo}));
+    }
+  };
+
+  const handleProfileDirectorNameChange = (value) => {
+    setProfileData({...profileData, director_name: value});
+    
+    // Auto-generate signature
+    if (value) {
+      const sig = generateSignature(value);
+      setProfileData(prev => ({...prev, signature: sig}));
+    }
+    
+    // Update represented_by
+    updateProfileRepresentedBy(value, profileData.position, profileData.contract_type);
+  };
+
+  const handleProfilePositionChange = (value) => {
+    setProfileData({...profileData, position: value});
+    updateProfileRepresentedBy(profileData.director_name, value, profileData.contract_type);
+  };
+
+  const handleProfileBasisChange = (value) => {
+    setProfileData({...profileData, contract_type: value});
+    updateProfileRepresentedBy(profileData.director_name, profileData.position, value);
+  };
+
+  const updateProfileRepresentedBy = (directorName, position, basis) => {
+    if (!directorName || !position || !basis) return;
+    
+    const positionGenitive = generateGenitivePosition(position);
+    const nameGenitive = generateGenitiveName(directorName);
+    const represented = `${positionGenitive} ${nameGenitive}, що діє на підставі ${basis}`;
+    
+    setProfileData(prev => ({...prev, represented_by: represented}));
+  };
+
   const saveUserProfile = async () => {
     // Auto-generate represented_by from director info
     const representedBy = generateRepresentedBy(
