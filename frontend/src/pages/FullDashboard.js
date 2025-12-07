@@ -2702,61 +2702,23 @@ const FullDashboard = () => {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Список Актів ({filterActsByEdrpou(acts).length})</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {/* Search by EDRPOU */}
-                <div className="mb-4">
-                  <Label className="text-sm text-gray-600">Пошук за ЄДРПОУ</Label>
-                  <Input
-                    value={searchEdrpouActs}
-                    onChange={(e) => setSearchEdrpouActs(e.target.value)}
-                    placeholder="Введіть ЄДРПОУ контрагента"
-                    className="max-w-md"
-                  />
-                </div>
-
-                {filterActsByEdrpou(acts).length === 0 ? (
-                  <p className="text-center py-8 text-gray-500">
-                    {searchEdrpouActs ? 'Актів з таким ЄДРПОУ не знайдено' : 'Немає актів'}
-                  </p>
-                ) : (
-                  <div className="space-y-2">
-                    {filterActsByEdrpou(acts).map((act) => (
-                      <Card 
-                        key={act._id} 
-                        className={`card-hover ${currentTheme.cardBg} border-2 ${currentTheme.cardBorder} ${currentTheme.shadow} transition-all duration-300 group`}
-                      >
-                        <CardContent className="p-4">
-                          <div className="flex justify-between items-start">
-                            <div className="flex-1 cursor-pointer" onClick={() => openActDialog(act)}>
-                              <p className={`font-medium ${currentTheme.text}`}>№{act.number}</p>
-                              <p className="text-sm text-gray-600">{act.counterparty_name}</p>
-                              <p className={`font-bold ${currentTheme.text}`}>{act.total_amount} грн</p>
-                            </div>
-                            <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  openActDialog(act);
-                                }}
-                                className="h-8 w-8 p-0"
-                              >
-                                <Eye className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <DocumentListGeneric
+              documents={acts}
+              title="Список Актів"
+              searchValue={searchEdrpouActs}
+              onSearchChange={setSearchEdrpouActs}
+              onViewDocument={openActDialog}
+              theme={currentTheme}
+              filterByEdrpou={filterActsByEdrpou}
+              emptyMessage="Немає актів"
+              renderContent={(act, theme) => (
+                <>
+                  <p className={`font-medium ${theme.text}`}>№{act.number}</p>
+                  <p className="text-sm text-gray-600">{act.counterparty_name}</p>
+                  <p className={`font-bold ${theme.text}`}>{act.total_amount} грн</p>
+                </>
+              )}
+            />
           </TabsContent>
 
           <TabsContent value="waybills" className="space-y-6">
