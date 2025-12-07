@@ -2116,7 +2116,7 @@ const FullDashboard = () => {
                 ) : (
                   <div className="space-y-2">
                     {acts.map((act) => (
-                      <Card key={act._id}>
+                      <Card key={act._id} className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => openActDialog(act)}>
                         <CardContent className="p-4">
                           <p className="font-medium">№{act.number}</p>
                           <p className="text-sm text-gray-600">{act.counterparty_name}</p>
