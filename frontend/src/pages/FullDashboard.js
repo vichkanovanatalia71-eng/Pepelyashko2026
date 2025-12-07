@@ -1755,28 +1755,46 @@ const FullDashboard = () => {
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
         <Tabs defaultValue="counterparties" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
-            <TabsTrigger value="counterparties">
+          <TabsList className="grid w-full grid-cols-6 bg-gradient-to-r from-gray-50 to-gray-100 p-2 rounded-xl shadow-lg gap-2">
+            <TabsTrigger 
+              value="counterparties"
+              className="data-[state=active]:bg-gradient-to-br data-[state=active]:from-teal-500 data-[state=active]:to-cyan-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:scale-105 transition-all duration-300 rounded-lg"
+            >
               <Users className="w-4 h-4 mr-2" />
               Контрагенти
             </TabsTrigger>
-            <TabsTrigger value="orders">
+            <TabsTrigger 
+              value="orders"
+              className="data-[state=active]:bg-gradient-to-br data-[state=active]:from-blue-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:scale-105 transition-all duration-300 rounded-lg"
+            >
               <FileText className="w-4 h-4 mr-2" />
               Замовлення
             </TabsTrigger>
-            <TabsTrigger value="invoices">
+            <TabsTrigger 
+              value="invoices"
+              className="data-[state=active]:bg-gradient-to-br data-[state=active]:from-emerald-500 data-[state=active]:to-green-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:scale-105 transition-all duration-300 rounded-lg"
+            >
               <Receipt className="w-4 h-4 mr-2" />
               Рахунки
             </TabsTrigger>
-            <TabsTrigger value="acts">
+            <TabsTrigger 
+              value="acts"
+              className="data-[state=active]:bg-gradient-to-br data-[state=active]:from-purple-500 data-[state=active]:to-fuchsia-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:scale-105 transition-all duration-300 rounded-lg"
+            >
               <FileCheck className="w-4 h-4 mr-2" />
               Акти
             </TabsTrigger>
-            <TabsTrigger value="waybills">
+            <TabsTrigger 
+              value="waybills"
+              className="data-[state=active]:bg-gradient-to-br data-[state=active]:from-orange-500 data-[state=active]:to-amber-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:scale-105 transition-all duration-300 rounded-lg"
+            >
               <Package className="w-4 h-4 mr-2" />
               Накладні
             </TabsTrigger>
-            <TabsTrigger value="contracts">
+            <TabsTrigger 
+              value="contracts"
+              className="data-[state=active]:bg-gradient-to-br data-[state=active]:from-indigo-500 data-[state=active]:to-violet-600 data-[state=active]:text-white data-[state=active]:shadow-lg hover:scale-105 transition-all duration-300 rounded-lg"
+            >
               <FileSignature className="w-4 h-4 mr-2" />
               Договори
             </TabsTrigger>
