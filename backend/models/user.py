@@ -30,6 +30,10 @@ class UserModel(BaseModel):
     logo_url: Optional[str] = Field(None, description="URL логотипу компанії")
     logo_filename: Optional[str] = Field(None, description="Ім'я файлу логотипу")
     
+    # VAT information
+    vat_payer: Optional[bool] = Field(False, description="Чи є платником ПДВ")
+    vat_rate: Optional[float] = Field(20.0, description="Ставка ПДВ (%)")
+    
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
     
