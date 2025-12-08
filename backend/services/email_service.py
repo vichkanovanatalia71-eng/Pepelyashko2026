@@ -1232,13 +1232,15 @@ class EmailService:
                 <div class="content">
                     <p>Доброго дня!</p>
                     
+                    <p>Ділюся з Вами інформацією про нашу компанію.</p>
+                    
                     <div class="info-box">
-                        <p style="margin: 0;"><strong>Компанія:</strong> {company_name}</p>
+                        <p style="margin: 0; font-size: 16px;"><strong>{company_name}</strong></p>
                     </div>
                     
-                    <p><strong>{company_name}</strong> надсилає Вам профіль компанії у вкладеному PDF-файлі.</p>
+                    <p>У вкладеному файлі Ви знайдете детальну інформацію про нашу компанію, включаючи контактні дані, реквізити та іншу важливу інформацію для співпраці.</p>
                     
-                    <p>З повагою,<br><strong>{company_name}</strong></p>
+                    <p style="margin-top: 30px;">З повагою,<br><strong>{company_name}</strong></p>
                 </div>
                 
                 <div class="footer">
