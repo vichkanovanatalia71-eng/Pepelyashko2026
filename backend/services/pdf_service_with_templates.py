@@ -161,7 +161,7 @@ class PDFServiceWithTemplates:
             'total_amount_text': total_amount_text,
             'vat_note': "не платник ПДВ",
             
-            # Supplier info (from profile)
+            # Supplier info (from profile) - EXTENDED
             'supplier_name': supplier.get('representative_name', ''),
             'supplier_edrpou': supplier.get('edrpou', ''),
             'supplier_address': supplier.get('legal_address', ''),
@@ -172,9 +172,14 @@ class PDFServiceWithTemplates:
             'supplier_bank': supplier.get('bank_name', supplier.get('bank', '')),
             'supplier_director_name': supplier.get('director_name', ''),
             'supplier_director_position': supplier.get('director_position', 'Директор'),
+            'supplier_position': supplier.get('position', 'Директор'),
+            'supplier_represented_by': supplier.get('represented_by', ''),
+            'supplier_signature': supplier.get('signature', ''),
+            'supplier_full_name': supplier.get('full_name', ''),
+            'supplier_company_name': supplier.get('company_name', ''),
             'supplier_logo': logo_file_path,
             
-            # Counterparty info
+            # Counterparty info - EXTENDED
             'counterparty_name': counterparty.get('representative_name', invoice.get('counterparty_name', '')),
             'counterparty_edrpou': counterparty.get('edrpou', invoice.get('counterparty_edrpou', '')),
             'counterparty_address': counterparty.get('legal_address', ''),
@@ -182,7 +187,13 @@ class PDFServiceWithTemplates:
             'counterparty_phone': counterparty.get('phone', ''),
             'counterparty_iban': counterparty.get('bank_account', counterparty.get('iban', '')),
             'counterparty_mfo': counterparty.get('mfo', ''),
-            'counterparty_bank': counterparty.get('bank_name', ''),
+            'counterparty_bank': counterparty.get('bank_name', counterparty.get('bank', '')),
+            'counterparty_director_name': counterparty.get('director_name', ''),
+            'counterparty_director_position': counterparty.get('director_position', 'Директор'),
+            'counterparty_position': counterparty.get('position', 'Директор'),
+            'counterparty_represented_by': counterparty.get('represented_by', ''),
+            'counterparty_signature': counterparty.get('signature', ''),
+            'counterparty_contract_type': counterparty.get('contract_type', ''),
             
             # Aliases for buyer (same as counterparty)
             'buyer_name': counterparty.get('representative_name', invoice.get('counterparty_name', '')),
@@ -192,7 +203,12 @@ class PDFServiceWithTemplates:
             'buyer_phone': counterparty.get('phone', ''),
             'buyer_iban': counterparty.get('bank_account', counterparty.get('iban', '')),
             'buyer_mfo': counterparty.get('mfo', ''),
-            'buyer_bank': counterparty.get('bank_name', ''),
+            'buyer_bank': counterparty.get('bank_name', counterparty.get('bank', '')),
+            'buyer_director_name': counterparty.get('director_name', ''),
+            'buyer_director_position': counterparty.get('director_position', 'Директор'),
+            'buyer_position': counterparty.get('position', 'Директор'),
+            'buyer_represented_by': counterparty.get('represented_by', ''),
+            'buyer_signature': counterparty.get('signature', ''),
         }
         
         return context
