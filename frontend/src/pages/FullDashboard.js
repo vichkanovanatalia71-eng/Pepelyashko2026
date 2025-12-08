@@ -64,12 +64,16 @@ const FullDashboard = () => {
     iban: '',
     contract_type: 'Статуту', // Діє на підставі: Статуту, Довіреності, Виписка
     director_name: '',
+    director_position: '',
     legal_address: '',
     bank: '',
+    bank_name: '',
     mfo: '',
     position: '',
     represented_by: '',
-    signature: ''
+    signature: '',
+    vat_payer: false,
+    vat_rate: 20
   });
   
   // Loading state for EDRPOU search
