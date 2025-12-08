@@ -3479,9 +3479,6 @@ def main():
     # Initialize test suite
     test_suite = TemplateResetTestSuite()
     
-    # Track test results
-    test_results = []
-    
     try:
         # Run all template reset tests
         success = test_suite.run_all_tests()
@@ -3489,33 +3486,6 @@ def main():
         
     except Exception as e:
         logger.error(f"❌ Критична помилка під час тестування: {str(e)}")
-        return False
-    
-    # Print final summary
-    logger.info("\n" + "=" * 100)
-    logger.info("ПІДСУМОК ТЕСТУВАННЯ")
-    logger.info("=" * 100)
-    
-    passed_tests = 0
-    total_tests = len(test_results)
-    
-    for test_name, result in test_results:
-        status = "✅ ПРОЙДЕНО" if result else "❌ ПРОВАЛЕНО"
-        logger.info(f"{status}: {test_name}")
-        if result:
-            passed_tests += 1
-    
-    logger.info("-" * 100)
-    logger.info(f"РЕЗУЛЬТАТ: {passed_tests}/{total_tests} тестів пройдено ({passed_tests/total_tests*100:.1f}%)")
-    
-    if passed_tests == total_tests:
-        logger.info("🎉 ВСІ ТЕСТИ ПРОЙДЕНО УСПІШНО!")
-        logger.info("✅ Повний потік роботи з рахунками працює правильно")
-        return True
-    else:
-        failed_tests = total_tests - passed_tests
-        logger.error(f"❌ {failed_tests} тестів провалено")
-        logger.error("⚠️ Потрібні додаткові виправлення")
         return False
 
 if __name__ == "__main__":
