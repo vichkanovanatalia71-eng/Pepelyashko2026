@@ -93,7 +93,12 @@ class CounterpartyUpdate(BaseModel):
     director_name: Optional[str] = None
     legal_address: Optional[str] = None
     bank: Optional[str] = None
+    bank_name: Optional[str] = None
     mfo: Optional[str] = None
     position: Optional[str] = None
     represented_by: Optional[str] = None
     signature: Optional[str] = None
+    logo_url: Optional[str] = None
+    logo_filename: Optional[str] = None
+    vat_payer: Optional[bool] = None
+    vat_rate: Optional[float] = None
