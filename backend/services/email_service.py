@@ -475,8 +475,8 @@ class EmailService:
                     background-color: #ffffff;
                 }}
                 .company-logo {{
-                    max-width: 80px;
-                    max-height: 80px;
+                    max-width: 160px;
+                    max-height: 160px;
                     border-radius: 8px;
                 }}
                 .header {{
