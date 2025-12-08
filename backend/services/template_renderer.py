@@ -138,7 +138,9 @@ class TemplateRenderer:
                 
                 parts = []
                 if millions > 0:
-                    parts.append(f"{self._convert_hundreds(millions)} мільйонів")
+                    # Correct plural form for millions
+                    millions_word = "мільйон" if millions == 1 else "мільйонів" if millions < 5 else "мільйонів"
+                    parts.append(f"{self._convert_hundreds(millions)} {millions_word}")
                 if thousands > 0:
                     parts.append(f"{self._convert_hundreds(thousands)} тисяч")
                 if ones > 0:
