@@ -380,13 +380,21 @@ async def send_invoice_email(
         else:
             invoice_date = str(invoice_date)
         
+        # Get company logo URL if available
+        company_logo_url = None
+        if user.get('company_logo'):
+            # Convert relative path to full URL
+            logo_filename = user['company_logo'].split('/')[-1]
+            company_logo_url = f"{os.environ.get('BACKEND_URL', 'http://localhost:8001')}/api/uploads/{logo_filename}"
+        
         email_service.send_invoice_document(
             to_email=recipient_email,
             invoice_number=invoice_number,
             invoice_date=invoice_date,
             counterparty_name=invoice.get('counterparty_name', '—'),
             total_amount=invoice.get('total_amount', 0),
-            pdf_path=pdf_path
+            pdf_path=pdf_path,
+            company_logo_url=company_logo_url
         )
         
         logger.info(f"Invoice PDF sent to {recipient_email} by user {current_user['_id']}")
