@@ -73,19 +73,65 @@ const ProfileCard = ({ user, onUpdate, onDelete }) => {
     if (!directorName || !position) return '';
     
     // Convert position to genitive case (родовий відмінок)
-    const positionGenitive = position.toLowerCase() === 'директор' 
-      ? 'директора' 
-      : position.toLowerCase();
+    let positionGenitive = position.toLowerCase();
+    if (positionGenitive === 'директор') positionGenitive = 'директора';
+    else if (positionGenitive === 'генеральний директор') positionGenitive = 'генерального директора';
+    else if (positionGenitive === 'керівник') positionGenitive = 'керівника';
+    else if (positionGenitive === 'президент') positionGenitive = 'президента';
+    else if (positionGenitive === 'голова') positionGenitive = 'голови';
     
-    // Convert name to genitive case (approximation)
+    // Convert name to genitive case (українська мова)
     const nameParts = directorName.trim().split(' ');
     let nameGenitive = directorName;
     
-    if (nameParts.length === 3) {
-      const lastName = nameParts[0];
-      const firstName = nameParts[1];
-      const patronymic = nameParts[2];
-      nameGenitive = `${lastName}а ${firstName}а ${patronymic}а`;
+    if (nameParts.length >= 2) {
+      let lastName = nameParts[0];
+      let firstName = nameParts[1];
+      let patronymic = nameParts.length >= 3 ? nameParts[2] : '';
+      
+      // Прізвище в родовому відмінку
+      if (lastName.endsWith('ко')) {
+        // Українські прізвища на -ко не змінюються
+        // залишаємо як є
+      } else if (lastName.endsWith('ський') || lastName.endsWith('цький')) {
+        lastName = lastName.slice(0, -2) + 'ого';
+      } else if (lastName.endsWith('ий') || lastName.endsWith('ій')) {
+        lastName = lastName.slice(0, -2) + 'ого';
+      } else if (lastName.endsWith('ов') || lastName.endsWith('ев') || lastName.endsWith('їв') || lastName.endsWith('ін')) {
+        lastName = lastName + 'а';
+      } else if (lastName.endsWith('а') && lastName.length > 2) {
+        lastName = lastName.slice(0, -1) + 'и';
+      } else if (lastName.endsWith('я') && lastName.length > 2) {
+        lastName = lastName.slice(0, -1) + 'і';
+      } else if (!lastName.endsWith('а') && !lastName.endsWith('о') && !lastName.endsWith('е')) {
+        lastName = lastName + 'а';
+      }
+      
+      // Ім'я в родовому відмінку
+      if (firstName.endsWith('о')) {
+        // Ім'я на -о не змінюється
+      } else if (firstName.endsWith('й')) {
+        firstName = firstName.slice(0, -1) + 'я';
+      } else if (firstName.endsWith('а')) {
+        firstName = firstName.slice(0, -1) + 'и';
+      } else {
+        firstName = firstName + 'а';
+      }
+      
+      // По батькові в родовому відмінку
+      if (patronymic) {
+        if (patronymic.endsWith('ович') || patronymic.endsWith('евич')) {
+          patronymic = patronymic + 'а';
+        } else if (patronymic.endsWith('івна') || patronymic.endsWith('ївна')) {
+          patronymic = patronymic.slice(0, -1) + 'и';
+        } else if (patronymic.endsWith('ч')) {
+          patronymic = patronymic + 'а';
+        }
+      }
+      
+      nameGenitive = patronymic 
+        ? `${lastName} ${firstName} ${patronymic}`
+        : `${lastName} ${firstName}`;
     }
     
     return `${positionGenitive} ${nameGenitive}, що діє на підставі ${contractType}`;
