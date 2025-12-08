@@ -59,13 +59,15 @@ async def upload_logo(
         
         # Update user profile with logo URL
         logo_url = f"/api/uploads/{unique_filename}"
+        logo_path = f"uploads/{unique_filename}"
         
         await db.users.update_one(
             {"_id": current_user["_id"]},
             {
                 "$set": {
                     "logo_url": logo_url,
-                    "logo_filename": unique_filename
+                    "logo_filename": unique_filename,
+                    "company_logo": logo_path  # Додано для email та PDF
                 }
             }
         )
