@@ -168,56 +168,54 @@ class UserTemplateTestSuite:
             logger.error(f"❌ Тест перевірки користувацького шаблону провалився: {str(e)}")
             return False
     
-    def test_get_invoice_templates(self):
-        """Test 2: GET /api/templates - отримати список шаблонів рахунків"""
+    def test_generate_pdf_and_verify_custom_template_usage(self):
+        """Test 2: Generate PDF for invoice and verify custom template usage"""
         logger.info("=" * 80)
-        logger.info("ТЕСТ 2: ОТРИМАННЯ СПИСКУ ШАБЛОНІВ РАХУНКІВ")
+        logger.info("ТЕСТ 2: ГЕНЕРАЦІЯ PDF ТА ПЕРЕВІРКА ВИКОРИСТАННЯ КОРИСТУВАЦЬКОГО ШАБЛОНУ")
         logger.info("=" * 80)
         
         try:
+            logger.info(f"Генерація PDF для рахунку {self.test_invoice_number}...")
+            
+            # Generate PDF via API endpoint
             response = requests.get(
-                f"{self.api_url}/templates",
+                f"{self.api_url}/invoices/pdf/{self.test_invoice_number}",
                 headers=self.get_auth_headers(),
                 timeout=30
             )
             
             if response.status_code != 200:
-                logger.error(f"❌ Помилка отримання шаблонів: {response.status_code} - {response.text}")
+                logger.error(f"❌ Помилка генерації PDF: {response.status_code} - {response.text}")
                 return False
             
-            templates = response.json()
-            logger.info(f"✅ Отримано {len(templates)} шаблонів")
-            
-            # Find invoice templates
-            invoice_templates = [t for t in templates if t.get('template_type') == 'invoice']
-            logger.info(f"✅ Знайдено {len(invoice_templates)} шаблонів рахунків")
-            
-            # Find user template (not system default)
-            user_template = None
-            system_template = None
-            
-            for template in invoice_templates:
-                if template.get('is_default') == True:
-                    system_template = template
-                    self.system_template_id = template.get('_id')
-                    logger.info(f"✅ Знайдено системний шаблон: {template.get('name')}")
-                elif template.get('user_id'):  # User template
-                    user_template = template
-                    self.user_template_id = template.get('_id')
-                    logger.info(f"✅ Знайдено користувацький шаблон: {template.get('name')}")
-            
-            if not system_template:
-                logger.error("❌ Системний шаблон рахунку не знайдено")
+            # Check Content-Type
+            content_type = response.headers.get('content-type', '')
+            if 'application/pdf' not in content_type:
+                logger.error(f"❌ Неправильний Content-Type: {content_type}")
                 return False
             
-            if not user_template:
-                logger.warning("⚠️  Користувацький шаблон не знайдено - буде використано системний для тестування")
-                self.user_template_id = self.system_template_id
+            pdf_size = len(response.content)
+            logger.info("✅ PDF згенеровано успішно")
+            logger.info(f"   Content-Type: {content_type}")
+            logger.info(f"   Розмір файлу: {pdf_size} байт ({pdf_size/1024:.1f} KB)")
             
-            return True
+            # Check minimum size requirement (~150KB from review request)
+            if pdf_size < 100 * 1024:  # 100KB minimum
+                logger.error(f"❌ PDF файл занадто малий: {pdf_size/1024:.1f} KB (очікувалося >100KB)")
+                return False
+            else:
+                logger.info(f"✅ Розмір PDF відповідає вимогам (>{100} KB)")
+            
+            # Save PDF to temporary file for text extraction
+            with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as temp_pdf:
+                temp_pdf.write(response.content)
+                temp_pdf_path = temp_pdf.name
+            
+            # Extract and check PDF content for custom template markers
+            return self.check_custom_template_pdf_content(temp_pdf_path)
             
         except Exception as e:
-            logger.error(f"❌ Тест отримання шаблонів провалився: {str(e)}")
+            logger.error(f"❌ Тест генерації PDF провалився: {str(e)}")
             return False
     
     def test_template_reset_functionality(self):
