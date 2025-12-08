@@ -281,6 +281,8 @@ const TemplateViewer = () => {
                               <div className="grid grid-cols-2 gap-2">
                                 <code className="bg-white px-2 py-1 rounded text-xs border">{'{{supplier_name}}'}</code>
                                 <span className="text-xs text-gray-600">- Назва</span>
+                                <code className="bg-white px-2 py-1 rounded text-xs border">{'{{supplier_company_name}}'}</code>
+                                <span className="text-xs text-gray-600">- Назва компанії</span>
                                 <code className="bg-white px-2 py-1 rounded text-xs border">{'{{supplier_edrpou}}'}</code>
                                 <span className="text-xs text-gray-600">- ЄДРПОУ</span>
                                 <code className="bg-white px-2 py-1 rounded text-xs border">{'{{supplier_address}}'}</code>
@@ -295,10 +297,18 @@ const TemplateViewer = () => {
                                 <span className="text-xs text-gray-600">- МФО</span>
                                 <code className="bg-white px-2 py-1 rounded text-xs border">{'{{supplier_bank}}'}</code>
                                 <span className="text-xs text-gray-600">- Назва банку</span>
+                                <code className="bg-white px-2 py-1 rounded text-xs border">{'{{supplier_full_name}}'}</code>
+                                <span className="text-xs text-gray-600">- Повне ім'я</span>
                                 <code className="bg-white px-2 py-1 rounded text-xs border">{'{{supplier_director_name}}'}</code>
                                 <span className="text-xs text-gray-600">- ПІБ директора</span>
                                 <code className="bg-white px-2 py-1 rounded text-xs border">{'{{supplier_director_position}}'}</code>
                                 <span className="text-xs text-gray-600">- Посада директора</span>
+                                <code className="bg-white px-2 py-1 rounded text-xs border">{'{{supplier_position}}'}</code>
+                                <span className="text-xs text-gray-600">- Посада</span>
+                                <code className="bg-white px-2 py-1 rounded text-xs border">{'{{supplier_represented_by}}'}</code>
+                                <span className="text-xs text-gray-600">- В особі</span>
+                                <code className="bg-white px-2 py-1 rounded text-xs border">{'{{supplier_signature}}'}</code>
+                                <span className="text-xs text-gray-600">- Підпис</span>
                                 <code className="bg-white px-2 py-1 rounded text-xs border">{'{{supplier_logo}}'}</code>
                                 <span className="text-xs text-gray-600">- Логотип (URL)</span>
                               </div>
