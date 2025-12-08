@@ -122,13 +122,6 @@ class TemplateRenderer:
     
     def number_to_words_ua(self, amount: float) -> str:
         """Convert number to Ukrainian words."""
-        # Simplified version - can be extended
-        units = ['', 'одна', 'дві', 'три', 'чотири', "п'ять", 'шість', 'сім', 'вісім', "дев'ять"]
-        tens = ['', 'десять', 'двадцять', 'тридцять', 'сорок', "п'ятдесят", 
-                'шістдесят', 'сімдесят', 'вісімдесят', "дев'яносто"]
-        hundreds = ['', 'сто', 'двісті', 'триста', 'чотириста', "п'ятсот", 
-                    'шістсот', 'сімсот', 'вісімсот', "дев'ятсот"]
-        
         # Split into integer and fractional parts
         integer_part = int(amount)
         fractional_part = int(round((amount - integer_part) * 100))
@@ -136,11 +129,34 @@ class TemplateRenderer:
         if integer_part == 0:
             result = "нуль гривень"
         else:
-            # Simple implementation for numbers up to 999
-            if integer_part >= 1000:
+            # Handle millions (up to 999,999,999)
+            if integer_part >= 1000000:
+                millions = integer_part // 1000000
+                remainder = integer_part % 1000000
+                thousands = remainder // 1000
+                ones = remainder % 1000
+                
+                parts = []
+                if millions > 0:
+                    parts.append(f"{self._convert_hundreds(millions)} мільйонів")
+                if thousands > 0:
+                    parts.append(f"{self._convert_hundreds(thousands)} тисяч")
+                if ones > 0:
+                    parts.append(self._convert_hundreds(ones))
+                
+                result = ' '.join(parts) + " гривень"
+            # Handle thousands (up to 999,999)
+            elif integer_part >= 1000:
                 thousands = integer_part // 1000
                 remainder = integer_part % 1000
-                result = f"{self._convert_hundreds(thousands)} тисяч {self._convert_hundreds(remainder)} гривень"
+                
+                parts = []
+                if thousands > 0:
+                    parts.append(f"{self._convert_hundreds(thousands)} тисяч")
+                if remainder > 0:
+                    parts.append(self._convert_hundreds(remainder))
+                
+                result = ' '.join(parts) + " гривень"
             else:
                 result = f"{self._convert_hundreds(integer_part)} гривень"
         
