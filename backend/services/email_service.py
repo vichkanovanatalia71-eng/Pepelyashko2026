@@ -261,10 +261,12 @@ class EmailService:
         order_date: str,
         counterparty_name: str,
         total_amount: float,
-        pdf_path: str
+        pdf_path: str,
+        company_logo_url: str = None,
+        company_logo_path: str = None
     ) -> bool:
         """
-        Send order document PDF via email with blue-themed HTML styling.
+        Send order document PDF via email with green-themed HTML styling.
         
         Args:
             to_email: Recipient email address
