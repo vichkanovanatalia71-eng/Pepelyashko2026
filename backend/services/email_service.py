@@ -452,10 +452,31 @@ class EmailService:
                     padding: 30px 40px;
                     text-align: center;
                 }}
+                .header-content {{
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 20px;
+                }}
+                .company-logo {{
+                    max-width: 60px;
+                    max-height: 60px;
+                    border-radius: 8px;
+                    background-color: white;
+                    padding: 8px;
+                }}
+                .header-text {{
+                    text-align: left;
+                }}
                 .header h1 {{
                     margin: 0;
                     font-size: 28px;
                     font-weight: 600;
+                }}
+                .header p {{
+                    margin: 5px 0 0 0;
+                    font-size: 14px;
+                    opacity: 0.9;
                 }}
                 .content {{
                     padding: 40px;
