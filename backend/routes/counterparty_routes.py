@@ -194,8 +194,8 @@ async def download_counterparty_pdf(
         # Convert to dict for PDF generation
         counterparty_dict = counterparty.model_dump() if hasattr(counterparty, 'model_dump') else dict(counterparty)
         
-        # Generate PDF
-        pdf_path = pdf_service.generate_pdf(counterparty_dict)
+        # Generate PDF with new styled card
+        pdf_path = pdf_service.generate_counterparty_card_pdf(counterparty_dict)
         
         # Return file with properly encoded filename
         from urllib.parse import quote
@@ -259,8 +259,8 @@ async def send_counterparty_card_email(
         # Convert to dict for PDF generation
         counterparty_dict = counterparty.model_dump() if hasattr(counterparty, 'model_dump') else dict(counterparty)
         
-        # Generate PDF
-        pdf_path = pdf_service.generate_pdf(counterparty_dict)
+        # Generate PDF with new styled card
+        pdf_path = pdf_service.generate_counterparty_card_pdf(counterparty_dict)
         
         # Get user for logo
         user = await database.users.find_one({"_id": current_user["_id"]})
