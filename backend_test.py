@@ -87,6 +87,359 @@ class InvoiceWorkflowTestSuite:
         if not self.auth_token:
             return {}
         return {"Authorization": f"Bearer {self.auth_token}"}
+    
+    def test_get_orders_list(self):
+        """Test 1: GET /api/orders (отримати список замовлень)"""
+        logger.info("=" * 80)
+        logger.info("ТЕСТ 1: ОТРИМАННЯ СПИСКУ ЗАМОВЛЕНЬ")
+        logger.info("=" * 80)
+        
+        try:
+            response = requests.get(
+                f"{self.api_url}/orders",
+                headers=self.get_auth_headers(),
+                timeout=30
+            )
+            
+            if response.status_code != 200:
+                logger.error(f"❌ Помилка отримання замовлень: {response.status_code} - {response.text}")
+                return False
+            
+            orders = response.json()
+            logger.info(f"✅ Отримано {len(orders)} замовлень")
+            
+            if not orders:
+                logger.error("❌ Список замовлень порожній")
+                return False
+            
+            # Select first order for invoice creation
+            self.selected_order = orders[0]
+            logger.info(f"✅ Вибрано замовлення для створення рахунку:")
+            logger.info(f"   Номер: {self.selected_order.get('number', 'N/A')}")
+            logger.info(f"   ЄДРПОУ: {self.selected_order.get('counterparty_edrpou', 'N/A')}")
+            logger.info(f"   Сума: {self.selected_order.get('total_amount', 'N/A')}")
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"❌ Тест отримання замовлень провалився: {str(e)}")
+            return False
+    
+    def test_create_invoice_from_order(self):
+        """Test 2: POST /api/invoices з даними з замовлення"""
+        logger.info("=" * 80)
+        logger.info("ТЕСТ 2: СТВОРЕННЯ РАХУНКУ НА ОСНОВІ ЗАМОВЛЕННЯ")
+        logger.info("=" * 80)
+        
+        if not self.selected_order:
+            logger.error("❌ Немає вибраного замовлення для створення рахунку")
+            return False
+        
+        try:
+            # Prepare invoice data based on order
+            invoice_data = {
+                "counterparty_edrpou": self.selected_order.get('counterparty_edrpou'),
+                "items": self.selected_order.get('items', []),
+                "total_amount": self.selected_order.get('total_amount'),
+                "based_on_order": self.selected_order.get('number')  # Order number as basis
+            }
+            
+            logger.info("Створення рахунку з даними:")
+            logger.info(f"   ЄДРПОУ: {invoice_data['counterparty_edrpou']}")
+            logger.info(f"   Кількість позицій: {len(invoice_data['items'])}")
+            logger.info(f"   Загальна сума: {invoice_data['total_amount']}")
+            logger.info(f"   На основі замовлення: {invoice_data['based_on_order']}")
+            
+            response = requests.post(
+                f"{self.api_url}/invoices",
+                json=invoice_data,
+                headers={**self.get_auth_headers(), 'Content-Type': 'application/json'},
+                timeout=30
+            )
+            
+            if response.status_code not in [200, 201]:
+                logger.error(f"❌ Помилка створення рахунку: {response.status_code} - {response.text}")
+                return False
+            
+            result = response.json()
+            self.created_invoice_number = result.get('number')
+            
+            logger.info("✅ Рахунок створено успішно:")
+            logger.info(f"   Номер рахунку: {self.created_invoice_number}")
+            logger.info(f"   Дата: {result.get('date', 'N/A')}")
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"❌ Тест створення рахунку провалився: {str(e)}")
+            return False
+    
+    def test_invoice_pdf_generation(self):
+        """Test 3: GET /api/invoices/pdf/{invoice_number} для генерації PDF"""
+        logger.info("=" * 80)
+        logger.info("ТЕСТ 3: ГЕНЕРАЦІЯ PDF РАХУНКУ")
+        logger.info("=" * 80)
+        
+        if not self.created_invoice_number:
+            logger.error("❌ Немає номера створеного рахунку для генерації PDF")
+            return False
+        
+        try:
+            response = requests.get(
+                f"{self.api_url}/invoices/pdf/{self.created_invoice_number}",
+                headers=self.get_auth_headers(),
+                timeout=30
+            )
+            
+            if response.status_code != 200:
+                logger.error(f"❌ Помилка генерації PDF: {response.status_code} - {response.text}")
+                return False
+            
+            # Check Content-Type
+            content_type = response.headers.get('content-type', '')
+            if 'application/pdf' not in content_type:
+                logger.error(f"❌ Неправильний Content-Type: {content_type}")
+                return False
+            
+            logger.info("✅ PDF згенеровано успішно")
+            logger.info(f"   Content-Type: {content_type}")
+            logger.info(f"   Розмір файлу: {len(response.content)} байт")
+            
+            # Save PDF to temporary file for text extraction
+            with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as temp_pdf:
+                temp_pdf.write(response.content)
+                temp_pdf_path = temp_pdf.name
+            
+            # Extract text from PDF using pdftotext
+            return self.check_pdf_content(temp_pdf_path)
+            
+        except Exception as e:
+            logger.error(f"❌ Тест генерації PDF провалився: {str(e)}")
+            return False
+    
+    def check_pdf_content(self, pdf_path):
+        """Extract and check PDF content using pdftotext"""
+        logger.info("Перевірка вмісту PDF...")
+        
+        try:
+            # Extract text using pdftotext
+            result = subprocess.run(
+                ['pdftotext', pdf_path, '-'],
+                capture_output=True,
+                text=True,
+                timeout=10
+            )
+            
+            if result.returncode != 0:
+                logger.error(f"❌ Помилка витягу тексту з PDF: {result.stderr}")
+                return False
+            
+            pdf_text = result.stdout
+            logger.info("✅ Текст витягнуто з PDF успішно")
+            
+            # Check required elements
+            checks = []
+            
+            # 1. Check Ukrainian date format (DD місяць YYYY року)
+            ukrainian_months = ['січня', 'лютого', 'березня', 'квітня', 'травня', 'червня',
+                              'липня', 'серпня', 'вересня', 'жовтня', 'листопада', 'грудня']
+            
+            date_found = False
+            doubled_roku = False
+            for month in ukrainian_months:
+                if f" {month} " in pdf_text and " року" in pdf_text:
+                    date_found = True
+                    # Check for doubled "року"
+                    if "року року" in pdf_text:
+                        doubled_roku = True
+                    break
+            
+            if date_found and not doubled_roku:
+                logger.info("✅ Українська дата знайдена БЕЗ подвоєння 'року'")
+                checks.append(True)
+            elif date_found and doubled_roku:
+                logger.error("❌ Знайдено подвоєння слова 'року' в даті")
+                checks.append(False)
+            else:
+                logger.error("❌ Українська дата не знайдена в PDF")
+                checks.append(False)
+            
+            # 2. Check document basis (Підстава: Замовлення №...)
+            if "Підстава:" in pdf_text and "Замовлення №" in pdf_text:
+                logger.info("✅ Підстава документа присутня")
+                checks.append(True)
+            else:
+                logger.error("❌ Підстава документа не знайдена")
+                checks.append(False)
+            
+            # 3. Check items table elements
+            table_elements = ["Найменування", "Кількість", "Ціна", "Сума"]
+            table_found = all(element in pdf_text for element in table_elements)
+            
+            if table_found:
+                logger.info("✅ Таблиця товарів присутня")
+                checks.append(True)
+            else:
+                logger.error("❌ Таблиця товарів неповна")
+                checks.append(False)
+            
+            # 4. Check total sum
+            if "Всього до сплати" in pdf_text:
+                logger.info("✅ Підсумкова сума присутня")
+                checks.append(True)
+            else:
+                logger.error("❌ Підсумкова сума не знайдена")
+                checks.append(False)
+            
+            # 5. Check VAT exemption note
+            if "не платник ПДВ" in pdf_text:
+                logger.info("✅ Примітка 'не платник ПДВ' присутня")
+                checks.append(True)
+            else:
+                logger.error("❌ Примітка 'не платник ПДВ' не знайдена")
+                checks.append(False)
+            
+            # Clean up temporary file
+            os.unlink(pdf_path)
+            
+            # Return True if all checks passed
+            return all(checks)
+            
+        except Exception as e:
+            logger.error(f"❌ Помилка перевірки вмісту PDF: {str(e)}")
+            return False
+    
+    def test_send_invoice_email(self):
+        """Test 4: POST /api/invoices/{invoice_number}/send-email"""
+        logger.info("=" * 80)
+        logger.info("ТЕСТ 4: ВІДПРАВКА PDF НА EMAIL")
+        logger.info("=" * 80)
+        
+        if not self.created_invoice_number:
+            logger.error("❌ Немає номера створеного рахунку для відправки email")
+            return False
+        
+        try:
+            email_data = {"email": "test@example.com"}
+            
+            response = requests.post(
+                f"{self.api_url}/invoices/{self.created_invoice_number}/send-email",
+                json=email_data,
+                headers={**self.get_auth_headers(), 'Content-Type': 'application/json'},
+                timeout=30
+            )
+            
+            if response.status_code != 200:
+                logger.error(f"❌ Помилка відправки email: {response.status_code} - {response.text}")
+                return False
+            
+            result = response.json()
+            message = result.get('message', '')
+            
+            if 'успішно' in message.lower() or 'success' in message.lower():
+                logger.info("✅ Email відправлено успішно")
+                logger.info(f"   Повідомлення: {message}")
+                return True
+            else:
+                logger.error(f"❌ Неочікуване повідомлення: {message}")
+                return False
+            
+        except Exception as e:
+            logger.error(f"❌ Тест відправки email провалився: {str(e)}")
+            return False
+    
+    def test_get_invoices_list(self):
+        """Test 5: GET /api/invoices (отримання списку всіх рахунків)"""
+        logger.info("=" * 80)
+        logger.info("ТЕСТ 5: ОТРИМАННЯ СПИСКУ ВСІХ РАХУНКІВ")
+        logger.info("=" * 80)
+        
+        try:
+            response = requests.get(
+                f"{self.api_url}/invoices",
+                headers=self.get_auth_headers(),
+                timeout=30
+            )
+            
+            if response.status_code != 200:
+                logger.error(f"❌ Помилка отримання рахунків: {response.status_code} - {response.text}")
+                return False
+            
+            invoices = response.json()
+            logger.info(f"✅ Отримано {len(invoices)} рахунків")
+            
+            # Check that all invoices have valid date field
+            invalid_dates = 0
+            for invoice in invoices:
+                date_field = invoice.get('date')
+                if not date_field:
+                    invalid_dates += 1
+            
+            if invalid_dates == 0:
+                logger.info("✅ Всі рахунки мають валідне поле date")
+                return True
+            else:
+                logger.error(f"❌ {invalid_dates} рахунків мають порожнє поле date")
+                return False
+            
+        except Exception as e:
+            logger.error(f"❌ Тест отримання списку рахунків провалився: {str(e)}")
+            return False
+    
+    def test_edit_invoice(self):
+        """Test 6: PUT /api/invoices/{invoice_number} (редагування рахунку)"""
+        logger.info("=" * 80)
+        logger.info("ТЕСТ 6: РЕДАГУВАННЯ РАХУНКУ")
+        logger.info("=" * 80)
+        
+        if not self.created_invoice_number:
+            logger.error("❌ Немає номера створеного рахунку для редагування")
+            return False
+        
+        try:
+            # Update items and total_amount
+            updated_data = {
+                "items": [
+                    {
+                        "name": "Оновлений товар",
+                        "unit": "шт",
+                        "quantity": 3,
+                        "price": 2000,
+                        "amount": 6000
+                    }
+                ],
+                "total_amount": 6000
+            }
+            
+            response = requests.put(
+                f"{self.api_url}/invoices/{self.created_invoice_number}",
+                json=updated_data,
+                headers={**self.get_auth_headers(), 'Content-Type': 'application/json'},
+                timeout=30
+            )
+            
+            if response.status_code != 200:
+                logger.error(f"❌ Помилка оновлення рахунку: {response.status_code} - {response.text}")
+                return False
+            
+            result = response.json()
+            
+            # Check that updates were applied
+            updated_total = result.get('total_amount')
+            updated_items = result.get('items', [])
+            
+            if updated_total == 6000 and len(updated_items) == 1:
+                logger.info("✅ Рахунок оновлено успішно")
+                logger.info(f"   Нова сума: {updated_total}")
+                logger.info(f"   Оновлених позицій: {len(updated_items)}")
+                return True
+            else:
+                logger.error(f"❌ Оновлення не застосувалися правильно")
+                return False
+            
+        except Exception as e:
+            logger.error(f"❌ Тест редагування рахунку провалився: {str(e)}")
+            return False
         
     def test_health_check(self):
         """Test if the backend is running and healthy"""
