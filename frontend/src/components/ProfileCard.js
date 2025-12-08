@@ -37,6 +37,111 @@ const ProfileCard = ({ user, onUpdate, onDelete }) => {
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [searchingEdrpou, setSearchingEdrpou] = useState(false);
 
+  const companyLogo = user?.logo_url 
+    ? `${API_URL}${user.logo_url}`
+    : (user?.company_logo ? `${API_URL}/api/uploads/${user.company_logo.split('/').pop()}` : null);
+
+  // YouScore ЄДРПОУ search
+  const searchByEdrpou = async (edrpou) => {
+    if (!edrpou || (edrpou.length !== 8 && edrpou.length !== 10)) return;
+    
+    setSearchingEdrpou(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_URL}/api/counterparties/search/${edrpou}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (response.data) {
+        setFormData(prev => ({
+          ...prev,
+          representative_name: response.data.name || prev.representative_name,
+          legal_address: response.data.address || prev.legal_address
+        }));
+        toast.success('Дані підтягнуто з ЄДР');
+      }
+    } catch (error) {
+      console.error('Error searching EDRPOU:', error);
+      toast.error('Не вдалося знайти дані за ЄДРПОУ');
+    } finally {
+      setSearchingEdrpou(false);
+    }
+  };
+
+  // Auto-generate "В особі" field
+  const generateRepresentedBy = (directorName, position, contractType) => {
+    if (!directorName || !position) return '';
+    
+    // Convert position to genitive case (родовий відмінок)
+    const positionGenitive = position.toLowerCase() === 'директор' 
+      ? 'директора' 
+      : position.toLowerCase();
+    
+    // Convert name to genitive case (approximation)
+    const nameParts = directorName.trim().split(' ');
+    let nameGenitive = directorName;
+    
+    if (nameParts.length === 3) {
+      const lastName = nameParts[0];
+      const firstName = nameParts[1];
+      const patronymic = nameParts[2];
+      nameGenitive = `${lastName}а ${firstName}а ${patronymic}а`;
+    }
+    
+    return `${positionGenitive} ${nameGenitive}, що діє на підставі ${contractType}`;
+  };
+
+  // Auto-generate signature from director name
+  const generateSignature = (directorName) => {
+    if (!directorName) return '';
+    
+    const nameParts = directorName.trim().split(' ');
+    if (nameParts.length >= 2) {
+      const lastName = nameParts[0].toUpperCase();
+      const firstName = nameParts[1];
+      return `${firstName} ${lastName}`;
+    }
+    return directorName;
+  };
+
+  // Handle director name change with auto-generation
+  const handleDirectorNameChange = (value) => {
+    setFormData(prev => {
+      const newSignature = generateSignature(value);
+      const newRepresentedBy = generateRepresentedBy(value, prev.director_position, prev.contract_type);
+      return {
+        ...prev,
+        director_name: value,
+        signature: newSignature,
+        represented_by: newRepresentedBy
+      };
+    });
+  };
+
+  // Handle position change with auto-generation
+  const handlePositionChange = (value) => {
+    setFormData(prev => {
+      const newRepresentedBy = generateRepresentedBy(prev.director_name, value, prev.contract_type);
+      return {
+        ...prev,
+        director_position: value,
+        represented_by: newRepresentedBy
+      };
+    });
+  };
+
+  // Handle contract type change with auto-generation
+  const handleContractTypeChange = (value) => {
+    setFormData(prev => {
+      const newRepresentedBy = generateRepresentedBy(prev.director_name, prev.director_position, value);
+      return {
+        ...prev,
+        contract_type: value,
+        represented_by: newRepresentedBy
+      };
+    });
+  };
+
   const handleDownloadPDF = async () => {
     try {
       const token = localStorage.getItem('token');
