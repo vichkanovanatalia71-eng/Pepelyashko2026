@@ -3773,6 +3773,33 @@ const FullDashboard = () => {
                   />
                   <p className="text-xs text-gray-500 mt-1">Формат: Ім'я ПРІЗВИЩЕ</p>
                 </div>
+                
+                {/* VAT Section */}
+                <div className="md:col-span-2 border-t pt-4">
+                  <div className="flex items-center space-x-2 mb-3">
+                    <Switch
+                      id="edit_vat_payer"
+                      checked={counterpartyForm.vat_payer}
+                      onCheckedChange={(checked) => setCounterpartyForm(prev => ({...prev, vat_payer: checked}))}
+                    />
+                    <Label htmlFor="edit_vat_payer" className="font-semibold">Платник ПДВ</Label>
+                  </div>
+                  
+                  {counterpartyForm.vat_payer && (
+                    <div className="ml-8">
+                      <Label htmlFor="edit_vat_rate">Ставка ПДВ (%)</Label>
+                      <Input
+                        id="edit_vat_rate"
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={counterpartyForm.vat_rate}
+                        onChange={(e) => setCounterpartyForm(prev => ({...prev, vat_rate: parseFloat(e.target.value) || 20}))}
+                        placeholder="20"
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}
