@@ -78,13 +78,20 @@ class ProfilePDFService:
                         line-height: 1.4;
                         color: #1e293b;
                         background: white;
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        padding: 15mm;
+                        min-height: 297mm;
                     }}
                     .card {{
-                        width: 210mm;
-                        min-height: 297mm;
+                        width: 85%;
+                        max-width: 178.5mm;
                         background: white;
-                        border-radius: 8px;
+                        border-radius: 12px;
+                        border: 2px solid #4b5563;
                         overflow: hidden;
+                        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
                     }}
                     .header {{
                         background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
