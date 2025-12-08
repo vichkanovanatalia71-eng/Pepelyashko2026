@@ -133,30 +133,30 @@ const ProfileCard = ({ user, onUpdate, onDelete }) => {
         <CardContent className="pt-4 space-y-4">
           {/* Basic Information */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
-              <Building2 className="text-teal-500" size={20} />
+            <h3 className="text-base font-semibold text-gray-900 mb-2 flex items-center gap-2">
+              <Building2 className="text-teal-500" size={18} />
               Основна інформація
             </h3>
-            <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
+            <div className="grid grid-cols-2 gap-3 bg-gray-50 p-3 rounded-lg">
               <div>
-                <p className="text-sm text-gray-500">ЄДРПОУ</p>
-                <p className="font-medium">{user?.edrpou || '—'}</p>
+                <p className="text-xs text-gray-500">ЄДРПОУ</p>
+                <p className="text-sm font-medium">{user?.edrpou || '—'}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Email</p>
-                <p className="font-medium">{user?.email || '—'}</p>
+                <p className="text-xs text-gray-500">Email</p>
+                <p className="text-sm font-medium">{user?.email || '—'}</p>
               </div>
               <div className="col-span-2">
-                <p className="text-sm text-gray-500 flex items-center gap-1">
-                  <MapPin size={14} /> Юридична адреса
+                <p className="text-xs text-gray-500 flex items-center gap-1">
+                  <MapPin size={12} /> Юридична адреса
                 </p>
-                <p className="font-medium">{user?.legal_address || '—'}</p>
+                <p className="text-sm font-medium">{user?.legal_address || '—'}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500 flex items-center gap-1">
-                  <Phone size={14} /> Телефон
+                <p className="text-xs text-gray-500 flex items-center gap-1">
+                  <Phone size={12} /> Телефон
                 </p>
-                <p className="font-medium">{user?.phone || '—'}</p>
+                <p className="text-sm font-medium">{user?.phone || '—'}</p>
               </div>
             </div>
           </div>
