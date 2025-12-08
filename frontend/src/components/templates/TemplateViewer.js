@@ -334,6 +334,18 @@ const TemplateViewer = () => {
                                 <span className="text-xs text-gray-600">- МФО</span>
                                 <code className="bg-white px-2 py-1 rounded text-xs border">{'{{buyer_bank}}'}</code>
                                 <span className="text-xs text-gray-600">- Назва банку</span>
+                                <code className="bg-white px-2 py-1 rounded text-xs border">{'{{buyer_director_name}}'}</code>
+                                <span className="text-xs text-gray-600">- ПІБ директора</span>
+                                <code className="bg-white px-2 py-1 rounded text-xs border">{'{{buyer_director_position}}'}</code>
+                                <span className="text-xs text-gray-600">- Посада директора</span>
+                                <code className="bg-white px-2 py-1 rounded text-xs border">{'{{buyer_position}}'}</code>
+                                <span className="text-xs text-gray-600">- Посада</span>
+                                <code className="bg-white px-2 py-1 rounded text-xs border">{'{{buyer_represented_by}}'}</code>
+                                <span className="text-xs text-gray-600">- В особі</span>
+                                <code className="bg-white px-2 py-1 rounded text-xs border">{'{{buyer_signature}}'}</code>
+                                <span className="text-xs text-gray-600">- Підпис</span>
+                                <code className="bg-white px-2 py-1 rounded text-xs border">{'{{counterparty_contract_type}}'}</code>
+                                <span className="text-xs text-gray-600">- Тип договору</span>
                               </div>
                             </div>
 
