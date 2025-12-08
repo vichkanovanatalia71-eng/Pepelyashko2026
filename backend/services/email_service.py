@@ -416,7 +416,8 @@ class EmailService:
         invoice_date: str,
         counterparty_name: str,
         total_amount: float,
-        pdf_path: str
+        pdf_path: str,
+        company_logo_url: str = None
     ) -> bool:
         """Send invoice document PDF via email with green-themed HTML styling."""
         formatted_date = self.format_date_ukrainian(invoice_date)
