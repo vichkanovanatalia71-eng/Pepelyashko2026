@@ -208,7 +208,7 @@ class ProfilePDFService:
                             </div>
                         </div>
                         
-                        {/* Контактні дані */}
+                        <!-- Контактні дані -->
                         <div class="section">
                             <div class="section-title">
                                 <span class="section-icon">📞</span>
