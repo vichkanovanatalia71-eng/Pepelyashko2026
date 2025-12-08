@@ -81,12 +81,12 @@ class ProfilePDFService:
                         display: flex;
                         justify-content: center;
                         align-items: center;
-                        padding: 15mm;
+                        padding: 7.5mm;
                         min-height: 297mm;
                     }}
                     .card {{
-                        width: 85%;
-                        max-width: 178.5mm;
+                        width: 95%;
+                        max-width: 199.5mm;
                         background: white;
                         border-radius: 12px;
                         border: 2px solid #4b5563;
