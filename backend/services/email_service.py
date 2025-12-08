@@ -554,8 +554,13 @@ class EmailService:
         <body>
             <div class="email-container">
                 <div class="header">
-                    <h1>Рахунок №{invoice_number}</h1>
-                    <p>Система Управління Документами</p>
+                    <div class="header-content">
+                        {f'<img src="{company_logo_url}" alt="Logo" class="company-logo" />' if company_logo_url else ''}
+                        <div class="header-text">
+                            <h1>Рахунок №{invoice_number}</h1>
+                            <p>Система Управління Документами</p>
+                        </div>
+                    </div>
                 </div>
                 <div class="content">
                     <p class="greeting">Доброго дня!</p>
