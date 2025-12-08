@@ -528,38 +528,53 @@ const ProfileCard = ({ user, onUpdate, onDelete }) => {
                 onChange={(e) => setFormData({ ...formData, iban: e.target.value })}
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Назва банку</Label>
-                <Input
-                  value={formData.bank_name}
-                  onChange={(e) => setFormData({ ...formData, bank_name: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label>МФО</Label>
-                <Input
-                  value={formData.mfo}
-                  onChange={(e) => setFormData({ ...formData, mfo: e.target.value })}
-                />
+
+            {/* Banking Info Section */}
+            <div className="space-y-4 pb-4 border-b">
+              <h4 className="font-semibold text-gray-700">Банківські реквізити</h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Назва банку</Label>
+                  <Input
+                    value={formData.bank_name}
+                    onChange={(e) => setFormData({ ...formData, bank_name: e.target.value })}
+                    placeholder="АТ КБ 'ПриватБанк'"
+                  />
+                </div>
+                <div>
+                  <Label>МФО</Label>
+                  <Input
+                    value={formData.mfo}
+                    onChange={(e) => setFormData({ ...formData, mfo: e.target.value })}
+                    placeholder="305299"
+                  />
+                </div>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Директор (ПІБ)</Label>
-                <Input
-                  value={formData.director_name}
-                  onChange={(e) => handleDirectorNameChange(e.target.value)}
-                  placeholder="Прізвище Ім'я По батькові"
-                />
-              </div>
-              <div>
-                <Label>Посада директора</Label>
-                <Input
-                  value={formData.director_position}
-                  onChange={(e) => handlePositionChange(e.target.value)}
-                  placeholder="директор"
-                />
+
+            {/* Management Section */}
+            <div className="space-y-4 pb-4 border-b">
+              <h4 className="font-semibold text-gray-700">Керівництво та підписи</h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Директор (ПІБ)</Label>
+                  <Input
+                    value={formData.director_name}
+                    onChange={(e) => handleDirectorNameChange(e.target.value)}
+                    placeholder="Прізвище Ім'я По батькові"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Автоматично формує "В особі" та "Підпис"
+                  </p>
+                </div>
+                <div>
+                  <Label>Посада директора</Label>
+                  <Input
+                    value={formData.director_position}
+                    onChange={(e) => handlePositionChange(e.target.value)}
+                    placeholder="Директор"
+                  />
+                </div>
               </div>
             </div>
             <div>
