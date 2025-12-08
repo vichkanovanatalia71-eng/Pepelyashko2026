@@ -1,102 +1,246 @@
 <analysis>**original_problem_statement:**
-The user is building a document management system. Initial user requests included:
-1.  Implement full management (CRUD, PDF, Email) for , , , and .
-2.  Dynamically pull the місце складання (place of compilation) from the supplier's legal address.
-3.  Overhaul the Profile section into a header-button-triggered dialog.
-4.  Implement a dynamic, tab-specific color theming system.
-5.  Create a feature roadmap for the Profile section.
+The user is building a document management system. Initial user requests included full CRUD for various documents, dynamic data population, and UI overhauls.
 
-During this session, the user added the following requirements:
-1.  **Create Documents from Orders:** Implement functionality to create Invoices, Acts, Waybills, and Contracts based on a selected Order, auto-populating data. This should be available both from the Orders tab and from within each document's creation form.
-2.  **Enhance Invoice Management:**
-    *   Add full editing capabilities for invoices.
-    *   Remove the Download button from the invoice dialog.
-    *   When sending an invoice by email, automatically populate the counterparty's email address in the recipient field.
-3.  **UI/UX Improvements:**
-    *   Add View (Eye) and Edit (Pencil) icons to all document cards.
-    *   Add a search bar on every document tab to filter by the counterparty's EDRPOU code.
-4.  **Refactoring:** Perform a major refactoring of the monolithic  component.
-5.  **Templating System:**
-    *   Create a document templating system based on user-provided HTML for an invoice.
-    *   The system should allow for variables, a placeholder for a logo, and be integrated into the PDF generation service.
-6.  **Profile Enhancements:**
-    *   Add fields for banking details (IBAN, Bank Name, MFO) to the user's profile.
-    *   Implement a logo upload feature for the user's company.
+During the course of development, the user's core requirements have focused on perfecting the **Invoice generation and management** functionality. Key requests implemented in this and previous sessions include:
+1.  **Create Documents from Orders:** Auto-populate Invoices, Acts, etc., from a selected Order.
+2.  **Invoice Management:** Implement editing, email sending, and UI enhancements.
+3.  **Templating System:** Create a dynamic PDF generation system using user-editable HTML templates.
+4.  **Profile Customization:** Allow users to upload a company logo and specify banking details to be used in documents.
+5.  **Refactoring:** Break down the monolithic  component.
+6.  **Specific PDF Layout Requirements:**
+    *   The invoice PDF must include a table of items (products/services) from the source document.
+    *   The email sending functionality must use the new HTML template, not an old hardcoded one.
+    *   The invoice layout should be optimized: logo at the top, no VAT, table fits on the page.
+    *   The PDF should include the basis of the document (e.g., На підставі Замовлення №123).
+    *   The date should be written out in words (e.g., 08 грудня 2025 року).
+7.  **Template Editor UI:**
+    *   Allow users to edit and save changes to HTML templates.
+    *   Display a list of all available placeholder variables () for the user.
 
 **User's preferred language**:
 Ukrainian. The user consistently communicates in Ukrainian. The next agent **MUST** respond in Ukrainian only.
 
 **what currently exists?**
-The application is a full-stack React/FastAPI/MongoDB system.
-- **Document Management:** Full CRUD (Create, Read, Update, Delete), PDF generation, and email functionality are implemented for all document types: , , , , , and .
-- **Create from Order:** Documents can be created based on existing Orders, which auto-fills counterparty and item data. This is accessible from both the Orders tab and a new dropdown in each document's creation form.
-- **Enhanced UI:** All document tabs now feature a search bar to filter by counterparty EDRPOU. Document cards have view/edit icons.
-- **Templating System (Partial):** A backend framework for HTML-based document templates has been established. A default invoice template has been created from user-provided HTML and is now used for generating invoice PDFs. A new Шаблони (Templates) tab has been added to the UI, but it is not yet fully functional.
-- **Profile Enhancements (Partial):** The user profile dialog now includes UI fields for uploading a company logo and entering banking information (IBAN, Bank Name, MFO). The backend has been updated with an upload endpoint and a modified user model.
-- **Refactoring (Partial):** The refactoring of the massive  has begun. Document list rendering has been extracted into smaller components (, ), but the main file remains extremely large and complex.
+The application is a full-stack React/FastAPI/MongoDB system with robust document management features.
+- **Core Functionality:** Full CRUD, PDF generation, and emailing are implemented for Invoices, Acts, Waybills, Contracts, and Orders.
+- **Templating Engine:** A backend service renders PDFs from HTML templates stored in MongoDB. The invoice template has been significantly customized to user specifications, including a new layout, no VAT, a company logo, and dynamic fields like date in words and document basis.
+- **Template Editor:** The Шаблони (Templates) tab in the UI allows users to select a document type, view the HTML template, see a list of all available variables with descriptions, and edit/save the template content. Editing a system template now correctly creates a user-specific version.
+- **Profile Features:** The user profile includes functionality for uploading a company logo and saving banking details, which are correctly inserted into generated PDFs.
+- **Refactoring:** The  component has been partially refactored by extracting the modal dialogs for Acts, Waybills, and Contracts into separate components.
 
 **Last working item**:
-- **Last item agent was working:** Implementing the user profile enhancement to add a company logo and banking details. The agent updated the backend model, created an upload route, and modified the frontend profile dialog.
+- **Last item agent was working:** The user reported an error when creating or sending a PDF (помилка с створення пдф). The agent was about to investigate the backend logs to diagnose the issue. This is highly likely a recurrence of a missing system dependency.
 - **Status:** IN PROGRESS
-- **Agent Testing Done:** N (Only a visual check of the UI via screenshot was performed. The end-to-end functionality of uploading a logo, saving it, and having it appear in a PDF has not been tested.)
-- **Which testing method agent to use?** Frontend testing agent. The test should cover the full user flow: 1. Open profile. 2. Upload a logo image and fill in bank details. 3. Save profile. 4. Navigate to the Invoices tab. 5. Generate a new PDF for an invoice. 6. Verify the logo and new banking details appear correctly in the generated PDF.
+- **Agent Testing Done:** N
+- **Which testing method agent to use?** Manual testing. First, check backend logs with ==> /var/log/supervisor/backend.err.log <==
+DEBUG:fontTools.ttLib.ttFont:Reading 'maxp' table from disk
+DEBUG:fontTools.ttLib.ttFont:Decompiling 'maxp' table
+DEBUG:fontTools.subset.timer:Took 0.000s to load 'maxp'
+DEBUG:fontTools.subset.timer:Took 0.000s to prune 'maxp'
+INFO:fontTools.subset:maxp pruned
+DEBUG:fontTools.ttLib.ttFont:Reading 'cmap' table from disk
+DEBUG:fontTools.ttLib.ttFont:Decompiling 'cmap' table
+DEBUG:fontTools.ttLib.ttFont:Reading 'post' table from disk
+DEBUG:fontTools.ttLib.ttFont:Decompiling 'post' table
+DEBUG:fontTools.subset.timer:Took 0.001s to load 'cmap'
+DEBUG:fontTools.subset.timer:Took 0.000s to prune 'cmap'
+INFO:fontTools.subset:cmap pruned
+INFO:fontTools.subset:fpgm dropped
+INFO:fontTools.subset:prep dropped
+INFO:fontTools.subset:cvt  dropped
+DEBUG:fontTools.subset.timer:Took 0.000s to load 'post'
+DEBUG:fontTools.subset.timer:Took 0.000s to prune 'post'
+INFO:fontTools.subset:post pruned
+DEBUG:fontTools.ttLib.ttFont:Reading 'glyf' table from disk
+DEBUG:fontTools.ttLib.ttFont:Decompiling 'glyf' table
+DEBUG:fontTools.ttLib.ttFont:Reading 'loca' table from disk
+DEBUG:fontTools.ttLib.ttFont:Decompiling 'loca' table
+DEBUG:fontTools.ttLib.ttFont:Reading 'head' table from disk
+DEBUG:fontTools.ttLib.ttFont:Decompiling 'head' table
+DEBUG:fontTools.subset.timer:Took 0.000s to load 'glyf'
+DEBUG:fontTools.subset.timer:Took 0.000s to prune 'glyf'
+INFO:fontTools.subset:glyf pruned
+DEBUG:fontTools.subset.timer:Took 0.000s to close glyph list over 'cmap'
+INFO:fontTools.subset:Added gid0 to subset
+INFO:fontTools.subset:Closing glyph list over 'glyf': 7 glyphs before
+INFO:fontTools.subset:Glyph names: ['.notdef', 'five', 'four', 'period', 'six', 'two', 'zero']
+INFO:fontTools.subset:Glyph IDs:   [0, 17, 19, 21, 23, 24, 25]
+INFO:fontTools.subset:Closed glyph list over 'glyf': 7 glyphs after
+INFO:fontTools.subset:Glyph names: ['.notdef', 'five', 'four', 'period', 'six', 'two', 'zero']
+INFO:fontTools.subset:Glyph IDs:   [0, 17, 19, 21, 23, 24, 25]
+DEBUG:fontTools.subset.timer:Took 0.000s to close glyph list over 'glyf'
+INFO:fontTools.subset:Retaining 7 glyphs
+INFO:fontTools.subset:head subsetting not needed
+INFO:fontTools.subset:hhea subsetting not needed
+INFO:fontTools.subset:maxp subsetting not needed
+INFO:fontTools.subset:OS/2 subsetting not needed
+DEBUG:fontTools.ttLib.ttFont:Reading 'hmtx' table from disk
+DEBUG:fontTools.ttLib.ttFont:Decompiling 'hmtx' table
+DEBUG:fontTools.ttLib.ttFont:Reading 'hhea' table from disk
+DEBUG:fontTools.ttLib.ttFont:Decompiling 'hhea' table
+DEBUG:fontTools.subset.timer:Took 0.000s to subset 'hmtx'
+INFO:fontTools.subset:hmtx subsetted
+DEBUG:fontTools.subset.timer:Took 0.000s to subset 'cmap'
+INFO:fontTools.subset:cmap subsetted
+INFO:fontTools.subset:loca subsetting not needed
+DEBUG:fontTools.subset.timer:Took 0.000s to subset 'post'
+INFO:fontTools.subset:post subsetted
+INFO:fontTools.subset:gasp subsetting not needed
+INFO:fontTools.subset:FFTM NOT subset; don't know how to subset
+DEBUG:fontTools.ttLib.ttFont:Reading 'GDEF' table from disk
+DEBUG:fontTools.ttLib.ttFont:Decompiling 'GDEF' table
+DEBUG:fontTools.subset.timer:Took 0.000s to subset 'GDEF'
+INFO:fontTools.subset:GDEF subsetted
+INFO:fontTools.subset:name subsetting not needed
+DEBUG:fontTools.subset.timer:Took 0.000s to subset 'glyf'
+INFO:fontTools.subset:glyf subsetted
+DEBUG:fontTools.subset.timer:Took 0.000s to subset GlyphOrder
+DEBUG:fontTools.subset.timer:Took 0.000s to prune 'head'
+INFO:fontTools.subset:head pruned
+DEBUG:fontTools.ttLib.ttFont:Reading 'OS/2' table from disk
+DEBUG:fontTools.ttLib.ttFont:Decompiling 'OS/2' table
+INFO:fontTools.subset:OS/2 Unicode ranges pruned: [0]
+INFO:fontTools.subset:OS/2 CodePage ranges pruned: [0]
+DEBUG:fontTools.subset.timer:Took 0.000s to prune 'glyf'
+INFO:fontTools.subset:glyf pruned
+DEBUG:fontTools.subset.timer:Took 0.000s to prune 'GDEF'
+INFO:fontTools.subset:GDEF pruned
+DEBUG:fontTools.ttLib.ttFont:Reading 'name' table from disk
+DEBUG:fontTools.ttLib.ttFont:Decompiling 'name' table
+DEBUG:fontTools.ttLib.ttFont:Reading 'gasp' table from disk
+DEBUG:fontTools.ttLib.ttFont:Decompiling 'gasp' table
+DEBUG:fontTools.ttLib.ttFont:Reading 'FFTM' table from disk
+DEBUG:fontTools.ttLib.ttFont:Decompiling 'FFTM' table
+DEBUG:fontTools.subset.timer:Took 0.000s to prune 'name'
+INFO:fontTools.subset:name pruned
+INFO:services.pdf_service_with_templates:Generated invoice PDF: /tmp/document_pdfs/invoice_1968-4_20251208_094723.pdf
+INFO:routes.document_routes:Invoice updated: 1968-4 by user b3678469-180d-41b7-8ff4-64a3b343439f
+ERROR:routes.document_routes:Error getting invoices: 1 validation error for InvoiceModel
+date
+  Input should be a valid datetime or date, input is too short [type=datetime_from_date_parsing, input_value='', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/datetime_from_date_parsing
+ERROR:services.pdf_service_with_templates:Error generating invoice PDF: Invalid isoformat string: ''
+ERROR:routes.document_routes:Error generating invoice PDF: Invalid isoformat string: ''
+INFO:routes.document_routes:Invoice updated: 1968-4 by user b3678469-180d-41b7-8ff4-64a3b343439f
+ERROR:routes.document_routes:Error getting invoices: 1 validation error for InvoiceModel
+date
+  Input should be a valid datetime or date, input is too short [type=datetime_from_date_parsing, input_value='', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/datetime_from_date_parsing
+ERROR:services.pdf_service_with_templates:Error generating invoice PDF: Invalid isoformat string: ''
+ERROR:routes.document_routes:Error generating invoice PDF: Invalid isoformat string: ''
+ERROR:services.pdf_service_with_templates:Error generating invoice PDF: Invalid isoformat string: ''
+ERROR:routes.document_routes:Error generating invoice PDF: Invalid isoformat string: ''
+INFO:     Will watch for changes in these directories: ['/app/backend']
+INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
+INFO:     Started reloader process [29] using WatchFiles
+
+==> /var/log/supervisor/backend.out.log <==
+INFO:     10.64.128.5:47444 - "GET /api/acts HTTP/1.1" 200 OK
+INFO:     10.64.139.137:41872 - "GET /api/waybills HTTP/1.1" 200 OK
+INFO:     10.64.139.137:41874 - "GET /api/auth/me HTTP/1.1" 200 OK
+INFO:     10.64.139.138:38100 - "GET /api/contracts HTTP/1.1" 200 OK
+INFO:     10.64.139.138:38104 - "GET /api/orders HTTP/1.1" 200 OK
+INFO:     10.64.139.138:38096 - "GET /api/invoices HTTP/1.1" 200 OK
+INFO:     10.64.128.5:47444 - "GET /api/counterparties HTTP/1.1" 200 OK
+INFO:     10.64.139.137:41874 - "GET /api/waybills HTTP/1.1" 200 OK
+INFO:     10.64.128.5:47448 - "GET /api/acts HTTP/1.1" 200 OK
+INFO:     10.64.128.9:43690 - "GET /api/orders HTTP/1.1" 200 OK
+INFO:     10.64.139.137:41872 - "GET /api/invoices HTTP/1.1" 200 OK
+INFO:     10.64.128.9:43712 - "GET /api/contracts HTTP/1.1" 200 OK
+INFO:     10.64.128.9:43700 - "GET /api/auth/me HTTP/1.1" 200 OK
+INFO:     10.64.128.132:41700 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:     10.64.128.131:43148 - "GET /api/auth/me HTTP/1.1" 200 OK
+INFO:     10.64.128.132:41700 - "GET /api/counterparties HTTP/1.1" 200 OK
+INFO:     10.64.128.131:43148 - "GET /api/acts HTTP/1.1" 200 OK
+INFO:     10.64.128.132:41710 - "GET /api/invoices HTTP/1.1" 200 OK
+INFO:     10.64.128.131:43154 - "GET /api/waybills HTTP/1.1" 200 OK
+INFO:     10.64.128.131:43166 - "GET /api/orders HTTP/1.1" 200 OK
+INFO:     10.64.128.131:43168 - "GET /api/contracts HTTP/1.1" 200 OK
+INFO:     10.64.128.132:41714 - "GET /api/auth/me HTTP/1.1" 200 OK
+INFO:     10.64.128.132:41710 - "GET /api/counterparties HTTP/1.1" 200 OK
+INFO:     10.64.128.132:41714 - "GET /api/acts HTTP/1.1" 200 OK
+INFO:     10.64.128.131:43148 - "GET /api/waybills HTTP/1.1" 200 OK
+INFO:     10.64.128.132:41700 - "GET /api/orders HTTP/1.1" 200 OK
+INFO:     10.64.128.131:43154 - "GET /api/invoices HTTP/1.1" 200 OK
+INFO:     10.64.128.131:43184 - "GET /api/auth/me HTTP/1.1" 200 OK
+INFO:     10.64.128.132:41722 - "GET /api/contracts HTTP/1.1" 200 OK
+INFO:     10.64.128.131:57272 - "GET /api/invoices/pdf/6770-1?t=1765185184828 HTTP/1.1" 200 OK
+INFO:     10.64.128.132:36456 - "POST /api/invoices/6770-1/send-email HTTP/1.1" 200 OK
+INFO:     10.64.139.137:41804 - "GET /api/auth/me HTTP/1.1" 200 OK
+INFO:     10.64.128.5:57596 - "GET /api/auth/me HTTP/1.1" 200 OK
+INFO:     10.64.128.5:57596 - "GET /api/counterparties HTTP/1.1" 200 OK
+INFO:     10.64.139.137:41804 - "GET /api/acts HTTP/1.1" 200 OK
+INFO:     10.64.139.138:55810 - "GET /api/orders HTTP/1.1" 200 OK
+INFO:     10.64.139.138:55804 - "GET /api/waybills HTTP/1.1" 200 OK
+INFO:     10.64.128.9:37798 - "GET /api/contracts HTTP/1.1" 200 OK
+INFO:     10.64.128.9:37814 - "GET /api/invoices HTTP/1.1" 200 OK
+INFO:     10.64.139.138:55804 - "GET /api/auth/me HTTP/1.1" 200 OK
+INFO:     10.64.128.5:57596 - "GET /api/counterparties HTTP/1.1" 200 OK
+INFO:     10.64.139.138:55804 - "GET /api/acts HTTP/1.1" 200 OK
+INFO:     10.64.128.5:57596 - "GET /api/orders HTTP/1.1" 200 OK
+INFO:     10.64.128.9:37814 - "GET /api/contracts HTTP/1.1" 200 OK
+INFO:     10.64.128.5:57596 - "GET /api/waybills HTTP/1.1" 200 OK
+INFO:     10.64.139.138:55804 - "GET /api/invoices HTTP/1.1" 200 OK
+INFO:     10.64.128.5:57596 - "GET /api/auth/me HTTP/1.1" 200 OK
+INFO:     10.64.139.137:50174 - "GET /api/templates HTTP/1.1" 200 OK
+INFO:     10.64.139.138:58524 - "GET /api/templates HTTP/1.1" 200 OK
+INFO:     10.64.139.138:47448 - "PUT /api/templates/02889d14-edc0-40d1-8525-2a9c7a45d836 HTTP/1.1" 200 OK
+INFO:     10.64.139.137:49540 - "GET /api/templates HTTP/1.1" 200 OK
+INFO:     10.64.128.5:57608 - "GET /api/invoices/pdf/1274-4?t=1765186016978 HTTP/1.1" 200 OK
+INFO:     10.64.128.9:53504 - "GET /api/templates HTTP/1.1" 200 OK
+INFO:     10.64.139.137:48226 - "GET /api/templates HTTP/1.1" 200 OK
+INFO:     10.64.128.9:42222 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:     10.64.128.9:42222 - "GET /api/counterparties HTTP/1.1" 200 OK
+INFO:     10.64.136.10:59694 - "POST /api/invoices HTTP/1.1" 201 Created
+INFO:     10.64.136.9:38252 - "GET /api/invoices HTTP/1.1" 200 OK
+INFO:     10.64.136.9:38252 - "GET /api/invoices/pdf/3456-6 HTTP/1.1" 200 OK
+INFO:     10.64.128.9:46326 - "GET /api/invoices HTTP/1.1" 403 Forbidden
+INFO:     10.64.139.137:47628 - "GET /api/auth/me HTTP/1.1" 200 OK
+INFO:     10.64.139.138:43074 - "GET /api/auth/me HTTP/1.1" 200 OK
+INFO:     10.64.139.137:47628 - "GET /api/acts HTTP/1.1" 200 OK
+INFO:     10.64.128.5:45830 - "GET /api/counterparties HTTP/1.1" 200 OK
+INFO:     10.64.139.138:43074 - "GET /api/contracts HTTP/1.1" 200 OK
+INFO:     10.64.139.137:47632 - "GET /api/invoices HTTP/1.1" 200 OK
+INFO:     10.64.139.137:47638 - "GET /api/waybills HTTP/1.1" 200 OK
+INFO:     10.64.128.9:37754 - "GET /api/orders HTTP/1.1" 200 OK
+INFO:     10.64.139.137:47638 - "GET /api/auth/me HTTP/1.1" 200 OK
+INFO:     10.64.139.138:43074 - "GET /api/acts HTTP/1.1" 200 OK
+INFO:     10.64.139.138:43074 - "GET /api/contracts HTTP/1.1" 200 OK
+INFO:     10.64.128.5:45830 - "GET /api/waybills HTTP/1.1" 200 OK
+INFO:     10.64.139.138:43078 - "GET /api/invoices HTTP/1.1" 200 OK
+INFO:     10.64.128.5:45846 - "GET /api/counterparties HTTP/1.1" 200 OK
+INFO:     10.64.128.5:45846 - "GET /api/orders HTTP/1.1" 200 OK
+INFO:     10.64.139.138:43074 - "GET /api/auth/me HTTP/1.1" 200 OK
+INFO:     10.64.128.9:37754 - "GET /api/templates HTTP/1.1" 200 OK
+INFO:     10.64.128.5:45846 - "GET /api/templates HTTP/1.1" 200 OK
+INFO:     10.64.128.132:44878 - "PUT /api/templates/02889d14-edc0-40d1-8525-2a9c7a45d836 HTTP/1.1" 200 OK
+INFO:     10.64.128.132:44878 - "GET /api/templates HTTP/1.1" 200 OK
+INFO:     10.64.128.132:43170 - "GET /api/invoices/pdf/1968-4?t=1765187243136 HTTP/1.1" 200 OK
+INFO:     10.64.139.138:52348 - "PUT /api/invoices/1968-4 HTTP/1.1" 200 OK
+INFO:     10.64.139.138:52348 - "GET /api/waybills HTTP/1.1" 200 OK
+INFO:     10.64.136.10:33842 - "GET /api/orders HTTP/1.1" 200 OK
+INFO:     10.64.143.135:42458 - "GET /api/counterparties HTTP/1.1" 200 OK
+INFO:     10.64.128.5:37372 - "GET /api/invoices HTTP/1.1" 500 Internal Server Error
+INFO:     10.64.128.9:41334 - "GET /api/acts HTTP/1.1" 200 OK
+INFO:     10.64.139.137:57918 - "GET /api/contracts HTTP/1.1" 200 OK
+INFO:     10.64.139.138:52348 - "GET /api/invoices/pdf/1968-4?t=1765187404066 HTTP/1.1" 500 Internal Server Error
+INFO:     10.64.128.9:47726 - "PUT /api/invoices/1968-4 HTTP/1.1" 200 OK
+INFO:     10.64.128.9:47726 - "GET /api/waybills HTTP/1.1" 200 OK
+INFO:     10.64.139.137:41564 - "GET /api/invoices HTTP/1.1" 500 Internal Server Error
+INFO:     10.64.139.137:41580 - "GET /api/counterparties HTTP/1.1" 200 OK
+INFO:     10.64.139.137:41564 - "GET /api/contracts HTTP/1.1" 200 OK
+INFO:     10.64.139.138:59144 - "GET /api/acts HTTP/1.1" 200 OK
+INFO:     10.64.128.5:52374 - "GET /api/orders HTTP/1.1" 200 OK
+INFO:     10.64.128.9:47726 - "GET /api/invoices/pdf/1968-4?t=1765187439296 HTTP/1.1" 500 Internal Server Error
+INFO:     10.64.128.9:44980 - "GET /api/invoices/pdf/1968-4?t=1765187461041 HTTP/1.1" 500 Internal Server Error
+INFO:     10.64.128.131:60288 - "GET /api/templates HTTP/1.1" 200 OK
+INFO:     10.64.128.132:55326 - "GET /api/templates HTTP/1.1" 200 OK to confirm the error. Then, use a simple  command to attempt PDF generation and reproduce the failure.
 - **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
-- **Issue 1: UI for Templates Tab is Broken (P1)**
-  - **Description:** After adding the Шаблони (Templates) tab and a new  component, the UI on that tab is incorrectly rendering a different, unrelated component. The new  component is not being displayed.
-  - **Attempted fixes:** The agent identified the visual error but moved on to another task before fixing it.
-  - **Next debug checklist:**
-    - In , check the  for .
-    - Ensure it is correctly importing and rendering the  component.
-    - Check for console errors when switching to the Templates tab.
-    - Verify that the necessary state and props are being passed to the  component.
-  - **Why fix this issue and what will be achieved with the fix?** The templating system is a major new feature. Fixing this will unblock all future UI work for managing templates.
-  - **Status:** NOT STARTED
-  - **Is recurring issue?** N
-  - **Should Test frontend/backend/both after fix?** Frontend
-
-**In progress Task List**:
-- **Task 1: Complete and Test Profile Logo/Banking Feature (P0)**
-  - **Where to resume:** The UI and backend routes are in place but untested. The  service needs to be updated to pass the new user profile data (logo URL, bank details) into the template context.
-  - **What will be achieved with this?** Users will be able to upload their company logo and set their banking details, which will automatically appear on generated documents.
-  - **Status:** IN PROGRESS
-  - **Should Test frontend/backend/both after fix?** Both
-  - **Blocked on something:** None.
-
-- **Task 2: Complete  Refactoring (P2)**
-  - **Where to resume:** The agent has already extracted the document lists. The next step is to extract the modal dialogs for each document type (Acts, Waybills, Contracts, Profile) into their own components, similar to what was done for .
-  - **What will be achieved with this?** A more maintainable and modular codebase, significantly reducing the size and complexity of .
-  - **Status:** IN PROGRESS
-  - **Should Test frontend/backend/both after fix?** Frontend (regression testing)
-  - **Blocked on something:** None.
-
-**Upcoming and Future Tasks**
-- **Upcoming Tasks:**
-  - **(P1) Build out the Template Management UI:** Once the broken Templates tab is fixed, implement the UI for listing, viewing, and editing HTML document templates.
-  - **(P2) Implement Editing for Other Documents:** Add editing capabilities for Acts, Waybills, and Contracts, similar to the functionality built for Invoices.
-- **Future Tasks:**
-  - **(P1) Refactor  state management:** Move logic and state into custom hooks or React Context to further clean up the main component.
-  - **(P1) Implement features from :** Begin work on the user-approved roadmap.
-  - **(P2) Implement Template Version History:** Allow users to view and revert to previous versions of a document template.
-
-**Completed work in this session**
-- **Critical Bug Fix (DONE):** Resolved the  backend error, which was blocking all document creation.
-- **Full CRUD for Contracts (DONE):** Implemented PDF generation and emailing for Contracts, completing the feature set for this document type.
-- **Create Documents from Order (DONE):** Implemented functionality to create any document based on a selected Order, with auto-population of data.
-- **Invoice Management Overhaul (DONE):** Added invoice editing, removed the download button, and implemented auto-population of the recipient's email.
-- **Comprehensive Search and UI Icons (DONE):** Added EDRPOU search to all document tabs and view/edit icons to all document cards.
-- **Initial Refactoring of  (DONE):** Began breaking down the monolithic component by extracting document list rendering logic.
-- **Templating System Backend (DONE):** Created the backend models, services, and a default invoice template to enable dynamic PDF generation from HTML.
-- **Profile Enhancements Started (IN PROGRESS):** Added backend routes and frontend UI for logo upload and banking details.
-
-**Earlier issues found/mentioned but not fixed**
-- See **Issue 1** in .
-
-**Known issue recurrence from previous fork**
-- **Issue recurrence in previous fork:**  dependency for PDF generation with WeasyPrint.
-- **Recurrence count:** 3 (occurred once this session).
-- **Status:** RESOLVED (by installing the package via apt 2.6.1 (arm64)
+- **Issue 1: PDF Generation Fails Due to Missing Dependency (P0)**
+  - **Description:** The user is unable to generate or email PDFs. This is a recurring issue caused by the  system library (a dependency for WeasyPrint) becoming uninstalled, which halts the backend service.
+  - **Attempted fixes:** The agent has successfully fixed this multiple times during the session by reinstalling the package via apt 2.6.1 (arm64)
 Usage: apt-get [options] command
        apt-get [options] install|remove pkg1 [pkg2 ...]
        apt-get [options] source pkg1 [pkg2 ...]
@@ -130,97 +274,147 @@ Configuration options and syntax is detailed in apt.conf(5).
 Information about how to configure sources can be found in sources.list(5).
 Package and version choices can be expressed via apt_preferences(5).
 Security details are available in apt-secure(8).
-                                        This APT has Super Cow Powers.). This is a known environmental dependency.
+                                        This APT has Super Cow Powers.. The issue appears to recur after certain environment events.
+  - **Next debug checklist:**
+    1.  Check backend logs for the  message.
+    2.  Verify the package is missing with .
+    3.  Reinstall the package: Hit:1 http://deb.debian.org/debian bookworm InRelease
+Get:2 http://deb.debian.org/debian bookworm-updates InRelease [55.4 kB]
+Get:3 http://deb.debian.org/debian-security bookworm-security InRelease [48.0 kB]
+Get:4 https://deb.nodesource.com/node_20.x nodistro InRelease [12.1 kB]
+Get:5 https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 InRelease [3005 B]
+Get:6 http://deb.debian.org/debian-security bookworm-security/main arm64 Packages [285 kB]
+Get:7 https://deb.nodesource.com/node_20.x nodistro/main arm64 Packages [13.2 kB]
+Get:8 https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0/multiverse amd64 Packages [96.8 kB]
+Get:9 https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0/multiverse arm64 Packages [95.4 kB]
+Fetched 609 kB in 1s (552 kB/s)
+Reading package lists...
+Reading package lists...
+Building dependency tree...
+Reading state information...
+The following NEW packages will be installed:
+  libpangoft2-1.0-0
+0 upgraded, 1 newly installed, 0 to remove and 2 not upgraded.
+Need to get 44.5 kB of archives.
+After this operation, 178 kB of additional disk space will be used.
+Get:1 http://deb.debian.org/debian bookworm/main arm64 libpangoft2-1.0-0 arm64 1.50.12+ds-1 [44.5 kB]
+Fetched 44.5 kB in 0s (739 kB/s)
+Selecting previously unselected package libpangoft2-1.0-0:arm64.
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 38368 files and directories currently installed.)
+Preparing to unpack .../libpangoft2-1.0-0_1.50.12+ds-1_arm64.deb ...
+Unpacking libpangoft2-1.0-0:arm64 (1.50.12+ds-1) ...
+Setting up libpangoft2-1.0-0:arm64 (1.50.12+ds-1) ...
+Processing triggers for libc-bin (2.36-9+deb12u13) ....
+    4.  Verify that the backend is running and that PDF generation works via API or UI.
+  - **Why fix this issue and what will be achieved with the fix?** This is a critical blocker. The application's main purpose—generating documents—is non-functional until this is resolved.
+  - **Status:** IN PROGRESS
+  - **Is recurring issue?** Y
+  - **Should Test frontend/backend/both after fix?** Backend
+  - **Blocked on other issue:** None. This is the primary blocker.
+
+**In progress Task List**:
+- **Task 1: Complete  Refactoring (P2)**
+  - **Where to resume:** The dialogs for Acts, Waybills, and Contracts have been extracted. The next logical step is to extract the dialogs for , , and . Further work can focus on extracting complex state management logic into custom React hooks.
+  - **What will be achieved with this?** A significantly smaller, more maintainable  file, improving developer velocity and reducing the risk of regression bugs.
+  - **Status:** IN PROGRESS
+  - **Should Test frontend/backend/both after fix?** Frontend (for regression)
+  - **Blocked on something:** Blocked on **Issue 1**.
+
+**Upcoming and Future Tasks**
+- **Upcoming Tasks:**
+  - **(P1) Implement Editing for Other Documents:** Add full editing capabilities for Acts, Waybills, and Contracts, similar to what's implemented for Invoices.
+- **Future Tasks:**
+  - **(P1) Refactor  State Management:** Move state and logic into custom hooks or React Context to finalize the cleanup of the main component.
+  - **(P1) Implement :** Begin work on the original feature roadmap for the profile section.
+  - **(P2) Implement Template Version History:** Allow users to view and revert to previous versions of a document template.
+
+**Completed work in this session**
+- **Critical Bug Fix: Items Missing in PDF (DONE):** Resolved a multi-faceted bug where the items table was not appearing in invoice PDFs. This involved fixing HTML escaping in the template renderer, correcting a variable name mismatch ( vs ) in the database template, and confirming the fix with the testing agent.
+- **Critical Bug Fix: Template Editing (DONE):** Fixed a permission issue that prevented users from editing system templates. The implemented solution now correctly creates a user-specific copy upon saving.
+- **Invoice Template Redesign (DONE):** Completely overhauled the invoice HTML template based on a user-provided PDF, adjusting the layout, moving the logo, removing VAT calculations, and ensuring the content table fits the page.
+- **New Template Variables (DONE):** Added  (document basis) and  (date in words) to the PDF context and template.
+- **Template Editor UI Enhancement (DONE):** Added a comprehensive, context-aware list of available variables directly into the template editor UI.
+- **Removed Redundant UI Elements (DONE):** Deleted a duplicate Шаблони button from the main header.
+- **Partial Refactoring of  (DONE):** Extracted , , and  into their own components, reducing the main file's size.
+- **Resolved Recurring Dependency Issue (Temporarily):** Re-installed the  package multiple times to restore PDF functionality.
+
+**Earlier issues found/mentioned but not fixed**
+- None. All issues were addressed, but one has recurred.
+
+**Known issue recurrence from previous fork**
+- **Issue recurrence in previous fork:**  dependency for PDF generation with WeasyPrint.
+- **Recurrence count:** High (at least 5 times this session).
+- **Status:** IN PROGRESS (This is the current active issue).
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Monolithic Component Refactoring:** Started breaking down the massive  into smaller, reusable React components (, ).
-- **Backend Templating for PDFs:** Implemented a system where a backend service () populates an HTML template with data before passing it to  for PDF conversion.
-- **File Uploads in FastAPI:** Created a dedicated route () using  to handle file uploads and store them on the server's filesystem.
-- **Static File Serving in FastAPI:** Used  to serve uploaded content from a designated  directory.
-- **Controlled Components & State Lifting:** Managed complex form state for editing documents and auto-filling data from selected orders.
+- **Recurring Dependency Management:** Repeatedly diagnosing and fixing a missing system library (), highlighting an environmental instability.
+- **Deep Template Debugging:** Tracing data flow from the database model through backend services () into the final HTML to find and fix subtle bugs related to HTML escaping, incorrect variable names, and faulty loop logic.
+- **Permissions and Ownership Logic:** Implementing a security model for templates where users can edit system templates, which creates a personal copy, leaving the original intact.
+- **Component-Based Refactoring:** Systematically extracting large JSX blocks (modal dialogs) from a monolithic component into smaller, props-driven child components.
 
 **key DB schema**
-- : Added .
-- : A collection based on  (, , , , , ) is now actively used.
+- :  field is now used to distinguish between system templates () and user-owned copies. The  of the default invoice template has been replaced.  was fixed to be a  instead of .
+- :  field is used to generate the Підстава text in PDFs. Invalid Mon Dec  8 09:56:06 UTC 2025 fields were programmatically cleaned up to prevent validation errors.
 
 **All files of reference**
-- : The central component. **Still critically oversized and the primary focus for refactoring.**
-- : Contains all endpoints for document management.
-- : The new primary service for generating PDFs from templates.
-- : Logic for injecting data into HTML templates.
-- : The base HTML template for invoices.
-- : The new directory for refactored components.
-- : The new route for handling file uploads.
-- : Updated to include user's logo URL.
+- : Contains the critical logic for updating templates.
+- : Contains the fix for rendering HTML tables and the new date formatting function.
+- : The new, user-specified invoice layout.
+- : The main component, still large and a target for further refactoring.
+- : The UI for all template management.
 
 **Areas that need refactoring**:
-- ** remains the #1 priority.** It is still over 4,700 lines long. The refactoring that was started must be completed by extracting all modal dialogs, creation forms, and complex state logic into separate, manageable components and hooks.
+- **:** This remains the highest priority for refactoring. Although reduced in size, it is still over 4,600 lines and contains significant state and business logic that should be extracted into custom hooks and smaller components.
 
 **key api endpoints**
-- : Uploads the user's company logo.
-- : Serves static uploaded files like the logo.
-- : Endpoints for managing document templates.
-- : Updates an existing invoice.
-- : Generates a PDF for a contract.
-- : Sends a contract via email.
+- : The endpoint for saving template changes. Its underlying service logic was heavily debugged and fixed.
+- : The endpoint for viewing invoice PDFs.
+- : The endpoint for emailing invoices.
 
 **Critical Info for New Agent**
-- Your first priority is to complete the **Profile Logo/Banking feature (Task 1)**. This requires testing the full flow from UI upload to seeing the result in a generated PDF. This also involves updating  to include the new user data.
-- Your second priority is to fix the **broken Templates tab UI (Issue 1)**. The  component is not rendering, which blocks further development of the templating feature.
-- The user is highly engaged and provides specific, multi-point requests. Address each point clearly and confirm your plan.
-- Vigorously continue the refactoring of . This technical debt is the biggest risk to the project's maintainability.
+- Your first and only priority is to **fix the PDF generation failure**. It is a recurring problem caused by the  dependency vanishing. Follow the debug checklist in the All Pending/In progress Issue list to reinstall it and confirm functionality. Do not proceed until PDFs can be generated successfully.
+- The user is very attentive to detail. After fixing the PDF issue, re-verify that the latest features (date in words, document basis) are still present and correct in the generated documents.
+- Be prepared for the  issue to happen again. It is an environmental problem, and the only known fix is to reinstall it.
 
 **documents created in this job**
 - 
 - 
 - 
 - 
-- 
-- 
-- 
-- 
-- 
-- 
-- 
-- 
 
 **Last 10 User Messages and any pending user messages**
-1.  **User:** Provided HTML for the invoice template. (Completed)
-2.  **Agent:** Acknowledged and started implementing the templating system. (In Progress)
-3.  **User:** continue development and updates (Completed)
-4.  **Agent:** Started integrating templates into PDF generation. (In Progress)
-5.  **User:** continue development and updates (Completed)
-6.  **Agent:** Showed the template UI is broken but proposed a plan to fix it. (Pending)
-7.  **User:** continue development and updates (Completed)
-8.  **Agent:** Started implementing banking/logo fields in the user profile. (In Progress)
-9.  **User:** continue development and updates (Completed)
-10. **Agent:** Showed a screenshot of the updated profile dialog and was about to start testing. (In Progress)
+1.  **User:** Fix missing items in PDF, remove extra Templates tab, and enable template editing. (Resolved)
+2.  **User:** Persisted that items were still missing in the PDF. (Resolved)
+3.  **User:** Reported a data loading error on the frontend. (Resolved)
+4.  **User:** Reported errors when viewing or emailing PDFs. (Resolved)
+5.  **User:** Provided a sample PDF and requested a complete visual redesign of the invoice template. (Resolved)
+6.  **User:** Reported being unable to save changes to templates. (Resolved)
+7.  **User:** Requested a list of all available template variables be displayed in the UI. (Resolved)
+8.  **User:** Requested adding a basis for the document (e.g., from an order) field to the PDF. (Resolved)
+9.  **User:** Requested adding a date in words format to the PDF. (Resolved)
+10. **User:** PDF creation error. (IN PROGRESS - This is the current, active issue).
 
 **Project Health Check:**
-- **Broken:**
-  - The UI for the Шаблони (Templates) tab is not rendering the correct component, blocking further development on that feature.
-- **In Progress:**
-  - The logo/banking details feature for the user profile is partially implemented but not tested end-to-end.
-  - The major refactoring of  has started but is far from complete.
+- **Broken:** Core PDF generation functionality.
+- **Mocked:** None.
 
-**3rd Party Integrations**:
+**3rd Party Integrations**
 - **YouScore API:** Used for fetching Ukrainian company data.
 - **SMTP (via smtplib):** Used for sending emails.
 
 **Testing status**
-- **Testing agent used after significant changes:** YES. The agent used testing extensively to verify bug fixes, new features like creating documents from orders, contract PDF generation, and invoice editing, and for regression testing after the initial refactoring.
+- **Testing agent used after significant changes:** YES. The agent used testing extensively to confirm fixes for complex bugs (like missing PDF items and template editing) and to verify new features.
 - **Troubleshoot agent used after agent stuck in loop:** NO
-- **Test files created:** None
-- **Known regressions:** The Templates tab UI is broken.
+- **Test files created:** None.
+- **Known regressions:** The PDF generation system is prone to breaking due to a recurring environmental dependency issue.
 
 **Credentials to test flow:**
 - **Test User:**
   - Email: 
   - Password: 
-- **YouScore API Key (hardcoded):** 
 
 **What agent forgot to execute**
-- The agent correctly identified that the Templates tab UI was broken but did not fix it before moving on to the next task. This is now logged as a pending issue.</analysis>
+- The agent has not implemented a permanent fix for the recurring  dependency issue. While this may be an environmental limitation, the root cause remains unaddressed, leading to repeated manual intervention.</analysis>
