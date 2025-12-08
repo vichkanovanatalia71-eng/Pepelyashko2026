@@ -1030,26 +1030,29 @@ const FullDashboard = () => {
     });
   };
 
-  const saveEditedInvoice = async () => {
+  const saveEditedInvoice = async (formData = editInvoiceForm) => {
     if (!viewingInvoice) return;
     
     setLoading(true);
     try {
       console.log('💾 SAVING INVOICE:', viewingInvoice.number);
-      console.log('📝 editInvoiceForm state:', {
-        items: editInvoiceForm.items,
-        itemsCount: editInvoiceForm.items?.length,
-        total: editInvoiceForm.total_amount
+      console.log('📝 Form data received:', {
+        items: formData.items,
+        itemsCount: formData.items?.length,
+        total: formData.total_amount
       });
       
       const payload = {
-        date: editInvoiceForm.date,
-        items: editInvoiceForm.items,
-        total_amount: editInvoiceForm.total_amount
+        date: formData.date,
+        items: formData.items,
+        total_amount: formData.total_amount
       };
       console.log('📤 Sending payload:', JSON.stringify(payload, null, 2));
       
-      await axios.put(`${API_URL}/api/invoices/${viewingInvoice.number}`, payload);
+      const token = localStorage.getItem('token');
+      await axios.put(`${API_URL}/api/invoices/${viewingInvoice.number}`, payload, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       
       toast.success('Рахунок успішно оновлено!');
       setEditingInvoice(false);
