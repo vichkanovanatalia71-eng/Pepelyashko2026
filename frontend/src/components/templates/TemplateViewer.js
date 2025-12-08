@@ -270,6 +270,14 @@ const TemplateViewer = () => {
                                 <span className="text-xs text-gray-600">- Загальна сума (число)</span>
                                 <code className="bg-white px-2 py-1 rounded text-xs border">{'{{total_amount_text}}'}</code>
                                 <span className="text-xs text-gray-600">- Сума прописом</span>
+                                <code className="bg-white px-2 py-1 rounded text-xs border">{'{{amount_without_vat}}'}</code>
+                                <span className="text-xs text-gray-600">- Сума без ПДВ</span>
+                                <code className="bg-white px-2 py-1 rounded text-xs border">{'{{vat_amount}}'}</code>
+                                <span className="text-xs text-gray-600">- Сума ПДВ</span>
+                                <code className="bg-white px-2 py-1 rounded text-xs border">{'{{vat_rate}}'}</code>
+                                <span className="text-xs text-gray-600">- Ставка ПДВ (%)</span>
+                                <code className="bg-white px-2 py-1 rounded text-xs border">{'{{is_vat_payer}}'}</code>
+                                <span className="text-xs text-gray-600">- Чи платник ПДВ (true/false)</span>
                                 <code className="bg-white px-2 py-1 rounded text-xs border">{'{{vat_note}}'}</code>
                                 <span className="text-xs text-gray-600">- Примітка про ПДВ</span>
                               </div>
