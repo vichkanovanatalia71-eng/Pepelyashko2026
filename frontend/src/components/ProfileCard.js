@@ -386,15 +386,15 @@ const ProfileCard = ({ user, onUpdate, onDelete }) => {
             <div className="bg-gray-50 p-3 rounded-lg">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs text-gray-500">Статус ПДВ</p>
+                  <p className="text-xs text-gray-500">Податковий статус</p>
                   <p className="font-medium flex items-center gap-2 mt-1">
                     {user?.vat_payer ? (
                       <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">
                         Платник ПДВ ({user?.vat_rate || 20}%)
                       </span>
                     ) : (
-                      <span className="px-2 py-1 bg-gray-200 text-gray-700 rounded-full text-xs font-semibold">
-                        Не платник ПДВ
+                      <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">
+                        Платник ЄП
                       </span>
                     )}
                   </p>
