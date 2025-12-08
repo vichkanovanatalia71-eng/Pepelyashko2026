@@ -353,7 +353,7 @@ class EmailService:
                     display: flex;
                     justify-content: space-between;
                     padding: 8px 0;
-                    border-bottom: 1px solid #dcfce7;
+                    border-bottom: 1px solid #dbeafe;
                 }}
                 .info-row:last-child {{
                     border-bottom: none;
@@ -369,19 +369,19 @@ class EmailService:
                     font-size: 14px;
                 }}
                 .total {{
-                    background-color: #dcfce7;
+                    background-color: #dbeafe;
                     padding: 15px 20px;
                     margin: 20px 0;
                     border-radius: 6px;
                     text-align: right;
                 }}
                 .total-label {{
-                    color: #14532d;
+                    color: #1e3a8a;
                     font-size: 16px;
                     font-weight: 600;
                 }}
                 .total-amount {{
-                    color: #059669;
+                    color: #2563eb;
                     font-size: 24px;
                     font-weight: 700;
                     margin-top: 5px;
