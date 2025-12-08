@@ -844,12 +844,21 @@ class EmailService:
         waybill_date: str,
         counterparty_name: str,
         total_amount: float,
-        pdf_path: str
+        pdf_path: str,
+        company_name: str = None,
+        company_logo_url: str = None,
+        company_logo_path: str = None
     ) -> bool:
         """Send waybill document PDF via email with orange-themed HTML styling."""
         formatted_date = self.format_date_ukrainian(waybill_date)
+        company_display_name = company_name or "Компанія"
         
         subject = f"Видаткова накладна №{waybill_number} від {formatted_date}"
+        
+        # Logo section
+        logo_html = ""
+        if company_logo_path and Path(company_logo_path).exists():
+            logo_html = '<img src="cid:company_logo" alt="Logo" style="max-width: 120px; max-height: 60px; margin-bottom: 15px;" />'
         
         body = f"""
         <!DOCTYPE html>
@@ -945,12 +954,13 @@ class EmailService:
         <body>
             <div class="email-container">
                 <div class="header">
+                    {logo_html}
                     <h1>Видаткова накладна №{waybill_number}</h1>
                     <p>Система Управління Документами</p>
                 </div>
                 <div class="content">
                     <p>Доброго дня!</p>
-                    <p>Надсилаємо Вам видаткову накладну №<strong>{waybill_number}</strong> від <strong>{formatted_date}</strong>.</p>
+                    <p><strong>{company_display_name}</strong> надсилає Вам видаткову накладну №<strong>{waybill_number}</strong> від <strong>{formatted_date}</strong>.</p>
                     <div class="info-box">
                         <div class="info-row">
                             <span>📋 Номер накладної:</span>
@@ -981,12 +991,13 @@ class EmailService:
         </html>
         """
         
-        return self.send_email_with_attachment(
+        return self.send_email_with_logo(
             to_email=to_email,
             subject=subject,
             body=body,
             attachment_path=pdf_path,
-            attachment_name=f"Накладна_{waybill_number}.pdf"
+            attachment_name=f"Накладна_{waybill_number}.pdf",
+            logo_path=company_logo_path
         )
 
 
