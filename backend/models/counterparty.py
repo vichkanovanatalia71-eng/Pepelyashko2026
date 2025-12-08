@@ -59,10 +59,15 @@ class CounterpartyCreate(BaseModel):
     director_name: Optional[str] = Field(None, description="ПІБ керівника")
     legal_address: Optional[str] = Field(None, description="Юридична адреса")
     bank: Optional[str] = Field(None, description="Банк")
+    bank_name: Optional[str] = Field(None, description="Повна назва банку")
     mfo: Optional[str] = Field(None, description="МФО")
     position: Optional[str] = Field(None, description="Посада")
     represented_by: Optional[str] = Field(None, description="В особі")
     signature: Optional[str] = Field(None, description="Підпис")
+    logo_url: Optional[str] = Field(None, description="URL логотипу контрагента")
+    logo_filename: Optional[str] = Field(None, description="Ім'я файлу логотипу")
+    vat_payer: Optional[bool] = Field(False, description="Чи є платником ПДВ")
+    vat_rate: Optional[float] = Field(20.0, description="Ставка ПДВ (%)")
     
     @field_validator('edrpou')
     @classmethod
