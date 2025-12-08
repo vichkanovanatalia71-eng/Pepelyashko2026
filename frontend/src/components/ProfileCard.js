@@ -536,7 +536,7 @@ const ProfileCard = ({ user, onUpdate, onDelete }) => {
               <Label>Діє на підставі</Label>
               <Select 
                 value={formData.contract_type} 
-                onValueChange={(value) => setFormData({ ...formData, contract_type: value })}
+                onValueChange={(value) => handleContractTypeChange(value)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Оберіть підставу" />
