@@ -1477,6 +1477,9 @@ async def send_order_email(
             company_logo_path = f"/app/backend/{logo_relative_path}"
             company_logo_url = "embedded"
         
+        # Get company name
+        company_name = user.get('company_name') or user.get('representative_name') or 'Наша компанія'
+        
         # Email service will format it to Ukrainian
         email_service.send_order_document(
             to_email=recipient_email,
@@ -1486,7 +1489,8 @@ async def send_order_email(
             total_amount=order.get('total_amount', 0),
             pdf_path=pdf_path,
             company_logo_url=company_logo_url,
-            company_logo_path=company_logo_path
+            company_logo_path=company_logo_path,
+            company_name=company_name
         )
         
         logger.info(f"Order PDF sent to {recipient_email} by user {current_user['_id']}")
