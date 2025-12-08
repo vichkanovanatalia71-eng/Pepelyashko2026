@@ -140,8 +140,21 @@ class PDFServiceWithTemplates:
         # Generate items table HTML
         items_html = self.renderer.generate_items_table_html(invoice.get('items', []))
         
-        # Amount in words (без ПДВ)
-        total_amount_text = self.renderer.number_to_words_ua(total_amount)
+        # VAT calculations
+        is_vat_payer = supplier.get('vat_payer', False)
+        vat_rate = supplier.get('vat_rate', 20.0) if is_vat_payer else 0.0
+        
+        if is_vat_payer:
+            # Calculate amounts with VAT
+            amount_without_vat = total_amount / (1 + vat_rate / 100)
+            vat_amount = total_amount - amount_without_vat
+            vat_note = f"У тому числі ПДВ {vat_rate}%: {vat_amount:.2f} грн"
+            total_amount_text = self.renderer.number_to_words_ua(total_amount)
+        else:
+            amount_without_vat = total_amount
+            vat_amount = 0.0
+            vat_note = "не платник ПДВ"
+            total_amount_text = self.renderer.number_to_words_ua(total_amount)
         
         # Get logo file path for WeasyPrint
         logo_file_path = self._get_logo_file_path(supplier.get('logo_url', ''))
@@ -156,10 +169,14 @@ class PDFServiceWithTemplates:
             'based_on_order': invoice.get('based_on_order', ''),
             'based_on_document': invoice.get('based_on_order', ''),  # Alias for template
             
-            # Amounts (БЕЗ ПДВ - новий шаблон)
+            # Amounts with VAT support
             'total_amount': f"{total_amount:.2f}",
             'total_amount_text': total_amount_text,
-            'vat_note': "не платник ПДВ",
+            'amount_without_vat': f"{amount_without_vat:.2f}",
+            'vat_amount': f"{vat_amount:.2f}",
+            'vat_rate': f"{vat_rate:.0f}",
+            'is_vat_payer': is_vat_payer,
+            'vat_note': vat_note,
             
             # Supplier info (from profile) - EXTENDED
             'supplier_name': supplier.get('representative_name', ''),
