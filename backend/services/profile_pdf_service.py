@@ -278,7 +278,7 @@ class ProfilePDFService:
                             </div>
                         </div>
                         
-                        {/* Податкова інформація */}
+                        <!-- Податкова інформація -->
                         <div class="section">
                             <div class="section-title">
                                 <span class="section-icon">📋</span>
