@@ -353,6 +353,14 @@ const ProfileCard = ({ user, onUpdate, onDelete }) => {
               </div>
             </div>
             <div>
+              <Label>В особі</Label>
+              <Input
+                value={formData.represented_by}
+                onChange={(e) => setFormData({ ...formData, represented_by: e.target.value })}
+                placeholder="директора Іванова Івана Івановича, що діє на підставі Статуту"
+              />
+            </div>
+            <div>
               <Label>Підпис</Label>
               <Input
                 value={formData.signature}
