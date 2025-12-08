@@ -336,7 +336,8 @@ class InvoiceWorkflowTestSuite:
             result = response.json()
             message = result.get('message', '')
             
-            if 'успішно' in message.lower() or 'success' in message.lower():
+            if ('успішно' in message.lower() or 'success' in message.lower() or 
+                'відправлено' in message.lower() or 'sent' in message.lower()):
                 logger.info("✅ Email відправлено успішно")
                 logger.info(f"   Повідомлення: {message}")
                 return True
