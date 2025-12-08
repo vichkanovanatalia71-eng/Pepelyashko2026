@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8" />
+  <title>Рахунок на оплату № {{document_number}} від {{document_date_text}}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    @page { size: A4; margin: 1.5cm 1.5cm 2cm 1.5cm; }
+
+    html, body{
+      margin:0; padding:0;
+      background:#fff; color:#111;
+      font:11px/1.45 "Times New Roman",serif;
+    }
+
+    .wrap{
+      max-width:18cm;
+      margin:0 auto;
+      position:relative;
+      min-height:26cm;
+    }
+
+    .logo-row{
+      width:100%;
+      margin-bottom:6px;
+    }
+    .logo-row table{
+      width:100%;
+      border-collapse:collapse;
+    }
+    .logo-row td{
+      padding:0;
+      vertical-align:middle;
+    }
+    .logo-cell img{
+      max-width:170px;
+      max-height:60px;
+      object-fit:contain;
+    }
+
+    .mono{
+      font-family:"Courier New",monospace;
+      font-size:10px;
+      white-space:nowrap;
+    }
+
+    .payorder{
+      width:100%;
+      border-collapse:collapse;
+      border:1.4px solid #333;
+      margin:0 0 14px;
+      font-size:10px;
+    }
+    .payorder td{
+      border:0.7px solid #555;
+      padding:4px 7px;
+      vertical-align:middle;
+    }
+    .payorder .paytitle-row td{
+      border-bottom:0.7px solid #555;
+      border-left:none;
+      border-right:none;
+      text-align:center;
+      font-weight:bold;
+      padding:3px 0 5px;
+      font-size:11px;
+      background:#f5f7fa;
+    }
+    .payorder .label{
+      width:24%;
+      font-weight:bold;
+      white-space:nowrap;
+    }
+    .payorder .center{
+      text-align:center;
+    }
+
+    .invoice-title{
+      text-align:center;
+      font-size:14px;
+      font-weight:bold;
+      margin:6px 0 2px;
+    }
+    .hr-top{
+      border-bottom:1px solid #555;
+      margin:0 0 10px;
+    }
+
+    .parties{
+      width:100%;
+      border-collapse:collapse;
+      margin-bottom:10px;
+      font-size:11px;
+    }
+    .parties td{
+      padding:2px 0;
+      vertical-align:top;
+    }
+    .parties .label{
+      width:17%;
+      font-weight:bold;
+      padding-right:4px;
+      white-space:nowrap;
+    }
+
+    .basis{
+      margin:4px 0 8px;
+      font-size:10.5px;
+    }
+
+    table.items{
+      width:100%;
+      border-collapse:collapse;
+      margin:8px 0 6px;
+      table-layout:auto;
+      font-size:10px;
+    }
+    table.items th,
+    table.items td{
+      border:0.7px solid #555;
+      padding:4px 5px;
+      vertical-align:middle;
+      word-break:break-word;
+      overflow-wrap:break-word;
+      hyphens:auto;
+    }
+    table.items thead th{
+      background:#f5f7fa;
+      font-weight:bold;
+      text-align:center;
+    }
+    table.items tbody td:nth-child(1){
+      text-align:center;
+      width:5%;
+    }
+    table.items tbody td:nth-child(3),
+    table.items tbody td:nth-child(4){
+      text-align:center;
+      width:8%;
+    }
+    table.items tbody td:nth-child(5),
+    table.items tbody td:nth-child(6){
+      text-align:right;
+      width:14%;
+      white-space:nowrap;
+    }
+
+    .totals{
+      width:45%;
+      margin-left:auto;
+      font-size:10.5px;
+      margin-top:6px;
+    }
+    .totals table{
+      width:100%;
+      border-collapse:collapse;
+    }
+    .totals td{
+      padding:3px 0;
+    }
+    .totals td:first-child{
+      text-align:right;
+      padding-right:10px;
+    }
+    .totals .num{
+      text-align:right;
+      white-space:nowrap;
+    }
+    .totals .total-row{
+      border-top:1px solid #555;
+      font-weight:bold;
+      padding-top:4px;
+    }
+
+    .amount-text{
+      margin:12px 0 0;
+      font-size:10.5px;
+    }
+
+    .sign-row{
+      width:100%;
+      margin-top:18px;
+      font-size:11px;
+    }
+    .sign-row table{
+      width:100%;
+      border-collapse:collapse;
+    }
+    .sign-row td{
+      padding-top:18px;
+      vertical-align:bottom;
+    }
+    .sign-line{
+      border-bottom:1px solid #333;
+      width:180px;
+      display:inline-block;
+      height:0;
+      margin:0 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+
+    <div class="logo-row">
+      <table>
+        <tr>
+          <td class="logo-cell">
+            {{#if supplier_logo}}
+              <img src="{{supplier_logo}}" alt="Логотип" />
+            {{/if}}
+          </td>
+          <td></td>
+        </tr>
+      </table>
+    </div>
+
+    <table class="payorder">
+      <tr class="paytitle-row">
+        <td colspan="4">Платіжне доручення</td>
+      </tr>
+      <tr>
+        <td class="label">Одержувач</td>
+        <td colspan="3"><strong>{{supplier_name}}</strong></td>
+      </tr>
+      <tr>
+        <td class="label">Код</td>
+        <td><span class="mono">{{supplier_edrpou}}</span></td>
+        <td class="label center">КРЕДИТ рах. №</td>
+        <td><span class="mono">{{supplier_iban}}</span></td>
+      </tr>
+      <tr>
+        <td class="label">Банк одержувача</td>
+        <td>{{supplier_bank}}</td>
+        <td class="label center">Код банку</td>
+        <td><span class="mono">{{supplier_mfo}}</span></td>
+      </tr>
+    </table>
+
+    <div class="invoice-title">
+      Рахунок на оплату № {{document_number}} від {{document_date_text}}
+    </div>
+    <div class="hr-top"></div>
+
+    <table class="parties">
+      <tr>
+        <td class="label">Виконавець:</td>
+        <td>
+          <strong>{{supplier_name}}</strong><br />
+          Юридична адреса: {{supplier_address}}<br />
+          IBAN: <span class="mono">{{supplier_iban}}</span>, в {{supplier_bank}}, МФО <span class="mono">{{supplier_mfo}}</span><br />
+          Код РНОКПП/ЄДРПОУ: <span class="mono">{{supplier_edrpou}}</span><br />
+        </td>
+      </tr>
+      <tr>
+        <td class="label">Замовник:</td>
+        <td>
+          <strong>{{buyer_name}}</strong><br />
+          Юридична адреса: {{buyer_address}}<br />
+          IBAN: <span class="mono">{{buyer_iban}}</span>, {{buyer_bank}}, МФО <span class="mono">{{buyer_mfo}}</span><br />
+          Код РНОКПП/ЄДРПОУ: <span class="mono">{{buyer_edrpou}}</span><br />
+        </td>
+      </tr>
+    </table>
+
+    {{#if based_on_order}}
+      <div class="basis">
+        <strong>Підстава:</strong> {{based_on_order}}
+      </div>
+    {{else}}
+      {{#if based_on_document}}
+        <div class="basis">
+          <strong>Підстава:</strong> {{based_on_document}}
+        </div>
+      {{/if}}
+    {{/if}}
+
+    <table class="items">
+      <thead>
+        <tr>
+          <th>№</th>
+          <th>Товари (роботи , послуги)</th>
+          <th>Кіл-сть</th>
+          <th>Од.</th>
+          <th>Ціна без ПДВ</th>
+          <th>Сума без ПДВ</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{items_table}}
+      </tbody>
+    </table>
+
+    <div class="totals">
+      <table>
+        {{#if is_vat_payer}}
+          <tr>
+            <td><b>Всього:</b></td>
+            <td class="num"><span class="mono">{{amount_without_vat}}</span></td>
+          </tr>
+          <tr>
+            <td><b>Сума ПДВ ({{vat_rate}}%):</b></td>
+            <td class="num"><span class="mono">{{vat_amount}}</span></td>
+          </tr>
+          <tr class="total-row">
+            <td><b>Всього з ПДВ:</b></td>
+            <td class="num"><b><span class="mono">{{total_amount}}</span></b></td>
+          </tr>
+        {{else}}
+          <tr>
+            <td><b>Всього:</b></td>
+            <td class="num"><span class="mono">{{amount_without_vat}}</span></td>
+          </tr>
+          <tr>
+            <td><b>Сума ПДВ:</b></td>
+            <td class="num"><span class="mono">0.00</span></td>
+          </tr>
+          <tr class="total-row">
+            <td><b>Всього з ПДВ:</b></td>
+            <td class="num"><b><span class="mono">{{amount_without_vat}}</span></b></td>
+          </tr>
+        {{/if}}
+      </table>
+    </div>
+
+    {{#if is_vat_payer}}
+      <div class="amount-text">
+        <em>{{total_amount}} ({{total_amount_text}}, у тому числі ПДВ {{vat_rate}}%: {{vat_amount}} грн)</em>
+      </div>
+    {{else}}
+      <div class="amount-text">
+        <em>{{amount_without_vat}} ({{total_amount_text}}, без ПДВ)</em>
+      </div>
+    {{/if}}
+
+    <!-- Підпис - один рядок -->
+    <div class="sign-row">
+      <table>
+        <tr>
+          <td style="width:50%"></td>
+          <td style="width:50%; text-align:right; white-space:nowrap;">
+            Підпис
+            <span class="sign-line"></span>
+            {{buyer_position}} {{supplier_signature}}
+          </td>
+        </tr>
+      </table>
+    </div>
+
+  </div>
+</body>
+</html>
