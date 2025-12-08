@@ -3345,14 +3345,97 @@ class InvoiceWorkflowTestSuite:
         return overall_success
 
 def main():
-    """Main test execution"""
+    """Main test runner for invoice workflow testing"""
+    logger.info("=" * 100)
+    logger.info("ТЕСТУВАННЯ ПОВНОГО ПОТОКУ РОБОТИ З РАХУНКАМИ")
+    logger.info("Протестувати повний потік роботи з рахунками після виправлення проблеми з генерацією PDF")
+    logger.info("=" * 100)
+    
+    # Initialize test suite
+    test_suite = InvoiceWorkflowTestSuite()
+    
+    # Track test results
+    test_results = []
+    
     try:
-        test_suite = InvoiceWorkflowTestSuite()
-        success = test_suite.run_all_tests()
-        sys.exit(0 if success else 1)
+        # Test 1: Health check
+        logger.info("\n🔍 ТЕСТ 1: ПЕРЕВІРКА ЗДОРОВ'Я СИСТЕМИ")
+        result = test_suite.test_health_check()
+        test_results.append(("Health Check", result))
+        
+        if not result:
+            logger.error("❌ Система не працює. Припинення тестування.")
+            return False
+        
+        # Test 2: Authentication
+        logger.info("\n🔐 ТЕСТ 2: АВТЕНТИФІКАЦІЯ")
+        result = test_suite.authenticate()
+        test_results.append(("Authentication", result))
+        
+        if not result:
+            logger.error("❌ Автентифікація не вдалася. Припинення тестування.")
+            return False
+        
+        # Test 3: Get orders list
+        logger.info("\n📋 ТЕСТ 3: ОТРИМАННЯ СПИСКУ ЗАМОВЛЕНЬ")
+        result = test_suite.test_get_orders_list()
+        test_results.append(("Get Orders List", result))
+        
+        # Test 4: Create invoice from order
+        logger.info("\n📄 ТЕСТ 4: СТВОРЕННЯ РАХУНКУ НА ОСНОВІ ЗАМОВЛЕННЯ")
+        result = test_suite.test_create_invoice_from_order()
+        test_results.append(("Create Invoice from Order", result))
+        
+        # Test 5: Generate invoice PDF
+        logger.info("\n🖨️ ТЕСТ 5: ГЕНЕРАЦІЯ PDF РАХУНКУ")
+        result = test_suite.test_invoice_pdf_generation()
+        test_results.append(("Invoice PDF Generation", result))
+        
+        # Test 6: Send invoice email
+        logger.info("\n📧 ТЕСТ 6: ВІДПРАВКА PDF НА EMAIL")
+        result = test_suite.test_send_invoice_email()
+        test_results.append(("Send Invoice Email", result))
+        
+        # Test 7: Get invoices list
+        logger.info("\n📊 ТЕСТ 7: ОТРИМАННЯ СПИСКУ ВСІХ РАХУНКІВ")
+        result = test_suite.test_get_invoices_list()
+        test_results.append(("Get Invoices List", result))
+        
+        # Test 8: Edit invoice
+        logger.info("\n✏️ ТЕСТ 8: РЕДАГУВАННЯ РАХУНКУ")
+        result = test_suite.test_edit_invoice()
+        test_results.append(("Edit Invoice", result))
+        
     except Exception as e:
-        logger.error(f"Test suite failed to initialize: {str(e)}")
-        sys.exit(1)
+        logger.error(f"❌ Критична помилка під час тестування: {str(e)}")
+        return False
+    
+    # Print final summary
+    logger.info("\n" + "=" * 100)
+    logger.info("ПІДСУМОК ТЕСТУВАННЯ")
+    logger.info("=" * 100)
+    
+    passed_tests = 0
+    total_tests = len(test_results)
+    
+    for test_name, result in test_results:
+        status = "✅ ПРОЙДЕНО" if result else "❌ ПРОВАЛЕНО"
+        logger.info(f"{status}: {test_name}")
+        if result:
+            passed_tests += 1
+    
+    logger.info("-" * 100)
+    logger.info(f"РЕЗУЛЬТАТ: {passed_tests}/{total_tests} тестів пройдено ({passed_tests/total_tests*100:.1f}%)")
+    
+    if passed_tests == total_tests:
+        logger.info("🎉 ВСІ ТЕСТИ ПРОЙДЕНО УСПІШНО!")
+        logger.info("✅ Повний потік роботи з рахунками працює правильно")
+        return True
+    else:
+        failed_tests = total_tests - passed_tests
+        logger.error(f"❌ {failed_tests} тестів провалено")
+        logger.error("⚠️ Потрібні додаткові виправлення")
+        return False
 
 if __name__ == "__main__":
     main()
