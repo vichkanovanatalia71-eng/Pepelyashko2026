@@ -379,7 +379,7 @@ class EmailService:
                     font-weight: 600;
                 }}
                 .total-amount {{
-                    color: #0369a1;
+                    color: #059669;
                     font-size: 24px;
                     font-weight: 700;
                     margin-top: 5px;
