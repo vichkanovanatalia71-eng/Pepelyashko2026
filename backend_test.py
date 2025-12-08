@@ -90,32 +90,82 @@ class UserTemplateTestSuite:
             return {}
         return {"Authorization": f"Bearer {self.auth_token}"}
     
-    def test_libpangoft2_library_check(self):
-        """Test 1: Check libpangoft2-1.0-0 library installation (Critical)"""
+    def test_user_template_exists_and_contains_custom_text(self):
+        """Test 1: Verify user template exists and contains custom text"""
         logger.info("=" * 80)
-        logger.info("ТЕСТ 1: ПЕРЕВІРКА БІБЛІОТЕКИ libpangoft2-1.0-0 (КРИТИЧНО)")
+        logger.info("ТЕСТ 1: ПЕРЕВІРКА КОРИСТУВАЦЬКОГО ШАБЛОНУ")
         logger.info("=" * 80)
         
         try:
-            # Check if libpangoft2-1.0-0 is installed
-            result = subprocess.run(
-                ['dpkg', '-l', 'libpangoft2-1.0-0'],
-                capture_output=True,
-                text=True,
-                timeout=10
+            # Query MongoDB directly to find user's invoice template
+            logger.info(f"Пошук шаблону рахунку для користувача {self.user_id}...")
+            
+            # First get all templates to see what's available
+            response = requests.get(
+                f"{self.api_url}/templates",
+                headers=self.get_auth_headers(),
+                timeout=30
             )
             
-            if result.returncode == 0 and 'libpangoft2-1.0-0' in result.stdout:
-                logger.info("✅ libpangoft2-1.0-0 бібліотека встановлена")
-                logger.info(f"   Деталі: {result.stdout.strip().split()[-3:]}")  # Show version info
+            if response.status_code != 200:
+                logger.error(f"❌ Помилка отримання шаблонів: {response.status_code} - {response.text}")
+                return False
+            
+            templates = response.json()
+            logger.info(f"✅ Отримано {len(templates)} шаблонів")
+            
+            # Find user's invoice template
+            user_template = None
+            system_template = None
+            
+            for template in templates:
+                if template.get('template_type') == 'invoice':
+                    if template.get('user_id'):  # User template
+                        user_template = template
+                        self.user_template_id = template.get('_id')
+                        logger.info(f"✅ Знайдено користувацький шаблон: {template.get('name')}")
+                    elif template.get('is_default') == True:  # System template
+                        system_template = template
+                        self.system_template_id = template.get('_id')
+                        logger.info(f"✅ Знайдено системний шаблон: {template.get('name')}")
+            
+            if not user_template:
+                logger.error("❌ Користувацький шаблон рахунку не знайдено")
+                return False
+            
+            if not system_template:
+                logger.error("❌ Системний шаблон рахунку не знайдено")
+                return False
+            
+            # Check user template content for custom text
+            user_content = user_template.get('content', '')
+            
+            # Check for custom markers from review request
+            custom_markers = [
+                "ТЕСТОВИЙ РАХУНОК",
+                "TEST USER TEMPLATE 12345"
+            ]
+            
+            found_markers = []
+            missing_markers = []
+            
+            for marker in custom_markers:
+                if marker in user_content:
+                    found_markers.append(marker)
+                    logger.info(f"✅ Знайдено маркер: {marker}")
+                else:
+                    missing_markers.append(marker)
+                    logger.warning(f"⚠️  Маркер не знайдено: {marker}")
+            
+            if found_markers:
+                logger.info(f"✅ Користувацький шаблон містить {len(found_markers)} з {len(custom_markers)} маркерів")
                 return True
             else:
-                logger.error("❌ КРИТИЧНА ПОМИЛКА: libpangoft2-1.0-0 бібліотека НЕ встановлена!")
-                logger.error("   Це заблокує генерацію PDF файлів")
+                logger.error("❌ Користувацький шаблон не містить жодного з очікуваних маркерів")
                 return False
             
         except Exception as e:
-            logger.error(f"❌ Помилка перевірки бібліотеки: {str(e)}")
+            logger.error(f"❌ Тест перевірки користувацького шаблону провалився: {str(e)}")
             return False
     
     def test_get_invoice_templates(self):
