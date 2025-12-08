@@ -519,7 +519,8 @@ const ProfileCard = ({ user, onUpdate, onDelete }) => {
                 <Label>Директор (ПІБ)</Label>
                 <Input
                   value={formData.director_name}
-                  onChange={(e) => setFormData({ ...formData, director_name: e.target.value })}
+                  onChange={(e) => handleDirectorNameChange(e.target.value)}
+                  placeholder="Прізвище Ім'я По батькові"
                 />
               </div>
               <div>
