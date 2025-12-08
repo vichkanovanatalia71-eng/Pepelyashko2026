@@ -65,6 +65,28 @@ async def get_all_templates(
         )
 
 
+@router.get("/invoice/user", response_model=TemplateModel)
+async def get_user_invoice_template(
+    current_user: dict = Depends(get_current_user)
+):
+    """Get or create user's invoice template."""
+    from server import db as database
+    
+    template_service = TemplateService(database)
+    
+    try:
+        template = await template_service.get_or_create_user_invoice_template(
+            user_id=current_user["_id"]
+        )
+        return template
+    except Exception as e:
+        logger.error(f"Error getting user invoice template: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Помилка при отриманні шаблону рахунку"
+        )
+
+
 @router.get("/type/{template_type}", response_model=List[TemplateModel])
 async def get_templates_by_type(
     template_type: str,
