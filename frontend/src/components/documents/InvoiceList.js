@@ -39,7 +39,7 @@ const InvoiceList = ({
                 onView={() => onViewInvoice(invoice)}
                 onEdit={() => {
                   onViewInvoice(invoice);
-                  setTimeout(() => onEditInvoice(), 100);
+                  setTimeout(() => onEditInvoice(invoice), 100);
                 }}
                 showEditIcon={true}
               >
