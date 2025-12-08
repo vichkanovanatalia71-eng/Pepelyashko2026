@@ -3470,14 +3470,14 @@ class TemplateResetTestSuite:
         return overall_success
 
 def main():
-    """Main test runner for invoice workflow testing"""
+    """Main test runner for template reset functionality testing"""
     logger.info("=" * 100)
-    logger.info("ТЕСТУВАННЯ ПОВНОГО ПОТОКУ РОБОТИ З РАХУНКАМИ")
-    logger.info("Протестувати повний потік роботи з рахунками після виправлення проблеми з генерацією PDF")
+    logger.info("ТЕСТУВАННЯ ФУНКЦІОНАЛЬНОСТІ СКИДАННЯ ШАБЛОНІВ")
+    logger.info("Протестувати функціональність 'Reset Template to System Default' та генерацію PDF з новим шаблоном")
     logger.info("=" * 100)
     
     # Initialize test suite
-    test_suite = InvoiceWorkflowTestSuite()
+    test_suite = TemplateResetTestSuite()
     
     # Track test results
     test_results = []
