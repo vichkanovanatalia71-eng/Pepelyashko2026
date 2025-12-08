@@ -143,6 +143,7 @@ class PDFServiceWithTemplates:
             # Document info
             'document_number': invoice.get('number', ''),
             'document_date': formatted_date,
+            'document_date_text': formatted_date_text,  # Ukrainian text format
             'items_table': items_html,
             'based_on_order': invoice.get('based_on_order', ''),
             'based_on_document': invoice.get('based_on_order', ''),  # Alias for template
