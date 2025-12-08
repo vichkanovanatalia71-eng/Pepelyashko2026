@@ -185,22 +185,26 @@ const ProfileCard = ({ user, onUpdate, onDelete }) => {
 
           {/* Management */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
-              <User className="text-teal-500" size={20} />
+            <h3 className="text-base font-semibold text-gray-900 mb-2 flex items-center gap-2">
+              <User className="text-teal-500" size={18} />
               Керівництво
             </h3>
-            <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
+            <div className="grid grid-cols-2 gap-3 bg-gray-50 p-3 rounded-lg">
               <div>
-                <p className="text-sm text-gray-500">Директор</p>
-                <p className="font-medium">{user?.director_name || '—'}</p>
+                <p className="text-xs text-gray-500">Директор</p>
+                <p className="text-sm font-medium">{user?.director_name || '—'}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Посада</p>
-                <p className="font-medium">{user?.director_position || user?.position || '—'}</p>
+                <p className="text-xs text-gray-500">Посада</p>
+                <p className="text-sm font-medium">{user?.director_position || user?.position || '—'}</p>
+              </div>
+              <div className="col-span-2">
+                <p className="text-xs text-gray-500">В особі</p>
+                <p className="text-sm font-medium">{user?.represented_by || '—'}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Підпис</p>
-                <p className="font-medium">{user?.signature || '—'}</p>
+                <p className="text-xs text-gray-500">Підпис</p>
+                <p className="text-sm font-medium">{user?.signature || '—'}</p>
               </div>
             </div>
           </div>
