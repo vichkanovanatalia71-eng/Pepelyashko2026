@@ -208,7 +208,7 @@ class EmailService:
                         <p style="margin: 0;"><strong>Контрагент:</strong> {counterparty_name}</p>
                     </div>
                     
-                    <p>Надсилаємо Вам картку контрагента у вкладеному PDF-файлі.</p>
+                    <p><strong>{company_name or 'Наша компанія'}</strong> надсилає Вам картку контрагента у вкладеному PDF-файлі.</p>
                     
                     <p>З повагою,<br>Ваша команда</p>
                 </div>
