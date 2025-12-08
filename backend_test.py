@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-Backend Test Suite for Template Reset and PDF Generation Testing
-Tests the template reset functionality and PDF generation with new system default template:
-- Template reset to system default functionality
-- PDF generation with new template layout
-- System default template verification
-- libpangoft2-1.0-0 library check
+Backend Test Suite for User Template Usage in PDF Generation
+Tests that user's custom template is used in PDF generation instead of system default:
+- Verify user template exists and contains custom text
+- Generate PDF and verify custom template usage
+- Compare with system template
+- Test template service logic
 """
 
 import requests
