@@ -205,13 +205,17 @@ const ProfileCard = ({ user, onUpdate, onDelete }) => {
                 <p className="text-xs text-gray-500">Посада</p>
                 <p className="text-sm font-medium">{user?.director_position || user?.position || '—'}</p>
               </div>
-              <div className="col-span-2">
-                <p className="text-xs text-gray-500">В особі</p>
-                <p className="text-sm font-medium">{user?.represented_by || '—'}</p>
+              <div>
+                <p className="text-xs text-gray-500">Діє на підставі</p>
+                <p className="text-sm font-medium">{user?.contract_type || 'Статуту'}</p>
               </div>
               <div>
                 <p className="text-xs text-gray-500">Підпис</p>
                 <p className="text-sm font-medium">{user?.signature || '—'}</p>
+              </div>
+              <div className="col-span-2">
+                <p className="text-xs text-gray-500">В особі</p>
+                <p className="text-sm font-medium">{user?.represented_by || '—'}</p>
               </div>
             </div>
           </div>
