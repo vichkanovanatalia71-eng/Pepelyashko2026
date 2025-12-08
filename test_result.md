@@ -446,7 +446,19 @@ backend:
     status_history:
       - working: true
         agent: "testing"
-        comment: "✅ ДОДАНО ВІДСУТНІЙ ЕНДПОІНТ: Реалізовано ендпоінт GET /api/documents/by-order/{order_number} який був згаданий в review request але відсутній в коді. Ендпоінт фільтрує всі типи документів (invoices, acts, waybills, contracts) за полем based_on_order та повертає структуру {invoices: [], acts: [], waybills: [], contracts: []}. Використовує той самий метод sheets_service.get_documents() що забезпечує консистентність з іншими ендпоінтами. Протестовано успішно з різними значеннями order_number."
+        comment: "✅ ДОДАНО ВІДСУТНІЙ ЕНДПОІНТ: Реалізовано ендпоінт GET /api/documents/by-order/{order_number} який був згаданий в review request але відсутній в коді. Ендпоінт фільтрує всі типи документів (invoices, acts, waybills, contracts) за полем based_on_order та повертає структуру {invoices: [], acts: [], waybills: [], contracts: []}. Використовує той samий метод sheets_service.get_documents() що забезпечує консистентність з іншими ендпоінтами. Протестовано успішно з різними значеннями order_number."
+
+  - task: "Template Reset to System Default Functionality"
+    implemented: true
+    working: true
+    file: "/app/backend/routes/template_routes.py, /app/backend/templates/default_invoice_template.html"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "🎉 ТЕСТУВАННЯ ФУНКЦІОНАЛЬНОСТІ СКИДАННЯ ШАБЛОНІВ ЗАВЕРШЕНО УСПІШНО (100% SUCCESS RATE)! Протестовано згідно з review request всі критичні вимоги: 1) БІБЛІОТЕКА libpangoft2-1.0-0 ✅ - встановлена та працює коректно, жодних OSError помилок не виявлено, 2) ОТРИМАННЯ ШАБЛОНІВ ✅ - GET /api/templates повертає список шаблонів, знайдено 2 шаблони рахунків (системний та користувацький), 3) СКИДАННЯ ШАБЛОНУ ✅ - POST /api/templates/{template_id}/reset працює коректно, шаблон успішно скинуто до системного, контент оновлено, попередня версія збережена в version_history (3 версії), всі обов'язкові елементи присутні (Платіжне доручення, payorder CSS class, Код банку), 4) СИСТЕМНИЙ ШАБЛОН ✅ - is_default: true, template_type: invoice, контент 8390 символів, всі обов'язкові елементи присутні: Платіжне доручення, class='payorder', Код банку, Одержувач, supplier_iban, supplier_mfo, items_table, Товари (роботи , послуги), Кіл-сть, Ціна без ПДВ, Сума без ПДВ, компактний макет підтверджено (4/4 індикаторів), 5) ГЕНЕРАЦІЯ PDF З НОВИМ ШАБЛОНОМ ✅ - GET /api/invoices/pdf/1968-5 повертає HTTP 200, розмір PDF 149.3 KB (>50KB вимога виконана), Content-Type: application/pdf, PDF містить всі нові елементи: секція 'Платіжне доручення', поле 'Код банку', інформація про одержувача, банківські реквізити, таблиця товарів (4/4 заголовків), результат перевірки PDF: 5/5 тестів пройдено (100.0%). КРИТЕРІЇ УСПІХУ ДОСЯГНУТО: ✅ Функціональність скидання шаблонів працює коректно, ✅ Новий системний шаблон містить всі необхідні елементи, ✅ PDF генерується з новим шаблоном без помилок, ✅ libpangoft2-1.0-0 бібліотека працює стабільно. ВСІ ТЕСТИ ПРОЙДЕНО: 6/6 (100.0%)!"
 
   - task: "Backend API Endpoints Update"
     implemented: true
