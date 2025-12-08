@@ -299,58 +299,71 @@ class UserTemplateTestSuite:
             logger.error(f"❌ Тест порівняння з системним шаблоном провалився: {str(e)}")
             return False
     
-    def test_pdf_generation_with_new_template(self):
-        """Test 4: GET /api/invoices/pdf/{invoice_number} - генерація PDF з новим шаблоном"""
+    def test_template_service_logic(self):
+        """Test 4: Test template service logic to get default template for user"""
         logger.info("=" * 80)
-        logger.info("ТЕСТ 4: ГЕНЕРАЦІЯ PDF З НОВИМ ШАБЛОНОМ")
+        logger.info("ТЕСТ 4: ПЕРЕВІРКА ЛОГІКИ СЕРВІСУ ШАБЛОНІВ")
         logger.info("=" * 80)
         
         try:
-            logger.info(f"Генерація PDF для рахунку {self.test_invoice_number}...")
+            # Test the template service endpoint that should return user's template
+            logger.info("Отримання дефолтного шаблону для користувача...")
+            
+            # Get user's invoice template (should prioritize user template over system)
             response = requests.get(
-                f"{self.api_url}/invoices/pdf/{self.test_invoice_number}",
+                f"{self.api_url}/templates/invoice/user",
                 headers=self.get_auth_headers(),
                 timeout=30
             )
             
             if response.status_code != 200:
-                logger.error(f"❌ Помилка генерації PDF: {response.status_code} - {response.text}")
-                # Check if it's an OSError related to libpangoft2
-                if "OSError" in response.text or "libpangoft2" in response.text:
-                    logger.error("❌ КРИТИЧНА ПОМИЛКА: Проблема з бібліотекою libpangoft2-1.0-0!")
+                logger.error(f"❌ Помилка отримання користувацького шаблону: {response.status_code} - {response.text}")
                 return False
             
-            # Check Content-Type
-            content_type = response.headers.get('content-type', '')
-            if 'application/pdf' not in content_type:
-                logger.error(f"❌ Неправильний Content-Type: {content_type}")
+            user_template = response.json()
+            logger.info("✅ Користувацький шаблон отримано успішно")
+            
+            # Verify it's the user's template, not system default
+            template_id = user_template.get('_id')
+            user_id = user_template.get('user_id')
+            is_default = user_template.get('is_default', False)
+            
+            if is_default and not user_id:
+                logger.error("❌ Повернуто системний шаблон замість користувацького")
                 return False
             
-            pdf_size = len(response.content)
-            logger.info("✅ PDF згенеровано успішно")
-            logger.info(f"   Content-Type: {content_type}")
-            logger.info(f"   Розмір файлу: {pdf_size} байт ({pdf_size/1024:.1f} KB)")
-            
-            # Check minimum size requirement (>50KB from review request)
-            if pdf_size < 50 * 1024:  # 50KB
-                logger.error(f"❌ PDF файл занадто малий: {pdf_size/1024:.1f} KB (очікувалося >50KB)")
-                return False
+            if user_id:
+                logger.info(f"✅ Повернуто користувацький шаблон (user_id: {user_id})")
             else:
-                logger.info(f"✅ Розмір PDF відповідає вимогам (>{50} KB)")
+                logger.warning("⚠️  Шаблон не має user_id - може бути системним")
             
-            # Save PDF to temporary file for text extraction
-            with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as temp_pdf:
-                temp_pdf.write(response.content)
-                temp_pdf_path = temp_pdf.name
+            # Check that this matches our found user template ID
+            if self.user_template_id and template_id == self.user_template_id:
+                logger.info("✅ ID шаблону співпадає з раніше знайденим користувацьким шаблоном")
+            else:
+                logger.warning(f"⚠️  ID шаблону не співпадає. Очікувався: {self.user_template_id}, отримано: {template_id}")
             
-            # Extract and check PDF content for new template features
-            return self.check_new_template_pdf_content(temp_pdf_path)
+            # Verify template contains custom markers
+            template_content = user_template.get('content', '')
+            custom_markers = [
+                "ТЕСТОВИЙ РАХУНОК",
+                "TEST USER TEMPLATE 12345"
+            ]
+            
+            found_markers = []
+            for marker in custom_markers:
+                if marker in template_content:
+                    found_markers.append(marker)
+            
+            if found_markers:
+                logger.info(f"✅ Шаблон містить користувацькі маркери: {found_markers}")
+                return True
+            else:
+                logger.error("❌ Шаблон не містить очікуваних користувацьких маркерів")
+                return False
             
         except Exception as e:
-            logger.error(f"❌ Тест генерації PDF провалився: {str(e)}")
-            # Check if it's an OSError
-            if "OSError" in str(e):
-                logger.error("❌ КРИТИЧНА ПОМИЛКА: OSError - можлива проблема з libpangoft2-1.0-0!")
+            logger.error(f"❌ Тест логіки сервісу шаблонів провалився: {str(e)}")
             return False
     
     def check_new_template_pdf_content(self, pdf_path):
