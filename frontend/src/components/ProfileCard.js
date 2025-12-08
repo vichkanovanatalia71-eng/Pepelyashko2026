@@ -457,10 +457,24 @@ const ProfileCard = ({ user, onUpdate, onDelete }) => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>ЄДРПОУ</Label>
-                <Input
-                  value={formData.edrpou}
-                  onChange={(e) => setFormData({ ...formData, edrpou: e.target.value })}
-                />
+                <div className="relative">
+                  <Input
+                    value={formData.edrpou}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setFormData({ ...formData, edrpou: value });
+                      if (value.length === 8 || value.length === 10) {
+                        searchByEdrpou(value);
+                      }
+                    }}
+                    placeholder="8 або 10 цифр"
+                  />
+                  {searchingEdrpou && (
+                    <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-teal-500"></div>
+                    </div>
+                  )}
+                </div>
               </div>
               <div>
                 <Label>Телефон</Label>
