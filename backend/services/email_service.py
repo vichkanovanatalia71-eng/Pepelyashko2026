@@ -977,3 +977,120 @@ class EmailService:
             attachment_path=pdf_path,
             attachment_name=f"Накладна_{waybill_number}.pdf"
         )
+
+
+    def send_profile_document(
+        self,
+        to_email: str,
+        company_name: str,
+        pdf_path: str,
+        company_logo_url: str = None,
+        company_logo_path: str = None
+    ) -> bool:
+        """Send user profile PDF via email with teal-themed styling."""
+        subject = f"Профіль компанії: {company_name}"
+        
+        body = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <style>
+                body {{
+                    font-family: 'Segoe UI', Arial, sans-serif;
+                    line-height: 1.6;
+                    color: #1e293b;
+                    margin: 0;
+                    padding: 0;
+                    background-color: #f8fafc;
+                }}
+                .email-container {{
+                    max-width: 600px;
+                    margin: 20px auto;
+                    background-color: #ffffff;
+                    border-radius: 8px;
+                    overflow: hidden;
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                }}
+                .logo-container {{
+                    text-align: center;
+                    padding: 20px;
+                    background-color: #ffffff;
+                }}
+                .company-logo {{
+                    max-width: 160px;
+                    max-height: 160px;
+                    border-radius: 8px;
+                }}
+                .header {{
+                    background: linear-gradient(135deg, #14b8a6 0%, #0891b2 100%);
+                    color: white;
+                    padding: 30px 40px;
+                    text-align: center;
+                }}
+                .header h1 {{
+                    margin: 0;
+                    font-size: 28px;
+                    font-weight: 600;
+                }}
+                .header p {{
+                    margin: 5px 0 0 0;
+                    font-size: 14px;
+                    opacity: 0.9;
+                }}
+                .content {{
+                    padding: 40px;
+                }}
+                .info-box {{
+                    background-color: #f0fdfa;
+                    border-left: 4px solid #14b8a6;
+                    padding: 15px;
+                    margin: 20px 0;
+                    border-radius: 4px;
+                }}
+                .footer {{
+                    background-color: #f8fafc;
+                    padding: 20px;
+                    text-align: center;
+                    font-size: 12px;
+                    color: #64748b;
+                    border-top: 1px solid #e2e8f0;
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="email-container">
+                {f'<div class="logo-container"><img src="cid:company_logo" alt="Company Logo" class="company-logo" /></div>' if company_logo_url else ''}
+                <div class="header">
+                    <h1>Профіль компанії</h1>
+                    <p>Система Управління Документами</p>
+                </div>
+                
+                <div class="content">
+                    <p>Доброго дня!</p>
+                    
+                    <div class="info-box">
+                        <p style="margin: 0;"><strong>Компанія:</strong> {company_name}</p>
+                    </div>
+                    
+                    <p><strong>{company_name}</strong> надсилає Вам профіль компанії у вкладеному PDF-файлі.</p>
+                    
+                    <p>З повагою,<br><strong>{company_name}</strong></p>
+                </div>
+                
+                <div class="footer">
+                    <p>Це автоматично згенерований лист. Будь ласка, не відповідайте на нього.</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        
+        return self.send_email_with_attachment(
+            to_email=to_email,
+            subject=subject,
+            body=body,
+            attachment_path=pdf_path,
+            attachment_name=f"Профіль_{company_name[:30]}.pdf",
+            embedded_image_path=company_logo_path
+        )
