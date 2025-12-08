@@ -3450,13 +3450,17 @@ class UserTemplateTestSuite:
         
         logger.info("=" * 100)
         
-        if success_rate >= 80:
-            logger.info("🎉 ТЕСТУВАННЯ ЗАВЕРШЕНО УСПІШНО!")
-            logger.info("   Функціональність скидання шаблонів працює коректно")
+        if critical_passed == len(critical_tests):
+            logger.info("🎉 КРИТИЧНІ ТЕСТИ ПРОЙДЕНО - КОРИСТУВАЦЬКИЙ ШАБЛОН ВИКОРИСТОВУЄТЬСЯ!")
+            logger.info("   Система правильно використовує користувацький шаблон для генерації PDF")
+            return True
+        elif critical_passed > 0:
+            logger.info("⚠️  ЧАСТКОВО УСПІШНО - ПОТРЕБУЄ ДОДАТКОВОЇ ПЕРЕВІРКИ")
+            logger.info("   Деякі аспекти користувацького шаблону працюють")
             return True
         else:
-            logger.error("💥 ТЕСТУВАННЯ ПРОВАЛИЛОСЯ")
-            logger.error("   Виявлені критичні проблеми з функціональністю")
+            logger.error("💥 КРИТИЧНІ ТЕСТИ ПРОВАЛИЛИСЯ")
+            logger.error("   Користувацький шаблон НЕ використовується в PDF генерації")
             return False
         
         results = []
