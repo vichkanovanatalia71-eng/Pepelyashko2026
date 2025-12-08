@@ -248,7 +248,7 @@ class ProfilePDFService:
                             </div>
                         </div>
                         
-                        {/* Керівництво */}
+                        <!-- Керівництво -->
                         <div class="section">
                             <div class="section-title">
                                 <span class="section-icon">👤</span>
