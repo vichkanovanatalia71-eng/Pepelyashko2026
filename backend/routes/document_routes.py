@@ -390,6 +390,9 @@ async def send_invoice_email(
             company_logo_path = f"/app/backend/{logo_relative_path}"
             company_logo_url = "embedded"  # Flag to show logo in template
         
+        # Get company name
+        company_name = user.get('company_name') or user.get('representative_name') or 'Наша компанія'
+        
         email_service.send_invoice_document(
             to_email=recipient_email,
             invoice_number=invoice_number,
@@ -398,7 +401,8 @@ async def send_invoice_email(
             total_amount=invoice.get('total_amount', 0),
             pdf_path=pdf_path,
             company_logo_url=company_logo_url,
-            company_logo_path=company_logo_path
+            company_logo_path=company_logo_path,
+            company_name=company_name
         )
         
         logger.info(f"Invoice PDF sent to {recipient_email} by user {current_user['_id']}")
