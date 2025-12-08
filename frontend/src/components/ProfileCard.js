@@ -289,6 +289,57 @@ const ProfileCard = ({ user, onUpdate, onDelete }) => {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
+            {/* Logo Upload Section */}
+            <div className="border-b pb-4">
+              <Label>Логотип компанії</Label>
+              <div className="flex items-center gap-4 mt-2">
+                <div className="w-20 h-20 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center overflow-hidden">
+                  {companyLogo ? (
+                    <img src={companyLogo} alt="Logo" className="w-full h-full object-contain p-1" />
+                  ) : (
+                    <Building2 className="text-gray-400" size={32} />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    disabled={uploadingLogo}
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      
+                      setUploadingLogo(true);
+                      try {
+                        const formData = new FormData();
+                        formData.append('file', file);
+                        
+                        const token = localStorage.getItem('token');
+                        const response = await axios.post(`${API_URL}/api/upload/logo`, formData, {
+                          headers: {
+                            'Content-Type': 'multipart/form-data',
+                            'Authorization': `Bearer ${token}`
+                          }
+                        });
+                        
+                        toast.success('Логотип завантажено');
+                        // Reload to show new logo
+                        if (onUpdate) onUpdate();
+                      } catch (error) {
+                        console.error('Error uploading logo:', error);
+                        toast.error('Помилка завантаження логотипу');
+                      } finally {
+                        setUploadingLogo(false);
+                      }
+                    }}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    PNG, JPG до 5MB
+                  </p>
+                </div>
+              </div>
+            </div>
+
             <div>
               <Label>Назва компанії</Label>
               <Input
