@@ -241,12 +241,17 @@ async def update_invoice(
         if not date_value or date_value == "":
             date_value = existing_invoice.get("date")
         
+        # Get total_amount - if 0 or None, use existing
+        total_amount = invoice_data.get("total_amount")
+        if total_amount is None or total_amount == 0:
+            total_amount = existing_invoice.get("total_amount", 0)
+        
         update_data = {
             "date": date_value,
             "counterparty_edrpou": invoice_data.get("counterparty_edrpou", existing_invoice.get("counterparty_edrpou")),
             "counterparty_name": invoice_data.get("counterparty_name", existing_invoice.get("counterparty_name")),
             "items": items,
-            "total_amount": float(invoice_data.get("total_amount", existing_invoice.get("total_amount"))),
+            "total_amount": float(total_amount),
             "updated_at": datetime.utcnow()
         }
         
