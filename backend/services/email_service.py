@@ -435,10 +435,6 @@ class EmailService:
                 <div class="content">
                     <p class="greeting">Доброго дня!</p>
                     
-                    <p class="message">
-                        Надсилаємо Вам замовлення №<strong>{order_number}</strong> від <strong>{formatted_date}</strong>.
-                    </p>
-                    
                     <div class="info-box">
                         <div class="info-row">
                             <span class="info-label">📋 Номер замовлення:</span>
