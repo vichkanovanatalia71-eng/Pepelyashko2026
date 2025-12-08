@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-Backend Test Suite for Invoice Workflow Testing
-Tests the complete invoice workflow after PDF generation issue fixes:
-- Creating invoices from orders
-- PDF generation with Ukrainian date format
-- Email sending functionality
-- Invoice listing and editing
+Backend Test Suite for Template Reset and PDF Generation Testing
+Tests the template reset functionality and PDF generation with new system default template:
+- Template reset to system default functionality
+- PDF generation with new template layout
+- System default template verification
+- libpangoft2-1.0-0 library check
 """
 
 import requests
