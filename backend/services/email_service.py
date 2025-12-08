@@ -608,7 +608,8 @@ class EmailService:
             subject=subject,
             body=body,
             attachment_path=pdf_path,
-            attachment_name=f"Рахунок_{invoice_number}.pdf"
+            attachment_name=f"Рахунок_{invoice_number}.pdf",
+            embedded_image_path=company_logo_path
         )
     
     def send_act_document(
