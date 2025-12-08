@@ -52,7 +52,11 @@ class ProfilePDFService:
             vat_rate = user.get('vat_rate', 20.0) if is_vat_payer else 0.0
             vat_status = f"Платник ПДВ ({vat_rate}%)" if is_vat_payer else "Не платник ПДВ"
             
-            # Create HTML
+            # VAT badge color - синій для ЄП, зелений для ПДВ
+            vat_badge_bg = '#dbeafe' if not is_vat_payer else '#dcfce7'
+            vat_badge_color = '#1e40af' if not is_vat_payer else '#166534'
+            
+            # Create HTML matching the design from image
             html_content = f"""
             <!DOCTYPE html>
             <html>
@@ -61,151 +65,235 @@ class ProfilePDFService:
                 <style>
                     @page {{
                         size: A4;
-                        margin: 20mm;
+                        margin: 0;
+                    }}
+                    * {{
+                        margin: 0;
+                        padding: 0;
+                        box-sizing: border-box;
                     }}
                     body {{
                         font-family: 'DejaVu Sans', Arial, sans-serif;
-                        font-size: 11pt;
-                        line-height: 1.6;
+                        font-size: 10pt;
+                        line-height: 1.4;
                         color: #1e293b;
+                        background: white;
+                    }}
+                    .card {{
+                        width: 210mm;
+                        min-height: 297mm;
+                        background: white;
+                        border-radius: 8px;
+                        overflow: hidden;
                     }}
                     .header {{
-                        text-align: center;
-                        margin-bottom: 30px;
-                        padding-bottom: 20px;
-                        border-bottom: 3px solid #14b8a6;
+                        background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+                        padding: 25px 30px;
+                        display: flex;
+                        align-items: center;
+                        gap: 20px;
+                    }}
+                    .logo-box {{
+                        width: 80px;
+                        height: 80px;
+                        background: #f1f5f9;
+                        border-radius: 8px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        flex-shrink: 0;
                     }}
                     .logo {{
-                        max-width: 120px;
-                        max-height: 120px;
-                        margin-bottom: 15px;
+                        max-width: 70px;
+                        max-height: 70px;
+                        object-fit: contain;
+                    }}
+                    .header-text {{
+                        flex: 1;
                     }}
                     .company-name {{
-                        font-size: 18pt;
+                        font-size: 14pt;
                         font-weight: bold;
-                        color: #0f172a;
+                        color: white;
                         margin-bottom: 5px;
                     }}
                     .subtitle {{
-                        font-size: 12pt;
-                        color: #64748b;
+                        font-size: 9pt;
+                        color: rgba(255, 255, 255, 0.9);
+                    }}
+                    .content {{
+                        padding: 25px 30px;
                     }}
                     .section {{
-                        margin-bottom: 25px;
+                        margin-bottom: 20px;
+                        page-break-inside: avoid;
                     }}
                     .section-title {{
-                        font-size: 14pt;
+                        font-size: 11pt;
                         font-weight: bold;
+                        color: #0f172a;
+                        margin-bottom: 12px;
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                    }}
+                    .section-icon {{
+                        width: 18px;
+                        height: 18px;
                         color: #14b8a6;
-                        margin-bottom: 10px;
-                        padding-bottom: 5px;
-                        border-bottom: 2px solid #e2e8f0;
+                    }}
+                    .info-grid {{
+                        background: #f8fafc;
+                        border-radius: 6px;
+                        padding: 15px;
                     }}
                     .info-row {{
                         display: flex;
-                        padding: 8px 0;
-                        border-bottom: 1px solid #f1f5f9;
+                        padding: 6px 0;
+                    }}
+                    .info-row:not(:last-child) {{
+                        border-bottom: 1px solid #e2e8f0;
                     }}
                     .info-label {{
-                        width: 40%;
+                        width: 45%;
+                        font-size: 9pt;
+                        color: #64748b;
                         font-weight: 600;
-                        color: #475569;
                     }}
                     .info-value {{
-                        width: 60%;
+                        width: 55%;
+                        font-size: 9pt;
                         color: #0f172a;
+                        word-wrap: break-word;
                     }}
                     .vat-badge {{
                         display: inline-block;
-                        padding: 4px 12px;
-                        background-color: {'#dcfce7' if is_vat_payer else '#f1f5f9'};
-                        color: {'#166534' if is_vat_payer else '#64748b'};
-                        border-radius: 4px;
-                        font-size: 10pt;
-                        font-weight: 600;
-                    }}
-                    .footer {{
-                        margin-top: 40px;
-                        text-align: center;
+                        padding: 6px 12px;
+                        background-color: {vat_badge_bg};
+                        color: {vat_badge_color};
+                        border-radius: 12px;
                         font-size: 9pt;
-                        color: #94a3b8;
-                        padding-top: 20px;
-                        border-top: 1px solid #e2e8f0;
+                        font-weight: 600;
                     }}
                 </style>
             </head>
             <body>
-                <div class="header">
-                    {f'<img src="{logo_base64}" class="logo" />' if logo_base64 else ''}
-                    <div class="company-name">{company_name}</div>
-                    <div class="subtitle">Картка профілю компанії</div>
-                </div>
-                
-                <div class="section">
-                    <div class="section-title">Основна інформація</div>
-                    <div class="info-row">
-                        <div class="info-label">ЄДРПОУ:</div>
-                        <div class="info-value">{user.get('edrpou', '—')}</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">Юридична адреса:</div>
-                        <div class="info-value">{user.get('legal_address', '—')}</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">Email:</div>
-                        <div class="info-value">{user.get('email', '—')}</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">Телефон:</div>
-                        <div class="info-value">{user.get('phone', '—')}</div>
-                    </div>
-                </div>
-                
-                <div class="section">
-                    <div class="section-title">Банківські реквізити</div>
-                    <div class="info-row">
-                        <div class="info-label">IBAN:</div>
-                        <div class="info-value">{user.get('iban', user.get('bank_account', '—'))}</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">Назва банку:</div>
-                        <div class="info-value">{user.get('bank_name', user.get('bank', '—'))}</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">МФО:</div>
-                        <div class="info-value">{user.get('mfo', '—')}</div>
-                    </div>
-                </div>
-                
-                <div class="section">
-                    <div class="section-title">Керівництво</div>
-                    <div class="info-row">
-                        <div class="info-label">Директор:</div>
-                        <div class="info-value">{user.get('director_name', '—')}</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">Посада:</div>
-                        <div class="info-value">{user.get('director_position', user.get('position', '—'))}</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">Підпис:</div>
-                        <div class="info-value">{user.get('signature', '—')}</div>
-                    </div>
-                </div>
-                
-                <div class="section">
-                    <div class="section-title">Податкова інформація</div>
-                    <div class="info-row">
-                        <div class="info-label">Статус ПДВ:</div>
-                        <div class="info-value">
-                            <span class="vat-badge">{vat_status}</span>
+                <div class="card">
+                    <div class="header">
+                        <div class="logo-box">
+                            {f'<img src="{logo_base64}" class="logo" />' if logo_base64 else '<div style="font-size: 24pt; color: #14b8a6;">📄</div>'}
+                        </div>
+                        <div class="header-text">
+                            <div class="company-name">{company_name}</div>
+                            <div class="subtitle">Картка профілю компанії</div>
                         </div>
                     </div>
-                </div>
-                
-                <div class="footer">
-                    <p>Згенеровано: {datetime.now().strftime('%d.%m.%Y %H:%M')}</p>
-                    <p>Система Управління Документами</p>
+                    
+                    <div class="content">
+                        {/* Основна інформація */}
+                        <div class="section">
+                            <div class="section-title">
+                                <span class="section-icon">🏢</span>
+                                Основна інформація
+                            </div>
+                            <div class="info-grid">
+                                <div class="info-row">
+                                    <div class="info-label">ЄДРПОУ</div>
+                                    <div class="info-value">{user.get('edrpou', '—')}</div>
+                                </div>
+                                <div class="info-row">
+                                    <div class="info-label">Юридична адреса</div>
+                                    <div class="info-value">{user.get('legal_address', '—')}</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {/* Контактні дані */}
+                        <div class="section">
+                            <div class="section-title">
+                                <span class="section-icon">📞</span>
+                                Контактні дані
+                            </div>
+                            <div class="info-grid">
+                                <div class="info-row">
+                                    <div class="info-label">Email</div>
+                                    <div class="info-value">{user.get('email', '—')}</div>
+                                </div>
+                                <div class="info-row">
+                                    <div class="info-label">Телефон</div>
+                                    <div class="info-value">{user.get('phone', '—')}</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {/* Банківські реквізити */}
+                        <div class="section">
+                            <div class="section-title">
+                                <span class="section-icon">💳</span>
+                                Банківські реквізити
+                            </div>
+                            <div class="info-grid">
+                                <div class="info-row">
+                                    <div class="info-label">IBAN</div>
+                                    <div class="info-value" style="font-family: monospace; font-size: 8pt;">{user.get('iban', user.get('bank_account', '—'))}</div>
+                                </div>
+                                <div class="info-row">
+                                    <div class="info-label">Банк</div>
+                                    <div class="info-value">{user.get('bank_name', user.get('bank', '—'))}</div>
+                                </div>
+                                <div class="info-row">
+                                    <div class="info-label">МФО</div>
+                                    <div class="info-value">{user.get('mfo', '—')}</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {/* Керівництво */}
+                        <div class="section">
+                            <div class="section-title">
+                                <span class="section-icon">👤</span>
+                                Керівництво
+                            </div>
+                            <div class="info-grid">
+                                <div class="info-row">
+                                    <div class="info-label">Директор</div>
+                                    <div class="info-value">{user.get('director_name', '—')}</div>
+                                </div>
+                                <div class="info-row">
+                                    <div class="info-label">Посада</div>
+                                    <div class="info-value">{user.get('director_position', user.get('position', '—'))}</div>
+                                </div>
+                                <div class="info-row">
+                                    <div class="info-label">Діє на підставі</div>
+                                    <div class="info-value">{user.get('contract_type', 'Статуту')}</div>
+                                </div>
+                                <div class="info-row">
+                                    <div class="info-label">Підпис</div>
+                                    <div class="info-value">{user.get('signature', '—')}</div>
+                                </div>
+                                <div class="info-row">
+                                    <div class="info-label">В особі</div>
+                                    <div class="info-value">{user.get('represented_by', '—')}</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {/* Податкова інформація */}
+                        <div class="section">
+                            <div class="section-title">
+                                <span class="section-icon">📋</span>
+                                Податкова інформація
+                            </div>
+                            <div class="info-grid">
+                                <div class="info-row">
+                                    <div class="info-label">Податковий статус</div>
+                                    <div class="info-value">
+                                        <span class="vat-badge">{vat_status}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </body>
             </html>
