@@ -105,15 +105,19 @@ class EmailService:
         self,
         to_email: str,
         counterparty_name: str,
-        pdf_path: str
+        pdf_path: str,
+        company_logo_url: str = None,
+        company_logo_path: str = None
     ) -> bool:
         """
-        Send counterparty card PDF via email.
+        Send counterparty card PDF via email with green-themed styling.
         
         Args:
             to_email: Recipient email address
             counterparty_name: Name of the counterparty
             pdf_path: Path to PDF file
+            company_logo_url: Flag for logo display
+            company_logo_path: Path to company logo file
             
         Returns:
             True if email sent successfully
@@ -121,49 +125,89 @@ class EmailService:
         subject = f"Картка контрагента: {counterparty_name}"
         
         body = f"""
+        <!DOCTYPE html>
         <html>
         <head>
+            <meta charset="UTF-8">
             <style>
                 body {{
-                    font-family: Arial, sans-serif;
+                    font-family: 'Segoe UI', Arial, sans-serif;
                     line-height: 1.6;
-                    color: #333;
+                    color: #1e293b;
+                    margin: 0;
+                    padding: 0;
+                    background-color: #f8fafc;
                 }}
-                .container {{
+                .email-container {{
                     max-width: 600px;
-                    margin: 0 auto;
+                    margin: 20px auto;
+                    background-color: #ffffff;
+                    border-radius: 8px;
+                    overflow: hidden;
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                }}
+                .logo-container {{
+                    text-align: center;
                     padding: 20px;
+                    background-color: #ffffff;
+                }}
+                .company-logo {{
+                    max-width: 160px;
+                    max-height: 160px;
+                    border-radius: 8px;
                 }}
                 .header {{
-                    background-color: #f8f9fa;
-                    padding: 20px;
-                    border-radius: 5px;
-                    margin-bottom: 20px;
+                    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+                    color: white;
+                    padding: 30px 40px;
+                    text-align: center;
+                }}
+                .header h1 {{
+                    margin: 0;
+                    font-size: 28px;
+                    font-weight: 600;
+                }}
+                .header p {{
+                    margin: 5px 0 0 0;
+                    font-size: 14px;
+                    opacity: 0.9;
                 }}
                 .content {{
-                    padding: 20px 0;
+                    padding: 40px;
+                }}
+                .info-box {{
+                    background-color: #f0fdf4;
+                    border-left: 4px solid #10b981;
+                    padding: 15px;
+                    margin: 20px 0;
+                    border-radius: 4px;
                 }}
                 .footer {{
-                    margin-top: 30px;
-                    padding-top: 20px;
-                    border-top: 1px solid #e0e0e0;
+                    background-color: #f8fafc;
+                    padding: 20px;
+                    text-align: center;
                     font-size: 12px;
-                    color: #666;
+                    color: #64748b;
+                    border-top: 1px solid #e2e8f0;
                 }}
             </style>
         </head>
         <body>
-            <div class="container">
+            <div class="email-container">
+                {f'<div class="logo-container"><img src="cid:company_logo" alt="Company Logo" class="company-logo" /></div>' if company_logo_url else ''}
                 <div class="header">
-                    <h2 style="margin: 0; color: #1a1a1a;">Картка контрагента</h2>
+                    <h1>Картка контрагента</h1>
+                    <p>Система Управління Документами</p>
                 </div>
                 
                 <div class="content">
                     <p>Доброго дня!</p>
                     
-                    <p>Надсилаємо Вам картку контрагента: <strong>{counterparty_name}</strong></p>
+                    <div class="info-box">
+                        <p style="margin: 0;"><strong>Контрагент:</strong> {counterparty_name}</p>
+                    </div>
                     
-                    <p>Картка контрагента знаходиться у вкладеному PDF-файлі.</p>
+                    <p>Надсилаємо Вам картку контрагента у вкладеному PDF-файлі.</p>
                     
                     <p>З повагою,<br>Ваша команда</p>
                 </div>
@@ -181,7 +225,8 @@ class EmailService:
             subject=subject,
             body=body,
             attachment_path=pdf_path,
-            attachment_name=f"Картка_контрагента_{counterparty_name[:30]}.pdf"
+            attachment_name=f"Картка_контрагента_{counterparty_name[:30]}.pdf",
+            embedded_image_path=company_logo_path
         )
     
     def format_date_ukrainian(self, date_str: str) -> str:
