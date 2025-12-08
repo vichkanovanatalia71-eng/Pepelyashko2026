@@ -262,11 +262,24 @@ async def send_counterparty_card_email(
         # Generate PDF
         pdf_path = pdf_service.generate_pdf(counterparty_dict)
         
+        # Get user for logo
+        user = await database.users.find_one({"_id": current_user["_id"]})
+        
+        # Get company logo if available
+        company_logo_url = None
+        company_logo_path = None
+        if user and user.get('company_logo'):
+            logo_relative_path = user['company_logo']
+            company_logo_path = f"/app/backend/{logo_relative_path}"
+            company_logo_url = "embedded"
+        
         # Send email
         success = email_service.send_counterparty_card(
             to_email=recipient_email,
             counterparty_name=counterparty_dict.get('representative_name', 'Unknown'),
-            pdf_path=pdf_path
+            pdf_path=pdf_path,
+            company_logo_url=company_logo_url,
+            company_logo_path=company_logo_path
         )
         
         if not success:
