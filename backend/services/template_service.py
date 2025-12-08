@@ -144,6 +144,57 @@ class TemplateService:
             templates.append(TemplateModel(**template))
         return templates
     
+    async def get_or_create_user_invoice_template(self, user_id: str) -> TemplateModel:
+        """
+        Get or create user's invoice template.
+        If user doesn't have an invoice template, create one from system default.
+        
+        Args:
+            user_id: Owner user ID
+        
+        Returns:
+            User's invoice template model
+        """
+        # Check if user already has an invoice template
+        user_template = await self.collection.find_one({
+            "user_id": user_id,
+            "template_type": "invoice"
+        })
+        
+        if user_template:
+            return TemplateModel(**user_template)
+        
+        # Get system default template
+        system_template = await self.collection.find_one({
+            "user_id": None,
+            "template_type": "invoice",
+            "is_default": True
+        })
+        
+        if not system_template:
+            raise ValueError("System default invoice template not found")
+        
+        # Create user's template from system default
+        template_id = str(uuid.uuid4())
+        user_template_dict = {
+            "_id": template_id,
+            "user_id": user_id,
+            "is_default": False,
+            "template_type": "invoice",
+            "name": "Мій шаблон рахунку",
+            "content": system_template["content"],
+            "variables": system_template.get("variables", []),
+            "version_history": [],
+            "current_version": 1,
+            "created_at": datetime.utcnow(),
+            "updated_at": datetime.utcnow()
+        }
+        
+        await self.collection.insert_one(user_template_dict)
+        logger.info(f"Created invoice template for user {user_id}")
+        
+        return TemplateModel(**user_template_dict)
+    
     async def update_template(self, user_id: str, template_id: str, template_data: TemplateUpdate) -> Optional[TemplateModel]:
         """
         Update template with versioning.
