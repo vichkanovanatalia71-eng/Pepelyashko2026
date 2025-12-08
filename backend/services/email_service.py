@@ -1151,7 +1151,7 @@ class EmailService:
         company_logo_path: str = None
     ) -> bool:
         """Send user profile PDF via email with teal-themed styling."""
-        subject = f"Профіль компанії: {company_name}"
+        subject = f"Інформація про компанію {company_name}"
         
         body = f"""
         <!DOCTYPE html>
