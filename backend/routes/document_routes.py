@@ -1706,7 +1706,7 @@ async def email_contract(
         
         # Send email
         email_service = EmailService()
-        recipient_email = email_data.get("recipient_email")
+        recipient_email = email_data.get("recipient_email") or email_data.get("email")
         
         if not recipient_email:
             raise HTTPException(
@@ -1714,12 +1714,31 @@ async def email_contract(
                 detail="Email отримувача не вказано"
             )
         
-        await email_service.send_document_email(
-            recipient_email=recipient_email,
-            subject=f"Договір №{contract_dict.get('number', 'N/A')}",
-            body=f"Доброго дня!\n\nНадсилаємо Вам договір №{contract_dict.get('number', 'N/A')}.\n\nЗ повагою,\n{supplier.get('representative_name', 'Постачальник')}",
-            attachment_path=pdf_path,
-            attachment_name=f"contract_{contract_dict.get('number', 'unknown')}.pdf"
+        # Prepare company logo
+        company_logo_url = None
+        company_logo_path = None
+        if supplier and supplier.get('company_logo'):
+            logo_relative_path = supplier['company_logo']
+            company_logo_path = f"/app/backend/{logo_relative_path}"
+            company_logo_url = "embedded"
+        
+        # Format date
+        contract_date = contract_dict.get('date', '')
+        from datetime import datetime
+        if isinstance(contract_date, datetime):
+            contract_date = contract_date.isoformat()
+        else:
+            contract_date = str(contract_date)
+        
+        email_service.send_contract_document(
+            to_email=recipient_email,
+            contract_number=contract_dict.get('number', 'N/A'),
+            contract_date=contract_date,
+            counterparty_name=contract_dict.get('counterparty_name', '—'),
+            pdf_path=pdf_path,
+            company_name=supplier.get('representative_name') or supplier.get('company_name', 'Компанія') if supplier else 'Компанія',
+            company_logo_url=company_logo_url,
+            company_logo_path=company_logo_path
         )
         
         return {"message": "Email успішно надіслано"}
