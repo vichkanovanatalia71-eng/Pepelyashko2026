@@ -1061,9 +1061,9 @@ const FullDashboard = () => {
       // Update viewing invoice with new data
       const updatedInvoice = {
         ...viewingInvoice,
-        date: editInvoiceForm.date,
-        items: editInvoiceForm.items,
-        total_amount: editInvoiceForm.total_amount
+        date: formData.date,
+        items: formData.items,
+        total_amount: formData.total_amount
       };
       setViewingInvoice(updatedInvoice);
     } catch (error) {
