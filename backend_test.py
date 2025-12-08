@@ -50,6 +50,43 @@ class InvoiceWorkflowTestSuite:
         self.selected_order = None
         self.created_invoice_number = None
         self.test_results = {}
+    
+    def authenticate(self):
+        """Authenticate with test credentials"""
+        logger.info("Authenticating with test credentials...")
+        
+        try:
+            response = requests.post(
+                f"{self.api_url}/auth/login",
+                json={
+                    "email": self.test_email,
+                    "password": self.test_password
+                },
+                headers={'Content-Type': 'application/json'},
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                self.auth_token = result.get('access_token')
+                if self.auth_token:
+                    logger.info("✅ Authentication successful")
+                    return True
+                else:
+                    logger.error("❌ No access token in response")
+                    return False
+            else:
+                logger.error(f"❌ Authentication failed: {response.status_code} - {response.text}")
+                return False
+        except Exception as e:
+            logger.error(f"❌ Authentication failed with exception: {str(e)}")
+            return False
+    
+    def get_auth_headers(self):
+        """Get authentication headers"""
+        if not self.auth_token:
+            return {}
+        return {"Authorization": f"Bearer {self.auth_token}"}
         
     def test_health_check(self):
         """Test if the backend is running and healthy"""
