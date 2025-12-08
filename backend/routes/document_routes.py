@@ -231,8 +231,13 @@ async def update_invoice(
                 if 'amount' in item:
                     item['amount'] = float(item['amount'])
         
+        # Ensure date is not empty
+        date_value = invoice_data.get("date", existing_invoice.get("date"))
+        if not date_value or date_value == "":
+            date_value = existing_invoice.get("date")
+        
         update_data = {
-            "date": invoice_data.get("date", existing_invoice.get("date")),
+            "date": date_value,
             "counterparty_edrpou": invoice_data.get("counterparty_edrpou", existing_invoice.get("counterparty_edrpou")),
             "counterparty_name": invoice_data.get("counterparty_name", existing_invoice.get("counterparty_name")),
             "items": items,
