@@ -94,6 +94,42 @@ const TemplateViewer = () => {
     }
   };
 
+  const handleResetToDefault = async () => {
+    if (!selectedTemplate) {
+      return;
+    }
+
+    // Confirm action
+    if (!window.confirm('Ви впевнені, що хочете скинути шаблон на системний за замовчуванням? Поточний вміст буде збережено в історії версій.')) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.post(
+        `${API_URL}/api/templates/${selectedTemplate._id}/reset`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      toast.success('Шаблон успішно скинуто на системний!');
+      
+      // Reload templates
+      await loadTemplates();
+      
+      // Update selected template with new content
+      setSelectedTemplate(response.data);
+      setIsEditing(false);
+      setViewMode('preview');
+    } catch (error) {
+      console.error('Error resetting template:', error);
+      toast.error(error.response?.data?.detail || 'Помилка скидання шаблону');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <Card>
