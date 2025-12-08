@@ -89,41 +89,32 @@ class TemplateResetTestSuite:
             return {}
         return {"Authorization": f"Bearer {self.auth_token}"}
     
-    def test_get_orders_list(self):
-        """Test 1: GET /api/orders (отримати список замовлень)"""
+    def test_libpangoft2_library_check(self):
+        """Test 1: Check libpangoft2-1.0-0 library installation (Critical)"""
         logger.info("=" * 80)
-        logger.info("ТЕСТ 1: ОТРИМАННЯ СПИСКУ ЗАМОВЛЕНЬ")
+        logger.info("ТЕСТ 1: ПЕРЕВІРКА БІБЛІОТЕКИ libpangoft2-1.0-0 (КРИТИЧНО)")
         logger.info("=" * 80)
         
         try:
-            response = requests.get(
-                f"{self.api_url}/orders",
-                headers=self.get_auth_headers(),
-                timeout=30
+            # Check if libpangoft2-1.0-0 is installed
+            result = subprocess.run(
+                ['dpkg', '-l', 'libpangoft2-1.0-0'],
+                capture_output=True,
+                text=True,
+                timeout=10
             )
             
-            if response.status_code != 200:
-                logger.error(f"❌ Помилка отримання замовлень: {response.status_code} - {response.text}")
+            if result.returncode == 0 and 'libpangoft2-1.0-0' in result.stdout:
+                logger.info("✅ libpangoft2-1.0-0 бібліотека встановлена")
+                logger.info(f"   Деталі: {result.stdout.strip().split()[-3:]}")  # Show version info
+                return True
+            else:
+                logger.error("❌ КРИТИЧНА ПОМИЛКА: libpangoft2-1.0-0 бібліотека НЕ встановлена!")
+                logger.error("   Це заблокує генерацію PDF файлів")
                 return False
-            
-            orders = response.json()
-            logger.info(f"✅ Отримано {len(orders)} замовлень")
-            
-            if not orders:
-                logger.error("❌ Список замовлень порожній")
-                return False
-            
-            # Select first order for invoice creation
-            self.selected_order = orders[0]
-            logger.info(f"✅ Вибрано замовлення для створення рахунку:")
-            logger.info(f"   Номер: {self.selected_order.get('number', 'N/A')}")
-            logger.info(f"   ЄДРПОУ: {self.selected_order.get('counterparty_edrpou', 'N/A')}")
-            logger.info(f"   Сума: {self.selected_order.get('total_amount', 'N/A')}")
-            
-            return True
             
         except Exception as e:
-            logger.error(f"❌ Тест отримання замовлень провалився: {str(e)}")
+            logger.error(f"❌ Помилка перевірки бібліотеки: {str(e)}")
             return False
     
     def test_create_invoice_from_order(self):
