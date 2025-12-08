@@ -194,6 +194,7 @@ class PDFServiceWithTemplates:
             'supplier_signature': supplier.get('signature', ''),
             'supplier_full_name': supplier.get('full_name', ''),
             'supplier_company_name': supplier.get('company_name', ''),
+            'supplier_contract_type': supplier.get('contract_type', 'Статуту'),
             'supplier_logo': logo_file_path,
             
             # Counterparty info - EXTENDED
