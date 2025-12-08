@@ -424,6 +424,7 @@ class EmailService:
         </head>
         <body>
             <div class="email-container">
+                {f'<div class="logo-container"><img src="cid:company_logo" alt="Company Logo" class="company-logo" /></div>' if company_logo_url else ''}
                 <div class="header">
                     <h1>Замовлення №{order_number}</h1>
                     <p>Система Управління Документами</p>
