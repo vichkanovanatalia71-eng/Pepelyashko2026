@@ -250,8 +250,8 @@ async def update_invoice(
         if not date_value or date_value == "":
             date_value = existing_invoice.get("date")
         
-        # Get total_amount from request if provided, otherwise keep existing
-        if "total_amount" in invoice_data:
+        # Get total_amount from request if provided AND non-zero, otherwise keep existing
+        if "total_amount" in invoice_data and invoice_data["total_amount"] > 0:
             total_amount = invoice_data["total_amount"]
         else:
             total_amount = existing_invoice.get("total_amount", 0)
