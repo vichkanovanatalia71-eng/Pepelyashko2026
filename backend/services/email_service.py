@@ -446,27 +446,21 @@ class EmailService:
                     overflow: hidden;
                     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
                 }}
+                .logo-container {{
+                    text-align: center;
+                    padding: 20px;
+                    background-color: #ffffff;
+                }}
+                .company-logo {{
+                    max-width: 80px;
+                    max-height: 80px;
+                    border-radius: 8px;
+                }}
                 .header {{
                     background: linear-gradient(135deg, #10b981 0%, #059669 100%);
                     color: white;
                     padding: 30px 40px;
                     text-align: center;
-                }}
-                .header-content {{
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 20px;
-                }}
-                .company-logo {{
-                    max-width: 60px;
-                    max-height: 60px;
-                    border-radius: 8px;
-                    background-color: white;
-                    padding: 8px;
-                }}
-                .header-text {{
-                    text-align: left;
                 }}
                 .header h1 {{
                     margin: 0;
