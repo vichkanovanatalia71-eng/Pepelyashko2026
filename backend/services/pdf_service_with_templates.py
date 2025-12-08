@@ -42,6 +42,8 @@ class PDFServiceWithTemplates:
             Path to generated PDF file
         """
         try:
+            logger.info(f"Starting PDF generation for invoice: {invoice.get('number')}")
+            
             # Get template
             if template_id:
                 template = await self.template_service.get_template_by_id(
@@ -57,11 +59,17 @@ class PDFServiceWithTemplates:
             if not template:
                 raise Exception("Template not found")
             
+            logger.info("Template loaded successfully")
+            
             # Prepare context
             context = self._prepare_invoice_context(invoice, supplier, counterparty)
             
+            logger.info("Context prepared successfully")
+            
             # Render template
             html_content = self.renderer.render(template.content, context)
+            
+            logger.info("Template rendered successfully")
             
             # Generate PDF
             invoice_number = invoice.get('number', 'unknown')
@@ -75,7 +83,7 @@ class PDFServiceWithTemplates:
             return str(pdf_path)
             
         except Exception as e:
-            logger.error(f"Error generating invoice PDF: {str(e)}")
+            logger.error(f"Error generating invoice PDF: {str(e)}", exc_info=True)
             raise
     
     def _get_logo_file_path(self, logo_url: str) -> str:
