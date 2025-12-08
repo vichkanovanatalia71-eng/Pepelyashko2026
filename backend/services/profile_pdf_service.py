@@ -74,8 +74,8 @@ class ProfilePDFService:
                     }}
                     body {{
                         font-family: 'DejaVu Sans', Arial, sans-serif;
-                        font-size: 10pt;
-                        line-height: 1.4;
+                        font-size: 9pt;
+                        line-height: 1.3;
                         color: #1e293b;
                         background: white;
                         display: flex;
@@ -95,91 +95,91 @@ class ProfilePDFService:
                     }}
                     .header {{
                         background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
-                        padding: 25px 30px;
+                        padding: 18px 25px;
                         display: flex;
                         align-items: center;
-                        gap: 20px;
+                        gap: 15px;
                     }}
                     .logo-box {{
-                        width: 80px;
-                        height: 80px;
+                        width: 65px;
+                        height: 65px;
                         background: #f1f5f9;
-                        border-radius: 8px;
+                        border-radius: 6px;
                         display: flex;
                         align-items: center;
                         justify-content: center;
                         flex-shrink: 0;
                     }}
                     .logo {{
-                        max-width: 70px;
-                        max-height: 70px;
+                        max-width: 58px;
+                        max-height: 58px;
                         object-fit: contain;
                     }}
                     .header-text {{
                         flex: 1;
                     }}
                     .company-name {{
-                        font-size: 14pt;
+                        font-size: 12pt;
                         font-weight: bold;
                         color: white;
-                        margin-bottom: 5px;
+                        margin-bottom: 3px;
                     }}
                     .subtitle {{
-                        font-size: 9pt;
+                        font-size: 8pt;
                         color: rgba(255, 255, 255, 0.9);
                     }}
                     .content {{
-                        padding: 25px 30px;
+                        padding: 18px 25px;
                     }}
                     .section {{
-                        margin-bottom: 20px;
+                        margin-bottom: 14px;
                         page-break-inside: avoid;
                     }}
                     .section-title {{
-                        font-size: 11pt;
+                        font-size: 10pt;
                         font-weight: bold;
                         color: #0f172a;
-                        margin-bottom: 12px;
+                        margin-bottom: 8px;
                         display: flex;
                         align-items: center;
-                        gap: 8px;
+                        gap: 6px;
                     }}
                     .section-icon {{
-                        width: 18px;
-                        height: 18px;
+                        width: 15px;
+                        height: 15px;
                         color: #14b8a6;
                     }}
                     .info-grid {{
                         background: #f8fafc;
-                        border-radius: 6px;
-                        padding: 15px;
+                        border-radius: 5px;
+                        padding: 10px 12px;
                     }}
                     .info-row {{
                         display: flex;
-                        padding: 6px 0;
+                        padding: 4px 0;
                     }}
                     .info-row:not(:last-child) {{
                         border-bottom: 1px solid #e2e8f0;
                     }}
                     .info-label {{
                         width: 45%;
-                        font-size: 9pt;
+                        font-size: 8pt;
                         color: #64748b;
                         font-weight: 600;
                     }}
                     .info-value {{
                         width: 55%;
-                        font-size: 9pt;
+                        font-size: 8pt;
                         color: #0f172a;
                         word-wrap: break-word;
                     }}
                     .vat-badge {{
                         display: inline-block;
-                        padding: 6px 12px;
+                        padding: 4px 10px;
                         background-color: {vat_badge_bg};
                         color: {vat_badge_color};
-                        border-radius: 12px;
-                        font-size: 9pt;
+                        border-radius: 10px;
+                        font-size: 8pt;
                         font-weight: 600;
                     }}
                 </style>
