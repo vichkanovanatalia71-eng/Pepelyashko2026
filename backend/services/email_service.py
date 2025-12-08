@@ -306,8 +306,18 @@ class EmailService:
                     overflow: hidden;
                     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
                 }}
+                .logo-container {{
+                    text-align: center;
+                    padding: 20px;
+                    background-color: #ffffff;
+                }}
+                .company-logo {{
+                    max-width: 160px;
+                    max-height: 160px;
+                    border-radius: 8px;
+                }}
                 .header {{
-                    background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+                    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
                     color: white;
                     padding: 30px 40px;
                     text-align: center;
@@ -316,12 +326,11 @@ class EmailService:
                     margin: 0;
                     font-size: 28px;
                     font-weight: 600;
-                    letter-spacing: -0.5px;
                 }}
                 .header p {{
-                    margin: 10px 0 0 0;
-                    font-size: 16px;
-                    opacity: 0.95;
+                    margin: 5px 0 0 0;
+                    font-size: 14px;
+                    opacity: 0.9;
                 }}
                 .content {{
                     padding: 40px;
@@ -332,8 +341,8 @@ class EmailService:
                     margin-bottom: 20px;
                 }}
                 .info-box {{
-                    background-color: #f0f9ff;
-                    border-left: 4px solid #0ea5e9;
+                    background-color: #f0fdf4;
+                    border-left: 4px solid #10b981;
                     padding: 20px;
                     margin: 25px 0;
                     border-radius: 4px;
@@ -342,7 +351,7 @@ class EmailService:
                     display: flex;
                     justify-content: space-between;
                     padding: 8px 0;
-                    border-bottom: 1px solid #e0f2fe;
+                    border-bottom: 1px solid #dcfce7;
                 }}
                 .info-row:last-child {{
                     border-bottom: none;
@@ -358,14 +367,14 @@ class EmailService:
                     font-size: 14px;
                 }}
                 .total {{
-                    background-color: #e0f2fe;
+                    background-color: #dcfce7;
                     padding: 15px 20px;
                     margin: 20px 0;
                     border-radius: 6px;
                     text-align: right;
                 }}
                 .total-label {{
-                    color: #0c4a6e;
+                    color: #14532d;
                     font-size: 16px;
                     font-weight: 600;
                 }}
