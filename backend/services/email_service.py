@@ -107,7 +107,8 @@ class EmailService:
         counterparty_name: str,
         pdf_path: str,
         company_logo_url: str = None,
-        company_logo_path: str = None
+        company_logo_path: str = None,
+        company_name: str = None
     ) -> bool:
         """
         Send counterparty card PDF via email with green-themed styling.
