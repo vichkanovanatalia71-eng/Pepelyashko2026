@@ -3542,6 +3542,20 @@ const FullDashboard = () => {
                   <Label className="text-sm text-gray-600">Підпис</Label>
                   <p className="text-lg">{viewingCounterparty.signature || 'Не вказано'}</p>
                 </div>
+                <div>
+                  <Label className="text-sm text-gray-600">Податковий статус</Label>
+                  <p className="text-lg">
+                    {viewingCounterparty.vat_payer ? (
+                      <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-semibold">
+                        Платник ПДВ ({viewingCounterparty.vat_rate || 20}%)
+                      </span>
+                    ) : (
+                      <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-semibold">
+                        Платник ЄП
+                      </span>
+                    )}
+                  </p>
+                </div>
               </div>
 
               {/* Documents Section */}
