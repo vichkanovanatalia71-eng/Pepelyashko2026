@@ -273,13 +273,17 @@ async def send_counterparty_card_email(
             company_logo_path = f"/app/backend/{logo_relative_path}"
             company_logo_url = "embedded"
         
+        # Get company name
+        company_name = user.get('company_name') or user.get('representative_name') or 'Наша компанія'
+        
         # Send email
         success = email_service.send_counterparty_card(
             to_email=recipient_email,
             counterparty_name=counterparty_dict.get('representative_name', 'Unknown'),
             pdf_path=pdf_path,
             company_logo_url=company_logo_url,
-            company_logo_path=company_logo_path
+            company_logo_path=company_logo_path,
+            company_name=company_name
         )
         
         if not success:
