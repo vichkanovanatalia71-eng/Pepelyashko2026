@@ -101,9 +101,9 @@ const ProfileCard = ({ user, onUpdate, onDelete }) => {
     }
   };
 
-  const companyLogo = user?.company_logo 
-    ? `${API_URL}/api/uploads/${user.company_logo.split('/').pop()}`
-    : null;
+  const companyLogo = user?.logo_url 
+    ? `${API_URL}${user.logo_url}`
+    : (user?.company_logo ? `${API_URL}/api/uploads/${user.company_logo.split('/').pop()}` : null);
 
   return (
     <>
