@@ -60,13 +60,18 @@ class EmailService:
             msg_alternative.attach(MIMEText(body, 'html'))
             
             # Add embedded image if provided
-            if embedded_image_path and os.path.exists(embedded_image_path):
-                with open(embedded_image_path, 'rb') as f:
-                    img_data = f.read()
-                    image = MIMEImage(img_data)
-                    image.add_header('Content-ID', '<company_logo>')
-                    image.add_header('Content-Disposition', 'inline', filename='logo.png')
-                    msg.attach(image)
+            if embedded_image_path:
+                logger.info(f"Attempting to embed logo from: {embedded_image_path}")
+                if os.path.exists(embedded_image_path):
+                    with open(embedded_image_path, 'rb') as f:
+                        img_data = f.read()
+                        image = MIMEImage(img_data)
+                        image.add_header('Content-ID', '<company_logo>')
+                        image.add_header('Content-Disposition', 'inline', filename='logo.png')
+                        msg.attach(image)
+                    logger.info(f"✓ Logo embedded successfully, size: {len(img_data)} bytes")
+                else:
+                    logger.warning(f"✗ Logo file not found at: {embedded_image_path}")
             
             # Add PDF attachment
             if os.path.exists(attachment_path):
