@@ -220,7 +220,11 @@ async def update_invoice(
             )
         
         # Prepare update data - ensure numeric values are stored as numbers
-        items = invoice_data.get("items", existing_invoice.get("items"))
+        items = invoice_data.get("items")
+        
+        # If items is None or empty array, keep existing items
+        if items is None or (isinstance(items, list) and len(items) == 0):
+            items = existing_invoice.get("items", [])
         
         # Convert string values to numbers in items
         if items:
