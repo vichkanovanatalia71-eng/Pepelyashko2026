@@ -218,91 +218,85 @@ class UserTemplateTestSuite:
             logger.error(f"❌ Тест генерації PDF провалився: {str(e)}")
             return False
     
-    def test_template_reset_functionality(self):
-        """Test 3: POST /api/templates/{template_id}/reset - скидання шаблону до системного"""
+    def test_compare_with_system_template(self):
+        """Test 3: Compare user template with system template"""
         logger.info("=" * 80)
-        logger.info("ТЕСТ 3: СКИДАННЯ ШАБЛОНУ ДО СИСТЕМНОГО")
+        logger.info("ТЕСТ 3: ПОРІВНЯННЯ З СИСТЕМНИМ ШАБЛОНОМ")
         logger.info("=" * 80)
         
-        if not self.user_template_id:
-            logger.error("❌ Немає ID користувацького шаблону для скидання")
+        if not self.system_template_id:
+            logger.error("❌ Немає ID системного шаблону для порівняння")
             return False
         
         try:
-            # First, get the current template content for comparison
-            get_response = requests.get(
-                f"{self.api_url}/templates/{self.user_template_id}",
+            # Get system default template
+            response = requests.get(
+                f"{self.api_url}/templates/{self.system_template_id}",
                 headers=self.get_auth_headers(),
                 timeout=30
             )
             
-            if get_response.status_code != 200:
-                logger.error(f"❌ Помилка отримання поточного шаблону: {get_response.status_code}")
+            if response.status_code != 200:
+                logger.error(f"❌ Помилка отримання системного шаблону: {response.status_code} - {response.text}")
                 return False
             
-            original_template = get_response.json()
-            original_content = original_template.get('content', '')
-            logger.info(f"✅ Отримано поточний шаблон (довжина контенту: {len(original_content)} символів)")
+            system_template = response.json()
+            logger.info("✅ Системний шаблон отримано успішно")
             
-            # Reset template to system default
-            logger.info(f"Скидання шаблону {self.user_template_id} до системного...")
-            reset_response = requests.post(
-                f"{self.api_url}/templates/{self.user_template_id}/reset",
-                headers=self.get_auth_headers(),
-                timeout=30
-            )
-            
-            if reset_response.status_code != 200:
-                logger.error(f"❌ Помилка скидання шаблону: {reset_response.status_code} - {reset_response.text}")
+            # Verify it's marked as default
+            if not system_template.get('is_default'):
+                logger.error("❌ Шаблон не позначений як системний (is_default: false)")
                 return False
-            
-            reset_result = reset_response.json()
-            logger.info("✅ Шаблон успішно скинуто до системного")
-            
-            # Verify the template content has been updated
-            new_content = reset_result.get('content', '')
-            if new_content == original_content:
-                logger.warning("⚠️  Контент шаблону не змінився (можливо, вже був системним)")
             else:
-                logger.info("✅ Контент шаблону оновлено")
-                logger.info(f"   Нова довжина контенту: {len(new_content)} символів")
+                logger.info("✅ Шаблон правильно позначений як системний (is_default: true)")
             
-            # Check for new template features from review request
-            required_features = [
-                "Платіжне доручення",  # Payment order section
-                "payorder",            # CSS class
-                "Код банку"            # Bank code field
+            # Check that system template does NOT contain custom text
+            system_content = system_template.get('content', '')
+            
+            custom_markers = [
+                "ТЕСТОВИЙ РАХУНОК",
+                "TEST USER TEMPLATE 12345"
             ]
             
-            missing_features = []
-            for feature in required_features:
-                if feature not in new_content:
-                    missing_features.append(feature)
+            found_custom_in_system = []
+            for marker in custom_markers:
+                if marker in system_content:
+                    found_custom_in_system.append(marker)
             
-            if missing_features:
-                logger.error(f"❌ Відсутні обов'язкові елементи в новому шаблоні: {missing_features}")
+            if found_custom_in_system:
+                logger.error(f"❌ Системний шаблон містить користувацькі маркери: {found_custom_in_system}")
                 return False
             else:
-                logger.info("✅ Всі обов'язкові елементи присутні в новому шаблоні:")
-                for feature in required_features:
-                    logger.info(f"   ✓ {feature}")
+                logger.info("✅ Системний шаблон НЕ містить користувацькі маркери")
             
-            # Verify version history was updated
-            version_history = reset_result.get('version_history', [])
-            if version_history:
-                logger.info(f"✅ Історія версій оновлена ({len(version_history)} версій)")
-                latest_version = version_history[-1] if version_history else {}
-                if latest_version.get('content') == original_content:
-                    logger.info("✅ Попередній контент збережено в історії версій")
+            # Check that system template contains standard text
+            standard_markers = [
+                "Рахунок на оплату",
+                "ПОСТАЧАЛЬНИК",
+                "ПОКУПЕЦЬ"
+            ]
+            
+            found_standard = []
+            missing_standard = []
+            
+            for marker in standard_markers:
+                if marker in system_content:
+                    found_standard.append(marker)
                 else:
-                    logger.warning("⚠️  Попередній контент може не збереглися в історії")
+                    missing_standard.append(marker)
+            
+            if missing_standard:
+                logger.error(f"❌ Системний шаблон не містить стандартні елементи: {missing_standard}")
+                return False
             else:
-                logger.warning("⚠️  Історія версій порожня")
+                logger.info("✅ Системний шаблон містить всі стандартні елементи:")
+                for marker in found_standard:
+                    logger.info(f"   ✓ {marker}")
             
             return True
             
         except Exception as e:
-            logger.error(f"❌ Тест скидання шаблону провалився: {str(e)}")
+            logger.error(f"❌ Тест порівняння з системним шаблоном провалився: {str(e)}")
             return False
     
     def test_pdf_generation_with_new_template(self):
