@@ -309,6 +309,8 @@ const TemplateViewer = () => {
                                 <span className="text-xs text-gray-600">- В особі</span>
                                 <code className="bg-white px-2 py-1 rounded text-xs border">{'{{supplier_signature}}'}</code>
                                 <span className="text-xs text-gray-600">- Підпис</span>
+                                <code className="bg-white px-2 py-1 rounded text-xs border">{'{{supplier_contract_type}}'}</code>
+                                <span className="text-xs text-gray-600">- Діє на підставі</span>
                                 <code className="bg-white px-2 py-1 rounded text-xs border">{'{{supplier_logo}}'}</code>
                                 <span className="text-xs text-gray-600">- Логотип (URL)</span>
                               </div>
