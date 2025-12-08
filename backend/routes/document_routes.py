@@ -158,7 +158,7 @@ async def get_invoice_pdf(
         # Get supplier (current user) details
         user = await database.users.find_one({
             "_id": current_user["_id"]
-        }, {"_id": 0, "hashed_password": 0})
+        }, {"hashed_password": 0})
         
         if not user:
             raise HTTPException(
