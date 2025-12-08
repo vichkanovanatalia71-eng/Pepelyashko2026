@@ -1001,6 +1001,147 @@ class EmailService:
         )
 
 
+    def send_contract_document(
+        self,
+        to_email: str,
+        contract_number: str,
+        contract_date: str,
+        counterparty_name: str,
+        pdf_path: str,
+        company_name: str = None,
+        company_logo_url: str = None,
+        company_logo_path: str = None
+    ) -> bool:
+        """Send contract document PDF via email with pink-themed HTML styling."""
+        formatted_date = self.format_date_ukrainian(contract_date)
+        company_display_name = company_name or "Компанія"
+        
+        subject = f"Договір №{contract_number} від {formatted_date}"
+        
+        # Logo section
+        logo_html = ""
+        if company_logo_path and Path(company_logo_path).exists():
+            logo_html = '<img src="cid:company_logo" alt="Logo" style="max-width: 120px; max-height: 60px; margin-bottom: 15px;" />'
+        
+        body = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <style>
+                body {{
+                    font-family: 'Segoe UI', Arial, sans-serif;
+                    line-height: 1.6;
+                    color: #1e293b;
+                    margin: 0;
+                    padding: 0;
+                    background-color: #f8fafc;
+                }}
+                .email-container {{
+                    max-width: 600px;
+                    margin: 20px auto;
+                    background-color: #ffffff;
+                    border-radius: 8px;
+                    overflow: hidden;
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                }}
+                .header {{
+                    background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+                    color: white;
+                    padding: 30px 40px;
+                    text-align: center;
+                }}
+                .header h1 {{
+                    margin: 0;
+                    font-size: 28px;
+                    font-weight: 600;
+                }}
+                .content {{
+                    padding: 40px;
+                }}
+                .info-box {{
+                    background-color: #fff1f2;
+                    border-left: 4px solid #f43f5e;
+                    padding: 20px;
+                    margin: 25px 0;
+                    border-radius: 4px;
+                }}
+                .info-row {{
+                    display: flex;
+                    justify-content: space-between;
+                    padding: 8px 0;
+                    border-bottom: 1px solid #fecdd3;
+                }}
+                .info-row:last-child {{
+                    border-bottom: none;
+                }}
+                .attachment-notice {{
+                    background-color: #fecdd3;
+                    border: 1px solid #fda4af;
+                    padding: 15px;
+                    margin: 25px 0;
+                    border-radius: 6px;
+                    text-align: center;
+                }}
+                .footer {{
+                    background-color: #f8fafc;
+                    padding: 25px 40px;
+                    text-align: center;
+                    border-top: 1px solid #e2e8f0;
+                }}
+                .footer p {{
+                    margin: 5px 0;
+                    font-size: 13px;
+                    color: #94a3b8;
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="email-container">
+                <div class="header">
+                    {logo_html}
+                    <h1>Договір №{contract_number}</h1>
+                    <p>Система Управління Документами</p>
+                </div>
+                <div class="content">
+                    <p>Доброго дня!</p>
+                    <p><strong>{company_display_name}</strong> надсилає Вам договір №<strong>{contract_number}</strong> від <strong>{formatted_date}</strong>.</p>
+                    <div class="info-box">
+                        <div class="info-row">
+                            <span>📋 Номер договору:</span>
+                            <span>№{contract_number}</span>
+                        </div>
+                        <div class="info-row">
+                            <span>📅 Дата:</span>
+                            <span>{formatted_date}</span>
+                        </div>
+                        <div class="info-row">
+                            <span>🏢 Контрагент:</span>
+                            <span>{counterparty_name}</span>
+                        </div>
+                    </div>
+                    <div class="attachment-notice">
+                        <p>📎 Повна інформація про договір знаходиться у вкладеному PDF-документі</p>
+                    </div>
+                </div>
+                <div class="footer">
+                    <p>Це автоматично згенерований лист</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        
+        return self.send_email_with_logo(
+            to_email=to_email,
+            subject=subject,
+            body=body,
+            attachment_path=pdf_path,
+            attachment_name=f"Договір_{contract_number}.pdf",
+            logo_path=company_logo_path
+        )
+
+
     def send_profile_document(
         self,
         to_email: str,
