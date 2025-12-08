@@ -455,16 +455,18 @@ const ProfileCard = ({ user, onUpdate, onDelete }) => {
               </div>
             </div>
 
-            <div>
-              <Label>Назва компанії</Label>
-              <Input
-                value={formData.representative_name}
-                onChange={(e) => setFormData({ ...formData, representative_name: e.target.value })}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
+            {/* Company Info Section */}
+            <div className="space-y-4 pb-4 border-b">
+              <h4 className="font-semibold text-gray-700">Інформація про компанію</h4>
               <div>
-                <Label>ЄДРПОУ</Label>
+                <Label>Назва компанії</Label>
+                <Input
+                  value={formData.representative_name}
+                  onChange={(e) => setFormData({ ...formData, representative_name: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>ЄДРПОУ {searchingEdrpou && <span className="text-xs text-teal-600">(пошук даних...)</span>}</Label>
                 <div className="relative">
                   <Input
                     value={formData.edrpou}
@@ -483,21 +485,41 @@ const ProfileCard = ({ user, onUpdate, onDelete }) => {
                     </div>
                   )}
                 </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Дані підтягуються автоматично при введенні 8 цифр (ЮрОсоба) або 10 цифр (ФОП)
+                </p>
               </div>
               <div>
-                <Label>Телефон</Label>
+                <Label>Юридична адреса {searchingEdrpou && <span className="text-xs text-teal-600">(оновлюється...)</span>}</Label>
                 <Input
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  value={formData.legal_address}
+                  onChange={(e) => setFormData({ ...formData, legal_address: e.target.value })}
+                  placeholder="Автоматично заповниться за ЄДРПОУ або введіть вручну"
                 />
               </div>
             </div>
-            <div>
-              <Label>Юридична адреса</Label>
-              <Input
-                value={formData.legal_address}
-                onChange={(e) => setFormData({ ...formData, legal_address: e.target.value })}
-              />
+
+            {/* Contact Info Section */}
+            <div className="space-y-4 pb-4 border-b">
+              <h4 className="font-semibold text-gray-700">Контактні дані</h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Email</Label>
+                  <Input
+                    value={formData.email}
+                    disabled
+                    className="bg-gray-100"
+                  />
+                </div>
+                <div>
+                  <Label>Телефон</Label>
+                  <Input
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    placeholder="+380501234567"
+                  />
+                </div>
+              </div>
             </div>
             <div>
               <Label>IBAN</Label>
