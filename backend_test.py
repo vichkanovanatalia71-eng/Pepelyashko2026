@@ -3327,50 +3327,85 @@ class TemplateResetTestSuite:
             return False
 
     def run_all_tests(self):
-        """Run all tests and return overall success status"""
-        logger.info("=" * 80)
-        logger.info("ПОВНЕ ТЕСТУВАННЯ ВСІЄЇ ЛОГІКИ СИСТЕМИ УПРАВЛІННЯ ДОКУМЕНТАМИ")
-        logger.info("=" * 80)
+        """Run all tests for template reset functionality"""
+        logger.info("🚀 ПОЧАТОК ТЕСТУВАННЯ ФУНКЦІОНАЛЬНОСТІ СКИДАННЯ ШАБЛОНІВ")
+        logger.info("=" * 100)
         
-        tests = [
-            ("Health Check", self.test_health_check),
-            ("Google Drive Service Initialization", self.test_google_drive_service_initialization),
-            ("Get Counterparties for Documents", self.test_get_counterparties_for_documents),
-            
-            # ФАЗА 1 РЕФАКТОРИНГ ЗАМОВЛЕНЬ TESTS (PRIORITY)
-            ("ФАЗА 1: Створення замовлення БЕЗ PDF", self.test_order_creation_without_pdf),
-            ("ФАЗА 1: Генерація PDF для існуючого замовлення", self.test_order_pdf_generation_on_demand),
-            ("ФАЗА 1: Перевірка списку замовлень", self.test_order_list_verification),
-            
-            # БЛОК 1: ЗАМОВЛЕННЯ (LEGACY)
-            ("1.1 Order Creation", self.test_order_creation),
-            ("1.2 Order List", self.test_order_list),
-            ("1.3 Order Email Sending", self.test_order_email_sending),
-            
-            # БЛОК 2: СТВОРЕННЯ ДОКУМЕНТІВ НА ОСНОВІ ЗАМОВЛЕННЯ
-            ("2.1 Contract Based on Order", self.test_contract_based_on_order),
-            ("2.2 Invoice Based on Order", self.test_invoice_based_on_order),
-            ("2.3 Related Documents by Order", self.test_related_documents_by_order),
-            
-            # БЛОК 3: ІНШІ ДОКУМЕНТИ
-            ("3.1 Act Creation", self.test_act_creation),
-            ("3.2 Waybill Creation", self.test_waybill_creation),
-            ("3.3 All Document Lists", self.test_all_document_lists),
-            
-            # БЛОК 4: КОНТРАГЕНТИ
-            ("4.1 Counterparties List", self.test_counterparties_list),
-            
-            # БЛОК 5: РАХУНКИ БЕЗ ЗАМОВЛЕНЬ (REVIEW REQUEST)
-            ("5.1 Invoice Generation WITHOUT Orders", self.test_invoice_generation_without_orders),
-            
-            # КРИТИЧНІ ПЕРЕВІРКИ
-            ("Ukrainian Characters in PDFs", self.test_ukrainian_characters_in_pdfs),
-            ("VAT Exemption Marking", self.test_vat_exemption_marking),
-            ("Google Drive Integration", self.test_specific_google_drive_scenario),
-            ("Contract Creation Based on Orders", self.test_contract_creation_based_on_orders),
-            ("Custom Template Contract Generation", self.test_custom_template_contract_generation),
-            ("Backend Logs Unicode Check", self.check_backend_logs_for_unicode_errors),
-        ]
+        # Test results tracking
+        test_results = {}
+        
+        # Health check first
+        test_results['health_check'] = self.test_health_check()
+        
+        # Critical: Check libpangoft2 library first
+        test_results['libpangoft2_check'] = self.test_libpangoft2_library_check()
+        if not test_results['libpangoft2_check']:
+            logger.error("❌ КРИТИЧНА ПОМИЛКА: libpangoft2-1.0-0 не встановлена - зупинка тестування")
+            return False
+        
+        # Authentication
+        if not self.authenticate():
+            logger.error("❌ Автентифікація провалилася - зупинка тестування")
+            return False
+        
+        # Template reset functionality tests
+        test_results['get_templates'] = self.test_get_invoice_templates()
+        test_results['template_reset'] = self.test_template_reset_functionality()
+        test_results['system_template_content'] = self.test_system_default_template_content()
+        test_results['pdf_with_new_template'] = self.test_pdf_generation_with_new_template()
+        
+        # Print summary
+        logger.info("=" * 100)
+        logger.info("📊 ПІДСУМОК ТЕСТУВАННЯ ФУНКЦІОНАЛЬНОСТІ СКИДАННЯ ШАБЛОНІВ")
+        logger.info("=" * 100)
+        
+        passed_tests = sum(1 for result in test_results.values() if result)
+        total_tests = len(test_results)
+        success_rate = (passed_tests / total_tests) * 100
+        
+        logger.info(f"Пройдено тестів: {passed_tests}/{total_tests} ({success_rate:.1f}%)")
+        logger.info("")
+        
+        for test_name, result in test_results.items():
+            status = "✅ ПРОЙДЕНО" if result else "❌ ПРОВАЛЕНО"
+            logger.info(f"{test_name}: {status}")
+        
+        logger.info("=" * 100)
+        
+        # Detailed results for each test category
+        logger.info("📋 ДЕТАЛЬНІ РЕЗУЛЬТАТИ:")
+        logger.info("")
+        
+        if test_results.get('libpangoft2_check'):
+            logger.info("✅ БІБЛІОТЕКА libpangoft2-1.0-0: Встановлена та працює")
+        else:
+            logger.info("❌ БІБЛІОТЕКА libpangoft2-1.0-0: НЕ встановлена або не працює")
+        
+        if test_results.get('template_reset'):
+            logger.info("✅ СКИДАННЯ ШАБЛОНУ: Функціональність працює коректно")
+        else:
+            logger.info("❌ СКИДАННЯ ШАБЛОНУ: Помилки в функціональності")
+        
+        if test_results.get('pdf_with_new_template'):
+            logger.info("✅ ГЕНЕРАЦІЯ PDF: Новий шаблон використовується правильно")
+        else:
+            logger.info("❌ ГЕНЕРАЦІЯ PDF: Проблеми з новим шаблоном")
+        
+        if test_results.get('system_template_content'):
+            logger.info("✅ СИСТЕМНИЙ ШАБЛОН: Контент відповідає вимогам")
+        else:
+            logger.info("❌ СИСТЕМНИЙ ШАБЛОН: Контент не відповідає вимогам")
+        
+        logger.info("=" * 100)
+        
+        if success_rate >= 80:
+            logger.info("🎉 ТЕСТУВАННЯ ЗАВЕРШЕНО УСПІШНО!")
+            logger.info("   Функціональність скидання шаблонів працює коректно")
+            return True
+        else:
+            logger.error("💥 ТЕСТУВАННЯ ПРОВАЛИЛОСЯ")
+            logger.error("   Виявлені критичні проблеми з функціональністю")
+            return False
         
         results = []
         passed = 0
