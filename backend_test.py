@@ -22,7 +22,7 @@ import tempfile
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-class NewArchitectureTestSuite:
+class InvoiceWorkflowTestSuite:
     def __init__(self):
         # Get backend URL from frontend .env file
         frontend_env_path = Path("/app/frontend/.env")
@@ -41,20 +41,15 @@ class NewArchitectureTestSuite:
         self.api_url = f"{self.backend_url}/api"
         logger.info(f"Testing backend at: {self.api_url}")
         
-        # Test data with Ukrainian characters
-        self.test_counterparty_edrpou = None
-        self.generated_pdf_filename = None
-        self.generated_pdf_path = None
-        self.contract_number = None
-        self.drive_view_link = None
-        self.drive_download_link = None
-        self.drive_file_id = None
+        # Test credentials from review request
+        self.test_email = "user1@example.com"
+        self.test_password = "password123"
+        self.auth_token = None
         
-        # New document test results
-        self.invoice_results = {}
-        self.act_results = {}
-        self.waybill_results = {}
-        self.order_results = {}
+        # Test data
+        self.selected_order = None
+        self.created_invoice_number = None
+        self.test_results = {}
         
     def test_health_check(self):
         """Test if the backend is running and healthy"""
