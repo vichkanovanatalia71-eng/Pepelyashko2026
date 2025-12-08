@@ -47,8 +47,9 @@ class TemplateResetTestSuite:
         self.auth_token = None
         
         # Test data
-        self.selected_order = None
-        self.created_invoice_number = None
+        self.user_template_id = None
+        self.system_template_id = None
+        self.test_invoice_number = "1968-5"  # From review request
         self.test_results = {}
     
     def authenticate(self):
