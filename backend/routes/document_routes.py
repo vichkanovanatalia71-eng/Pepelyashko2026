@@ -381,12 +381,14 @@ async def send_invoice_email(
         else:
             invoice_date = str(invoice_date)
         
-        # Get company logo URL if available
+        # Get company logo path if available
         company_logo_url = None
+        company_logo_path = None
         if user.get('company_logo'):
-            # Convert relative path to full URL
-            logo_filename = user['company_logo'].split('/')[-1]
-            company_logo_url = f"{os.environ.get('BACKEND_URL', 'http://localhost:8001')}/api/uploads/{logo_filename}"
+            # Get the actual file path for embedding
+            logo_relative_path = user['company_logo']
+            company_logo_path = f"/app/backend/{logo_relative_path}"
+            company_logo_url = "embedded"  # Flag to show logo in template
         
         email_service.send_invoice_document(
             to_email=recipient_email,
@@ -395,7 +397,8 @@ async def send_invoice_email(
             counterparty_name=invoice.get('counterparty_name', '—'),
             total_amount=invoice.get('total_amount', 0),
             pdf_path=pdf_path,
-            company_logo_url=company_logo_url
+            company_logo_url=company_logo_url,
+            company_logo_path=company_logo_path
         )
         
         logger.info(f"Invoice PDF sent to {recipient_email} by user {current_user['_id']}")
