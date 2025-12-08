@@ -236,36 +236,36 @@ const ProfileCard = ({ user, onUpdate, onDelete }) => {
           </div>
 
           {/* Action Buttons */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-4 border-t">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 pt-3 border-t">
             <Button
               onClick={() => setIsEditDialogOpen(true)}
-              className="bg-teal-500 hover:bg-teal-600"
+              className="bg-teal-500 hover:bg-teal-600 text-sm py-2"
             >
-              <Edit size={16} className="mr-2" />
+              <Edit size={14} className="mr-1" />
               Редагувати
             </Button>
             <Button
               onClick={handleDownloadPDF}
               variant="outline"
-              className="border-teal-500 text-teal-600 hover:bg-teal-50"
+              className="border-teal-500 text-teal-600 hover:bg-teal-50 text-sm py-2"
             >
-              <Download size={16} className="mr-2" />
+              <Download size={14} className="mr-1" />
               PDF
             </Button>
             <Button
               onClick={() => setIsEmailDialogOpen(true)}
               variant="outline"
-              className="border-cyan-500 text-cyan-600 hover:bg-cyan-50"
+              className="border-cyan-500 text-cyan-600 hover:bg-cyan-50 text-sm py-2"
             >
-              <Mail size={16} className="mr-2" />
+              <Mail size={14} className="mr-1" />
               Email
             </Button>
             <Button
               onClick={() => setIsDeleteDialogOpen(true)}
               variant="outline"
-              className="border-red-500 text-red-600 hover:bg-red-50"
+              className="border-red-500 text-red-600 hover:bg-red-50 text-sm py-2"
             >
-              <Trash2 size={16} className="mr-2" />
+              <Trash2 size={14} className="mr-1" />
               Видалити
             </Button>
           </div>
