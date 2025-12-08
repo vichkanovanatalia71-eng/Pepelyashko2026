@@ -1093,13 +1093,24 @@ async def send_waybill_email(
         else:
             waybill_date = str(waybill_date)
         
+        # Prepare company logo
+        company_logo_url = None
+        company_logo_path = None
+        if user and user.get('company_logo'):
+            logo_relative_path = user['company_logo']
+            company_logo_path = f"/app/backend/{logo_relative_path}"
+            company_logo_url = "embedded"
+        
         email_service.send_waybill_document(
             to_email=recipient_email,
             waybill_number=waybill_number,
             waybill_date=waybill_date,
             counterparty_name=waybill.get('counterparty_name', '—'),
             total_amount=waybill.get('total_amount', 0),
-            pdf_path=pdf_path
+            pdf_path=pdf_path,
+            company_name=user.get('representative_name') or user.get('company_name', 'Компанія') if user else 'Компанія',
+            company_logo_url=company_logo_url,
+            company_logo_path=company_logo_path
         )
         
         logger.info(f"Waybill PDF sent to {recipient_email} by user {current_user['_id']}")
