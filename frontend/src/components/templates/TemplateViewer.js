@@ -211,6 +211,16 @@ const TemplateViewer = () => {
                                 HTML код
                               </Button>
                               <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleResetToDefault}
+                                disabled={loading}
+                                className="border-purple-500 text-purple-600 hover:bg-purple-50"
+                              >
+                                <FileText className="w-4 h-4 mr-2" />
+                                Шаблон системи
+                              </Button>
+                              <Button
                                 variant="default"
                                 size="sm"
                                 onClick={handleEdit}
