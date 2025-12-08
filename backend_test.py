@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 """
-Backend Test Suite for New Document Architecture: "CREATE WITHOUT PDF + GENERATE ON DEMAND"
-Tests the new architecture where documents are created without PDF generation,
-and PDFs are generated on demand with 3-day caching and Google Sheets cache clearing.
+Backend Test Suite for Invoice Workflow Testing
+Tests the complete invoice workflow after PDF generation issue fixes:
+- Creating invoices from orders
+- PDF generation with Ukrainian date format
+- Email sending functionality
+- Invoice listing and editing
 """
 
 import requests
@@ -12,6 +15,8 @@ import sys
 from pathlib import Path
 import time
 import logging
+import subprocess
+import tempfile
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
