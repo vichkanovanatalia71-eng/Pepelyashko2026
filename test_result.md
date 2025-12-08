@@ -448,6 +448,21 @@ backend:
         agent: "testing"
         comment: "✅ ДОДАНО ВІДСУТНІЙ ЕНДПОІНТ: Реалізовано ендпоінт GET /api/documents/by-order/{order_number} який був згаданий в review request але відсутній в коді. Ендпоінт фільтрує всі типи документів (invoices, acts, waybills, contracts) за полем based_on_order та повертає структуру {invoices: [], acts: [], waybills: [], contracts: []}. Використовує той samий метод sheets_service.get_documents() що забезпечує консистентність з іншими ендпоінтами. Протестовано успішно з різними значеннями order_number."
 
+  - task: "User Template Usage in PDF Generation"
+    implemented: true
+    working: true
+    file: "/app/backend/routes/document_routes.py, /app/backend/services/pdf_service_with_templates.py, /app/backend/services/template_service.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "❌ КРИТИЧНА ПРОБЛЕМА ВИЯВЛЕНА: Система НЕ використовує користувацький шаблон з '🔵 ТЕСТОВИЙ РАХУНОК' для генерації PDF. Тестування показало: 1) ✅ Користувацький шаблон існує та містить маркери 'ТЕСТОВИЙ РАХУНОК' та 'TEST USER TEMPLATE 12345', 2) ✅ Template service правильно повертає користувацький шаблон через get_default_template(), 3) ❌ PDF генерація використовує системний шаблон замість користувацького, 4) ❌ PDF містить стандартний 'Рахунок на оплату' замість '🔵 ТЕСТОВИЙ РАХУНОК'. RCA: Проблема в /app/backend/routes/document_routes.py лінія 161 - projection {"_id": 0} виключає поле _id з user об'єкта, через що supplier.get('_id') повертає None і template service не може знайти користувацький шаблон."
+      - working: true
+        agent: "testing"
+        comment: "🎉 КРИТИЧНА ПРОБЛЕМА ВИПРАВЛЕНА! Виявлено та виправлено bug в /app/backend/routes/document_routes.py: projection {"_id": 0, "hashed_password": 0} виключав поле _id з user об'єкта. ВИПРАВЛЕННЯ: Змінено на {"hashed_password": 0} щоб зберегти _id поле. РЕЗУЛЬТАТИ ТЕСТУВАННЯ: 1) ✅ Користувацький шаблон 'Новий шаблон invoice' тепер використовується, 2) ✅ Template service отримує правильний user_id: b3678469-180d-41b7-8ff4-64a3b343439f, 3) ✅ PDF генерація використовує користувацький шаблон з маркерами 'ТЕСТОВИЙ РАХУНОК' та 'TEST USER TEMPLATE 12345', 4) ✅ Backend логи підтверджують: 'Template loaded successfully: Новий шаблон invoice', 'Template contains ТЕСТОВИЙ: True'. КРИТИЧНІ ТЕСТИ ПРОЙДЕНО (2/2): користувацький шаблон правильно використовується для генерації PDF замість системного шаблону. Система тепер працює згідно з вимогами review request."
+
   - task: "Template Reset to System Default Functionality"
     implemented: true
     working: true
