@@ -163,22 +163,22 @@ const ProfileCard = ({ user, onUpdate, onDelete }) => {
 
           {/* Banking Information */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
-              <CreditCard className="text-teal-500" size={20} />
+            <h3 className="text-base font-semibold text-gray-900 mb-2 flex items-center gap-2">
+              <CreditCard className="text-teal-500" size={18} />
               Банківські реквізити
             </h3>
-            <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
+            <div className="grid grid-cols-2 gap-3 bg-gray-50 p-3 rounded-lg">
               <div className="col-span-2">
-                <p className="text-sm text-gray-500">IBAN</p>
-                <p className="font-medium font-mono text-sm">{user?.iban || user?.bank_account || '—'}</p>
+                <p className="text-xs text-gray-500">IBAN</p>
+                <p className="text-sm font-medium font-mono">{user?.iban || user?.bank_account || '—'}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Банк</p>
-                <p className="font-medium">{user?.bank_name || user?.bank || '—'}</p>
+                <p className="text-xs text-gray-500">Банк</p>
+                <p className="text-sm font-medium">{user?.bank_name || user?.bank || '—'}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">МФО</p>
-                <p className="font-medium">{user?.mfo || '—'}</p>
+                <p className="text-xs text-gray-500">МФО</p>
+                <p className="text-sm font-medium">{user?.mfo || '—'}</p>
               </div>
             </div>
           </div>
