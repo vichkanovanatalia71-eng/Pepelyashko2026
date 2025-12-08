@@ -213,10 +213,6 @@ const ProfileCard = ({ user, onUpdate, onDelete }) => {
     }
   };
 
-  const companyLogo = user?.logo_url 
-    ? `${API_URL}${user.logo_url}`
-    : (user?.company_logo ? `${API_URL}/api/uploads/${user.company_logo.split('/').pop()}` : null);
-
   return (
     <>
       <Card className="w-full max-w-4xl mx-auto shadow-lg">
