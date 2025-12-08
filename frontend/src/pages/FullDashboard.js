@@ -37,6 +37,7 @@ import '../styles/animations.css';
 import { InvoiceDialog, ActDialog, WaybillDialog, ContractDialog } from '../components/dialogs';
 import { InvoiceList, DocumentListGeneric } from '../components/documents';
 import TemplateViewer from '../components/templates/TemplateViewer';
+import InvoiceTemplateEditor from '../components/templates/InvoiceTemplateEditor';
 import ProfileCard from '../components/ProfileCard';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
