@@ -3347,7 +3347,7 @@ class InvoiceWorkflowTestSuite:
 def main():
     """Main test execution"""
     try:
-        test_suite = ContractTestSuite()
+        test_suite = InvoiceWorkflowTestSuite()
         success = test_suite.run_all_tests()
         sys.exit(0 if success else 1)
     except Exception as e:
