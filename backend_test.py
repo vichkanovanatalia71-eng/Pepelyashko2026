@@ -3526,17 +3526,17 @@ class UserTemplateTestSuite:
         return overall_success
 
 def main():
-    """Main test runner for template reset functionality testing"""
+    """Main test runner for user template usage in PDF generation"""
     logger.info("=" * 100)
-    logger.info("ТЕСТУВАННЯ ФУНКЦІОНАЛЬНОСТІ СКИДАННЯ ШАБЛОНІВ")
-    logger.info("Протестувати функціональність 'Reset Template to System Default' та генерацію PDF з новим шаблоном")
+    logger.info("ТЕСТУВАННЯ ВИКОРИСТАННЯ КОРИСТУВАЦЬКОГО ШАБЛОНУ В PDF ГЕНЕРАЦІЇ")
+    logger.info("Перевірити що система використовує користувацький шаблон з '🔵 ТЕСТОВИЙ РАХУНОК' замість системного")
     logger.info("=" * 100)
     
     # Initialize test suite
-    test_suite = TemplateResetTestSuite()
+    test_suite = UserTemplateTestSuite()
     
     try:
-        # Run all template reset tests
+        # Run all user template tests
         success = test_suite.run_all_tests()
         return success
         
