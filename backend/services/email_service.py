@@ -5,8 +5,10 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
+from email.mime.image import MIMEImage
 from pathlib import Path
 import logging
+import base64
 
 logger = logging.getLogger(__name__)
 
