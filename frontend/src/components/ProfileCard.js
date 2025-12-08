@@ -248,13 +248,9 @@ const ProfileCard = ({ user, onUpdate, onDelete }) => {
               Основна інформація
             </h3>
             <div className="grid grid-cols-2 gap-3 bg-gray-50 p-3 rounded-lg">
-              <div>
+              <div className="col-span-2">
                 <p className="text-xs text-gray-500">ЄДРПОУ</p>
                 <p className="text-sm font-medium">{user?.edrpou || '—'}</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500">Email</p>
-                <p className="text-sm font-medium">{user?.email || '—'}</p>
               </div>
               <div className="col-span-2">
                 <p className="text-xs text-gray-500 flex items-center gap-1">
@@ -262,10 +258,22 @@ const ProfileCard = ({ user, onUpdate, onDelete }) => {
                 </p>
                 <p className="text-sm font-medium">{user?.legal_address || '—'}</p>
               </div>
+            </div>
+          </div>
+
+          {/* Contact Information */}
+          <div>
+            <h3 className="text-base font-semibold text-gray-900 mb-2 flex items-center gap-2">
+              <Phone className="text-teal-500" size={18} />
+              Контактні дані
+            </h3>
+            <div className="grid grid-cols-2 gap-3 bg-gray-50 p-3 rounded-lg">
               <div>
-                <p className="text-xs text-gray-500 flex items-center gap-1">
-                  <Phone size={12} /> Телефон
-                </p>
+                <p className="text-xs text-gray-500">Email</p>
+                <p className="text-sm font-medium">{user?.email || '—'}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500">Телефон</p>
                 <p className="text-sm font-medium">{user?.phone || '—'}</p>
               </div>
             </div>
