@@ -103,12 +103,11 @@ class TemplateService:
         return templates
     
     async def get_default_template(self, user_id: str, template_type: str) -> Optional[TemplateModel]:
-        """Get default template for a document type."""
-        # First try to find user's default template
+        """Get default template for a document type - prioritizes user's template."""
+        # First try to find user's template (any user template, not just default)
         template_doc = await self.collection.find_one({
             "user_id": user_id,
-            "template_type": template_type,
-            "is_default": True
+            "template_type": template_type
         })
         
         # If not found, get system default
