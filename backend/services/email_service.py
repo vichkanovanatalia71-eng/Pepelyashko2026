@@ -28,10 +28,11 @@ class EmailService:
         subject: str,
         body: str,
         attachment_path: str,
-        attachment_name: str = None
+        attachment_name: str = None,
+        embedded_image_path: str = None
     ) -> bool:
         """
-        Send email with PDF attachment.
+        Send email with PDF attachment and optional embedded image.
         
         Args:
             to_email: Recipient email address
@@ -39,21 +40,35 @@ class EmailService:
             body: Email body (HTML or plain text)
             attachment_path: Path to file to attach
             attachment_name: Custom name for attachment (optional)
+            embedded_image_path: Path to image to embed in email (optional)
             
         Returns:
             True if email sent successfully, False otherwise
         """
         try:
             # Create message
-            msg = MIMEMultipart()
+            msg = MIMEMultipart('related')
             msg['From'] = self.smtp_username
             msg['To'] = to_email
             msg['Subject'] = subject
             
-            # Add body
-            msg.attach(MIMEText(body, 'html'))
+            # Create alternative part for HTML
+            msg_alternative = MIMEMultipart('alternative')
+            msg.attach(msg_alternative)
             
-            # Add attachment
+            # Add body
+            msg_alternative.attach(MIMEText(body, 'html'))
+            
+            # Add embedded image if provided
+            if embedded_image_path and os.path.exists(embedded_image_path):
+                with open(embedded_image_path, 'rb') as f:
+                    img_data = f.read()
+                    image = MIMEImage(img_data)
+                    image.add_header('Content-ID', '<company_logo>')
+                    image.add_header('Content-Disposition', 'inline', filename='logo.png')
+                    msg.attach(image)
+            
+            # Add PDF attachment
             if os.path.exists(attachment_path):
                 with open(attachment_path, 'rb') as f:
                     attachment = MIMEApplication(f.read(), _subtype='pdf')
