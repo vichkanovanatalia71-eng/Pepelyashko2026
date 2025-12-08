@@ -21,6 +21,7 @@ const ProfileCard = ({ user, onUpdate, onDelete }) => {
     representative_name: user?.representative_name || '',
     edrpou: user?.edrpou || '',
     legal_address: user?.legal_address || '',
+    email: user?.email || '',
     phone: user?.phone || '',
     iban: user?.iban || user?.bank_account || '',
     bank_name: user?.bank_name || user?.bank || '',
@@ -34,6 +35,7 @@ const ProfileCard = ({ user, onUpdate, onDelete }) => {
     vat_rate: user?.vat_rate || 20
   });
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [searchingEdrpou, setSearchingEdrpou] = useState(false);
 
   const handleDownloadPDF = async () => {
     try {
