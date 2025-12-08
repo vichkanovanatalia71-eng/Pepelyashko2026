@@ -48,7 +48,7 @@ const ProfileCard = ({ user, onUpdate, onDelete }) => {
     setSearchingEdrpou(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get(`${API_URL}/api/counterparties/search/${edrpou}`, {
+      const response = await axios.get(`${API_URL}/api/counterparties/youscore/${edrpou}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
