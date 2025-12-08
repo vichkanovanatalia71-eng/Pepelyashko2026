@@ -250,7 +250,9 @@ const TemplateViewer = () => {
                                 <code className="bg-white px-2 py-1 rounded text-xs border">{'{{document_number}}'}</code>
                                 <span className="text-xs text-gray-600">- Номер рахунку</span>
                                 <code className="bg-white px-2 py-1 rounded text-xs border">{'{{document_date}}'}</code>
-                                <span className="text-xs text-gray-600">- Дата рахунку</span>
+                                <span className="text-xs text-gray-600">- Дата (DD.MM.YYYY)</span>
+                                <code className="bg-white px-2 py-1 rounded text-xs border">{'{{document_date_text}}'}</code>
+                                <span className="text-xs text-gray-600">- Дата прописом (08 грудня 2025 року)</span>
                                 <code className="bg-white px-2 py-1 rounded text-xs border">{'{{items_table}}'}</code>
                                 <span className="text-xs text-gray-600">- Таблиця товарів (HTML)</span>
                                 <code className="bg-white px-2 py-1 rounded text-xs border">{'{{based_on_order}}'}</code>
