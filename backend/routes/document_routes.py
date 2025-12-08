@@ -207,6 +207,11 @@ async def update_invoice(
     from datetime import datetime
     
     try:
+        # Log incoming data for debugging
+        logger.info(f"UPDATE INVOICE {invoice_number}: Received data keys: {list(invoice_data.keys())}")
+        logger.info(f"UPDATE INVOICE {invoice_number}: Items in request: {invoice_data.get('items', 'NOT PROVIDED')}")
+        logger.info(f"UPDATE INVOICE {invoice_number}: Total in request: {invoice_data.get('total_amount', 'NOT PROVIDED')}")
+        
         # Get existing invoice
         existing_invoice = await database.invoices.find_one({
             "number": invoice_number,
@@ -219,12 +224,16 @@ async def update_invoice(
                 detail="Рахунок не знайдено"
             )
         
+        logger.info(f"UPDATE INVOICE {invoice_number}: Existing items count: {len(existing_invoice.get('items', []))}")
+        
         # Prepare update data - ensure numeric values are stored as numbers
         # Use items from request if provided, otherwise keep existing
         if "items" in invoice_data:
             items = invoice_data["items"]
+            logger.info(f"UPDATE INVOICE {invoice_number}: Using items from request (count: {len(items) if items else 0})")
         else:
             items = existing_invoice.get("items", [])
+            logger.info(f"UPDATE INVOICE {invoice_number}: Using existing items (count: {len(items)})")
         
         # Convert string values to numbers in items
         if items:
