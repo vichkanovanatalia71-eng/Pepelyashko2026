@@ -226,7 +226,7 @@ class ProfilePDFService:
                             </div>
                         </div>
                         
-                        {/* Банківські реквізити */}
+                        <!-- Банківські реквізити -->
                         <div class="section">
                             <div class="section-title">
                                 <span class="section-icon">💳</span>
