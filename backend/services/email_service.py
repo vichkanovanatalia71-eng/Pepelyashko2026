@@ -407,8 +407,8 @@ class EmailService:
                     color: #94a3b8;
                 }}
                 .attachment-notice {{
-                    background-color: #dbeafe;
-                    border: 1px solid #bfdbfe;
+                    background-color: #dcfce7;
+                    border: 1px solid #bbf7d0;
                     padding: 15px;
                     margin: 25px 0;
                     border-radius: 6px;
@@ -416,7 +416,7 @@ class EmailService:
                 }}
                 .attachment-notice p {{
                     margin: 0;
-                    color: #1e40af;
+                    color: #15803d;
                     font-size: 14px;
                     font-weight: 500;
                 }}
