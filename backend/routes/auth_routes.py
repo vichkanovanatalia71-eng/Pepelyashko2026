@@ -242,3 +242,184 @@ async def logout(current_user: dict = Depends(get_current_user)):
     """
     logger.info(f"User logged out: {current_user.get('email', 'unknown')}")
     return {"message": "Успішно вийшли з системи"}
+
+
+
+# ==================== PROFILE MANAGEMENT ROUTES ====================
+
+@router.get("/profile/pdf")
+async def download_profile_pdf(
+    current_user: dict = Depends(get_current_user)
+):
+    """Generate and download user profile as PDF."""
+    from server import db as database
+    from services.profile_pdf_service import ProfilePDFService
+    from fastapi.responses import FileResponse
+    import os
+    
+    try:
+        # Get full user data
+        user = await database.users.find_one(
+            {"_id": current_user["_id"]},
+            {"_id": 0, "hashed_password": 0}
+        )
+        
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Користувача не знайдено"
+            )
+        
+        # Add _id for PDF generation
+        user['_id'] = current_user["_id"]
+        
+        # Generate PDF
+        pdf_service = ProfilePDFService()
+        pdf_path = pdf_service.generate_profile_pdf(user)
+        
+        if not os.path.exists(pdf_path):
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Помилка генерації PDF"
+            )
+        
+        logger.info(f"Profile PDF generated: {pdf_path} for user {current_user['_id']}")
+        
+        company_name = user.get('representative_name') or user.get('company_name', 'Профіль')
+        filename = f"Профіль_{company_name[:30]}.pdf"
+        
+        return FileResponse(
+            path=pdf_path,
+            media_type="application/pdf",
+            filename=filename
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error generating profile PDF: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Помилка при генерації PDF профілю"
+        )
+
+
+class EmailRequest(BaseModel):
+    """Request model for sending email."""
+    email: str
+
+
+@router.post("/profile/send-email")
+async def send_profile_email(
+    email_request: EmailRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """Send user profile PDF via email."""
+    from server import db as database
+    from services.profile_pdf_service import ProfilePDFService
+    from services.email_service import EmailService
+    import os
+    
+    try:
+        # Get full user data
+        user = await database.users.find_one(
+            {"_id": current_user["_id"]},
+            {"_id": 0, "hashed_password": 0}
+        )
+        
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Користувача не знайдено"
+            )
+        
+        # Add _id for PDF generation
+        user['_id'] = current_user["_id"]
+        
+        # Generate PDF
+        pdf_service = ProfilePDFService()
+        pdf_path = pdf_service.generate_profile_pdf(user)
+        
+        # Get company logo
+        company_logo_url = None
+        company_logo_path = None
+        if user.get('company_logo'):
+            logo_relative_path = user['company_logo']
+            company_logo_path = f"/app/backend/{logo_relative_path}"
+            company_logo_url = "embedded"
+        
+        # Send email
+        email_service = EmailService()
+        company_name = user.get('representative_name') or user.get('company_name', 'Компанія')
+        
+        success = email_service.send_profile_document(
+            to_email=email_request.email,
+            company_name=company_name,
+            pdf_path=pdf_path,
+            company_logo_url=company_logo_url,
+            company_logo_path=company_logo_path
+        )
+        
+        if not success:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Помилка відправки email"
+            )
+        
+        logger.info(f"Profile PDF sent to {email_request.email} by user {current_user['_id']}")
+        
+        return {"message": f"Профіль відправлено на {email_request.email}"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error sending profile email: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Помилка при відправці профілю"
+        )
+
+
+@router.delete("/profile")
+async def delete_profile(
+    current_user: dict = Depends(get_current_user)
+):
+    """Delete user profile (soft delete - deactivate account)."""
+    from server import db as database
+    from datetime import datetime
+    
+    try:
+        # Update user status to deactivated
+        result = await database.users.update_one(
+            {"_id": current_user["_id"]},
+            {
+                "$set": {
+                    "is_active": False,
+                    "deactivated_at": datetime.utcnow(),
+                    "updated_at": datetime.utcnow()
+                }
+            }
+        )
+        
+        if result.modified_count == 0:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Користувача не знайдено"
+            )
+        
+        logger.info(f"User profile deactivated: {current_user['_id']}")
+        
+        return {
+            "message": "Профіль деактивовано",
+            "detail": "Ваш обліковий запис було деактивовано. Зверніться до адміністратора для відновлення."
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting profile: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Помилка при видаленні профілю"
+        )
+
