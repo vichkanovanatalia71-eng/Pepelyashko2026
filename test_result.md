@@ -826,6 +826,7 @@ test_plan:
     - "Invoice Without Orders - Structural Fix"
     - "Invoice UI Consistency with Acts"
     - "Order Management UI Testing - View and Management Functionality"
+    - "Template Reset to System Default Functionality"
 
 agent_communication:
   - agent: "main"
