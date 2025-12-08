@@ -25,6 +25,7 @@ class UserModel(BaseModel):
     director_name: Optional[str] = Field(None, description="ПІБ керівника")
     director_position: Optional[str] = Field(None, description="Посада керівника")
     position: Optional[str] = Field(None, description="Посада підписанта")
+    contract_type: Optional[str] = Field("Статуту", description="Діє на підставі")
     represented_by: Optional[str] = Field(None, description="В особі")
     signature: Optional[str] = Field(None, description="Підпис")
     logo_url: Optional[str] = Field(None, description="URL логотипу компанії")
