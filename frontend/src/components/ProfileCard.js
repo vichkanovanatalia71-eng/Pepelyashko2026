@@ -410,6 +410,22 @@ const ProfileCard = ({ user, onUpdate, onDelete }) => {
               </div>
             </div>
             <div>
+              <Label>Діє на підставі</Label>
+              <Select 
+                value={formData.contract_type} 
+                onValueChange={(value) => setFormData({ ...formData, contract_type: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Оберіть підставу" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Статуту">Статуту</SelectItem>
+                  <SelectItem value="Довіреності">Довіреності</SelectItem>
+                  <SelectItem value="Виписки з ЄДР">Виписки з ЄДР</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
               <Label>В особі</Label>
               <Input
                 value={formData.represented_by}
