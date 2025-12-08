@@ -25,6 +25,7 @@ const ProfileCard = ({ user, onUpdate, onDelete }) => {
     mfo: user?.mfo || '',
     director_name: user?.director_name || '',
     director_position: user?.director_position || '',
+    represented_by: user?.represented_by || '',
     signature: user?.signature || '',
     vat_payer: user?.vat_payer || false,
     vat_rate: user?.vat_rate || 20
