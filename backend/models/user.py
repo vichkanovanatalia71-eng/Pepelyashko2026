@@ -99,6 +99,7 @@ class UserUpdate(BaseModel):
     director_name: Optional[str] = None
     director_position: Optional[str] = None
     position: Optional[str] = None
+    contract_type: Optional[str] = None
     represented_by: Optional[str] = None
     signature: Optional[str] = None
     
