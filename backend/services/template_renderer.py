@@ -8,6 +8,42 @@ from datetime import datetime
 class TemplateRenderer:
     """Renderer for processing template variables."""
     
+    UKRAINIAN_MONTHS = {
+        1: 'січня', 2: 'лютого', 3: 'березня', 4: 'квітня',
+        5: 'травня', 6: 'червня', 7: 'липня', 8: 'серпня',
+        9: 'вересня', 10: 'жовтня', 11: 'листопада', 12: 'грудня'
+    }
+    
+    def format_date_ukrainian(self, date_value) -> str:
+        """
+        Format date to Ukrainian text format: "08 грудня 2025 року"
+        
+        Args:
+            date_value: datetime object or ISO string
+            
+        Returns:
+            Formatted date string in Ukrainian
+        """
+        if not date_value:
+            return ''
+        
+        # Convert to datetime if needed
+        if isinstance(date_value, str):
+            try:
+                date_obj = datetime.fromisoformat(date_value.replace('Z', '+00:00'))
+            except:
+                return str(date_value)
+        elif isinstance(date_value, datetime):
+            date_obj = date_value
+        else:
+            return str(date_value)
+        
+        day = date_obj.day
+        month_name = self.UKRAINIAN_MONTHS.get(date_obj.month, '')
+        year = date_obj.year
+        
+        return f"{day:02d} {month_name} {year} року"
+    
     def render(self, template: str, context: Dict[str, Any]) -> str:
         """
         Render template with context variables.
