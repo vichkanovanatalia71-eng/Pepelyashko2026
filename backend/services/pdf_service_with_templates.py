@@ -59,7 +59,10 @@ class PDFServiceWithTemplates:
             if not template:
                 raise Exception("Template not found")
             
-            logger.info("Template loaded successfully")
+            logger.info(f"Template loaded successfully: {template.name}")
+            logger.info(f"Template user_id: {template.user_id}")
+            logger.info(f"Template contains ТЕСТОВИЙ: {'ТЕСТОВИЙ РАХУНОК' in template.content}")
+            logger.info(f"Supplier ID: {supplier.get('_id')}")
             
             # Prepare context
             context = self._prepare_invoice_context(invoice, supplier, counterparty)
