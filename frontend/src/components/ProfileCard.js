@@ -110,24 +110,26 @@ const ProfileCard = ({ user, onUpdate, onDelete }) => {
     <>
       <Card className="w-full max-w-4xl mx-auto shadow-lg">
         {/* Header with Logo */}
-        <CardHeader className="bg-gradient-to-r from-teal-500 to-cyan-600 text-white pb-12">
-          <div className="flex flex-col items-center">
-            <div className="w-24 h-24 mb-3 bg-white rounded-lg shadow-xl flex items-center justify-center overflow-hidden">
+        <CardHeader className="bg-gradient-to-r from-teal-500 to-cyan-600 text-white py-6">
+          <div className="flex items-center gap-4">
+            <div className="w-20 h-20 bg-white rounded-lg shadow-xl flex items-center justify-center overflow-hidden flex-shrink-0">
               {companyLogo ? (
                 <img src={companyLogo} alt="Logo" className="w-full h-full object-contain p-2" />
               ) : (
                 <div className="flex flex-col items-center text-teal-500">
-                  <Building2 size={36} />
-                  <span className="text-xs mt-1">Логотип</span>
+                  <Building2 size={32} />
+                  <span className="text-xs mt-1">Лого</span>
                 </div>
               )}
             </div>
-            <CardTitle className="text-xl font-bold text-center">
-              {user?.representative_name || user?.company_name || 'Профіль компанії'}
-            </CardTitle>
-            <CardDescription className="text-teal-50 text-sm">
-              Картка профілю компанії
-            </CardDescription>
+            <div className="flex-1 text-left">
+              <CardTitle className="text-lg font-bold">
+                {user?.representative_name || user?.company_name || 'Профіль компанії'}
+              </CardTitle>
+              <CardDescription className="text-teal-50 text-xs mt-1">
+                Картка профілю компанії
+              </CardDescription>
+            </div>
           </div>
         </CardHeader>
 
