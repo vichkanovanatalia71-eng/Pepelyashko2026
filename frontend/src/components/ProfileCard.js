@@ -527,7 +527,8 @@ const ProfileCard = ({ user, onUpdate, onDelete }) => {
                 <Label>Посада директора</Label>
                 <Input
                   value={formData.director_position}
-                  onChange={(e) => setFormData({ ...formData, director_position: e.target.value })}
+                  onChange={(e) => handlePositionChange(e.target.value)}
+                  placeholder="директор"
                 />
               </div>
             </div>
