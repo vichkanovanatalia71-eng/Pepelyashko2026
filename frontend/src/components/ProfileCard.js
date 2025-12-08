@@ -211,21 +211,21 @@ const ProfileCard = ({ user, onUpdate, onDelete }) => {
 
           {/* VAT Information */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
-              <FileText className="text-teal-500" size={20} />
+            <h3 className="text-base font-semibold text-gray-900 mb-2 flex items-center gap-2">
+              <FileText className="text-teal-500" size={18} />
               Податкова інформація
             </h3>
-            <div className="bg-gray-50 p-4 rounded-lg">
+            <div className="bg-gray-50 p-3 rounded-lg">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-500">Статус ПДВ</p>
+                  <p className="text-xs text-gray-500">Статус ПДВ</p>
                   <p className="font-medium flex items-center gap-2 mt-1">
                     {user?.vat_payer ? (
-                      <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-semibold">
+                      <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">
                         Платник ПДВ ({user?.vat_rate || 20}%)
                       </span>
                     ) : (
-                      <span className="px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-sm font-semibold">
+                      <span className="px-2 py-1 bg-gray-200 text-gray-700 rounded-full text-xs font-semibold">
                         Не платник ПДВ
                       </span>
                     )}
