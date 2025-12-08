@@ -3483,53 +3483,9 @@ def main():
     test_results = []
     
     try:
-        # Test 1: Health check
-        logger.info("\n🔍 ТЕСТ 1: ПЕРЕВІРКА ЗДОРОВ'Я СИСТЕМИ")
-        result = test_suite.test_health_check()
-        test_results.append(("Health Check", result))
-        
-        if not result:
-            logger.error("❌ Система не працює. Припинення тестування.")
-            return False
-        
-        # Test 2: Authentication
-        logger.info("\n🔐 ТЕСТ 2: АВТЕНТИФІКАЦІЯ")
-        result = test_suite.authenticate()
-        test_results.append(("Authentication", result))
-        
-        if not result:
-            logger.error("❌ Автентифікація не вдалася. Припинення тестування.")
-            return False
-        
-        # Test 3: Get orders list
-        logger.info("\n📋 ТЕСТ 3: ОТРИМАННЯ СПИСКУ ЗАМОВЛЕНЬ")
-        result = test_suite.test_get_orders_list()
-        test_results.append(("Get Orders List", result))
-        
-        # Test 4: Create invoice from order
-        logger.info("\n📄 ТЕСТ 4: СТВОРЕННЯ РАХУНКУ НА ОСНОВІ ЗАМОВЛЕННЯ")
-        result = test_suite.test_create_invoice_from_order()
-        test_results.append(("Create Invoice from Order", result))
-        
-        # Test 5: Generate invoice PDF
-        logger.info("\n🖨️ ТЕСТ 5: ГЕНЕРАЦІЯ PDF РАХУНКУ")
-        result = test_suite.test_invoice_pdf_generation()
-        test_results.append(("Invoice PDF Generation", result))
-        
-        # Test 6: Send invoice email
-        logger.info("\n📧 ТЕСТ 6: ВІДПРАВКА PDF НА EMAIL")
-        result = test_suite.test_send_invoice_email()
-        test_results.append(("Send Invoice Email", result))
-        
-        # Test 7: Get invoices list
-        logger.info("\n📊 ТЕСТ 7: ОТРИМАННЯ СПИСКУ ВСІХ РАХУНКІВ")
-        result = test_suite.test_get_invoices_list()
-        test_results.append(("Get Invoices List", result))
-        
-        # Test 8: Edit invoice
-        logger.info("\n✏️ ТЕСТ 8: РЕДАГУВАННЯ РАХУНКУ")
-        result = test_suite.test_edit_invoice()
-        test_results.append(("Edit Invoice", result))
+        # Run all template reset tests
+        success = test_suite.run_all_tests()
+        return success
         
     except Exception as e:
         logger.error(f"❌ Критична помилка під час тестування: {str(e)}")
