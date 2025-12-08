@@ -943,19 +943,28 @@ const FullDashboard = () => {
     }
   };
 
-  const startEditingInvoice = () => {
-    if (!viewingInvoice) return;
+  const startEditingInvoice = (invoice = viewingInvoice) => {
+    if (!invoice) return;
+    
+    console.log('🔍 Starting edit for invoice:', invoice.number, 'Items count:', invoice.items?.length);
+    
+    // Set viewing invoice first if not already set
+    if (!viewingInvoice || viewingInvoice.number !== invoice.number) {
+      setViewingInvoice(invoice);
+    }
     
     // Prepare edit form with current invoice data
-    const dateStr = viewingInvoice.date ? 
-      (viewingInvoice.date.split('T')[0]) : 
+    const dateStr = invoice.date ? 
+      (invoice.date.split('T')[0]) : 
       new Date().toISOString().split('T')[0];
     
     setEditInvoiceForm({
       date: dateStr,
-      items: viewingInvoice.items.map(item => ({...item})),
-      total_amount: viewingInvoice.total_amount
+      items: invoice.items ? invoice.items.map(item => ({...item})) : [],
+      total_amount: invoice.total_amount || 0
     });
+    
+    console.log('✅ Edit form initialized with items:', invoice.items?.length);
     setEditingInvoice(true);
   };
 
