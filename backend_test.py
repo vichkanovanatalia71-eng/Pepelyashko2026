@@ -169,47 +169,91 @@ class TemplateResetTestSuite:
             logger.error(f"❌ Тест отримання шаблонів провалився: {str(e)}")
             return False
     
-    def test_invoice_pdf_generation(self):
-        """Test 3: GET /api/invoices/pdf/{invoice_number} для генерації PDF"""
+    def test_template_reset_functionality(self):
+        """Test 3: POST /api/templates/{template_id}/reset - скидання шаблону до системного"""
         logger.info("=" * 80)
-        logger.info("ТЕСТ 3: ГЕНЕРАЦІЯ PDF РАХУНКУ")
+        logger.info("ТЕСТ 3: СКИДАННЯ ШАБЛОНУ ДО СИСТЕМНОГО")
         logger.info("=" * 80)
         
-        if not self.created_invoice_number:
-            logger.error("❌ Немає номера створеного рахунку для генерації PDF")
+        if not self.user_template_id:
+            logger.error("❌ Немає ID користувацького шаблону для скидання")
             return False
         
         try:
-            response = requests.get(
-                f"{self.api_url}/invoices/pdf/{self.created_invoice_number}",
+            # First, get the current template content for comparison
+            get_response = requests.get(
+                f"{self.api_url}/templates/{self.user_template_id}",
                 headers=self.get_auth_headers(),
                 timeout=30
             )
             
-            if response.status_code != 200:
-                logger.error(f"❌ Помилка генерації PDF: {response.status_code} - {response.text}")
+            if get_response.status_code != 200:
+                logger.error(f"❌ Помилка отримання поточного шаблону: {get_response.status_code}")
                 return False
             
-            # Check Content-Type
-            content_type = response.headers.get('content-type', '')
-            if 'application/pdf' not in content_type:
-                logger.error(f"❌ Неправильний Content-Type: {content_type}")
+            original_template = get_response.json()
+            original_content = original_template.get('content', '')
+            logger.info(f"✅ Отримано поточний шаблон (довжина контенту: {len(original_content)} символів)")
+            
+            # Reset template to system default
+            logger.info(f"Скидання шаблону {self.user_template_id} до системного...")
+            reset_response = requests.post(
+                f"{self.api_url}/templates/{self.user_template_id}/reset",
+                headers=self.get_auth_headers(),
+                timeout=30
+            )
+            
+            if reset_response.status_code != 200:
+                logger.error(f"❌ Помилка скидання шаблону: {reset_response.status_code} - {reset_response.text}")
                 return False
             
-            logger.info("✅ PDF згенеровано успішно")
-            logger.info(f"   Content-Type: {content_type}")
-            logger.info(f"   Розмір файлу: {len(response.content)} байт")
+            reset_result = reset_response.json()
+            logger.info("✅ Шаблон успішно скинуто до системного")
             
-            # Save PDF to temporary file for text extraction
-            with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as temp_pdf:
-                temp_pdf.write(response.content)
-                temp_pdf_path = temp_pdf.name
+            # Verify the template content has been updated
+            new_content = reset_result.get('content', '')
+            if new_content == original_content:
+                logger.warning("⚠️  Контент шаблону не змінився (можливо, вже був системним)")
+            else:
+                logger.info("✅ Контент шаблону оновлено")
+                logger.info(f"   Нова довжина контенту: {len(new_content)} символів")
             
-            # Extract text from PDF using pdftotext
-            return self.check_pdf_content(temp_pdf_path)
+            # Check for new template features from review request
+            required_features = [
+                "Платіжне доручення",  # Payment order section
+                "payorder",            # CSS class
+                "Код банку"            # Bank code field
+            ]
+            
+            missing_features = []
+            for feature in required_features:
+                if feature not in new_content:
+                    missing_features.append(feature)
+            
+            if missing_features:
+                logger.error(f"❌ Відсутні обов'язкові елементи в новому шаблоні: {missing_features}")
+                return False
+            else:
+                logger.info("✅ Всі обов'язкові елементи присутні в новому шаблоні:")
+                for feature in required_features:
+                    logger.info(f"   ✓ {feature}")
+            
+            # Verify version history was updated
+            version_history = reset_result.get('version_history', [])
+            if version_history:
+                logger.info(f"✅ Історія версій оновлена ({len(version_history)} версій)")
+                latest_version = version_history[-1] if version_history else {}
+                if latest_version.get('content') == original_content:
+                    logger.info("✅ Попередній контент збережено в історії версій")
+                else:
+                    logger.warning("⚠️  Попередній контент може не збереглися в історії")
+            else:
+                logger.warning("⚠️  Історія версій порожня")
+            
+            return True
             
         except Exception as e:
-            logger.error(f"❌ Тест генерації PDF провалився: {str(e)}")
+            logger.error(f"❌ Тест скидання шаблону провалився: {str(e)}")
             return False
     
     def check_pdf_content(self, pdf_path):
