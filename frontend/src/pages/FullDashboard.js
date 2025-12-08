@@ -3301,7 +3301,7 @@ const FullDashboard = () => {
 
           {/* Templates Tab */}
           <TabsContent value="templates" className="space-y-6">
-            <TemplateViewer />
+            <InvoiceTemplateEditor />
           </TabsContent>
 
 
