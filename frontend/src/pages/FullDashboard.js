@@ -4249,9 +4249,14 @@ const FullDashboard = () => {
           <ProfileCard 
             user={user}
             onUpdate={async () => {
-              // Reload user data after profile update
-              await loadUserProfile();
-              toast.success('Профіль оновлено');
+              // Reload user data in AuthContext
+              try {
+                const response = await axios.get(`${API_URL}/api/auth/me`);
+                // This will trigger re-render with updated user data
+                window.location.reload();
+              } catch (error) {
+                console.error('Error reloading user:', error);
+              }
             }}
             onDelete={async () => {
               // Handle profile deletion (logout)
