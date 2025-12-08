@@ -117,53 +117,56 @@ class TemplateResetTestSuite:
             logger.error(f"❌ Помилка перевірки бібліотеки: {str(e)}")
             return False
     
-    def test_create_invoice_from_order(self):
-        """Test 2: POST /api/invoices з даними з замовлення"""
+    def test_get_invoice_templates(self):
+        """Test 2: GET /api/templates - отримати список шаблонів рахунків"""
         logger.info("=" * 80)
-        logger.info("ТЕСТ 2: СТВОРЕННЯ РАХУНКУ НА ОСНОВІ ЗАМОВЛЕННЯ")
+        logger.info("ТЕСТ 2: ОТРИМАННЯ СПИСКУ ШАБЛОНІВ РАХУНКІВ")
         logger.info("=" * 80)
-        
-        if not self.selected_order:
-            logger.error("❌ Немає вибраного замовлення для створення рахунку")
-            return False
         
         try:
-            # Prepare invoice data based on order
-            invoice_data = {
-                "counterparty_edrpou": self.selected_order.get('counterparty_edrpou'),
-                "items": self.selected_order.get('items', []),
-                "total_amount": self.selected_order.get('total_amount'),
-                "based_on_order": self.selected_order.get('number')  # Order number as basis
-            }
-            
-            logger.info("Створення рахунку з даними:")
-            logger.info(f"   ЄДРПОУ: {invoice_data['counterparty_edrpou']}")
-            logger.info(f"   Кількість позицій: {len(invoice_data['items'])}")
-            logger.info(f"   Загальна сума: {invoice_data['total_amount']}")
-            logger.info(f"   На основі замовлення: {invoice_data['based_on_order']}")
-            
-            response = requests.post(
-                f"{self.api_url}/invoices",
-                json=invoice_data,
-                headers={**self.get_auth_headers(), 'Content-Type': 'application/json'},
+            response = requests.get(
+                f"{self.api_url}/templates",
+                headers=self.get_auth_headers(),
                 timeout=30
             )
             
-            if response.status_code not in [200, 201]:
-                logger.error(f"❌ Помилка створення рахунку: {response.status_code} - {response.text}")
+            if response.status_code != 200:
+                logger.error(f"❌ Помилка отримання шаблонів: {response.status_code} - {response.text}")
                 return False
             
-            result = response.json()
-            self.created_invoice_number = result.get('number')
+            templates = response.json()
+            logger.info(f"✅ Отримано {len(templates)} шаблонів")
             
-            logger.info("✅ Рахунок створено успішно:")
-            logger.info(f"   Номер рахунку: {self.created_invoice_number}")
-            logger.info(f"   Дата: {result.get('date', 'N/A')}")
+            # Find invoice templates
+            invoice_templates = [t for t in templates if t.get('template_type') == 'invoice']
+            logger.info(f"✅ Знайдено {len(invoice_templates)} шаблонів рахунків")
+            
+            # Find user template (not system default)
+            user_template = None
+            system_template = None
+            
+            for template in invoice_templates:
+                if template.get('is_default') == True:
+                    system_template = template
+                    self.system_template_id = template.get('_id')
+                    logger.info(f"✅ Знайдено системний шаблон: {template.get('name')}")
+                elif template.get('user_id'):  # User template
+                    user_template = template
+                    self.user_template_id = template.get('_id')
+                    logger.info(f"✅ Знайдено користувацький шаблон: {template.get('name')}")
+            
+            if not system_template:
+                logger.error("❌ Системний шаблон рахунку не знайдено")
+                return False
+            
+            if not user_template:
+                logger.warning("⚠️  Користувацький шаблон не знайдено - буде використано системний для тестування")
+                self.user_template_id = self.system_template_id
             
             return True
             
         except Exception as e:
-            logger.error(f"❌ Тест створення рахунку провалився: {str(e)}")
+            logger.error(f"❌ Тест отримання шаблонів провалився: {str(e)}")
             return False
     
     def test_invoice_pdf_generation(self):
