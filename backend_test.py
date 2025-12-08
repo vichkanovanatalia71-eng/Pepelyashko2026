@@ -3380,8 +3380,8 @@ class UserTemplateTestSuite:
             return False
 
     def run_all_tests(self):
-        """Run all tests for template reset functionality"""
-        logger.info("🚀 ПОЧАТОК ТЕСТУВАННЯ ФУНКЦІОНАЛЬНОСТІ СКИДАННЯ ШАБЛОНІВ")
+        """Run all tests for user template usage in PDF generation"""
+        logger.info("🚀 ПОЧАТОК ТЕСТУВАННЯ ВИКОРИСТАННЯ КОРИСТУВАЦЬКОГО ШАБЛОНУ В PDF")
         logger.info("=" * 100)
         
         # Test results tracking
@@ -3390,33 +3390,32 @@ class UserTemplateTestSuite:
         # Health check first
         test_results['health_check'] = self.test_health_check()
         
-        # Critical: Check libpangoft2 library first
-        test_results['libpangoft2_check'] = self.test_libpangoft2_library_check()
-        if not test_results['libpangoft2_check']:
-            logger.error("❌ КРИТИЧНА ПОМИЛКА: libpangoft2-1.0-0 не встановлена - зупинка тестування")
-            return False
-        
         # Authentication
         if not self.authenticate():
             logger.error("❌ Автентифікація провалилася - зупинка тестування")
             return False
         
-        # Template reset functionality tests
-        test_results['get_templates'] = self.test_get_invoice_templates()
-        test_results['template_reset'] = self.test_template_reset_functionality()
-        test_results['system_template_content'] = self.test_system_default_template_content()
-        test_results['pdf_with_new_template'] = self.test_pdf_generation_with_new_template()
+        # User template verification tests
+        test_results['user_template_check'] = self.test_user_template_exists_and_contains_custom_text()
+        test_results['pdf_generation_custom'] = self.test_generate_pdf_and_verify_custom_template_usage()
+        test_results['system_template_compare'] = self.test_compare_with_system_template()
+        test_results['template_service_logic'] = self.test_template_service_logic()
         
         # Print summary
         logger.info("=" * 100)
-        logger.info("📊 ПІДСУМОК ТЕСТУВАННЯ ФУНКЦІОНАЛЬНОСТІ СКИДАННЯ ШАБЛОНІВ")
+        logger.info("📊 ПІДСУМОК ТЕСТУВАННЯ ВИКОРИСТАННЯ КОРИСТУВАЦЬКОГО ШАБЛОНУ")
         logger.info("=" * 100)
         
         passed_tests = sum(1 for result in test_results.values() if result)
         total_tests = len(test_results)
         success_rate = (passed_tests / total_tests) * 100
         
+        # Critical assessment
+        critical_tests = ['user_template_check', 'pdf_generation_custom']
+        critical_passed = sum(1 for test in critical_tests if test_results.get(test, False))
+        
         logger.info(f"Пройдено тестів: {passed_tests}/{total_tests} ({success_rate:.1f}%)")
+        logger.info(f"Критичні тести: {critical_passed}/{len(critical_tests)} пройдено")
         logger.info("")
         
         for test_name, result in test_results.items():
