@@ -190,7 +190,7 @@ class ProfilePDFService:
                     </div>
                     
                     <div class="content">
-                        {/* Основна інформація */}
+                        <!-- Основна інформація -->
                         <div class="section">
                             <div class="section-title">
                                 <span class="section-icon">🏢</span>
