@@ -227,13 +227,13 @@ async def update_invoice(
         logger.info(f"UPDATE INVOICE {invoice_number}: Existing items count: {len(existing_invoice.get('items', []))}")
         
         # Prepare update data - ensure numeric values are stored as numbers
-        # Use items from request if provided, otherwise keep existing
-        if "items" in invoice_data:
+        # CRITICAL FIX: If items array is empty in request, keep existing items
+        if "items" in invoice_data and len(invoice_data["items"]) > 0:
             items = invoice_data["items"]
-            logger.info(f"UPDATE INVOICE {invoice_number}: Using items from request (count: {len(items) if items else 0})")
+            logger.info(f"UPDATE INVOICE {invoice_number}: Using items from request (count: {len(items)})")
         else:
             items = existing_invoice.get("items", [])
-            logger.info(f"UPDATE INVOICE {invoice_number}: Using existing items (count: {len(items)})")
+            logger.info(f"UPDATE INVOICE {invoice_number}: Using existing items (count: {len(items)}) - request had empty items")
         
         # Convert string values to numbers in items
         if items:
