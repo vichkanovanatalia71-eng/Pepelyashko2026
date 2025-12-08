@@ -256,9 +256,63 @@ class TemplateResetTestSuite:
             logger.error(f"❌ Тест скидання шаблону провалився: {str(e)}")
             return False
     
-    def check_pdf_content(self, pdf_path):
-        """Extract and check PDF content using pdftotext"""
-        logger.info("Перевірка вмісту PDF...")
+    def test_pdf_generation_with_new_template(self):
+        """Test 4: GET /api/invoices/pdf/{invoice_number} - генерація PDF з новим шаблоном"""
+        logger.info("=" * 80)
+        logger.info("ТЕСТ 4: ГЕНЕРАЦІЯ PDF З НОВИМ ШАБЛОНОМ")
+        logger.info("=" * 80)
+        
+        try:
+            logger.info(f"Генерація PDF для рахунку {self.test_invoice_number}...")
+            response = requests.get(
+                f"{self.api_url}/invoices/pdf/{self.test_invoice_number}",
+                headers=self.get_auth_headers(),
+                timeout=30
+            )
+            
+            if response.status_code != 200:
+                logger.error(f"❌ Помилка генерації PDF: {response.status_code} - {response.text}")
+                # Check if it's an OSError related to libpangoft2
+                if "OSError" in response.text or "libpangoft2" in response.text:
+                    logger.error("❌ КРИТИЧНА ПОМИЛКА: Проблема з бібліотекою libpangoft2-1.0-0!")
+                return False
+            
+            # Check Content-Type
+            content_type = response.headers.get('content-type', '')
+            if 'application/pdf' not in content_type:
+                logger.error(f"❌ Неправильний Content-Type: {content_type}")
+                return False
+            
+            pdf_size = len(response.content)
+            logger.info("✅ PDF згенеровано успішно")
+            logger.info(f"   Content-Type: {content_type}")
+            logger.info(f"   Розмір файлу: {pdf_size} байт ({pdf_size/1024:.1f} KB)")
+            
+            # Check minimum size requirement (>50KB from review request)
+            if pdf_size < 50 * 1024:  # 50KB
+                logger.error(f"❌ PDF файл занадто малий: {pdf_size/1024:.1f} KB (очікувалося >50KB)")
+                return False
+            else:
+                logger.info(f"✅ Розмір PDF відповідає вимогам (>{50} KB)")
+            
+            # Save PDF to temporary file for text extraction
+            with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as temp_pdf:
+                temp_pdf.write(response.content)
+                temp_pdf_path = temp_pdf.name
+            
+            # Extract and check PDF content for new template features
+            return self.check_new_template_pdf_content(temp_pdf_path)
+            
+        except Exception as e:
+            logger.error(f"❌ Тест генерації PDF провалився: {str(e)}")
+            # Check if it's an OSError
+            if "OSError" in str(e):
+                logger.error("❌ КРИТИЧНА ПОМИЛКА: OSError - можлива проблема з libpangoft2-1.0-0!")
+            return False
+    
+    def check_new_template_pdf_content(self, pdf_path):
+        """Extract and check PDF content for new template features"""
+        logger.info("Перевірка вмісту PDF на наявність нових елементів шаблону...")
         
         try:
             # Extract text using pdftotext
@@ -276,82 +330,59 @@ class TemplateResetTestSuite:
             pdf_text = result.stdout
             logger.info("✅ Текст витягнуто з PDF успішно")
             
-            # Check required elements
+            # Check required elements from new template
             checks = []
             
-            # 1. Check Ukrainian date format (DD місяць YYYY року)
-            ukrainian_months = ['січня', 'лютого', 'березня', 'квітня', 'травня', 'червня',
-                              'липня', 'серпня', 'вересня', 'жовтня', 'листопада', 'грудня']
-            
-            date_found = False
-            doubled_roku = False
-            for month in ukrainian_months:
-                if f" {month} " in pdf_text and " року" in pdf_text:
-                    date_found = True
-                    # Check for doubled "року"
-                    if "року року" in pdf_text:
-                        doubled_roku = True
-                    break
-            
-            if date_found and not doubled_roku:
-                logger.info("✅ Українська дата знайдена БЕЗ подвоєння 'року'")
-                checks.append(True)
-            elif date_found and doubled_roku:
-                logger.error("❌ Знайдено подвоєння слова 'року' в даті")
-                checks.append(False)
-            else:
-                logger.error("❌ Українська дата не знайдена в PDF")
-                checks.append(False)
-            
-            # 2. Check document basis (Підстава: Замовлення №...)
-            if "Підстава:" in pdf_text and "Замовлення №" in pdf_text:
-                logger.info("✅ Підстава документа присутня")
+            # 1. Check for "Платіжне доручення" section
+            if "Платіжне доручення" in pdf_text:
+                logger.info("✅ Секція 'Платіжне доручення' знайдена в PDF")
                 checks.append(True)
             else:
-                logger.error("❌ Підстава документа не знайдена")
+                logger.error("❌ Секція 'Платіжне доручення' не знайдена в PDF")
                 checks.append(False)
             
-            # 3. Check items table elements (be more flexible with table headers)
-            # Check for various possible Ukrainian table headers
-            name_variants = ["Найменування", "Назва", "Товари", "Послуги", "Товари/послуги"]
-            quantity_variants = ["Кількість", "Кіл-сть", "К-сть", "Од"]
-            price_variants = ["Ціна", "Вартість"]
-            amount_variants = ["Сума", "Всього"]
-            
-            found_name = any(variant in pdf_text for variant in name_variants)
-            found_quantity = any(variant in pdf_text for variant in quantity_variants)
-            found_price = any(variant in pdf_text for variant in price_variants)
-            found_amount = any(variant in pdf_text for variant in amount_variants)
-            
-            found_count = sum([found_name, found_quantity, found_price, found_amount])
-            
-            if found_count >= 2:  # At least 2 table elements should be present
-                logger.info(f"✅ Таблиця товарів присутня (знайдено {found_count}/4 елементів)")
+            # 2. Check for bank code field ("Код банку")
+            if "Код банку" in pdf_text:
+                logger.info("✅ Поле 'Код банку' знайдено в PDF")
                 checks.append(True)
             else:
-                logger.error(f"❌ Таблиця товарів неповна (знайдено тільки {found_count}/4 елементів)")
+                logger.error("❌ Поле 'Код банку' не знайдено в PDF")
                 checks.append(False)
             
-            # 4. Check total sum
-            if "Всього до сплати" in pdf_text:
-                logger.info("✅ Підсумкова сума присутня")
+            # 3. Check for supplier/receiver information
+            if "Одержувач" in pdf_text:
+                logger.info("✅ Інформація про одержувача знайдена в PDF")
                 checks.append(True)
             else:
-                logger.error("❌ Підсумкова сума не знайдена")
+                logger.error("❌ Інформація про одержувача не знайдена в PDF")
                 checks.append(False)
             
-            # 5. Check VAT exemption note
-            if "не платник ПДВ" in pdf_text:
-                logger.info("✅ Примітка 'не платник ПДВ' присутня")
+            # 4. Check for IBAN format (should be in monospace)
+            if "IBAN" in pdf_text or "рах. №" in pdf_text:
+                logger.info("✅ Банківські реквізити знайдені в PDF")
                 checks.append(True)
             else:
-                logger.error("❌ Примітка 'не платник ПДВ' не знайдена")
+                logger.error("❌ Банківські реквізити не знайдені в PDF")
+                checks.append(False)
+            
+            # 5. Check for items table
+            table_headers = ["Товари", "Кіл-сть", "Ціна", "Сума"]
+            found_headers = sum(1 for header in table_headers if header in pdf_text)
+            
+            if found_headers >= 3:  # At least 3 out of 4 headers
+                logger.info(f"✅ Таблиця товарів знайдена ({found_headers}/4 заголовків)")
+                checks.append(True)
+            else:
+                logger.error(f"❌ Таблиця товарів неповна ({found_headers}/4 заголовків)")
                 checks.append(False)
             
             # Clean up temporary file
             os.unlink(pdf_path)
             
             # Return True if all checks passed
+            success_rate = sum(checks) / len(checks) * 100
+            logger.info(f"Результат перевірки PDF: {sum(checks)}/{len(checks)} тестів пройдено ({success_rate:.1f}%)")
+            
             return all(checks)
             
         except Exception as e:
