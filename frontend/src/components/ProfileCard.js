@@ -189,12 +189,12 @@ const ProfileCard = ({ user, onUpdate, onDelete }) => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       
+      toast.success('Профіль успішно оновлено');
       if (onUpdate) onUpdate();
       setIsEditDialogOpen(false);
-      alert('Профіль оновлено');
     } catch (error) {
       console.error('Error updating profile:', error);
-      alert('Помилка оновлення профілю');
+      toast.error('Помилка оновлення профілю');
     }
   };
 
