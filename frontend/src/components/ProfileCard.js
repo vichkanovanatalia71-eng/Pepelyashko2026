@@ -1,0 +1,450 @@
+import React, { useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { Switch } from './ui/switch';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
+import { Edit, Download, Mail, Trash2, Upload, Building2, Phone, MapPin, CreditCard, User, FileText } from 'lucide-react';
+import axios from 'axios';
+
+const API_URL = process.env.REACT_APP_BACKEND_URL;
+
+const ProfileCard = ({ user, onUpdate, onDelete }) => {
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [email, setEmail] = useState('');
+  const [formData, setFormData] = useState({
+    representative_name: user?.representative_name || '',
+    edrpou: user?.edrpou || '',
+    legal_address: user?.legal_address || '',
+    phone: user?.phone || '',
+    iban: user?.iban || user?.bank_account || '',
+    bank_name: user?.bank_name || user?.bank || '',
+    mfo: user?.mfo || '',
+    director_name: user?.director_name || '',
+    director_position: user?.director_position || '',
+    signature: user?.signature || '',
+    vat_payer: user?.vat_payer || false,
+    vat_rate: user?.vat_rate || 20
+  });
+
+  const handleDownloadPDF = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_URL}/api/auth/profile/pdf`, {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: 'blob'
+      });
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Профіль_${user?.representative_name || 'Компанія'}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      alert('Помилка завантаження PDF');
+    }
+  };
+
+  const handleSendEmail = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(
+        `${API_URL}/api/auth/profile/send-email`,
+        { email },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      alert(`Профіль надіслано на ${email}`);
+      setIsEmailDialogOpen(false);
+      setEmail('');
+    } catch (error) {
+      console.error('Error sending email:', error);
+      alert('Помилка відправки email');
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(
+        `${API_URL}/api/auth/profile`,
+        formData,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      if (onUpdate) onUpdate();
+      setIsEditDialogOpen(false);
+      alert('Профіль оновлено');
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      alert('Помилка оновлення профілю');
+    }
+  };
+
+  const handleDeleteProfile = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(`${API_URL}/api/auth/profile`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (onDelete) onDelete();
+      setIsDeleteDialogOpen(false);
+    } catch (error) {
+      console.error('Error deleting profile:', error);
+      alert('Помилка видалення профілю');
+    }
+  };
+
+  const companyLogo = user?.company_logo 
+    ? `${API_URL}/api/uploads/${user.company_logo.split('/').pop()}`
+    : null;
+
+  return (
+    <>
+      <Card className="w-full max-w-4xl mx-auto shadow-lg">
+        {/* Header with Logo */}
+        <CardHeader className="bg-gradient-to-r from-teal-500 to-cyan-600 text-white pb-20">
+          <div className="flex flex-col items-center">
+            <div className="w-32 h-32 mb-4 bg-white rounded-lg shadow-xl flex items-center justify-center overflow-hidden">
+              {companyLogo ? (
+                <img src={companyLogo} alt="Logo" className="w-full h-full object-cover" />
+              ) : (
+                <div className="flex flex-col items-center text-teal-500">
+                  <Building2 size={48} />
+                  <span className="text-xs mt-2">Логотип</span>
+                </div>
+              )}
+            </div>
+            <CardTitle className="text-2xl font-bold text-center">
+              {user?.representative_name || user?.company_name || 'Профіль компанії'}
+            </CardTitle>
+            <CardDescription className="text-teal-50">
+              Картка профілю компанії
+            </CardDescription>
+          </div>
+        </CardHeader>
+
+        <CardContent className="pt-6 space-y-6">
+          {/* Basic Information */}
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+              <Building2 className="text-teal-500" size={20} />
+              Основна інформація
+            </h3>
+            <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
+              <div>
+                <p className="text-sm text-gray-500">ЄДРПОУ</p>
+                <p className="font-medium">{user?.edrpou || '—'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Email</p>
+                <p className="font-medium">{user?.email || '—'}</p>
+              </div>
+              <div className="col-span-2">
+                <p className="text-sm text-gray-500 flex items-center gap-1">
+                  <MapPin size={14} /> Юридична адреса
+                </p>
+                <p className="font-medium">{user?.legal_address || '—'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500 flex items-center gap-1">
+                  <Phone size={14} /> Телефон
+                </p>
+                <p className="font-medium">{user?.phone || '—'}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Banking Information */}
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+              <CreditCard className="text-teal-500" size={20} />
+              Банківські реквізити
+            </h3>
+            <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
+              <div className="col-span-2">
+                <p className="text-sm text-gray-500">IBAN</p>
+                <p className="font-medium font-mono text-sm">{user?.iban || user?.bank_account || '—'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Банк</p>
+                <p className="font-medium">{user?.bank_name || user?.bank || '—'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">МФО</p>
+                <p className="font-medium">{user?.mfo || '—'}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Management */}
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+              <User className="text-teal-500" size={20} />
+              Керівництво
+            </h3>
+            <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
+              <div>
+                <p className="text-sm text-gray-500">Директор</p>
+                <p className="font-medium">{user?.director_name || '—'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Посада</p>
+                <p className="font-medium">{user?.director_position || user?.position || '—'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Підпис</p>
+                <p className="font-medium">{user?.signature || '—'}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* VAT Information */}
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+              <FileText className="text-teal-500" size={20} />
+              Податкова інформація
+            </h3>
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-500">Статус ПДВ</p>
+                  <p className="font-medium flex items-center gap-2 mt-1">
+                    {user?.vat_payer ? (
+                      <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-semibold">
+                        Платник ПДВ ({user?.vat_rate || 20}%)
+                      </span>
+                    ) : (
+                      <span className="px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-sm font-semibold">
+                        Не платник ПДВ
+                      </span>
+                    )}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-4 border-t">
+            <Button
+              onClick={() => setIsEditDialogOpen(true)}
+              className="bg-teal-500 hover:bg-teal-600"
+            >
+              <Edit size={16} className="mr-2" />
+              Редагувати
+            </Button>
+            <Button
+              onClick={handleDownloadPDF}
+              variant="outline"
+              className="border-teal-500 text-teal-600 hover:bg-teal-50"
+            >
+              <Download size={16} className="mr-2" />
+              PDF
+            </Button>
+            <Button
+              onClick={() => setIsEmailDialogOpen(true)}
+              variant="outline"
+              className="border-cyan-500 text-cyan-600 hover:bg-cyan-50"
+            >
+              <Mail size={16} className="mr-2" />
+              Email
+            </Button>
+            <Button
+              onClick={() => setIsDeleteDialogOpen(true)}
+              variant="outline"
+              className="border-red-500 text-red-600 hover:bg-red-50"
+            >
+              <Trash2 size={16} className="mr-2" />
+              Видалити
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Edit Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Редагування профілю</DialogTitle>
+            <DialogDescription>
+              Оновіть інформацію про вашу компанію
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label>Назва компанії</Label>
+              <Input
+                value={formData.representative_name}
+                onChange={(e) => setFormData({ ...formData, representative_name: e.target.value })}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>ЄДРПОУ</Label>
+                <Input
+                  value={formData.edrpou}
+                  onChange={(e) => setFormData({ ...formData, edrpou: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>Телефон</Label>
+                <Input
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                />
+              </div>
+            </div>
+            <div>
+              <Label>Юридична адреса</Label>
+              <Input
+                value={formData.legal_address}
+                onChange={(e) => setFormData({ ...formData, legal_address: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>IBAN</Label>
+              <Input
+                value={formData.iban}
+                onChange={(e) => setFormData({ ...formData, iban: e.target.value })}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Назва банку</Label>
+                <Input
+                  value={formData.bank_name}
+                  onChange={(e) => setFormData({ ...formData, bank_name: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>МФО</Label>
+                <Input
+                  value={formData.mfo}
+                  onChange={(e) => setFormData({ ...formData, mfo: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Директор (ПІБ)</Label>
+                <Input
+                  value={formData.director_name}
+                  onChange={(e) => setFormData({ ...formData, director_name: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>Посада директора</Label>
+                <Input
+                  value={formData.director_position}
+                  onChange={(e) => setFormData({ ...formData, director_position: e.target.value })}
+                />
+              </div>
+            </div>
+            <div>
+              <Label>Підпис</Label>
+              <Input
+                value={formData.signature}
+                onChange={(e) => setFormData({ ...formData, signature: e.target.value })}
+              />
+            </div>
+            
+            {/* VAT Settings */}
+            <div className="border-t pt-4">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <Label>Платник ПДВ</Label>
+                  <p className="text-sm text-gray-500">Чи є ваша компанія платником ПДВ</p>
+                </div>
+                <Switch
+                  checked={formData.vat_payer}
+                  onCheckedChange={(checked) => setFormData({ ...formData, vat_payer: checked })}
+                />
+              </div>
+              {formData.vat_payer && (
+                <div>
+                  <Label>Ставка ПДВ (%)</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={formData.vat_rate}
+                    onChange={(e) => setFormData({ ...formData, vat_rate: parseFloat(e.target.value) || 20 })}
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-2 pt-4">
+              <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                Скасувати
+              </Button>
+              <Button onClick={handleSaveProfile} className="bg-teal-500 hover:bg-teal-600">
+                Зберегти
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Email Dialog */}
+      <Dialog open={isEmailDialogOpen} onOpenChange={setIsEmailDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Надіслати профіль на email</DialogTitle>
+            <DialogDescription>
+              Введіть email адресу для відправки профілю компанії
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label>Email адреса</Label>
+              <Input
+                type="email"
+                placeholder="example@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setIsEmailDialogOpen(false)}>
+                Скасувати
+              </Button>
+              <Button onClick={handleSendEmail} className="bg-cyan-500 hover:bg-cyan-600">
+                Надіслати
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Підтвердження видалення</DialogTitle>
+            <DialogDescription>
+              Ви впевнені, що хочете видалити профіль? Цю дію не можна скасувати.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-2 pt-4">
+            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+              Скасувати
+            </Button>
+            <Button onClick={handleDeleteProfile} variant="destructive">
+              Видалити
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+};
+
+export default ProfileCard;
