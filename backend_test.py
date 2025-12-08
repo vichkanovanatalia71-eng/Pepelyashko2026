@@ -389,6 +389,107 @@ class TemplateResetTestSuite:
             logger.error(f"❌ Помилка перевірки вмісту PDF: {str(e)}")
             return False
     
+    def test_system_default_template_content(self):
+        """Test 5: Verify system default template content and structure"""
+        logger.info("=" * 80)
+        logger.info("ТЕСТ 5: ПЕРЕВІРКА ВМІСТУ СИСТЕМНОГО ШАБЛОНУ")
+        logger.info("=" * 80)
+        
+        if not self.system_template_id:
+            logger.error("❌ Немає ID системного шаблону для перевірки")
+            return False
+        
+        try:
+            # Get system default template
+            response = requests.get(
+                f"{self.api_url}/templates/{self.system_template_id}",
+                headers=self.get_auth_headers(),
+                timeout=30
+            )
+            
+            if response.status_code != 200:
+                logger.error(f"❌ Помилка отримання системного шаблону: {response.status_code} - {response.text}")
+                return False
+            
+            template = response.json()
+            logger.info("✅ Системний шаблон отримано успішно")
+            
+            # Verify it's marked as default
+            if not template.get('is_default'):
+                logger.error("❌ Шаблон не позначений як системний (is_default: false)")
+                return False
+            else:
+                logger.info("✅ Шаблон правильно позначений як системний (is_default: true)")
+            
+            # Check template type
+            if template.get('template_type') != 'invoice':
+                logger.error(f"❌ Неправильний тип шаблону: {template.get('template_type')}")
+                return False
+            else:
+                logger.info("✅ Тип шаблону правильний (invoice)")
+            
+            # Check template content for required elements
+            content = template.get('content', '')
+            if not content:
+                logger.error("❌ Контент шаблону порожній")
+                return False
+            
+            logger.info(f"✅ Контент шаблону присутній (довжина: {len(content)} символів)")
+            
+            # Check for required HTML structure elements
+            required_elements = [
+                "Платіжне доручення",     # Payment order section
+                "class=\"payorder\"",     # CSS class for payment order table
+                "Код банку",              # Bank code field
+                "Одержувач",              # Receiver field
+                "supplier_iban",          # IBAN variable
+                "supplier_mfo",           # MFO variable
+                "items_table",            # Items table variable
+                "Товари (роботи , послуги)", # Items table header
+                "Кіл-сть",               # Quantity column
+                "Ціна без ПДВ",          # Price column
+                "Сума без ПДВ"           # Amount column
+            ]
+            
+            missing_elements = []
+            found_elements = []
+            
+            for element in required_elements:
+                if element in content:
+                    found_elements.append(element)
+                else:
+                    missing_elements.append(element)
+            
+            if missing_elements:
+                logger.error(f"❌ Відсутні обов'язкові елементи в шаблоні:")
+                for element in missing_elements:
+                    logger.error(f"   - {element}")
+                return False
+            else:
+                logger.info("✅ Всі обов'язкові елементи присутні в шаблоні:")
+                for element in found_elements:
+                    logger.info(f"   ✓ {element}")
+            
+            # Check for compact layout indicators
+            compact_indicators = [
+                "font-size:10px",         # Small font size
+                "font-size:11px",         # Small font size
+                "margin:",                # Margin specifications
+                "padding:",               # Padding specifications
+            ]
+            
+            found_compact = sum(1 for indicator in compact_indicators if indicator in content)
+            if found_compact >= 2:
+                logger.info(f"✅ Компактний макет підтверджено ({found_compact}/4 індикаторів)")
+            else:
+                logger.warning(f"⚠️  Компактний макет може бути неповним ({found_compact}/4 індикаторів)")
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"❌ Тест перевірки системного шаблону провалився: {str(e)}")
+            return False
+
     def test_send_invoice_email(self):
         """Test 4: POST /api/invoices/{invoice_number}/send-email"""
         logger.info("=" * 80)
