@@ -158,7 +158,7 @@ class EmailService:
                     border-radius: 8px;
                 }}
                 .header {{
-                    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+                    background: linear-gradient(135deg, #14b8a6 0%, #0891b2 100%);
                     color: white;
                     padding: 30px 40px;
                     text-align: center;
@@ -177,8 +177,8 @@ class EmailService:
                     padding: 40px;
                 }}
                 .info-box {{
-                    background-color: #f0fdf4;
-                    border-left: 4px solid #10b981;
+                    background-color: #f0fdfa;
+                    border-left: 4px solid #14b8a6;
                     padding: 15px;
                     margin: 20px 0;
                     border-radius: 4px;
