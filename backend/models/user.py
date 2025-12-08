@@ -101,6 +101,10 @@ class UserUpdate(BaseModel):
     represented_by: Optional[str] = None
     signature: Optional[str] = None
     
+    # VAT information
+    vat_payer: Optional[bool] = None
+    vat_rate: Optional[float] = None
+    
     class Config:
         json_schema_extra = {
             "example": {
