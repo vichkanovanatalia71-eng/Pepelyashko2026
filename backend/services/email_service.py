@@ -638,7 +638,7 @@ class EmailService:
                 </div>
                 <div class="content">
                     <p class="greeting">Доброго дня!</p>
-                    <p>Надсилаємо Вам рахунок №<strong>{invoice_number}</strong> від <strong>{formatted_date}</strong>.</p>
+                    <p><strong>{company_name or 'Наша компанія'}</strong> надсилає Вам рахунок №<strong>{invoice_number}</strong> від <strong>{formatted_date}</strong>.</p>
                     <div class="info-box">
                         <div class="info-row">
                             <span class="info-label">📋 Номер рахунку:</span>
