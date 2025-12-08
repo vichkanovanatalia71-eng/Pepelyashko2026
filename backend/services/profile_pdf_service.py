@@ -50,7 +50,7 @@ class ProfilePDFService:
             # VAT info
             is_vat_payer = user.get('vat_payer', False)
             vat_rate = user.get('vat_rate', 20.0) if is_vat_payer else 0.0
-            vat_status = f"Платник ПДВ ({vat_rate}%)" if is_vat_payer else "Не платник ПДВ"
+            vat_status = f"Платник ПДВ ({vat_rate:.0f}%)" if is_vat_payer else "Платник ЄП"
             
             # VAT badge color - синій для ЄП, зелений для ПДВ
             vat_badge_bg = '#dbeafe' if not is_vat_payer else '#dcfce7'
