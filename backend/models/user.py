@@ -81,6 +81,7 @@ class UserUpdate(BaseModel):
     full_name: Optional[str] = None
     company_name: Optional[str] = None
     phone: Optional[str] = None
+    company_logo: Optional[str] = None
     
     # Supplier/Provider details
     edrpou: Optional[str] = None
