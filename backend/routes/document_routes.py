@@ -1483,22 +1483,32 @@ async def send_order_email(
         # Send email with styled HTML
         email_service = EmailService()
         
-        # Format date
+        # Format date to Ukrainian format
+        from datetime import datetime
         order_date = order.get('date', '')
-        if isinstance(order_date, str):
-            try:
-                from datetime import datetime
-                date_obj = datetime.fromisoformat(order_date.replace('Z', '+00:00'))
-                months = {
-                    1: 'січня', 2: 'лютого', 3: 'березня', 4: 'квітня',
-                    5: 'травня', 6: 'червня', 7: 'липня', 8: 'серпня',
-                    9: 'вересня', 10: 'жовтня', 11: 'листопада', 12: 'грудня'
-                }
-                formatted_date = f"{date_obj.day:02d} {months.get(date_obj.month, '')} {date_obj.year} року"
-            except:
-                formatted_date = order_date.split('T')[0] if 'T' in order_date else order_date
-        else:
-            formatted_date = str(order_date)
+        formatted_date = ''
+        
+        try:
+            if isinstance(order_date, str):
+                # Handle string format
+                if 'T' in order_date:
+                    date_obj = datetime.fromisoformat(order_date.replace('Z', '+00:00'))
+                else:
+                    date_obj = datetime.strptime(order_date, '%Y-%m-%d')
+            else:
+                # Handle datetime object
+                date_obj = order_date
+            
+            months = {
+                1: 'січня', 2: 'лютого', 3: 'березня', 4: 'квітня',
+                5: 'травня', 6: 'червня', 7: 'липня', 8: 'серпня',
+                9: 'вересня', 10: 'жовтня', 11: 'листопада', 12: 'грудня'
+            }
+            formatted_date = f"{date_obj.day:02d} {months.get(date_obj.month, '')} {date_obj.year} року"
+        except Exception as e:
+            logger.error(f"Error formatting order date: {e}, date: {order_date}")
+            # Fallback to raw date
+            formatted_date = str(order_date).split('T')[0] if 'T' in str(order_date) else str(order_date)
         
         company_name = user.get('representative_name', user.get('company_name', 'Компанія'))
         counterparty_name = order.get('counterparty_name', 'N/A')
