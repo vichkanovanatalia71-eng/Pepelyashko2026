@@ -21,6 +21,7 @@
 ```handlebars
 <h1>Акт №{{act_number}}</h1>
 <p>від {{act_date}}</p>
+<p>Місто: {{city}}</p>
 
 {{#if based_on_order}}
 <p>На підставі замовлення: {{based_on_order}}</p>
