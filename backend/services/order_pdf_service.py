@@ -428,56 +428,6 @@ class OrderPDFService:
         </div>
         
         <div class="content">
-            <!-- ПОСТАЧАЛЬНИК -->
-            <div class="section">
-                <div class="section-title">
-                    <span>🏢</span>
-                    ПОСТАЧАЛЬНИК
-                </div>
-                <div class="info-grid">
-                    <div class="info-row">
-                        <div class="info-label">Повна назва</div>
-                        <div class="info-value" style="font-weight: bold;">{supplier_name if supplier_name else 'Не вказано'}</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">Код ЄДРПОУ</div>
-                        <div class="info-value">{supplier_edrpou if supplier_edrpou else '—'}</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">Юридична адреса</div>
-                        <div class="info-value">{supplier_address if supplier_address else '—'}</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">Телефон</div>
-                        <div class="info-value">{supplier_phone if supplier_phone else '—'}</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">Email</div>
-                        <div class="info-value">{supplier_email if supplier_email else '—'}</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">Банк</div>
-                        <div class="info-value">{supplier_bank if supplier_bank else '—'}</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">IBAN</div>
-                        <div class="info-value" style="font-family: monospace; font-size: 7.5pt;">{supplier_iban if supplier_iban else '—'}</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">МФО</div>
-                        <div class="info-value">{supplier_mfo if supplier_mfo else '—'}</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">Директор</div>
-                        <div class="info-value">{supplier_director if supplier_director else '—'}</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">Посада</div>
-                        <div class="info-value">{supplier_position if supplier_position else '—'}</div>
-                    </div>
-                </div>
-            </div>
-            
             <!-- ПОКУПЕЦЬ -->
             <div class="section">
                 <div class="section-title">
