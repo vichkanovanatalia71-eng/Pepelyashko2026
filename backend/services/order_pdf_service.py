@@ -38,7 +38,7 @@ class OrderPDFService:
             year = date_obj.year
             
             return f"{day:02d} {month} {year} року"
-        except:
+        except Exception:
             return date_str.split('T')[0] if 'T' in str(date_str) else str(date_str)
     
     def generate_order_pdf(self, order: dict, user: dict = None, counterparty: dict = None) -> str:
