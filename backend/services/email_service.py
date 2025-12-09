@@ -692,11 +692,6 @@ class EmailService:
         
         subject = f"Акт №{act_number} від {formatted_date}"
         
-        # Logo section - будемо вбудовувати як CID
-        logo_html = ""
-        if company_logo_path and Path(company_logo_path).exists():
-            logo_html = '<img src="cid:company_logo" alt="Logo" style="max-width: 120px; max-height: 60px; margin-bottom: 15px;" />'
-        
         body = f"""
         <!DOCTYPE html>
         <html>
