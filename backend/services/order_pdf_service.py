@@ -41,7 +41,7 @@ class OrderPDFService:
         except:
             return date_str.split('T')[0] if 'T' in str(date_str) else str(date_str)
     
-    def generate_order_pdf(self, order: dict, user: dict = None) -> str:
+    def generate_order_pdf(self, order: dict, user: dict = None, counterparty: dict = None) -> str:
         """
         Generate PDF for order card.
         
