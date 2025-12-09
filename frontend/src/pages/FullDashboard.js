@@ -81,6 +81,9 @@ const FullDashboard = () => {
   // Loading state for EDRPOU search
   const [searchingEdrpou, setSearchingEdrpou] = useState(false);
   
+  // Search state for counterparties list
+  const [counterpartySearchQuery, setCounterpartySearchQuery] = useState('');
+  
   // Dialog for viewing counterparty details
   const [showCounterpartyDialog, setShowCounterpartyDialog] = useState(false);
   const [viewingCounterparty, setViewingCounterparty] = useState(null);
