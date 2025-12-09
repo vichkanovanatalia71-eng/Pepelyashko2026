@@ -1498,7 +1498,7 @@ async def send_order_email(
         </html>
         """
         
-        email_service.send_email(
+        email_service.send_email_with_attachment(
             to_email=email,
             subject=subject,
             body=body,
