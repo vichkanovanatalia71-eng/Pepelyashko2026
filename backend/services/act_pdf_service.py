@@ -154,7 +154,7 @@ class ActPDFService:
         buyer_mfo = counterparty_data.get('mfo', '—')
         buyer_email = counterparty_data.get('email', '—')
         buyer_phone = counterparty_data.get('phone', '—')
-        buyer_representative = counterparty_data.get('representative', '—')
+        buyer_representative = counterparty_data.get('represented_by', '—')
         buyer_position = counterparty_data.get('position', '—')
         buyer_signature = counterparty_data.get('signature', '—')
         
@@ -167,7 +167,7 @@ class ActPDFService:
         supplier_mfo = supplier_data.get('mfo', '—')
         supplier_email = supplier_data.get('email', '—')
         supplier_phone = supplier_data.get('phone', '—')
-        supplier_representative = supplier_data.get('representative', '—')
+        supplier_representative = supplier_data.get('represented_by', '—')
         supplier_signature = supplier_data.get('signature', '—')
         
         # Get supplier logo if exists
