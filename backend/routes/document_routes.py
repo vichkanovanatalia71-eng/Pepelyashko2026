@@ -1506,11 +1506,14 @@ async def send_order_email(
         is_paid = order.get('is_paid', False)
         payment_status = '✅ Сплачено' if is_paid else '⏳ Не сплачено'
         
-        # Get company logo
+        # Get company logo path if available
+        company_logo_url = None
         company_logo_path = None
-        company_logo_url = user.get('logo_url')
-        if company_logo_url:
-            company_logo_path = f"/app/backend/{company_logo_url}"
+        if user.get('company_logo'):
+            # Get the actual file path for embedding
+            logo_relative_path = user['company_logo']
+            company_logo_path = f"/app/backend/{logo_relative_path}"
+            company_logo_url = "embedded"  # Flag to show logo in template
         
         subject = f"Замовлення №{order_number} від {formatted_date}"
         
