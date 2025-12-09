@@ -394,9 +394,11 @@ class PDFServiceWithTemplates:
             'act_number': act.get('number', ''),
             'act_date': formatted_date,
             'act_date_text': formatted_date_text,
+            'act_date_text_full': formatted_date_full_text,  # Дата прописом
             'document_number': act.get('number', ''),  # Alias
             'document_date': formatted_date,  # Alias
             'document_date_text': formatted_date_text,  # Alias
+            'document_date_text_full': formatted_date_full_text,  # Alias
             'items_table': items_html,
             'based_on_order': act.get('based_on_order', ''),
             'based_on_document': act.get('based_on_contract', ''),
