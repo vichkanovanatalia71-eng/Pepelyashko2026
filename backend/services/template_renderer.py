@@ -56,35 +56,16 @@ class TemplateRenderer:
     
     def format_date_text_full(self, date_value) -> str:
         """
-        Format date to full Ukrainian text format: "дев'ятого грудня дві тисячі двадцять п'ятого року"
+        Format date to Ukrainian text format: "09 грудня 2025 року"
         
         Args:
             date_value: datetime object or ISO string
             
         Returns:
-            Full text date string in Ukrainian
+            Text date string in Ukrainian (same as format_date_ukrainian)
         """
-        if not date_value:
-            return ''
-        
-        # Convert to datetime if needed
-        if isinstance(date_value, str):
-            try:
-                date_obj = datetime.fromisoformat(date_value.replace('Z', '+00:00'))
-            except:
-                return str(date_value)
-        elif isinstance(date_value, datetime):
-            date_obj = date_value
-        else:
-            return str(date_value)
-        
-        day = date_obj.day
-        day_text = self.UKRAINIAN_DAYS_TEXT.get(day, str(day))
-        month_name = self.UKRAINIAN_MONTHS.get(date_obj.month, '')
-        year = date_obj.year
-        year_text = self._number_to_year_text(year)
-        
-        return f"{day_text} {month_name} {year_text} року"
+        # Use the same format as format_date_ukrainian
+        return self.format_date_ukrainian(date_value)
     
     def _number_to_year_text(self, year: int) -> str:
         """Convert year number to Ukrainian text."""
