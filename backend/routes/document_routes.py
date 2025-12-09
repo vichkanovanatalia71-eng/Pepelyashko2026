@@ -776,8 +776,7 @@ async def send_act_email(
             counterparty_name=act.get('counterparty_name', '—'),
             total_amount=act.get('total_amount', 0),
             pdf_path=pdf_path,
-            company_name=user.get('representative_name') or user.get('company_name', 'Компанія') if user else 'Компанія',
-            company_logo_url=company_logo_url,
+            company_name=user.get('representative_name', user.get('company_name', 'Компанія')) if user else 'Компанія',
             company_logo_path=company_logo_path
         )
         
