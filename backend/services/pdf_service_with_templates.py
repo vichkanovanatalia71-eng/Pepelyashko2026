@@ -194,6 +194,10 @@ class PDFServiceWithTemplates:
         # Get logo file path for WeasyPrint
         logo_file_path = self._get_logo_file_path(supplier.get('logo_url', ''))
         
+        # Extract city from supplier address
+        supplier_address = supplier.get('legal_address', '')
+        city_name = self._extract_city_from_address(supplier_address)
+        
         # Prepare context
         context = {
             # Document info
@@ -203,6 +207,7 @@ class PDFServiceWithTemplates:
             'items_table': items_html,
             'based_on_order': invoice.get('based_on_order', ''),
             'based_on_document': invoice.get('based_on_order', ''),  # Alias for template
+            'city': city_name,  # Місто складання документу
             
             # Amounts with VAT support
             'total_amount': f"{total_amount:.2f}",
