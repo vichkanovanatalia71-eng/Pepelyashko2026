@@ -5,6 +5,8 @@ from pathlib import Path
 from datetime import datetime
 from weasyprint import HTML
 import logging
+import re
+from pybars import Compiler
 
 logger = logging.getLogger(__name__)
 
@@ -15,6 +17,11 @@ class ActPDFService:
     def __init__(self):
         self.output_dir = Path("/tmp/act_pdfs")
         self.output_dir.mkdir(exist_ok=True)
+        self.template_path = Path('/app/backend/act_template.html')
+        
+        # Load template
+        with open(self.template_path, 'r', encoding='utf-8') as f:
+            self.template = f.read()
     
     def extract_city_from_address(self, address: str) -> str:
         """Extract city name from Ukrainian legal address."""
