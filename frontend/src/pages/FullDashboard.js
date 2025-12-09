@@ -941,7 +941,7 @@ const FullDashboard = () => {
     }
   };
 
-  const downloadOrderPDF = async () => {
+  const downloadOrderPDFFromDialog = async () => {
     if (!viewingOrder) return;
     
     try {
