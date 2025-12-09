@@ -115,11 +115,17 @@ const TemplateViewer = () => {
       
       toast.success('Шаблон успішно скинуто на системний!');
       
-      // Update selected template with new content FIRST
-      setSelectedTemplate(response.data);
-      
-      // Then reload templates list
+      // Reload templates list
       await loadTemplates();
+      
+      // Fetch the updated template from server
+      const updatedTemplateResponse = await axios.get(
+        `${API_URL}/api/templates/${selectedTemplate._id}`,
+        { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
+      );
+      
+      // Update selected template with fresh data from server
+      setSelectedTemplate(updatedTemplateResponse.data);
       
       setIsEditing(false);
       setViewMode('preview');
