@@ -271,6 +271,14 @@ backend:
     stuck_count: 0
     priority: "high"
     needs_retesting: false
+
+  - task: "Updated PDF Order Structure for Buyer Verification"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/order_service.py, /app/frontend/src/pages/FullDashboard.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
     status_history:
       - working: "needs_testing"
         agent: "main"
