@@ -1,61 +1,65 @@
 <analysis>**original_problem_statement:**
-The user wants to build a comprehensive document management system. The initial request was to overhaul the user profile by adding VAT functionality and redesigning it as a Profile Card. This evolved to include standardizing all email templates, enhancing the counterparty management features to match the user profile, and numerous specific UI/UX improvements for both web and PDF outputs.
+The user's primary goal is to build a comprehensive document management system. The project began with a redesign of the user profile and counterparty management, including VAT features, PDF generation, and standardized email templates.
 
-**PRODUCT REQUIREMENTS:**
-1.  **User Profile Overhaul (VAT & UI Redesign):**
-    *   Implement a Profile Card in a dialog, replacing the old form.
-    *   The card must display a logo, all user info, and have action buttons (Edit, Download PDF, Send Email, Delete).
-    *   Add a VAT Payer toggle and a VAT percentage input field.
-    *   If VAT is disabled, the user status should be Платник ЄП (Single Tax Payer).
-    *   Add fields for В особі (represented by) and Діє на підставі (acts on the basis of), with a dropdown for the latter (Statute, Power of Attorney, etc.).
-    *   Add a field for a phone number.
-    *   Implement an Upload Logo feature within the edit dialog.
-2.  **Profile Automation & UX:**
-    *   Integrate YouScore API to auto-fill company data using the ЄДРПОУ code.
-    *   Automatically generate the В особі and Підпис (signature) fields based on other inputs.
-    *   Create a separate Контактні дані (Contact Info) block for email and phone.
-    *   Improve the genitive case conversion for Ukrainian names in auto-generated fields.
-3.  **Counterparty Feature Parity:**
-    *   Update the Counterparty model and UI to include all fields present in the User Profile (VAT status, logo, bank name, etc.).
-    *   Ensure the Платник ЄП status is correctly displayed for counterparties.
-4.  **PDF Generation & Styling:**
-    *   Generate a PDF of the User Profile Card styled according to a user-provided image (dark teal header, icons, specific layout).
-    *   The PDF card should occupy 95% of the page width, have a dark-grey rounded border, and have a compact layout with reduced spacing.
-    *   Generate a PDF for the Counterparty card with the exact same style as the user profile card.
-5.  **Email & Notifications:**
-    *   Standardize all email templates (Invoices, Acts, Waybills, Contracts, etc.) with a consistent design, company logo, and dynamic header colors.
-    *   Update the email text for sharing a profile to be more personalized.
-    *   Style all toast notifications (Sonner) to appear in the top-right corner, auto-dismiss after 2-3 seconds, and use green/red gradients for success/error.
-6.  **Template Variables:**
-    *   Ensure all new fields from the User Profile (e.g., , VAT fields) are available as variables in the invoice template editor.
-7.  **Bug Fixes:**
-    *   Address the recurring critical failure of PDF generation.
+The scope expanded to include several new features and bug fixes:
+1.  **Invoice Template Management:** The user requested to replace an HTML Code button with a System Template button to allow resetting the invoice template to a user-provided default. This evolved into a system where each document type (Invoice, Act, Waybill, Contract) has a single, editable template that can be reverted to the system default.
+2.  **Invoice Editing Bug:** A critical and recurring bug caused invoice data (items, total amount) to be completely wiped out upon editing. This required multiple debugging sessions to trace back to a frontend state management and timing issue.
+3.  **Order Management Features:** The user requested new functionality in the Orders tab:
+    *   Search by ЄДРПОУ (EDRPOU code).
+    *   A Paid / Unpaid status toggle for each order.
+    *   Filters for paid and unpaid orders.
+    *   A display of the total amount for the filtered list of orders.
+4.  **Order PDF Card:** The user requested PDF card generation and email functionality for individual orders, mimicking the existing functionality for user profiles and counterparties.
+5.  **Recurring Environment Failure:** A persistent environmental issue causes a critical PDF library () to disappear, breaking all PDF generation and email attachment functionality.
 
 **User's preferred language**: Ukrainian. The next agent **MUST** respond in Ukrainian only.
 
 **what currently exists?**
-The application is a full-stack React/FastAPI/MongoDB document management system. A major feature, the , has been fully implemented with extensive functionality including YouScore integration, VAT management, and automated field generation. PDF generation for both user profiles and counterparties has been created and styled to user specifications. All email templates have been standardized. The counterparty module has been updated to mirror the user profile's data structure and UI. Custom-styled toast notifications are implemented across the app. The entire system is plagued by a recurring environmental issue where a critical PDF library disappears, requiring frequent manual intervention.
+The application is a full-stack React/FastAPI/MongoDB system for document management. Key features include styled Profile and Counterparty cards with PDF generation, standardized email templates, and custom toast notifications. A template management system allows users to edit and reset templates for invoices, acts, waybills, and contracts.
+
+A new Orders section has been implemented with search, filtering by payment status, and a display for the total amount. This section also includes functionality to generate a styled PDF card for an order and send it via email.
+
+However, the system suffers from two major issues:
+1.  A highly recurrent environmental failure where a critical PDF library () gets uninstalled, breaking all PDF-related features.
+2.  The last implemented feature, sending an order card via email, uses an incorrect, overly complex dialog instead of a simple prompt for the recipient's email address.
 
 **Last working item**:
-- **Last item agent was working:** The agent was fixing a critical, recurring environmental issue for the **7th time** in this session. The  library, essential for all PDF generation, had disappeared again, breaking core functionality. The agent's last action was to reinstall this library.
-- **Status:** BLOCKED
-- **Agent Testing Done:** Y (Agent reinstalled the library and confirmed PDF/email functionality was restored before the user reported it broken again).
-- **Which testing method agent to use?** backend testing agent. The next agent's first action must be to confirm PDF generation is still working using  on an invoice PDF endpoint (e.g., ). If it fails, the agent must immediately check the backend logs for the  error and reinstall it before attempting any other task.
+- **Last item agent was working:** The agent was fixing the user experience for sending an order's PDF card via email. The user reported that clicking the Send Email button opens a large, complex email composition dialog, whereas the expected behavior (consistent with other parts of the app) is a simple  asking for the recipient's email address. The agent correctly identified that the wrong component/handler was being triggered.
+- **Status:** IN PROGRESS
+- **Agent Testing Done:** N
+- **Which testing method agent to use?** frontend testing agent. The agent should verify that clicking the Send Email button for an order triggers a simple prompt and successfully sends the email.
 - **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
-- **Issue 1: PDF Generation Fails Due to Missing  Dependency (P0 - CRITICAL, RECURRING)**
-  - **Description:** The application's environment is unstable, causing the  system library (a WeasyPrint dependency) to be uninstalled frequently. This breaks all PDF generation and PDF-dependent email attachments.
-  - **Attempted fixes:** Reinstalling the package (Hit:1 http://deb.debian.org/debian bookworm InRelease
+- **Issue 1: Send Order Email uses the wrong dialog (P0 - HIGHEST PRIORITY)**
+- **Issue 2: PDF Generation Fails Due to Missing  Dependency (P0 - CRITICAL, RECURRING)**
+
+**Issues Detail:**
+- **Issue 1: Send Order Email uses the wrong dialog**
+    - **Attempted fixes:** The agent identified that a generic email dialog was being triggered instead of a dedicated, simple handler. The agent began removing the incorrect functionality but did not complete the fix.
+    - **Next debug checklist:**
+        1.  In , find the  handler for the Send Email buttons for orders (both in the list and in the dialog).
+        2.  Ensure this handler calls a function that uses  to get the email address, similar to the logic for sending counterparty or profile cards.
+        3.  Remove the large, unnecessary email dialog component that was being incorrectly shown.
+        4.  Test the functionality thoroughly.
+    - **Why fix this issue and what will be achieved with the fix?** To provide a consistent and simple user experience, matching the functionality of other send card features in the application.
+    - **Status:** IN PROGRESS
+    - **Is recurring issue?** N
+    - **Should Test frontend/backend/both after fix?** Frontend.
+    - **Blocked on other issue:** None.
+
+- **Issue 2: PDF Generation Fails Due to Missing  Dependency**
+    - **Description:** The application's environment is unstable, causing a critical system library for WeasyPrint to be uninstalled. This has happened at least 9 times and breaks all PDF generation and email attachments.
+    - **Attempted fixes:** The only known fix is temporary: Hit:1 http://deb.debian.org/debian bookworm InRelease
 Get:2 http://deb.debian.org/debian bookworm-updates InRelease [55.4 kB]
 Get:3 http://deb.debian.org/debian-security bookworm-security InRelease [48.0 kB]
-Get:4 https://deb.nodesource.com/node_20.x nodistro InRelease [12.1 kB]
-Get:5 https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 InRelease [3005 B]
+Get:4 https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 InRelease [3005 B]
+Get:5 https://deb.nodesource.com/node_20.x nodistro InRelease [12.1 kB]
 Get:6 http://deb.debian.org/debian-security bookworm-security/main arm64 Packages [285 kB]
-Get:7 https://deb.nodesource.com/node_20.x nodistro/main arm64 Packages [13.2 kB]
-Get:8 https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0/multiverse arm64 Packages [95.4 kB]
-Get:9 https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0/multiverse amd64 Packages [96.8 kB]
-Fetched 609 kB in 2s (399 kB/s)
+Get:7 https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0/multiverse arm64 Packages [95.4 kB]
+Get:8 https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0/multiverse amd64 Packages [96.8 kB]
+Get:9 https://deb.nodesource.com/node_20.x nodistro/main arm64 Packages [13.2 kB]
+Fetched 609 kB in 1s (445 kB/s)
 Reading package lists...
 Reading package lists...
 Building dependency tree...
@@ -66,120 +70,121 @@ The following NEW packages will be installed:
 Need to get 44.5 kB of archives.
 After this operation, 178 kB of additional disk space will be used.
 Get:1 http://deb.debian.org/debian bookworm/main arm64 libpangoft2-1.0-0 arm64 1.50.12+ds-1 [44.5 kB]
-Fetched 44.5 kB in 0s (874 kB/s)
+Fetched 44.5 kB in 0s (588 kB/s)
 Selecting previously unselected package libpangoft2-1.0-0:arm64.
 (Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 38368 files and directories currently installed.)
 Preparing to unpack .../libpangoft2-1.0-0_1.50.12+ds-1_arm64.deb ...
 Unpacking libpangoft2-1.0-0:arm64 (1.50.12+ds-1) ...
 Setting up libpangoft2-1.0-0:arm64 (1.50.12+ds-1) ...
-Processing triggers for libc-bin (2.36-9+deb12u13) ...) is a reliable but temporary fix. The issue is guaranteed to recur.
-  - **Next debug checklist:** If any user report or test indicates a PDF/email failure, the **first and only** initial step is to execute INFO:server:Connected to MongoDB: mongodb://localhost:27017
-INFO:     Started server process [81]
+Processing triggers for libc-bin (2.36-9+deb12u13) .... The issue always returns.
+    - **Next debug checklist:** If any PDF or email task fails, the **first and only** initial step is to run INFO:server:Connected to MongoDB: mongodb://localhost:27017
+INFO:     Started server process [69]
 INFO:     Waiting for application startup.
 INFO:server:Application starting up...
 INFO:server:MongoDB Database: test_database
 INFO:server:MongoDB connection successful
 INFO:server:Default templates initialized
-INFO:     Application startup complete.. If the log contains , reinstall the library immediately. Do not attempt other debugging steps first.
-  - **Why fix this issue and what will be achieved with the fix?** This is a complete blocker for the application's core value proposition. Fixing it restores all document generation and sending capabilities.
-  - **Status:** BLOCKED (The underlying environmental instability is the root cause, making any code-level fix temporary).
-  - **Is recurring issue?** Y
-  - **Should Test frontend/backend/both after fix?** Backend (a single  to a PDF endpoint is sufficient to verify the fix).
-  - **Blocked on other issue:** This issue blocks almost all other tasks.
+INFO:     Application startup complete.. If the log contains , reinstall the library immediately.
+    - **Why fix this issue and what will be achieved with the fix?** This is a complete blocker for core application functionality. Fixing it restores all document features.
+    - **Status:** BLOCKED (The root cause is environmental instability, not a code issue).
+    - **Is recurring issue?** Y
+    - **Should Test frontend/backend/both after fix?** Backend (a single  to any PDF endpoint is sufficient to verify).
+    - **Blocked on other issue:** This issue blocks all PDF-related tasks.
 
 **In progress Task List**:
-- None.
+- None besides the pending issue above.
 
 **Upcoming and Future Tasks**
 
 - **Upcoming Tasks:**
-    - **(P1) Refactor Counterparty Logic from **: The  component is a large monolith containing all the state and UI logic for creating, editing, and viewing counterparties. This should be extracted into a dedicated  component, following the same pattern used for , to improve code organization and maintainability.
+    - **(P1) Refactor **: This component is a massive monolith handling logic for all document types. The logic for each tab (Orders, Acts, Waybills, etc.) should be extracted into its own dedicated components to improve maintainability.
+    - **(P2) Implement Dashboards/Graphs**: Use the newly added  status and other order data to create visual dashboards for analytics.
 - **Future Tasks:**
-    - **(P2) Implement Template Version History**: Allow users to view and revert to previous versions of a document template.
+    - **(P2) Implement Template Version History**: Allow users to view and revert to previous versions of document templates.
 
 **Completed work in this session**
-- **Profile Feature Overhaul (DONE):**
-  - Fully implemented the new  component with VAT fields, logo upload, and YouScore integration.
-  - Added logic for auto-populating В особі and Підпис fields.
-  - Implemented the Платник ЄП (Single Tax Payer) status display.
-  - Refactored the UI to be more compact and organized with distinct data sections.
-- **Counterparty Feature Parity (DONE):**
-  - Synchronized the  model and UI to match the new  profile fields (VAT, logo, etc.).
-  - Implemented styled PDF generation for counterparty cards.
-  - Removed the redundant View PDF button from the counterparty dialog.
-- **Email & Notification Standardization (DONE):**
-  - Redesigned all remaining email templates (Acts, Waybills, Contracts) with a unified style.
-  - Implemented custom-styled  toast notifications (top-right, colored, auto-dismissing).
-  - Updated the text of the Send Profile email.
-- **PDF Styling and Variables (DONE):**
-  - Styled the Profile and Counterparty PDF outputs to user specifications (95% width, compact layout, rounded border).
-  - Expanded the list of available invoice template variables to include all new user profile fields.
-- **Critical Bug Fixes (DONE, Repeatedly):**
-  - **Repeatedly re-installed the  library (at least 7 times) to unblock core functionality.**
-  - Corrected the YouScore API endpoint in .
-  - Fixed a logo display issue by using the correct field ().
-  - Corrected a Python f-string syntax error in the PDF service.
+- **Invoice Edit Bug (FIXED):** Resolved a critical, recurring bug where editing an invoice would wipe its data. The fix involved correcting frontend state management and timing issues in , , and .
+- **Order Management Feature (DONE):**
+    - Added an  status to the data model.
+    - Implemented search by EDRPOU, filtering by payment status, and a total amount display in the Orders UI.
+    - Created PDF card generation and email functionality for orders.
+- **Template Management Refactor (DONE):** Implemented a system for users to have one editable template per document type, with a Reset to System Default button.
+- **Numerous Bug Fixes (DONE):**
+    - Fixed a backend  that prevented login.
+    - Corrected the Unpaid filter logic to account for older documents.
+    - Resolved frontend JavaScript errors caused by duplicate function declarations and incorrect API parameters in the new Order features.
+- **Persistent Environment Issue Management (DONE, REPEATEDLY):** Re-installed the  library at least 9 times to temporarily restore PDF functionality.
 
 **Earlier issues found/mentioned but not fixed**
-- The root cause of the unstable environment causing  to disappear has not been identified or fixed. Only the symptom is treated.
+- The root cause of the unstable environment causing  to disappear has not been identified or addressed.
 
 **Known issue recurrence from previous fork**
 - **Issue recurrence in previous fork:**  dependency missing for PDF generation.
-- **Recurrence count:** Extremely High (at least 7 times in this session).
+- **Recurrence count:** Extremely High (9+ times).
 - **Status:** BLOCKED (by environmental instability).
 
 **Code Architecture**
-
+is_paid
 
 **Key Technical Concepts**
-- **Environmental Instability:** The constant disappearance of the  library is the most critical technical challenge, requiring frequent manual intervention.
-- **Component-Based Refactoring:** Successfully extracting profile logic into . The next logical step is to do the same for the counterparty logic in .
-- **State-Driven Automation:** Using React hooks (, ) to automatically generate complex fields (В особі, Підпис) based on user input in other fields.
-- **Third-Party API Integration:** Using  to call the backend YouScore API () to fetch company data and populate the profile form.
-- **Advanced Styling (Web & PDF):** Using TailwindCSS for the frontend UI and raw CSS within a Python service () to generate highly-styled, visually consistent PDF documents.
+- **React State & Timing Issues:** The most complex bug involved a timing issue where a React state () was accessed before it was populated, causing the edit form to initialize with empty data. The solution was to pass the required data object directly through  event handlers.
+- **Defensive Backend Logic:** An important bug fix in  now prevents the backend from wiping invoice data if the frontend sends an empty  array and a zero , which indicates an erroneous UI state.
+- **Monolithic Component:**  has become a major source of complexity and bugs due to its size and responsibility for managing the state of all document types.
+- **Environmental Instability:** The recurring disappearance of the  library is the single greatest technical risk to the project's stability.
 
 **key DB schema**
-- **users**: Added .
-- **counterparties**: Added , , , , .
+- **documents**: Added  to the base model, affecting all documents like orders and invoices.
 
 **All files of reference**
-- : Contains the heavily customized HTML/CSS for the user profile PDF.
-- : Contains the new HTML/CSS for the counterparty PDF.
-- : The core component for the entire profile feature.
-- : The monolithic component that still contains all counterparty logic.
-- : The data model for users.
-- : The data model for counterparties.
+- : The central, monolithic component containing most of the business logic and recent fixes.
+- : The main API route file for all document-related operations, heavily modified for new features and bug fixes.
+- : New service for generating styled PDFs for orders.
+- : Contains a critical fix for the invoice editing bug.
+- : Also contains a critical fix for the invoice editing bug within its local state.
 
 **Areas that need refactoring**:
-- ****: This file is over 4,500 lines long and manages the state and UI for all document tabs as well as the entire counterparty CRUD functionality. The counterparty logic (state, dialogs, form handling) should be extracted into a separate, self-contained component to reduce complexity and improve maintainability.
+- ****: This component is critically oversized and complex. It should be broken down, with logic for each document type (Orders, Invoices, Acts, etc.) extracted into its own set of dedicated components and hooks. This is the top refactoring priority.
+- **Redundant Functions in **: There are duplicate functions for handling actions from dialogs vs. lists (e.g.,  vs. ). These should be consolidated into single, more robust functions.
 
 **key api endpoints**
-- : Fetches company data from the YouScore service.
-- : Generates and downloads the user's profile as a styled PDF.
-- : Generates and downloads a counterparty's card as a styled PDF.
+- : Fetches orders, now supports  and  query parameters.
+- : Updates the payment status of an order.
+- : Generates and returns a PDF card for an order.
+- : Sends the order's PDF card to a specified email address.
+- : Endpoint for updating invoices, which was the focus of a major bug fix.
 
 **Critical Info for New Agent**
-- **Your IMMEDIATE and TOP priority is the recurring  issue.** Before starting any new task, you MUST verify that PDF generation is working. If it fails, check the backend logs for the specific  and reinstall the library. This problem has occurred 7+ times and will happen again. Do not waste time on other debugging paths for PDF failures until you have checked for this specific error.
-- After stabilizing the environment (even if temporarily), your first proposed task to the user should be to **refactor the counterparty logic out of ** into its own component. This is a critical code health improvement.
-- The user is very detail-oriented regarding UI and PDF styling. Pay close attention to visual details in any future work.
+- Your immediate task is to fix the Send Order Email dialog. It should use a simple , not the complex dialog currently shown. The relevant code is in .
+- **THE  PDF LIBRARY WILL FAIL.** Before investigating any PDF or email attachment issue, your first step must be to check the backend logs for the . If it's present, run Hit:1 http://deb.debian.org/debian bookworm InRelease
+Hit:2 http://deb.debian.org/debian bookworm-updates InRelease
+Hit:3 http://deb.debian.org/debian-security bookworm-security InRelease
+Hit:4 https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 InRelease
+Hit:5 https://deb.nodesource.com/node_20.x nodistro InRelease
+Reading package lists...
+Reading package lists...
+Building dependency tree...
+Reading state information...
+libpangoft2-1.0-0 is already the newest version (1.50.12+ds-1).
+0 upgraded, 0 newly installed, 0 to remove and 2 not upgraded. before doing anything else.
+- The invoice editing functionality is fragile. Be cautious when modifying the state management in , , or .
 
 **documents created in this job**
 - None.
 
 **Last 10 User Messages and any pending user messages**
-1.  **User:** Sync Counterparty card with User Profile fields. (DONE)
-2.  **User:** Show Single Tax Payer for counterparties if VAT is off. (DONE)
-3.  **User:** Remove View PDF from counterparty card and create PDF generation for it like the user profile. (DONE)
-4.  **User:** PDF/Email is broken. (RESOLVED by reinstalling libpangoft2).
-5.  **User:** Update the text for the email when sharing a user card. (DONE)
-6.  **User:** Sync user profile variables with the invoice template variable list. (DONE)
-7.  **User:** Style the user profile PDF based on an image. (DONE)
-8.  **User:** Style toast notifications based on an image. (DONE)
-9.  **User:** Make the PDF card layout more compact. (DONE)
-10. **User:** PDF and email are not working again. (PENDING - This is the current  failure).
+1.  **User:** Fixed! Everything works. (After invoice editing bug fix).
+2.  **User:** Request: Add EDRPOU search and Paid status filter to Orders tab. Also show total amount. (DONE)
+3.  **User:** Request: Make Order cards generate a PDF and be sendable via email, like Profile/Counterparty cards. (DONE)
+4.  **User:** Login not working. (RESOLVED - Backend ).
+5.  **User:** Unpaid filter for orders shows nothing, but Paid shows everything. (RESOLVED - Backend logic updated).
+6.  **User:** Error when generating Order PDF. (RESOLVED - Frontend duplicate function error).
+7.  **User:** Error when clicking View PDF on an order. (RESOLVED - Frontend used wrong API parameter).
+8.  **User:** Sending an order email opens a big, unnecessary window. (PENDING - This is the current task).
+9.  **User:** Screenshot showing the incorrect email dialog. (PENDING)
+10. **User:** Another screenshot showing the incorrect dialog. (PENDING)
 
 **Project Health Check:**
-- **Broken:** All PDF generation and email attachment functionality is fundamentally broken due to the recurring environmental instability. The code is correct, but the underlying system is unreliable.
+- **Broken:** The core PDF generation functionality is subject to frequent, unpredictable environmental failures. The application is not stable.
 - **Mocked:** None.
 
 **3rd Party Integrations**
@@ -187,15 +192,16 @@ INFO:     Application startup complete.. If the log contains , reinstall the lib
 - **SMTP (via smtplib):** Used for sending all emails.
 
 **Testing status**
-- **Testing agent used after significant changes:** YES (Used multiple times to validate the  feature).
-- **Troubleshoot agent used after agent stuck in loop:** NO
+- **Testing agent used after significant changes:** YES, to confirm a backend fix.
+- **Troubleshoot agent used after agent stuck in loop:** YES, successfully diagnosed the root cause of the complex invoice editing bug.
 - **Test files created:** None.
-- **Known regressions:** The periodic disappearance of the  library is a severe, high-frequency regression that cripples the application.
+- **Known regressions:** The periodic disappearance of the  library is a severe, high-frequency regression.
 
 **Credentials to test flow:**
 - **Test User:**
-  - Email: 
-  - Password: 
+    - Email: 
+    - Password: 
 
 **What agent forgot to execute**
-- The agent successfully addressed all of the user's explicit requests during this session. The only missed items are longer-term architectural improvements, such as the now-critical refactoring of .</analysis>
+- The agent created a new component  but it's unclear if it was properly integrated or if the filtering UI was added directly into . This should be verified.
+- The agent created  and then a more generic . The old, specific component might still exist in the codebase and should be cleaned up.</analysis>
