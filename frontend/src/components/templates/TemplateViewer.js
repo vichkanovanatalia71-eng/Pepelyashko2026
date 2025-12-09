@@ -259,6 +259,7 @@ const TemplateViewer = () => {
                       {viewMode === 'preview' && !isEditing ? (
                         <div className="border rounded-lg p-4 bg-white">
                           <iframe
+                            key={selectedTemplate?.updated_at || selectedTemplate?._id}
                             srcDoc={selectedTemplate.content}
                             className="w-full h-[600px] border-0"
                             title="Template Preview"
