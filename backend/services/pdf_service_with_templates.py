@@ -169,6 +169,9 @@ class PDFServiceWithTemplates:
         # Format date in Ukrainian text format
         formatted_date_text = self.renderer.format_date_ukrainian(invoice_date)
         
+        # Format date as full text
+        formatted_date_full_text = self.renderer.format_date_text_full(invoice_date)
+        
         # Calculate totals (БЕЗ ПДВ за вимогою користувача)
         total_amount = float(invoice.get('total_amount', 0))
         
