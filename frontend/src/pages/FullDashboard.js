@@ -208,6 +208,22 @@ const FullDashboard = () => {
     loadUserProfile();
   }, []);
 
+  const loadOrders = async () => {
+    try {
+      const params = {};
+      if (searchEdrpouOrders) params.edrpou = searchEdrpouOrders;
+      if (paymentFilterOrders !== 'all') {
+        params.is_paid = paymentFilterOrders === 'paid';
+      }
+      
+      const response = await axios.get(`${API_URL}/api/orders`, { params });
+      setOrders(response.data);
+    } catch (error) {
+      console.error('Error loading orders:', error);
+      toast.error('Помилка завантаження замовлень');
+    }
+  };
+
   const loadAllData = async () => {
     setLoading(true);
     try {
@@ -240,6 +256,13 @@ const FullDashboard = () => {
       setLoading(false);
     }
   };
+
+  // Load orders when filters change
+  useEffect(() => {
+    if (!loading) {
+      loadOrders();
+    }
+  }, [searchEdrpouOrders, paymentFilterOrders]);
 
   // Counterparty functions
   const handleCounterpartySubmit = async (e) => {
