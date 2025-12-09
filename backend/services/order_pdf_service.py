@@ -428,16 +428,135 @@ class OrderPDFService:
         </div>
         
         <div class="content">
-            <div class="description">
-                <strong>📋 Мета документу:</strong> Це замовлення надіслано постачальником <strong>{supplier_name or 'N/A'}</strong> для перевірки та підтвердження покупцем. Будь ласка, уважно перевірте реквізити обох сторін та деталі замовлення перед підтвердженням.
+            <!-- ПОСТАЧАЛЬНИК -->
+            <div class="section">
+                <div class="section-title">
+                    <span>🏢</span>
+                    ПОСТАЧАЛЬНИК
+                </div>
+                <div class="info-grid">
+                    <div class="info-row">
+                        <div class="info-label">Повна назва</div>
+                        <div class="info-value" style="font-weight: bold;">{supplier_name if supplier_name else 'Не вказано'}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Код ЄДРПОУ</div>
+                        <div class="info-value">{supplier_edrpou if supplier_edrpou else '—'}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Юридична адреса</div>
+                        <div class="info-value">{supplier_address if supplier_address else '—'}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Телефон</div>
+                        <div class="info-value">{supplier_phone if supplier_phone else '—'}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Email</div>
+                        <div class="info-value">{supplier_email if supplier_email else '—'}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Банк</div>
+                        <div class="info-value">{supplier_bank if supplier_bank else '—'}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">IBAN</div>
+                        <div class="info-value" style="font-family: monospace; font-size: 7.5pt;">{supplier_iban if supplier_iban else '—'}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">МФО</div>
+                        <div class="info-value">{supplier_mfo if supplier_mfo else '—'}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Директор</div>
+                        <div class="info-value">{supplier_director if supplier_director else '—'}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Посада</div>
+                        <div class="info-value">{supplier_position if supplier_position else '—'}</div>
+                    </div>
+                </div>
             </div>
             
-            <!-- БЛОК 1: ПЕРЕВІРКА РЕКВІЗИТІВ -->
-            <div class="verification-block">
-                <div class="block-header">
-                    <span style="font-size: 12pt; font-weight: bold;">✓ БЛОК 1: ПЕРЕВІРКА РЕКВІЗИТІВ</span>
+            <!-- ПОКУПЕЦЬ -->
+            <div class="section">
+                <div class="section-title">
+                    <span>👥</span>
+                    ПОКУПЕЦЬ
                 </div>
-                <div class="block-content">"""
+                <div class="info-grid">
+                    <div class="info-row">
+                        <div class="info-label">Повна назва</div>
+                        <div class="info-value" style="font-weight: bold;">{counterparty_name}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Код ЄДРПОУ</div>
+                        <div class="info-value">{counterparty_edrpou}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Юридична адреса</div>
+                        <div class="info-value">{counterparty_address if counterparty_address else '—'}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Телефон</div>
+                        <div class="info-value">{counterparty_phone if counterparty_phone else '—'}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Email</div>
+                        <div class="info-value">{counterparty_email if counterparty_email else '—'}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Банк</div>
+                        <div class="info-value">{counterparty_bank if counterparty_bank else '—'}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">IBAN</div>
+                        <div class="info-value" style="font-family: monospace; font-size: 7.5pt;">{counterparty_iban if counterparty_iban else '—'}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">МФО</div>
+                        <div class="info-value">{counterparty_mfo if counterparty_mfo else '—'}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Директор</div>
+                        <div class="info-value">{counterparty_director if counterparty_director else '—'}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Посада</div>
+                        <div class="info-value">{counterparty_position if counterparty_position else '—'}</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- ТОВАРИ ТА ПОСЛУГИ -->
+            <div class="section">
+                <div class="section-title">
+                    <span>📦</span>
+                    ТОВАРИ ТА ПОСЛУГИ
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 40px; text-align: center;">№</th>
+                            <th>Найменування товару/послуги</th>
+                            <th style="width: 60px; text-align: center;">Кіл-ть</th>
+                            <th style="width: 50px; text-align: center;">Од.</th>
+                            <th style="width: 100px; text-align: right;">Ціна</th>
+                            <th style="width: 120px; text-align: right;">Сума</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {items_html}
+                    </tbody>
+                </table>
+                
+                <div class="total-section">
+                    <div class="total-row">
+                        <div class="total-label">💰 Загальна сума замовлення:</div>
+                        <div class="total-value">{total_amount:,.2f} грн</div>
+                    </div>
+                </div>
+            </div>"""
             
             # Add supplier section if available
             if supplier_name:
