@@ -1385,6 +1385,122 @@ async def update_order_payment_status(
         )
 
 
+@router.get("/orders/{order_number}/pdf")
+async def get_order_pdf(
+    order_number: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Generate and download order PDF."""
+    from server import db as database
+    from services.order_pdf_service import OrderPDFService
+    
+    try:
+        # Get order
+        order = await database.orders.find_one({
+            "number": order_number,
+            "user_id": current_user["_id"]
+        }, {"_id": 0})
+        
+        if not order:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Замовлення не знайдено"
+            )
+        
+        # Get user data
+        user = await database.users.find_one({
+            "_id": current_user["_id"]
+        }, {"hashed_password": 0})
+        
+        # Generate PDF
+        pdf_service = OrderPDFService()
+        pdf_path = pdf_service.generate_order_pdf(order, user)
+        
+        return FileResponse(
+            pdf_path,
+            media_type="application/pdf",
+            filename=f"zamovlennya_{order_number}.pdf"
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error generating order PDF: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Помилка при генерації PDF"
+        )
+
+
+@router.post("/orders/{order_number}/send-email")
+async def send_order_email(
+    order_number: str,
+    email: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Send order PDF via email."""
+    from server import db as database
+    from services.order_pdf_service import OrderPDFService
+    from services.email_service import EmailService
+    
+    try:
+        # Get order
+        order = await database.orders.find_one({
+            "number": order_number,
+            "user_id": current_user["_id"]
+        }, {"_id": 0})
+        
+        if not order:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Замовлення не знайдено"
+            )
+        
+        # Get user data
+        user = await database.users.find_one({
+            "_id": current_user["_id"]
+        }, {"hashed_password": 0})
+        
+        # Generate PDF
+        pdf_service = OrderPDFService()
+        pdf_path = pdf_service.generate_order_pdf(order, user)
+        
+        # Send email
+        email_service = EmailService()
+        subject = f"Замовлення №{order_number}"
+        body = f"""
+        <html>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6;">
+            <h2 style="color: #3b82f6;">Замовлення №{order_number}</h2>
+            <p>Доброго дня!</p>
+            <p>Надсилаємо вам картку замовлення №{order_number} від {order.get('date', '')}.</p>
+            <p><strong>Контрагент:</strong> {order.get('counterparty_name', 'N/A')}</p>
+            <p><strong>Загальна сума:</strong> {order.get('total_amount', 0.0):,.2f} грн</p>
+            <p><strong>Статус оплати:</strong> {'✅ Сплачено' if order.get('is_paid', False) else '⏳ Не сплачено'}</p>
+            <p style="margin-top: 20px;">PDF документ додано до листа.</p>
+            <p style="color: #64748b; font-size: 0.9em; margin-top: 30px;">З повагою,<br>{user.get('representative_name', user.get('company_name', 'Компанія'))}</p>
+        </body>
+        </html>
+        """
+        
+        email_service.send_email(
+            to_email=email,
+            subject=subject,
+            body=body,
+            attachment_path=pdf_path
+        )
+        
+        logger.info(f"Order {order_number} PDF sent to {email}")
+        return {"message": f"Замовлення відправлено на {email}"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error sending order email: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Помилка при відправці email"
+        )
+
+
 @router.delete("/orders/{order_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_order(
     order_id: str,
