@@ -854,6 +854,24 @@ const FullDashboard = () => {
     });
   };
 
+  const toggleOrderPaymentStatus = async (orderNumber, currentStatus) => {
+    try {
+      const newStatus = !currentStatus;
+      const token = localStorage.getItem('token');
+      await axios.patch(
+        `${API_URL}/api/orders/${orderNumber}/payment-status?is_paid=${newStatus}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      toast.success(`Статус оплати оновлено: ${newStatus ? 'Сплачено ✅' : 'Не сплачено ⏳'}`);
+      await loadOrders();
+    } catch (error) {
+      console.error('Error updating payment status:', error);
+      toast.error('Помилка оновлення статусу оплати');
+    }
+  };
+
   const deleteOrder = async () => {
     if (!viewingOrder) return;
     
