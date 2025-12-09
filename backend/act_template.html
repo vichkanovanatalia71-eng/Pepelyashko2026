@@ -145,6 +145,9 @@
           <p><strong>Email:</strong> <span class="mono">{{buyer_email}}</span></p>
           <p><strong>Тел.:</strong> <span class="mono">{{buyer_phone}}</span></p>
           <p><strong>В особі:</strong> {{buyer_representative}}</p>
+          {{#if buyer_position}}
+          <p><strong>Посада:</strong> {{buyer_position}}</p>
+          {{/if}}
           <p class="signline">Підпис: __________________ / ________ /</p>
           <p><strong>{{buyer_signature}}</strong></p>
         </td>
