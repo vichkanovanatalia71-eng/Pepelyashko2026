@@ -38,6 +38,7 @@ import { InvoiceDialog, ActDialog, WaybillDialog, ContractDialog } from '../comp
 import { InvoiceList, DocumentListGeneric } from '../components/documents';
 import TemplateEditor from '../components/templates/TemplateEditor';
 import ProfileCard from '../components/ProfileCard';
+import OrderFilters from '../components/OrderFilters';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
