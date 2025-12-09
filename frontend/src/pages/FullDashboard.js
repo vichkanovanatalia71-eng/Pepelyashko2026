@@ -3242,7 +3242,19 @@ const FullDashboard = () => {
                               <p className={`font-bold ${currentTheme.text}`}>{order.total_amount} грн</p>
                               <p className="text-xs text-gray-500">{order.date}</p>
                             </div>
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 items-center">
+                              <div className="flex items-center gap-2 mr-2">
+                                <Switch
+                                  checked={order.is_paid || false}
+                                  onCheckedChange={(checked) => {
+                                    toggleOrderPaymentStatus(order.number, order.is_paid);
+                                  }}
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                                <span className="text-xs text-gray-600 whitespace-nowrap">
+                                  {order.is_paid ? '✅' : '⏳'}
+                                </span>
+                              </div>
                               <Button
                                 size="sm"
                                 variant="outline"
