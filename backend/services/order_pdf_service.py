@@ -79,11 +79,29 @@ class OrderPDFService:
                         mime_type = 'image/png' if logo_ext == '.png' else 'image/jpeg'
                         logo_base64 = f"data:{mime_type};base64,{base64.b64encode(logo_data).decode()}"
             
-            supplier_name = user.get('company_name', user.get('representative_name', '')) if user else ''
-            supplier_edrpou = user.get('edrpou', '') if user else ''
-            supplier_address = user.get('legal_address', '') if user else ''
-            supplier_phone = user.get('phone', '') if user else ''
-            supplier_email = user.get('email', '') if user else ''
+            # Get full supplier info from user
+            supplier_name = ''
+            supplier_edrpou = ''
+            supplier_address = ''
+            supplier_phone = ''
+            supplier_email = ''
+            supplier_bank = ''
+            supplier_iban = ''
+            supplier_mfo = ''
+            supplier_director = ''
+            supplier_position = ''
+            
+            if user:
+                supplier_name = user.get('representative_name', user.get('company_name', ''))
+                supplier_edrpou = user.get('edrpou', '')
+                supplier_address = user.get('legal_address', '')
+                supplier_phone = user.get('phone', '')
+                supplier_email = user.get('email', '')
+                supplier_bank = user.get('bank_name', user.get('bank', ''))
+                supplier_iban = user.get('iban', '')
+                supplier_mfo = user.get('mfo', '')
+                supplier_director = user.get('director_name', '')
+                supplier_position = user.get('director_position', user.get('position', ''))
             
             # Build items table
             items_html = ""
