@@ -14,6 +14,7 @@ const ActDialog = ({
   onDownload,
   onPreview,
   onSendEmail,
+  onEdit,
   formatDateUkrainian
 }) => {
   if (!act) return null;
