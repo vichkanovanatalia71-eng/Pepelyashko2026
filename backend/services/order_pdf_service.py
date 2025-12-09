@@ -96,12 +96,12 @@ class OrderPDFService:
                 
                 items_html += f"""
                 <tr>
-                    <td style="text-align: center; padding: 8px; border-bottom: 1px solid #e5e7eb;">{idx}</td>
-                    <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">{item_name}</td>
-                    <td style="text-align: center; padding: 8px; border-bottom: 1px solid #e5e7eb;">{item_quantity}</td>
-                    <td style="text-align: center; padding: 8px; border-bottom: 1px solid #e5e7eb;">{item_unit}</td>
-                    <td style="text-align: right; padding: 8px; border-bottom: 1px solid #e5e7eb;">{item_price:,.2f} грн</td>
-                    <td style="text-align: right; padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">{item_amount:,.2f} грн</td>
+                    <td style="text-align: center; padding: 10px 8px; border-bottom: 1px solid #e5e7eb;">{idx}</td>
+                    <td style="padding: 10px 8px; border-bottom: 1px solid #e5e7eb;">{item_name}</td>
+                    <td style="text-align: center; padding: 10px 8px; border-bottom: 1px solid #e5e7eb;">{item_quantity}</td>
+                    <td style="text-align: center; padding: 10px 8px; border-bottom: 1px solid #e5e7eb;">{item_unit}</td>
+                    <td style="text-align: right; padding: 10px 8px; border-bottom: 1px solid #e5e7eb;">{item_price:,.2f} грн</td>
+                    <td style="text-align: right; padding: 10px 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">{item_amount:,.2f} грн</td>
                 </tr>
                 """
             
