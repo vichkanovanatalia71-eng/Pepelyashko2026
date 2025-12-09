@@ -4310,8 +4310,7 @@ const FullDashboard = () => {
                     variant="outline" 
                     onClick={() => {
                       if (viewingOrder) {
-                        setShowOrderDialog(false);
-                        openOrderEmailDialog();
+                        sendOrderEmail(viewingOrder.number);
                       }
                     }}
                   >
