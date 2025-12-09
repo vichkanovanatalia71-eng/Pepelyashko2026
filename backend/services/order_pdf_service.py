@@ -556,7 +556,7 @@ class OrderPDFService:
                         <div class="total-value">{total_amount:,.2f} грн</div>
                     </div>
                 </div>
-            </div>"""
+            </div>
         </div>
         
         <div class="footer">
