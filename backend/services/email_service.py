@@ -991,13 +991,13 @@ class EmailService:
         </html>
         """
         
-        return self.send_email_with_logo(
+        return self.send_email_with_attachment(
             to_email=to_email,
             subject=subject,
             body=body,
             attachment_path=pdf_path,
             attachment_name=f"Накладна_{waybill_number}.pdf",
-            logo_path=company_logo_path
+            embedded_image_path=company_logo_path
         )
 
 
