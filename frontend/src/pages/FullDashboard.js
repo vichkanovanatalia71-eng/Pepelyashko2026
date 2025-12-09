@@ -4039,26 +4039,31 @@ const FullDashboard = () => {
       <Dialog open={showEmailDialog} onOpenChange={setShowEmailDialog}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Відправити картку на Email</DialogTitle>
+            <DialogTitle>
+              {emailType === 'order' ? 'Надіслати замовлення на email' : 
+               emailType === 'invoice' ? 'Надіслати рахунок на email' :
+               emailType === 'act' ? 'Надіслати акт на email' :
+               emailType === 'waybill' ? 'Надіслати накладну на email' :
+               'Надіслати профіль на email'}
+            </DialogTitle>
+            {emailType === 'order' && viewingOrder && (
+              <DialogDescription className="text-sm text-gray-500">
+                Введіть email адресу для відправки профілю компанії
+              </DialogDescription>
+            )}
           </DialogHeader>
           
           <div className="space-y-4">
             <div>
-              <Label htmlFor="email_recipient">Email адреса отримувача</Label>
+              <Label htmlFor="email_recipient">Email адреса</Label>
               <Input
                 id="email_recipient"
                 type="email"
                 value={emailRecipient}
                 onChange={(e) => setEmailRecipient(e.target.value)}
-                placeholder="email@example.com"
+                placeholder="example@email.com"
                 autoFocus
               />
-              <p className="text-xs text-gray-500 mt-1">
-                {viewingCounterparty && viewingCounterparty.email ? 
-                  `За замовчуванням: ${viewingCounterparty.email}` : 
-                  'Введіть email адресу отримувача'
-                }
-              </p>
             </div>
           </div>
           
@@ -4067,7 +4072,7 @@ const FullDashboard = () => {
               Скасувати
             </Button>
             <Button onClick={handleSendEmail} disabled={loading || !emailRecipient}>
-              {loading ? 'Відправка...' : 'Відправити'}
+              {loading ? 'Відправка...' : 'Надіслати'}
             </Button>
           </DialogFooter>
         </DialogContent>
