@@ -718,9 +718,9 @@ async def send_act_email(
     email_data: dict,
     current_user: dict = Depends(get_current_user)
 ):
-    """Send act PDF to email."""
+    """Send act PDF to email using template."""
     from server import db as database
-    from services.act_pdf_service import ActPDFService
+    from services.pdf_service_with_templates import PDFServiceWithTemplates
     from services.email_service import EmailService
     
     try:
