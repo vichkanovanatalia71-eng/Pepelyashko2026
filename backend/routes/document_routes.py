@@ -1468,9 +1468,17 @@ async def send_order_email(
             "_id": current_user["_id"]
         }, {"hashed_password": 0})
         
+        # Get counterparty data
+        counterparty = None
+        if order.get('counterparty_edrpou'):
+            counterparty = await database.counterparties.find_one({
+                "edrpou": order['counterparty_edrpou'],
+                "user_id": current_user["_id"]
+            }, {"_id": 0})
+        
         # Generate PDF
         pdf_service = OrderPDFService()
-        pdf_path = pdf_service.generate_order_pdf(order, user)
+        pdf_path = pdf_service.generate_order_pdf(order, user, counterparty)
         
         # Send email
         email_service = EmailService()
