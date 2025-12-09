@@ -4298,11 +4298,7 @@ const FullDashboard = () => {
                 <div className="flex gap-2">
                   <Button 
                     variant="outline" 
-                    onClick={() => {
-                      if (viewingOrder) {
-                        sendOrderEmail(viewingOrder.number);
-                      }
-                    }}
+                    onClick={openOrderEmailDialog}
                   >
                     <Mail className="w-4 h-4 mr-2" />
                     Відправити Email
