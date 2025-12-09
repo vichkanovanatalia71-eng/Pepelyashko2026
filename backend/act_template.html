@@ -97,18 +97,25 @@
         {{/each}}
       </tbody>
       <tfoot>
+        {{#if is_vat_payer}}
         <tr>
           <td colspan="5" class="tfoot-label">Разом без ПДВ, грн</td>
-          <td class="tfoot-sum"><span class="mono">{{total_net}}</span></td>
+          <td class="tfoot-sum"><span class="mono">{{amount_without_vat}}</span></td>
         </tr>
         <tr>
           <td colspan="5" class="tfoot-label">ПДВ {{vat_rate}}%, грн</td>
-          <td class="tfoot-sum"><span class="mono">{{total_vat}}</span></td>
+          <td class="tfoot-sum"><span class="mono">{{vat_amount}}</span></td>
         </tr>
         <tr>
           <td colspan="5" class="tfoot-label"><strong>Всього до сплати, грн</strong></td>
-          <td class="tfoot-sum"><strong><span class="mono">{{total_gross}}</span></strong></td>
+          <td class="tfoot-sum"><strong><span class="mono">{{total_amount}}</span></strong></td>
         </tr>
+        {{else}}
+        <tr>
+          <td colspan="5" class="tfoot-label"><strong>Всього до сплати (без ПДВ), грн</strong></td>
+          <td class="tfoot-sum"><strong><span class="mono">{{total_amount}}</span></strong></td>
+        </tr>
+        {{/if}}
         <tr>
           <td colspan="6" style="padding:8px;text-align:left;font-size:11px">
             <strong>Сума прописом:</strong> <span style="text-transform:lowercase">{{total_amount_text}}</span>
