@@ -345,6 +345,7 @@ class TemplateService:
         # Find system default template of the same type
         default_template = await self.collection.find_one({
             "is_default": True,
+            "user_id": None,
             "template_type": user_template["template_type"]
         })
         
