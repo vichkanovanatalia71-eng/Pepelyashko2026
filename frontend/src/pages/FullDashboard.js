@@ -184,6 +184,8 @@ const FullDashboard = () => {
   const [searchEdrpouActs, setSearchEdrpouActs] = useState('');
   const [searchEdrpouWaybills, setSearchEdrpouWaybills] = useState('');
   const [searchEdrpouContracts, setSearchEdrpouContracts] = useState('');
+  const [searchEdrpouOrders, setSearchEdrpouOrders] = useState('');
+  const [paymentFilterOrders, setPaymentFilterOrders] = useState('all');
   const [foundCounterparty, setFoundCounterparty] = useState(null);
   
   // Selected counterparty for viewing documents
