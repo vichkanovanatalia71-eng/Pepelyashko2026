@@ -3210,6 +3210,14 @@ const FullDashboard = () => {
                 <CardTitle>Список Замовлень ({orders.length})</CardTitle>
               </CardHeader>
               <CardContent>
+                {/* Filters */}
+                <OrderFilters
+                  searchEdrpou={searchEdrpouOrders}
+                  onSearchEdrpouChange={setSearchEdrpouOrders}
+                  paymentFilter={paymentFilterOrders}
+                  onPaymentFilterChange={setPaymentFilterOrders}
+                />
+
                 {orders.length === 0 ? (
                   <p className="text-center py-8 text-gray-500">Немає замовлень</p>
                 ) : (
@@ -3222,7 +3230,14 @@ const FullDashboard = () => {
                         <CardContent className="p-4">
                           <div className="flex justify-between items-center">
                             <div className="flex-1 cursor-pointer" onClick={() => openOrderDialog(order)}>
-                              <p className={`font-medium ${currentTheme.text}`}>№{order.number}</p>
+                              <div className="flex items-center gap-2">
+                                <p className={`font-medium ${currentTheme.text}`}>№{order.number}</p>
+                                {order.is_paid ? (
+                                  <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">✅ Сплачено</span>
+                                ) : (
+                                  <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full font-medium">⏳ Не сплачено</span>
+                                )}
+                              </div>
                               <p className="text-sm text-gray-600">{order.counterparty_name}</p>
                               <p className={`font-bold ${currentTheme.text}`}>{order.total_amount} грн</p>
                               <p className="text-xs text-gray-500">{order.date}</p>
