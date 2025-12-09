@@ -29,6 +29,7 @@ const TemplateEditor = () => {
     invoice: [
       { var: '{{document_number}}', desc: 'Номер рахунку' },
       { var: '{{document_date_text}}', desc: 'Дата рахунку (текстом)' },
+      { var: '{{document_date_text_full}}', desc: 'Дата прописом (повністю текстом)' },
       { var: '{{city}}', desc: 'Місто складання документу' },
       { var: '{{supplier_logo}}', desc: 'Логотип постачальника (використовувати в {{#if}}...{{/if}})' },
       { var: '{{supplier_name}}', desc: 'Назва постачальника' },
