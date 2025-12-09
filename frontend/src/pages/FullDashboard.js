@@ -2512,6 +2512,36 @@ const FullDashboard = () => {
                 <CardTitle>Список Контрагентів ({counterparties.length})</CardTitle>
               </CardHeader>
               <CardContent>
+                {/* Search field */}
+                <div className="mb-4">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <Input
+                      type="text"
+                      placeholder="Пошук за назвою або кодом ЄДРПОУ..."
+                      value={counterpartySearchQuery}
+                      onChange={(e) => setCounterpartySearchQuery(e.target.value)}
+                      className="pl-10"
+                    />
+                    {counterpartySearchQuery && (
+                      <button
+                        onClick={() => setCounterpartySearchQuery('')}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                  {counterpartySearchQuery && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Знайдено: {counterparties.filter(cp => 
+                        cp.representative_name.toLowerCase().includes(counterpartySearchQuery.toLowerCase()) ||
+                        cp.edrpou.includes(counterpartySearchQuery)
+                      ).length} контрагентів
+                    </p>
+                  )}
+                </div>
+                
                 {loading ? (
                   <div className="text-center py-8">
                     <Loader2 className="w-8 h-8 animate-spin mx-auto text-teal-600" />
@@ -2522,7 +2552,13 @@ const FullDashboard = () => {
                   </p>
                 ) : (
                   <div className="space-y-2">
-                    {counterparties.map((counterparty) => (
+                    {counterparties
+                      .filter(cp => 
+                        !counterpartySearchQuery ||
+                        cp.representative_name.toLowerCase().includes(counterpartySearchQuery.toLowerCase()) ||
+                        cp.edrpou.includes(counterpartySearchQuery)
+                      )
+                      .map((counterparty) => (
                       <Card 
                         key={counterparty._id} 
                         className={`card-hover cursor-pointer ${currentTheme.cardBg} border-2 ${currentTheme.cardBorder} ${currentTheme.shadow} transition-all duration-300`}
