@@ -96,14 +96,6 @@ const ActDialog = ({
             <Mail className="w-4 h-4 mr-2" /> Email
           </Button>
           <Button 
-            variant="outline" 
-            onClick={onDownload}
-            disabled={loading}
-            className={`border-2 ${theme.border} ${theme.hover} ${theme.textLight} hover:scale-105 transition-all duration-300`}
-          >
-            <Download className="w-4 h-4 mr-2" /> Завантажити
-          </Button>
-          <Button 
             onClick={onPreview}
             disabled={loading}
             className={`${theme.buttonBg} ${theme.buttonHover} text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105`}
