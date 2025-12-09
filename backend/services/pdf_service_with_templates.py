@@ -86,6 +86,41 @@ class PDFServiceWithTemplates:
             logger.error(f"Error generating invoice PDF: {str(e)}", exc_info=True)
             raise
     
+    def _extract_city_from_address(self, address: str) -> str:
+        """Extract city name from Ukrainian legal address."""
+        if not address:
+            return "м. Київ"
+        
+        import re
+        # Try to find city pattern: "місто Назва" or "м. Назва" or "смт Назва" or "село Назва"
+        patterns = [
+            r'місто\s+([\u0410-\u042f\u0406\u0407\u0404\u0490\u0430-\u044f\u0456\u0457\u0454\u0491\'\-]+)',
+            r'м\.\s*([\u0410-\u042f\u0406\u0407\u0404\u0490\u0430-\u044f\u0456\u0457\u0454\u0491\'\-]+)',
+            r'смт\s+([\u0410-\u042f\u0406\u0407\u0404\u0490\u0430-\u044f\u0456\u0457\u0454\u0491\'\-]+)',
+            r'село\s+([\u0410-\u042f\u0406\u0407\u0404\u0490\u0430-\u044f\u0456\u0457\u0454\u0491\'\-]+)',
+            r'с\.\s*([\u0410-\u042f\u0406\u0407\u0404\u0490\u0430-\u044f\u0456\u0457\u0454\u0491\'\-]+)'
+        ]
+        
+        for pattern in patterns:
+            match = re.search(pattern, address, re.IGNORECASE)
+            if match:
+                city_name = match.group(1).capitalize()
+                # Determine prefix based on pattern
+                if 'місто' in pattern or 'м.' in pattern:
+                    return f"м. {city_name}"
+                elif 'смт' in pattern:
+                    return f"смт {city_name}"
+                elif 'село' in pattern or 'с.' in pattern:
+                    return f"с. {city_name}"
+        
+        # If no match, try to extract from comma-separated parts
+        parts = [p.strip() for p in address.split(',')]
+        for part in parts:
+            if 'місто' in part.lower() or 'м.' in part.lower():
+                return part
+        
+        return "м. Київ"
+    
     def _get_logo_file_path(self, logo_url: str) -> str:
         """
         Convert logo URL to local file path for WeasyPrint.
