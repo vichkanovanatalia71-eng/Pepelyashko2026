@@ -541,8 +541,11 @@ class OrderPDFService:
         </div>
         
         <div class="footer">
+            <div style="font-weight: 600; margin-bottom: 4px;">
+                📤 Замовлення надіслано: {supplier_name if supplier_name else 'Постачальник'} → {counterparty_name}
+            </div>
             <div>Документ згенеровано автоматично: {datetime.now().strftime('%d.%m.%Y о %H:%M')}</div>
-            <div style="margin-top: 4px;">Замовлення №{order_number} • Статус: {payment_status}</div>
+            <div style="margin-top: 4px;">Замовлення №{order_number} від {order_date} • Статус: {payment_status}</div>
         </div>
     </div>
 </body>
