@@ -61,7 +61,7 @@ const TemplateEditor = () => {
     act: [
       { var: '{{act_number}}', desc: 'Номер акта' },
       { var: '{{act_date}}', desc: 'Дата акта' },
-      { var: '{{act_date_text_full}}', desc: 'Дата прописом (повністю текстом)' },
+      { var: '{{act_date_text_full}}', desc: 'Дата текстом (09 грудня 2025 року)' },
       { var: '{{city}}', desc: 'Місто складання документу' },
       { var: '{{basis}}', desc: 'Підстава складання акта' },
       { var: '{{supplier_logo}}', desc: 'Логотип постачальника (використовувати в {{#if}}...{{/if}})' },
