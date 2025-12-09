@@ -557,8 +557,6 @@ class OrderPDFService:
                     </div>
                 </div>
             </div>"""
-            
-            # Content sections are now included directly in the template above
         </div>
         
         <div class="footer">
