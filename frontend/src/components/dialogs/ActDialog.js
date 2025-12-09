@@ -2,7 +2,7 @@ import React from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Eye, Mail, Trash2, Download } from 'lucide-react';
+import { Eye, Mail, Trash2, Download, Edit } from 'lucide-react';
 
 const ActDialog = ({
   open,
