@@ -4514,7 +4514,7 @@ const FullDashboard = () => {
         onDelete={deleteAct}
         onDownload={downloadActPDF}
         onPreview={previewActPDF}
-        onSendEmail={() => { setEmailType('act'); setShowEmailDialog(true); }}
+        onSendEmail={openActEmailDialog}
         formatDateUkrainian={formatDateUkrainian}
       />
 
