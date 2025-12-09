@@ -572,6 +572,27 @@ const FullDashboard = () => {
     setShowEmailDialog(true);
   };
 
+  const openOrderEmailDialog = async () => {
+    // Try to get counterparty email for this order
+    if (viewingOrder && viewingOrder.counterparty_edrpou) {
+      try {
+        const counterparty = counterparties.find(cp => cp.edrpou === viewingOrder.counterparty_edrpou);
+        if (counterparty && counterparty.email) {
+          setEmailRecipient(counterparty.email);
+        } else {
+          setEmailRecipient('');
+        }
+      } catch (error) {
+        console.error('Error fetching counterparty email:', error);
+        setEmailRecipient('');
+      }
+    } else {
+      setEmailRecipient('');
+    }
+    setEmailType('order');
+    setShowEmailDialog(true);
+  };
+
   const closeEmailDialog = () => {
     setShowEmailDialog(false);
     setEmailRecipient('');
