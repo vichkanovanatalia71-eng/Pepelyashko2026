@@ -838,10 +838,13 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Order Email Functionality Fix - Simple Prompt Instead of Large Dialog"
+    - "Order PDF Generation with Drive Upload"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
+  completed_tests:
+    - "Order PDF Generation with Drive Upload"
+    - "Order Email Functionality Fix - Beautiful Dialog Instead of Simple Prompt"
   completed_tests:
     - "Counterparty Search by ЄДРПОУ in 'Основні дані'"
     - "UI/UX Design Update - surdo.org.ua Style"
