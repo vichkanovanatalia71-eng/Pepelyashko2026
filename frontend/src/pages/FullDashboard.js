@@ -1273,6 +1273,16 @@ const FullDashboard = () => {
     setEditingAct(false);
   };
 
+  const editAct = () => {
+    if (viewingAct) {
+      setShowActDialog(false);
+      setEditingAct(true);
+      // Scroll to Acts section and open edit form would be here
+      // For now, just close dialog and user can edit from list
+      toast.info('Функція редагування акта буде додана найближчим часом');
+    }
+  };
+
   const openContractDialog = (contract) => {
     setViewingContract(contract);
     setShowContractDialog(true);
