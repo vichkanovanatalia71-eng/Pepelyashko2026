@@ -245,6 +245,18 @@ backend:
     priority: "high"
     needs_retesting: false
 
+  - task: "Order Email Functionality Fix - Simple Prompt Instead of Large Dialog"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/FullDashboard.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "🎉 ВИПРАВЛЕННЯ EMAIL ФУНКЦІЇ ДЛЯ ЗАМОВЛЕНЬ ПРОТЕСТОВАНО УСПІШНО! Протестовано згідно з review request виправлення кнопки 'Відправити Email' для замовлень. РЕЗУЛЬТАТИ: 1) АВТОРИЗАЦІЯ ✅ - успішний вхід як user1@example.com/password123, 2) НАВІГАЦІЯ ✅ - перехід на вкладку 'Замовлення' працює, 3) КНОПКИ EMAIL У СПИСКУ ✅ - знайдено 14 кнопок Email у списку замовлень, 4) ТЕСТУВАННЯ ПРОСТОГО PROMPT ✅ - при натисканні кнопки '✉️ Email' з'являється ПРОСТИЙ браузерний prompt з текстом 'Введіть email для відправки:', НЕ великий діалог з формою, 5) ФУНКЦІЯ sendOrderEmail() ✅ - код використовує window.prompt() як вимагається в review request. КРИТЕРІЙ УСПІХУ ДОСЯГНУТО: ✅ З'являється простий браузерний prompt замість великого діалогу, ✅ Текст prompt: 'Введіть email для відправки:', ✅ Функція працює як очікувалося після виправлення. ВИПРАВЛЕННЯ ПРАЦЮЄ ПОВНІСТЮ - тепер кнопка Email використовує простий prompt замість складного діалогу!"
+
   - task: "Order Editing and Save Changes Functionality"
     implemented: true
     working: true
