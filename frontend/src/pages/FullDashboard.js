@@ -3325,7 +3325,9 @@ const FullDashboard = () => {
                                 variant="outline"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  sendOrderEmail(order.number);
+                                  setViewingOrder(order);
+                                  // Wait for state to update, then open dialog
+                                  setTimeout(() => openOrderEmailDialog(), 0);
                                 }}
                                 title="Надіслати Email"
                                 className="border-green-500 text-green-600 hover:bg-green-50"
