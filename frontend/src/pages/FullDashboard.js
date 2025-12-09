@@ -3293,7 +3293,7 @@ const FullDashboard = () => {
                               <p className={`font-bold ${currentTheme.text}`}>{order.total_amount} грн</p>
                               <p className="text-xs text-gray-500">{order.date}</p>
                             </div>
-                            <div className="flex gap-2 items-center">
+                            <div className="flex gap-2 items-center flex-wrap">
                               <div className="flex items-center gap-2 mr-2">
                                 <Switch
                                   checked={order.is_paid || false}
@@ -3306,6 +3306,30 @@ const FullDashboard = () => {
                                   {order.is_paid ? '✅' : '⏳'}
                                 </span>
                               </div>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  downloadOrderPDF(order.number);
+                                }}
+                                title="Завантажити PDF"
+                                className="border-blue-500 text-blue-600 hover:bg-blue-50"
+                              >
+                                📄 PDF
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  sendOrderEmail(order.number);
+                                }}
+                                title="Надіслати Email"
+                                className="border-green-500 text-green-600 hover:bg-green-50"
+                              >
+                                ✉️ Email
+                              </Button>
                               <Button
                                 size="sm"
                                 variant="outline"
