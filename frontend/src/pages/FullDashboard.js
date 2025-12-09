@@ -4334,7 +4334,7 @@ const FullDashboard = () => {
                 <div className="flex gap-2">
                   <Button 
                     variant="outline" 
-                    onClick={openOrderEmailDialog}
+                    onClick={() => openOrderEmailDialog(viewingOrder)}
                   >
                     <Mail className="w-4 h-4 mr-2" />
                     Відправити Email
