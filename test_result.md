@@ -852,7 +852,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Order PDF Generation with Drive Upload"
+    - "Updated PDF Order Structure for Buyer Verification"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
