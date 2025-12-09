@@ -459,4 +459,37 @@ class TemplateService:
                 logger.info("✅ Default invoice template created")
             else:
                 logger.warning(f"Default template file not found: {template_path}")
+        
+        # Check if default act template exists
+        existing_act = await self.collection.find_one({
+            "user_id": None,
+            "template_type": "act",
+            "is_default": True
+        })
+        
+        if not existing_act:
+            # Load default act template from file
+            act_template_path = "/app/backend/act_template.html"
+            if os.path.exists(act_template_path):
+                with open(act_template_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                
+                default_act_template = {
+                    "_id": str(uuid.uuid4()),
+                    "user_id": None,
+                    "is_default": True,
+                    "template_type": "act",
+                    "name": "Стандартний шаблон акту",
+                    "content": content,
+                    "variables": self._extract_variables(content),
+                    "version_history": [],
+                    "current_version": 1,
+                    "created_at": datetime.utcnow(),
+                    "updated_at": datetime.utcnow()
+                }
+                
+                await self.collection.insert_one(default_act_template)
+                logger.info("✅ Default act template created")
+            else:
+                logger.warning(f"Default act template file not found: {act_template_path}")
 
