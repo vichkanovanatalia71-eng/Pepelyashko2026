@@ -981,7 +981,7 @@ const FullDashboard = () => {
       // Add timestamp to prevent caching
       const timestamp = new Date().getTime();
       const response = await axios.get(
-        `${API_URL}/api/orders/${viewingOrder._id}/pdf?t=${timestamp}`,
+        `${API_URL}/api/orders/${viewingOrder.number}/pdf?t=${timestamp}`,
         { 
           responseType: 'blob',
           headers: {
