@@ -3207,7 +3207,12 @@ const FullDashboard = () => {
             {/* Orders List */}
             <Card>
               <CardHeader>
-                <CardTitle>Список Замовлень ({orders.length})</CardTitle>
+                <CardTitle className="flex items-center justify-between">
+                  <span>Список Замовлень ({orders.length})</span>
+                  <span className="text-lg font-bold text-blue-600">
+                    Загальна сума: {orders.reduce((sum, order) => sum + (order.total_amount || 0), 0).toLocaleString('uk-UA', {minimumFractionDigits: 2, maximumFractionDigits: 2})} грн
+                  </span>
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 {/* Filters */}
