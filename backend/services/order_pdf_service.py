@@ -284,6 +284,95 @@ class OrderPDFService:
             line-height: 1.5;
             color: #0f172a;
         }}
+        .verification-block {{
+            border: 2px solid #3b82f6;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 16px;
+            page-break-inside: avoid;
+        }}
+        .block-header {{
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            padding: 12px 16px;
+            font-size: 11pt;
+            font-weight: bold;
+        }}
+        .block-content {{
+            padding: 16px;
+            background: white;
+        }}
+        .party-section {{
+            margin-bottom: 14px;
+        }}
+        .party-title {{
+            background: #f8fafc;
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 9.5pt;
+            font-weight: bold;
+            color: #1e40af;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }}
+        .party-info {{
+            background: #f8fafc;
+            border-radius: 5px;
+            padding: 10px 12px;
+        }}
+        .checkbox-section {{
+            margin-top: 12px;
+            padding: 10px;
+            background: #ecfdf5;
+            border-radius: 5px;
+            border: 1px solid #10b981;
+        }}
+        .confirmation-block {{
+            border: 2px solid #10b981;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-top: 20px;
+            page-break-inside: avoid;
+        }}
+        .confirmation-title {{
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 12px 16px;
+            font-size: 11pt;
+            font-weight: bold;
+        }}
+        .confirmation-content {{
+            padding: 16px;
+            background: white;
+        }}
+        .signature-section {{
+            display: flex;
+            gap: 20px;
+            margin-top: 12px;
+        }}
+        .signature-box {{
+            flex: 1;
+        }}
+        .signature-label {{
+            font-size: 8.5pt;
+            font-weight: 600;
+            color: #475569;
+            margin-bottom: 6px;
+        }}
+        .signature-line {{
+            border-bottom: 2px solid #94a3b8;
+            padding: 8px 0;
+            text-align: center;
+            font-size: 9pt;
+        }}
+        .signature-hint {{
+            font-size: 7.5pt;
+            color: #94a3b8;
+            text-align: center;
+            margin-top: 2px;
+        }}
     </style>
 </head>
 <body>
