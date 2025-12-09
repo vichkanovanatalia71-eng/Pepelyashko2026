@@ -24,6 +24,7 @@ class DocumentModel(BaseModel):
     counterparty_name: str = Field(..., description="Назва контрагента")
     items: List[DocumentItem] = Field(..., description="Список товарів/робіт")
     total_amount: float = Field(..., description="Загальна сума")
+    is_paid: Optional[bool] = Field(False, description="Статус оплати (Сплачено/Не сплачено)")
     based_on_order: Optional[str] = Field(None, description="Номер замовлення (якщо створено на основі замовлення)")
     pdf_path: Optional[str] = Field(None, description="Path to generated PDF")
     pdf_generated_at: Optional[datetime] = Field(None, description="PDF generation timestamp")
