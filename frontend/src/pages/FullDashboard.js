@@ -2551,34 +2551,52 @@ const FullDashboard = () => {
                     Немає контрагентів. Створіть першого!
                   </p>
                 ) : (
-                  <div className="space-y-2">
-                    {counterparties
-                      .filter(cp => 
+                  <>
+                    {(() => {
+                      const filteredCounterparties = counterparties.filter(cp => 
                         !counterpartySearchQuery ||
                         cp.representative_name.toLowerCase().includes(counterpartySearchQuery.toLowerCase()) ||
                         cp.edrpou.includes(counterpartySearchQuery)
-                      )
-                      .map((counterparty) => (
-                      <Card 
-                        key={counterparty._id} 
-                        className={`card-hover cursor-pointer ${currentTheme.cardBg} border-2 ${currentTheme.cardBorder} ${currentTheme.shadow} transition-all duration-300`}
-                        onClick={() => viewCounterpartyDetails(counterparty)}
-                      >
-                        <CardContent className="p-4">
-                          <div className="flex items-center justify-between">
-                            <div className="flex-1">
-                              <p className={`font-semibold text-lg ${currentTheme.text}`}>{counterparty.representative_name}</p>
-                              <p className={`text-sm ${currentTheme.textLight}`}>ЄДРПОУ: {counterparty.edrpou}</p>
-                              <p className="text-sm text-gray-600">
-                                {counterparty.email} | {counterparty.phone}
-                              </p>
-                            </div>
-                            <Eye className={`w-5 h-5 ${currentTheme.textLight}`} />
+                      );
+                      
+                      if (filteredCounterparties.length === 0 && counterpartySearchQuery) {
+                        return (
+                          <div className="text-center py-8">
+                            <Search className="w-12 h-12 mx-auto text-gray-300 mb-3" />
+                            <p className="text-gray-500 font-medium">Нічого не знайдено</p>
+                            <p className="text-sm text-gray-400 mt-1">
+                              Спробуйте інший запит або код ЄДРПОУ
+                            </p>
                           </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
+                        );
+                      }
+                      
+                      return (
+                        <div className="space-y-2">
+                          {filteredCounterparties.map((counterparty) => (
+                            <Card 
+                              key={counterparty._id} 
+                              className={`card-hover cursor-pointer ${currentTheme.cardBg} border-2 ${currentTheme.cardBorder} ${currentTheme.shadow} transition-all duration-300`}
+                              onClick={() => viewCounterpartyDetails(counterparty)}
+                            >
+                              <CardContent className="p-4">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex-1">
+                                    <p className={`font-semibold text-lg ${currentTheme.text}`}>{counterparty.representative_name}</p>
+                                    <p className={`text-sm ${currentTheme.textLight}`}>ЄДРПОУ: {counterparty.edrpou}</p>
+                                    <p className="text-sm text-gray-600">
+                                      {counterparty.email} | {counterparty.phone}
+                                    </p>
+                                  </div>
+                                  <Eye className={`w-5 h-5 ${currentTheme.textLight}`} />
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                      );
+                    })()}
+                  </>
                 )}
               </CardContent>
             </Card>
