@@ -830,7 +830,8 @@ metadata:
   run_ui: false
 
 test_plan:
-  current_focus: []
+  current_focus:
+    - "Order Email Functionality Fix - Simple Prompt Instead of Large Dialog"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
