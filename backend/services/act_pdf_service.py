@@ -81,8 +81,42 @@ class ActPDFService:
         except:
             return date_str
     
+    def number_to_words_ua(self, number: float) -> str:
+        """Convert number to Ukrainian words - simplified version."""
+        try:
+            integer_part = int(number)
+            decimal_part = int((number - integer_part) * 100)
+            
+            # Simplified: just return formatted number with currency
+            if integer_part % 10 == 1 and integer_part % 100 != 11:
+                currency = 'гривня'
+            elif integer_part % 10 in [2,3,4] and integer_part % 100 not in [12,13,14]:
+                currency = 'гривні'
+            else:
+                currency = 'гривень'
+            
+            result = f"{integer_part} {currency}"
+            
+            if decimal_part > 0:
+                if decimal_part % 10 == 1 and decimal_part % 100 != 11:
+                    kop_currency = 'копійка'
+                elif decimal_part % 10 in [2,3,4] and decimal_part % 100 not in [12,13,14]:
+                    kop_currency = 'копійки'
+                else:
+                    kop_currency = 'копійок'
+                result += f" {decimal_part:02d} {kop_currency}"
+            
+            return result.strip()
+        except Exception as e:
+            logger.error(f"Error converting number to words: {e}")
+            return f"{int(number)} гривень"
+    
+    def format_currency(self, value: float) -> str:
+        """Format currency with space as thousands separator."""
+        return f"{value:,.2f}".replace(',', ' ')
+    
     def generate_html(self, act: dict) -> str:
-        """Generate HTML for act document with professional design."""
+        """Generate HTML for act document using external template."""
         
         # Format date in Ukrainian
         date_value = act.get('date', datetime.now())
