@@ -357,6 +357,9 @@ class PDFServiceWithTemplates:
         # Format date in Ukrainian text format
         formatted_date_text = self.renderer.format_date_ukrainian(act_date)
         
+        # Format date as full text
+        formatted_date_full_text = self.renderer.format_date_text_full(act_date)
+        
         # Calculate totals
         total_amount = float(act.get('total_amount', 0))
         
