@@ -4525,6 +4525,7 @@ const FullDashboard = () => {
         onDownload={downloadActPDF}
         onPreview={previewActPDF}
         onSendEmail={openActEmailDialog}
+        onEdit={editAct}
         formatDateUkrainian={formatDateUkrainian}
       />
 
