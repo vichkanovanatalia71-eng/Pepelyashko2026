@@ -572,11 +572,21 @@ const FullDashboard = () => {
     setShowEmailDialog(true);
   };
 
-  const openOrderEmailDialog = async () => {
+  const openOrderEmailDialog = async (order = null) => {
+    // If order is passed, use it; otherwise use viewingOrder
+    const targetOrder = order || viewingOrder;
+    
+    if (!targetOrder) return;
+    
+    // Set viewing order if not already set
+    if (order && order !== viewingOrder) {
+      setViewingOrder(order);
+    }
+    
     // Try to get counterparty email for this order
-    if (viewingOrder && viewingOrder.counterparty_edrpou) {
+    if (targetOrder.counterparty_edrpou) {
       try {
-        const counterparty = counterparties.find(cp => cp.edrpou === viewingOrder.counterparty_edrpou);
+        const counterparty = counterparties.find(cp => cp.edrpou === targetOrder.counterparty_edrpou);
         if (counterparty && counterparty.email) {
           setEmailRecipient(counterparty.email);
         } else {
