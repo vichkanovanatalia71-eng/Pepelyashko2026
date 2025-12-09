@@ -301,64 +301,80 @@ class OrderPDFService:
         
         <div class="content">
             <div class="description">
-                <strong>📝 Опис:</strong> Дане замовлення сформовано для контрагента <strong>{counterparty_name}</strong> (ЄДРПОУ: {counterparty_edrpou}). Документ містить детальний перелік товарів/послуг із зазначенням кількості, ціни та загальної вартості.
-            </div>"""
+                <strong>📋 Мета документу:</strong> Це замовлення надіслано постачальником <strong>{supplier_name or 'N/A'}</strong> для перевірки та підтвердження покупцем. Будь ласка, уважно перевірте реквізити обох сторін та деталі замовлення перед підтвердженням.
+            </div>
+            
+            <!-- БЛОК 1: ПЕРЕВІРКА РЕКВІЗИТІВ -->
+            <div class="verification-block">
+                <div class="block-header">
+                    <span style="font-size: 12pt; font-weight: bold;">✓ БЛОК 1: ПЕРЕВІРКА РЕКВІЗИТІВ</span>
+                </div>
+                <div class="block-content">"""
             
             # Add supplier section if available
             if supplier_name:
                 html_content += f"""
-            <div class="section">
-                <div class="section-title">
-                    <span>🏢</span>
-                    Постачальник
-                </div>
-                <div class="info-grid">
-                    <div class="info-row">
-                        <div class="info-label">Назва</div>
-                        <div class="info-value">{supplier_name}</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">ЄДРПОУ</div>
-                        <div class="info-value">{supplier_edrpou}</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">Адреса</div>
-                        <div class="info-value">{supplier_address}</div>
-                    </div>"""
+                    <div class="party-section">
+                        <div class="party-title">
+                            <span>🏢</span>
+                            ПОСТАЧАЛЬНИК (хто надсилає замовлення)
+                        </div>
+                        <div class="party-info">
+                            <div class="info-row">
+                                <div class="info-label">Повна назва</div>
+                                <div class="info-value" style="font-weight: bold;">{supplier_name}</div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Код ЄДРПОУ</div>
+                                <div class="info-value">{supplier_edrpou}</div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Юридична адреса</div>
+                                <div class="info-value">{supplier_address}</div>
+                            </div>"""
                 
                 if supplier_phone:
                     html_content += f"""
-                    <div class="info-row">
-                        <div class="info-label">Телефон</div>
-                        <div class="info-value">{supplier_phone}</div>
-                    </div>"""
+                            <div class="info-row">
+                                <div class="info-label">Телефон</div>
+                                <div class="info-value">{supplier_phone}</div>
+                            </div>"""
                 
                 if supplier_email:
                     html_content += f"""
-                    <div class="info-row">
-                        <div class="info-label">Email</div>
-                        <div class="info-value">{supplier_email}</div>
-                    </div>"""
+                            <div class="info-row">
+                                <div class="info-label">Email</div>
+                                <div class="info-value">{supplier_email}</div>
+                            </div>"""
                 
                 html_content += """
-                </div>
-            </div>"""
+                        </div>
+                    </div>"""
             
             html_content += f"""
-            
-            <div class="section">
-                <div class="section-title">
-                    <span>👥</span>
-                    Покупець
-                </div>
-                <div class="info-grid">
-                    <div class="info-row">
-                        <div class="info-label">Назва</div>
-                        <div class="info-value" style="font-weight: bold;">{counterparty_name}</div>
+                    
+                    <div class="party-section">
+                        <div class="party-title">
+                            <span>👥</span>
+                            ПОКУПЕЦЬ (кому адресовано замовлення)
+                        </div>
+                        <div class="party-info">
+                            <div class="info-row">
+                                <div class="info-label">Повна назва</div>
+                                <div class="info-value" style="font-weight: bold;">{counterparty_name}</div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Код ЄДРПОУ</div>
+                                <div class="info-value">{counterparty_edrpou}</div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="info-row">
-                        <div class="info-label">ЄДРПОУ</div>
-                        <div class="info-value">{counterparty_edrpou}</div>
+                    
+                    <div class="checkbox-section">
+                        <div style="display: flex; align-items: center; gap: 8px; padding: 8px 0;">
+                            <div style="width: 16px; height: 16px; border: 2px solid #3b82f6; border-radius: 3px;"></div>
+                            <span style="font-size: 9pt; font-weight: 600;">Підтверджую, що реквізити постачальника та покупця вказані вірно</span>
+                        </div>
                     </div>
                 </div>
             </div>
