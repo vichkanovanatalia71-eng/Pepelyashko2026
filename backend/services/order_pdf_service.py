@@ -379,32 +379,74 @@ class OrderPDFService:
                 </div>
             </div>
             
-            <div class="section">
-                <div class="section-title">
-                    <span>📦</span>
-                    Товари та послуги
+            <!-- БЛОК 2: ПЕРЕВІРКА ЗАМОВЛЕННЯ -->
+            <div class="verification-block" style="margin-top: 20px;">
+                <div class="block-header">
+                    <span style="font-size: 12pt; font-weight: bold;">✓ БЛОК 2: ПЕРЕВІРКА ЗАМОВЛЕННЯ</span>
                 </div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th style="width: 40px; text-align: center;">№</th>
-                            <th>Найменування товару/послуги</th>
-                            <th style="width: 60px; text-align: center;">Кіл-ть</th>
-                            <th style="width: 50px; text-align: center;">Од.</th>
-                            <th style="width: 100px; text-align: right;">Ціна</th>
-                            <th style="width: 120px; text-align: right;">Сума</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {items_html}
-                    </tbody>
-                </table>
+                <div class="block-content">
+                    <div class="section-title" style="margin-bottom: 10px;">
+                        <span>📦</span>
+                        Перелік товарів та послуг
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 40px; text-align: center;">№</th>
+                                <th>Найменування товару/послуги</th>
+                                <th style="width: 60px; text-align: center;">Кіл-ть</th>
+                                <th style="width: 50px; text-align: center;">Од.</th>
+                                <th style="width: 100px; text-align: right;">Ціна</th>
+                                <th style="width: 120px; text-align: right;">Сума</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {items_html}
+                        </tbody>
+                    </table>
+                    
+                    <div class="total-section">
+                        <div class="total-row">
+                            <div class="total-label">💰 Загальна сума замовлення:</div>
+                            <div class="total-value">{total_amount:,.2f} грн</div>
+                        </div>
+                    </div>
+                    
+                    <div class="checkbox-section">
+                        <div style="display: flex; align-items: center; gap: 8px; padding: 8px 0;">
+                            <div style="width: 16px; height: 16px; border: 2px solid #3b82f6; border-radius: 3px;"></div>
+                            <span style="font-size: 9pt; font-weight: 600;">Підтверджую, що перелік товарів/послуг та суми вказані вірно</span>
+                        </div>
+                    </div>
+                </div>
             </div>
             
-            <div class="total-section">
-                <div class="total-row">
-                    <div class="total-label">💰 Загальна сума замовлення:</div>
-                    <div class="total-value">{total_amount:,.2f} грн</div>
+            <!-- БЛОК ПІДТВЕРДЖЕННЯ -->
+            <div class="confirmation-block">
+                <div class="confirmation-title">📝 ПІДТВЕРДЖЕННЯ ЗАМОВЛЕННЯ</div>
+                <div class="confirmation-content">
+                    <p style="margin-bottom: 10px; font-size: 9pt; line-height: 1.6;">
+                        Після перевірки всіх вищезазначених даних, прошу підтвердити замовлення, поставивши підпис та печатку (за наявності):
+                    </p>
+                    
+                    <div class="signature-section">
+                        <div class="signature-box">
+                            <div class="signature-label">Підпис уповноваженої особи покупця:</div>
+                            <div class="signature-line">_______________________________</div>
+                            <div class="signature-hint">(ПІБ / підпис)</div>
+                        </div>
+                        
+                        <div class="signature-box">
+                            <div class="signature-label">Дата підтвердження:</div>
+                            <div class="signature-line">_______________________________</div>
+                            <div class="signature-hint">(дд.мм.рррр)</div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 12px; padding: 10px; background: #fef3c7; border-radius: 5px; border-left: 3px solid #f59e0b;">
+                        <strong style="color: #92400e; font-size: 8.5pt;">⚠️ Увага:</strong>
+                        <span style="color: #78350f; font-size: 8pt;"> Після підтвердження замовлення, будь ласка, надішліть підписаний документ на email постачальника{f': {supplier_email}' if supplier_email else ''}.</span>
+                    </div>
                 </div>
             </div>
         </div>
