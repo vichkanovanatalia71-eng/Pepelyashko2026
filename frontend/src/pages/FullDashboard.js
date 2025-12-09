@@ -643,8 +643,6 @@ const FullDashboard = () => {
   };
 
   const sendOrderEmailFromDialog = async () => {
-    console.log('sendOrderEmailFromDialog called, viewingOrder:', viewingOrder);
-    
     if (!viewingOrder) {
       toast.error('Замовлення не знайдено. Будь ласка, спробуйте ще раз.');
       return;
@@ -664,7 +662,6 @@ const FullDashboard = () => {
     
     if (!viewingOrder.number) {
       toast.error('Номер замовлення не знайдено');
-      console.error('viewingOrder without number:', viewingOrder);
       return;
     }
     
