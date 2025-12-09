@@ -609,41 +609,8 @@ const FullDashboard = () => {
     }
   };
 
-  const sendOrderEmailFromDialog = async () => {
-    if (!viewingOrder || !emailRecipient) {
-      toast.error('Введіть email адресу');
-      return;
-    }
-    
-    // Basic email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(emailRecipient)) {
-      toast.error('Введіть коректний email');
-      return;
-    }
-    
-    setLoading(true);
-    
-    try {
-      await axios.post(
-        `${API_URL}/api/orders/${viewingOrder.number}/send-email?email=${encodeURIComponent(emailRecipient)}`,
-        {}
-      );
-      
-      toast.success(`Замовлення відправлено на ${emailRecipient}`);
-      closeEmailDialog();
-    } catch (error) {
-      console.error('Error sending email:', error);
-      toast.error(error.response?.data?.detail || 'Помилка відправки email');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleSendEmail = async () => {
-    if (emailType === 'order') {
-      await sendOrderEmail();
-    } else if (emailType === 'invoice') {
+    if (emailType === 'invoice') {
       await sendInvoiceEmail();
     } else if (emailType === 'act') {
       await sendActEmail();
