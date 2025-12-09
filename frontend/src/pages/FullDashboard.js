@@ -872,6 +872,52 @@ const FullDashboard = () => {
     }
   };
 
+  const downloadOrderPDF = async (orderNumber) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(
+        `${API_URL}/api/orders/${orderNumber}/pdf`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          responseType: 'blob'
+        }
+      );
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `zamovlennya_${orderNumber}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      
+      toast.success('PDF завантажено!');
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      toast.error('Помилка завантаження PDF');
+    }
+  };
+
+  const sendOrderEmail = async (orderNumber) => {
+    const email = prompt('Введіть email для відправки:');
+    if (!email) return;
+    
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(
+        `${API_URL}/api/orders/${orderNumber}/send-email?email=${encodeURIComponent(email)}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      toast.success(`Замовлення відправлено на ${email}!`);
+    } catch (error) {
+      console.error('Error sending email:', error);
+      toast.error(error.response?.data?.detail || 'Помилка відправки email');
+    }
+  };
+
   const deleteOrder = async () => {
     if (!viewingOrder) return;
     
