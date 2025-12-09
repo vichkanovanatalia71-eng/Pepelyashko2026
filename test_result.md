@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Детальна перевірка ВСІХ полів та функцій оновленого ProfileCard компонента. Тестування view mode (всі поля), edit dialog (всі input поля), функціональності 'Діє на підставі' select, компактності відображення."
+user_problem_statement: "Потрібно протестувати виправлення функції відправки email для замовлення. Кнопка 'Відправити Email' для замовлення повинна використовувати простий window.prompt() для вводу email адреси замість великого складного діалогу."
 
 backend:
   - task: "Google Drive Service Integration"
