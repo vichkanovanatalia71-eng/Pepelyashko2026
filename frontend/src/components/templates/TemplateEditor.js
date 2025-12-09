@@ -343,31 +343,96 @@ const TemplateEditor = () => {
                       </div>
                     </div>
 
-                    {viewMode === 'preview' && !isEditing ? (
-                      <div className="border rounded-lg p-4 bg-white">
-                        <iframe
-                          srcDoc={currentTemplate.content}
-                          className="w-full h-[600px] border-0"
-                          title="Template Preview"
-                        />
+                    <div className="grid grid-cols-12 gap-4">
+                      {/* Main content area */}
+                      <div className={showVariables ? 'col-span-8' : 'col-span-12'}>
+                        {viewMode === 'preview' && !isEditing ? (
+                          <div className="border rounded-lg p-4 bg-white">
+                            <iframe
+                              srcDoc={currentTemplate.content}
+                              className="w-full h-[600px] border-0"
+                              title="Template Preview"
+                            />
+                          </div>
+                        ) : isEditing ? (
+                          <div>
+                            <textarea
+                              value={editedContent}
+                              onChange={(e) => setEditedContent(e.target.value)}
+                              className="w-full h-[600px] p-4 bg-gray-900 text-gray-100 font-mono text-xs rounded-lg border border-gray-700 focus:border-blue-500 focus:outline-none"
+                              placeholder="Введіть HTML код шаблону..."
+                            />
+                            <p className="text-xs text-gray-500 mt-2">
+                              💡 Використовуйте змінні у форматі {`{{variable_name}}`} для динамічних даних
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-auto h-[600px]">
+                            <pre className="text-xs font-mono">
+                              {currentTemplate.content}
+                            </pre>
+                          </div>
+                        )}
                       </div>
-                    ) : isEditing ? (
-                      <div>
-                        <textarea
-                          value={editedContent}
-                          onChange={(e) => setEditedContent(e.target.value)}
-                          className="w-full h-[600px] p-4 bg-gray-900 text-gray-100 font-mono text-xs rounded-lg border border-gray-700 focus:border-blue-500 focus:outline-none"
-                          placeholder="Введіть HTML код шаблону..."
-                        />
-                        <p className="text-xs text-gray-500 mt-2">
-                          💡 Використовуйте змінні у форматі {`{{variable_name}}`} для динамічних даних
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-auto h-[600px]">
-                        <pre className="text-xs font-mono">
-                          {currentTemplate.content}
-                        </pre>
+
+                      {/* Variables sidebar */}
+                      {showVariables && (
+                        <div className="col-span-4">
+                          <Card className="sticky top-4">
+                            <CardHeader className="pb-3">
+                              <div className="flex items-center justify-between">
+                                <CardTitle className="text-sm font-semibold">Доступні змінні</CardTitle>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setShowVariables(false)}
+                                  className="h-6 w-6 p-0"
+                                >
+                                  ✕
+                                </Button>
+                              </div>
+                              <CardDescription className="text-xs">
+                                Натисніть, щоб скопіювати змінну
+                              </CardDescription>
+                            </CardHeader>
+                            <CardContent className="max-h-[560px] overflow-y-auto">
+                              <div className="space-y-1">
+                                {templateVariables[selectedType]?.map((item, index) => (
+                                  <button
+                                    key={index}
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(item.var);
+                                      toast.success('Скопійовано!', { duration: 1000 });
+                                    }}
+                                    className="w-full text-left p-2 rounded hover:bg-gray-100 transition-colors group"
+                                  >
+                                    <code className="text-xs font-mono text-blue-600 group-hover:text-blue-700">
+                                      {item.var}
+                                    </code>
+                                    <p className="text-xs text-gray-600 mt-1">
+                                      {item.desc}
+                                    </p>
+                                  </button>
+                                ))}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Show variables button when hidden */}
+                    {!showVariables && (
+                      <div className="mt-4">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowVariables(true)}
+                          className="border-blue-500 text-blue-600 hover:bg-blue-50"
+                        >
+                          <FileText className="w-4 h-4 mr-2" />
+                          Показати доступні змінні
+                        </Button>
                       </div>
                     )}
                   </>
