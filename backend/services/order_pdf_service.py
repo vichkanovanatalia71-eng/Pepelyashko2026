@@ -4,6 +4,7 @@ from pathlib import Path
 from datetime import datetime
 from weasyprint import HTML
 import logging
+import base64
 
 logger = logging.getLogger(__name__)
 
@@ -14,6 +15,31 @@ class OrderPDFService:
     def __init__(self):
         self.output_dir = Path("/tmp/documents")
         self.output_dir.mkdir(exist_ok=True)
+    
+    def format_date_ukrainian(self, date_str: str) -> str:
+        """Format date in Ukrainian style."""
+        if not date_str:
+            return '—'
+        
+        try:
+            if isinstance(date_str, str):
+                date_obj = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+            else:
+                date_obj = date_str
+            
+            months = {
+                1: 'січня', 2: 'лютого', 3: 'березня', 4: 'квітня',
+                5: 'травня', 6: 'червня', 7: 'липня', 8: 'серпня',
+                9: 'вересня', 10: 'жовтня', 11: 'листопада', 12: 'грудня'
+            }
+            
+            day = date_obj.day
+            month = months.get(date_obj.month, '')
+            year = date_obj.year
+            
+            return f"{day:02d} {month} {year} року"
+        except:
+            return date_str.split('T')[0] if 'T' in str(date_str) else str(date_str)
     
     def generate_order_pdf(self, order: dict, user: dict = None) -> str:
         """
