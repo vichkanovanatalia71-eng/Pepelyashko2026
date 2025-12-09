@@ -115,11 +115,12 @@ const TemplateViewer = () => {
       
       toast.success('Шаблон успішно скинуто на системний!');
       
-      // Reload templates
+      // Update selected template with new content FIRST
+      setSelectedTemplate(response.data);
+      
+      // Then reload templates list
       await loadTemplates();
       
-      // Update selected template with new content
-      setSelectedTemplate(response.data);
       setIsEditing(false);
       setViewMode('preview');
     } catch (error) {
