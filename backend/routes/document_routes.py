@@ -1348,6 +1348,43 @@ async def update_order(
         )
 
 
+@router.patch("/orders/{order_number}/payment-status")
+async def update_order_payment_status(
+    order_number: str,
+    is_paid: bool,
+    current_user: dict = Depends(get_current_user)
+):
+    """Update payment status of an order."""
+    from server import db as database
+    from datetime import datetime
+    
+    try:
+        result = await database.orders.update_one(
+            {"number": order_number, "user_id": current_user["_id"]},
+            {"$set": {
+                "is_paid": is_paid,
+                "updated_at": datetime.utcnow()
+            }}
+        )
+        
+        if result.matched_count == 0:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Замовлення не знайдено"
+            )
+        
+        logger.info(f"Order {order_number} payment status updated to {is_paid}")
+        return {"message": "Статус оплати оновлено", "is_paid": is_paid}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating payment status: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Помилка при оновленні статусу оплати"
+        )
+
+
 @router.delete("/orders/{order_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_order(
     order_id: str,
