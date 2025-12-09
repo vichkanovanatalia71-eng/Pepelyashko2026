@@ -57,8 +57,29 @@ class OrderPDFService:
             order_number = order.get('number', 'N/A')
             order_date = self.format_date_ukrainian(order.get('date', ''))
             
+            # Get buyer/counterparty info
             counterparty_name = order.get('counterparty_name', 'N/A')
             counterparty_edrpou = order.get('counterparty_edrpou', 'N/A')
+            counterparty_address = ''
+            counterparty_phone = ''
+            counterparty_email = ''
+            counterparty_bank = ''
+            counterparty_iban = ''
+            counterparty_mfo = ''
+            counterparty_director = ''
+            counterparty_position = ''
+            
+            if counterparty:
+                counterparty_name = counterparty.get('representative_name', counterparty_name)
+                counterparty_address = counterparty.get('legal_address', '')
+                counterparty_phone = counterparty.get('phone', '')
+                counterparty_email = counterparty.get('email', '')
+                counterparty_bank = counterparty.get('bank_name', counterparty.get('bank', ''))
+                counterparty_iban = counterparty.get('iban', '')
+                counterparty_mfo = counterparty.get('mfo', '')
+                counterparty_director = counterparty.get('director_name', '')
+                counterparty_position = counterparty.get('director_position', counterparty.get('position', ''))
+            
             total_amount = order.get('total_amount', 0.0)
             items = order.get('items', [])
             is_paid = order.get('is_paid', False)
