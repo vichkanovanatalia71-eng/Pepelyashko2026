@@ -719,6 +719,16 @@ class EmailService:
                     overflow: hidden;
                     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
                 }}
+                .logo-container {{
+                    text-align: center;
+                    padding: 20px;
+                    background-color: #ffffff;
+                }}
+                .company-logo {{
+                    max-width: 160px;
+                    max-height: 160px;
+                    border-radius: 8px;
+                }}
                 .header {{
                     background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%);
                     color: white;
@@ -730,8 +740,18 @@ class EmailService:
                     font-size: 28px;
                     font-weight: 600;
                 }}
+                .header p {{
+                    margin: 5px 0 0 0;
+                    font-size: 14px;
+                    opacity: 0.9;
+                }}
                 .content {{
                     padding: 40px;
+                }}
+                .greeting {{
+                    font-size: 18px;
+                    color: #0f172a;
+                    margin-bottom: 20px;
                 }}
                 .info-box {{
                     background-color: #faf5ff;
@@ -748,6 +768,16 @@ class EmailService:
                 }}
                 .info-row:last-child {{
                     border-bottom: none;
+                }}
+                .info-label {{
+                    color: #64748b;
+                    font-weight: 500;
+                    font-size: 14px;
+                }}
+                .info-value {{
+                    color: #0f172a;
+                    font-weight: 600;
+                    font-size: 14px;
                 }}
                 .total {{
                     background-color: #e9d5ff;
@@ -790,31 +820,31 @@ class EmailService:
         </head>
         <body>
             <div class="email-container">
+                {f'<div class="logo-container"><img src="cid:company_logo" alt="Company Logo" class="company-logo" /></div>' if company_logo_path and Path(company_logo_path).exists() else ''}
                 <div class="header">
-                    {logo_html}
                     <h1>Акт №{act_number}</h1>
                     <p>Система Управління Документами</p>
                 </div>
                 <div class="content">
-                    <p>Доброго дня!</p>
+                    <p class="greeting">Доброго дня!</p>
                     <p><strong>{company_display_name}</strong> надсилає Вам акт прийнятих робіт №<strong>{act_number}</strong> від <strong>{formatted_date}</strong>.</p>
                     <div class="info-box">
                         <div class="info-row">
-                            <span>📋 Номер акту:</span>
-                            <span>№{act_number}</span>
+                            <span class="info-label">📋 Номер акту:</span>
+                            <span class="info-value">№{act_number}</span>
                         </div>
                         <div class="info-row">
-                            <span>📅 Дата:</span>
-                            <span>{formatted_date}</span>
+                            <span class="info-label">📅 Дата:</span>
+                            <span class="info-value">{formatted_date}</span>
                         </div>
                         <div class="info-row">
-                            <span>🏢 Контрагент:</span>
-                            <span>{counterparty_name}</span>
+                            <span class="info-label">🏢 Контрагент:</span>
+                            <span class="info-value">{counterparty_name}</span>
                         </div>
                     </div>
                     <div class="total">
                         <div class="total-label">ЗАГАЛЬНА СУМА:</div>
-                        <div class="total-amount">{total_amount:.2f} грн</div>
+                        <div class="total-amount">{total_amount:,.2f} грн</div>
                     </div>
                     <div class="attachment-notice">
                         <p>📎 Повна інформація про акт знаходиться у вкладеному PDF-документі</p>
@@ -822,6 +852,7 @@ class EmailService:
                 </div>
                 <div class="footer">
                     <p>Це автоматично згенерований лист</p>
+                    <p style="margin-top: 8px; font-weight: 500; color: #64748b;">З повагою, {company_display_name}</p>
                 </div>
             </div>
         </body>
