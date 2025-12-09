@@ -1480,20 +1480,211 @@ async def send_order_email(
         pdf_service = OrderPDFService()
         pdf_path = pdf_service.generate_order_pdf(order, user, counterparty)
         
-        # Send email
+        # Send email with styled HTML
         email_service = EmailService()
-        subject = f"Замовлення №{order_number}"
+        
+        # Format date
+        order_date = order.get('date', '')
+        if isinstance(order_date, str):
+            try:
+                from datetime import datetime
+                date_obj = datetime.fromisoformat(order_date.replace('Z', '+00:00'))
+                months = {
+                    1: 'січня', 2: 'лютого', 3: 'березня', 4: 'квітня',
+                    5: 'травня', 6: 'червня', 7: 'липня', 8: 'серпня',
+                    9: 'вересня', 10: 'жовтня', 11: 'листопада', 12: 'грудня'
+                }
+                formatted_date = f"{date_obj.day:02d} {months.get(date_obj.month, '')} {date_obj.year} року"
+            except:
+                formatted_date = order_date.split('T')[0] if 'T' in order_date else order_date
+        else:
+            formatted_date = str(order_date)
+        
+        company_name = user.get('representative_name', user.get('company_name', 'Компанія'))
+        counterparty_name = order.get('counterparty_name', 'N/A')
+        total_amount = order.get('total_amount', 0.0)
+        is_paid = order.get('is_paid', False)
+        payment_status = '✅ Сплачено' if is_paid else '⏳ Не сплачено'
+        
+        # Get company logo
+        company_logo_path = None
+        company_logo_url = user.get('logo_url')
+        if company_logo_url:
+            company_logo_path = f"/app/backend/{company_logo_url}"
+        
+        subject = f"Замовлення №{order_number} від {formatted_date}"
+        
         body = f"""
+        <!DOCTYPE html>
         <html>
-        <body style="font-family: Arial, sans-serif; line-height: 1.6;">
-            <h2 style="color: #3b82f6;">Замовлення №{order_number}</h2>
-            <p>Доброго дня!</p>
-            <p>Надсилаємо вам картку замовлення №{order_number} від {order.get('date', '')}.</p>
-            <p><strong>Контрагент:</strong> {order.get('counterparty_name', 'N/A')}</p>
-            <p><strong>Загальна сума:</strong> {order.get('total_amount', 0.0):,.2f} грн</p>
-            <p><strong>Статус оплати:</strong> {'✅ Сплачено' if order.get('is_paid', False) else '⏳ Не сплачено'}</p>
-            <p style="margin-top: 20px;">PDF документ додано до листа.</p>
-            <p style="color: #64748b; font-size: 0.9em; margin-top: 30px;">З повагою,<br>{user.get('representative_name', user.get('company_name', 'Компанія'))}</p>
+        <head>
+            <meta charset="UTF-8">
+            <style>
+                body {{
+                    font-family: 'Segoe UI', Arial, sans-serif;
+                    line-height: 1.6;
+                    color: #1e293b;
+                    margin: 0;
+                    padding: 0;
+                    background-color: #f8fafc;
+                }}
+                .email-container {{
+                    max-width: 600px;
+                    margin: 20px auto;
+                    background-color: #ffffff;
+                    border-radius: 8px;
+                    overflow: hidden;
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                }}
+                .logo-container {{
+                    text-align: center;
+                    padding: 20px;
+                    background-color: #ffffff;
+                }}
+                .company-logo {{
+                    max-width: 160px;
+                    max-height: 160px;
+                    border-radius: 8px;
+                }}
+                .header {{
+                    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+                    color: white;
+                    padding: 30px 40px;
+                    text-align: center;
+                }}
+                .header h1 {{
+                    margin: 0;
+                    font-size: 28px;
+                    font-weight: 600;
+                }}
+                .header p {{
+                    margin: 5px 0 0 0;
+                    font-size: 14px;
+                    opacity: 0.9;
+                }}
+                .content {{
+                    padding: 40px;
+                }}
+                .greeting {{
+                    font-size: 18px;
+                    color: #0f172a;
+                    margin-bottom: 20px;
+                }}
+                .info-box {{
+                    background-color: #eff6ff;
+                    border-left: 4px solid #3b82f6;
+                    padding: 20px;
+                    margin: 25px 0;
+                    border-radius: 4px;
+                }}
+                .info-row {{
+                    display: flex;
+                    justify-content: space-between;
+                    padding: 8px 0;
+                    border-bottom: 1px solid #dbeafe;
+                }}
+                .info-row:last-child {{
+                    border-bottom: none;
+                }}
+                .info-label {{
+                    color: #64748b;
+                    font-weight: 500;
+                    font-size: 14px;
+                }}
+                .info-value {{
+                    color: #0f172a;
+                    font-weight: 600;
+                    font-size: 14px;
+                }}
+                .total {{
+                    background-color: #dbeafe;
+                    padding: 15px 20px;
+                    margin: 20px 0;
+                    border-radius: 6px;
+                    text-align: right;
+                }}
+                .total-label {{
+                    color: #1e40af;
+                    font-size: 16px;
+                    font-weight: 600;
+                }}
+                .total-amount {{
+                    color: #1e3a8a;
+                    font-size: 24px;
+                    font-weight: 700;
+                    margin-top: 5px;
+                }}
+                .status-badge {{
+                    display: inline-block;
+                    padding: 6px 12px;
+                    border-radius: 20px;
+                    font-size: 13px;
+                    font-weight: 600;
+                    background-color: {('#dcfce7' if is_paid else '#fef3c7')};
+                    color: {('#166534' if is_paid else '#92400e')};
+                }}
+                .attachment-notice {{
+                    background-color: #dbeafe;
+                    border: 1px solid #bfdbfe;
+                    padding: 15px;
+                    margin: 25px 0;
+                    border-radius: 6px;
+                    text-align: center;
+                }}
+                .footer {{
+                    background-color: #f8fafc;
+                    padding: 25px 40px;
+                    text-align: center;
+                    border-top: 1px solid #e2e8f0;
+                }}
+                .footer p {{
+                    margin: 5px 0;
+                    font-size: 13px;
+                    color: #94a3b8;
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="email-container">
+                {f'<div class="logo-container"><img src="cid:company_logo" alt="Company Logo" class="company-logo" /></div>' if company_logo_url else ''}
+                <div class="header">
+                    <h1>Замовлення №{order_number}</h1>
+                    <p>Система Управління Документами</p>
+                </div>
+                <div class="content">
+                    <p class="greeting">Доброго дня!</p>
+                    <p><strong>{company_name}</strong> надсилає Вам замовлення №<strong>{order_number}</strong> від <strong>{formatted_date}</strong>.</p>
+                    <div class="info-box">
+                        <div class="info-row">
+                            <span class="info-label">📋 Номер замовлення:</span>
+                            <span class="info-value">№{order_number}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">📅 Дата:</span>
+                            <span class="info-value">{formatted_date}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">🏢 Покупець:</span>
+                            <span class="info-value">{counterparty_name}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">💳 Статус оплати:</span>
+                            <span class="info-value"><span class="status-badge">{payment_status}</span></span>
+                        </div>
+                    </div>
+                    <div class="total">
+                        <div class="total-label">ЗАГАЛЬНА СУМА ЗАМОВЛЕННЯ:</div>
+                        <div class="total-amount">{total_amount:,.2f} грн</div>
+                    </div>
+                    <div class="attachment-notice">
+                        <p>📎 Детальна інформація про замовлення з повними реквізитами покупця знаходиться у вкладеному PDF-документі</p>
+                    </div>
+                </div>
+                <div class="footer">
+                    <p>Це автоматично згенерований лист</p>
+                    <p style="margin-top: 8px; font-weight: 500; color: #64748b;">З повагою, {company_name}</p>
+                </div>
+            </div>
         </body>
         </html>
         """
