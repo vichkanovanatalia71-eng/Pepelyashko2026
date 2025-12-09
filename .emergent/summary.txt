@@ -1,68 +1,71 @@
 <analysis>**original_problem_statement:**
-The user's primary goal is to build a comprehensive document management system. The project began with a redesign of user profiles and counterparty management. The scope has since expanded significantly to cover a wide range of features and fixes across different document types (Invoices, Orders, Acts, Waybills, Contracts).
+The user's goal is to build a comprehensive document management system. The initial scope involved user profiles and counterparty management, which has expanded to include full CRUD operations, PDF generation, and emailing for various document types (Invoices, Orders, Acts, Waybills, Contracts).
 
-Key feature requests and bug fixes addressed in this session include:
-1.  **Order Management UX:** Redesigning the process for sending an Order PDF via email, moving from a simple system prompt to a styled dialog that pre-fills the counterparty's email address.
-2.  **Order PDF & Email Styling:** Iteratively redesigning the Order PDF to look more professional and serve as a verification document for buyers. The email body for sending orders has also been styled to match the design of invoice emails, including the company logo and a user-friendly date format.
-3.  **Counterparty Search:** Adding a search bar to the Counterparties tab to allow filtering by company name or ЄДРПОУ code.
-4.  **Template Unification:**
-    *   Ensuring the Act template supports all the same variables and conditional logic as the Invoice template.
-    *   Adding a Available Variables sidebar to the template editor UI to improve usability.
-5.  **Feature Parity for Document Dialogs:** Unifying the action buttons across all document view dialogs (Act, Waybill) to match the Invoice dialog, including Email, Preview PDF, Edit, and Delete buttons.
-6.  **Critical Bug Fixes:**
-    *   Resolving multiple backend bugs that prevented emails from being sent for Orders, Acts, and Waybills.
-    *   Fixing a frontend bug where sending an email from a document's *view dialog* would fail, while sending from the main list worked correctly.
-7.  **Recurring Environment Failure:** Continuously fighting a persistent environmental issue where a critical PDF library () disappears, breaking all PDF generation and email attachment functionality. This issue has occurred more than 12 times.
+In this session, the user's requests focused on achieving feature parity and professional polish across all document types, as well as fixing a critical, recurring environmental failure.
+
+Key requests included:
+1.  **Styling Act Emails:** Make the Act email template match the Invoice email template, with the company logo at the top.
+2.  **Template-Driven PDFs:** Ensure Act PDFs are generated from a database template, not hardcoded HTML, mimicking the logic for Invoices.
+3.  **Template Customization:** Allow the user to provide new HTML for the system's default Act and Invoice templates and have the system use them.
+4.  **Template Variables:**
+    *   Add В особі (representative) fields for both the user and counterparty to the PDFs.
+    *   Add a  variable, derived from the user's address.
+    *   Add a  variable to display the date in DD month YYYY format.
+    *   Create a markdown document listing all available template variables and add the new variables to the UI's template editor.
+5.  **Fix Reset Template**: Ensure the button to reset a template to the system default works correctly.
+6.  **Fix Critical PDF Failure:** Repeatedly address a critical environmental issue where a required library () disappears, breaking all PDF functionality.
+7.  **Implement Universal Search:** Add search functionality by both company name and ЄДРПОУ code to *all* document tabs (Counterparties, Acts, Invoices, Waybills, Orders, Contracts).
 
 **User's preferred language**: Ukrainian. The next agent **MUST** respond in Ukrainian only.
 
 **what currently exists?**
-The application is a full-stack React/FastAPI/MongoDB system for document management. It features a main dashboard with tabs for different document types.
+The application is a full-stack React/FastAPI/MongoDB system for document management. The core features for Invoices and Acts are now highly consistent.
 
-- **Completed Features:**
-    - **Orders:** Full CRUD, search by EDRPOU, filtering by payment status, PDF card generation, and a styled email sending flow with a pre-filled recipient address.
-    - **Counterparties:** A dedicated tab with a new search functionality by name or EDRPOU code.
-    - **Templates:** A template editor with a sidebar that lists all available variables and their descriptions for each document type, improving the template creation experience.
-    - **UI/UX Consistency:** The action buttons in the view dialogs for Invoices, Acts, and Waybills are now consistent, offering Email, Preview PDF, Edit, and Delete.
-
-- **Core Instability:** The application's environment is unstable. A critical PDF rendering library, , is periodically uninstalled, causing all PDF generation and email attachment features to fail until it is manually reinstalled. This has happened at least 12 times.
+- **PDF Generation:** PDF generation for both Invoices and Acts is now driven by a unified service () that fetches HTML templates from the MongoDB database. The system automatically seeds a default template for both document types if one doesn't exist.
+- **Template Management:** The UI includes a template editor where users can view and edit their document templates. A sidebar lists available variables. A button to reset to the system default is now functional, though it may require a page refresh to display changes due to a potential UI/caching issue.
+- **Emailing:** Email templates for Acts and Invoices are styled consistently with the company logo at the top. The email subject for Acts has been corrected to Акт наданих послуг.
+- **Documentation:** A new file, , has been created, documenting all available variables for the Act template.
+- **Critical Instability:** The environment remains highly unstable. The  library, essential for PDF generation, has been observed to disappear unpredictably at least 16 times, requiring manual re-installation to restore functionality.
 
 **Last working item**:
-- **Last item agent was working:** The agent was styling the email template for Acts to match the professional design of Invoice emails. The user specifically requested moving the company logo to the top of the email body and adjusting the structure and sizes. The agent began by editing  to refactor the  method, removing some old, incorrect logo-handling logic.
-- **Status:** IN PROGRESS
+- **Last item agent was working:** The user requested that search functionality (by both company name and ЄДРПОУ code) be implemented on every document tab: Counterparties, Acts, Invoices, Waybills, Orders, and Contracts. The agent began investigating the existing search implementation in .
+- **Status:** NOT STARTED
 - **Agent Testing Done:** N
-- **Which testing method agent to use?** Frontend testing agent. The agent needs to restart the backend, then trigger the Send Email function for an Act from the frontend to verify that the email is sent successfully and that no backend errors occur.
+- **Which testing method agent to use?** Frontend testing agent. This feature impacts multiple UI tabs and requires thorough end-to-end verification to ensure search and filtering work correctly on each tab without side effects.
 - **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
-- **Issue 1: Finalize and Test Act Email Template Styling (P0 - HIGHEST PRIORITY)**
+- **Issue 1: Implement Universal Search on All Document Tabs (P0 - HIGHEST PRIORITY)**
 - **Issue 2: PDF Generation Fails Due to Missing  Dependency (P0 - CRITICAL, RECURRING)**
 
 **Issues Detail:**
-- **Issue 1: Finalize and Test Act Email Template Styling**
-    - **Attempted fixes:** The agent started refactoring the  function in  by removing old code. The next step is to add the new HTML structure that places the logo at the top, similar to .
+- **Issue 1: Implement Universal Search on All Document Tabs**
+    - **Attempted fixes:** The agent has only begun investigation by using  to find existing search-related code in .
     - **Next debug checklist:**
-        1.  In , complete the refactoring of the  method. Copy the HTML structure from  (specifically the header with the logo) and adapt it for the Act email.
-        2.  Restart the backend service.
-        3.  From the frontend, open an existing Act, click the Email button, and confirm the email sends successfully without errors.
-    - **Why fix this issue and what will be achieved with the fix?** To provide a consistent, professional user experience for all document-related email communications.
-    - **Status:** IN PROGRESS
+        1.  Analyze  to understand how search is implemented for the Counterparties tab.
+        2.  Identify the state variables (e.g., ) and the filtering logic in the JSX.
+        3.  Replicate this pattern for all other tabs: Acts, Invoices, Waybills, Orders, and Contracts. This will involve:
+            *   Adding new state variables for search terms for each tab.
+            *   Adding search input fields to the UI of each tab.
+            *   Applying a combined filtering logic (by name AND EDRPOU) to the data arrays for each document type before they are rendered.
+    - **Why fix this issue and what will be achieved with the fix?** To fulfill a direct user request for consistent and improved usability across the entire application.
+    - **Status:** NOT STARTED
     - **Is recurring issue?** N
-    - **Should Test frontend/backend/both after fix?** Frontend and Backend.
-    - **Blocked on other issue:** None (unless Issue #2 occurs).
+    - **Should Test frontend/backend/both after fix?** Frontend
+    - **Blocked on other issue:** None.
 
 - **Issue 2: PDF Generation Fails Due to Missing  Dependency**
-    - **Description:** A critical system library for the WeasyPrint PDF engine () is frequently and unpredictably uninstalled from the environment. This breaks all PDF generation and email attachment features across the entire application.
+    - **Description:** A critical system library for WeasyPrint () is frequently and unpredictably uninstalled from the environment, breaking all PDF generation and email attachment features. This has happened over 16 times.
     - **Attempted fixes:** The only known fix is temporary: run Hit:1 http://deb.debian.org/debian bookworm InRelease
 Get:2 http://deb.debian.org/debian bookworm-updates InRelease [55.4 kB]
 Get:3 http://deb.debian.org/debian-security bookworm-security InRelease [48.0 kB]
-Get:4 https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 InRelease [3005 B]
-Get:5 https://deb.nodesource.com/node_20.x nodistro InRelease [12.1 kB]
+Get:4 https://deb.nodesource.com/node_20.x nodistro InRelease [12.1 kB]
+Get:5 https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 InRelease [3005 B]
 Get:6 http://deb.debian.org/debian-security bookworm-security/main arm64 Packages [285 kB]
-Get:7 https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0/multiverse arm64 Packages [95.4 kB]
+Get:7 https://deb.nodesource.com/node_20.x nodistro/main arm64 Packages [13.2 kB]
 Get:8 https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0/multiverse amd64 Packages [96.8 kB]
-Get:9 https://deb.nodesource.com/node_20.x nodistro/main arm64 Packages [13.2 kB]
-Fetched 609 kB in 2s (381 kB/s)
+Get:9 https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0/multiverse arm64 Packages [95.4 kB]
+Fetched 609 kB in 2s (347 kB/s)
 Reading package lists...
 Reading package lists...
 Building dependency tree...
@@ -73,280 +76,91 @@ The following NEW packages will be installed:
 Need to get 44.5 kB of archives.
 After this operation, 178 kB of additional disk space will be used.
 Get:1 http://deb.debian.org/debian bookworm/main arm64 libpangoft2-1.0-0 arm64 1.50.12+ds-1 [44.5 kB]
-Fetched 44.5 kB in 0s (479 kB/s)
+Fetched 44.5 kB in 0s (465 kB/s)
 Selecting previously unselected package libpangoft2-1.0-0:arm64.
 (Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 38368 files and directories currently installed.)
 Preparing to unpack .../libpangoft2-1.0-0_1.50.12+ds-1_arm64.deb ...
 Unpacking libpangoft2-1.0-0:arm64 (1.50.12+ds-1) ...
 Setting up libpangoft2-1.0-0:arm64 (1.50.12+ds-1) ...
-Processing triggers for libc-bin (2.36-9+deb12u13) ... and restart the backend. The root cause of the uninstallation is unknown.
-    - **Next debug checklist:** If any PDF or email task fails with a backend error, the **first and only** initial step is to run INFO:fontTools.subset:glyf pruned
-DEBUG:fontTools.subset.timer:Took 0.000s to close glyph list over 'cmap'
-INFO:fontTools.subset:Added gid0 to subset
-INFO:fontTools.subset:Closing glyph list over 'glyf': 66 glyphs before
-INFO:fontTools.subset:Glyph names: ['.notdef', 'colon', 'comma', 'eight', 'four', 'hyphen', 'nine', 'one', 'parenleft', 'parenright', 'percent', 'period', 'seven', 'six', 'space', 'three', 'two', 'uni0404', 'uni0406', 'uni0410', 'uni0411', 'uni0412', 'uni0413', 'uni0414', 'uni0415', 'uni0417', 'uni0418', 'uni0419', 'uni041A', 'uni041B', 'uni041C', 'uni041D', 'uni041E', 'uni041F', 'uni0420', 'uni0421', 'uni0422', 'uni0423', 'uni0425', 'uni0426', 'uni042C', 'uni042F', 'uni0430', 'uni0431', 'uni0432', 'uni0433', 'uni0434', 'uni0435', 'uni0437', 'uni0438', 'uni0439', 'uni043A', 'uni043B', 'uni043C', 'uni043D', 'uni043E', 'uni043F', 'uni0440', 'uni0441', 'uni0442', 'uni0443', 'uni044C', 'uni044F', 'uni0456', 'uni2116', 'zero']
-INFO:fontTools.subset:Glyph IDs:   [0, 3, 8, 11, 12, 15, 16, 17, 19, 20, 21, 22, 23, 25, 26, 27, 28, 29, 921, 923, 933, 934, 935, 936, 937, 938, 940, 941, 942, 943, 944, 945, 946, 947, 948, 949, 950, 951, 952, 954, 955, 961, 964, 965, 966, 967, 968, 969, 970, 972, 973, 974, 975, 976, 977, 978, 979, 980, 981, 982, 983, 984, 993, 996, 1003, 2990]
-INFO:fontTools.subset:Closed glyph list over 'glyf': 86 glyphs after
-INFO:fontTools.subset:Glyph names: ['.notdef', 'A', 'B', 'Breve', 'C', 'E', 'H', 'I', 'M', 'O', 'P', 'T', 'X', 'a', 'breve', 'c', 'colon', 'comma', 'e', 'eight', 'four', 'hyphen', 'i', 'nine', 'o', 'one', 'p', 'parenleft', 'parenright', 'percent', 'period', 'seven', 'six', 'space', 'three', 'two', 'uni0404', 'uni0406', 'uni0410', 'uni0411', 'uni0412', 'uni0413', 'uni0414', 'uni0415', 'uni0417', 'uni0418', 'uni0419', 'uni041A', 'uni041B', 'uni041C', 'uni041D', 'uni041E', 'uni041F', 'uni0420', 'uni0421', 'uni0422', 'uni0423', 'uni0425', 'uni0426', 'uni042C', 'uni042F', 'uni0430', 'uni0431', 'uni0432', 'uni0433', 'uni0434', 'uni0435', 'uni0437', 'uni0438', 'uni0439', 'uni043A', 'uni043B', 'uni043C', 'uni043D', 'uni043E', 'uni043F', 'uni0440', 'uni0441', 'uni0442', 'uni0443', 'uni044C', 'uni044F', 'uni0456', 'uni2116', 'y', 'zero']
-INFO:fontTools.subset:Glyph IDs:   [0, 3, 8, 11, 12, 15, 16, 17, 19, 20, 21, 22, 23, 25, 26, 27, 28, 29, 36, 37, 38, 40, 43, 44, 48, 50, 51, 55, 59, 68, 70, 72, 76, 82, 83, 92, 666, 921, 923, 933, 934, 935, 936, 937, 938, 940, 941, 942, 943, 944, 945, 946, 947, 948, 949, 950, 951, 952, 954, 955, 961, 964, 965, 966, 967, 968, 969, 970, 972, 973, 974, 975, 976, 977, 978, 979, 980, 981, 982, 983, 984, 993, 996, 1003, 2990, 5908]
-DEBUG:fontTools.subset.timer:Took 0.001s to close glyph list over 'glyf'
-INFO:fontTools.subset:Retaining 86 glyphs
-INFO:fontTools.subset:head subsetting not needed
-INFO:fontTools.subset:hhea subsetting not needed
-INFO:fontTools.subset:maxp subsetting not needed
-INFO:fontTools.subset:OS/2 subsetting not needed
-DEBUG:fontTools.ttLib.ttFont:Reading 'hmtx' table from disk
-DEBUG:fontTools.ttLib.ttFont:Decompiling 'hmtx' table
-DEBUG:fontTools.ttLib.ttFont:Reading 'hhea' table from disk
-DEBUG:fontTools.ttLib.ttFont:Decompiling 'hhea' table
-DEBUG:fontTools.subset.timer:Took 0.002s to subset 'hmtx'
-INFO:fontTools.subset:hmtx subsetted
-DEBUG:fontTools.subset.timer:Took 0.001s to subset 'cmap'
-INFO:fontTools.subset:cmap subsetted
-INFO:fontTools.subset:loca subsetting not needed
-DEBUG:fontTools.subset.timer:Took 0.000s to subset 'post'
-INFO:fontTools.subset:post subsetted
-INFO:fontTools.subset:gasp subsetting not needed
-INFO:fontTools.subset:FFTM NOT subset; don't know how to subset
-DEBUG:fontTools.ttLib.ttFont:Reading 'GDEF' table from disk
-DEBUG:fontTools.ttLib.ttFont:Decompiling 'GDEF' table
-DEBUG:fontTools.subset.timer:Took 0.001s to subset 'GDEF'
-INFO:fontTools.subset:GDEF subsetted
-INFO:fontTools.subset:name subsetting not needed
-DEBUG:fontTools.subset.timer:Took 0.002s to subset 'glyf'
-INFO:fontTools.subset:glyf subsetted
-DEBUG:fontTools.subset.timer:Took 0.000s to subset GlyphOrder
-DEBUG:fontTools.subset.timer:Took 0.000s to prune 'head'
-INFO:fontTools.subset:head pruned
-DEBUG:fontTools.ttLib.ttFont:Reading 'OS/2' table from disk
-DEBUG:fontTools.ttLib.ttFont:Decompiling 'OS/2' table
-INFO:fontTools.subset:OS/2 Unicode ranges pruned: [0, 9, 35]
-INFO:fontTools.subset:OS/2 CodePage ranges pruned: [2]
-DEBUG:fontTools.subset.timer:Took 0.001s to prune 'glyf'
-INFO:fontTools.subset:glyf pruned
-DEBUG:fontTools.subset.timer:Took 0.000s to prune 'GDEF'
-INFO:fontTools.subset:GDEF pruned
-DEBUG:fontTools.ttLib.ttFont:Reading 'name' table from disk
-DEBUG:fontTools.ttLib.ttFont:Decompiling 'name' table
-DEBUG:fontTools.ttLib.ttFont:Reading 'gasp' table from disk
-DEBUG:fontTools.ttLib.ttFont:Decompiling 'gasp' table
-DEBUG:fontTools.ttLib.ttFont:Reading 'FFTM' table from disk
-DEBUG:fontTools.ttLib.ttFont:Decompiling 'FFTM' table
-DEBUG:fontTools.subset.timer:Took 0.000s to prune 'name'
-INFO:fontTools.subset:name pruned
-INFO:services.act_pdf_service:Generated act PDF: /tmp/act_pdfs/act_1968-1.pdf
-INFO:services.email_service:Attempting to embed logo from: /app/backend/uploads/bdbb8b5a-ec9e-42a0-89e9-ba212729e017.png
-INFO:services.email_service:✓ Logo embedded successfully, size: 168942 bytes
-INFO:services.email_service:Email sent successfully to roman.kolontaj@gmail.com
-INFO:routes.document_routes:Act PDF sent to roman.kolontaj@gmail.com by user b3678469-180d-41b7-8ff4-64a3b343439f
-WARNING:  WatchFiles detected changes in 'services/email_service.py'. Reloading...
-INFO:     Shutting down
-INFO:     Waiting for application shutdown.
-INFO:server:Application shutting down...
-INFO:server:MongoDB connection closed
-INFO:     Application shutdown complete.
-INFO:     Finished server process [3284]
-INFO:server:Connected to MongoDB: mongodb://localhost:27017
-INFO:     Started server process [3602]
-INFO:     Waiting for application startup.
-INFO:server:Application starting up...
-INFO:server:MongoDB Database: test_database
-INFO:server:MongoDB connection successful
-INFO:server:Default templates initialized
-INFO:     Application startup complete.
-WARNING:  WatchFiles detected changes in 'services/email_service.py'. Reloading...
-INFO:     Shutting down
-INFO:     Waiting for application shutdown.
-INFO:server:Application shutting down...
-INFO:server:MongoDB connection closed
-INFO:     Application shutdown complete.
-INFO:     Finished server process [3602]
-INFO:server:Connected to MongoDB: mongodb://localhost:27017
-INFO:     Started server process [3610]
-INFO:     Waiting for application startup.
-INFO:server:Application starting up...
-INFO:server:MongoDB Database: test_database
-INFO:server:MongoDB connection successful
-INFO:server:Default templates initialized
-INFO:     Application startup complete.
-INFO:     Will watch for changes in these directories: ['/app/backend']
-INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
-INFO:     Started reloader process [29] using WatchFiles
-INFO:server:Connected to MongoDB: mongodb://localhost:27017
-INFO:     Started server process [66]
-INFO:     Waiting for application startup.
-INFO:server:Application starting up...
-INFO:server:MongoDB Database: test_database
-INFO:server:MongoDB connection successful
-INFO:server:Default templates initialized
-INFO:     Application startup complete.. If the log contains , reinstall the library immediately before any other debugging.
-    - **Why fix this issue and what will be achieved with the fix?** This is a complete blocker for core application functionality. Fixing it restores all document features. A permanent solution is needed.
-    - **Status:** BLOCKED (The root cause is environmental instability, not a code issue).
+Processing triggers for libc-bin (2.36-9+deb12u13) ... and restart the backend. The root cause is unknown.
+    - **Next debug checklist:** This is a critical environmental failure, not a code bug. Before any other action, the agent MUST **call the ** to diagnose the root cause of the library's disappearance. A permanent fix is required, as the manual re-installation is unsustainable.
+    - **Why fix this issue and what will be achieved with the fix?** This is a complete blocker for the application's core functionality. A permanent fix will restore stability to all document features.
+    - **Status:** BLOCKED (by unknown environmental factors)
     - **Is recurring issue?** Y
-    - **Should Test frontend/backend/both after fix?** Backend (a single  to any PDF endpoint is sufficient to verify).
+    - **Should Test frontend/backend/both after fix?** Backend (verifying PDF generation).
     - **Blocked on other issue:** This issue blocks all PDF-related tasks.
 
 **In progress Task List**:
-- None besides the pending issues above.
+- None.
 
 **Upcoming and Future Tasks**
-
 - **Upcoming Tasks:**
-    - **(P1) Refactor **: This component is a massive monolith handling logic for all document types. The logic for each tab (Orders, Acts, Waybills, etc.) should be extracted into its own dedicated components to improve maintainability and reduce bugs.
+    - **(P1) Refactor **: This component is a massive monolith. With the addition of more search logic, it's more critical than ever to break it down. The logic for each tab should be extracted into its own dedicated components to improve maintainability.
 - **Future Tasks:**
-    - **(P2) Implement Dashboards/Graphs**: Use the  status and other order data to create visual dashboards for analytics.
+    - **(P2) Implement Dashboards/Graphs**: Use order data to create visual dashboards for analytics.
     - **(P2) Implement Template Version History**: Allow users to view and revert to previous versions of document templates.
 
 **Completed work in this session**
-- **Counterparty Search (DONE):** Implemented a search bar in the Counterparties tab to filter by name or EDRPOU code in .
-- **Template Editor UX (DONE):** Added a sidebar to  that displays a list of available variables with descriptions for the selected template type.
-- **Act & Waybill Feature Parity (DONE):**
-    - Added Edit, Preview PDF, and Delete buttons to  and  to match .
-    - Implemented the  functionality in .
-    - Fixed a deep bug in  that prevented emails for Acts and Waybills from being sent correctly.
-- **Order Email Flow (DONE):**
-    - Fixed the Send Email flow for orders, ensuring the counterparty's email is pre-filled and the email sends successfully from both the list and the view dialog.
-    - Styled the order email body in  to match the invoice email, including adding the company logo and formatting the date correctly.
-- **Template Unification (DONE):** Updated  to support the same variables as the invoice template.
-- **Persistent Environment Issue Management (DONE, REPEATEDLY):** Re-installed the  library at least four times to temporarily restore PDF functionality.
+- **Template System Overhaul (DONE):** Refactored Act PDF generation to use the unified , ensuring it pulls templates from the database.
+- **System Template Updates (DONE):** Updated the default HTML content for both Act and Invoice system templates based on user-provided code.
+- **Template Reset Fix (DONE):** Fixed the backend API and frontend logic for the Reset to System Template button.
+- **New Template Variables (DONE):**
+  - Added  and  (В особі) to PDF context.
+  - Added  (from user's address) to PDF context.
+  - Added  (formatted as 09 грудня 2025 року) to PDF context.
+- **UI and Doc Enhancements (DONE):**
+  - Created  to document all template variables.
+  - Added the new variables to the Available Variables list in the  component.
+- **Email Styling & Content (DONE):**
+  - Styled the Act email to match the Invoice email (logo on top).
+  - Corrected the Act email subject to Акт наданих послуг.
+- **Critical Issue Management (DONE, REPEATEDLY):** Re-installed the  library at least 5 times to temporarily restore PDF functionality.
 
 **Earlier issues found/mentioned but not fixed**
-- The root cause of the unstable environment causing  to disappear has not been identified or addressed. This requires a more permanent solution than re-installation.
+- The root cause of the unstable environment causing  to disappear has not been identified. A permanent solution is required.
 
 **Known issue recurrence from previous fork**
 - **Issue recurrence in previous fork:**  dependency missing for PDF generation.
-- **Recurrence count:** Extremely High (12+ times).
+- **Recurrence count:** Extremely High (was 12+, now 16+).
 - **Status:** BLOCKED (by environmental instability).
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Environmental Instability:** The recurring disappearance of the  library is the single greatest technical risk to the project's stability. It is not a code issue.
-- **Monolithic Frontend Component:**  continues to grow in complexity, making it difficult to maintain. It now handles state and logic for counterparty search in addition to all document types.
-- **Component State & Event Handling:** A bug was fixed where an  handler in a dialog was passing the  object instead of the required data object (), which was resolved by explicitly passing the correct data.
-- **Backend Service Logic:** Several bugs were traced back to incorrect internal method calls within , highlighting the need for careful testing of the service layer.
+- **Environmental Instability:** The recurring disappearance of the  library is the single greatest risk to the project.
+- **Template-driven PDF Generation:** The architecture was improved to use a single service () that fetches templates from MongoDB, making the system more modular and easier to maintain.
+- **Default Template Seeding:** The application now seeds the database with default templates for Acts and Invoices on startup, ensuring a baseline functionality.
+- **UI Reactivity Issue:** The agent noted that the  used for template previews in  does not always update after a state change, potentially due to browser caching. This may require a manual page refresh by the user.
 
 **key DB schema**
-- No schema changes were made in this session.
+- ****: 
+- ****: 
+- ****: 
+
+**changes in tech stack**
+- None.
 
 **All files of reference**
-- : The central file for all email template logic. **Last modified to begin refactoring the Act email template.**
-- : The monolithic frontend component containing most of the business logic. Last modified to add counterparty search and fix dialog handlers.
-- : The view/action dialog for Acts. Last modified to add feature parity with the Invoice dialog.
-- : The UI for editing document templates. Last modified to display available variables.
-- : The main API route file for all document-related operations.
+- : Central service for generating PDFs from database templates.
+- : Manages template creation, updates, and seeding defaults.
+- : The monolithic component targeted for the next task of implementing universal search.
+- : Contains the UI for viewing templates and the Reset button logic.
+- : The base HTML file for the default Act template.
+- : The base HTML file for the default Invoice template.
+- : The newly created documentation file.
 
 **Areas that need refactoring**:
-- ****: This component is critically oversized. It should be broken down, with logic for each tab extracted into its own set of dedicated components and hooks. This is the top refactoring priority.
-- ****: The HTML/CSS for email templates is duplicated across multiple methods (, , etc.). This should be extracted into a reusable base email template function to reduce redundancy and simplify maintenance.
+- ****: This component is critically oversized and complex. It is the top refactoring priority.
+- **Template Preview UI:** The  in  that previews templates has a reactivity/caching issue, forcing users to reload the page to see updates after a reset. This needs a more robust fix.
 
 **key api endpoints**
-- : Fixed multiple times, last targeted for an email template style update.
-- : Fixed and verified.
-- : Verified to be working after fixing the library issue.
+- : Fixed to correctly copy content from the system default template to a user's template.
+- : Refactored to use  and serve PDFs from database templates.
+- : Refactored to attach PDFs generated by .
 
 **Critical Info for New Agent**
-- **THE PDF LIBRARY WILL FAIL:** The  library has disappeared over 12 times. Before investigating any PDF or email attachment issue, your **first step** must be to check the backend logs (INFO:fontTools.subset:glyf pruned
-DEBUG:fontTools.subset.timer:Took 0.000s to close glyph list over 'cmap'
-INFO:fontTools.subset:Added gid0 to subset
-INFO:fontTools.subset:Closing glyph list over 'glyf': 66 glyphs before
-INFO:fontTools.subset:Glyph names: ['.notdef', 'colon', 'comma', 'eight', 'four', 'hyphen', 'nine', 'one', 'parenleft', 'parenright', 'percent', 'period', 'seven', 'six', 'space', 'three', 'two', 'uni0404', 'uni0406', 'uni0410', 'uni0411', 'uni0412', 'uni0413', 'uni0414', 'uni0415', 'uni0417', 'uni0418', 'uni0419', 'uni041A', 'uni041B', 'uni041C', 'uni041D', 'uni041E', 'uni041F', 'uni0420', 'uni0421', 'uni0422', 'uni0423', 'uni0425', 'uni0426', 'uni042C', 'uni042F', 'uni0430', 'uni0431', 'uni0432', 'uni0433', 'uni0434', 'uni0435', 'uni0437', 'uni0438', 'uni0439', 'uni043A', 'uni043B', 'uni043C', 'uni043D', 'uni043E', 'uni043F', 'uni0440', 'uni0441', 'uni0442', 'uni0443', 'uni044C', 'uni044F', 'uni0456', 'uni2116', 'zero']
-INFO:fontTools.subset:Glyph IDs:   [0, 3, 8, 11, 12, 15, 16, 17, 19, 20, 21, 22, 23, 25, 26, 27, 28, 29, 921, 923, 933, 934, 935, 936, 937, 938, 940, 941, 942, 943, 944, 945, 946, 947, 948, 949, 950, 951, 952, 954, 955, 961, 964, 965, 966, 967, 968, 969, 970, 972, 973, 974, 975, 976, 977, 978, 979, 980, 981, 982, 983, 984, 993, 996, 1003, 2990]
-INFO:fontTools.subset:Closed glyph list over 'glyf': 86 glyphs after
-INFO:fontTools.subset:Glyph names: ['.notdef', 'A', 'B', 'Breve', 'C', 'E', 'H', 'I', 'M', 'O', 'P', 'T', 'X', 'a', 'breve', 'c', 'colon', 'comma', 'e', 'eight', 'four', 'hyphen', 'i', 'nine', 'o', 'one', 'p', 'parenleft', 'parenright', 'percent', 'period', 'seven', 'six', 'space', 'three', 'two', 'uni0404', 'uni0406', 'uni0410', 'uni0411', 'uni0412', 'uni0413', 'uni0414', 'uni0415', 'uni0417', 'uni0418', 'uni0419', 'uni041A', 'uni041B', 'uni041C', 'uni041D', 'uni041E', 'uni041F', 'uni0420', 'uni0421', 'uni0422', 'uni0423', 'uni0425', 'uni0426', 'uni042C', 'uni042F', 'uni0430', 'uni0431', 'uni0432', 'uni0433', 'uni0434', 'uni0435', 'uni0437', 'uni0438', 'uni0439', 'uni043A', 'uni043B', 'uni043C', 'uni043D', 'uni043E', 'uni043F', 'uni0440', 'uni0441', 'uni0442', 'uni0443', 'uni044C', 'uni044F', 'uni0456', 'uni2116', 'y', 'zero']
-INFO:fontTools.subset:Glyph IDs:   [0, 3, 8, 11, 12, 15, 16, 17, 19, 20, 21, 22, 23, 25, 26, 27, 28, 29, 36, 37, 38, 40, 43, 44, 48, 50, 51, 55, 59, 68, 70, 72, 76, 82, 83, 92, 666, 921, 923, 933, 934, 935, 936, 937, 938, 940, 941, 942, 943, 944, 945, 946, 947, 948, 949, 950, 951, 952, 954, 955, 961, 964, 965, 966, 967, 968, 969, 970, 972, 973, 974, 975, 976, 977, 978, 979, 980, 981, 982, 983, 984, 993, 996, 1003, 2990, 5908]
-DEBUG:fontTools.subset.timer:Took 0.001s to close glyph list over 'glyf'
-INFO:fontTools.subset:Retaining 86 glyphs
-INFO:fontTools.subset:head subsetting not needed
-INFO:fontTools.subset:hhea subsetting not needed
-INFO:fontTools.subset:maxp subsetting not needed
-INFO:fontTools.subset:OS/2 subsetting not needed
-DEBUG:fontTools.ttLib.ttFont:Reading 'hmtx' table from disk
-DEBUG:fontTools.ttLib.ttFont:Decompiling 'hmtx' table
-DEBUG:fontTools.ttLib.ttFont:Reading 'hhea' table from disk
-DEBUG:fontTools.ttLib.ttFont:Decompiling 'hhea' table
-DEBUG:fontTools.subset.timer:Took 0.002s to subset 'hmtx'
-INFO:fontTools.subset:hmtx subsetted
-DEBUG:fontTools.subset.timer:Took 0.001s to subset 'cmap'
-INFO:fontTools.subset:cmap subsetted
-INFO:fontTools.subset:loca subsetting not needed
-DEBUG:fontTools.subset.timer:Took 0.000s to subset 'post'
-INFO:fontTools.subset:post subsetted
-INFO:fontTools.subset:gasp subsetting not needed
-INFO:fontTools.subset:FFTM NOT subset; don't know how to subset
-DEBUG:fontTools.ttLib.ttFont:Reading 'GDEF' table from disk
-DEBUG:fontTools.ttLib.ttFont:Decompiling 'GDEF' table
-DEBUG:fontTools.subset.timer:Took 0.001s to subset 'GDEF'
-INFO:fontTools.subset:GDEF subsetted
-INFO:fontTools.subset:name subsetting not needed
-DEBUG:fontTools.subset.timer:Took 0.002s to subset 'glyf'
-INFO:fontTools.subset:glyf subsetted
-DEBUG:fontTools.subset.timer:Took 0.000s to subset GlyphOrder
-DEBUG:fontTools.subset.timer:Took 0.000s to prune 'head'
-INFO:fontTools.subset:head pruned
-DEBUG:fontTools.ttLib.ttFont:Reading 'OS/2' table from disk
-DEBUG:fontTools.ttLib.ttFont:Decompiling 'OS/2' table
-INFO:fontTools.subset:OS/2 Unicode ranges pruned: [0, 9, 35]
-INFO:fontTools.subset:OS/2 CodePage ranges pruned: [2]
-DEBUG:fontTools.subset.timer:Took 0.001s to prune 'glyf'
-INFO:fontTools.subset:glyf pruned
-DEBUG:fontTools.subset.timer:Took 0.000s to prune 'GDEF'
-INFO:fontTools.subset:GDEF pruned
-DEBUG:fontTools.ttLib.ttFont:Reading 'name' table from disk
-DEBUG:fontTools.ttLib.ttFont:Decompiling 'name' table
-DEBUG:fontTools.ttLib.ttFont:Reading 'gasp' table from disk
-DEBUG:fontTools.ttLib.ttFont:Decompiling 'gasp' table
-DEBUG:fontTools.ttLib.ttFont:Reading 'FFTM' table from disk
-DEBUG:fontTools.ttLib.ttFont:Decompiling 'FFTM' table
-DEBUG:fontTools.subset.timer:Took 0.000s to prune 'name'
-INFO:fontTools.subset:name pruned
-INFO:services.act_pdf_service:Generated act PDF: /tmp/act_pdfs/act_1968-1.pdf
-INFO:services.email_service:Attempting to embed logo from: /app/backend/uploads/bdbb8b5a-ec9e-42a0-89e9-ba212729e017.png
-INFO:services.email_service:✓ Logo embedded successfully, size: 168942 bytes
-INFO:services.email_service:Email sent successfully to roman.kolontaj@gmail.com
-INFO:routes.document_routes:Act PDF sent to roman.kolontaj@gmail.com by user b3678469-180d-41b7-8ff4-64a3b343439f
-WARNING:  WatchFiles detected changes in 'services/email_service.py'. Reloading...
-INFO:     Shutting down
-INFO:     Waiting for application shutdown.
-INFO:server:Application shutting down...
-INFO:server:MongoDB connection closed
-INFO:     Application shutdown complete.
-INFO:     Finished server process [3284]
-INFO:server:Connected to MongoDB: mongodb://localhost:27017
-INFO:     Started server process [3602]
-INFO:     Waiting for application startup.
-INFO:server:Application starting up...
-INFO:server:MongoDB Database: test_database
-INFO:server:MongoDB connection successful
-INFO:server:Default templates initialized
-INFO:     Application startup complete.
-WARNING:  WatchFiles detected changes in 'services/email_service.py'. Reloading...
-INFO:     Shutting down
-INFO:     Waiting for application shutdown.
-INFO:server:Application shutting down...
-INFO:server:MongoDB connection closed
-INFO:     Application shutdown complete.
-INFO:     Finished server process [3602]
-INFO:server:Connected to MongoDB: mongodb://localhost:27017
-INFO:     Started server process [3610]
-INFO:     Waiting for application startup.
-INFO:server:Application starting up...
-INFO:server:MongoDB Database: test_database
-INFO:server:MongoDB connection successful
-INFO:server:Default templates initialized
-INFO:     Application startup complete.
-INFO:     Will watch for changes in these directories: ['/app/backend']
-INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
-INFO:     Started reloader process [29] using WatchFiles
-INFO:server:Connected to MongoDB: mongodb://localhost:27017
-INFO:     Started server process [66]
-INFO:     Waiting for application startup.
-INFO:server:Application starting up...
-INFO:server:MongoDB Database: test_database
-INFO:server:MongoDB connection successful
-INFO:server:Default templates initialized
-INFO:     Application startup complete.). If you see the , run Hit:1 http://deb.debian.org/debian bookworm InRelease
+- **THE PDF LIBRARY WILL FAIL:** The  library has disappeared over 16 times. Your first step for **any** PDF or email issue must be to check backend logs () for . If you see it, do not waste time debugging code. **Immediately call the  to find a permanent solution.** The temporary fix is Hit:1 http://deb.debian.org/debian bookworm InRelease
 Hit:2 http://deb.debian.org/debian bookworm-updates InRelease
 Hit:3 http://deb.debian.org/debian-security bookworm-security InRelease
 Hit:4 https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 InRelease
@@ -356,27 +170,27 @@ Reading package lists...
 Building dependency tree...
 Reading state information...
 libpangoft2-1.0-0 is already the newest version (1.50.12+ds-1).
-0 upgraded, 0 newly installed, 0 to remove and 2 not upgraded. and restart the backend. Do not waste time on other debugging until this is checked.
-- **Your immediate task is to complete the styling of the Act email template.** The previous agent started editing  but did not finish. You need to complete the HTML/CSS changes to match the invoice email format (logo on top) and then test the end-to-end flow from the frontend.
-- Be mindful of the monolithic nature of . Changes there can have unintended side effects on other document tabs.
+0 upgraded, 0 newly installed, 0 to remove and 2 not upgraded. followed by a backend restart, but this is not a long-term solution.
+- **Your immediate task is to implement universal search.** The user wants to search by company name and EDRPOU on *all* document tabs. You will need to modify  to add the necessary state and filter logic for each tab.
+- Be aware of the UI reactivity issue in the template viewer. If you make changes to templates, the preview  might not update without a full page reload.
 
 **documents created in this job**
-- None.
+- 
 
 **Last 10 User Messages and any pending user messages**
-1.  **User:** I created a new Act (#1968-1) and the PDF/email is not working, and the email address isn't pre-filling. (DONE - Was the recurring PDF library issue + a frontend bug).
-2.  **User:** The buttons in the Act view card should be the same as in the Invoice card. (DONE).
-3.  **User:** Add an Edit button for Acts and fix the email sending error. (DONE).
-4.  **User:** The Act email is still failing. (DONE - Found a deeper bug in ).
-5.  **User:** Move the logo to the top in the Act email and make the structure/size similar to the Invoice email. (IN PROGRESS - Last working item).
-6.  **User:** I created a new Act, but there's no list of variables in the template editor for it, and the Invoice variables are also gone. (DONE).
-7.  **User:** Add all variables from the Invoice template to the Act template. (DONE).
-8.  **User:** In the Counterparties tab, add a search by EDRPOU code or name. (DONE).
-9.  **User:** I created a new order, and if I open the order card and click Send Email, the email field is empty and sending fails. But it works from the main list. (DONE).
-10. **User:** Fix the date format in the order email to be 09 грудня 2025 року. (DONE).
+1.  **User:** Update the system Invoice template with new HTML. (DONE)
+2.  **User:** Change the email subject for Acts to Акт наданих послуг. (DONE)
+3.  **User:** Check every tab (counterparties, acts, invoices, etc.) and add search by EDRPOU and name everywhere. (PENDING - This is the current task).
+4.  **User:** The system template for an Act is not being applied when I click the Reset button; an error occurs. (DONE)
+5.  **User:** After fixing the reset, the content of the template doesn't update in the UI. (PARTIALLY DONE - Backend is fixed, but UI requires a refresh).
+6.  **User:** I'm providing new HTML for the system's Act template; please update it. (DONE)
+7.  **User:** The PDF library is broken again. (DONE - Reinstalled for the 16th time).
+8.  **User:** Please reinstall the library immediately. (DONE)
+9.  **User:** The Act template is not updating; it should work like the Invoice template. (DONE - Refactored to use ).
+10. **User:** Add the  variable to the list of variables in the template editor UI. (DONE)
 
 **Project Health Check:**
-- **Broken:** The core PDF generation functionality is subject to frequent, unpredictable environmental failures, making the application fundamentally unstable.
+- **Broken:** The core PDF generation functionality is subject to frequent, unpredictable environmental failures. The application is fundamentally unstable until the root cause of the  issue is found and fixed.
 - **Mocked:** None.
 
 **3rd Party Integrations**
@@ -384,8 +198,8 @@ libpangoft2-1.0-0 is already the newest version (1.50.12+ds-1).
 - **SMTP (via smtplib):** Used for sending all emails.
 
 **Testing status**
-- **Testing agent used after significant changes:** YES, but it failed once due to context length. The agent primarily relied on the screenshot tool and  for testing.
-- **Troubleshoot agent used after agent stuck in loop:** NO.
+- **Testing agent used after significant changes:** YES.
+- **Troubleshoot agent used after agent stuck in loop:** NO. The agent should have used it for the recurring library issue.
 - **Test files created:** None.
 - **Known regressions:** The periodic disappearance of the  library is a severe, high-frequency regression.
 
@@ -395,4 +209,5 @@ libpangoft2-1.0-0 is already the newest version (1.50.12+ds-1).
     - Password: 
 
 **What agent forgot to execute**
-- The agent started refactoring the Act email template in  by removing old code but did not implement the new structure with the logo at the top. This is the immediate next step for the new agent.</analysis>
+- The agent did not find a permanent solution for the recurring  library failure, instead opting to re-install it manually each time. The next agent should prioritize a permanent fix by using the .
+- The agent has not yet started implementing the universal search feature requested by the user in the last message.</analysis>
