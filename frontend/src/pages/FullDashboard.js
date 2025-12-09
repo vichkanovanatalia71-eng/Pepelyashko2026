@@ -4528,7 +4528,7 @@ const FullDashboard = () => {
         onDelete={deleteWaybill}
         onDownload={downloadWaybillPDF}
         onPreview={previewWaybillPDF}
-        onSendEmail={() => { setEmailType('waybill'); setShowEmailDialog(true); }}
+        onSendEmail={openWaybillEmailDialog}
         formatDateUkrainian={formatDateUkrainian}
       />
 
