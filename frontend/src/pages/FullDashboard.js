@@ -647,8 +647,8 @@ const FullDashboard = () => {
     
     try {
       await axios.post(
-        `${API_URL}/api/orders/${viewingOrder._id}/send-email`,
-        { email: emailRecipient }
+        `${API_URL}/api/orders/${viewingOrder.number}/send-email?email=${encodeURIComponent(emailRecipient)}`,
+        {}
       );
       
       toast.success(`Замовлення відправлено на ${emailRecipient}`);
