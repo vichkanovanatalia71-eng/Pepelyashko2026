@@ -537,11 +537,12 @@ async def get_act(
 @router.get("/acts/pdf/{act_number}")
 async def get_act_pdf(
     act_number: str,
+    template_id: Optional[str] = None,
     current_user: dict = Depends(get_current_user)
 ):
-    """Generate and return act PDF."""
+    """Generate and return act PDF using template."""
     from server import db as database
-    from services.act_pdf_service import ActPDFService
+    from services.pdf_service_with_templates import PDFServiceWithTemplates
     from urllib.parse import quote
     
     try:
@@ -559,26 +560,35 @@ async def get_act_pdf(
         
         # Get counterparty details
         counterparty_edrpou = act.get('counterparty_edrpou')
+        counterparty = {}
         if counterparty_edrpou:
-            counterparty = await database.counterparties.find_one({
+            cp = await database.counterparties.find_one({
                 "edrpou": counterparty_edrpou,
                 "user_id": current_user["_id"]
             }, {"_id": 0})
             
-            if counterparty:
-                act['counterparty_details'] = counterparty
+            if cp:
+                counterparty = cp
         
-        # Get supplier details
+        # Get supplier (current user) details
         user = await database.users.find_one({
             "_id": current_user["_id"]
-        }, {"_id": 0, "hashed_password": 0})
+        }, {"hashed_password": 0})
         
-        if user:
-            act['supplier_details'] = user
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
         
-        # Generate PDF
-        pdf_service = ActPDFService()
-        pdf_path = pdf_service.generate_pdf(act)
+        # Generate PDF using template
+        pdf_service = PDFServiceWithTemplates(database)
+        pdf_path = await pdf_service.generate_act_pdf(
+            act,
+            user,
+            counterparty,
+            template_id
+        )
         
         filename = f"Акт_{act_number}.pdf"
         encoded_filename = quote(filename.encode('utf-8'))
