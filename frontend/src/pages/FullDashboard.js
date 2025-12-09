@@ -573,19 +573,13 @@ const FullDashboard = () => {
   };
 
   const openOrderEmailDialog = async (order = null) => {
-    console.log('openOrderEmailDialog called with order:', order);
-    console.log('Current viewingOrder:', viewingOrder);
-    
     // If order is passed, use it; otherwise use viewingOrder
     const targetOrder = order || viewingOrder;
     
     if (!targetOrder) {
-      console.error('No order available to send email');
       toast.error('Замовлення не знайдено');
       return;
     }
-    
-    console.log('Using targetOrder:', targetOrder);
     
     // Always set viewing order to ensure it's available during send
     setViewingOrder(targetOrder);
@@ -593,23 +587,18 @@ const FullDashboard = () => {
     // Try to get counterparty email for this order
     if (targetOrder.counterparty_edrpou) {
       try {
-        console.log('Looking for counterparty with EDRPOU:', targetOrder.counterparty_edrpou);
         const counterparty = counterparties.find(cp => cp.edrpou === targetOrder.counterparty_edrpou);
-        console.log('Found counterparty:', counterparty);
         
         if (counterparty && counterparty.email) {
           setEmailRecipient(counterparty.email);
-          console.log('Set email recipient:', counterparty.email);
         } else {
           setEmailRecipient('');
-          console.log('No email found for counterparty');
         }
       } catch (error) {
         console.error('Error fetching counterparty email:', error);
         setEmailRecipient('');
       }
     } else {
-      console.log('No counterparty_edrpou in order');
       setEmailRecipient('');
     }
     setEmailType('order');
