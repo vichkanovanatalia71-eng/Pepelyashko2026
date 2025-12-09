@@ -822,7 +822,7 @@ class EmailService:
                 </div>
                 <div class="content">
                     <p class="greeting">Доброго дня!</p>
-                    <p><strong>{company_display_name}</strong> надсилає Вам акт прийнятих робіт №<strong>{act_number}</strong> від <strong>{formatted_date}</strong>.</p>
+                    <p><strong>{company_display_name}</strong> надсилає Вам Акт наданих послуг №<strong>{act_number}</strong> від <strong>{formatted_date}</strong>.</p>
                     <div class="info-box">
                         <div class="info-row">
                             <span class="info-label">📋 Номер акту:</span>
