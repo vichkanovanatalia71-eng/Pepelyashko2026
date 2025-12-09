@@ -1189,16 +1189,20 @@ async def create_order(
 
 @router.get("/orders", response_model=List[OrderModel])
 async def get_all_orders(
+    edrpou: Optional[str] = None,
+    is_paid: Optional[bool] = None,
     current_user: dict = Depends(get_current_user)
 ):
-    """Get all orders for the current user."""
+    """Get all orders for the current user with optional filters."""
     from server import db as database
     
     document_service = DocumentServiceMongo(database)
     
     try:
         orders = await document_service.get_all_orders(
-            user_id=current_user["_id"]
+            user_id=current_user["_id"],
+            edrpou_filter=edrpou,
+            is_paid_filter=is_paid
         )
         return orders
     except Exception as e:
