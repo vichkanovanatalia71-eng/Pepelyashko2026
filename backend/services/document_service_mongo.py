@@ -259,7 +259,16 @@ class DocumentServiceMongo:
         
         # Add payment status filter if provided
         if is_paid_filter is not None:
-            query["is_paid"] = is_paid_filter
+            if is_paid_filter:
+                # For paid: is_paid must be true
+                query["is_paid"] = True
+            else:
+                # For unpaid: is_paid is false OR null/missing
+                query["$or"] = [
+                    {"is_paid": False},
+                    {"is_paid": {"$exists": False}},
+                    {"is_paid": None}
+                ]
         
         cursor = self.orders.find(query).sort("date", -1)
         orders = []
