@@ -1,4 +1,4 @@
-"""Service for generating act PDFs."""
+"""Service for generating act PDFs using external template."""
 
 import os
 from pathlib import Path
@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 class ActPDFService:
-    """Service for generating PDF documents for acts."""
+    """Service for generating PDF documents for acts using external template."""
     
     def __init__(self):
         self.output_dir = Path("/tmp/act_pdfs")
@@ -29,7 +29,6 @@ class ActPDFService:
             return "м. Київ"
         
         # Try to find city pattern: "місто Назва" or "м. Назва" or "смт Назва" or "село Назва"
-        import re
         patterns = [
             r'місто\s+([А-ЯІЇЄҐа-яіїєґ\'\-]+)',
             r'м\.\s*([А-ЯІЇЄҐа-яіїєґ\'\-]+)',
@@ -129,280 +128,137 @@ class ActPDFService:
         
         formatted_date = self.format_date_ukrainian(date_str)
         
-        # Calculate items for table
-        items_html = ""
-        for idx, item in enumerate(act.get('items', []), 1):
-            # Convert to float to handle both string and numeric values
-            quantity = float(item.get('quantity', 0))
-            price = float(item.get('price', 0))
-            amount = float(item.get('amount', 0))
-            
-            items_html += f"""
-            <tr>
-                <td class="table-cell center">{idx}</td>
-                <td class="table-cell">{item.get('name', '—')}</td>
-                <td class="table-cell center">{item.get('unit', 'послуга')}</td>
-                <td class="table-cell right">{quantity:.2f}</td>
-                <td class="table-cell right">{price:.2f}</td>
-                <td class="table-cell right bold">{amount:.2f}</td>
-            </tr>
-            """
-        
         # Calculate totals
-        total_without_vat = float(act.get('total_amount', 0))
-        vat_amount = 0.0
-        total_to_pay = total_without_vat + vat_amount
+        total_amount = float(act.get('total_amount', 0))
+        vat_rate = 20.0  # Default VAT rate
+        is_vat_payer = False  # По умолчанию не платник ПДВ
         
-        # Get counterparty details
+        # Check if VAT payer from supplier details
+        supplier_data = act.get('supplier_details', {})
+        # Implement logic if needed
+        
+        if is_vat_payer:
+            amount_without_vat = total_amount / (1 + vat_rate / 100)
+            vat_amount = total_amount - amount_without_vat
+        else:
+            amount_without_vat = total_amount
+            vat_amount = 0.0
+        
+        # Get counterparty (buyer) details
         counterparty_data = act.get('counterparty_details', {})
-        client_name = counterparty_data.get('representative_name', act.get('counterparty_name', '—'))
-        client_edrpou = act.get('counterparty_edrpou', '—')
-        client_address = counterparty_data.get('legal_address', '—')
-        client_signature = counterparty_data.get('signature', '—')
+        buyer_name = counterparty_data.get('representative_name', act.get('counterparty_name', '—'))
+        buyer_edrpou = act.get('counterparty_edrpou', '—')
+        buyer_address = counterparty_data.get('legal_address', '—')
+        buyer_iban = counterparty_data.get('iban', '—')
+        buyer_bank = counterparty_data.get('bank', '—')
+        buyer_mfo = counterparty_data.get('mfo', '—')
+        buyer_email = counterparty_data.get('email', '—')
+        buyer_phone = counterparty_data.get('phone', '—')
+        buyer_representative = counterparty_data.get('representative', '—')
+        buyer_position = counterparty_data.get('position', '—')
+        buyer_signature = counterparty_data.get('signature', '—')
         
         # Get supplier details from user profile
-        supplier_data = act.get('supplier_details', {})
         supplier_name = supplier_data.get('representative_name', supplier_data.get('company_name', '—'))
         supplier_edrpou = supplier_data.get('edrpou', '—')
         supplier_address = supplier_data.get('legal_address', '—')
+        supplier_iban = supplier_data.get('iban', '—')
+        supplier_bank = supplier_data.get('bank', '—')
+        supplier_mfo = supplier_data.get('mfo', '—')
+        supplier_email = supplier_data.get('email', '—')
+        supplier_phone = supplier_data.get('phone', '—')
+        supplier_representative = supplier_data.get('representative', '—')
         supplier_signature = supplier_data.get('signature', '—')
         
-        # Extract city from supplier address
-        supplier_city = self.extract_city_from_address(supplier_address)
+        # Get supplier logo if exists
+        supplier_logo = None
+        if supplier_data.get('company_logo'):
+            logo_path = f"/app/backend/{supplier_data['company_logo']}"
+            if os.path.exists(logo_path):
+                # Convert logo to base64 for embedding
+                import base64
+                with open(logo_path, 'rb') as logo_file:
+                    logo_data = base64.b64encode(logo_file.read()).decode('utf-8')
+                    # Determine image type
+                    ext = Path(logo_path).suffix.lower()
+                    mime_type = 'image/png' if ext == '.png' else 'image/jpeg'
+                    supplier_logo = f"data:{mime_type};base64,{logo_data}"
         
-        # Build professional HTML document with purple design (act-specific)
-        html_content = f"""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <style>
-                @page {{
-                    size: A4;
-                    margin: 20mm;
-                }}
-                body {{
-                    font-family: 'DejaVu Sans', Arial, sans-serif;
-                    font-size: 10pt;
-                    line-height: 1.4;
-                    color: #1e293b;
-                    margin: 0;
-                    padding: 0;
-                    background: #f8fafc;
-                }}
-                .document {{
-                    width: 100%;
-                    max-width: 210mm;
-                    background: white;
-                    padding: 20px;
-                }}
-                .header {{
-                    text-align: center;
-                    margin-bottom: 20px;
-                    padding: 20px;
-                    background: linear-gradient(135deg, #e9d5ff 0%, #d8b4fe 100%);
-                    border-radius: 8px;
-                }}
-                .location {{
-                    font-size: 9pt;
-                    margin-bottom: 10px;
-                    color: #581c87;
-                }}
-                .title {{
-                    font-size: 14pt;
-                    font-weight: bold;
-                    margin: 10px 0;
-                    color: #7c3aed;
-                }}
-                .subtitle {{
-                    font-size: 10pt;
-                    margin-top: 10px;
-                    color: #6b21a8;
-                }}
-                .section-title {{
-                    font-size: 11pt;
-                    font-weight: bold;
-                    text-align: center;
-                    margin: 20px 0 15px 0;
-                    text-transform: uppercase;
-                    color: #7c3aed;
-                    padding: 8px;
-                    background: #f3e8ff;
-                    border-left: 4px solid #a855f7;
-                }}
-                table {{
-                    width: 100%;
-                    border-collapse: collapse;
-                    margin: 10px 0;
-                }}
-                table.items-table {{
-                    margin-bottom: 0;
-                }}
-                table.items-table th {{
-                    background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%);
-                    color: white;
-                    padding: 10px 5px;
-                    font-size: 9pt;
-                    font-weight: bold;
-                    border: 1px solid #9333ea;
-                    text-align: center;
-                }}
-                table.items-table td {{
-                    padding: 8px 5px;
-                    font-size: 9pt;
-                    border: 1px solid #d8b4fe;
-                }}
-                .table-cell {{
-                    vertical-align: middle;
-                }}
-                .center {{
-                    text-align: center;
-                }}
-                .right {{
-                    text-align: right;
-                }}
-                .bold {{
-                    font-weight: bold;
-                }}
-                .summary-row td {{
-                    border: none;
-                    border-top: 1px solid #9333ea;
-                    padding: 8px 5px;
-                    font-size: 10pt;
-                    background: #faf5ff;
-                }}
-                .summary-row.total td {{
-                    font-weight: bold;
-                    border-top: 2px solid #7c3aed;
-                    background: #e9d5ff;
-                    color: #581c87;
-                }}
-                .signatures {{
-                    margin-top: 25px;
-                }}
-                .signatures-grid {{
-                    display: table;
-                    width: 100%;
-                    border: 2px solid #a855f7;
-                }}
-                .party-column {{
-                    display: table-cell;
-                    width: 50%;
-                    padding: 15px;
-                    vertical-align: top;
-                    border-right: 2px solid #a855f7;
-                }}
-                .party-column:last-child {{
-                    border-right: none;
-                }}
-                .party-header {{
-                    font-weight: bold;
-                    font-size: 11pt;
-                    text-align: center;
-                    margin-bottom: 15px;
-                    text-transform: uppercase;
-                    color: white;
-                    background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%);
-                    padding: 8px;
-                    border-radius: 4px;
-                }}
-                .party-info {{
-                    font-size: 8pt;
-                    line-height: 1.8;
-                }}
-                .party-info .label {{
-                    font-weight: bold;
-                    display: inline-block;
-                    width: 85px;
-                    color: #581c87;
-                }}
-                .party-info .value {{
-                    display: inline;
-                }}
-                .party-info div {{
-                    margin-bottom: 5px;
-                    word-wrap: break-word;
-                }}
-                .signature-line {{
-                    margin-top: 30px;
-                    padding-top: 10px;
-                    border-top: 1px solid #a855f7;
-                    text-align: center;
-                    font-size: 9pt;
-                }}
-            </style>
-        </head>
-        <body>
-            <div class="document">
-                <!-- Header -->
-                <div class="header">
-                    <div class="location">Місце складання: {supplier_city}</div>
-                    <div class="title">АКТ ПРИЙНЯТИХ РОБІТ (ПОСЛУГ) № {act.get('number', '—')}</div>
-                    <div class="subtitle">від {formatted_date}</div>
-                </div>
-                
-                <!-- Items Table -->
-                <div class="section-title">Виконані роботи (надані послуги)</div>
-                <table class="items-table">
-                    <thead>
-                        <tr>
-                            <th style="width: 5%;">№</th>
-                            <th style="width: 35%;">Найменування робіт (послуг)</th>
-                            <th style="width: 12%;">Од. виміру</th>
-                            <th style="width: 12%;">Кількість</th>
-                            <th style="width: 18%;">Ціна, грн</th>
-                            <th style="width: 18%;">Сума, грн</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {items_html}
-                        <tr class="summary-row">
-                            <td colspan="5" class="right bold">Разом без ПДВ:</td>
-                            <td class="right bold">{total_without_vat:.2f}</td>
-                        </tr>
-                        <tr class="summary-row">
-                            <td colspan="5" class="right bold">ПДВ 20%:</td>
-                            <td class="right bold">{vat_amount:.2f}</td>
-                        </tr>
-                        <tr class="summary-row total">
-                            <td colspan="5" class="right bold">Всього до сплати:</td>
-                            <td class="right bold">{total_to_pay:.2f}</td>
-                        </tr>
-                    </tbody>
-                </table>
-                
-                <!-- Signatures Section -->
-                <div class="signatures">
-                    <div class="signatures-grid">
-                        <!-- Supplier (Виконавець) -->
-                        <div class="party-column">
-                            <div class="party-header">Виконавець</div>
-                            <div class="party-info">
-                                <div><span class="label">Назва:</span> <span class="value">{supplier_name}</span></div>
-                                <div><span class="label">ЄДРПОУ:</span> <span class="value">{supplier_edrpou}</span></div>
-                                <div><span class="label">Адреса:</span> <span class="value">{supplier_address}</span></div>
-                                <div class="signature-line">___________________<br/>{supplier_signature}</div>
-                            </div>
-                        </div>
-                        
-                        <!-- Client (Замовник) -->
-                        <div class="party-column">
-                            <div class="party-header">Замовник</div>
-                            <div class="party-info">
-                                <div><span class="label">Назва:</span> <span class="value">{client_name}</span></div>
-                                <div><span class="label">ЄДРПОУ:</span> <span class="value">{client_edrpou}</span></div>
-                                <div><span class="label">Адреса:</span> <span class="value">{client_address}</span></div>
-                                <div class="signature-line">___________________<br/>{client_signature}</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </body>
-        </html>
-        """
+        # Prepare items for Handlebars templates
+        formatted_items = []
+        for item in act.get('items', []):
+            formatted_items.append({
+                'name': item.get('name', ''),
+                'unit': item.get('unit', 'шт'),
+                'qty': self.format_currency(float(item.get('quantity', 0))),
+                'price': self.format_currency(float(item.get('price', 0))),
+                'sum': self.format_currency(float(item.get('amount', 0)))
+            })
         
-        return html_content
+        # Prepare template context
+        context = {
+            # Act info
+            'act_number': act.get('number', '—'),
+            'act_date': formatted_date,
+            'basis': act.get('based_on_order', 'Не вказано'),
+            'based_on_order': act.get('based_on_order', None),
+            'based_on_document': act.get('based_on_contract', None),
+            # Supplier (Виконавець)
+            'supplier_name': supplier_name,
+            'supplier_edrpou': supplier_edrpou,
+            'supplier_address': supplier_address,
+            'supplier_iban': supplier_iban,
+            'supplier_bank': supplier_bank,
+            'supplier_mfo': supplier_mfo,
+            'supplier_email': supplier_email,
+            'supplier_phone': supplier_phone,
+            'supplier_representative': supplier_representative,
+            'supplier_signature': supplier_signature,
+            'supplier_logo': supplier_logo,
+            # Buyer (Замовник)
+            'buyer_name': buyer_name,
+            'buyer_edrpou': buyer_edrpou,
+            'buyer_address': buyer_address,
+            'buyer_iban': buyer_iban,
+            'buyer_bank': buyer_bank,
+            'buyer_mfo': buyer_mfo,
+            'buyer_email': buyer_email,
+            'buyer_phone': buyer_phone,
+            'buyer_representative': buyer_representative,
+            'buyer_position': buyer_position,
+            'buyer_signature': buyer_signature,
+            # Items
+            'items': formatted_items,
+            # Totals
+            'total_amount': self.format_currency(total_amount),
+            'amount_without_vat': self.format_currency(amount_without_vat),
+            'vat_amount': self.format_currency(vat_amount),
+            'vat_rate': str(int(vat_rate)),
+            'total_amount_text': self.number_to_words_ua(total_amount),
+            'is_vat_payer': is_vat_payer
+        }
+        
+        # Parse template using Handlebars
+        try:
+            compiler = Compiler()
+            
+            # Register helper for incrementing index
+            def inc_helper(this, index):
+                return str(index + 1)
+            
+            template_func = compiler.compile(self.template)
+            helpers = {'inc': inc_helper}
+            parsed_html = template_func(context, helpers=helpers)
+            
+            return parsed_html
+        except Exception as e:
+            logger.error(f"Error parsing template: {e}")
+            # Fallback to simple regex replacement
+            parsed = self.template
+            for key, value in context.items():
+                if not isinstance(value, (list, dict, bool)):
+                    parsed = parsed.replace(f"{{{{{key}}}}}", str(value))
+            return parsed
     
     def generate_pdf(self, act: dict) -> str:
         """Generate PDF from act data and return the file path."""
