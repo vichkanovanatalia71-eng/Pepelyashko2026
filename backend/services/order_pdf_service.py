@@ -302,9 +302,12 @@ class OrderPDFService:
         <div class="content">
             <div class="description">
                 <strong>📝 Опис:</strong> Дане замовлення сформовано для контрагента <strong>{counterparty_name}</strong> (ЄДРПОУ: {counterparty_edrpou}). Документ містить детальний перелік товарів/послуг із зазначенням кількості, ціни та загальної вартості.
-            </div>
+            </div>"""
             
-            {f'''<div class="section">
+            # Add supplier section if available
+            if supplier_name:
+                html_content += f"""
+            <div class="section">
                 <div class="section-title">
                     <span>🏢</span>
                     Постачальник
@@ -321,17 +324,27 @@ class OrderPDFService:
                     <div class="info-row">
                         <div class="info-label">Адреса</div>
                         <div class="info-value">{supplier_address}</div>
-                    </div>
-                    {f"""<div class="info-row">
+                    </div>"""
+                
+                if supplier_phone:
+                    html_content += f"""
+                    <div class="info-row">
                         <div class="info-label">Телефон</div>
                         <div class="info-value">{supplier_phone}</div>
-                    </div>""" if supplier_phone else ''}
-                    {f"""<div class="info-row">
+                    </div>"""
+                
+                if supplier_email:
+                    html_content += f"""
+                    <div class="info-row">
                         <div class="info-label">Email</div>
                         <div class="info-value">{supplier_email}</div>
-                    </div>""" if supplier_email else ''}
+                    </div>"""
+                
+                html_content += """
                 </div>
-            </div>''' if supplier_name else ''}
+            </div>"""
+            
+            html_content += f"""
             
             <div class="section">
                 <div class="section-title">
