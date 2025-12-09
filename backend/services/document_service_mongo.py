@@ -249,9 +249,19 @@ class DocumentServiceMongo:
             return OrderModel(**order)
         return None
     
-    async def get_all_orders(self, user_id: str) -> List[OrderModel]:
-        """Get all orders for a user."""
-        cursor = self.orders.find({"user_id": user_id}).sort("date", -1)
+    async def get_all_orders(self, user_id: str, edrpou_filter: Optional[str] = None, is_paid_filter: Optional[bool] = None) -> List[OrderModel]:
+        """Get all orders for a user with optional filters."""
+        query = {"user_id": user_id}
+        
+        # Add EDRPOU filter if provided
+        if edrpou_filter:
+            query["counterparty_edrpou"] = edrpou_filter
+        
+        # Add payment status filter if provided
+        if is_paid_filter is not None:
+            query["is_paid"] = is_paid_filter
+        
+        cursor = self.orders.find(query).sort("date", -1)
         orders = []
         async for order in cursor:
             orders.append(OrderModel(**order))
