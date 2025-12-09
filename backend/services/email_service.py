@@ -815,7 +815,7 @@ class EmailService:
         </head>
         <body>
             <div class="email-container">
-                {f'<div class="logo-container"><img src="cid:company_logo" alt="Company Logo" class="company-logo" /></div>' if company_logo_path and Path(company_logo_path).exists() else ''}
+                {f'<div class="logo-container"><img src="cid:company_logo" alt="Company Logo" class="company-logo" /></div>' if company_logo_url else ''}
                 <div class="header">
                     <h1>Акт №{act_number}</h1>
                     <p>Система Управління Документами</p>
@@ -847,7 +847,6 @@ class EmailService:
                 </div>
                 <div class="footer">
                     <p>Це автоматично згенерований лист</p>
-                    <p style="margin-top: 8px; font-weight: 500; color: #64748b;">З повагою, {company_display_name}</p>
                 </div>
             </div>
         </body>
