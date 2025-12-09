@@ -756,11 +756,20 @@ async def send_act_email(
             "_id": current_user["_id"]
         }, {"_id": 0, "hashed_password": 0})
         
-        if user:
-            act['supplier_details'] = user
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
         
-        pdf_service = ActPDFService()
-        pdf_path = pdf_service.generate_pdf(act)
+        # Generate PDF using template
+        pdf_service_templates = PDFServiceWithTemplates(database)
+        pdf_path = await pdf_service_templates.generate_act_pdf(
+            act,
+            user,
+            act.get('counterparty_details', {}),
+            act.get('template_id')
+        )
         
         email_service = EmailService()
         act_date = act.get('date', '')
