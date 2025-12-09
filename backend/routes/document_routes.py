@@ -1693,7 +1693,9 @@ async def send_order_email(
             to_email=email,
             subject=subject,
             body=body,
-            attachment_path=pdf_path
+            attachment_path=pdf_path,
+            attachment_name=f"Замовлення_{order_number}.pdf",
+            embedded_image_path=company_logo_path
         )
         
         logger.info(f"Order {order_number} PDF sent to {email}")
