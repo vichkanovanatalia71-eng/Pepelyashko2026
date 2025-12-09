@@ -630,7 +630,7 @@ const FullDashboard = () => {
     }
   };
 
-  const sendOrderEmail = async () => {
+  const sendOrderEmailFromDialog = async () => {
     if (!viewingOrder || !emailRecipient) {
       toast.error('Введіть email адресу');
       return;
