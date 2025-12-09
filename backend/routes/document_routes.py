@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException, status, Response
 from fastapi.responses import FileResponse
-from typing import List
+from typing import List, Optional
 from pathlib import Path
 from datetime import datetime, timedelta
 import logging
