@@ -54,6 +54,73 @@ class TemplateRenderer:
         
         return f"{day:02d} {month_name} {year} року"
     
+    def format_date_text_full(self, date_value) -> str:
+        """
+        Format date to full Ukrainian text format: "дев'ятого грудня дві тисячі двадцять п'ятого року"
+        
+        Args:
+            date_value: datetime object or ISO string
+            
+        Returns:
+            Full text date string in Ukrainian
+        """
+        if not date_value:
+            return ''
+        
+        # Convert to datetime if needed
+        if isinstance(date_value, str):
+            try:
+                date_obj = datetime.fromisoformat(date_value.replace('Z', '+00:00'))
+            except:
+                return str(date_value)
+        elif isinstance(date_value, datetime):
+            date_obj = date_value
+        else:
+            return str(date_value)
+        
+        day = date_obj.day
+        day_text = self.UKRAINIAN_DAYS_TEXT.get(day, str(day))
+        month_name = self.UKRAINIAN_MONTHS.get(date_obj.month, '')
+        year = date_obj.year
+        year_text = self._number_to_year_text(year)
+        
+        return f"{day_text} {month_name} {year_text} року"
+    
+    def _number_to_year_text(self, year: int) -> str:
+        """Convert year number to Ukrainian text."""
+        # Simplified version for years 2000-2099
+        if year >= 2000 and year < 2100:
+            thousands = "дві тисячі"
+            remainder = year - 2000
+            
+            if remainder == 0:
+                return thousands
+            elif remainder < 10:
+                ones = ['', 'першого', 'другого', 'третього', 'четвертого', "п'ятого", 
+                       'шостого', 'сьомого', 'восьмого', "дев'ятого"]
+                return f"{thousands} {ones[remainder]}"
+            elif remainder < 20:
+                teens = ['десятого', 'одинадцятого', 'дванадцятого', 'тринадцятого', 
+                        'чотирнадцятого', "п'ятнадцятого", 'шістнадцятого', 
+                        'сімнадцятого', 'вісімнадцятого', "дев'ятнадцятого"]
+                return f"{thousands} {teens[remainder - 10]}"
+            else:
+                tens_digit = remainder // 10
+                ones_digit = remainder % 10
+                
+                tens = ['', '', 'двадцять', 'тридцять', 'сорок', "п'ятдесят", 
+                       'шістдесят', 'сімдесят', 'вісімдесят', "дев'яносто"]
+                ones = ['', 'першого', 'другого', 'третього', 'четвертого', "п'ятого", 
+                       'шостого', 'сьомого', 'восьмого', "дев'ятого"]
+                
+                if ones_digit == 0:
+                    return f"{thousands} {tens[tens_digit]}"
+                else:
+                    return f"{thousands} {tens[tens_digit]} {ones[ones_digit]}"
+        
+        # Fallback for other years
+        return str(year)
+    
     def render(self, template: str, context: Dict[str, Any]) -> str:
         """
         Render template with context variables.
