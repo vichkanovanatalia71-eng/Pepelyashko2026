@@ -47,7 +47,7 @@ class OrderPDFService:
         
         Args:
             order: Order dictionary with all order data
-            user: Optional user dictionary for logo
+            user: Optional user dictionary for logo and company info
             
         Returns:
             Path to generated PDF file
@@ -55,12 +55,7 @@ class OrderPDFService:
         try:
             # Prepare data
             order_number = order.get('number', 'N/A')
-            order_date = order.get('date', '')
-            if isinstance(order_date, str):
-                try:
-                    order_date = datetime.fromisoformat(order_date.replace('Z', '+00:00')).strftime('%d.%m.%Y')
-                except:
-                    order_date = order_date.split('T')[0] if 'T' in order_date else order_date
+            order_date = self.format_date_ukrainian(order.get('date', ''))
             
             counterparty_name = order.get('counterparty_name', 'N/A')
             counterparty_edrpou = order.get('counterparty_edrpou', 'N/A')
@@ -72,6 +67,23 @@ class OrderPDFService:
             payment_status = "✅ Сплачено" if is_paid else "⏳ Не сплачено"
             payment_badge_bg = '#dcfce7' if is_paid else '#fef3c7'
             payment_badge_color = '#166534' if is_paid else '#92400e'
+            
+            # User/Company info (Supplier)
+            logo_base64 = None
+            if user and user.get('logo_url'):
+                logo_path = f"/app/backend/{user['logo_url']}"
+                if Path(logo_path).exists():
+                    with open(logo_path, 'rb') as f:
+                        logo_data = f.read()
+                        logo_ext = Path(logo_path).suffix.lower()
+                        mime_type = 'image/png' if logo_ext == '.png' else 'image/jpeg'
+                        logo_base64 = f"data:{mime_type};base64,{base64.b64encode(logo_data).decode()}"
+            
+            supplier_name = user.get('company_name', user.get('representative_name', '')) if user else ''
+            supplier_edrpou = user.get('edrpou', '') if user else ''
+            supplier_address = user.get('legal_address', '') if user else ''
+            supplier_phone = user.get('phone', '') if user else ''
+            supplier_email = user.get('email', '') if user else ''
             
             # Build items table
             items_html = ""
