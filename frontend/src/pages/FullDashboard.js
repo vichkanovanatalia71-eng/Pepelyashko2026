@@ -641,7 +641,14 @@ const FullDashboard = () => {
   };
 
   const sendOrderEmailFromDialog = async () => {
-    if (!viewingOrder || !emailRecipient) {
+    console.log('sendOrderEmailFromDialog called, viewingOrder:', viewingOrder);
+    
+    if (!viewingOrder) {
+      toast.error('Замовлення не знайдено. Будь ласка, спробуйте ще раз.');
+      return;
+    }
+    
+    if (!emailRecipient) {
       toast.error('Введіть email адресу');
       return;
     }
@@ -650,6 +657,12 @@ const FullDashboard = () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(emailRecipient)) {
       toast.error('Введіть коректний email');
+      return;
+    }
+    
+    if (!viewingOrder.number) {
+      toast.error('Номер замовлення не знайдено');
+      console.error('viewingOrder without number:', viewingOrder);
       return;
     }
     
