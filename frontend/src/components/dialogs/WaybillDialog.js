@@ -103,6 +103,16 @@ const WaybillDialog = ({
           >
             <Eye className="w-4 h-4 mr-2" /> Переглянути PDF
           </Button>
+          {onEdit && (
+            <Button 
+              variant="outline"
+              onClick={onEdit}
+              disabled={loading}
+              className={`border-2 ${theme.border} ${theme.hover} ${theme.textLight} hover:scale-105 transition-all duration-300`}
+            >
+              Редагувати
+            </Button>
+          )}
           <Button 
             variant="destructive" 
             onClick={onDelete}
