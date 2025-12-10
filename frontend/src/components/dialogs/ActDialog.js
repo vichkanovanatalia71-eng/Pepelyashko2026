@@ -154,9 +154,9 @@ const ActDialog = ({
                       <tr key={idx} className="border-b last:border-0">
                         <td className="p-2">{item.name}</td>
                         <td className="p-2 text-center">{item.unit}</td>
-                        <td className="p-2 text-right">{item.quantity}</td>
-                        <td className="p-2 text-right">{item.price.toFixed(2)} грн</td>
-                        <td className="p-2 text-right font-semibold">{item.amount.toFixed(2)} грн</td>
+                        <td className="p-2 text-right">{item.quantity || 0}</td>
+                        <td className="p-2 text-right">{(item.price || 0).toFixed(2)} грн</td>
+                        <td className="p-2 text-right font-semibold">{(item.amount || 0).toFixed(2)} грн</td>
                       </tr>
                     ))}
                   </tbody>
