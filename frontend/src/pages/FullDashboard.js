@@ -34,7 +34,7 @@ import {
 } from 'lucide-react';
 import { documentThemes } from '../theme/documentThemes';
 import '../styles/animations.css';
-import { InvoiceDialog, ActDialog, WaybillDialog, ContractDialog } from '../components/dialogs';
+import { InvoiceDialog, ActDialog, WaybillDialog, ContractDialog, EditDocumentConfirmDialog } from '../components/dialogs';
 import { InvoiceList, ActList, DocumentListGeneric } from '../components/documents';
 import TemplateEditor from '../components/templates/TemplateEditor';
 import ProfileCard from '../components/ProfileCard';
