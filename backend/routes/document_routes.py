@@ -1089,9 +1089,9 @@ async def send_waybill_email(
     email_data: dict,
     current_user: dict = Depends(get_current_user)
 ):
-    """Send waybill PDF to email."""
+    """Send waybill PDF to email using template."""
     from server import db as database
-    from services.waybill_pdf_service import WaybillPDFService
+    from services.pdf_service_with_templates import PDFServiceWithTemplates
     from services.email_service import EmailService
     
     try:
@@ -1114,24 +1114,33 @@ async def send_waybill_email(
             )
         
         counterparty_edrpou = waybill.get('counterparty_edrpou')
+        counterparty = {}
         if counterparty_edrpou:
-            counterparty = await database.counterparties.find_one({
+            cp = await database.counterparties.find_one({
                 "edrpou": counterparty_edrpou,
                 "user_id": current_user["_id"]
             }, {"_id": 0})
             
-            if counterparty:
-                waybill['counterparty_details'] = counterparty
+            if cp:
+                counterparty = cp
         
         user = await database.users.find_one({
             "_id": current_user["_id"]
         }, {"_id": 0, "hashed_password": 0})
         
-        if user:
-            waybill['supplier_details'] = user
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
         
-        pdf_service = WaybillPDFService()
-        pdf_path = pdf_service.generate_pdf(waybill)
+        # Generate PDF using NEW template service
+        pdf_service = PDFServiceWithTemplates(database)
+        pdf_path = await pdf_service.generate_waybill_pdf(
+            waybill,
+            user,
+            counterparty
+        )
         
         email_service = EmailService()
         waybill_date = waybill.get('date', '')
