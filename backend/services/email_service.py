@@ -880,11 +880,6 @@ class EmailService:
         
         subject = f"Видаткова накладна №{waybill_number} від {formatted_date}"
         
-        # Logo section
-        logo_html = ""
-        if company_logo_path and Path(company_logo_path).exists():
-            logo_html = '<img src="cid:company_logo" alt="Logo" style="max-width: 120px; max-height: 60px; margin-bottom: 15px;" />'
-        
         body = f"""
         <!DOCTYPE html>
         <html>
@@ -907,6 +902,16 @@ class EmailService:
                     overflow: hidden;
                     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
                 }}
+                .logo-container {{
+                    text-align: center;
+                    padding: 20px;
+                    background-color: #ffffff;
+                }}
+                .company-logo {{
+                    max-width: 160px;
+                    max-height: 160px;
+                    border-radius: 8px;
+                }}
                 .header {{
                     background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
                     color: white;
@@ -917,6 +922,11 @@ class EmailService:
                     margin: 0;
                     font-size: 28px;
                     font-weight: 600;
+                }}
+                .header p {{
+                    margin: 5px 0 0 0;
+                    font-size: 14px;
+                    opacity: 0.9;
                 }}
                 .content {{
                     padding: 40px;
@@ -978,8 +988,8 @@ class EmailService:
         </head>
         <body>
             <div class="email-container">
+                {f'<div class="logo-container"><img src="cid:company_logo" alt="Company Logo" class="company-logo" /></div>' if company_logo_url else ''}
                 <div class="header">
-                    {logo_html}
                     <h1>Видаткова накладна №{waybill_number}</h1>
                     <p>Система Управління Документами</p>
                 </div>
