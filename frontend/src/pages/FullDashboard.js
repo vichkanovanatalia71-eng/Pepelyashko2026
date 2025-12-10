@@ -856,6 +856,21 @@ const FullDashboard = () => {
     }
   };
 
+  const openOrderForEditing = (orderNumber) => {
+    // Find the order by number
+    const order = orders.find(o => o.number === orderNumber);
+    if (order) {
+      setViewingOrder(order);
+      setShowOrderDialog(true);
+      // Automatically start editing
+      setTimeout(() => {
+        startEditingOrder();
+      }, 100);
+    } else {
+      toast.error(`Замовлення №${orderNumber} не знайдено`);
+    }
+  };
+
   const updateEditOrderItem = (index, field, value) => {
     const updatedItems = [...editOrderForm.items];
     updatedItems[index] = { ...updatedItems[index], [field]: value };
