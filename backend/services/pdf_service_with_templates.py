@@ -1,6 +1,7 @@
 """PDF service with template support."""
 
 import os
+import traceback
 from pathlib import Path
 from datetime import datetime
 from weasyprint import HTML
