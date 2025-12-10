@@ -135,6 +135,14 @@ const FullDashboard = () => {
   const [viewingWaybill, setViewingWaybill] = useState(null);
   const [editingWaybill, setEditingWaybill] = useState(false);
 
+  // Edit document confirm dialog
+  const [showEditConfirmDialog, setShowEditConfirmDialog] = useState(false);
+  const [editConfirmData, setEditConfirmData] = useState({
+    documentType: '',
+    documentNumber: '',
+    orderNumber: ''
+  });
+
   // Profile state
   const [showProfileDialog, setShowProfileDialog] = useState(false);
   const [profileData, setProfileData] = useState({
