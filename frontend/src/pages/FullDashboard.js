@@ -1567,6 +1567,26 @@ const FullDashboard = () => {
     }
   };
 
+  const startEditingWaybill = (waybill = viewingWaybill) => {
+    if (!waybill) {
+      console.error('❌ No waybill provided to startEditingWaybill!');
+      return;
+    }
+    
+    // Check if waybill was created based on an order
+    if (waybill.based_on_order) {
+      setEditConfirmData({
+        documentType: 'waybill',
+        documentNumber: waybill.number,
+        orderNumber: waybill.based_on_order
+      });
+      setShowEditConfirmDialog(true);
+      setShowWaybillDialog(false);
+    } else {
+      toast.info('Ця накладна не створена на основі замовлення і не може бути відредагована');
+    }
+  };
+
   const downloadWaybillPDF = async () => {
     if (!viewingWaybill) return;
     try {
