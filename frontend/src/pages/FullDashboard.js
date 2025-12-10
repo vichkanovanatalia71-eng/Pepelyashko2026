@@ -1075,42 +1075,23 @@ const FullDashboard = () => {
   };
 
   const startEditingInvoice = (invoice = viewingInvoice) => {
-    console.log('🚀 CODE VERSION: 2024-12-08-23:20 - START EDIT');
-    
     if (!invoice) {
       console.error('❌ No invoice provided to startEditingInvoice!');
       return;
     }
     
-    console.log('🔍 Starting edit for invoice:', invoice.number);
-    console.log('📦 Invoice data received:', {
-      number: invoice.number,
-      itemsCount: invoice.items?.length,
-      items: invoice.items,
-      total: invoice.total_amount
-    });
-    
-    // Set viewing invoice first if not already set
-    if (!viewingInvoice || viewingInvoice.number !== invoice.number) {
-      setViewingInvoice(invoice);
+    // Check if invoice was created based on an order
+    if (invoice.based_on_order) {
+      setEditConfirmData({
+        documentType: 'invoice',
+        documentNumber: invoice.number,
+        orderNumber: invoice.based_on_order
+      });
+      setShowEditConfirmDialog(true);
+      setShowInvoiceDialog(false);
+    } else {
+      toast.info('Цей рахунок не створений на основі замовлення і не може бути відредагований');
     }
-    
-    // Prepare edit form with current invoice data
-    const dateStr = invoice.date ? 
-      (invoice.date.split('T')[0]) : 
-      new Date().toISOString().split('T')[0];
-    
-    const formData = {
-      date: dateStr,
-      items: invoice.items ? invoice.items.map(item => ({...item})) : [],
-      total_amount: invoice.total_amount || 0
-    };
-    
-    console.log('📝 Setting editInvoiceForm to:', formData);
-    setEditInvoiceForm(formData);
-    
-    console.log('✅ Edit form initialized successfully');
-    setEditingInvoice(true);
   };
 
   const cancelEditingInvoice = () => {
