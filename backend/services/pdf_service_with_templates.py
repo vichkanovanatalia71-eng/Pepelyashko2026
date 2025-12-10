@@ -540,104 +540,148 @@ class PDFServiceWithTemplates:
         waybill_date = waybill.get('date')
         if isinstance(waybill_date, str):
             waybill_date = datetime.fromisoformat(waybill_date.replace('Z', '+00:00'))
+        elif not isinstance(waybill_date, datetime):
+            waybill_date = datetime.now()
         
-        # Format date in Ukrainian
+        # Format dates in different formats (like in acts)
         formatted_date = waybill_date.strftime('%d.%m.%Y')
+        formatted_date_short = waybill_date.strftime('%d.%m.%y')
+        formatted_date_iso = waybill_date.strftime('%Y-%m-%d')
+        formatted_date_long = waybill_date.strftime('%d %B %Y')
         
-        # Date in text format (like in acts): "09 грудня 2025 року"
-        waybill_date_text_full = self.renderer.format_date_full_text(waybill_date)
+        # Ukrainian date formats
+        formatted_date_text = self.renderer.format_date_ukrainian(waybill_date)
+        formatted_date_text_full = self.renderer.format_date_text_full(waybill_date)
         
         # Extract city from supplier address
-        city = ""
-        if supplier.get('legal_address'):
-            address_parts = supplier.get('legal_address').split(',')
-            for part in address_parts:
-                part_clean = part.strip()
-                if part_clean.startswith('м.') or part_clean.startswith('місто'):
-                    city = part_clean
-                    break
-            if not city and len(address_parts) > 0:
-                city = address_parts[0].strip()
+        supplier_address = supplier.get('legal_address', '')
+        city_name = self._extract_city_from_address(supplier_address)
         
-        # Get logo
-        logo_file_path = None
-        if supplier.get('logo_url'):
-            logo_file_path = supplier['logo_url']
+        # Get logo file path for WeasyPrint
+        logo_file_path = self._get_logo_file_path(supplier.get('logo_url', ''))
         
-        # Calculate VAT
+        # Calculate VAT (same as in acts)
         total_amount = float(waybill.get('total_amount', 0))
-        is_vat_payer = supplier.get('is_vat_payer', False)
-        vat_rate = 20.0
+        is_vat_payer = supplier.get('vat_payer', supplier.get('is_vat_payer', False))
+        vat_rate = supplier.get('vat_rate', 20.0) if is_vat_payer else 0.0
         
         if is_vat_payer:
             amount_without_vat = total_amount / (1 + vat_rate / 100)
             vat_amount = total_amount - amount_without_vat
-            vat_note = f"У тому числі ПДВ {vat_rate}%"
+            vat_note = f"У тому числі ПДВ {vat_rate}%: {vat_amount:.2f} грн"
         else:
             amount_without_vat = total_amount
-            vat_amount = 0
-            vat_note = "Без ПДВ"
+            vat_amount = 0.0
+            vat_note = "не платник ПДВ"
         
-        # Format items
+        # Convert amount to text (Ukrainian)
+        total_amount_text = self.renderer.number_to_words_ua(total_amount)
+        amount_without_vat_text = self.renderer.number_to_words_ua(amount_without_vat)
+        vat_amount_text = self.renderer.number_to_words_ua(vat_amount)
+        
+        # Generate items table HTML
+        items_html = self.renderer.generate_items_table_html(waybill.get('items', []))
+        
+        # Format items for template
         formatted_items = []
         for item in waybill.get('items', []):
             formatted_items.append({
                 'name': item.get('name', ''),
                 'unit': item.get('unit', 'шт'),
                 'qty': f"{float(item.get('quantity', 0)):.2f}",
+                'quantity': f"{float(item.get('quantity', 0)):.2f}",
                 'price': f"{float(item.get('price', 0)):.2f}",
-                'sum': f"{float(item.get('amount', 0)):.2f}"
+                'sum': f"{float(item.get('amount', 0)):.2f}",
+                'amount': f"{float(item.get('amount', 0)):.2f}"
             })
         
-        # Convert amount to text
-        total_amount_text = self.renderer.number_to_text(total_amount)
-        
         context = {
-            # Document info
+            # Document info - ALL formats
             'waybill_number': waybill.get('number', ''),
+            'document_number': waybill.get('number', ''),  # Alias
+            
+            # Date in all formats
             'waybill_date': formatted_date,
-            'waybill_date_text_full': waybill_date_text_full,
-            'city': city,
-            'basis': waybill.get('basis', ''),
+            'waybill_date_short': formatted_date_short,
+            'waybill_date_long': formatted_date_long,
+            'waybill_date_iso': formatted_date_iso,
+            'waybill_date_text': formatted_date_text,
+            'waybill_date_text_full': formatted_date_text_full,
+            'document_date': formatted_date,
+            'document_date_text': formatted_date_text,
+            'document_date_text_full': formatted_date_text_full,
+            
+            # Location
+            'city': city_name,
+            
+            # Basis and references
+            'basis': waybill.get('basis', waybill.get('based_on_order', waybill.get('based_on_document', 'Не вказано'))),
             'based_on_order': waybill.get('based_on_order', ''),
             'based_on_document': waybill.get('based_on_document', ''),
+            'based_on_contract': waybill.get('based_on_contract', ''),
             
-            # Items
+            # Items - multiple formats
             'items': formatted_items,
+            'items_table': items_html,
             
-            # Totals
+            # Amounts - all variants
             'total_amount': f"{total_amount:.2f}",
             'total_amount_text': total_amount_text,
+            'total_amount_words': total_amount_text,  # Alias
+            'amount_in_words': total_amount_text,  # Alias
+            
             'amount_without_vat': f"{amount_without_vat:.2f}",
+            'amount_without_vat_text': amount_without_vat_text,
+            
             'vat_amount': f"{vat_amount:.2f}",
+            'vat_amount_text': vat_amount_text,
             'vat_rate': f"{vat_rate:.0f}",
             'is_vat_payer': is_vat_payer,
             'vat_note': vat_note,
             
-            # Supplier info
+            # Supplier info - complete
             'supplier_name': supplier.get('representative_name', ''),
+            'supplier_company_name': supplier.get('representative_name', ''),  # Alias
             'supplier_edrpou': supplier.get('edrpou', ''),
+            'supplier_code': supplier.get('edrpou', ''),  # Alias
             'supplier_address': supplier.get('legal_address', ''),
+            'supplier_legal_address': supplier.get('legal_address', ''),  # Alias
             'supplier_email': supplier.get('email', ''),
             'supplier_phone': supplier.get('phone', ''),
             'supplier_iban': supplier.get('bank_account', supplier.get('iban', '')),
+            'supplier_bank_account': supplier.get('bank_account', supplier.get('iban', '')),  # Alias
             'supplier_mfo': supplier.get('mfo', ''),
             'supplier_bank': supplier.get('bank_name', supplier.get('bank', '')),
+            'supplier_bank_name': supplier.get('bank_name', supplier.get('bank', '')),  # Alias
             'supplier_representative': supplier.get('represented_by', ''),
+            'supplier_represented_by': supplier.get('represented_by', ''),  # Alias
             'supplier_position': supplier.get('position', 'Директор'),
             'supplier_signature': supplier.get('signature', ''),
             'supplier_logo': logo_file_path,
+            'supplier_logo_url': logo_file_path,  # Alias
             
-            # Buyer/Counterparty info
+            # Buyer/Counterparty info - complete
             'buyer_name': counterparty.get('representative_name', waybill.get('counterparty_name', '')),
+            'buyer_company_name': counterparty.get('representative_name', waybill.get('counterparty_name', '')),  # Alias
+            'counterparty_name': counterparty.get('representative_name', waybill.get('counterparty_name', '')),  # Alias
+            
             'buyer_edrpou': counterparty.get('edrpou', waybill.get('counterparty_edrpou', '')),
+            'buyer_code': counterparty.get('edrpou', waybill.get('counterparty_edrpou', '')),  # Alias
+            'counterparty_edrpou': counterparty.get('edrpou', waybill.get('counterparty_edrpou', '')),  # Alias
+            
             'buyer_address': counterparty.get('legal_address', ''),
+            'buyer_legal_address': counterparty.get('legal_address', ''),  # Alias
             'buyer_email': counterparty.get('email', ''),
             'buyer_phone': counterparty.get('phone', ''),
+            
             'buyer_iban': counterparty.get('bank_account', counterparty.get('iban', '')),
+            'buyer_bank_account': counterparty.get('bank_account', counterparty.get('iban', '')),  # Alias
             'buyer_mfo': counterparty.get('mfo', ''),
             'buyer_bank': counterparty.get('bank_name', counterparty.get('bank', '')),
+            'buyer_bank_name': counterparty.get('bank_name', counterparty.get('bank', '')),  # Alias
+            
             'buyer_representative': counterparty.get('represented_by', ''),
+            'buyer_represented_by': counterparty.get('represented_by', ''),  # Alias
             'buyer_position': counterparty.get('position', 'Директор'),
             'buyer_signature': counterparty.get('signature', ''),
         }
