@@ -510,8 +510,8 @@ class PDFServiceWithTemplates:
             logger.info(f"📦 Context items count: {len(context.get('items', []))}")
             
             # Render HTML
-            html_content = self.renderer.render_template(
-                template['content'],
+            html_content = self.renderer.render(
+                template.content,
                 context
             )
             
