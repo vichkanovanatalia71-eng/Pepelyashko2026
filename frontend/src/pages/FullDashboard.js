@@ -3053,22 +3053,14 @@ const FullDashboard = () => {
               </CardContent>
             </Card>
 
-            <DocumentListGeneric
-              documents={acts}
-              title="Список Актів"
+            <ActList
+              acts={acts}
               searchValue={searchEdrpouActs}
               onSearchChange={setSearchEdrpouActs}
-              onViewDocument={openActDialog}
+              onViewAct={openActDialog}
+              onEditAct={startEditingAct}
               theme={currentTheme}
               filterByEdrpou={filterActsByEdrpou}
-              emptyMessage="Немає актів"
-              renderContent={(act, theme) => (
-                <>
-                  <p className={`font-medium ${theme.text}`}>№{act.number}</p>
-                  <p className="text-sm text-gray-600">{act.counterparty_name}</p>
-                  <p className={`font-bold ${theme.text}`}>{act.total_amount} грн</p>
-                </>
-              )}
             />
           </TabsContent>
 
