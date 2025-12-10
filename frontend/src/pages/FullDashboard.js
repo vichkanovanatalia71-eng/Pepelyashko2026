@@ -1191,32 +1191,40 @@ const FullDashboard = () => {
     }
   };
 
-  // Filter functions for search
+  // Filter functions for search - by EDRPOU or Company Name
   const filterInvoicesByEdrpou = (invoices) => {
     if (!searchEdrpouInvoices) return invoices;
+    const searchTerm = searchEdrpouInvoices.toLowerCase();
     return invoices.filter(inv => 
-      inv.counterparty_edrpou.includes(searchEdrpouInvoices)
+      inv.counterparty_edrpou.includes(searchEdrpouInvoices) ||
+      inv.counterparty_name.toLowerCase().includes(searchTerm)
     );
   };
 
   const filterActsByEdrpou = (acts) => {
     if (!searchEdrpouActs) return acts;
+    const searchTerm = searchEdrpouActs.toLowerCase();
     return acts.filter(act => 
-      act.counterparty_edrpou.includes(searchEdrpouActs)
+      act.counterparty_edrpou.includes(searchEdrpouActs) ||
+      act.counterparty_name.toLowerCase().includes(searchTerm)
     );
   };
 
   const filterWaybillsByEdrpou = (waybills) => {
     if (!searchEdrpouWaybills) return waybills;
+    const searchTerm = searchEdrpouWaybills.toLowerCase();
     return waybills.filter(wb => 
-      wb.counterparty_edrpou.includes(searchEdrpouWaybills)
+      wb.counterparty_edrpou.includes(searchEdrpouWaybills) ||
+      wb.counterparty_name.toLowerCase().includes(searchTerm)
     );
   };
 
   const filterContractsByEdrpou = (contracts) => {
     if (!searchEdrpouContracts) return contracts;
+    const searchTerm = searchEdrpouContracts.toLowerCase();
     return contracts.filter(contract => 
-      contract.counterparty_edrpou.includes(searchEdrpouContracts)
+      contract.counterparty_edrpou.includes(searchEdrpouContracts) ||
+      contract.counterparty_name.toLowerCase().includes(searchTerm)
     );
   };
 
