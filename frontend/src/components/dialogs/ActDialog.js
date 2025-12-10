@@ -164,7 +164,7 @@ const ActDialog = ({
               </div>
               <div className="mt-4 flex justify-end">
                 <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
-                  <p className="text-lg font-bold text-purple-900">Всього: {act.total_amount.toFixed(2)} грн</p>
+                  <p className="text-lg font-bold text-purple-900">Всього: {(act.total_amount || 0).toFixed(2)} грн</p>
                 </div>
               </div>
             </div>
