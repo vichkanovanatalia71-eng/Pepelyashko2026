@@ -1197,6 +1197,94 @@ const FullDashboard = () => {
     }
   };
 
+  // Act editing functions
+  const cancelEditingAct = () => {
+    setEditingAct(false);
+    setEditActForm({
+      date: '',
+      items: [],
+      total_amount: 0
+    });
+  };
+
+  const updateActItem = (index, field, value) => {
+    const updatedItems = [...editActForm.items];
+    updatedItems[index][field] = value;
+    
+    // Calculate amount if quantity or price changed
+    if (field === 'quantity' || field === 'price') {
+      const quantity = parseFloat(updatedItems[index].quantity) || 0;
+      const price = parseFloat(updatedItems[index].price) || 0;
+      updatedItems[index].amount = quantity * price;
+    }
+    
+    // Calculate total
+    const total = updatedItems.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
+    
+    setEditActForm({
+      ...editActForm,
+      items: updatedItems,
+      total_amount: total
+    });
+  };
+
+  const addActItem = () => {
+    setEditActForm({
+      ...editActForm,
+      items: [...editActForm.items, { name: '', unit: 'шт', quantity: 1, price: 0, amount: 0 }]
+    });
+  };
+
+  const removeActItem = (index) => {
+    const updatedItems = editActForm.items.filter((_, i) => i !== index);
+    const total = updatedItems.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
+    
+    setEditActForm({
+      ...editActForm,
+      items: updatedItems,
+      total_amount: total
+    });
+  };
+
+  const saveEditedAct = async (formData = editActForm) => {
+    if (!viewingAct) return;
+    
+    setLoading(true);
+    try {
+      console.log('💾 SAVING ACT:', viewingAct.number);
+      
+      const payload = {
+        date: formData.date,
+        items: formData.items,
+        total_amount: formData.total_amount
+      };
+      console.log('📤 Sending payload:', JSON.stringify(payload, null, 2));
+      
+      const token = localStorage.getItem('token');
+      await axios.put(`${API_URL}/api/acts/${viewingAct.number}`, payload, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      toast.success('Акт успішно оновлено!');
+      setEditingAct(false);
+      await loadAllData();
+      
+      // Update viewing act with new data
+      const updatedAct = {
+        ...viewingAct,
+        date: formData.date,
+        items: formData.items,
+        total_amount: formData.total_amount
+      };
+      setViewingAct(updatedAct);
+    } catch (error) {
+      console.error('Error updating act:', error);
+      toast.error(error.response?.data?.detail || 'Помилка оновлення акту');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Filter functions for search - by EDRPOU or Company Name
   const filterInvoicesByEdrpou = (invoices) => {
     if (!searchEdrpouInvoices) return invoices;
