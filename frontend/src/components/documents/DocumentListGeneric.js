@@ -29,7 +29,7 @@ const DocumentListGeneric = ({
 
         {filteredDocuments.length === 0 ? (
           <p className="text-center py-8 text-gray-500">
-            {searchValue ? `${emptyMessage} з таким ЄДРПОУ не знайдено` : emptyMessage}
+            {searchValue ? `${emptyMessage} за таким запитом не знайдено` : emptyMessage}
           </p>
         ) : (
           <div className="space-y-2">
