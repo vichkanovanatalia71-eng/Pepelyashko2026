@@ -279,7 +279,7 @@ const ActDialog = ({
                 <div className="flex justify-between">
                   <span className="font-semibold">Загальна сума:</span>
                   <span className="text-xl font-bold text-purple-700">
-                    {editForm.total_amount.toFixed(2)} грн
+                    {(editForm.total_amount || 0).toFixed(2)} грн
                   </span>
                 </div>
               </div>
