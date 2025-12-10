@@ -295,7 +295,9 @@ class PDFServiceWithTemplates:
             Path to generated PDF file
         """
         try:
-            logger.info(f"Starting PDF generation for act: {act.get('number')}")
+            logger.info(f"🔍 Starting PDF generation for act: {act.get('number')}")
+            logger.info(f"📦 Act data received: counterparty={act.get('counterparty_name')}, items={len(act.get('items', []))}, total={act.get('total_amount')}")
+            logger.info(f"📦 First item: {act.get('items', [{}])[0] if act.get('items') else 'No items'}")
             
             # Get template
             if template_id:
