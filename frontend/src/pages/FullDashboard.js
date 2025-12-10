@@ -1095,16 +1095,25 @@ const FullDashboard = () => {
       return;
     }
     
+    console.log('🔍 startEditingInvoice called for:', invoice.number);
+    console.log('📦 based_on_order:', invoice.based_on_order);
+    console.log('✅ Boolean check:', !!invoice.based_on_order);
+    
     // Check if invoice was created based on an order
     if (invoice.based_on_order) {
-      setEditConfirmData({
+      console.log('✅ Invoice HAS based_on_order, showing confirm dialog');
+      const confirmData = {
         documentType: 'invoice',
         documentNumber: invoice.number,
         orderNumber: invoice.based_on_order
-      });
+      };
+      console.log('📤 Setting editConfirmData:', confirmData);
+      setEditConfirmData(confirmData);
       setShowEditConfirmDialog(true);
       setShowInvoiceDialog(false);
+      console.log('✅ Dialogs state updated');
     } else {
+      console.log('❌ Invoice does NOT have based_on_order');
       toast.info('Цей рахунок не створений на основі замовлення і не може бути відредагований');
     }
   };
