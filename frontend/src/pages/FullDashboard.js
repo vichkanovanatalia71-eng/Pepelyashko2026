@@ -4673,6 +4673,7 @@ const FullDashboard = () => {
         onDownload={downloadWaybillPDF}
         onPreview={previewWaybillPDF}
         onSendEmail={openWaybillEmailDialog}
+        onEdit={startEditingWaybill}
         formatDateUkrainian={formatDateUkrainian}
       />
 
