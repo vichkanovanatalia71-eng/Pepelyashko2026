@@ -16,7 +16,7 @@ def test_pdf_endpoints():
     """Test the three PDF generation endpoints directly"""
     
     # Use the backend URL from frontend .env
-    backend_url = "https://papervault-11.preview.emergentagent.com/api"
+    backend_url = "https://papdocman.preview.emergentagent.com/api"
     
     # Test payload as specified in review request
     test_payload = {
