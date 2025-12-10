@@ -1370,32 +1370,22 @@ const FullDashboard = () => {
       return;
     }
     
-    console.log('🔍 Starting edit for act:', act.number);
-    
-    // Set viewing act first if not already set
-    if (!viewingAct || viewingAct.number !== act.number) {
-      setViewingAct(act);
+    // Check if act was created based on an order
+    if (act.based_on_order) {
+      setEditConfirmData({
+        documentType: 'act',
+        documentNumber: act.number,
+        orderNumber: act.based_on_order
+      });
+      setShowEditConfirmDialog(true);
+      setShowActDialog(false);
+    } else {
+      toast.info('Цей акт не створений на основі замовлення і не може бути відредагований');
     }
-    
-    // Prepare edit form with current act data
-    const dateStr = act.date ? 
-      (act.date.split('T')[0]) : 
-      new Date().toISOString().split('T')[0];
-    
-    const formData = {
-      date: dateStr,
-      items: act.items ? act.items.map(item => ({...item})) : [],
-      total_amount: act.total_amount || 0
-    };
-    
-    console.log('📝 Setting editActForm to:', formData);
-    setEditActForm(formData);
-    setEditingAct(true);
   };
 
   const editAct = () => {
     if (viewingAct) {
-      setShowActDialog(false);
       startEditingAct(viewingAct);
     }
   };
