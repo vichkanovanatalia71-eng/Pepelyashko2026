@@ -7,22 +7,19 @@ import { Search, Filter } from 'lucide-react';
 const OrderFilters = ({ searchEdrpou, onSearchEdrpouChange, paymentFilter, onPaymentFilterChange }) => {
   return (
     <div className="flex flex-col sm:flex-row gap-4 mb-4">
-      {/* EDRPOU Search */}
+      {/* Universal Search - EDRPOU or Company Name */}
       <div className="flex-1">
         <Label htmlFor="search-edrpou" className="text-sm font-medium mb-2 block">
           <Search className="w-4 h-4 inline mr-1" />
-          Пошук за ЄДРПОУ
+          Пошук за назвою або ЄДРПОУ
         </Label>
         <Input
           id="search-edrpou"
           type="text"
-          inputMode="numeric"
-          placeholder="Введіть ЄДРПОУ (8 або 10 цифр)"
-          maxLength={10}
+          placeholder="Введіть назву компанії або ЄДРПОУ"
           value={searchEdrpou}
           onChange={(e) => {
-            const value = e.target.value.replace(/\D/g, '');
-            onSearchEdrpouChange(value);
+            onSearchEdrpouChange(e.target.value);
           }}
           className="w-full"
         />
