@@ -493,4 +493,37 @@ class TemplateService:
                 logger.info("✅ Default act template created")
             else:
                 logger.warning(f"Default act template file not found: {act_template_path}")
+        
+        # Check if default waybill template exists
+        existing_waybill = await self.collection.find_one({
+            "user_id": None,
+            "template_type": "waybill",
+            "is_default": True
+        })
+        
+        if not existing_waybill:
+            # Load default waybill template from file
+            waybill_template_path = "/app/backend/waybill_template.html"
+            if os.path.exists(waybill_template_path):
+                with open(waybill_template_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                
+                default_waybill_template = {
+                    "_id": str(uuid.uuid4()),
+                    "user_id": None,
+                    "is_default": True,
+                    "template_type": "waybill",
+                    "name": "Стандартний шаблон накладної",
+                    "content": content,
+                    "variables": self._extract_variables(content),
+                    "version_history": [],
+                    "current_version": 1,
+                    "created_at": datetime.utcnow(),
+                    "updated_at": datetime.utcnow()
+                }
+                
+                await self.collection.insert_one(default_waybill_template)
+                logger.info("✅ Default waybill template created")
+            else:
+                logger.warning(f"Default waybill template file not found: {waybill_template_path}")
 
