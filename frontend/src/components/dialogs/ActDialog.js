@@ -33,7 +33,12 @@ const ActDialog = ({
       
       setEditForm({
         date: dateStr,
-        items: act.items?.map(item => ({...item})) || [],
+        items: act.items?.map(item => ({
+          ...item,
+          quantity: item.quantity || 0,
+          price: item.price || 0,
+          amount: item.amount || 0
+        })) || [],
         total_amount: act.total_amount || 0
       });
     }
@@ -47,8 +52,13 @@ const ActDialog = ({
     
     setEditForm({
       date: dateStr,
-      items: act.items.map(item => ({...item})),
-      total_amount: act.total_amount
+      items: act.items.map(item => ({
+        ...item,
+        quantity: item.quantity || 0,
+        price: item.price || 0,
+        amount: item.amount || 0
+      })),
+      total_amount: act.total_amount || 0
     });
     setEditing(true);
   };
