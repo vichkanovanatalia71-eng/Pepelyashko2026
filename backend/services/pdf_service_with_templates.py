@@ -482,21 +482,21 @@ class PDFServiceWithTemplates:
             # Get template
             if template_id:
                 template = await self.template_service.get_template_by_id(
-                    template_id, 
-                    supplier.get('_id')
+                    supplier.get('_id'),
+                    template_id
                 )
             else:
-                template = await self.template_service.get_template_by_type(
-                    'waybill',
-                    supplier.get('_id')
+                template = await self.template_service.get_default_template(
+                    supplier.get('_id'),
+                    'waybill'
                 )
             
             if not template:
                 logger.error("No waybill template found, creating default")
                 await self.template_service.seed_default_templates(supplier.get('_id'))
-                template = await self.template_service.get_template_by_type(
-                    'waybill',
-                    supplier.get('_id')
+                template = await self.template_service.get_default_template(
+                    supplier.get('_id'),
+                    'waybill'
                 )
             
             if not template:
