@@ -27,7 +27,7 @@ const InvoiceList = ({
 
         {filteredInvoices.length === 0 ? (
           <p className="text-center py-8 text-gray-500">
-            {searchValue ? 'Рахунків з таким ЄДРПОУ не знайдено' : 'Немає рахунків'}
+            {searchValue ? 'Рахунків за таким запитом не знайдено' : 'Немає рахунків'}
           </p>
         ) : (
           <div className="space-y-2">
