@@ -7,10 +7,12 @@ from collections import defaultdict
 import os
 
 MONGO_URL = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
+DB_NAME = os.environ.get('DB_NAME', 'test_database')
 
 async def fix_duplicates():
     client = AsyncIOMotorClient(MONGO_URL)
-    db = client.document_management
+    db = client[DB_NAME]
+    print(f"Connected to database: {DB_NAME}")
     
     print("🔍 Starting duplicate fix and index creation...\n")
     
