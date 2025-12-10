@@ -574,6 +574,18 @@ frontend:
     working: true
     file: "/app/frontend/src/pages/FullDashboard.js, /app/backend/routes/auth_routes.py, /app/backend/routes/counterparty_routes.py"
     stuck_count: 0
+
+  - task: "Act Editing Functionality"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/components/dialogs/ActDialog.js, /app/frontend/src/pages/FullDashboard.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "needs_testing"
+        agent: "main"
+        comment: "Реалізовано повний функціонал редагування актів. ActDialog.js містить форму редагування з можливістю зміни дати, редагування позицій (найменування, одиниця, кількість, ціна), додавання/видалення позицій, автоматичний розрахунок сум. FullDashboard.js містить функції startEditingAct, saveEditedAct, updateActItem, addActItem, removeActItem. Підключено до PUT /api/acts/{act_number} endpoint. Кнопка 'Редагувати' в діалозі та іконка редагування в списку актів."
     priority: "high"
     needs_retesting: false
     status_history:
