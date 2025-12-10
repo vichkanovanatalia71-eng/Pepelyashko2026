@@ -4715,6 +4715,16 @@ const FullDashboard = () => {
         onSendEmail={sendContractEmail}
         formatDateUkrainian={formatDateUkrainian}
       />
+
+      {/* Edit Document Confirm Dialog */}
+      <EditDocumentConfirmDialog
+        open={showEditConfirmDialog}
+        onClose={() => setShowEditConfirmDialog(false)}
+        documentType={editConfirmData.documentType}
+        documentNumber={editConfirmData.documentNumber}
+        orderNumber={editConfirmData.orderNumber}
+        onOpenOrder={() => openOrderForEditing(editConfirmData.orderNumber)}
+      />
       </div>
     </div>
   );
