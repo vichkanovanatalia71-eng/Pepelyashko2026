@@ -319,7 +319,9 @@ class PDFServiceWithTemplates:
             # Prepare context
             context = self._prepare_act_context(act, supplier, counterparty)
             
-            logger.info("Context prepared successfully")
+            logger.info("✅ Context prepared successfully")
+            logger.info(f"📦 Context counterparty: {context.get('buyer_name')}")
+            logger.info(f"📦 Context items count: {len(context.get('items', []))}")
             
             # Render template
             html_content = self.renderer.render(template.content, context)
