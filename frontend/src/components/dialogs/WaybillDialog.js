@@ -14,6 +14,7 @@ const WaybillDialog = ({
   onDownload,
   onPreview,
   onSendEmail,
+  onEdit,
   formatDateUkrainian
 }) => {
   if (!waybill) return null;
