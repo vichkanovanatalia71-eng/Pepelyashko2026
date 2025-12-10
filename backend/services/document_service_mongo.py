@@ -253,9 +253,12 @@ class DocumentServiceMongo:
         """Get all orders for a user with optional filters."""
         query = {"user_id": user_id}
         
-        # Add EDRPOU filter if provided
+        # Add search filter if provided (search by EDRPOU or company name)
         if edrpou_filter:
-            query["counterparty_edrpou"] = edrpou_filter
+            query["$or"] = [
+                {"counterparty_edrpou": {"$regex": edrpou_filter, "$options": "i"}},
+                {"counterparty_name": {"$regex": edrpou_filter, "$options": "i"}}
+            ]
         
         # Add payment status filter if provided
         if is_paid_filter is not None:
@@ -264,11 +267,23 @@ class DocumentServiceMongo:
                 query["is_paid"] = True
             else:
                 # For unpaid: is_paid is false OR null/missing
-                query["$or"] = [
-                    {"is_paid": False},
-                    {"is_paid": {"$exists": False}},
-                    {"is_paid": None}
-                ]
+                if "$or" in query:
+                    # Combine with existing $or for search
+                    search_or = query.pop("$or")
+                    query["$and"] = [
+                        {"$or": search_or},
+                        {"$or": [
+                            {"is_paid": False},
+                            {"is_paid": {"$exists": False}},
+                            {"is_paid": None}
+                        ]}
+                    ]
+                else:
+                    query["$or"] = [
+                        {"is_paid": False},
+                        {"is_paid": {"$exists": False}},
+                        {"is_paid": None}
+                    ]
         
         cursor = self.orders.find(query).sort("date", -1)
         orders = []
