@@ -1532,14 +1532,22 @@ const FullDashboard = () => {
   const previewActPDF = async () => {
     if (!viewingAct) return;
     try {
+      console.log('🔍 previewActPDF called for act:', viewingAct.number);
+      console.log('📦 Full act data:', JSON.stringify(viewingAct, null, 2));
+      
       const timestamp = new Date().getTime();
-      const response = await axios.get(
-        `${API_URL}/api/acts/pdf/${viewingAct.number}?t=${timestamp}`,
+      const url = `${API_URL}/api/acts/pdf/${viewingAct.number}?t=${timestamp}`;
+      console.log('📤 Requesting PDF from:', url);
+      
+      const response = await axios.get(url,
         { responseType: 'blob', headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' } }
       );
-      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
-      window.open(url, '_blank');
-      setTimeout(() => window.URL.revokeObjectURL(url), 100);
+      
+      console.log('✅ PDF received, size:', response.data.size);
+      
+      const blobUrl = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+      window.open(blobUrl, '_blank');
+      setTimeout(() => window.URL.revokeObjectURL(blobUrl), 100);
       toast.success('PDF відкрито для перегляду');
     } catch (error) {
       console.error('Error previewing PDF:', error);
