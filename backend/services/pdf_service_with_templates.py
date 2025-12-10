@@ -458,3 +458,188 @@ class PDFServiceWithTemplates:
         }
         
         return context
+    
+    async def generate_waybill_pdf(
+        self,
+        waybill: dict,
+        supplier: dict,
+        counterparty: dict,
+        template_id: str = None
+    ) -> str:
+        """
+        Generate waybill PDF using database template with ALL variables from invoices and acts.
+        """
+        try:
+            print(f"🔍 [PDF] Starting PDF generation for waybill: {waybill.get('number')}")
+            print(f"📦 [PDF] Waybill data: counterparty={waybill.get('counterparty_name')}, total={waybill.get('total_amount')}")
+            print(f"📦 [PDF] Items count: {len(waybill.get('items', []))}")
+            if waybill.get('items'):
+                print(f"📦 [PDF] First item: name={waybill['items'][0].get('name')}, qty={waybill['items'][0].get('quantity')}")
+            
+            logger.info(f"🔍 Starting PDF generation for waybill: {waybill.get('number')}")
+            logger.info(f"📦 Waybill data received: counterparty={waybill.get('counterparty_name')}, items={len(waybill.get('items', []))}, total={waybill.get('total_amount')}")
+            
+            # Get template
+            if template_id:
+                template = await self.template_service.get_template_by_id(
+                    template_id, 
+                    supplier.get('_id')
+                )
+            else:
+                template = await self.template_service.get_template_by_type(
+                    'waybill',
+                    supplier.get('_id')
+                )
+            
+            if not template:
+                logger.error("No waybill template found, creating default")
+                await self.template_service.seed_default_templates(supplier.get('_id'))
+                template = await self.template_service.get_template_by_type(
+                    'waybill',
+                    supplier.get('_id')
+                )
+            
+            if not template:
+                raise ValueError("Could not create or retrieve waybill template")
+            
+            # Prepare context with ALL variables from invoices and acts
+            context = self._prepare_waybill_context(waybill, supplier, counterparty)
+            
+            logger.info("✅ Context prepared successfully")
+            logger.info(f"📦 Context counterparty: {context.get('buyer_name')}")
+            logger.info(f"📦 Context items count: {len(context.get('items', []))}")
+            
+            # Render HTML
+            html_content = self.renderer.render_template(
+                template['content'],
+                context
+            )
+            
+            # Generate PDF
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            pdf_filename = f"waybill_{waybill.get('number')}_{timestamp}.pdf"
+            pdf_path = os.path.join('/tmp/document_pdfs', pdf_filename)
+            
+            os.makedirs('/tmp/document_pdfs', exist_ok=True)
+            
+            HTML(string=html_content).write_pdf(pdf_path)
+            
+            logger.info(f"✅ Waybill PDF generated successfully: {pdf_path}")
+            return pdf_path
+            
+        except Exception as e:
+            logger.error(f"Error generating waybill PDF: {str(e)}")
+            logger.error(f"Traceback: {traceback.format_exc()}")
+            raise
+    
+    def _prepare_waybill_context(self, waybill: dict, supplier: dict, counterparty: dict) -> dict:
+        """
+        Prepare context for waybill template with ALL variables from invoices and acts.
+        """
+        # Parse dates
+        waybill_date = waybill.get('date')
+        if isinstance(waybill_date, str):
+            waybill_date = datetime.fromisoformat(waybill_date.replace('Z', '+00:00'))
+        
+        # Format date in Ukrainian
+        formatted_date = waybill_date.strftime('%d.%m.%Y')
+        
+        # Date in text format (like in acts): "09 грудня 2025 року"
+        waybill_date_text_full = self.renderer.format_date_full_text(waybill_date)
+        
+        # Extract city from supplier address
+        city = ""
+        if supplier.get('legal_address'):
+            address_parts = supplier.get('legal_address').split(',')
+            for part in address_parts:
+                part_clean = part.strip()
+                if part_clean.startswith('м.') or part_clean.startswith('місто'):
+                    city = part_clean
+                    break
+            if not city and len(address_parts) > 0:
+                city = address_parts[0].strip()
+        
+        # Get logo
+        logo_file_path = None
+        if supplier.get('logo_url'):
+            logo_file_path = supplier['logo_url']
+        
+        # Calculate VAT
+        total_amount = float(waybill.get('total_amount', 0))
+        is_vat_payer = supplier.get('is_vat_payer', False)
+        vat_rate = 20.0
+        
+        if is_vat_payer:
+            amount_without_vat = total_amount / (1 + vat_rate / 100)
+            vat_amount = total_amount - amount_without_vat
+            vat_note = f"У тому числі ПДВ {vat_rate}%"
+        else:
+            amount_without_vat = total_amount
+            vat_amount = 0
+            vat_note = "Без ПДВ"
+        
+        # Format items
+        formatted_items = []
+        for item in waybill.get('items', []):
+            formatted_items.append({
+                'name': item.get('name', ''),
+                'unit': item.get('unit', 'шт'),
+                'qty': f"{float(item.get('quantity', 0)):.2f}",
+                'price': f"{float(item.get('price', 0)):.2f}",
+                'sum': f"{float(item.get('amount', 0)):.2f}"
+            })
+        
+        # Convert amount to text
+        total_amount_text = self.renderer.number_to_text(total_amount)
+        
+        context = {
+            # Document info
+            'waybill_number': waybill.get('number', ''),
+            'waybill_date': formatted_date,
+            'waybill_date_text_full': waybill_date_text_full,
+            'city': city,
+            'basis': waybill.get('basis', ''),
+            'based_on_order': waybill.get('based_on_order', ''),
+            'based_on_document': waybill.get('based_on_document', ''),
+            
+            # Items
+            'items': formatted_items,
+            
+            # Totals
+            'total_amount': f"{total_amount:.2f}",
+            'total_amount_text': total_amount_text,
+            'amount_without_vat': f"{amount_without_vat:.2f}",
+            'vat_amount': f"{vat_amount:.2f}",
+            'vat_rate': f"{vat_rate:.0f}",
+            'is_vat_payer': is_vat_payer,
+            'vat_note': vat_note,
+            
+            # Supplier info
+            'supplier_name': supplier.get('representative_name', ''),
+            'supplier_edrpou': supplier.get('edrpou', ''),
+            'supplier_address': supplier.get('legal_address', ''),
+            'supplier_email': supplier.get('email', ''),
+            'supplier_phone': supplier.get('phone', ''),
+            'supplier_iban': supplier.get('bank_account', supplier.get('iban', '')),
+            'supplier_mfo': supplier.get('mfo', ''),
+            'supplier_bank': supplier.get('bank_name', supplier.get('bank', '')),
+            'supplier_representative': supplier.get('represented_by', ''),
+            'supplier_position': supplier.get('position', 'Директор'),
+            'supplier_signature': supplier.get('signature', ''),
+            'supplier_logo': logo_file_path,
+            
+            # Buyer/Counterparty info
+            'buyer_name': counterparty.get('representative_name', waybill.get('counterparty_name', '')),
+            'buyer_edrpou': counterparty.get('edrpou', waybill.get('counterparty_edrpou', '')),
+            'buyer_address': counterparty.get('legal_address', ''),
+            'buyer_email': counterparty.get('email', ''),
+            'buyer_phone': counterparty.get('phone', ''),
+            'buyer_iban': counterparty.get('bank_account', counterparty.get('iban', '')),
+            'buyer_mfo': counterparty.get('mfo', ''),
+            'buyer_bank': counterparty.get('bank_name', counterparty.get('bank', '')),
+            'buyer_representative': counterparty.get('represented_by', ''),
+            'buyer_position': counterparty.get('position', 'Директор'),
+            'buyer_signature': counterparty.get('signature', ''),
+        }
+        
+        return context
