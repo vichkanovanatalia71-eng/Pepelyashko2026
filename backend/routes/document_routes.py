@@ -919,12 +919,13 @@ async def get_waybill_pdf(
     waybill_number: str,
     current_user: dict = Depends(get_current_user)
 ):
-    """Generate and return waybill PDF."""
+    """Generate and return waybill PDF using template from database."""
     from server import db as database
-    from services.waybill_pdf_service import WaybillPDFService
+    from services.pdf_service_with_templates import PDFServiceWithTemplates
     from urllib.parse import quote
     
     try:
+        # Get waybill from database
         waybill = await database.waybills.find_one({
             "number": waybill_number,
             "user_id": current_user["_id"]
@@ -936,25 +937,29 @@ async def get_waybill_pdf(
                 detail=f"Накладну {waybill_number} не знайдено"
             )
         
+        # Get supplier (user) info
+        supplier = await database.users.find_one({
+            "_id": current_user["_id"]
+        }, {"_id": 0, "hashed_password": 0})
+        
+        if not supplier:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Інформація про постачальника не знайдена"
+            )
+        
+        # Get counterparty info
+        counterparty = {}
         counterparty_edrpou = waybill.get('counterparty_edrpou')
         if counterparty_edrpou:
             counterparty = await database.counterparties.find_one({
                 "edrpou": counterparty_edrpou,
                 "user_id": current_user["_id"]
-            }, {"_id": 0})
-            
-            if counterparty:
-                waybill['counterparty_details'] = counterparty
+            }, {"_id": 0}) or {}
         
-        user = await database.users.find_one({
-            "_id": current_user["_id"]
-        }, {"_id": 0, "hashed_password": 0})
-        
-        if user:
-            waybill['supplier_details'] = user
-        
-        pdf_service = WaybillPDFService()
-        pdf_path = pdf_service.generate_pdf(waybill)
+        # Generate PDF using template
+        pdf_service = PDFServiceWithTemplates(database)
+        pdf_path = await pdf_service.generate_waybill_pdf(waybill, supplier, counterparty)
         
         filename = f"Накладна_{waybill_number}.pdf"
         encoded_filename = quote(filename.encode('utf-8'))
