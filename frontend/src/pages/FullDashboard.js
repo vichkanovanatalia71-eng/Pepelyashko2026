@@ -842,11 +842,11 @@ const FullDashboard = () => {
         }
       );
       
-      toast.success('Замовлення успішно оновлено!');
+      toast.success('Замовлення успішно оновлено! Всі пов\'язані документи (рахунки, акти, накладні) також оновлено.');
       setEditingOrder(false);
       setViewingOrder(response.data);
       
-      // Reload orders list
+      // Reload all data to show updated documents
       await loadAllData();
     } catch (error) {
       console.error('Error updating order:', error);
