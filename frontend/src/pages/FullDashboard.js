@@ -181,6 +181,12 @@ const FullDashboard = () => {
     items: [],
     total_amount: 0
   });
+
+  const [editActForm, setEditActForm] = useState({
+    date: '',
+    items: [],
+    total_amount: 0
+  });
   
   // Search states
   const [searchEdrpou, setSearchEdrpou] = useState('');
