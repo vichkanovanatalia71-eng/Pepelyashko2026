@@ -4642,10 +4642,9 @@ const FullDashboard = () => {
         theme={currentTheme}
         loading={loading}
         onDelete={deleteAct}
-        onDownload={downloadActPDF}
-        onPreview={previewActPDF}
+        onViewPDF={previewActPDF}
         onSendEmail={openActEmailDialog}
-        onEdit={editAct}
+        onEdit={saveEditedAct}
         formatDateUkrainian={formatDateUkrainian}
       />
 
