@@ -546,6 +546,8 @@ async def get_act_pdf(
     from urllib.parse import quote
     
     try:
+        logger.info(f"🔍 Generating PDF for act: {act_number}")
+        
         # Get act from database
         act = await database.acts.find_one({
             "number": act_number,
@@ -553,10 +555,14 @@ async def get_act_pdf(
         }, {"_id": 0})
         
         if not act:
+            logger.error(f"❌ Act not found: {act_number}")
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Акт {act_number} не знайдено"
             )
+        
+        logger.info(f"✅ Act found: {act_number}")
+        logger.info(f"📦 Act data: counterparty={act.get('counterparty_name')}, total={act.get('total_amount')}, items={len(act.get('items', []))}")
         
         # Get counterparty details
         counterparty_edrpou = act.get('counterparty_edrpou')
