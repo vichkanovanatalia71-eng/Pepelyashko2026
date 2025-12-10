@@ -1287,13 +1287,39 @@ const FullDashboard = () => {
     setEditingAct(false);
   };
 
+  const startEditingAct = (act = viewingAct) => {
+    if (!act) {
+      console.error('❌ No act provided to startEditingAct!');
+      return;
+    }
+    
+    console.log('🔍 Starting edit for act:', act.number);
+    
+    // Set viewing act first if not already set
+    if (!viewingAct || viewingAct.number !== act.number) {
+      setViewingAct(act);
+    }
+    
+    // Prepare edit form with current act data
+    const dateStr = act.date ? 
+      (act.date.split('T')[0]) : 
+      new Date().toISOString().split('T')[0];
+    
+    const formData = {
+      date: dateStr,
+      items: act.items ? act.items.map(item => ({...item})) : [],
+      total_amount: act.total_amount || 0
+    };
+    
+    console.log('📝 Setting editActForm to:', formData);
+    setEditActForm(formData);
+    setEditingAct(true);
+  };
+
   const editAct = () => {
     if (viewingAct) {
       setShowActDialog(false);
-      setEditingAct(true);
-      // Scroll to Acts section and open edit form would be here
-      // For now, just close dialog and user can edit from list
-      toast.info('Функція редагування акта буде додана найближчим часом');
+      startEditingAct(viewingAct);
     }
   };
 
