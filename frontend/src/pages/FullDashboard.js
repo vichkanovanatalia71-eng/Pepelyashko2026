@@ -4642,7 +4642,7 @@ const FullDashboard = () => {
         theme={currentTheme}
         loading={loading}
         onDelete={deleteInvoice}
-        onEdit={saveEditedInvoice}
+        onEdit={startEditingInvoice}
         onViewPDF={previewInvoicePDF}
         onSendEmail={openInvoiceEmailDialog}
         formatDateUkrainian={formatDateUkrainian}
@@ -4658,7 +4658,7 @@ const FullDashboard = () => {
         onDelete={deleteAct}
         onViewPDF={previewActPDF}
         onSendEmail={openActEmailDialog}
-        onEdit={saveEditedAct}
+        onEdit={startEditingAct}
         formatDateUkrainian={formatDateUkrainian}
       />
 
