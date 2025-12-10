@@ -1355,6 +1355,70 @@ async def update_order(
             # Convert MongoDB _id to string for response
             updated_order['_id'] = str(updated_order.get('_id', order_id))
         
+        # Update all related documents (invoices, acts, waybills) with new data
+        order_number = updated_order.get('number')
+        logger.info(f"Updating related documents for order {order_number}")
+        
+        # Update invoices
+        invoices = await database.invoices.find({
+            "based_on_order": order_number,
+            "user_id": current_user["_id"]
+        }).to_list(100)
+        
+        for invoice in invoices:
+            await database.invoices.update_one(
+                {"_id": invoice["_id"]},
+                {"$set": {
+                    "date": update_data["date"],
+                    "items": update_data["items"],
+                    "total_amount": update_data["total_amount"],
+                    "counterparty_edrpou": update_data["counterparty_edrpou"],
+                    "counterparty_name": update_data["counterparty_name"],
+                    "updated_at": datetime.utcnow()
+                }}
+            )
+        logger.info(f"Updated {len(invoices)} invoices for order {order_number}")
+        
+        # Update acts
+        acts = await database.acts.find({
+            "based_on_order": order_number,
+            "user_id": current_user["_id"]
+        }).to_list(100)
+        
+        for act in acts:
+            await database.acts.update_one(
+                {"_id": act["_id"]},
+                {"$set": {
+                    "date": update_data["date"],
+                    "items": update_data["items"],
+                    "total_amount": update_data["total_amount"],
+                    "counterparty_edrpou": update_data["counterparty_edrpou"],
+                    "counterparty_name": update_data["counterparty_name"],
+                    "updated_at": datetime.utcnow()
+                }}
+            )
+        logger.info(f"Updated {len(acts)} acts for order {order_number}")
+        
+        # Update waybills
+        waybills = await database.waybills.find({
+            "based_on_order": order_number,
+            "user_id": current_user["_id"]
+        }).to_list(100)
+        
+        for waybill in waybills:
+            await database.waybills.update_one(
+                {"_id": waybill["_id"]},
+                {"$set": {
+                    "date": update_data["date"],
+                    "items": update_data["items"],
+                    "total_amount": update_data["total_amount"],
+                    "counterparty_edrpou": update_data["counterparty_edrpou"],
+                    "counterparty_name": update_data["counterparty_name"],
+                    "updated_at": datetime.utcnow()
+                }}
+            )
+        logger.info(f"Updated {len(waybills)} waybills for order {order_number}")
+        
         logger.info(f"Order updated: {order_id} by user {current_user['_id']}")
         return updated_order
     except HTTPException:
