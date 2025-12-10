@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Видаткова накладна №{{waybill_number}}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 15mm;
+        }
+        
+        body {
+            font-family: 'DejaVu Sans', Arial, sans-serif;
+            font-size: 10pt;
+            line-height: 1.4;
+            color: #000;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        
+        .company-logo {
+            max-width: 200px;
+            max-height: 80px;
+            margin-bottom: 10px;
+        }
+        
+        h1 {
+            text-align: center;
+            font-size: 16pt;
+            font-weight: bold;
+            margin: 10px 0;
+            text-transform: uppercase;
+        }
+        
+        .document-info {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 11pt;
+        }
+        
+        .parties-container {
+            display: table;
+            width: 100%;
+            margin-bottom: 20px;
+            border-collapse: collapse;
+        }
+        
+        .party-box {
+            display: table-cell;
+            width: 50%;
+            padding: 10px;
+            border: 1px solid #333;
+            vertical-align: top;
+        }
+        
+        .party-title {
+            font-weight: bold;
+            font-size: 11pt;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+        
+        .party-info {
+            font-size: 9pt;
+            line-height: 1.5;
+        }
+        
+        .party-info p {
+            margin: 3px 0;
+        }
+        
+        table.items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 9pt;
+        }
+        
+        table.items-table th,
+        table.items-table td {
+            border: 1px solid #333;
+            padding: 6px 4px;
+            text-align: left;
+        }
+        
+        table.items-table th {
+            background-color: #e8f4f8;
+            font-weight: bold;
+            text-align: center;
+        }
+        
+        table.items-table td.number {
+            text-align: center;
+            width: 30px;
+        }
+        
+        table.items-table td.unit {
+            text-align: center;
+            width: 50px;
+        }
+        
+        table.items-table td.quantity,
+        table.items-table td.price,
+        table.items-table td.sum {
+            text-align: right;
+            width: 80px;
+        }
+        
+        .totals-section {
+            margin-top: 20px;
+            text-align: right;
+        }
+        
+        .totals-table {
+            margin-left: auto;
+            border-collapse: collapse;
+            font-size: 10pt;
+            min-width: 350px;
+        }
+        
+        .totals-table td {
+            padding: 5px 10px;
+            border: none;
+        }
+        
+        .totals-table td.label {
+            text-align: right;
+            font-weight: normal;
+        }
+        
+        .totals-table td.value {
+            text-align: right;
+            font-weight: bold;
+            min-width: 120px;
+        }
+        
+        .total-row {
+            border-top: 2px solid #333;
+            font-size: 12pt;
+        }
+        
+        .total-text {
+            font-style: italic;
+            color: #555;
+            margin-top: 5px;
+            font-size: 9pt;
+        }
+        
+        .signatures-section {
+            margin-top: 40px;
+            page-break-inside: avoid;
+        }
+        
+        .signatures-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .signatures-table td {
+            width: 50%;
+            vertical-align: top;
+            padding: 10px;
+        }
+        
+        .signature-box {
+            min-height: 120px;
+        }
+        
+        .signature-title {
+            font-weight: bold;
+            font-size: 11pt;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+        
+        .signature-line {
+            margin-top: 30px;
+            border-bottom: 1px solid #000;
+            width: 200px;
+        }
+        
+        .signature-name {
+            margin-top: 5px;
+            font-size: 9pt;
+            color: #555;
+        }
+        
+        .basis-info {
+            margin: 15px 0;
+            padding: 10px;
+            background-color: #f5f5f5;
+            border-left: 3px solid #0066cc;
+            font-size: 9pt;
+        }
+        
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 8pt;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header with logo -->
+    {{#if supplier_logo}}
+    <div class="header">
+        <img src="{{supplier_logo}}" alt="Логотип компанії" class="company-logo">
+    </div>
+    {{/if}}
+    
+    <!-- Document title -->
+    <h1>Видаткова накладна №{{waybill_number}}</h1>
+    
+    <div class="document-info">
+        <p>від {{waybill_date}}</p>
+        {{#if city}}
+        <p>{{city}}</p>
+        {{/if}}
+    </div>
+    
+    <!-- Basis information -->
+    {{#if based_on_order}}
+    <div class="basis-info">
+        <strong>На підставі:</strong> Замовлення №{{based_on_order}}
+    </div>
+    {{/if}}
+    
+    {{#if based_on_document}}
+    <div class="basis-info">
+        <strong>Згідно з:</strong> {{based_on_document}}
+    </div>
+    {{/if}}
+    
+    <!-- Parties information -->
+    <div class="parties-container">
+        <div class="party-box">
+            <div class="party-title">Постачальник</div>
+            <div class="party-info">
+                <p><strong>{{supplier_name}}</strong></p>
+                <p>ЄДРПОУ: {{supplier_edrpou}}</p>
+                {{#if supplier_address}}
+                <p>Адреса: {{supplier_address}}</p>
+                {{/if}}
+                {{#if supplier_representative}}
+                <p>В особі: {{supplier_representative}}</p>
+                {{/if}}
+            </div>
+        </div>
+        
+        <div class="party-box">
+            <div class="party-title">Покупець (Одержувач)</div>
+            <div class="party-info">
+                <p><strong>{{buyer_name}}</strong></p>
+                <p>ЄДРПОУ: {{buyer_edrpou}}</p>
+                {{#if buyer_address}}
+                <p>Адреса: {{buyer_address}}</p>
+                {{/if}}
+                {{#if buyer_representative}}
+                <p>В особі: {{buyer_representative}}</p>
+                {{/if}}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Items table -->
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th class="number">№</th>
+                <th>Найменування товару</th>
+                <th class="unit">Од. вим.</th>
+                <th class="quantity">Кількість</th>
+                <th class="price">Ціна, грн</th>
+                <th class="sum">Сума, грн</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#each items}}
+            <tr>
+                <td class="number">{{inc @index}}</td>
+                <td>{{this.name}}</td>
+                <td class="unit">{{this.unit}}</td>
+                <td class="quantity">{{this.qty}}</td>
+                <td class="price">{{this.price}}</td>
+                <td class="sum">{{this.sum}}</td>
+            </tr>
+            {{/each}}
+        </tbody>
+    </table>
+    
+    <!-- Totals section -->
+    <div class="totals-section">
+        <table class="totals-table">
+            {{#if is_vat_payer}}
+            <tr>
+                <td class="label">Сума без ПДВ:</td>
+                <td class="value">{{amount_without_vat}} грн</td>
+            </tr>
+            <tr>
+                <td class="label">ПДВ ({{vat_rate}}%):</td>
+                <td class="value">{{vat_amount}} грн</td>
+            </tr>
+            {{/if}}
+            <tr class="total-row">
+                <td class="label">Всього до сплати:</td>
+                <td class="value">{{total_amount}} грн</td>
+            </tr>
+        </table>
+        <p class="total-text">{{total_amount_text}}</p>
+    </div>
+    
+    <!-- Signatures section -->
+    <div class="signatures-section">
+        <table class="signatures-table">
+            <tr>
+                <td>
+                    <div class="signature-box">
+                        <div class="signature-title">Відпустив</div>
+                        <p><strong>{{supplier_name}}</strong></p>
+                        {{#if supplier_position}}
+                        <p>{{supplier_position}}</p>
+                        {{/if}}
+                        <div class="signature-line"></div>
+                        {{#if supplier_signature}}
+                        <p class="signature-name">{{supplier_signature}}</p>
+                        {{/if}}
+                    </div>
+                </td>
+                <td>
+                    <div class="signature-box">
+                        <div class="signature-title">Одержав</div>
+                        <p><strong>{{buyer_name}}</strong></p>
+                        {{#if buyer_position}}
+                        <p>{{buyer_position}}</p>
+                        {{/if}}
+                        <div class="signature-line"></div>
+                        {{#if buyer_signature}}
+                        <p class="signature-name">{{buyer_signature}}</p>
+                        {{/if}}
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+    
+    <!-- Footer -->
+    <div class="footer">
+        <p>Видаткова накладна №{{waybill_number}} від {{waybill_date}}</p>
+        {{#if vat_note}}
+        <p>{{vat_note}}</p>
+        {{/if}}
+    </div>
+</body>
+</html>
