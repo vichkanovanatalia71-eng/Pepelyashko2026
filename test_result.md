@@ -1078,7 +1078,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Profile Logo and Banking Details Feature"
+    - "Act Editing Functionality"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
