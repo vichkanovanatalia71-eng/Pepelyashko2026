@@ -295,6 +295,12 @@ class PDFServiceWithTemplates:
             Path to generated PDF file
         """
         try:
+            print(f"🔍 [PDF] Starting PDF generation for act: {act.get('number')}")
+            print(f"📦 [PDF] Act data: counterparty={act.get('counterparty_name')}, total={act.get('total_amount')}")
+            print(f"📦 [PDF] Items count: {len(act.get('items', []))}")
+            if act.get('items'):
+                print(f"📦 [PDF] First item: name={act['items'][0].get('name')}, qty={act['items'][0].get('quantity')}")
+            
             logger.info(f"🔍 Starting PDF generation for act: {act.get('number')}")
             logger.info(f"📦 Act data received: counterparty={act.get('counterparty_name')}, items={len(act.get('items', []))}, total={act.get('total_amount')}")
             logger.info(f"📦 First item: {act.get('items', [{}])[0] if act.get('items') else 'No items'}")
