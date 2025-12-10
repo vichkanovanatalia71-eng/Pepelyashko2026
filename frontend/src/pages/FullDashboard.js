@@ -1394,16 +1394,25 @@ const FullDashboard = () => {
       return;
     }
     
+    console.log('🔍 startEditingAct called for:', act.number);
+    console.log('📦 based_on_order:', act.based_on_order);
+    console.log('✅ Boolean check:', !!act.based_on_order);
+    
     // Check if act was created based on an order
     if (act.based_on_order) {
-      setEditConfirmData({
+      console.log('✅ Act HAS based_on_order, showing confirm dialog');
+      const confirmData = {
         documentType: 'act',
         documentNumber: act.number,
         orderNumber: act.based_on_order
-      });
+      };
+      console.log('📤 Setting editConfirmData:', confirmData);
+      setEditConfirmData(confirmData);
       setShowEditConfirmDialog(true);
       setShowActDialog(false);
+      console.log('✅ Dialogs state updated');
     } else {
+      console.log('❌ Act does NOT have based_on_order');
       toast.info('Цей акт не створений на основі замовлення і не може бути відредагований');
     }
   };
