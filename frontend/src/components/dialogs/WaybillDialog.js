@@ -106,7 +106,7 @@ const WaybillDialog = ({
           {onEdit && (
             <Button 
               variant="outline"
-              onClick={onEdit}
+              onClick={() => onEdit(waybill)}
               disabled={loading}
               className={`border-2 ${theme.border} ${theme.hover} ${theme.textLight} hover:scale-105 transition-all duration-300`}
             >
