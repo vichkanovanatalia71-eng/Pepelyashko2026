@@ -255,7 +255,7 @@ const ActDialog = ({
                       <Label className="text-xs">Сума</Label>
                       <Input
                         type="number"
-                        value={item.amount.toFixed(2)}
+                        value={(item.amount || 0).toFixed(2)}
                         readOnly
                         className="bg-gray-50"
                       />
