@@ -106,12 +106,106 @@ const TemplateEditor = () => {
       { var: '{{#if buyer_position}}...{{/if}}', desc: 'Умова: чи є посада покупця' },
     ],
     waybill: [
-      { var: '{{waybill_number}}', desc: 'Номер накладної' },
-      { var: '{{waybill_date}}', desc: 'Дата накладної' },
-      { var: '{{supplier_name}}', desc: 'Назва постачальника' },
-      { var: '{{buyer_name}}', desc: 'Назва покупця' },
-      { var: '{{items}}', desc: 'Товари/послуги (масив)' },
-      { var: '{{total_amount}}', desc: 'Загальна сума' },
+      // Документ (номери та дати)
+      { var: '{{waybill_number}}', desc: 'Номер накладної (наприклад: "1968-1")' },
+      { var: '{{document_number}}', desc: 'Аліас для номера документа' },
+      { var: '{{waybill_date}}', desc: 'Дата у форматі ДД.ММ.РРРР (09.12.2025)' },
+      { var: '{{waybill_date_short}}', desc: 'Коротка дата ДД.ММ.РР (09.12.25)' },
+      { var: '{{waybill_date_long}}', desc: 'Довга дата (09 December 2025)' },
+      { var: '{{waybill_date_iso}}', desc: 'ISO формат (2025-12-09)' },
+      { var: '{{waybill_date_text}}', desc: 'Дата текстом українською (9 грудня 2025 р.)' },
+      { var: '{{waybill_date_text_full}}', desc: 'Повна дата текстом (09 грудня 2025 року)' },
+      { var: '{{document_date}}', desc: 'Аліас для дати' },
+      { var: '{{document_date_text}}', desc: 'Аліас для дати текстом' },
+      { var: '{{city}}', desc: 'Місто складання документа (м. Київ)' },
+      { var: '{{basis}}', desc: 'Підстава для накладної' },
+      { var: '{{based_on_order}}', desc: 'На основі замовлення №' },
+      { var: '{{based_on_document}}', desc: 'Згідно з документом' },
+      { var: '{{based_on_contract}}', desc: 'На основі договору' },
+      
+      // Фінанси (числові значення)
+      { var: '{{total_amount}}', desc: 'Загальна сума (150000.00)' },
+      { var: '{{amount_without_vat}}', desc: 'Сума без ПДВ (125000.00)' },
+      { var: '{{vat_amount}}', desc: 'Сума ПДВ (25000.00)' },
+      { var: '{{vat_rate}}', desc: 'Ставка ПДВ (20)' },
+      { var: '{{total_amount_text}}', desc: 'Загальна сума прописом' },
+      { var: '{{total_amount_words}}', desc: 'Аліас для суми прописом' },
+      { var: '{{amount_in_words}}', desc: 'Аліас для суми прописом' },
+      { var: '{{amount_without_vat_text}}', desc: 'Сума без ПДВ прописом' },
+      { var: '{{vat_amount_text}}', desc: 'Сума ПДВ прописом' },
+      { var: '{{is_vat_payer}}', desc: 'Чи є платником ПДВ (true/false)' },
+      { var: '{{vat_note}}', desc: 'Примітка про ПДВ ("У тому числі ПДВ 20%: 25000.00 грн")' },
+      
+      // Позиції товарів/послуг
+      { var: '{{items_table}}', desc: 'Готова HTML таблиця з усіма позиціями' },
+      { var: '{{#each items}}...{{/each}}', desc: 'Цикл по товарах/послугах' },
+      { var: '{{this.name}}', desc: 'Найменування товару/послуги (в циклі)' },
+      { var: '{{this.unit}}', desc: 'Одиниця виміру - шт, кг, м, год (в циклі)' },
+      { var: '{{this.qty}}', desc: 'Кількість (в циклі)' },
+      { var: '{{this.quantity}}', desc: 'Аліас для кількості (в циклі)' },
+      { var: '{{this.price}}', desc: 'Ціна за одиницю (в циклі)' },
+      { var: '{{this.sum}}', desc: 'Сума (кількість × ціна) (в циклі)' },
+      { var: '{{this.amount}}', desc: 'Аліас для суми (в циклі)' },
+      { var: '{{inc @index}}', desc: 'Номер рядка (індекс + 1)' },
+      
+      // Постачальник - основні дані
+      { var: '{{supplier_name}}', desc: 'Повна назва компанії постачальника' },
+      { var: '{{supplier_company_name}}', desc: 'Аліас для назви' },
+      { var: '{{supplier_edrpou}}', desc: 'Код ЄДРПОУ постачальника (8 або 10 цифр)' },
+      { var: '{{supplier_code}}', desc: 'Аліас для ЄДРПОУ' },
+      
+      // Постачальник - адреси та контакти
+      { var: '{{supplier_address}}', desc: 'Юридична адреса постачальника' },
+      { var: '{{supplier_legal_address}}', desc: 'Аліас для адреси' },
+      { var: '{{supplier_email}}', desc: 'Електронна пошта постачальника' },
+      { var: '{{supplier_phone}}', desc: 'Телефон постачальника' },
+      
+      // Постачальник - банківські реквізити
+      { var: '{{supplier_iban}}', desc: 'IBAN рахунок постачальника' },
+      { var: '{{supplier_bank_account}}', desc: 'Аліас для IBAN' },
+      { var: '{{supplier_mfo}}', desc: 'МФО банку постачальника' },
+      { var: '{{supplier_bank}}', desc: 'Назва банку постачальника' },
+      { var: '{{supplier_bank_name}}', desc: 'Аліас для назви банку' },
+      
+      // Постачальник - представники та підписи
+      { var: '{{supplier_representative}}', desc: 'В особі (ПІБ директора)' },
+      { var: '{{supplier_represented_by}}', desc: 'Аліас' },
+      { var: '{{supplier_position}}', desc: 'Посада (Директор, Генеральний директор)' },
+      { var: '{{supplier_signature}}', desc: 'Підпис (ПІБ для підпису)' },
+      { var: '{{supplier_logo}}', desc: 'Шлях до файлу логотипу (використовувати в {{#if}}...{{/if}})' },
+      { var: '{{supplier_logo_url}}', desc: 'Аліас для логотипу' },
+      
+      // Покупець (одержувач) - основні дані
+      { var: '{{buyer_name}}', desc: 'Повна назва компанії покупця' },
+      { var: '{{buyer_company_name}}', desc: 'Аліас для назви' },
+      { var: '{{counterparty_name}}', desc: 'Аліас для назви контрагента' },
+      { var: '{{buyer_edrpou}}', desc: 'Код ЄДРПОУ покупця' },
+      { var: '{{buyer_code}}', desc: 'Аліас для ЄДРПОУ' },
+      { var: '{{counterparty_edrpou}}', desc: 'Аліас для ЄДРПОУ контрагента' },
+      
+      // Покупець - адреси та контакти
+      { var: '{{buyer_address}}', desc: 'Юридична адреса покупця' },
+      { var: '{{buyer_legal_address}}', desc: 'Аліас для адреси' },
+      { var: '{{buyer_email}}', desc: 'Електронна пошта покупця' },
+      { var: '{{buyer_phone}}', desc: 'Телефон покупця' },
+      
+      // Покупець - банківські реквізити
+      { var: '{{buyer_iban}}', desc: 'IBAN рахунок покупця' },
+      { var: '{{buyer_bank_account}}', desc: 'Аліас для IBAN' },
+      { var: '{{buyer_mfo}}', desc: 'МФО банку покупця' },
+      { var: '{{buyer_bank}}', desc: 'Назва банку покупця' },
+      { var: '{{buyer_bank_name}}', desc: 'Аліас для назви банку' },
+      
+      // Покупець - представники та підписи
+      { var: '{{buyer_representative}}', desc: 'В особі (ПІБ директора)' },
+      { var: '{{buyer_represented_by}}', desc: 'Аліас' },
+      { var: '{{buyer_position}}', desc: 'Посада' },
+      { var: '{{buyer_signature}}', desc: 'Підпис (ПІБ для підпису)' },
+      
+      // Умовні оператори
+      { var: '{{#if supplier_logo}}...{{/if}}', desc: 'Умова: чи є логотип' },
+      { var: '{{#if is_vat_payer}}...{{else}}...{{/if}}', desc: 'Умова: чи є платником ПДВ' },
+      { var: '{{#if based_on_order}}...{{/if}}', desc: 'Умова: чи є базове замовлення' },
     ],
     contract: [
       { var: '{{contract_number}}', desc: 'Номер договору' },
