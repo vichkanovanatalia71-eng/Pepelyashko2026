@@ -12,8 +12,10 @@ async def seed_all_templates():
     
     # Підключення до MongoDB
     mongo_url = os.getenv('MONGO_URL', 'mongodb://localhost:27017')
+    db_name = os.getenv('DB_NAME', 'test_database')
+    
     client = AsyncIOMotorClient(mongo_url)
-    db = client.document_management
+    db = client[db_name]
     
     print("🔍 Підключення до MongoDB...")
     
