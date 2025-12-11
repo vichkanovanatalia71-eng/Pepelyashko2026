@@ -223,31 +223,116 @@ const OrderCard = ({
                     </div>
                   </div>
 
-                  {/* Block 4: Customer Details */}
+                  {/* Block 4: Customer/Buyer Details - ПОКУПЕЦЬ */}
                   <div className="bg-[#F7F9FA] rounded-xl p-6 mb-8">
                     <h2 className="text-[16px] font-semibold text-[#1B1B1B] mb-4 flex items-center gap-2">
                       <Building2 className="w-5 h-5 text-blue-500" />
-                      Реквізити замовника
+                      ПОКУПЕЦЬ
                     </h2>
-                    <div className="space-y-4">
-                      <div>
-                        <p className="text-[12px] font-medium text-gray-400 uppercase tracking-wide mb-1">
-                          ЄДРПОУ
-                        </p>
-                        <p className="text-[15px] font-medium text-[#1B1B1B]">
-                          {order.counterparty_edrpou}
-                        </p>
+                    
+                    {/* Two-column layout for buyer details */}
+                    <div className="space-y-3">
+                      {/* Повна назва */}
+                      <div className="flex items-start py-2 border-b border-gray-200">
+                        <span className="text-[13px] font-medium text-gray-500 w-40 flex-shrink-0">
+                          Повна назва
+                        </span>
+                        <span className="text-[14px] font-semibold text-[#1B1B1B]">
+                          {order.counterparty_name || '—'}
+                        </span>
                       </div>
-                      <div>
-                        <p className="text-[12px] font-medium text-gray-400 uppercase tracking-wide mb-1">
-                          Назва компанії
-                        </p>
-                        <p className="text-[15px] font-medium text-[#1B1B1B]">
-                          {order.counterparty_name}
-                        </p>
+                      
+                      {/* Код ЄДРПОУ */}
+                      <div className="flex items-start py-2 border-b border-gray-200">
+                        <span className="text-[13px] font-medium text-gray-500 w-40 flex-shrink-0">
+                          Код ЄДРПОУ
+                        </span>
+                        <span className="text-[14px] font-semibold text-[#1B1B1B]">
+                          {order.counterparty_edrpou || '—'}
+                        </span>
                       </div>
-                      {order.counterparty_address && (
-                        <div>
+                      
+                      {/* Юридична адреса */}
+                      <div className="flex items-start py-2 border-b border-gray-200">
+                        <span className="text-[13px] font-medium text-gray-500 w-40 flex-shrink-0">
+                          Юридична адреса
+                        </span>
+                        <span className="text-[14px] text-[#1B1B1B]">
+                          {order.counterparty_address || order.buyer_address || '—'}
+                        </span>
+                      </div>
+                      
+                      {/* Телефон */}
+                      <div className="flex items-start py-2 border-b border-gray-200">
+                        <span className="text-[13px] font-medium text-gray-500 w-40 flex-shrink-0">
+                          Телефон
+                        </span>
+                        <span className="text-[14px] text-[#1B1B1B]">
+                          {order.counterparty_phone || order.buyer_phone || '—'}
+                        </span>
+                      </div>
+                      
+                      {/* Email */}
+                      <div className="flex items-start py-2 border-b border-gray-200">
+                        <span className="text-[13px] font-medium text-gray-500 w-40 flex-shrink-0">
+                          Email
+                        </span>
+                        <span className="text-[14px] text-[#1B1B1B]">
+                          {order.counterparty_email || order.buyer_email || '—'}
+                        </span>
+                      </div>
+                      
+                      {/* Банк */}
+                      <div className="flex items-start py-2 border-b border-gray-200">
+                        <span className="text-[13px] font-medium text-gray-500 w-40 flex-shrink-0">
+                          Банк
+                        </span>
+                        <span className="text-[14px] text-[#1B1B1B]">
+                          {order.counterparty_bank || order.buyer_bank || '—'}
+                        </span>
+                      </div>
+                      
+                      {/* IBAN */}
+                      <div className="flex items-start py-2 border-b border-gray-200">
+                        <span className="text-[13px] font-medium text-gray-500 w-40 flex-shrink-0">
+                          IBAN
+                        </span>
+                        <span className="text-[14px] text-[#1B1B1B] font-mono">
+                          {order.counterparty_iban || order.buyer_iban || '—'}
+                        </span>
+                      </div>
+                      
+                      {/* МФО */}
+                      <div className="flex items-start py-2 border-b border-gray-200">
+                        <span className="text-[13px] font-medium text-gray-500 w-40 flex-shrink-0">
+                          МФО
+                        </span>
+                        <span className="text-[14px] text-[#1B1B1B]">
+                          {order.counterparty_mfo || order.buyer_mfo || '—'}
+                        </span>
+                      </div>
+                      
+                      {/* Директор */}
+                      <div className="flex items-start py-2 border-b border-gray-200">
+                        <span className="text-[13px] font-medium text-gray-500 w-40 flex-shrink-0">
+                          Директор
+                        </span>
+                        <span className="text-[14px] text-[#1B1B1B]">
+                          {order.counterparty_director || order.buyer_director || '—'}
+                        </span>
+                      </div>
+                      
+                      {/* Посада */}
+                      <div className="flex items-start py-2">
+                        <span className="text-[13px] font-medium text-gray-500 w-40 flex-shrink-0">
+                          Посада
+                        </span>
+                        <span className="text-[14px] text-[#1B1B1B]">
+                          {order.counterparty_position || order.buyer_position || '—'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                           <p className="text-[12px] font-medium text-gray-400 uppercase tracking-wide mb-1">
                             Адреса
                           </p>
