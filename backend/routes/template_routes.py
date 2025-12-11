@@ -282,3 +282,37 @@ async def delete_template(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Помилка при видаленні шаблону"
         )
+
+
+@router.get("/system/{template_type}", response_model=TemplateModel)
+async def get_system_template(
+    template_type: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get system default template for a specific type."""
+    from server import db as database
+    
+    try:
+        # Get system template (user_id = None, is_default = True)
+        system_template = await database.templates.find_one({
+            "template_type": template_type,
+            "user_id": None,
+            "is_default": True
+        })
+        
+        if not system_template:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Системний шаблон не знайдено"
+            )
+        
+        logger.info(f"System template retrieved: {template_type}")
+        return TemplateModel(**system_template)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting system template: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Помилка при отриманні системного шаблону"
+        )
