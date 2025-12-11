@@ -4059,6 +4059,9 @@ const FullDashboard = () => {
                   </div>
                 </div>
               )}
+              
+              {/* Comments Section */}
+              <CommentsSection entityType="counterparty" entityId={viewingCounterparty.edrpou} />
             </div>
           )}
           
