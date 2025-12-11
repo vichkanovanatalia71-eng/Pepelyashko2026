@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Eye, Mail, Edit, Trash2 } from 'lucide-react';
+import CommentsSection from '../comments/CommentsSection';
 
 const InvoiceDialog = ({
   open,
