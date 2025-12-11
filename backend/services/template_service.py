@@ -197,6 +197,7 @@ class TemplateService:
     async def update_template(self, user_id: str, template_id: str, template_data: TemplateUpdate) -> Optional[TemplateModel]:
         """
         Update template with versioning.
+        If trying to update a system template, creates a user copy instead.
         
         Args:
             user_id: Owner user ID
@@ -212,9 +213,82 @@ class TemplateService:
         if not current_template:
             return None
         
-        # Check permissions: allow if user owns it OR if it's a system template
+        # Check permissions
         template_user_id = current_template.get("user_id")
+        is_system_template = current_template.get("is_default", False) and template_user_id is None
         
+        # If it's a system template, create a user copy instead of updating
+        if is_system_template:
+            logger.info(f"Creating user copy of system template {template_id} for user {user_id}")
+            
+            # Check if user already has a template of this type
+            existing_user_template = await self.collection.find_one({
+                "user_id": user_id,
+                "template_type": current_template["template_type"]
+            })
+            
+            if existing_user_template:
+                # Update existing user template
+                update_dict = template_data.model_dump(exclude_unset=True)
+                if not update_dict:
+                    return TemplateModel(**existing_user_template)
+                
+                # If content is being updated, save current version to history
+                if "content" in update_dict:
+                    version_history = existing_user_template.get("version_history", [])
+                    current_version = TemplateVersion(
+                        version_number=existing_user_template.get("current_version", 1),
+                        content=existing_user_template["content"],
+                        created_at=existing_user_template.get("updated_at", datetime.utcnow()),
+                        comment=template_data.comment
+                    )
+                    
+                    version_history.append(current_version.model_dump())
+                    if len(version_history) > 3:
+                        version_history = version_history[-3:]
+                    
+                    update_dict["version_history"] = version_history
+                    update_dict["current_version"] = existing_user_template.get("current_version", 1) + 1
+                    
+                    if template_data.variables is None:
+                        update_dict["variables"] = self._extract_variables(update_dict["content"])
+                
+                update_dict["updated_at"] = datetime.utcnow()
+                
+                await self.collection.update_one(
+                    {"_id": existing_user_template["_id"]},
+                    {"$set": update_dict}
+                )
+                
+                logger.info(f"Updated existing user template: {existing_user_template['_id']}")
+                updated_template = await self.collection.find_one({"_id": existing_user_template["_id"]})
+                return TemplateModel(**updated_template)
+            else:
+                # Create new user template based on system template
+                new_template_id = str(uuid.uuid4())
+                update_dict = template_data.model_dump(exclude_unset=True)
+                
+                new_content = update_dict.get("content", current_template["content"])
+                
+                new_template = {
+                    "_id": new_template_id,
+                    "user_id": user_id,
+                    "is_default": False,
+                    "template_type": current_template["template_type"],
+                    "name": f"Мій {current_template['name']}",
+                    "content": new_content,
+                    "variables": self._extract_variables(new_content),
+                    "version_history": [],
+                    "current_version": 1,
+                    "created_at": datetime.utcnow(),
+                    "updated_at": datetime.utcnow()
+                }
+                
+                await self.collection.insert_one(new_template)
+                logger.info(f"Created user template {new_template_id} from system template")
+                return TemplateModel(**new_template)
+        
+        # Regular user template update
         if template_user_id is not None and template_user_id != user_id:
             # Template belongs to another user - deny access
             return None
