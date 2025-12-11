@@ -296,70 +296,67 @@ const TemplateEditor = () => {
   const handleResetToDefault = async () => {
     const currentTemplate = getCurrentTemplate();
     
-    // Якщо немає поточного шаблону або це системний шаблон, завантажуємо системний
-    if (!currentTemplate || (!currentTemplate.user_id && currentTemplate.is_default)) {
-      // Завантажуємо системний шаблон напряму
-      setLoading(true);
-      try {
-        const token = localStorage.getItem('token');
-        const response = await axios.get(
-          `${API_URL}/api/templates/system/${selectedType}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        
-        console.log('System template loaded:', {
-          id: response.data._id,
-          size: response.data.content.length,
-          first100: response.data.content.substring(0, 100)
-        });
-        
-        // Оновлюємо поточний шаблон на системний
-        setTemplates(prev => {
-          const newTemplates = {
-            ...prev,
-            [selectedType]: response.data
-          };
-          console.log('Templates updated, new template for', selectedType, ':', {
-            id: newTemplates[selectedType]._id,
-            size: newTemplates[selectedType].content.length
-          });
-          return newTemplates;
-        });
-        
-        toast.success('Системний шаблон завантажено!');
-        setIsEditing(false);
-        setViewMode('code'); // Змінено на 'code' щоб користувач одразу побачив HTML
-      } catch (error) {
-        console.error('Error loading system template:', error);
-        toast.error(error.response?.data?.detail || 'Помилка завантаження системного шаблону');
-      } finally {
-        setLoading(false);
+    // Завжди показуємо підтвердження, якщо є який-небудь шаблон
+    if (currentTemplate && currentTemplate.user_id) {
+      if (!window.confirm('Ви впевнені, що хочете скинути шаблон на системний за замовчуванням? Всі ваші зміни будуть втрачені.')) {
+        return;
       }
-      return;
-    }
-
-    // Якщо є користувацький шаблон, скидаємо його
-    if (!window.confirm('Ви впевнені, що хочете скинути шаблон на системний за замовчуванням? Поточний вміст буде збережено в історії версій.')) {
-      return;
     }
 
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      await axios.post(
-        `${API_URL}/api/templates/${currentTemplate._id}/reset`,
-        {},
+      
+      // ЗАВЖДИ завантажуємо системний шаблон
+      const response = await axios.get(
+        `${API_URL}/api/templates/system/${selectedType}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       
-      toast.success('Шаблон успішно скинуто на системний!');
-      setIsEditing(false);
-      setViewMode('preview');
+      console.log('System template loaded:', {
+        id: response.data._id,
+        size: response.data.content.length,
+        first100: response.data.content.substring(0, 100)
+      });
       
+      // Якщо є користувацький шаблон, видаляємо його або скидаємо
+      if (currentTemplate && currentTemplate.user_id) {
+        try {
+          // Намагаємось скинути через reset endpoint
+          await axios.post(
+            `${API_URL}/api/templates/${currentTemplate._id}/reset`,
+            {},
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          console.log('User template reset to system');
+        } catch (resetError) {
+          console.log('Reset endpoint not available or failed, loading system template directly');
+        }
+      }
+      
+      // ПРИМУСОВО оновлюємо стан з системним шаблоном
+      setTemplates(prev => {
+        const newTemplates = {
+          ...prev,
+          [selectedType]: response.data
+        };
+        console.log('Templates FORCE updated, new template for', selectedType, ':', {
+          id: newTemplates[selectedType]._id,
+          size: newTemplates[selectedType].content.length
+        });
+        return newTemplates;
+      });
+      
+      toast.success('Системний шаблон завантажено!');
+      setIsEditing(false);
+      setEditedContent(''); // Очищаємо відредагований контент
+      setViewMode('code'); // Показуємо HTML код
+      
+      // Перезавантажуємо всі шаблони для синхронізації
       await loadAllTemplates();
     } catch (error) {
-      console.error('Error resetting template:', error);
-      toast.error(error.response?.data?.detail || 'Помилка скидання шаблону');
+      console.error('Error loading system template:', error);
+      toast.error(error.response?.data?.detail || 'Помилка завантаження системного шаблону');
     } finally {
       setLoading(false);
     }
