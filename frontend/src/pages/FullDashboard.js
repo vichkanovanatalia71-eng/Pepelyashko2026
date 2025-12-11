@@ -4331,23 +4331,26 @@ const FullDashboard = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Order Details Dialog */}
-      <Dialog open={showOrderDialog} onOpenChange={setShowOrderDialog}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-2xl">
-              Замовлення №{viewingOrder?.number}
-            </DialogTitle>
-            <DialogDescription>
-              {viewingOrder?.counterparty_name}
-            </DialogDescription>
-          </DialogHeader>
-          
-          {viewingOrder && !editingOrder && (
-            <div className="space-y-6">
-              {/* Order Information */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
+      {/* Order Details Dialog - Premium B2B Design */}
+      <OrderCard
+        open={showOrderDialog}
+        onOpenChange={setShowOrderDialog}
+        order={viewingOrder}
+        editingOrder={editingOrder}
+        editOrderForm={editOrderForm}
+        setEditOrderForm={setEditOrderForm}
+        loading={loading}
+        onDelete={deleteOrder}
+        onSendEmail={() => openOrderEmailDialog(viewingOrder)}
+        onPreviewPDF={previewOrderPDF}
+        onStartEdit={startEditingOrder}
+        onCancelEdit={cancelEditingOrder}
+        onSaveEdit={saveEditedOrder}
+        onAddItem={addEditOrderItem}
+        onUpdateItem={updateEditOrderItem}
+        onRemoveItem={removeEditOrderItem}
+        onClose={closeOrderDialog}
+      />
                   <Label className="text-sm text-gray-600">Номер замовлення</Label>
                   <p className="text-lg font-semibold">№{viewingOrder.number}</p>
                 </div>
