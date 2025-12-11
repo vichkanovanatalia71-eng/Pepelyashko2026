@@ -307,15 +307,28 @@ const TemplateEditor = () => {
           { headers: { Authorization: `Bearer ${token}` } }
         );
         
+        console.log('System template loaded:', {
+          id: response.data._id,
+          size: response.data.content.length,
+          first100: response.data.content.substring(0, 100)
+        });
+        
         // Оновлюємо поточний шаблон на системний
-        setTemplates(prev => ({
-          ...prev,
-          [selectedType]: response.data
-        }));
+        setTemplates(prev => {
+          const newTemplates = {
+            ...prev,
+            [selectedType]: response.data
+          };
+          console.log('Templates updated, new template for', selectedType, ':', {
+            id: newTemplates[selectedType]._id,
+            size: newTemplates[selectedType].content.length
+          });
+          return newTemplates;
+        });
         
         toast.success('Системний шаблон завантажено!');
         setIsEditing(false);
-        setViewMode('preview');
+        setViewMode('code'); // Змінено на 'code' щоб користувач одразу побачив HTML
       } catch (error) {
         console.error('Error loading system template:', error);
         toast.error(error.response?.data?.detail || 'Помилка завантаження системного шаблону');
