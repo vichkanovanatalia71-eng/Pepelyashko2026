@@ -47,6 +47,7 @@ from routes.counterparty_routes import router as counterparty_router
 from routes.template_routes import router as template_router
 from routes.document_routes import router as document_router
 from routes.upload_routes import router as upload_router
+from routes.comment_routes import router as comment_router
 
 # Include routers with /api prefix
 app.include_router(auth_router, prefix="/api")
@@ -54,6 +55,7 @@ app.include_router(counterparty_router, prefix="/api")
 app.include_router(template_router, prefix="/api")
 app.include_router(document_router, prefix="/api")
 app.include_router(upload_router, prefix="/api")
+app.include_router(comment_router)
 
 
 @app.get("/api/uploads/{filename}")
