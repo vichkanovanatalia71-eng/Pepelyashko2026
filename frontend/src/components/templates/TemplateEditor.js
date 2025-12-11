@@ -294,8 +294,6 @@ const TemplateEditor = () => {
   };
 
   const handleResetToDefault = async () => {
-    const currentTemplate = getCurrentTemplate();
-    
     // Завжди показуємо підтвердження
     if (!window.confirm('Ви впевнені, що хочете скинути шаблон на системний за замовчуванням? Всі ваші зміни будуть втрачені.')) {
       return;
@@ -304,21 +302,9 @@ const TemplateEditor = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
+      const currentTemplate = getCurrentTemplate();
       
-      // 1. Завантажуємо системний шаблон
-      const systemResponse = await axios.get(
-        `${API_URL}/api/templates/system/${selectedType}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      
-      const systemTemplate = systemResponse.data;
-      console.log('System template loaded:', {
-        id: systemTemplate._id,
-        size: systemTemplate.content.length,
-        first100: systemTemplate.content.substring(0, 100)
-      });
-      
-      // 2. Якщо є користувацький шаблон - ВИДАЛЯЄМО його з БД
+      // 1. Якщо є користувацький шаблон - ВИДАЛЯЄМО його з БД
       if (currentTemplate && currentTemplate.user_id) {
         try {
           await axios.delete(
@@ -327,8 +313,8 @@ const TemplateEditor = () => {
           );
           console.log('User template deleted successfully');
         } catch (deleteError) {
-          console.log('Delete failed, trying reset:', deleteError.message);
-          // Fallback: спробуємо reset endpoint
+          console.log('Delete failed:', deleteError.message);
+          // Якщо видалення не вдалося, спробуємо reset
           try {
             await axios.post(
               `${API_URL}/api/templates/${currentTemplate._id}/reset`,
@@ -342,30 +328,40 @@ const TemplateEditor = () => {
         }
       }
       
-      // 3. ПРИМУСОВО оновлюємо локальний стан з системним шаблоном
-      // БЕЗ виклику loadAllTemplates() який би перезаписав системний шаблон користувацьким
-      setTemplates(prev => {
-        const newTemplates = {
-          ...prev,
-          [selectedType]: systemTemplate
-        };
-        console.log('Templates state updated with system template:', {
-          type: selectedType,
-          size: systemTemplate.content.length
-        });
-        return newTemplates;
+      // 2. Перезавантажуємо ВСІ шаблони з сервера
+      // Після видалення користувацького шаблону, loadAllTemplates поверне системний
+      const response = await axios.get(`${API_URL}/api/templates`, {
+        headers: { Authorization: `Bearer ${token}` }
       });
+      
+      // Group templates by type - пріоритет користувацьким, якщо є
+      const grouped = {};
+      response.data.forEach(template => {
+        if (template.user_id || template.is_default) {
+          // Store user templates, or system defaults if no user template exists
+          if (!grouped[template.template_type] || template.user_id) {
+            grouped[template.template_type] = template;
+          }
+        }
+      });
+      
+      console.log('Reloaded templates after reset:', {
+        type: selectedType,
+        hasUserTemplate: grouped[selectedType]?.user_id ? true : false,
+        contentLength: grouped[selectedType]?.content?.length
+      });
+      
+      // 3. Оновлюємо стан шаблонів
+      setTemplates(grouped);
       
       toast.success('Системний шаблон завантажено!');
       setIsEditing(false);
-      setEditedContent(''); // Очищаємо відредагований контент
-      setViewMode('code'); // Показуємо HTML код
-      
-      // НЕ викликаємо loadAllTemplates() - це перезаписало б системний шаблон користувацьким
+      setEditedContent('');
+      setViewMode('code');
       
     } catch (error) {
-      console.error('Error loading system template:', error);
-      toast.error(error.response?.data?.detail || 'Помилка завантаження системного шаблону');
+      console.error('Error resetting template:', error);
+      toast.error(error.response?.data?.detail || 'Помилка скидання шаблону');
     } finally {
       setLoading(false);
     }
