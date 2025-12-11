@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Eye, Mail, Edit, Trash2 } from 'lucide-react';
+import CommentsSection from '../comments/CommentsSection';
 
 const ActDialog = ({
   open,
@@ -85,6 +86,9 @@ const ActDialog = ({
             </div>
           </div>
         </div>
+          
+          {/* Comments Section */}
+          <CommentsSection entityType="act" entityId={act.number} />
         
         <DialogFooter className="flex gap-2 justify-end">
           <Button 
