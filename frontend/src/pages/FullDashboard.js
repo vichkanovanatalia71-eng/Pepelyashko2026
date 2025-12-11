@@ -4407,6 +4407,9 @@ const FullDashboard = () => {
                   </table>
                 </div>
               </div>
+              
+              {/* Comments Section */}
+              <CommentsSection entityType="order" entityId={viewingOrder.number} />
             </div>
           )}
 
