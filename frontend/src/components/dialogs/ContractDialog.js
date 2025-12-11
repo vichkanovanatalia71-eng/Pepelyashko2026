@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Eye, Mail, Trash2 } from 'lucide-react';
+import CommentsSection from '../comments/CommentsSection';
 
 const ContractDialog = ({
   open,
@@ -92,6 +93,9 @@ const ContractDialog = ({
             </Button>
           </div>
         </div>
+          
+          {/* Comments Section */}
+          <CommentsSection entityType="contract" entityId={contract.number} />
       </DialogContent>
     </Dialog>
   );
