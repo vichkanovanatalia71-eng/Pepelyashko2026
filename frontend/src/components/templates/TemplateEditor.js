@@ -302,57 +302,48 @@ const TemplateEditor = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const currentTemplate = getCurrentTemplate();
       
-      // 1. Якщо є користувацький шаблон - ВИДАЛЯЄМО його з БД
-      if (currentTemplate && currentTemplate.user_id) {
-        try {
-          await axios.delete(
-            `${API_URL}/api/templates/${currentTemplate._id}`,
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
-          console.log('User template deleted successfully');
-        } catch (deleteError) {
-          console.log('Delete failed:', deleteError.message);
-          // Якщо видалення не вдалося, спробуємо reset
-          try {
-            await axios.post(
-              `${API_URL}/api/templates/${currentTemplate._id}/reset`,
-              {},
-              { headers: { Authorization: `Bearer ${token}` } }
-            );
-            console.log('User template reset via reset endpoint');
-          } catch (resetError) {
-            console.log('Reset also failed:', resetError.message);
-          }
-        }
-      }
+      // 1. Завантажуємо системний шаблон напряму
+      const systemResponse = await axios.get(
+        `${API_URL}/api/templates/system/${selectedType}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       
-      // 2. Перезавантажуємо ВСІ шаблони з сервера
-      // Після видалення користувацького шаблону, loadAllTemplates поверне системний
-      const response = await axios.get(`${API_URL}/api/templates`, {
+      const systemTemplate = systemResponse.data;
+      console.log('System template loaded directly:', {
+        id: systemTemplate._id,
+        size: systemTemplate.content.length
+      });
+      
+      // 2. Видаляємо ВСІ користувацькі шаблони цього типу
+      const allTemplatesResponse = await axios.get(`${API_URL}/api/templates`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
-      // Group templates by type - пріоритет користувацьким, якщо є
-      const grouped = {};
-      response.data.forEach(template => {
-        if (template.user_id || template.is_default) {
-          // Store user templates, or system defaults if no user template exists
-          if (!grouped[template.template_type] || template.user_id) {
-            grouped[template.template_type] = template;
-          }
+      const userTemplatesToDelete = allTemplatesResponse.data.filter(
+        t => t.template_type === selectedType && t.user_id
+      );
+      
+      console.log('User templates to delete:', userTemplatesToDelete.length);
+      
+      // Видаляємо всі user templates для цього типу
+      for (const userTemplate of userTemplatesToDelete) {
+        try {
+          await axios.delete(
+            `${API_URL}/api/templates/${userTemplate._id}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          console.log('Deleted user template:', userTemplate._id);
+        } catch (deleteError) {
+          console.log('Delete failed for:', userTemplate._id, deleteError.message);
         }
-      });
+      }
       
-      console.log('Reloaded templates after reset:', {
-        type: selectedType,
-        hasUserTemplate: grouped[selectedType]?.user_id ? true : false,
-        contentLength: grouped[selectedType]?.content?.length
-      });
-      
-      // 3. Оновлюємо стан шаблонів
-      setTemplates(grouped);
+      // 3. Оновлюємо локальний стан - показуємо системний шаблон
+      setTemplates(prev => ({
+        ...prev,
+        [selectedType]: systemTemplate
+      }));
       
       toast.success('Системний шаблон завантажено!');
       setIsEditing(false);
