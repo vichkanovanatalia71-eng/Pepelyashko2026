@@ -17,7 +17,7 @@ async def seed_all_templates():
     client = AsyncIOMotorClient(mongo_url)
     db = client[db_name]
     
-    print("🔍 Підключення до MongoDB...")
+    print(f"🔍 Підключення до MongoDB (БД: {db_name})...")
     
     # Конфігурація шаблонів
     templates_config = [
