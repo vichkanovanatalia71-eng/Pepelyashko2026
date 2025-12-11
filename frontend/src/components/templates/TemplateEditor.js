@@ -296,53 +296,62 @@ const TemplateEditor = () => {
   const handleResetToDefault = async () => {
     const currentTemplate = getCurrentTemplate();
     
-    // Завжди показуємо підтвердження, якщо є який-небудь шаблон
-    if (currentTemplate && currentTemplate.user_id) {
-      if (!window.confirm('Ви впевнені, що хочете скинути шаблон на системний за замовчуванням? Всі ваші зміни будуть втрачені.')) {
-        return;
-      }
+    // Завжди показуємо підтвердження
+    if (!window.confirm('Ви впевнені, що хочете скинути шаблон на системний за замовчуванням? Всі ваші зміни будуть втрачені.')) {
+      return;
     }
 
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
       
-      // ЗАВЖДИ завантажуємо системний шаблон
-      const response = await axios.get(
+      // 1. Завантажуємо системний шаблон
+      const systemResponse = await axios.get(
         `${API_URL}/api/templates/system/${selectedType}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       
+      const systemTemplate = systemResponse.data;
       console.log('System template loaded:', {
-        id: response.data._id,
-        size: response.data.content.length,
-        first100: response.data.content.substring(0, 100)
+        id: systemTemplate._id,
+        size: systemTemplate.content.length,
+        first100: systemTemplate.content.substring(0, 100)
       });
       
-      // Якщо є користувацький шаблон, видаляємо його або скидаємо
+      // 2. Якщо є користувацький шаблон - ВИДАЛЯЄМО його з БД
       if (currentTemplate && currentTemplate.user_id) {
         try {
-          // Намагаємось скинути через reset endpoint
-          await axios.post(
-            `${API_URL}/api/templates/${currentTemplate._id}/reset`,
-            {},
+          await axios.delete(
+            `${API_URL}/api/templates/${currentTemplate._id}`,
             { headers: { Authorization: `Bearer ${token}` } }
           );
-          console.log('User template reset to system');
-        } catch (resetError) {
-          console.log('Reset endpoint not available or failed, loading system template directly');
+          console.log('User template deleted successfully');
+        } catch (deleteError) {
+          console.log('Delete failed, trying reset:', deleteError.message);
+          // Fallback: спробуємо reset endpoint
+          try {
+            await axios.post(
+              `${API_URL}/api/templates/${currentTemplate._id}/reset`,
+              {},
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+            console.log('User template reset via reset endpoint');
+          } catch (resetError) {
+            console.log('Reset also failed:', resetError.message);
+          }
         }
       }
       
-      // ПРИМУСОВО оновлюємо стан з системним шаблоном
+      // 3. ПРИМУСОВО оновлюємо локальний стан з системним шаблоном
+      // БЕЗ виклику loadAllTemplates() який би перезаписав системний шаблон користувацьким
       setTemplates(prev => {
         const newTemplates = {
           ...prev,
-          [selectedType]: response.data
+          [selectedType]: systemTemplate
         };
-        console.log('Templates FORCE updated, new template for', selectedType, ':', {
-          id: newTemplates[selectedType]._id,
-          size: newTemplates[selectedType].content.length
+        console.log('Templates state updated with system template:', {
+          type: selectedType,
+          size: systemTemplate.content.length
         });
         return newTemplates;
       });
@@ -352,8 +361,8 @@ const TemplateEditor = () => {
       setEditedContent(''); // Очищаємо відредагований контент
       setViewMode('code'); // Показуємо HTML код
       
-      // Перезавантажуємо всі шаблони для синхронізації
-      await loadAllTemplates();
+      // НЕ викликаємо loadAllTemplates() - це перезаписало б системний шаблон користувацьким
+      
     } catch (error) {
       console.error('Error loading system template:', error);
       toast.error(error.response?.data?.detail || 'Помилка завантаження системного шаблону');
