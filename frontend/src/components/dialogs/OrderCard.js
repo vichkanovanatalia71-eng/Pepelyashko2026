@@ -333,26 +333,6 @@ const OrderCard = ({
                       </div>
                     </div>
                   </div>
-                          <p className="text-[12px] font-medium text-gray-400 uppercase tracking-wide mb-1">
-                            Адреса
-                          </p>
-                          <p className="text-[15px] text-[#1B1B1B]">
-                            {order.counterparty_address}
-                          </p>
-                        </div>
-                      )}
-                      {order.counterparty_email && (
-                        <div>
-                          <p className="text-[12px] font-medium text-gray-400 uppercase tracking-wide mb-1">
-                            Email
-                          </p>
-                          <p className="text-[15px] text-[#1B1B1B]">
-                            {order.counterparty_email}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
 
                   {/* Block 5: Control Message */}
                   <div className="bg-blue-50 rounded-xl p-5 mb-6 border border-blue-100">
