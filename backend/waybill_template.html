@@ -220,6 +220,8 @@
           <strong>р/р (IBAN):</strong> <span class="mono">{{supplier_iban}}</span>, {{supplier_bank}}, <strong>МФО:</strong> <span class="mono">{{supplier_mfo}}</span><br />
           <strong>Юридична адреса:</strong> {{supplier_address}}<br />
           <strong>Код РНОКПП/ЄДРПОУ:</strong> <span class="mono">{{supplier_edrpou}}</span><br />
+          {{#if supplier_email}}<strong>Email:</strong> {{supplier_email}}<br />{{/if}}
+          {{#if supplier_phone}}<strong>Тел.:</strong> {{supplier_phone}}{{/if}}
         </td>
       </tr>
       <tr>
@@ -229,6 +231,8 @@
           <strong>Юридична адреса:</strong> {{buyer_address}}<br />
           <strong>р/р (IBAN):</strong> <span class="mono">{{buyer_iban}}</span>, {{buyer_bank}}, <strong>МФО:</strong> <span class="mono">{{buyer_mfo}}</span><br />
           <strong>Код РНОКПП/ЄДРПОУ:</strong> <span class="mono">{{buyer_edrpou}}</span><br />
+          {{#if buyer_email}}<strong>Email:</strong> {{buyer_email}}<br />{{/if}}
+          {{#if buyer_phone}}<strong>Тел.:</strong> {{buyer_phone}}{{/if}}
         </td>
       </tr>
     </table>
@@ -330,6 +334,7 @@
             </div>
           </td>
 
+          <!-- Покупець -->
           <td style="width:50%; text-align:right;">
             <span class="sign-label">Отримав(ла)</span>
             <span class="sign-line"></span>
