@@ -39,6 +39,7 @@ import { InvoiceList, ActList, DocumentListGeneric } from '../components/documen
 import TemplateEditor from '../components/templates/TemplateEditor';
 import ProfileCard from '../components/ProfileCard';
 import OrderFilters from '../components/OrderFilters';
+import CommentsSection from '../components/comments/CommentsSection';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
