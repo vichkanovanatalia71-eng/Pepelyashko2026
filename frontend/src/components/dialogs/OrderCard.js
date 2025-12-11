@@ -185,41 +185,62 @@ const OrderCard = ({
                     </div>
                   </div>
 
-                  {/* Block 3: Order Items */}
+                  {/* Block 3: Order Items - ТОВАРИ ТА ПОСЛУГИ */}
                   <div className="mb-8">
                     <h2 className="text-[16px] font-semibold text-[#1B1B1B] mb-4 flex items-center gap-2">
                       <Package className="w-5 h-5 text-blue-500" />
-                      Позиції замовлення
+                      ТОВАРИ ТА ПОСЛУГИ
                     </h2>
-                    <div className="space-y-3">
+                    
+                    {/* Items Header */}
+                    <div className="bg-gray-50 rounded-t-lg px-4 py-3 grid grid-cols-12 gap-2 text-[12px] font-semibold text-gray-500 uppercase tracking-wide">
+                      <div className="col-span-1">№</div>
+                      <div className="col-span-5">Найменування</div>
+                      <div className="col-span-1 text-center">Од.</div>
+                      <div className="col-span-2 text-right">Кількість</div>
+                      <div className="col-span-1 text-right">Ціна</div>
+                      <div className="col-span-2 text-right">Сума</div>
+                    </div>
+                    
+                    {/* Items List */}
+                    <div className="border border-gray-100 border-t-0 rounded-b-lg divide-y divide-gray-100">
                       {order.items?.map((item, index) => (
                         <div 
                           key={index}
-                          className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0"
+                          className="px-4 py-3 grid grid-cols-12 gap-2 items-center hover:bg-gray-50 transition-colors"
                         >
-                          <div className="flex-1">
-                            <p className="text-[15px] font-medium text-[#1B1B1B]">
-                              {item.name}
-                            </p>
-                            <p className="text-[13px] text-gray-500 mt-0.5">
-                              {item.quantity} {item.unit} × {formatAmount(item.price)} грн
-                            </p>
+                          <div className="col-span-1 text-[13px] text-gray-500">
+                            {index + 1}
                           </div>
-                          <p className="text-[15px] font-semibold text-[#1B1B1B] ml-4">
+                          <div className="col-span-5 text-[14px] font-medium text-[#1B1B1B]">
+                            {item.name}
+                          </div>
+                          <div className="col-span-1 text-[13px] text-gray-500 text-center">
+                            {item.unit}
+                          </div>
+                          <div className="col-span-2 text-[14px] text-[#1B1B1B] text-right">
+                            {item.quantity}
+                          </div>
+                          <div className="col-span-1 text-[14px] text-[#1B1B1B] text-right">
+                            {formatAmount(item.price)}
+                          </div>
+                          <div className="col-span-2 text-[14px] font-semibold text-[#1B1B1B] text-right">
                             {formatAmount(item.amount)} грн
-                          </p>
+                          </div>
                         </div>
                       ))}
                     </div>
                     
-                    {/* Total */}
-                    <div className="flex justify-between items-center mt-4 pt-4 border-t-2 border-gray-200">
-                      <span className="text-[15px] font-semibold text-gray-600">
-                        Всього до сплати:
-                      </span>
-                      <span className="text-[20px] font-bold text-blue-600">
-                        {formatAmount(order.total_amount)} грн
-                      </span>
+                    {/* Total Amount - Premium Style */}
+                    <div className="mt-4 bg-blue-50 rounded-xl p-5 border border-blue-100">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[15px] font-semibold text-blue-900">
+                          Загальна сума замовлення:
+                        </span>
+                        <span className="text-[22px] font-bold text-blue-600">
+                          {formatAmount(order.total_amount)} грн
+                        </span>
+                      </div>
                     </div>
                   </div>
 
