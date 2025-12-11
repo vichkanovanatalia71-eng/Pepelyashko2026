@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Eye, Mail, Trash2, Download } from 'lucide-react';
+import CommentsSection from '../comments/CommentsSection';
 
 const WaybillDialog = ({
   open,
@@ -86,6 +87,9 @@ const WaybillDialog = ({
             </div>
           </div>
         </div>
+          
+          {/* Comments Section */}
+          <CommentsSection entityType="waybill" entityId={waybill.number} />
         
         <DialogFooter className="flex gap-2 justify-end">
           <Button 
