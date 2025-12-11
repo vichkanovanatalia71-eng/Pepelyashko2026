@@ -445,7 +445,7 @@ const TemplateEditor = () => {
                               className="border-purple-500 text-purple-600 hover:bg-purple-50"
                             >
                               <FileText className="w-4 h-4 mr-2" />
-                              Шаблон системи
+                              Системний шаблон
                             </Button>
                             <Button
                               variant="default"
