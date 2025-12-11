@@ -295,10 +295,37 @@ const TemplateEditor = () => {
 
   const handleResetToDefault = async () => {
     const currentTemplate = getCurrentTemplate();
-    if (!currentTemplate) {
+    
+    // Якщо немає поточного шаблону або це системний шаблон, завантажуємо системний
+    if (!currentTemplate || (!currentTemplate.user_id && currentTemplate.is_default)) {
+      // Завантажуємо системний шаблон напряму
+      setLoading(true);
+      try {
+        const token = localStorage.getItem('token');
+        const response = await axios.get(
+          `${API_URL}/api/templates/system/${selectedType}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        
+        // Оновлюємо поточний шаблон на системний
+        setTemplates(prev => ({
+          ...prev,
+          [selectedType]: response.data
+        }));
+        
+        toast.success('Системний шаблон завантажено!');
+        setIsEditing(false);
+        setViewMode('preview');
+      } catch (error) {
+        console.error('Error loading system template:', error);
+        toast.error(error.response?.data?.detail || 'Помилка завантаження системного шаблону');
+      } finally {
+        setLoading(false);
+      }
       return;
     }
 
+    // Якщо є користувацький шаблон, скидаємо його
     if (!window.confirm('Ви впевнені, що хочете скинути шаблон на системний за замовчуванням? Поточний вміст буде збережено в історії версій.')) {
       return;
     }
