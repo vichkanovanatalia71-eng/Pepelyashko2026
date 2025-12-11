@@ -98,12 +98,18 @@ const OrderCard = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[700px] p-0 bg-transparent border-none shadow-none overflow-visible">
+      <DialogContent className="max-w-[720px] p-0 bg-transparent border-none shadow-none overflow-visible max-h-[90vh]">
+        {/* Hidden title for accessibility */}
+        <VisuallyHidden>
+          <DialogTitle>Замовлення №{order.number}</DialogTitle>
+          <DialogDescription>Деталі замовлення для {order.counterparty_name}</DialogDescription>
+        </VisuallyHidden>
+        
         {/* Outer container with light gray background */}
-        <div className="bg-[#EEF2F5] p-6 rounded-[16px]">
+        <div className="bg-[#EEF2F5] p-6 rounded-[16px] max-h-[85vh] overflow-y-auto">
           {/* Main Card */}
           <div 
-            className="bg-white rounded-[12px] overflow-hidden"
+            className="bg-white rounded-[12px] relative"
             style={{
               boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
               fontFamily: "'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif"
@@ -112,7 +118,7 @@ const OrderCard = ({
             {/* Close button */}
             <button
               onClick={onClose}
-              className="absolute top-3 right-3 z-10 p-2 rounded-full bg-white/80 hover:bg-gray-100 transition-colors"
+              className="absolute top-4 right-4 z-10 p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
             >
               <X className="w-5 h-5 text-gray-500" />
             </button>
