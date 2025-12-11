@@ -85,6 +85,9 @@ const InvoiceDialog = ({
               </div>
             </div>
           </div>
+          
+          {/* Comments Section */}
+          <CommentsSection entityType="invoice" entityId={invoice.number} />
         </div>
         
         <DialogFooter className="flex gap-2 justify-end">
