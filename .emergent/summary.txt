@@ -1,207 +1,155 @@
 <analysis>**original_problem_statement:**
-The user's goal is to build a comprehensive document management system. The initial scope involved user profiles and counterparty management, which has expanded to include full CRUD operations, PDF generation, and emailing for various document types (Invoices, Orders, Acts, Waybills, Contracts).
+The user's primary goal is to build and enhance a comprehensive document management system. The core application for managing counterparties and various document types (Invoices, Orders, Acts, Waybills, Contracts) already exists.
 
-In this session, the user's requests focused on achieving feature parity and professional polish across all document types, as well as fixing a critical, recurring environmental failure.
-
-Key requests included:
-1.  **Styling Act Emails:** Make the Act email template match the Invoice email template, with the company logo at the top.
-2.  **Template-Driven PDFs:** Ensure Act PDFs are generated from a database template, not hardcoded HTML, mimicking the logic for Invoices.
-3.  **Template Customization:** Allow the user to provide new HTML for the system's default Act and Invoice templates and have the system use them.
-4.  **Template Variables:**
-    *   Add В особі (representative) fields for both the user and counterparty to the PDFs.
-    *   Add a  variable, derived from the user's address.
-    *   Add a  variable to display the date in DD month YYYY format.
-    *   Create a markdown document listing all available template variables and add the new variables to the UI's template editor.
-5.  **Fix Reset Template**: Ensure the button to reset a template to the system default works correctly.
-6.  **Fix Critical PDF Failure:** Repeatedly address a critical environmental issue where a required library () disappears, breaking all PDF functionality.
-7.  **Implement Universal Search:** Add search functionality by both company name and ЄДРПОУ code to *all* document tabs (Counterparties, Acts, Invoices, Waybills, Orders, Contracts).
+In this session, the user's requests were:
+1.  **Fix Waybill PDF Generation:** A bug prevented the viewing of Waybill PDFs.
+2.  **Update Waybill Template:** The user provided a new, more detailed HTML template for Waybills to be used as the system default.
+3.  **Fix Waybill Email:** The email sent for a waybill was using an old PDF template and had an incorrect layout.
+4.  **Implement Comments:** Add a commenting feature to all document types (Orders, Invoices, Acts, Waybills, Contracts) and to Counterparty detail views.
+5.  **Plan E-Signature Feature:** Provide a high-level plan for implementing Electronic Digital Signatures (E-Signatures) in Ukraine, without starting implementation yet.
+6.  **Fix System Template Button:** A recurring and complex bug where the System Template button in the template editor would not correctly revert a user's custom-saved template back to the system default.
 
 **User's preferred language**: Ukrainian. The next agent **MUST** respond in Ukrainian only.
 
 **what currently exists?**
-The application is a full-stack React/FastAPI/MongoDB system for document management. The core features for Invoices and Acts are now highly consistent.
-
-- **PDF Generation:** PDF generation for both Invoices and Acts is now driven by a unified service () that fetches HTML templates from the MongoDB database. The system automatically seeds a default template for both document types if one doesn't exist.
-- **Template Management:** The UI includes a template editor where users can view and edit their document templates. A sidebar lists available variables. A button to reset to the system default is now functional, though it may require a page refresh to display changes due to a potential UI/caching issue.
-- **Emailing:** Email templates for Acts and Invoices are styled consistently with the company logo at the top. The email subject for Acts has been corrected to Акт наданих послуг.
-- **Documentation:** A new file, , has been created, documenting all available variables for the Act template.
-- **Critical Instability:** The environment remains highly unstable. The  library, essential for PDF generation, has been observed to disappear unpredictably at least 16 times, requiring manual re-installation to restore functionality.
+The application is a full-stack React/FastAPI/MongoDB document management system.
+- **Commenting System:** A complete commenting feature has been successfully implemented. Users can now add, view, edit, and delete comments on Invoices, Acts, Waybills, Contracts, Orders, and Counterparties. The feature includes displaying the author's email and a timestamp for each comment.
+- **Waybill Functionality Fixed:** The previously broken PDF generation for Waybills is now fixed. The system uses the correct, updated HTML template for both PDF generation and for emails. The email layout has also been corrected to match other document types.
+- **Complete System Templates:** A critical bug was found where system templates for Invoices, Acts, and Contracts were missing from the database. A seeding script was created and run to ensure all document types have a default system template.
+- **Database Consistency Fix:** A major environmental bug was resolved where maintenance scripts were writing to the  database while the live application was using . Scripts have been corrected to use the environment-specified database name, ensuring data consistency.
 
 **Last working item**:
-- **Last item agent was working:** The user requested that search functionality (by both company name and ЄДРПОУ code) be implemented on every document tab: Counterparties, Acts, Invoices, Waybills, Orders, and Contracts. The agent began investigating the existing search implementation in .
-- **Status:** NOT STARTED
+- **Last item agent was working:** The agent was fixing a nuanced bug with the System Template button. The user reported that after they edit and save a template (creating a custom user version), clicking System Template fails to revert the editor's content back to the default system template.
+- **Status:** IN PROGRESS
 - **Agent Testing Done:** N
-- **Which testing method agent to use?** Frontend testing agent. This feature impacts multiple UI tabs and requires thorough end-to-end verification to ensure search and filtering work correctly on each tab without side effects.
+- **Which testing method agent to use?** Frontend testing agent. This is a multi-step user flow that needs verification: 1) Navigate to Templates -> Накладна. 2) Edit and Save the template. 3) Click Системний шаблон. 4) Confirm the content reverts to the default system HTML.
 - **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
-- **Issue 1: Implement Universal Search on All Document Tabs (P0 - HIGHEST PRIORITY)**
-- **Issue 2: PDF Generation Fails Due to Missing  Dependency (P0 - CRITICAL, RECURRING)**
+- **Issue 1: System Template button does not revert user-edited templates (P0 - HIGHEST PRIORITY)**
 
 **Issues Detail:**
-- **Issue 1: Implement Universal Search on All Document Tabs**
-    - **Attempted fixes:** The agent has only begun investigation by using  to find existing search-related code in .
+- **Issue 1: System Template button does not revert user-edited templates**
+    - **Attempted fixes:** The agent has just applied a significant fix to the  function in . The previous logic failed when a  existed. The new logic is designed to:
+        1.  Always fetch the system template directly via API.
+        2.  Present a confirmation dialog to the user before overwriting their changes.
+        3.  Forcefully update the React state with the fetched system template content.
+        4.  Switch the view to 'HTML код' to make the change visible.
     - **Next debug checklist:**
-        1.  Analyze  to understand how search is implemented for the Counterparties tab.
-        2.  Identify the state variables (e.g., ) and the filtering logic in the JSX.
-        3.  Replicate this pattern for all other tabs: Acts, Invoices, Waybills, Orders, and Contracts. This will involve:
-            *   Adding new state variables for search terms for each tab.
-            *   Adding search input fields to the UI of each tab.
-            *   Applying a combined filtering logic (by name AND EDRPOU) to the data arrays for each document type before they are rendered.
-    - **Why fix this issue and what will be achieved with the fix?** To fulfill a direct user request for consistent and improved usability across the entire application.
-    - **Status:** NOT STARTED
-    - **Is recurring issue?** N
-    - **Should Test frontend/backend/both after fix?** Frontend
-    - **Blocked on other issue:** None.
-
-- **Issue 2: PDF Generation Fails Due to Missing  Dependency**
-    - **Description:** A critical system library for WeasyPrint () is frequently and unpredictably uninstalled from the environment, breaking all PDF generation and email attachment features. This has happened over 16 times.
-    - **Attempted fixes:** The only known fix is temporary: run Hit:1 http://deb.debian.org/debian bookworm InRelease
-Get:2 http://deb.debian.org/debian bookworm-updates InRelease [55.4 kB]
-Get:3 http://deb.debian.org/debian-security bookworm-security InRelease [48.0 kB]
-Get:4 https://deb.nodesource.com/node_20.x nodistro InRelease [12.1 kB]
-Get:5 https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 InRelease [3005 B]
-Get:6 http://deb.debian.org/debian-security bookworm-security/main arm64 Packages [285 kB]
-Get:7 https://deb.nodesource.com/node_20.x nodistro/main arm64 Packages [13.2 kB]
-Get:8 https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0/multiverse amd64 Packages [96.8 kB]
-Get:9 https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0/multiverse arm64 Packages [95.4 kB]
-Fetched 609 kB in 2s (347 kB/s)
-Reading package lists...
-Reading package lists...
-Building dependency tree...
-Reading state information...
-The following NEW packages will be installed:
-  libpangoft2-1.0-0
-0 upgraded, 1 newly installed, 0 to remove and 2 not upgraded.
-Need to get 44.5 kB of archives.
-After this operation, 178 kB of additional disk space will be used.
-Get:1 http://deb.debian.org/debian bookworm/main arm64 libpangoft2-1.0-0 arm64 1.50.12+ds-1 [44.5 kB]
-Fetched 44.5 kB in 0s (465 kB/s)
-Selecting previously unselected package libpangoft2-1.0-0:arm64.
-(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 38368 files and directories currently installed.)
-Preparing to unpack .../libpangoft2-1.0-0_1.50.12+ds-1_arm64.deb ...
-Unpacking libpangoft2-1.0-0:arm64 (1.50.12+ds-1) ...
-Setting up libpangoft2-1.0-0:arm64 (1.50.12+ds-1) ...
-Processing triggers for libc-bin (2.36-9+deb12u13) ... and restart the backend. The root cause is unknown.
-    - **Next debug checklist:** This is a critical environmental failure, not a code bug. Before any other action, the agent MUST **call the ** to diagnose the root cause of the library's disappearance. A permanent fix is required, as the manual re-installation is unsustainable.
-    - **Why fix this issue and what will be achieved with the fix?** This is a complete blocker for the application's core functionality. A permanent fix will restore stability to all document features.
-    - **Status:** BLOCKED (by unknown environmental factors)
+        1.  The last fix was to the frontend code; a service restart is not strictly necessary but is good practice.
+        2.  Use the **frontend testing agent** to perform the exact scenario described by the user:
+            a. Go to Шаблони -> Накладна.
+            b. Switch to the HTML код view.
+            c. Delete a significant portion of the HTML code and click Зберегти (Save).
+            d. Verify the custom (shorter) template is still present.
+            e. Click the Системний шаблон button.
+            f.  Verify that a confirmation dialog appears.
+            g. Confirm the action.
+            h. Verify that the full HTML of the default system template is restored in the editor.
+    - **Why fix this issue and what will be achieved with the fix?** This is a core usability feature of the template editor. It allows users to safely customize templates with the confidence that they can always revert to a working default. The user has reported this issue multiple times.
+    - **Status:** IN PROGRESS
     - **Is recurring issue?** Y
-    - **Should Test frontend/backend/both after fix?** Backend (verifying PDF generation).
-    - **Blocked on other issue:** This issue blocks all PDF-related tasks.
+    - **Should Test frontend/backend/both after fix?** Frontend.
+    - **Blocked on other issue:** None.
 
 **In progress Task List**:
 - None.
 
 **Upcoming and Future Tasks**
 - **Upcoming Tasks:**
-    - **(P1) Refactor **: This component is a massive monolith. With the addition of more search logic, it's more critical than ever to break it down. The logic for each tab should be extracted into its own dedicated components to improve maintainability.
+    - **(P0) Implement E-Signatures:** The user has requested this as the next major feature. The agent provided a detailed implementation plan (see Chat Message 165), recommending integration with **Дія.Підпис** as the first phase. This should be prioritized after the current bug is resolved.
+    - **(P1) Refactor **: Extract the dialog logic for Orders and Counterparties into dedicated components to reduce the size and complexity of this file.
+    - **(P1) Refactor **: The component's variable lists are hardcoded. Refactor this to load variables from a static JSON file or a dedicated backend endpoint.
 - **Future Tasks:**
-    - **(P2) Implement Dashboards/Graphs**: Use order data to create visual dashboards for analytics.
-    - **(P2) Implement Template Version History**: Allow users to view and revert to previous versions of document templates.
+    - **(P2) Code Cleanup**: Remove unused state and functions from .
+    - **(P2) Implement Dashboards/Graphs**: Create visual analytics based on document data.
+    - **(P2) Implement Template Version History**: Allow users to revert to previous versions of their saved templates.
 
 **Completed work in this session**
-- **Template System Overhaul (DONE):** Refactored Act PDF generation to use the unified , ensuring it pulls templates from the database.
-- **System Template Updates (DONE):** Updated the default HTML content for both Act and Invoice system templates based on user-provided code.
-- **Template Reset Fix (DONE):** Fixed the backend API and frontend logic for the Reset to System Template button.
-- **New Template Variables (DONE):**
-  - Added  and  (В особі) to PDF context.
-  - Added  (from user's address) to PDF context.
-  - Added  (formatted as 09 грудня 2025 року) to PDF context.
-- **UI and Doc Enhancements (DONE):**
-  - Created  to document all template variables.
-  - Added the new variables to the Available Variables list in the  component.
-- **Email Styling & Content (DONE):**
-  - Styled the Act email to match the Invoice email (logo on top).
-  - Corrected the Act email subject to Акт наданих послуг.
-- **Critical Issue Management (DONE, REPEATEDLY):** Re-installed the  library at least 5 times to temporarily restore PDF functionality.
+- **Waybill Template UI (DONE):** Updated  to display all available variables for Waybill templates.
+- **Waybill PDF Generation Fix (DONE):** Resolved two critical backend errors in  that prevented Waybill PDF generation.
+- **Waybill System Template Update (DONE):** The default  was updated twice with user-provided code, and the changes were seeded into the correct database.
+- **Waybill Email Logic Fix (DONE):** The backend now uses the correct template service and layout when emailing Waybills.
+- **Commenting Feature (DONE):** A full-featured commenting system was implemented for all document types (Invoices, Acts, Waybills, Contracts, Orders) and Counterparties, including backend API and a reusable frontend component.
+- **System-Wide Template Seeding (DONE):** Fixed a bug where default templates were missing for most document types by creating a script () to populate them in the correct database.
 
 **Earlier issues found/mentioned but not fixed**
-- The root cause of the unstable environment causing  to disappear has not been identified. A permanent solution is required.
+- None.
 
 **Known issue recurrence from previous fork**
-- **Issue recurrence in previous fork:**  dependency missing for PDF generation.
-- **Recurrence count:** Extremely High (was 12+, now 16+).
-- **Status:** BLOCKED (by environmental instability).
+- None from the previous fork. A new recurring issue with the System Template button emerged and was heavily debugged during this session.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Environmental Instability:** The recurring disappearance of the  library is the single greatest risk to the project.
-- **Template-driven PDF Generation:** The architecture was improved to use a single service () that fetches templates from MongoDB, making the system more modular and easier to maintain.
-- **Default Template Seeding:** The application now seeds the database with default templates for Acts and Invoices on startup, ensuring a baseline functionality.
-- **UI Reactivity Issue:** The agent noted that the  used for template previews in  does not always update after a state change, potentially due to browser caching. This may require a manual page refresh by the user.
+- **Component-Based UI:** A reusable  component was created and successfully integrated across multiple different dialogs, demonstrating good React practice.
+- **Environment Configuration Bug:** A critical bug was traced to the backend application and maintenance scripts using different database names ( vs. ). This underscores the importance of consistent environment variable usage across all parts of the system.
+- **State Management & Re-rendering:** Debugging the template editor required a deep understanding of React's state management, particularly how to force a component to re-render with new data fetched from an API, which was ultimately addressed in the latest (untested) fix.
 
 **key DB schema**
-- ****: 
-- ****: 
-- ****: 
+- ** (New Collection):**
+  - 
+- **:**
+  - Now populated with ,  documents for all types (invoice, act, waybill, contract), ensuring the System Template feature has a data source.
 
 **changes in tech stack**
 - None.
 
 **All files of reference**
-- : Central service for generating PDFs from database templates.
-- : Manages template creation, updates, and seeding defaults.
-- : The monolithic component targeted for the next task of implementing universal search.
-- : Contains the UI for viewing templates and the Reset button logic.
-- : The base HTML file for the default Act template.
-- : The base HTML file for the default Invoice template.
-- : The newly created documentation file.
+- ****: **This is the file with the latest fix that needs immediate testing.**
+- : The new, reusable component for comments.
+- : Contains the dialogs for Orders and Counterparties.
+- : The API for template management, which was heavily debugged.
+- : The script used to fix the missing default templates. **Crucially, it must use the  environment variable.**
 
 **Areas that need refactoring**:
-- ****: This component is critically oversized and complex. It is the top refactoring priority.
-- **Template Preview UI:** The  in  that previews templates has a reactivity/caching issue, forcing users to reload the page to see updates after a reset. This needs a more robust fix.
+- ****: This large file still contains the full JSX and logic for the Order and Counterparty dialogs. This logic should be extracted into separate, cleaner components.
+- ****: The hardcoded list of template variables should be refactored to be loaded dynamically, making it easier to maintain.
 
 **key api endpoints**
-- : Fixed to correctly copy content from the system default template to a user's template.
-- : Refactored to use  and serve PDFs from database templates.
-- : Refactored to attach PDFs generated by .
+- : Full CRUD endpoints for the new commenting feature.
+- : Fetches the default system template for a given document type.
+- : Resets a user's custom template back to the system default.
 
 **Critical Info for New Agent**
-- **THE PDF LIBRARY WILL FAIL:** The  library has disappeared over 16 times. Your first step for **any** PDF or email issue must be to check backend logs () for . If you see it, do not waste time debugging code. **Immediately call the  to find a permanent solution.** The temporary fix is Hit:1 http://deb.debian.org/debian bookworm InRelease
-Hit:2 http://deb.debian.org/debian bookworm-updates InRelease
-Hit:3 http://deb.debian.org/debian-security bookworm-security InRelease
-Hit:4 https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 InRelease
-Hit:5 https://deb.nodesource.com/node_20.x nodistro InRelease
-Reading package lists...
-Reading package lists...
-Building dependency tree...
-Reading state information...
-libpangoft2-1.0-0 is already the newest version (1.50.12+ds-1).
-0 upgraded, 0 newly installed, 0 to remove and 2 not upgraded. followed by a backend restart, but this is not a long-term solution.
-- **Your immediate task is to implement universal search.** The user wants to search by company name and EDRPOU on *all* document tabs. You will need to modify  to add the necessary state and filter logic for each tab.
-- Be aware of the UI reactivity issue in the template viewer. If you make changes to templates, the preview  might not update without a full page reload.
+- **Your immediate task is to test the latest fix for the System Template button.** The agent has implemented a new logic in  to handle cases where a user has saved their own custom template. You must verify this exact flow works as intended.
+- **A critical environmental bug was fixed related to database names.** Be aware that any new maintenance or seeding scripts must read the  from environment variables to target the correct database ().
+- The next major feature requested by the user is **E-Signatures**. A detailed plan is available in the chat history (Chat Message 165) and should be discussed with the user after the current bug is confirmed as fixed.
 
 **documents created in this job**
 - 
+- 
+- 
+- 
+- Several one-off scripts for debugging and seeding (, etc.).
 
 **Last 10 User Messages and any pending user messages**
-1.  **User:** Update the system Invoice template with new HTML. (DONE)
-2.  **User:** Change the email subject for Acts to Акт наданих послуг. (DONE)
-3.  **User:** Check every tab (counterparties, acts, invoices, etc.) and add search by EDRPOU and name everywhere. (PENDING - This is the current task).
-4.  **User:** The system template for an Act is not being applied when I click the Reset button; an error occurs. (DONE)
-5.  **User:** After fixing the reset, the content of the template doesn't update in the UI. (PARTIALLY DONE - Backend is fixed, but UI requires a refresh).
-6.  **User:** I'm providing new HTML for the system's Act template; please update it. (DONE)
-7.  **User:** The PDF library is broken again. (DONE - Reinstalled for the 16th time).
-8.  **User:** Please reinstall the library immediately. (DONE)
-9.  **User:** The Act template is not updating; it should work like the Invoice template. (DONE - Refactored to use ).
-10. **User:** Add the  variable to the list of variables in the template editor UI. (DONE)
+1.  **User:** Reports the System Template button doesn't update the code. (IN PROGRESS)
+2.  **User:** Provides a new, updated HTML for the Waybill template. (COMPLETED)
+3.  **User:** Reports again that the code doesn't update after the new HTML was implemented. (IN PROGRESS)
+4.  **Agent:** Discovers the database name mismatch and fixes it.
+5.  **Agent:** Confirms via  that the API now serves the correct template.
+6.  **Agent:** Tests in the browser and believes it is fixed.
+7.  **User:** Provides a very specific scenario explaining the bug: after editing and saving, the System Template button does not revert the changes. This was a crucial clarification. (IN PROGRESS)
+8.  **Agent:** Understands the user-template scenario and implements a new logic in  to handle it.
+9.  **User:** Repeats that it's not working and should behave like it does for invoices/acts. (IN PROGRESS)
+10. **Agent:** Investigates and finds that it *doesn't* work for invoices/acts either because their default templates were missing in the DB. The agent then seeds all templates, fixing the issue for a clean state but not the edit->revert scenario. This leads back to the final fix in .
 
 **Project Health Check:**
-- **Broken:** The core PDF generation functionality is subject to frequent, unpredictable environmental failures. The application is fundamentally unstable until the root cause of the  issue is found and fixed.
+- **Broken:** The user flow for reverting a custom-saved template to the system default is currently broken, but a fix has been coded and is awaiting testing.
 - **Mocked:** None.
 
 **3rd Party Integrations**
-- **YouScore API:** Used for fetching Ukrainian company data by ЄДРПОУ code.
-- **SMTP (via smtplib):** Used for sending all emails.
+- **YouScore API:** Used for fetching Ukrainian company data.
+- **SMTP (via smtplib):** Used for sending emails with PDF attachments.
+- **Дія.Підпис (Future):** Discussed and planned for a future E-Signature implementation.
 
 **Testing status**
-- **Testing agent used after significant changes:** YES.
-- **Troubleshoot agent used after agent stuck in loop:** NO. The agent should have used it for the recurring library issue.
-- **Test files created:** None.
-- **Known regressions:** The periodic disappearance of the  library is a severe, high-frequency regression.
+- **Testing agent used after significant changes:** NO (Agent relied heavily on the screenshot tool).
+- **Troubleshoot agent used after agent stuck in loop:** NO
+- **Test files created:** None
+- **Known regressions:** The System Template button functionality is the primary issue and can be considered a regression/newly-discovered bug.
 
 **Credentials to test flow:**
 - **Test User:**
@@ -209,5 +157,4 @@ libpangoft2-1.0-0 is already the newest version (1.50.12+ds-1).
     - Password: 
 
 **What agent forgot to execute**
-- The agent did not find a permanent solution for the recurring  library failure, instead opting to re-install it manually each time. The next agent should prioritize a permanent fix by using the .
-- The agent has not yet started implementing the universal search feature requested by the user in the last message.</analysis>
+- The agent has not tested the final code change made to  in Chat Message 398. This is the immediate next step required to verify the fix for the main reported issue.</analysis>
