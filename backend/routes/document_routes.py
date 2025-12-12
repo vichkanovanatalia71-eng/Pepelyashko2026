@@ -1278,16 +1278,19 @@ async def create_order(
                 company_logo_path = None
                 if user and user.get('company_logo'):
                     logo_filename = user.get('company_logo')
-                    potential_path = f"/app/backend/uploads/logos/{logo_filename}"
+                    potential_path = f"/app/backend/uploads/{logo_filename}"
                     if os.path.exists(potential_path):
                         company_logo_path = potential_path
+                        logger.info(f"Found company logo at: {company_logo_path}")
+                    else:
+                        logger.warning(f"Logo file not found at: {potential_path}")
                 
-                # Send email using the email service
+                # Send email using the email service with formatted date
                 email_service = EmailService()
                 success = email_service.send_order_document(
                     to_email=counterparty_email,
                     order_number=order.number,
-                    order_date=order_date,
+                    order_date=formatted_date,  # Use pre-formatted Ukrainian date
                     counterparty_name=counterparty_name,
                     total_amount=total_amount,
                     pdf_path=pdf_path,
