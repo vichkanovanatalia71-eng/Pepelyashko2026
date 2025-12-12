@@ -84,8 +84,6 @@ class OrderPDFService:
             items = order.get('items', [])
             is_paid = order.get('is_paid', False)
             
-            # Payment status
-            payment_status = "✅ Сплачено" if is_paid else "⏳ Не сплачено"
             # Status labels for PDF
             STATUS_LABELS = {
                 'new': 'Нове',
