@@ -270,23 +270,14 @@ class EmailService:
         """
         Send order confirmation email to counterparty with PDF attachment.
         This email confirms that the counterparty's order has been accepted.
-        
-        Args:
-            to_email: Recipient email address
-            order_number: Order number
-            order_date: Order date (will be formatted to Ukrainian)
-            counterparty_name: Name of the counterparty
-            total_amount: Total order amount
-            pdf_path: Path to PDF file
-            
-        Returns:
-            True if email sent successfully
         """
-        # Format date to Ukrainian
         formatted_date = self.format_date_ukrainian(order_date)
         company_display = company_name or 'Наша компанія'
         
-        subject = f"Ваше замовлення №{order_number} прийнято"
+        # Check if logo exists for embedding
+        has_logo = company_logo_path and Path(company_logo_path).exists()
+        
+        subject = f"Ваше замовлення №{order_number} від {formatted_date}"
         
         body = f"""
         <!DOCTYPE html>
@@ -321,20 +312,20 @@ class EmailService:
                     border-radius: 8px;
                 }}
                 .header {{
-                    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+                    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
                     color: white;
                     padding: 30px 40px;
                     text-align: center;
                 }}
                 .header h1 {{
                     margin: 0;
-                    font-size: 26px;
+                    font-size: 28px;
                     font-weight: 600;
                 }}
                 .header p {{
-                    margin: 8px 0 0 0;
-                    font-size: 15px;
-                    opacity: 0.95;
+                    margin: 5px 0 0 0;
+                    font-size: 14px;
+                    opacity: 0.9;
                 }}
                 .content {{
                     padding: 40px;
@@ -344,23 +335,9 @@ class EmailService:
                     color: #0f172a;
                     margin-bottom: 20px;
                 }}
-                .confirmation-message {{
-                    background-color: #ecfdf5;
-                    border: 1px solid #a7f3d0;
-                    border-radius: 8px;
-                    padding: 20px;
-                    margin: 20px 0;
-                    text-align: center;
-                }}
-                .confirmation-message p {{
-                    margin: 0;
-                    color: #065f46;
-                    font-size: 16px;
-                    font-weight: 500;
-                }}
                 .info-box {{
-                    background-color: #f8fafc;
-                    border-left: 4px solid #10b981;
+                    background-color: #eff6ff;
+                    border-left: 4px solid #3b82f6;
                     padding: 20px;
                     margin: 25px 0;
                     border-radius: 4px;
@@ -369,7 +346,7 @@ class EmailService:
                     display: flex;
                     justify-content: space-between;
                     padding: 8px 0;
-                    border-bottom: 1px solid #e2e8f0;
+                    border-bottom: 1px solid #dbeafe;
                 }}
                 .info-row:last-child {{
                     border-bottom: none;
@@ -385,33 +362,36 @@ class EmailService:
                     font-size: 14px;
                 }}
                 .total {{
-                    background-color: #d1fae5;
+                    background-color: #dbeafe;
                     padding: 15px 20px;
                     margin: 20px 0;
                     border-radius: 6px;
                     text-align: right;
                 }}
                 .total-label {{
-                    color: #065f46;
+                    color: #1e3a8a;
                     font-size: 16px;
                     font-weight: 600;
                 }}
                 .total-amount {{
-                    color: #047857;
+                    color: #1d4ed8;
                     font-size: 24px;
                     font-weight: 700;
                     margin-top: 5px;
                 }}
-                .message {{
-                    color: #475569;
-                    font-size: 15px;
-                    line-height: 1.7;
-                    margin: 20px 0;
+                .attachment-notice {{
+                    background-color: #dbeafe;
+                    border: 1px solid #bfdbfe;
+                    padding: 15px;
+                    margin: 25px 0;
+                    border-radius: 6px;
+                    text-align: center;
                 }}
-                .signature {{
-                    margin-top: 30px;
-                    color: #64748b;
+                .attachment-notice p {{
+                    margin: 0;
+                    color: #1e40af;
                     font-size: 14px;
+                    font-weight: 500;
                 }}
                 .footer {{
                     background-color: #f8fafc;
@@ -424,49 +404,25 @@ class EmailService:
                     font-size: 13px;
                     color: #94a3b8;
                 }}
-                .attachment-notice {{
-                    background-color: #ecfdf5;
-                    border: 1px solid #a7f3d0;
-                    padding: 15px;
-                    margin: 25px 0;
-                    border-radius: 6px;
-                    text-align: center;
-                }}
-                .attachment-notice p {{
-                    margin: 0;
-                    color: #065f46;
-                    font-size: 14px;
-                    font-weight: 500;
-                }}
             </style>
         </head>
         <body>
             <div class="email-container">
-                {f'<div class="logo-container"><img src="cid:company_logo" alt="Company Logo" class="company-logo" /></div>' if company_logo_url else ''}
+                {f'<div class="logo-container"><img src="cid:company_logo" alt="Company Logo" class="company-logo" /></div>' if has_logo else ''}
                 <div class="header">
-                    <h1>✓ Ваше замовлення прийнято</h1>
-                    <p>Замовлення №{order_number} від {formatted_date}</p>
+                    <h1>Замовлення №{order_number}</h1>
+                    <p>Підтвердження замовлення</p>
                 </div>
-                
                 <div class="content">
                     <p class="greeting">Шановні партнери!</p>
-                    
-                    <div class="confirmation-message">
-                        <p>🎉 Дякуємо за ваше замовлення! Воно успішно прийнято в обробку.</p>
-                    </div>
-                    
-                    <p class="message">
-                        Компанія <strong>{company_display}</strong> підтверджує отримання вашого замовлення. 
-                        Нижче наведено основну інформацію:
-                    </p>
-                    
+                    <p><strong>{company_display}</strong> підтверджує отримання вашого замовлення №<strong>{order_number}</strong> від <strong>{formatted_date}</strong>.</p>
                     <div class="info-box">
                         <div class="info-row">
                             <span class="info-label">📋 Номер замовлення:</span>
                             <span class="info-value">№{order_number}</span>
                         </div>
                         <div class="info-row">
-                            <span class="info-label">📅 Дата оформлення:</span>
+                            <span class="info-label">📅 Дата:</span>
                             <span class="info-value">{formatted_date}</span>
                         </div>
                         <div class="info-row">
@@ -474,28 +430,16 @@ class EmailService:
                             <span class="info-value">{counterparty_name}</span>
                         </div>
                     </div>
-                    
                     <div class="total">
                         <div class="total-label">СУМА ЗАМОВЛЕННЯ:</div>
                         <div class="total-amount">{total_amount:,.2f} грн</div>
                     </div>
-                    
                     <div class="attachment-notice">
-                        <p>📎 У вкладеному PDF-документі ви знайдете детальну інформацію про ваше замовлення</p>
-                    </div>
-                    
-                    <p class="message">
-                        Якщо у вас виникнуть питання щодо замовлення, будь ласка, зв'яжіться з нами.
-                    </p>
-                    
-                    <div class="signature">
-                        <p>З повагою,<br>
-                        <strong>{company_display}</strong></p>
+                        <p>📎 Повна інформація про замовлення знаходиться у вкладеному PDF-документі</p>
                     </div>
                 </div>
-                
                 <div class="footer">
-                    <p>Це автоматичне повідомлення від {company_display}</p>
+                    <p>Це автоматично згенерований лист</p>
                 </div>
             </div>
         </body>
@@ -508,7 +452,7 @@ class EmailService:
             body=body,
             attachment_path=pdf_path,
             attachment_name=f"Замовлення_{order_number}.pdf",
-            embedded_image_path=company_logo_path
+            embedded_image_path=company_logo_path if has_logo else None
         )
     
     def send_invoice_document(
