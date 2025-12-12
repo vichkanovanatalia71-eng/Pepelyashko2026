@@ -838,7 +838,8 @@ const FullDashboard = () => {
       counterparty_edrpou: viewingOrder.counterparty_edrpou,
       counterparty_name: viewingOrder.counterparty_name,
       items: viewingOrder.items.map(item => ({ ...item })),
-      total_amount: viewingOrder.total_amount
+      total_amount: viewingOrder.total_amount,
+      ttn_number: viewingOrder.ttn_number || ''
     });
     setEditingOrder(true);
   };
@@ -850,7 +851,8 @@ const FullDashboard = () => {
       counterparty_edrpou: '',
       counterparty_name: '',
       items: [],
-      total_amount: 0
+      total_amount: 0,
+      ttn_number: ''
     });
   };
 
@@ -866,7 +868,8 @@ const FullDashboard = () => {
           counterparty_edrpou: editOrderForm.counterparty_edrpou,
           counterparty_name: editOrderForm.counterparty_name,
           items: editOrderForm.items,
-          total_amount: editOrderForm.total_amount
+          total_amount: editOrderForm.total_amount,
+          ttn_number: editOrderForm.ttn_number || null
         }
       );
       
