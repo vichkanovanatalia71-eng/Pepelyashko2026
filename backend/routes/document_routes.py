@@ -1735,6 +1735,199 @@ async def update_order_status(
         )
 
 
+@router.patch("/orders/{order_number}/ttn")
+async def update_order_ttn(
+    order_number: str,
+    ttn_number: str = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Update TTN number for an order."""
+    from server import db as database
+    from datetime import datetime
+    
+    try:
+        result = await database.orders.update_one(
+            {"number": order_number, "user_id": current_user["_id"]},
+            {"$set": {
+                "ttn_number": ttn_number,
+                "updated_at": datetime.utcnow()
+            }}
+        )
+        
+        if result.matched_count == 0:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Замовлення не знайдено"
+            )
+        
+        logger.info(f"Order {order_number} TTN updated to: {ttn_number}")
+        return {"message": "ТТН оновлено", "ttn_number": ttn_number}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating order TTN: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Помилка при оновленні ТТН"
+        )
+
+
+@router.post("/orders/{order_number}/ship")
+async def ship_order(
+    order_number: str,
+    ttn_number: str = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Change order status to 'shipped' and send notification to counterparty.
+    Optionally update TTN number before shipping.
+    """
+    from server import db as database
+    from datetime import datetime
+    from services.order_pdf_service import OrderPDFService
+    from services.email_service import EmailService
+    
+    try:
+        # Get current order
+        order = await database.orders.find_one(
+            {"number": order_number, "user_id": current_user["_id"]},
+            {"_id": 0}
+        )
+        
+        if not order:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Замовлення не знайдено"
+            )
+        
+        previous_status = order.get('status', 'new')
+        
+        # Only allow shipping from 'in_progress' status
+        if previous_status != 'in_progress':
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Можна відправити тільки замовлення зі статусом 'В роботі'. Поточний статус: {previous_status}"
+            )
+        
+        # Update TTN if provided, otherwise use existing
+        final_ttn = ttn_number if ttn_number else order.get('ttn_number')
+        
+        # Update order status to shipped
+        await database.orders.update_one(
+            {"number": order_number, "user_id": current_user["_id"]},
+            {"$set": {
+                "status": "shipped",
+                "ttn_number": final_ttn,
+                "shipped_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow()
+            }}
+        )
+        
+        logger.info(f"Order {order_number} shipped with TTN: {final_ttn}")
+        
+        # Send notification to counterparty
+        try:
+            # Get counterparty email
+            counterparty = await database.counterparties.find_one({
+                "edrpou": order.get('counterparty_edrpou'),
+                "user_id": current_user["_id"]
+            }, {"_id": 0})
+            
+            counterparty_email = counterparty.get('email') if counterparty else None
+            
+            if counterparty_email:
+                logger.info(f"Sending shipment notification to counterparty: {counterparty_email}")
+                
+                # Get user data
+                user = await database.users.find_one(
+                    {"_id": current_user["_id"]},
+                    {"hashed_password": 0}
+                )
+                
+                # Update order with new status for PDF
+                order['status'] = 'shipped'
+                order['ttn_number'] = final_ttn
+                
+                # Generate PDF
+                pdf_service = OrderPDFService()
+                pdf_path = pdf_service.generate_order_pdf(order, user, counterparty)
+                
+                # Format date
+                order_date = order.get('date', '')
+                formatted_date = ''
+                try:
+                    if isinstance(order_date, str):
+                        if 'T' in order_date:
+                            date_obj = datetime.fromisoformat(order_date.replace('Z', '+00:00'))
+                        else:
+                            date_obj = datetime.strptime(order_date, '%Y-%m-%d')
+                    else:
+                        date_obj = order_date
+                    
+                    months = {
+                        1: 'січня', 2: 'лютого', 3: 'березня', 4: 'квітня',
+                        5: 'травня', 6: 'червня', 7: 'липня', 8: 'серпня',
+                        9: 'вересня', 10: 'жовтня', 11: 'листопада', 12: 'грудня'
+                    }
+                    formatted_date = f"{date_obj.day:02d} {months.get(date_obj.month, '')} {date_obj.year} року"
+                except Exception:
+                    formatted_date = str(order_date).split('T')[0] if 'T' in str(order_date) else str(order_date)
+                
+                # Get company logo
+                company_logo_path = None
+                if user and user.get('company_logo'):
+                    logo_value = user.get('company_logo')
+                    if logo_value.startswith('uploads/'):
+                        potential_path = f"/app/backend/{logo_value}"
+                    else:
+                        potential_path = f"/app/backend/uploads/{logo_value}"
+                    
+                    if os.path.exists(potential_path):
+                        company_logo_path = potential_path
+                
+                company_name = user.get('representative_name', user.get('company_name', 'Компанія')) if user else 'Компанія'
+                counterparty_name = order.get('counterparty_name', 'N/A')
+                total_amount = order.get('total_amount', 0.0)
+                
+                # Send shipment notification email
+                email_service = EmailService()
+                success = email_service.send_order_shipped_notification(
+                    to_email=counterparty_email,
+                    order_number=order_number,
+                    order_date=formatted_date,
+                    counterparty_name=counterparty_name,
+                    total_amount=total_amount,
+                    ttn_number=final_ttn,
+                    pdf_path=pdf_path,
+                    company_logo_path=company_logo_path,
+                    company_name=company_name
+                )
+                
+                if success:
+                    logger.info(f"Shipment notification for order {order_number} sent to {counterparty_email}")
+                else:
+                    logger.warning(f"Failed to send shipment notification for order {order_number}")
+            else:
+                logger.warning(f"No email found for counterparty of order {order_number}")
+                
+        except Exception as email_error:
+            logger.error(f"Error sending shipment email: {str(email_error)}")
+        
+        return {
+            "message": "Замовлення відправлено",
+            "status": "shipped",
+            "ttn_number": final_ttn
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error shipping order: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Помилка при відправці замовлення"
+        )
+
+
 @router.get("/orders/{order_number}/pdf")
 async def get_order_pdf(
     order_number: str,
