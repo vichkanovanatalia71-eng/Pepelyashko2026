@@ -4412,6 +4412,7 @@ const FullDashboard = () => {
         onUpdateItem={updateEditOrderItem}
         onRemoveItem={removeEditOrderItem}
         onClose={closeOrderDialog}
+        onStatusChange={updateOrderStatus}
       />
 
       {/* Order Selection Dialog */}
