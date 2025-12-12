@@ -115,7 +115,8 @@ const FullDashboard = () => {
     counterparty_edrpou: '',
     counterparty_name: '',
     items: [],
-    total_amount: 0
+    total_amount: 0,
+    ttn_number: ''
   });
 
   // Invoice viewing/editing
