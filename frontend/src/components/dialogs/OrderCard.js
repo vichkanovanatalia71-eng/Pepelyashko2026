@@ -89,12 +89,14 @@ const OrderCard = ({
   onUpdateItem,
   onRemoveItem,
   onClose,
+  onStatusChange,
   supplierLogo
 }) => {
   if (!order) return null;
 
-  const status = order.is_paid ? 'paid' : (order.status || 'pending');
-  const currentStatus = statusConfig[status] || statusConfig.pending;
+  // Get current status - default to 'new' if not set
+  const currentStatusKey = order.status || (order.is_paid ? 'paid' : 'new');
+  const currentStatus = ORDER_STATUSES[currentStatusKey] || ORDER_STATUSES.new;
   const StatusIcon = currentStatus.icon;
 
   return (
