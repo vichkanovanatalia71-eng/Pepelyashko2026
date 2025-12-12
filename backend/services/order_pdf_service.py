@@ -144,16 +144,16 @@ class OrderPDFService:
                 </tr>
                 """
             
-            # Create HTML
+            # Create HTML with Premium B2B design
             html_content = f"""
 <!DOCTYPE html>
-<html>
+<html lang="uk">
 <head>
     <meta charset="UTF-8">
     <style>
         @page {{
             size: A4;
-            margin: 0;
+            margin: 15mm;
         }}
         * {{
             margin: 0;
@@ -161,360 +161,423 @@ class OrderPDFService:
             box-sizing: border-box;
         }}
         body {{
-            font-family: 'DejaVu Sans', Arial, sans-serif;
-            font-size: 9pt;
-            line-height: 1.3;
-            color: #1e293b;
-            background: white;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            padding: 7.5mm;
-            min-height: 297mm;
+            font-family: 'DejaVu Sans', 'Segoe UI', Arial, sans-serif;
+            font-size: 10pt;
+            line-height: 1.5;
+            color: #1B1B1B;
+            background: #EEF2F5;
         }}
         .card {{
-            width: 95%;
-            max-width: 199.5mm;
-            background: white;
+            max-width: 680px;
+            margin: 0 auto;
+            background: #FFFFFF;
             border-radius: 12px;
-            border: 2px solid #4b5563;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
             overflow: hidden;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }}
-        .header {{
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-            padding: 18px 25px;
+        .card-content {{
+            padding: 28px;
+        }}
+        
+        /* Hero Section */
+        .hero {{
             display: flex;
-            align-items: center;
-            gap: 15px;
-            color: white;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #E5E7EB;
         }}
-        .logo-box {{
-            width: 65px;
-            height: 65px;
-            background: #f1f5f9;
-            border-radius: 6px;
+        .hero-left {{
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+        }}
+        .hero-icon {{
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #3B82F6, #2563EB);
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            flex-shrink: 0;
+            color: white;
+            font-size: 20pt;
         }}
-        .logo {{
-            max-width: 58px;
-            max-height: 58px;
-            object-fit: contain;
-        }}
-        .header-text {{
-            flex: 1;
-        }}
-        .header-title {{
-            font-size: 14pt;
-            font-weight: bold;
+        .hero-title {{
+            font-size: 18pt;
+            font-weight: 600;
+            color: #1B1B1B;
             margin-bottom: 2px;
         }}
-        .header-subtitle {{
-            font-size: 9pt;
-            opacity: 0.9;
-        }}
-        .badge {{
-            background: {payment_badge_bg};
-            color: {payment_badge_color};
-            padding: 6px 14px;
-            border-radius: 12px;
-            font-size: 8.5pt;
-            font-weight: bold;
-            flex-shrink: 0;
-        }}
-        .content {{
-            padding: 20px 25px;
-        }}
-        .section {{
-            margin-bottom: 16px;
-            page-break-inside: avoid;
-        }}
-        .section-title {{
+        .hero-date {{
             font-size: 10pt;
-            font-weight: bold;
-            color: #0f172a;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
+            color: #6B7280;
         }}
-        .info-grid {{
-            background: #f8fafc;
-            border-radius: 5px;
-            padding: 10px 12px;
-        }}
-        .info-row {{
-            display: flex;
-            padding: 4px 0;
-        }}
-        .info-row:not(:last-child) {{
-            border-bottom: 1px solid #e2e8f0;
-        }}
-        .info-label {{
-            width: 45%;
-            font-size: 8pt;
-            color: #64748b;
+        .status-badge {{
+            background: {'#10B981' if is_paid else '#F59E0B'};
+            color: white;
+            padding: 6px 14px;
+            border-radius: 16px;
+            font-size: 9pt;
             font-weight: 600;
         }}
-        .info-value {{
-            width: 55%;
+        
+        /* Parameters Grid */
+        .params-grid {{
+            display: flex;
+            gap: 24px;
+            margin-bottom: 24px;
+        }}
+        .param-item {{
+            flex: 1;
+        }}
+        .param-label {{
             font-size: 8pt;
-            color: #0f172a;
-            word-wrap: break-word;
+            font-weight: 600;
+            color: #9CA3AF;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
         }}
-        table {{
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 8px;
-            border: 1px solid #e5e7eb;
-            border-radius: 6px;
-            overflow: hidden;
+        .param-value {{
+            font-size: 12pt;
+            font-weight: 600;
+            color: #1B1B1B;
         }}
-        th {{
-            background: #f8fafc;
-            padding: 10px 8px;
-            text-align: left;
-            font-size: 8.5pt;
-            font-weight: bold;
-            color: #475569;
-            border-bottom: 2px solid #e5e7eb;
+        .param-value.accent {{
+            font-size: 14pt;
+            font-weight: 700;
+            color: #3B82F6;
         }}
-        .total-section {{
-            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-            padding: 16px;
-            border-radius: 8px;
-            margin-top: 16px;
-            border: 2px solid #3b82f6;
+        
+        /* Section Title */
+        .section-title {{
+            font-size: 12pt;
+            font-weight: 600;
+            color: #1B1B1B;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }}
-        .total-row {{
+        .section-icon {{
+            color: #3B82F6;
+        }}
+        
+        /* Items Table */
+        .items-header {{
+            background: #F9FAFB;
+            border-radius: 6px 6px 0 0;
+            padding: 10px 12px;
+            display: flex;
+            font-size: 8pt;
+            font-weight: 600;
+            color: #6B7280;
+            text-transform: uppercase;
+        }}
+        .items-header > div:nth-child(1) {{ width: 30px; }}
+        .items-header > div:nth-child(2) {{ flex: 1; }}
+        .items-header > div:nth-child(3) {{ width: 50px; text-align: center; }}
+        .items-header > div:nth-child(4) {{ width: 60px; text-align: right; }}
+        .items-header > div:nth-child(5) {{ width: 70px; text-align: right; }}
+        .items-header > div:nth-child(6) {{ width: 90px; text-align: right; }}
+        
+        .items-body {{
+            border: 1px solid #E5E7EB;
+            border-top: none;
+            border-radius: 0 0 6px 6px;
+        }}
+        .item-row {{
+            display: flex;
+            padding: 10px 12px;
+            border-bottom: 1px solid #F3F4F6;
+            align-items: center;
+        }}
+        .item-row:last-child {{ border-bottom: none; }}
+        .item-row > div:nth-child(1) {{ width: 30px; font-size: 9pt; color: #9CA3AF; }}
+        .item-row > div:nth-child(2) {{ flex: 1; font-size: 10pt; font-weight: 500; }}
+        .item-row > div:nth-child(3) {{ width: 50px; font-size: 9pt; color: #6B7280; text-align: center; }}
+        .item-row > div:nth-child(4) {{ width: 60px; font-size: 10pt; text-align: right; }}
+        .item-row > div:nth-child(5) {{ width: 70px; font-size: 10pt; text-align: right; }}
+        .item-row > div:nth-child(6) {{ width: 90px; font-size: 10pt; font-weight: 600; text-align: right; }}
+        
+        /* Total Box */
+        .total-box {{
+            background: #EFF6FF;
+            border: 1px solid #BFDBFE;
+            border-radius: 10px;
+            padding: 16px 20px;
+            margin: 20px 0;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 4px 0;
         }}
         .total-label {{
             font-size: 11pt;
-            font-weight: bold;
-            color: #1e40af;
+            font-weight: 600;
+            color: #1E40AF;
         }}
         .total-value {{
             font-size: 16pt;
-            font-weight: bold;
-            color: #1e40af;
+            font-weight: 700;
+            color: #3B82F6;
         }}
-        .footer {{
-            padding: 14px 25px;
-            background: #f8fafc;
-            text-align: center;
-            font-size: 7.5pt;
-            color: #94a3b8;
-            border-top: 1px solid #e2e8f0;
+        
+        /* Buyer Card */
+        .buyer-card {{
+            background: #F7F9FA;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
         }}
-        .description {{
-            background: #f0f9ff;
-            padding: 12px;
-            border-radius: 6px;
-            border-left: 3px solid #3b82f6;
-            margin-bottom: 16px;
-            font-size: 8.5pt;
-            line-height: 1.5;
-            color: #0f172a;
-        }}
-        .verification-block {{
-            border: 2px solid #3b82f6;
-            border-radius: 8px;
-            overflow: hidden;
-            margin-bottom: 16px;
-            page-break-inside: avoid;
-        }}
-        .block-header {{
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-            color: white;
-            padding: 12px 16px;
-            font-size: 11pt;
-            font-weight: bold;
-        }}
-        .block-content {{
-            padding: 16px;
-            background: white;
-        }}
-        .party-section {{
-            margin-bottom: 14px;
-        }}
-        .party-title {{
-            background: #f8fafc;
-            padding: 8px 12px;
-            border-radius: 5px;
-            font-size: 9.5pt;
-            font-weight: bold;
-            color: #1e40af;
-            margin-bottom: 8px;
+        .buyer-row {{
             display: flex;
-            align-items: center;
-            gap: 6px;
+            padding: 8px 0;
+            border-bottom: 1px solid #E5E7EB;
         }}
-        .party-info {{
-            background: #f8fafc;
-            border-radius: 5px;
-            padding: 10px 12px;
+        .buyer-row:last-child {{ border-bottom: none; }}
+        .buyer-label {{
+            width: 120px;
+            font-size: 9pt;
+            font-weight: 500;
+            color: #6B7280;
         }}
-        .checkbox-section {{
-            margin-top: 12px;
-            padding: 10px;
-            background: #ecfdf5;
-            border-radius: 5px;
-            border: 1px solid #10b981;
+        .buyer-value {{
+            flex: 1;
+            font-size: 10pt;
+            color: #1B1B1B;
         }}
-        .confirmation-block {{
-            border: 2px solid #10b981;
-            border-radius: 8px;
-            overflow: hidden;
-            margin-top: 20px;
-            page-break-inside: avoid;
+        .buyer-value.bold {{ font-weight: 600; }}
+        .buyer-value.mono {{ font-family: 'DejaVu Sans Mono', monospace; font-size: 9pt; }}
+        
+        /* Info Box */
+        .info-box {{
+            background: #EFF6FF;
+            border: 1px solid #BFDBFE;
+            border-radius: 10px;
+            padding: 14px 18px;
+            margin-bottom: 20px;
         }}
-        .confirmation-title {{
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            color: white;
-            padding: 12px 16px;
-            font-size: 11pt;
-            font-weight: bold;
+        .info-title {{
+            font-size: 10pt;
+            font-weight: 600;
+            color: #1E40AF;
+            margin-bottom: 4px;
         }}
-        .confirmation-content {{
-            padding: 16px;
-            background: white;
+        .info-text {{
+            font-size: 9pt;
+            color: #3B82F6;
         }}
-        .signature-section {{
+        
+        /* Signatures */
+        .signatures {{
             display: flex;
-            gap: 20px;
-            margin-top: 12px;
+            gap: 24px;
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid #E5E7EB;
         }}
-        .signature-box {{
+        .signature-block {{
             flex: 1;
         }}
-        .signature-label {{
-            font-size: 8.5pt;
+        .signature-title {{
+            font-size: 10pt;
             font-weight: 600;
-            color: #475569;
-            margin-bottom: 6px;
+            color: #1B1B1B;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+            padding-bottom: 6px;
+            border-bottom: 2px solid #3B82F6;
+        }}
+        .signature-row {{
+            display: flex;
+            padding: 4px 0;
+        }}
+        .signature-label {{
+            width: 80px;
+            font-size: 8pt;
+            font-weight: 500;
+            color: #6B7280;
+        }}
+        .signature-value {{
+            font-size: 9pt;
+            color: #1B1B1B;
         }}
         .signature-line {{
-            border-bottom: 2px solid #94a3b8;
-            padding: 8px 0;
-            text-align: center;
-            font-size: 9pt;
+            margin-top: 16px;
+            padding-top: 12px;
+            border-top: 1px dashed #D1D5DB;
         }}
-        .signature-hint {{
-            font-size: 7.5pt;
-            color: #94a3b8;
+        .sign-placeholder {{
+            border-bottom: 1px solid #1B1B1B;
+            width: 150px;
+            display: inline-block;
+            height: 20px;
+        }}
+        
+        /* Footer */
+        .footer {{
             text-align: center;
-            margin-top: 2px;
+            padding: 14px 0 0;
+            font-size: 8pt;
+            color: #9CA3AF;
+            border-top: 1px solid #E5E7EB;
+            margin-top: 20px;
         }}
     </style>
 </head>
 <body>
     <div class="card">
-        <div class="header">
-            <div class="logo-box">
-                {f'<img src="{logo_base64}" class="logo" />' if logo_base64 else '<div style="font-size: 24pt; color: #3b82f6;">📋</div>'}
-            </div>
-            <div class="header-text">
-                <div class="header-title">Замовлення №{order_number}</div>
-                <div class="header-subtitle">від {order_date}</div>
-            </div>
-            <div class="badge">{payment_status}</div>
-        </div>
-        
-        <div class="content">
-            <!-- ПОКУПЕЦЬ -->
-            <div class="section">
-                <div class="section-title">
-                    <span>👥</span>
-                    ПОКУПЕЦЬ
-                </div>
-                <div class="info-grid">
-                    <div class="info-row">
-                        <div class="info-label">Повна назва</div>
-                        <div class="info-value" style="font-weight: bold;">{counterparty_name}</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">Код ЄДРПОУ</div>
-                        <div class="info-value">{counterparty_edrpou}</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">Юридична адреса</div>
-                        <div class="info-value">{counterparty_address if counterparty_address else '—'}</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">Телефон</div>
-                        <div class="info-value">{counterparty_phone if counterparty_phone else '—'}</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">Email</div>
-                        <div class="info-value">{counterparty_email if counterparty_email else '—'}</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">Банк</div>
-                        <div class="info-value">{counterparty_bank if counterparty_bank else '—'}</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">IBAN</div>
-                        <div class="info-value" style="font-family: monospace; font-size: 7.5pt;">{counterparty_iban if counterparty_iban else '—'}</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">МФО</div>
-                        <div class="info-value">{counterparty_mfo if counterparty_mfo else '—'}</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">Директор</div>
-                        <div class="info-value">{counterparty_director if counterparty_director else '—'}</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">Посада</div>
-                        <div class="info-value">{counterparty_position if counterparty_position else '—'}</div>
+        <div class="card-content">
+            <!-- Hero -->
+            <div class="hero">
+                <div class="hero-left">
+                    <div class="hero-icon">📋</div>
+                    <div>
+                        <div class="hero-title">Замовлення №{order_number}</div>
+                        <div class="hero-date">📅 {order_date}</div>
                     </div>
                 </div>
+                <div class="status-badge">{payment_status}</div>
+            </div>
+
+            <!-- Parameters -->
+            <div class="params-grid">
+                <div class="param-item">
+                    <div class="param-label">Номер</div>
+                    <div class="param-value">№{order_number}</div>
+                </div>
+                <div class="param-item">
+                    <div class="param-label">Дата створення</div>
+                    <div class="param-value">{order_date}</div>
+                </div>
+                <div class="param-item">
+                    <div class="param-label">Загальна сума</div>
+                    <div class="param-value accent">{total_amount:,.2f} грн</div>
+                </div>
+            </div>
+
+            <!-- Items -->
+            <div class="section-title">
+                <span class="section-icon">📦</span>
+                ТОВАРИ ТА ПОСЛУГИ
+            </div>
+            <div class="items-header">
+                <div>№</div>
+                <div>НАЙМЕНУВАННЯ</div>
+                <div>ОД.</div>
+                <div>КІЛЬК.</div>
+                <div>ЦІНА</div>
+                <div>СУМА</div>
+            </div>
+            <div class="items-body">
+                {items_html}
             </div>
             
-            <!-- ТОВАРИ ТА ПОСЛУГИ -->
-            <div class="section">
-                <div class="section-title">
-                    <span>📦</span>
-                    ТОВАРИ ТА ПОСЛУГИ
+            <div class="total-box">
+                <span class="total-label">💰 Загальна сума замовлення:</span>
+                <span class="total-value">{total_amount:,.2f} грн</span>
+            </div>
+
+            <!-- Buyer -->
+            <div class="section-title">
+                <span class="section-icon">🏢</span>
+                ПОКУПЕЦЬ
+            </div>
+            <div class="buyer-card">
+                <div class="buyer-row">
+                    <span class="buyer-label">Повна назва</span>
+                    <span class="buyer-value bold">{counterparty_name}</span>
                 </div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th style="width: 40px; text-align: center;">№</th>
-                            <th>Найменування товару/послуги</th>
-                            <th style="width: 60px; text-align: center;">Кіл-ть</th>
-                            <th style="width: 50px; text-align: center;">Од.</th>
-                            <th style="width: 100px; text-align: right;">Ціна</th>
-                            <th style="width: 120px; text-align: right;">Сума</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {items_html}
-                    </tbody>
-                </table>
-                
-                <div class="total-section">
-                    <div class="total-row">
-                        <div class="total-label">💰 Загальна сума замовлення:</div>
-                        <div class="total-value">{total_amount:,.2f} грн</div>
+                <div class="buyer-row">
+                    <span class="buyer-label">Код ЄДРПОУ</span>
+                    <span class="buyer-value mono">{counterparty_edrpou}</span>
+                </div>
+                <div class="buyer-row">
+                    <span class="buyer-label">Юридична адреса</span>
+                    <span class="buyer-value">{counterparty_address if counterparty_address else '—'}</span>
+                </div>
+                <div class="buyer-row">
+                    <span class="buyer-label">Телефон</span>
+                    <span class="buyer-value">{counterparty_phone if counterparty_phone else '—'}</span>
+                </div>
+                <div class="buyer-row">
+                    <span class="buyer-label">Email</span>
+                    <span class="buyer-value">{counterparty_email if counterparty_email else '—'}</span>
+                </div>
+                <div class="buyer-row">
+                    <span class="buyer-label">Банк</span>
+                    <span class="buyer-value">{counterparty_bank if counterparty_bank else '—'}</span>
+                </div>
+                <div class="buyer-row">
+                    <span class="buyer-label">IBAN</span>
+                    <span class="buyer-value mono">{counterparty_iban if counterparty_iban else '—'}</span>
+                </div>
+                <div class="buyer-row">
+                    <span class="buyer-label">МФО</span>
+                    <span class="buyer-value mono">{counterparty_mfo if counterparty_mfo else '—'}</span>
+                </div>
+                <div class="buyer-row">
+                    <span class="buyer-label">Директор</span>
+                    <span class="buyer-value">{counterparty_director if counterparty_director else '—'}</span>
+                </div>
+                <div class="buyer-row">
+                    <span class="buyer-label">Посада</span>
+                    <span class="buyer-value">{counterparty_position if counterparty_position else '—'}</span>
+                </div>
+            </div>
+
+            <!-- Info Box -->
+            <div class="info-box">
+                <div class="info-title">Замовлення готове до обробки</div>
+                <div class="info-text">Цей документ підтверджує погодження номенклатури та вартості товарів/послуг між сторонами.</div>
+            </div>
+
+            <!-- Signatures -->
+            <div class="signatures">
+                <div class="signature-block">
+                    <div class="signature-title">ПОКУПЕЦЬ</div>
+                    <div class="signature-row">
+                        <span class="signature-label">Назва:</span>
+                        <span class="signature-value">{counterparty_name[:40]}{'...' if len(counterparty_name) > 40 else ''}</span>
+                    </div>
+                    <div class="signature-row">
+                        <span class="signature-label">ЄДРПОУ:</span>
+                        <span class="signature-value">{counterparty_edrpou}</span>
+                    </div>
+                    <div class="signature-row">
+                        <span class="signature-label">Директор:</span>
+                        <span class="signature-value">{counterparty_director if counterparty_director else '—'}</span>
+                    </div>
+                    <div class="signature-line">
+                        <p style="font-size: 8pt; color: #6B7280;">Підпис: <span class="sign-placeholder"></span></p>
+                    </div>
+                </div>
+                <div class="signature-block">
+                    <div class="signature-title">ПОСТАЧАЛЬНИК</div>
+                    <div class="signature-row">
+                        <span class="signature-label">Назва:</span>
+                        <span class="signature-value">{supplier_name[:40] if supplier_name else '—'}{'...' if supplier_name and len(supplier_name) > 40 else ''}</span>
+                    </div>
+                    <div class="signature-row">
+                        <span class="signature-label">ЄДРПОУ:</span>
+                        <span class="signature-value">{supplier_edrpou if supplier_edrpou else '—'}</span>
+                    </div>
+                    <div class="signature-row">
+                        <span class="signature-label">Директор:</span>
+                        <span class="signature-value">{supplier_director if supplier_director else '—'}</span>
+                    </div>
+                    <div class="signature-line">
+                        <p style="font-size: 8pt; color: #6B7280;">Підпис: <span class="sign-placeholder"></span></p>
                     </div>
                 </div>
             </div>
-        </div>
-        
-        <div class="footer">
-            <div style="font-weight: 600; margin-bottom: 4px;">
-                📤 Замовлення надіслано: {supplier_name if supplier_name else 'Постачальник'} → {counterparty_name}
+
+            <!-- Footer -->
+            <div class="footer">
+                Документ сформовано автоматично системою управління документами • {datetime.now().strftime('%d.%m.%Y о %H:%M')}
             </div>
-            <div>Документ згенеровано автоматично: {datetime.now().strftime('%d.%m.%Y о %H:%M')}</div>
-            <div style="margin-top: 4px;">Замовлення №{order_number} від {order_date} • Статус: {payment_status}</div>
         </div>
     </div>
 </body>
