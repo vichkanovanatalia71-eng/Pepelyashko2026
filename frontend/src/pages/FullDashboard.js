@@ -791,8 +791,34 @@ const FullDashboard = () => {
     }
   };
 
-  const openOrderDialog = (order) => {
-    setViewingOrder(order);
+  const openOrderDialog = async (order) => {
+    // Fetch counterparty details to get full buyer information
+    try {
+      const counterparty = counterparties.find(c => c.edrpou === order.counterparty_edrpou);
+      
+      if (counterparty) {
+        // Enrich order with counterparty data
+        const enrichedOrder = {
+          ...order,
+          // Buyer details from counterparty
+          buyer_address: counterparty.legal_address,
+          buyer_phone: counterparty.phone,
+          buyer_email: counterparty.email,
+          buyer_bank: counterparty.bank || counterparty.bank_name,
+          buyer_iban: counterparty.iban,
+          buyer_mfo: counterparty.mfo,
+          buyer_director: counterparty.director_name,
+          buyer_position: counterparty.director_position || counterparty.position
+        };
+        setViewingOrder(enrichedOrder);
+      } else {
+        setViewingOrder(order);
+      }
+    } catch (error) {
+      console.error('Error enriching order with counterparty data:', error);
+      setViewingOrder(order);
+    }
+    
     setShowOrderDialog(true);
   };
 
