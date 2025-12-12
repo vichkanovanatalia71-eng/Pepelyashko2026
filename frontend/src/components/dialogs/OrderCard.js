@@ -179,7 +179,7 @@ const OrderCard = ({
                   </div>
 
                   {/* Block 2: Order Parameters */}
-                  <div className="grid grid-cols-3 gap-6 mb-8">
+                  <div className="grid grid-cols-4 gap-6 mb-8">
                     <div>
                       <p className="text-[12px] font-medium text-gray-400 uppercase tracking-wide mb-1">
                         Номер
@@ -194,6 +194,14 @@ const OrderCard = ({
                       </p>
                       <p className="text-[16px] font-semibold text-[#1B1B1B]">
                         {formatDateUkrainian(order.date)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[12px] font-medium text-gray-400 uppercase tracking-wide mb-1">
+                        Номер ТТН
+                      </p>
+                      <p className="text-[16px] font-semibold text-[#1B1B1B]">
+                        {order.ttn_number || '—'}
                       </p>
                     </div>
                     <div>
