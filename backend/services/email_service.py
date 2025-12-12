@@ -456,6 +456,216 @@ class EmailService:
             embedded_image_path=company_logo_path if has_logo else None
         )
     
+    def send_order_in_progress_notification(
+        self,
+        to_email: str,
+        order_number: str,
+        order_date: str,
+        counterparty_name: str,
+        total_amount: float,
+        pdf_path: str,
+        company_logo_path: str = None,
+        company_name: str = None
+    ) -> bool:
+        """
+        Send internal notification to user when order status changes to 'in_progress'.
+        This email is for triggering internal production processes.
+        """
+        formatted_date = order_date  # Already formatted
+        company_display = company_name or 'Компанія'
+        
+        # Check if logo exists for embedding
+        has_logo = company_logo_path and Path(company_logo_path).exists()
+        
+        subject = f"🔧 Замовлення №{order_number} — В роботі"
+        
+        body = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <style>
+                body {{
+                    font-family: 'Segoe UI', Arial, sans-serif;
+                    line-height: 1.6;
+                    color: #1e293b;
+                    margin: 0;
+                    padding: 0;
+                    background-color: #f8fafc;
+                }}
+                .email-container {{
+                    max-width: 600px;
+                    margin: 20px auto;
+                    background-color: #ffffff;
+                    border-radius: 8px;
+                    overflow: hidden;
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                }}
+                .logo-container {{
+                    text-align: center;
+                    padding: 20px;
+                    background-color: #ffffff;
+                }}
+                .company-logo {{
+                    max-width: 160px;
+                    max-height: 160px;
+                    border-radius: 8px;
+                }}
+                .header {{
+                    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+                    color: white;
+                    padding: 30px 40px;
+                    text-align: center;
+                }}
+                .header h1 {{
+                    margin: 0;
+                    font-size: 28px;
+                    font-weight: 600;
+                }}
+                .header p {{
+                    margin: 5px 0 0 0;
+                    font-size: 14px;
+                    opacity: 0.9;
+                }}
+                .content {{
+                    padding: 40px;
+                }}
+                .greeting {{
+                    font-size: 18px;
+                    color: #0f172a;
+                    margin-bottom: 20px;
+                }}
+                .status-badge {{
+                    display: inline-block;
+                    background-color: #fef3c7;
+                    color: #92400e;
+                    padding: 8px 16px;
+                    border-radius: 20px;
+                    font-weight: 600;
+                    font-size: 14px;
+                    margin: 15px 0;
+                }}
+                .info-box {{
+                    background-color: #fffbeb;
+                    border-left: 4px solid #f59e0b;
+                    padding: 20px;
+                    margin: 25px 0;
+                    border-radius: 4px;
+                }}
+                .info-row {{
+                    display: flex;
+                    justify-content: space-between;
+                    padding: 8px 0;
+                    border-bottom: 1px solid #fde68a;
+                }}
+                .info-row:last-child {{
+                    border-bottom: none;
+                }}
+                .info-label {{
+                    color: #64748b;
+                    font-weight: 500;
+                    font-size: 14px;
+                }}
+                .info-value {{
+                    color: #0f172a;
+                    font-weight: 600;
+                    font-size: 14px;
+                }}
+                .total {{
+                    background-color: #fde68a;
+                    padding: 15px 20px;
+                    margin: 20px 0;
+                    border-radius: 6px;
+                    text-align: right;
+                }}
+                .total-label {{
+                    color: #92400e;
+                    font-size: 16px;
+                    font-weight: 600;
+                }}
+                .total-amount {{
+                    color: #b45309;
+                    font-size: 24px;
+                    font-weight: 700;
+                    margin-top: 5px;
+                }}
+                .action-box {{
+                    background-color: #fef3c7;
+                    border: 1px solid #fde68a;
+                    padding: 15px;
+                    margin: 25px 0;
+                    border-radius: 6px;
+                    text-align: center;
+                }}
+                .action-box p {{
+                    margin: 0;
+                    color: #92400e;
+                    font-size: 14px;
+                    font-weight: 500;
+                }}
+                .footer {{
+                    background-color: #f8fafc;
+                    padding: 25px 40px;
+                    text-align: center;
+                    border-top: 1px solid #e2e8f0;
+                }}
+                .footer p {{
+                    margin: 5px 0;
+                    font-size: 13px;
+                    color: #94a3b8;
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="email-container">
+                {'<div class="logo-container"><img src="cid:company_logo" alt="Company Logo" class="company-logo" /></div>' if has_logo else ''}
+                <div class="header">
+                    <h1>Замовлення №{order_number}</h1>
+                    <p>Внутрішнє повідомлення</p>
+                </div>
+                <div class="content">
+                    <p class="greeting">Замовлення прийнято в роботу!</p>
+                    <div class="status-badge">🔧 Статус: В РОБОТІ</div>
+                    <p>Замовлення №<strong>{order_number}</strong> від <strong>{formatted_date}</strong> переведено в статус "В роботі". Можна запускати внутрішні процеси виробництва.</p>
+                    <div class="info-box">
+                        <div class="info-row">
+                            <span class="info-label">📋 Номер замовлення:</span>
+                            <span class="info-value">№{order_number}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">📅 Дата:</span>
+                            <span class="info-value">{formatted_date}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">🏢 Замовник:</span>
+                            <span class="info-value">{counterparty_name}</span>
+                        </div>
+                    </div>
+                    <div class="total">
+                        <div class="total-label">СУМА ЗАМОВЛЕННЯ:</div>
+                        <div class="total-amount">{total_amount:,.2f} грн</div>
+                    </div>
+                    <div class="action-box">
+                        <p>📎 PDF-документ замовлення додано до цього листа</p>
+                    </div>
+                </div>
+                <div class="footer">
+                    <p>Внутрішнє повідомлення • {company_display}</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        
+        return self.send_email_with_attachment(
+            to_email=to_email,
+            subject=subject,
+            body=body,
+            attachment_path=pdf_path,
+            attachment_name=f"Замовлення_{order_number}_в_роботі.pdf",
+            embedded_image_path=company_logo_path if has_logo else None
+        )
+    
     def send_invoice_document(
         self,
         to_email: str,
