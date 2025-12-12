@@ -1274,117 +1274,26 @@ async def create_order(
                 counterparty_name = order_dict.get('counterparty_name', 'N/A')
                 total_amount = order_dict.get('total_amount', 0.0)
                 
-                # Send email
+                # Get company logo path if available
+                company_logo_path = None
+                if user and user.get('company_logo'):
+                    logo_filename = user.get('company_logo')
+                    potential_path = f"/app/backend/uploads/logos/{logo_filename}"
+                    if os.path.exists(potential_path):
+                        company_logo_path = potential_path
+                
+                # Send email using the email service
                 email_service = EmailService()
-                subject = f"Нове замовлення №{order.number} від {formatted_date}"
-                
-                body = f"""
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <meta charset="UTF-8">
-                    <style>
-                        body {{
-                            font-family: 'Segoe UI', Arial, sans-serif;
-                            line-height: 1.6;
-                            color: #1e293b;
-                            margin: 0;
-                            padding: 0;
-                            background-color: #f8fafc;
-                        }}
-                        .container {{
-                            max-width: 600px;
-                            margin: 20px auto;
-                            padding: 20px;
-                        }}
-                        .card {{
-                            background: white;
-                            border-radius: 12px;
-                            padding: 24px;
-                            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-                        }}
-                        .header {{
-                            background: linear-gradient(135deg, #3b82f6, #2563eb);
-                            color: white;
-                            padding: 20px;
-                            border-radius: 8px;
-                            margin-bottom: 20px;
-                        }}
-                        .badge {{
-                            background: #10b981;
-                            color: white;
-                            padding: 4px 12px;
-                            border-radius: 12px;
-                            font-size: 12px;
-                            font-weight: bold;
-                        }}
-                        .info-row {{
-                            display: flex;
-                            justify-content: space-between;
-                            padding: 8px 0;
-                            border-bottom: 1px solid #e2e8f0;
-                        }}
-                        .total {{
-                            font-size: 24px;
-                            font-weight: bold;
-                            color: #3b82f6;
-                        }}
-                        .footer {{
-                            text-align: center;
-                            color: #64748b;
-                            font-size: 12px;
-                            margin-top: 20px;
-                        }}
-                    </style>
-                </head>
-                <body>
-                    <div class="container">
-                        <div class="card">
-                            <div class="header">
-                                <h2 style="margin: 0 0 8px 0;">📋 Нове замовлення</h2>
-                                <p style="margin: 0; opacity: 0.9;">№{order.number} від {formatted_date}</p>
-                            </div>
-                            
-                            <p>Шановний партнере,</p>
-                            <p>Вам надійшло нове замовлення від <strong>{company_name}</strong>.</p>
-                            
-                            <div style="background: #f8fafc; border-radius: 8px; padding: 16px; margin: 16px 0;">
-                                <div class="info-row">
-                                    <span>Контрагент:</span>
-                                    <strong>{counterparty_name}</strong>
-                                </div>
-                                <div class="info-row">
-                                    <span>Номер замовлення:</span>
-                                    <strong>№{order.number}</strong>
-                                </div>
-                                <div class="info-row">
-                                    <span>Дата:</span>
-                                    <strong>{formatted_date}</strong>
-                                </div>
-                                <div class="info-row" style="border: none;">
-                                    <span>Сума:</span>
-                                    <span class="total">{total_amount:,.2f} грн</span>
-                                </div>
-                            </div>
-                            
-                            <p>📎 PDF-файл із деталями замовлення додано до цього листа.</p>
-                            
-                            <p style="margin-top: 24px;">З повагою,<br><strong>{company_name}</strong></p>
-                        </div>
-                        
-                        <div class="footer">
-                            <p>Цей лист згенеровано автоматично системою управління документами.</p>
-                        </div>
-                    </div>
-                </body>
-                </html>
-                """
-                
-                success = email_service.send_email_with_attachment(
+                success = email_service.send_order_document(
                     to_email=counterparty_email,
-                    subject=subject,
-                    body=body,
-                    attachment_path=pdf_path
+                    order_number=order.number,
+                    order_date=order_date,
+                    counterparty_name=counterparty_name,
+                    total_amount=total_amount,
+                    pdf_path=pdf_path,
+                    company_logo_url=True if company_logo_path else None,
+                    company_logo_path=company_logo_path,
+                    company_name=company_name
                 )
                 
                 if success:
