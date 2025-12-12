@@ -427,6 +427,10 @@ class OrderPDFService:
                     <div class="param-value">{order_date}</div>
                 </div>
                 <div class="param-item">
+                    <div class="param-label">ТТН</div>
+                    <div class="param-value">{ttn_number if ttn_number else '—'}</div>
+                </div>
+                <div class="param-item">
                     <div class="param-label">Сума</div>
                     <div class="param-value accent">{total_amount:,.2f} грн</div>
                 </div>
