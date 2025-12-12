@@ -1384,8 +1384,7 @@ async def create_order(
                     to_email=counterparty_email,
                     subject=subject,
                     body=body,
-                    attachment_path=pdf_path,
-                    is_html=True
+                    attachment_path=pdf_path
                 )
                 
                 if success:
