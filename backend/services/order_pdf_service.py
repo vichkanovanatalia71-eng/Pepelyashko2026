@@ -83,6 +83,7 @@ class OrderPDFService:
             total_amount = order.get('total_amount', 0.0)
             items = order.get('items', [])
             is_paid = order.get('is_paid', False)
+            ttn_number = order.get('ttn_number', '')
             
             # Status labels for PDF
             STATUS_LABELS = {
@@ -96,6 +97,9 @@ class OrderPDFService:
             payment_status = STATUS_LABELS.get(order_status, 'Нове')
             payment_badge_bg = '#10b981' if order_status == 'paid' else '#3b82f6' if order_status == 'new' else '#f59e0b' if order_status == 'in_progress' else '#8b5cf6'
             payment_badge_color = '#ffffff'
+            
+            # Check if we should show full buyer details (not for shipped orders)
+            show_full_buyer_details = order_status != 'shipped'
             
             # User/Company info (Supplier)
             logo_base64 = None
