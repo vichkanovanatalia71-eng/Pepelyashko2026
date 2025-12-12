@@ -1190,8 +1190,11 @@ async def create_order(
     order_data: OrderCreate,
     current_user: dict = Depends(get_current_user)
 ):
-    """Create a new order."""
+    """Create a new order and automatically send PDF to counterparty if status is 'new'."""
     from server import db as database
+    from services.order_pdf_service import OrderPDFService
+    from services.email_service import EmailService
+    from datetime import datetime
     
     document_service = DocumentServiceMongo(database)
     counterparty_service = CounterpartyService(database)
@@ -1215,6 +1218,185 @@ async def create_order(
         )
         
         logger.info(f"Order created: {order.number} by user {current_user['_id']}")
+        
+        # Auto-send email to counterparty if status is 'new' and counterparty has email
+        order_status = getattr(order_data, 'status', 'new') or 'new'
+        counterparty_email = counterparty.email
+        
+        if order_status == 'new' and counterparty_email:
+            try:
+                logger.info(f"Auto-sending order {order.number} PDF to counterparty email: {counterparty_email}")
+                
+                # Get full order data for PDF
+                order_dict = await database.orders.find_one({
+                    "number": order.number,
+                    "user_id": current_user["_id"]
+                }, {"_id": 0})
+                
+                # Get user data for PDF
+                user = await database.users.find_one({
+                    "_id": current_user["_id"]
+                }, {"hashed_password": 0})
+                
+                # Get full counterparty data
+                counterparty_data = await database.counterparties.find_one({
+                    "edrpou": order_data.counterparty_edrpou,
+                    "user_id": current_user["_id"]
+                }, {"_id": 0})
+                
+                # Generate PDF
+                pdf_service = OrderPDFService()
+                pdf_path = pdf_service.generate_order_pdf(order_dict, user, counterparty_data)
+                
+                # Format date
+                order_date = order_dict.get('date', '')
+                formatted_date = ''
+                try:
+                    if isinstance(order_date, str):
+                        if 'T' in order_date:
+                            date_obj = datetime.fromisoformat(order_date.replace('Z', '+00:00'))
+                        else:
+                            date_obj = datetime.strptime(order_date, '%Y-%m-%d')
+                    else:
+                        date_obj = order_date
+                    
+                    months = {
+                        1: 'січня', 2: 'лютого', 3: 'березня', 4: 'квітня',
+                        5: 'травня', 6: 'червня', 7: 'липня', 8: 'серпня',
+                        9: 'вересня', 10: 'жовтня', 11: 'листопада', 12: 'грудня'
+                    }
+                    formatted_date = f"{date_obj.day:02d} {months.get(date_obj.month, '')} {date_obj.year} року"
+                except Exception as e:
+                    logger.error(f"Error formatting order date: {e}")
+                    formatted_date = str(order_date).split('T')[0] if 'T' in str(order_date) else str(order_date)
+                
+                company_name = user.get('representative_name', user.get('company_name', 'Компанія')) if user else 'Компанія'
+                counterparty_name = order_dict.get('counterparty_name', 'N/A')
+                total_amount = order_dict.get('total_amount', 0.0)
+                
+                # Send email
+                email_service = EmailService()
+                subject = f"Нове замовлення №{order.number} від {formatted_date}"
+                
+                body = f"""
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <style>
+                        body {{
+                            font-family: 'Segoe UI', Arial, sans-serif;
+                            line-height: 1.6;
+                            color: #1e293b;
+                            margin: 0;
+                            padding: 0;
+                            background-color: #f8fafc;
+                        }}
+                        .container {{
+                            max-width: 600px;
+                            margin: 20px auto;
+                            padding: 20px;
+                        }}
+                        .card {{
+                            background: white;
+                            border-radius: 12px;
+                            padding: 24px;
+                            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                        }}
+                        .header {{
+                            background: linear-gradient(135deg, #3b82f6, #2563eb);
+                            color: white;
+                            padding: 20px;
+                            border-radius: 8px;
+                            margin-bottom: 20px;
+                        }}
+                        .badge {{
+                            background: #10b981;
+                            color: white;
+                            padding: 4px 12px;
+                            border-radius: 12px;
+                            font-size: 12px;
+                            font-weight: bold;
+                        }}
+                        .info-row {{
+                            display: flex;
+                            justify-content: space-between;
+                            padding: 8px 0;
+                            border-bottom: 1px solid #e2e8f0;
+                        }}
+                        .total {{
+                            font-size: 24px;
+                            font-weight: bold;
+                            color: #3b82f6;
+                        }}
+                        .footer {{
+                            text-align: center;
+                            color: #64748b;
+                            font-size: 12px;
+                            margin-top: 20px;
+                        }}
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="card">
+                            <div class="header">
+                                <h2 style="margin: 0 0 8px 0;">📋 Нове замовлення</h2>
+                                <p style="margin: 0; opacity: 0.9;">№{order.number} від {formatted_date}</p>
+                            </div>
+                            
+                            <p>Шановний партнере,</p>
+                            <p>Вам надійшло нове замовлення від <strong>{company_name}</strong>.</p>
+                            
+                            <div style="background: #f8fafc; border-radius: 8px; padding: 16px; margin: 16px 0;">
+                                <div class="info-row">
+                                    <span>Контрагент:</span>
+                                    <strong>{counterparty_name}</strong>
+                                </div>
+                                <div class="info-row">
+                                    <span>Номер замовлення:</span>
+                                    <strong>№{order.number}</strong>
+                                </div>
+                                <div class="info-row">
+                                    <span>Дата:</span>
+                                    <strong>{formatted_date}</strong>
+                                </div>
+                                <div class="info-row" style="border: none;">
+                                    <span>Сума:</span>
+                                    <span class="total">{total_amount:,.2f} грн</span>
+                                </div>
+                            </div>
+                            
+                            <p>📎 PDF-файл із деталями замовлення додано до цього листа.</p>
+                            
+                            <p style="margin-top: 24px;">З повагою,<br><strong>{company_name}</strong></p>
+                        </div>
+                        
+                        <div class="footer">
+                            <p>Цей лист згенеровано автоматично системою управління документами.</p>
+                        </div>
+                    </div>
+                </body>
+                </html>
+                """
+                
+                success = await email_service.send_email_with_attachment(
+                    to_email=counterparty_email,
+                    subject=subject,
+                    body=body,
+                    attachment_path=pdf_path,
+                    is_html=True
+                )
+                
+                if success:
+                    logger.info(f"Order {order.number} PDF auto-sent to {counterparty_email}")
+                else:
+                    logger.warning(f"Failed to auto-send order {order.number} PDF to {counterparty_email}")
+                    
+            except Exception as email_error:
+                # Log error but don't fail order creation
+                logger.error(f"Error auto-sending order email: {str(email_error)}")
+        
         return order
     except HTTPException:
         raise
