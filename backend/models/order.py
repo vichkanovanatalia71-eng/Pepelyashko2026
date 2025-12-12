@@ -7,7 +7,7 @@ from .document import DocumentModel, DocumentItem
 
 class OrderModel(DocumentModel):
     """Order model for MongoDB."""
-    pass
+    status: Optional[str] = Field(default="new", description="Статус замовлення: new, in_progress, shipped, paid")
 
 
 class OrderCreate(BaseModel):
