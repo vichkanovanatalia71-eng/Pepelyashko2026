@@ -955,6 +955,42 @@ const FullDashboard = () => {
     }
   };
 
+  // Status labels for orders
+  const ORDER_STATUS_LABELS = {
+    new: 'Нове',
+    in_progress: 'В роботі',
+    shipped: 'Відправлено',
+    paid: 'Сплачено'
+  };
+
+  const updateOrderStatus = async (orderNumber, newStatus) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.patch(
+        `${API_URL}/api/orders/${orderNumber}/status?status_value=${newStatus}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      const statusLabel = ORDER_STATUS_LABELS[newStatus] || newStatus;
+      toast.success(`Статус оновлено: ${statusLabel}`);
+      
+      // Update viewing order if open
+      if (viewingOrder && viewingOrder.number === orderNumber) {
+        setViewingOrder({
+          ...viewingOrder,
+          status: newStatus,
+          is_paid: newStatus === 'paid'
+        });
+      }
+      
+      await loadOrders();
+    } catch (error) {
+      console.error('Error updating order status:', error);
+      toast.error('Помилка оновлення статусу');
+    }
+  };
+
   const downloadOrderPDF = async (orderNumber) => {
     try {
       const token = localStorage.getItem('token');
