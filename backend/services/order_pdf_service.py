@@ -124,7 +124,7 @@ class OrderPDFService:
                 supplier_director = user.get('director_name', '')
                 supplier_position = user.get('director_position', user.get('position', ''))
             
-            # Build items table
+            # Build items HTML for premium design
             items_html = ""
             for idx, item in enumerate(items, 1):
                 item_name = item.get('name', 'N/A')
@@ -134,14 +134,14 @@ class OrderPDFService:
                 item_amount = item.get('amount', 0.0)
                 
                 items_html += f"""
-                <tr>
-                    <td style="text-align: center; padding: 10px 8px; border-bottom: 1px solid #e5e7eb;">{idx}</td>
-                    <td style="padding: 10px 8px; border-bottom: 1px solid #e5e7eb;">{item_name}</td>
-                    <td style="text-align: center; padding: 10px 8px; border-bottom: 1px solid #e5e7eb;">{item_quantity}</td>
-                    <td style="text-align: center; padding: 10px 8px; border-bottom: 1px solid #e5e7eb;">{item_unit}</td>
-                    <td style="text-align: right; padding: 10px 8px; border-bottom: 1px solid #e5e7eb;">{item_price:,.2f} грн</td>
-                    <td style="text-align: right; padding: 10px 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">{item_amount:,.2f} грн</td>
-                </tr>
+                <div class="item-row">
+                    <div>{idx}</div>
+                    <div>{item_name}</div>
+                    <div>{item_unit}</div>
+                    <div>{item_quantity}</div>
+                    <div>{item_price:,.2f}</div>
+                    <div>{item_amount:,.2f} грн</div>
+                </div>
                 """
             
             # Create HTML with Premium B2B design
