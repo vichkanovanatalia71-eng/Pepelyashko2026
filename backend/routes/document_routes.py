@@ -1599,9 +1599,11 @@ async def update_order_status(
     status_value: str,
     current_user: dict = Depends(get_current_user)
 ):
-    """Update status of an order."""
+    """Update status of an order. Sends email to user when status changes to 'in_progress'."""
     from server import db as database
     from datetime import datetime
+    from services.order_pdf_service import OrderPDFService
+    from services.email_service import EmailService
     
     if status_value not in ORDER_STATUSES:
         raise HTTPException(
@@ -1610,6 +1612,20 @@ async def update_order_status(
         )
     
     try:
+        # Get current order to check previous status
+        order = await database.orders.find_one(
+            {"number": order_number, "user_id": current_user["_id"]},
+            {"_id": 0}
+        )
+        
+        if not order:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Замовлення не знайдено"
+            )
+        
+        previous_status = order.get('status', 'new')
+        
         # Also update is_paid for backward compatibility
         is_paid = status_value == "paid"
         
@@ -1622,13 +1638,92 @@ async def update_order_status(
             }}
         )
         
-        if result.matched_count == 0:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Замовлення не знайдено"
-            )
+        logger.info(f"Order {order_number} status updated from {previous_status} to {status_value}")
         
-        logger.info(f"Order {order_number} status updated to {status_value}")
+        # Send email to user when status changes from 'new' to 'in_progress'
+        if previous_status == 'new' and status_value == 'in_progress':
+            try:
+                user_email = current_user.get('email')
+                if user_email:
+                    logger.info(f"Sending 'in_progress' notification to user: {user_email}")
+                    
+                    # Get full user data for PDF
+                    user = await database.users.find_one(
+                        {"_id": current_user["_id"]},
+                        {"hashed_password": 0}
+                    )
+                    
+                    # Get counterparty data
+                    counterparty = await database.counterparties.find_one({
+                        "edrpou": order.get('counterparty_edrpou'),
+                        "user_id": current_user["_id"]
+                    }, {"_id": 0})
+                    
+                    # Update order with new status for PDF
+                    order['status'] = status_value
+                    
+                    # Generate PDF
+                    pdf_service = OrderPDFService()
+                    pdf_path = pdf_service.generate_order_pdf(order, user, counterparty)
+                    
+                    # Format date
+                    order_date = order.get('date', '')
+                    formatted_date = ''
+                    try:
+                        if isinstance(order_date, str):
+                            if 'T' in order_date:
+                                date_obj = datetime.fromisoformat(order_date.replace('Z', '+00:00'))
+                            else:
+                                date_obj = datetime.strptime(order_date, '%Y-%m-%d')
+                        else:
+                            date_obj = order_date
+                        
+                        months = {
+                            1: 'січня', 2: 'лютого', 3: 'березня', 4: 'квітня',
+                            5: 'травня', 6: 'червня', 7: 'липня', 8: 'серпня',
+                            9: 'вересня', 10: 'жовтня', 11: 'листопада', 12: 'грудня'
+                        }
+                        formatted_date = f"{date_obj.day:02d} {months.get(date_obj.month, '')} {date_obj.year} року"
+                    except Exception:
+                        formatted_date = str(order_date).split('T')[0] if 'T' in str(order_date) else str(order_date)
+                    
+                    # Get company logo path
+                    company_logo_path = None
+                    if user and user.get('company_logo'):
+                        logo_value = user.get('company_logo')
+                        if logo_value.startswith('uploads/'):
+                            potential_path = f"/app/backend/{logo_value}"
+                        else:
+                            potential_path = f"/app/backend/uploads/{logo_value}"
+                        
+                        if os.path.exists(potential_path):
+                            company_logo_path = potential_path
+                    
+                    company_name = user.get('representative_name', user.get('company_name', 'Компанія')) if user else 'Компанія'
+                    counterparty_name = order.get('counterparty_name', 'N/A')
+                    total_amount = order.get('total_amount', 0.0)
+                    
+                    # Send internal notification email
+                    email_service = EmailService()
+                    success = email_service.send_order_in_progress_notification(
+                        to_email=user_email,
+                        order_number=order_number,
+                        order_date=formatted_date,
+                        counterparty_name=counterparty_name,
+                        total_amount=total_amount,
+                        pdf_path=pdf_path,
+                        company_logo_path=company_logo_path,
+                        company_name=company_name
+                    )
+                    
+                    if success:
+                        logger.info(f"Order {order_number} 'in_progress' notification sent to {user_email}")
+                    else:
+                        logger.warning(f"Failed to send 'in_progress' notification for order {order_number}")
+                        
+            except Exception as email_error:
+                logger.error(f"Error sending 'in_progress' email: {str(email_error)}")
+        
         return {"message": "Статус оновлено", "status": status_value, "is_paid": is_paid}
     except HTTPException:
         raise
