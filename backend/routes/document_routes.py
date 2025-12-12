@@ -1653,11 +1653,26 @@ async def update_order_status(
                         {"hashed_password": 0}
                     )
                     
-                    # Get counterparty data
+                    # Get counterparty data - try with user_id first, then without
+                    counterparty_edrpou = order.get('counterparty_edrpou')
+                    logger.info(f"Looking for counterparty with edrpou: {counterparty_edrpou}, user_id: {current_user['_id']}")
+                    
                     counterparty = await database.counterparties.find_one({
-                        "edrpou": order.get('counterparty_edrpou'),
+                        "edrpou": counterparty_edrpou,
                         "user_id": current_user["_id"]
                     }, {"_id": 0})
+                    
+                    # If not found with user_id, try without it
+                    if not counterparty:
+                        logger.warning(f"Counterparty not found with user_id, trying without")
+                        counterparty = await database.counterparties.find_one({
+                            "edrpou": counterparty_edrpou
+                        }, {"_id": 0})
+                    
+                    if counterparty:
+                        logger.info(f"Found counterparty: {counterparty.get('representative_name', 'N/A')[:50]}, legal_address: {counterparty.get('legal_address', 'N/A')[:30]}")
+                    else:
+                        logger.warning(f"Counterparty not found for edrpou: {counterparty_edrpou}")
                     
                     # Update order with new status for PDF
                     order['status'] = status_value
