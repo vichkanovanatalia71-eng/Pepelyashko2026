@@ -272,6 +272,16 @@ class PDFServiceWithTemplates:
             'buyer_position': counterparty.get('position', 'Директор'),
             'buyer_represented_by': counterparty.get('represented_by', ''),
             'buyer_signature': counterparty.get('signature', ''),
+            
+            # VAT status - Supplier
+            'supplier_is_vat_payer': supplier.get('vat_payer', False),
+            'supplier_vat_status': 'Платник ПДВ' if supplier.get('vat_payer', False) else 'Неплатник ПДВ',
+            'supplier_vat_rate': supplier.get('vat_rate', 20.0) if supplier.get('vat_payer', False) else 0.0,
+            
+            # VAT status - Buyer/Counterparty
+            'buyer_is_vat_payer': counterparty.get('vat_payer', False),
+            'buyer_vat_status': 'Платник ПДВ' if counterparty.get('vat_payer', False) else 'Неплатник ПДВ',
+            'buyer_vat_rate': counterparty.get('vat_rate', 20.0) if counterparty.get('vat_payer', False) else 0.0,
         }
         
         return context
