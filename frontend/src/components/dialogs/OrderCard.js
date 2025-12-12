@@ -466,8 +466,8 @@ const OrderCard = ({
                     </div>
                   </div>
 
-                  {/* Edit: Date */}
-                  <div className="grid grid-cols-2 gap-6 mb-6">
+                  {/* Edit: Date and TTN */}
+                  <div className="grid grid-cols-3 gap-6 mb-6">
                     <div>
                       <Label className="text-[12px] font-medium text-gray-400 uppercase tracking-wide mb-2 block">
                         Номер замовлення
@@ -486,6 +486,17 @@ const OrderCard = ({
                         type="date"
                         value={editOrderForm.date}
                         onChange={(e) => setEditOrderForm({...editOrderForm, date: e.target.value})}
+                        className="border-gray-200 text-[15px]"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-[12px] font-medium text-gray-400 uppercase tracking-wide mb-2 block">
+                        Номер ТТН
+                      </Label>
+                      <Input
+                        value={editOrderForm.ttn_number || ''}
+                        onChange={(e) => setEditOrderForm({...editOrderForm, ttn_number: e.target.value})}
+                        placeholder="Введіть номер ТТН"
                         className="border-gray-200 text-[15px]"
                       />
                     </div>
