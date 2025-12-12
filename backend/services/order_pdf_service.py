@@ -86,8 +86,18 @@ class OrderPDFService:
             
             # Payment status
             payment_status = "✅ Сплачено" if is_paid else "⏳ Не сплачено"
-            payment_badge_bg = '#dcfce7' if is_paid else '#fef3c7'
-            payment_badge_color = '#166534' if is_paid else '#92400e'
+            # Status labels for PDF
+            STATUS_LABELS = {
+                'new': 'Нове',
+                'in_progress': 'В роботі',
+                'shipped': 'Відправлено',
+                'paid': 'Сплачено'
+            }
+            
+            order_status = order.get('status', 'new' if not is_paid else 'paid')
+            payment_status = STATUS_LABELS.get(order_status, 'Нове')
+            payment_badge_bg = '#10b981' if order_status == 'paid' else '#3b82f6' if order_status == 'new' else '#f59e0b' if order_status == 'in_progress' else '#8b5cf6'
+            payment_badge_color = '#ffffff'
             
             # User/Company info (Supplier)
             logo_base64 = None
