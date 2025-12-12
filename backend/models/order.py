@@ -8,6 +8,7 @@ from .document import DocumentModel, DocumentItem
 class OrderModel(DocumentModel):
     """Order model for MongoDB."""
     status: Optional[str] = Field(default="new", description="Статус замовлення: new, in_progress, shipped, paid")
+    ttn_number: Optional[str] = Field(default=None, description="Номер ТТН (товарно-транспортної накладної)")
 
 
 class OrderCreate(BaseModel):
