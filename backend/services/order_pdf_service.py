@@ -336,29 +336,26 @@ class OrderPDFService:
             color: #3B82F6;
         }}
         
-        /* Buyer Card - Full Width */
+        /* Buyer Card - Full Width as List */
         .buyer-card {{
             background: #F9FAFB;
             border-radius: 8px;
             padding: 18px 20px;
             margin-bottom: 16px;
         }}
-        .buyer-grid {{
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px 24px;
+        .buyer-list {{
+            display: flex;
+            flex-direction: column;
         }}
         .buyer-row {{
             display: flex;
-            padding: 6px 0;
+            padding: 8px 0;
             border-bottom: 1px solid #E5E7EB;
         }}
         .buyer-row:last-child {{ border-bottom: none; }}
-        .buyer-row.full-width {{
-            grid-column: 1 / -1;
-        }}
         .buyer-label {{
-            width: 100px;
+            width: 140px;
+            min-width: 140px;
             font-size: 8pt;
             font-weight: 500;
             color: #6B7280;
