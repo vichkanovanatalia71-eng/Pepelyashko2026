@@ -144,7 +144,7 @@ class OrderPDFService:
                 </div>
                 """
             
-            # Create HTML with Compact Premium B2B design (fits on one A4 page)
+            # Create HTML - Clean design without supplier & signatures (~80% fill)
             html_content = f"""
 <!DOCTYPE html>
 <html lang="uk">
@@ -153,7 +153,7 @@ class OrderPDFService:
     <style>
         @page {{
             size: A4;
-            margin: 10mm;
+            margin: 12mm;
         }}
         * {{
             margin: 0;
@@ -162,42 +162,350 @@ class OrderPDFService:
         }}
         body {{
             font-family: 'DejaVu Sans', 'Segoe UI', Arial, sans-serif;
-            font-size: 8pt;
-            line-height: 1.3;
+            font-size: 9pt;
+            line-height: 1.4;
             color: #1B1B1B;
             background: #F3F4F6;
         }}
         .card {{
             background: #FFFFFF;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            border-radius: 10px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
             overflow: hidden;
         }}
         .card-content {{
-            padding: 16px 20px;
+            padding: 24px 28px;
         }}
         
-        /* Hero Section - Compact */
+        /* Hero Section */
         .hero {{
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding-bottom: 10px;
-            margin-bottom: 12px;
-            border-bottom: 1px solid #E5E7EB;
+            padding-bottom: 16px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #E5E7EB;
         }}
         .hero-left {{
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 14px;
         }}
         .hero-icon {{
-            width: 32px;
-            height: 32px;
+            width: 44px;
+            height: 44px;
             background: linear-gradient(135deg, #3B82F6, #2563EB);
-            border-radius: 6px;
+            border-radius: 8px;
             display: flex;
             align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18pt;
+        }}
+        .hero-title {{
+            font-size: 16pt;
+            font-weight: 600;
+            color: #1B1B1B;
+        }}
+        .hero-date {{
+            font-size: 9pt;
+            color: #6B7280;
+            margin-top: 2px;
+        }}
+        .status-badge {{
+            background: {'#10B981' if is_paid else '#F59E0B'};
+            color: white;
+            padding: 6px 14px;
+            border-radius: 12px;
+            font-size: 8pt;
+            font-weight: 600;
+        }}
+        
+        /* Parameters Grid */
+        .params-grid {{
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            padding: 14px 18px;
+            background: #F9FAFB;
+            border-radius: 8px;
+        }}
+        .param-item {{
+            flex: 1;
+        }}
+        .param-label {{
+            font-size: 7pt;
+            font-weight: 600;
+            color: #9CA3AF;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }}
+        .param-value {{
+            font-size: 11pt;
+            font-weight: 600;
+            color: #1B1B1B;
+        }}
+        .param-value.accent {{
+            font-size: 13pt;
+            font-weight: 700;
+            color: #3B82F6;
+        }}
+        
+        /* Section Title */
+        .section-title {{
+            font-size: 10pt;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }}
+        .section-icon {{
+            font-size: 12pt;
+        }}
+        
+        /* Items Table */
+        .items-header {{
+            background: #F9FAFB;
+            border-radius: 6px 6px 0 0;
+            padding: 10px 14px;
+            display: flex;
+            font-size: 7pt;
+            font-weight: 600;
+            color: #6B7280;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }}
+        .items-header > div:nth-child(1) {{ width: 30px; }}
+        .items-header > div:nth-child(2) {{ flex: 1; }}
+        .items-header > div:nth-child(3) {{ width: 50px; text-align: center; }}
+        .items-header > div:nth-child(4) {{ width: 60px; text-align: right; }}
+        .items-header > div:nth-child(5) {{ width: 80px; text-align: right; }}
+        .items-header > div:nth-child(6) {{ width: 100px; text-align: right; }}
+        
+        .items-body {{
+            border: 1px solid #E5E7EB;
+            border-top: none;
+            border-radius: 0 0 6px 6px;
+        }}
+        .item-row {{
+            display: flex;
+            padding: 10px 14px;
+            border-bottom: 1px solid #F3F4F6;
+            align-items: center;
+        }}
+        .item-row:last-child {{ border-bottom: none; }}
+        .item-row > div:nth-child(1) {{ width: 30px; font-size: 8pt; color: #9CA3AF; }}
+        .item-row > div:nth-child(2) {{ flex: 1; font-size: 9pt; font-weight: 500; }}
+        .item-row > div:nth-child(3) {{ width: 50px; font-size: 8pt; color: #6B7280; text-align: center; }}
+        .item-row > div:nth-child(4) {{ width: 60px; font-size: 9pt; text-align: right; }}
+        .item-row > div:nth-child(5) {{ width: 80px; font-size: 9pt; text-align: right; }}
+        .item-row > div:nth-child(6) {{ width: 100px; font-size: 9pt; font-weight: 600; text-align: right; }}
+        
+        /* Total Box */
+        .total-box {{
+            background: linear-gradient(135deg, #EFF6FF, #DBEAFE);
+            border: 1px solid #BFDBFE;
+            border-radius: 8px;
+            padding: 14px 20px;
+            margin: 20px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }}
+        .total-label {{
+            font-size: 10pt;
+            font-weight: 600;
+            color: #1E40AF;
+        }}
+        .total-value {{
+            font-size: 16pt;
+            font-weight: 700;
+            color: #3B82F6;
+        }}
+        
+        /* Buyer Card - Full Width */
+        .buyer-card {{
+            background: #F9FAFB;
+            border-radius: 8px;
+            padding: 18px 20px;
+            margin-bottom: 16px;
+        }}
+        .buyer-grid {{
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px 24px;
+        }}
+        .buyer-row {{
+            display: flex;
+            padding: 6px 0;
+            border-bottom: 1px solid #E5E7EB;
+        }}
+        .buyer-row:last-child {{ border-bottom: none; }}
+        .buyer-row.full-width {{
+            grid-column: 1 / -1;
+        }}
+        .buyer-label {{
+            width: 100px;
+            font-size: 8pt;
+            font-weight: 500;
+            color: #6B7280;
+        }}
+        .buyer-value {{
+            flex: 1;
+            font-size: 9pt;
+            color: #1B1B1B;
+        }}
+        .buyer-value.bold {{ font-weight: 600; }}
+        .buyer-value.mono {{ font-family: 'DejaVu Sans Mono', monospace; font-size: 8pt; }}
+        
+        /* Info Box */
+        .info-box {{
+            background: #ECFDF5;
+            border: 1px solid #A7F3D0;
+            border-radius: 8px;
+            padding: 14px 18px;
+        }}
+        .info-title {{
+            font-size: 9pt;
+            font-weight: 600;
+            color: #065F46;
+            margin-bottom: 4px;
+        }}
+        .info-text {{
+            font-size: 8pt;
+            color: #047857;
+        }}
+        
+        /* Footer */
+        .footer {{
+            text-align: center;
+            padding: 14px 0 0;
+            font-size: 7pt;
+            color: #9CA3AF;
+            border-top: 1px solid #E5E7EB;
+            margin-top: 16px;
+        }}
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="card-content">
+            <!-- Hero -->
+            <div class="hero">
+                <div class="hero-left">
+                    <div class="hero-icon">📋</div>
+                    <div>
+                        <div class="hero-title">Замовлення №{order_number}</div>
+                        <div class="hero-date">📅 {order_date}</div>
+                    </div>
+                </div>
+                <div class="status-badge">{payment_status}</div>
+            </div>
+
+            <!-- Parameters -->
+            <div class="params-grid">
+                <div class="param-item">
+                    <div class="param-label">Номер</div>
+                    <div class="param-value">№{order_number}</div>
+                </div>
+                <div class="param-item">
+                    <div class="param-label">Дата</div>
+                    <div class="param-value">{order_date}</div>
+                </div>
+                <div class="param-item">
+                    <div class="param-label">Сума</div>
+                    <div class="param-value accent">{total_amount:,.2f} грн</div>
+                </div>
+            </div>
+
+            <!-- Items -->
+            <div class="section-title">
+                <span class="section-icon">📦</span>
+                Товари та послуги
+            </div>
+            <div class="items-header">
+                <div>№</div>
+                <div>Найменування</div>
+                <div>Од.</div>
+                <div>К-сть</div>
+                <div>Ціна</div>
+                <div>Сума</div>
+            </div>
+            <div class="items-body">
+                {items_html}
+            </div>
+            
+            <div class="total-box">
+                <span class="total-label">💰 Разом до сплати:</span>
+                <span class="total-value">{total_amount:,.2f} грн</span>
+            </div>
+
+            <!-- Buyer - Full Width -->
+            <div class="section-title">
+                <span class="section-icon">🏢</span>
+                Покупець
+            </div>
+            <div class="buyer-card">
+                <div class="buyer-grid">
+                    <div class="buyer-row full-width">
+                        <span class="buyer-label">Повна назва</span>
+                        <span class="buyer-value bold">{counterparty_name}</span>
+                    </div>
+                    <div class="buyer-row">
+                        <span class="buyer-label">ЄДРПОУ</span>
+                        <span class="buyer-value mono">{counterparty_edrpou}</span>
+                    </div>
+                    <div class="buyer-row">
+                        <span class="buyer-label">Телефон</span>
+                        <span class="buyer-value">{counterparty_phone if counterparty_phone else '—'}</span>
+                    </div>
+                    <div class="buyer-row full-width">
+                        <span class="buyer-label">Юридична адреса</span>
+                        <span class="buyer-value">{counterparty_address if counterparty_address else '—'}</span>
+                    </div>
+                    <div class="buyer-row">
+                        <span class="buyer-label">Email</span>
+                        <span class="buyer-value">{counterparty_email if counterparty_email else '—'}</span>
+                    </div>
+                    <div class="buyer-row">
+                        <span class="buyer-label">Директор</span>
+                        <span class="buyer-value">{counterparty_director if counterparty_director else '—'}</span>
+                    </div>
+                    <div class="buyer-row">
+                        <span class="buyer-label">Банк</span>
+                        <span class="buyer-value">{counterparty_bank if counterparty_bank else '—'}</span>
+                    </div>
+                    <div class="buyer-row">
+                        <span class="buyer-label">МФО</span>
+                        <span class="buyer-value mono">{counterparty_mfo if counterparty_mfo else '—'}</span>
+                    </div>
+                    <div class="buyer-row full-width">
+                        <span class="buyer-label">IBAN</span>
+                        <span class="buyer-value mono">{counterparty_iban if counterparty_iban else '—'}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Info Box -->
+            <div class="info-box">
+                <div class="info-title">✓ Замовлення погоджено</div>
+                <div class="info-text">Цей документ підтверджує погодження номенклатури та вартості товарів/послуг.</div>
+            </div>
+
+            <!-- Footer -->
+            <div class="footer">
+                Документ сформовано: {datetime.now().strftime('%d.%m.%Y %H:%M')} • Замовлення №{order_number} від {order_date}
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+            """
             justify-content: center;
             color: white;
             font-size: 14pt;
