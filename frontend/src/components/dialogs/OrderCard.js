@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/compone
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { 
   Mail, 
@@ -17,35 +18,35 @@ import {
   Package,
   CheckCircle2,
   Clock,
-  AlertCircle
+  Truck,
+  Sparkles
 } from 'lucide-react';
 import CommentsSection from '../comments/CommentsSection';
 
-// Status badge configurations
-const statusConfig = {
-  pending: {
-    label: 'Очікує підтвердження',
+// Order status configurations
+const ORDER_STATUSES = {
+  new: {
+    value: 'new',
+    label: 'Нове',
+    bgColor: 'bg-blue-500',
+    icon: Sparkles
+  },
+  in_progress: {
+    value: 'in_progress',
+    label: 'В роботі',
     bgColor: 'bg-amber-500',
     icon: Clock
   },
-  confirmed: {
-    label: 'Підтверджено',
-    bgColor: 'bg-emerald-500',
-    icon: CheckCircle2
-  },
-  processing: {
-    label: 'В обробці',
-    bgColor: 'bg-blue-500',
-    icon: AlertCircle
-  },
-  completed: {
-    label: 'Виконано',
-    bgColor: 'bg-green-600',
-    icon: CheckCircle2
+  shipped: {
+    value: 'shipped',
+    label: 'Відправлено',
+    bgColor: 'bg-purple-500',
+    icon: Truck
   },
   paid: {
+    value: 'paid',
     label: 'Сплачено',
-    bgColor: 'bg-emerald-600',
+    bgColor: 'bg-emerald-500',
     icon: CheckCircle2
   }
 };
