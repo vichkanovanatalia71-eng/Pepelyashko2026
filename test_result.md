@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Тестування нового преміального дизайну картки замовлення. Перевірити: 1) Відкриття картки замовлення, 2) Режим перегляду з Hero-секцією, бейджем статусу, позиціями та реквізитами, 3) Режим редагування, 4) Збереження змін, 5) Кнопки Email та PDF. Логін: user1@example.com/password123."
+user_problem_statement: "Тестування преміального PDF замовлення. Перевірити: 1) Відкриття замовлення з повними даними покупця (№0019), 2) Натискання 'Переглянути PDF', 3) Перевірка що PDF генерується з новим дизайном (Hero, параметри, товари, покупець з усіма полями, підписи). Логін: user1@example.com/password123."
 
 frontend:
   - task: "System Template Button Functionality in Template Editor"
