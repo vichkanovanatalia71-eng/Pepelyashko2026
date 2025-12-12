@@ -271,7 +271,8 @@ class EmailService:
         Send order confirmation email to counterparty with PDF attachment.
         This email confirms that the counterparty's order has been accepted.
         """
-        formatted_date = self.format_date_ukrainian(order_date)
+        # Date is already formatted by caller
+        formatted_date = order_date
         company_display = company_name or 'Наша компанія'
         
         # Check if logo exists for embedding
@@ -408,7 +409,7 @@ class EmailService:
         </head>
         <body>
             <div class="email-container">
-                {f'<div class="logo-container"><img src="cid:company_logo" alt="Company Logo" class="company-logo" /></div>' if has_logo else ''}
+                {'<div class="logo-container"><img src="cid:company_logo" alt="Company Logo" class="company-logo" /></div>' if has_logo else ''}
                 <div class="header">
                     <h1>Замовлення №{order_number}</h1>
                     <p>Підтвердження замовлення</p>
