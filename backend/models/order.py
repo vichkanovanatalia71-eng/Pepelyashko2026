@@ -16,6 +16,7 @@ class OrderCreate(BaseModel):
     items: List[DocumentItem] = Field(..., description="Список товарів")
     total_amount: float = Field(..., description="Загальна сума")
     template_id: Optional[str] = Field(None, description="Custom template ID")
+    status: Optional[str] = Field(default="new", description="Статус замовлення: new, in_progress, shipped, paid")
     
     class Config:
         json_schema_extra = {
@@ -30,6 +31,7 @@ class OrderCreate(BaseModel):
                         "amount": 1000.0
                     }
                 ],
-                "total_amount": 1000.0
+                "total_amount": 1000.0,
+                "status": "new"
             }
         }
