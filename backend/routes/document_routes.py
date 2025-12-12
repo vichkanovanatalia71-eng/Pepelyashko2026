@@ -1457,15 +1457,19 @@ async def update_order_payment_status(
     is_paid: bool,
     current_user: dict = Depends(get_current_user)
 ):
-    """Update payment status of an order."""
+    """Update payment status of an order (legacy endpoint)."""
     from server import db as database
     from datetime import datetime
     
     try:
+        # Map is_paid to new status system
+        new_status = "paid" if is_paid else "new"
+        
         result = await database.orders.update_one(
             {"number": order_number, "user_id": current_user["_id"]},
             {"$set": {
                 "is_paid": is_paid,
+                "status": new_status,
                 "updated_at": datetime.utcnow()
             }}
         )
@@ -1477,7 +1481,7 @@ async def update_order_payment_status(
             )
         
         logger.info(f"Order {order_number} payment status updated to {is_paid}")
-        return {"message": "Статус оплати оновлено", "is_paid": is_paid}
+        return {"message": "Статус оплати оновлено", "is_paid": is_paid, "status": new_status}
     except HTTPException:
         raise
     except Exception as e:
@@ -1485,6 +1489,56 @@ async def update_order_payment_status(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Помилка при оновленні статусу оплати"
+        )
+
+
+# Valid order statuses
+ORDER_STATUSES = ["new", "in_progress", "shipped", "paid"]
+
+@router.patch("/orders/{order_number}/status")
+async def update_order_status(
+    order_number: str,
+    status_value: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Update status of an order."""
+    from server import db as database
+    from datetime import datetime
+    
+    if status_value not in ORDER_STATUSES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Невірний статус. Допустимі: {', '.join(ORDER_STATUSES)}"
+        )
+    
+    try:
+        # Also update is_paid for backward compatibility
+        is_paid = status_value == "paid"
+        
+        result = await database.orders.update_one(
+            {"number": order_number, "user_id": current_user["_id"]},
+            {"$set": {
+                "status": status_value,
+                "is_paid": is_paid,
+                "updated_at": datetime.utcnow()
+            }}
+        )
+        
+        if result.matched_count == 0:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Замовлення не знайдено"
+            )
+        
+        logger.info(f"Order {order_number} status updated to {status_value}")
+        return {"message": "Статус оновлено", "status": status_value, "is_paid": is_paid}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating order status: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Помилка при оновленні статусу"
         )
 
 
