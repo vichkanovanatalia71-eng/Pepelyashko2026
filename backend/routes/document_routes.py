@@ -1449,6 +1449,7 @@ async def update_order(
             "counterparty_name": order_data.get("counterparty_name", existing_order.get("counterparty_name")),
             "items": items,
             "total_amount": float(order_data.get("total_amount", existing_order.get("total_amount"))),
+            "ttn_number": order_data.get("ttn_number", existing_order.get("ttn_number")),
             "updated_at": datetime.utcnow()
         }
         
