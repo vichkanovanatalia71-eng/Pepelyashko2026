@@ -3608,18 +3608,45 @@ const FullDashboard = () => {
                               <p className="text-xs text-gray-500">{order.date}</p>
                             </div>
                             <div className="flex gap-2 items-center flex-wrap">
-                              <div className="flex items-center gap-2 mr-2">
-                                <Switch
-                                  checked={order.is_paid || false}
-                                  onCheckedChange={(checked) => {
-                                    toggleOrderPaymentStatus(order.number, order.is_paid);
-                                  }}
+                              <Select
+                                value={order.status || (order.is_paid ? 'paid' : 'new')}
+                                onValueChange={(value) => {
+                                  updateOrderStatus(order.number, value);
+                                }}
+                              >
+                                <SelectTrigger 
+                                  className="w-[130px] h-8 text-xs"
                                   onClick={(e) => e.stopPropagation()}
-                                />
-                                <span className="text-xs text-gray-600 whitespace-nowrap">
-                                  {order.is_paid ? '✅' : '⏳'}
-                                </span>
-                              </div>
+                                >
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="new">
+                                    <span className="flex items-center gap-2">
+                                      <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                                      Нове
+                                    </span>
+                                  </SelectItem>
+                                  <SelectItem value="in_progress">
+                                    <span className="flex items-center gap-2">
+                                      <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                                      В роботі
+                                    </span>
+                                  </SelectItem>
+                                  <SelectItem value="shipped">
+                                    <span className="flex items-center gap-2">
+                                      <span className="w-2 h-2 rounded-full bg-purple-500"></span>
+                                      Відправлено
+                                    </span>
+                                  </SelectItem>
+                                  <SelectItem value="paid">
+                                    <span className="flex items-center gap-2">
+                                      <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                      Сплачено
+                                    </span>
+                                  </SelectItem>
+                                </SelectContent>
+                              </Select>
                               <Button
                                 size="sm"
                                 variant="outline"
