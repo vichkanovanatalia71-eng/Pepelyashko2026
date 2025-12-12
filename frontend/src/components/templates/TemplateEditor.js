@@ -208,91 +208,170 @@ const TemplateEditor = () => {
       { var: '{{#if based_on_order}}...{{/if}}', desc: 'Умова: чи є базове замовлення' },
     ],
     contract: [
-      // Документ (номери та дати)
+      // ═══════════════════════════════════════════════════════════════
+      // ДОКУМЕНТ - ОСНОВНА ІНФОРМАЦІЯ
+      // ═══════════════════════════════════════════════════════════════
       { var: '{{contract_number}}', desc: 'Номер договору' },
+      { var: '{{document_number}}', desc: 'Аліас для номера документа' },
       { var: '{{contract_date}}', desc: 'Дата договору ДД.ММ.РРРР' },
+      { var: '{{contract_date_short}}', desc: 'Коротка дата ДД.ММ.РР' },
+      { var: '{{contract_date_long}}', desc: 'Довга дата (09 December 2025)' },
+      { var: '{{contract_date_iso}}', desc: 'ISO формат (2025-12-09)' },
       { var: '{{contract_date_text}}', desc: 'Дата текстом (9 грудня 2025 р.)' },
       { var: '{{contract_date_text_full}}', desc: 'Повна дата (09 грудня 2025 року)' },
+      { var: '{{document_date}}', desc: 'Аліас для дати' },
+      { var: '{{document_date_text}}', desc: 'Аліас для дати текстом' },
       { var: '{{city}}', desc: 'Місто укладання договору' },
       { var: '{{contract_subject}}', desc: 'Предмет договору' },
       { var: '{{contract_term}}', desc: 'Строк дії договору' },
       { var: '{{contract_start_date}}', desc: 'Дата початку дії' },
       { var: '{{contract_end_date}}', desc: 'Дата закінчення дії' },
+      { var: '{{basis}}', desc: 'Підстава для договору' },
+      { var: '{{based_on_order}}', desc: 'На основі замовлення №' },
+      { var: '{{based_on_document}}', desc: 'Згідно з документом' },
+      { var: '{{based_on_contract}}', desc: 'На основі попереднього договору' },
       
-      // Постачальник (Сторона 1) - основні дані
+      // ═══════════════════════════════════════════════════════════════
+      // ФІНАНСИ - СУМИ ТА ПДВ
+      // ═══════════════════════════════════════════════════════════════
+      { var: '{{contract_amount}}', desc: 'Сума договору' },
+      { var: '{{total_amount}}', desc: 'Загальна сума (аліас)' },
+      { var: '{{contract_amount_text}}', desc: 'Сума договору прописом' },
+      { var: '{{total_amount_text}}', desc: 'Сума прописом (аліас)' },
+      { var: '{{total_amount_words}}', desc: 'Аліас для суми прописом' },
+      { var: '{{amount_in_words}}', desc: 'Аліас для суми прописом' },
+      { var: '{{amount_without_vat}}', desc: 'Сума без ПДВ' },
+      { var: '{{amount_without_vat_text}}', desc: 'Сума без ПДВ прописом' },
+      { var: '{{vat_amount}}', desc: 'Сума ПДВ' },
+      { var: '{{vat_amount_text}}', desc: 'Сума ПДВ прописом' },
+      { var: '{{vat_rate}}', desc: 'Ставка ПДВ (%)' },
+      { var: '{{vat_note}}', desc: 'Примітка про ПДВ' },
+      { var: '{{is_vat_payer}}', desc: 'Чи є платником ПДВ (true/false)' },
+      { var: '{{payment_terms}}', desc: 'Умови оплати' },
+      { var: '{{prepayment_percent}}', desc: 'Відсоток передоплати' },
+      { var: '{{currency}}', desc: 'Валюта договору (грн, USD, EUR)' },
+      
+      // ═══════════════════════════════════════════════════════════════
+      // ТОВАРИ ТА ПОСЛУГИ (СПЕЦИФІКАЦІЯ)
+      // ═══════════════════════════════════════════════════════════════
+      { var: '{{items_table}}', desc: 'Готова HTML таблиця з усіма позиціями' },
+      { var: '{{#each items}}...{{/each}}', desc: 'Цикл по товарах/послугах' },
+      { var: '{{this.name}}', desc: 'Найменування товару/послуги (в циклі)' },
+      { var: '{{this.unit}}', desc: 'Одиниця виміру - шт, кг, м, год (в циклі)' },
+      { var: '{{this.qty}}', desc: 'Кількість (в циклі)' },
+      { var: '{{this.quantity}}', desc: 'Аліас для кількості (в циклі)' },
+      { var: '{{this.price}}', desc: 'Ціна за одиницю (в циклі)' },
+      { var: '{{this.sum}}', desc: 'Сума (кількість × ціна) (в циклі)' },
+      { var: '{{this.amount}}', desc: 'Аліас для суми (в циклі)' },
+      { var: '{{inc @index}}', desc: 'Номер рядка (індекс + 1)' },
+      
+      // ═══════════════════════════════════════════════════════════════
+      // ПОСТАЧАЛЬНИК (СТОРОНА 1) - ОСНОВНІ ДАНІ
+      // ═══════════════════════════════════════════════════════════════
       { var: '{{supplier_name}}', desc: 'Повна назва постачальника' },
+      { var: '{{supplier_company_name}}', desc: 'Аліас для назви' },
       { var: '{{supplier_short_name}}', desc: 'Скорочена назва постачальника' },
       { var: '{{supplier_edrpou}}', desc: 'Код ЄДРПОУ постачальника' },
+      { var: '{{supplier_code}}', desc: 'Аліас для ЄДРПОУ' },
       { var: '{{supplier_ipn}}', desc: 'ІПН постачальника' },
       
       // Постачальник - статус ПДВ
-      { var: '{{supplier_vat_status}}', desc: 'Статус платника ПДВ (Платник ПДВ / Неплатник ПДВ)' },
+      { var: '{{supplier_vat_status}}', desc: 'Статус ПДВ (Платник ПДВ / Неплатник ПДВ)' },
       { var: '{{supplier_is_vat_payer}}', desc: 'Чи є платником ПДВ (true/false)' },
-      { var: '{{supplier_vat_certificate}}', desc: 'Номер свідоцтва ПДВ постачальника' },
-      { var: '{{#if supplier_is_vat_payer}}...{{else}}...{{/if}}', desc: 'Умова: ПДВ постачальника' },
+      { var: '{{supplier_vat_rate}}', desc: 'Ставка ПДВ постачальника (%)' },
+      { var: '{{supplier_vat_certificate}}', desc: 'Номер свідоцтва ПДВ' },
       
       // Постачальник - адреси та контакти
       { var: '{{supplier_address}}', desc: 'Юридична адреса постачальника' },
+      { var: '{{supplier_legal_address}}', desc: 'Аліас для юридичної адреси' },
       { var: '{{supplier_actual_address}}', desc: 'Фактична адреса постачальника' },
       { var: '{{supplier_email}}', desc: 'Email постачальника' },
       { var: '{{supplier_phone}}', desc: 'Телефон постачальника' },
       
       // Постачальник - банківські реквізити
       { var: '{{supplier_iban}}', desc: 'IBAN постачальника' },
+      { var: '{{supplier_bank_account}}', desc: 'Аліас для IBAN' },
       { var: '{{supplier_bank}}', desc: 'Назва банку постачальника' },
+      { var: '{{supplier_bank_name}}', desc: 'Аліас для назви банку' },
       { var: '{{supplier_mfo}}', desc: 'МФО банку постачальника' },
       
-      // Постачальник - представники
+      // Постачальник - представники та підписи
       { var: '{{supplier_representative}}', desc: 'ПІБ представника постачальника' },
-      { var: '{{supplier_position}}', desc: 'Посада представника постачальника' },
+      { var: '{{supplier_represented_by}}', desc: 'Аліас для представника' },
+      { var: '{{supplier_position}}', desc: 'Посада представника (Директор)' },
+      { var: '{{supplier_director_name}}', desc: 'ПІБ директора' },
+      { var: '{{supplier_director_position}}', desc: 'Посада директора' },
       { var: '{{supplier_basis}}', desc: 'На підставі (Статуту, Довіреності)' },
-      { var: '{{supplier_signature}}', desc: 'ПІБ для підпису постачальника' },
+      { var: '{{supplier_contract_type}}', desc: 'Тип договору постачальника' },
+      { var: '{{supplier_signature}}', desc: 'ПІБ для підпису' },
+      { var: '{{supplier_full_name}}', desc: 'Повне ПІБ постачальника' },
+      { var: '{{supplier_logo}}', desc: 'Логотип постачальника' },
+      { var: '{{supplier_logo_url}}', desc: 'Аліас для логотипу' },
       
-      // Покупець (Сторона 2) - основні дані
+      // ═══════════════════════════════════════════════════════════════
+      // ПОКУПЕЦЬ (СТОРОНА 2) - ОСНОВНІ ДАНІ
+      // ═══════════════════════════════════════════════════════════════
       { var: '{{buyer_name}}', desc: 'Повна назва покупця' },
+      { var: '{{buyer_company_name}}', desc: 'Аліас для назви' },
+      { var: '{{counterparty_name}}', desc: 'Аліас для назви контрагента' },
       { var: '{{buyer_short_name}}', desc: 'Скорочена назва покупця' },
       { var: '{{buyer_edrpou}}', desc: 'Код ЄДРПОУ покупця' },
+      { var: '{{buyer_code}}', desc: 'Аліас для ЄДРПОУ' },
+      { var: '{{counterparty_edrpou}}', desc: 'Аліас для ЄДРПОУ контрагента' },
       { var: '{{buyer_ipn}}', desc: 'ІПН покупця' },
       
       // Покупець - статус ПДВ
-      { var: '{{buyer_vat_status}}', desc: 'Статус платника ПДВ (Платник ПДВ / Неплатник ПДВ)' },
+      { var: '{{buyer_vat_status}}', desc: 'Статус ПДВ (Платник ПДВ / Неплатник ПДВ)' },
       { var: '{{buyer_is_vat_payer}}', desc: 'Чи є платником ПДВ (true/false)' },
-      { var: '{{buyer_vat_certificate}}', desc: 'Номер свідоцтва ПДВ покупця' },
-      { var: '{{#if buyer_is_vat_payer}}...{{else}}...{{/if}}', desc: 'Умова: ПДВ покупця' },
+      { var: '{{buyer_vat_rate}}', desc: 'Ставка ПДВ покупця (%)' },
+      { var: '{{buyer_vat_certificate}}', desc: 'Номер свідоцтва ПДВ' },
       
       // Покупець - адреси та контакти
       { var: '{{buyer_address}}', desc: 'Юридична адреса покупця' },
+      { var: '{{buyer_legal_address}}', desc: 'Аліас для юридичної адреси' },
       { var: '{{buyer_actual_address}}', desc: 'Фактична адреса покупця' },
       { var: '{{buyer_email}}', desc: 'Email покупця' },
       { var: '{{buyer_phone}}', desc: 'Телефон покупця' },
       
       // Покупець - банківські реквізити
       { var: '{{buyer_iban}}', desc: 'IBAN покупця' },
+      { var: '{{buyer_bank_account}}', desc: 'Аліас для IBAN' },
       { var: '{{buyer_bank}}', desc: 'Назва банку покупця' },
+      { var: '{{buyer_bank_name}}', desc: 'Аліас для назви банку' },
       { var: '{{buyer_mfo}}', desc: 'МФО банку покупця' },
       
-      // Покупець - представники
+      // Покупець - представники та підписи
       { var: '{{buyer_representative}}', desc: 'ПІБ представника покупця' },
-      { var: '{{buyer_position}}', desc: 'Посада представника покупця' },
+      { var: '{{buyer_represented_by}}', desc: 'Аліас для представника' },
+      { var: '{{buyer_position}}', desc: 'Посада представника (Директор)' },
+      { var: '{{buyer_director_name}}', desc: 'ПІБ директора покупця' },
+      { var: '{{buyer_director_position}}', desc: 'Посада директора покупця' },
       { var: '{{buyer_basis}}', desc: 'На підставі (Статуту, Довіреності)' },
-      { var: '{{buyer_signature}}', desc: 'ПІБ для підпису покупця' },
+      { var: '{{buyer_contract_type}}', desc: 'Тип договору покупця' },
+      { var: '{{buyer_signature}}', desc: 'ПІБ для підпису' },
       
-      // Фінансові умови
-      { var: '{{contract_amount}}', desc: 'Сума договору' },
-      { var: '{{contract_amount_text}}', desc: 'Сума договору прописом' },
-      { var: '{{payment_terms}}', desc: 'Умови оплати' },
-      { var: '{{prepayment_percent}}', desc: 'Відсоток передоплати' },
-      { var: '{{currency}}', desc: 'Валюта договору (грн, USD, EUR)' },
-      
-      // Додаткові умови
+      // ═══════════════════════════════════════════════════════════════
+      // ДОДАТКОВІ УМОВИ ДОГОВОРУ
+      // ═══════════════════════════════════════════════════════════════
       { var: '{{delivery_terms}}', desc: 'Умови поставки' },
       { var: '{{delivery_address}}', desc: 'Адреса поставки' },
       { var: '{{warranty_period}}', desc: 'Гарантійний строк' },
       { var: '{{penalty_rate}}', desc: 'Розмір пені за порушення' },
+      { var: '{{dispute_resolution}}', desc: 'Порядок вирішення спорів' },
+      { var: '{{force_majeure}}', desc: 'Форс-мажорні обставини' },
       
-      // Умовні оператори
+      // ═══════════════════════════════════════════════════════════════
+      // УМОВНІ ОПЕРАТОРИ
+      // ═══════════════════════════════════════════════════════════════
       { var: '{{#if supplier_logo}}...{{/if}}', desc: 'Умова: чи є логотип постачальника' },
+      { var: '{{#if supplier_is_vat_payer}}...{{else}}...{{/if}}', desc: 'Умова: ПДВ постачальника' },
+      { var: '{{#if buyer_is_vat_payer}}...{{else}}...{{/if}}', desc: 'Умова: ПДВ покупця' },
+      { var: '{{#if is_vat_payer}}...{{else}}...{{/if}}', desc: 'Умова: чи є платником ПДВ' },
       { var: '{{#if contract_amount}}...{{/if}}', desc: 'Умова: чи вказана сума договору' },
+      { var: '{{#if based_on_order}}...{{/if}}', desc: 'Умова: чи є базове замовлення' },
+      { var: '{{#if items}}...{{/if}}', desc: 'Умова: чи є специфікація товарів' },
+      { var: '{{#if buyer_position}}...{{/if}}', desc: 'Умова: чи є посада покупця' },
+      { var: '{{#if supplier_position}}...{{/if}}', desc: 'Умова: чи є посада постачальника' },
     ],
   };
 
