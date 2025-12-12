@@ -499,7 +499,7 @@ class OrderPDFService:
             <!-- Info Box -->
             <div class="info-box">
                 <div class="info-title">✓ Замовлення погоджено</div>
-                <div class="info-text">Цей документ підтверджує погодження номенклатури та вартості товарів/послуг.</div>
+                <div class="info-text">Завдання для виконання: підготувати товар/послуги згідно специфікації замовлення.</div>
             </div>
 
             <!-- Footer -->
