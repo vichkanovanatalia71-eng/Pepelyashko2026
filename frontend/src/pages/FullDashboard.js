@@ -967,17 +967,35 @@ const FullDashboard = () => {
     paid: 'Сплачено'
   };
 
-  const updateOrderStatus = async (orderNumber, newStatus) => {
+  const updateOrderStatus = async (orderNumber, newStatus, ttnNumber = null) => {
     try {
       const token = localStorage.getItem('token');
-      await axios.patch(
-        `${API_URL}/api/orders/${orderNumber}/status?status_value=${newStatus}`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
       
-      const statusLabel = ORDER_STATUS_LABELS[newStatus] || newStatus;
-      toast.success(`Статус оновлено: ${statusLabel}`);
+      // Special handling for 'shipped' status - use /ship endpoint
+      if (newStatus === 'shipped') {
+        // Get current order to check TTN
+        const currentOrder = orders.find(o => o.number === orderNumber) || viewingOrder;
+        const ttn = ttnNumber || currentOrder?.ttn_number;
+        
+        const shipUrl = `${API_URL}/api/orders/${orderNumber}/ship${ttn ? `?ttn_number=${encodeURIComponent(ttn)}` : ''}`;
+        
+        await axios.post(
+          shipUrl,
+          {},
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        
+        toast.success('Замовлення відправлено! Повідомлення надіслано контрагенту.');
+      } else {
+        await axios.patch(
+          `${API_URL}/api/orders/${orderNumber}/status?status_value=${newStatus}`,
+          {},
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        
+        const statusLabel = ORDER_STATUS_LABELS[newStatus] || newStatus;
+        toast.success(`Статус оновлено: ${statusLabel}`);
+      }
       
       // Update viewing order if open
       if (viewingOrder && viewingOrder.number === orderNumber) {
@@ -991,7 +1009,8 @@ const FullDashboard = () => {
       await loadOrders();
     } catch (error) {
       console.error('Error updating order status:', error);
-      toast.error('Помилка оновлення статусу');
+      const errorMsg = error.response?.data?.detail || 'Помилка оновлення статусу';
+      toast.error(errorMsg);
     }
   };
 
