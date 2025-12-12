@@ -220,6 +220,10 @@ class DocumentServiceMongo:
         existing_count = await self.orders.count_documents({"user_id": user_id})
         order_number = f"{existing_count + 1:04d}"
         
+        # Get status from order_data, default to 'new'
+        order_status = getattr(order_data, 'status', 'new') or 'new'
+        is_paid = order_status == 'paid'
+        
         order_dict = {
             "_id": order_id,
             "user_id": user_id,
@@ -229,6 +233,8 @@ class DocumentServiceMongo:
             "counterparty_name": counterparty_name,
             "items": [item.model_dump() for item in order_data.items],
             "total_amount": order_data.total_amount,
+            "status": order_status,
+            "is_paid": is_paid,
             "based_on_order": None,
             "pdf_path": None,
             "pdf_generated_at": None,
@@ -238,7 +244,7 @@ class DocumentServiceMongo:
         }
         
         await self.orders.insert_one(order_dict)
-        logger.info(f"Created order {order_number} for user {user_id}")
+        logger.info(f"Created order {order_number} for user {user_id} with status {order_status}")
         
         return OrderModel(**order_dict)
     
