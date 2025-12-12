@@ -312,18 +312,18 @@ class OrderService:
                 html_template = self.load_template()
                 logger.info("Using default template for order")
             
-            # Build items rows HTML
+            # Build items rows HTML - Premium style
             items_rows_html = ""
             for idx, item in enumerate(items, 1):
                 items_rows_html += f"""
-        <tr>
-          <td class="ncol">{idx}</td>
-          <td class="name">{item.get('name', '')}</td>
-          <td class="unit">{item.get('unit', 'шт')}</td>
-          <td class="numeric"><span class="mono">{self.format_currency(item.get('quantity', 0))}</span></td>
-          <td class="numeric"><span class="mono">{self.format_currency(item.get('price', 0))}</span></td>
-          <td class="numeric"><span class="mono">{self.format_currency(item.get('amount', 0))}</span></td>
-        </tr>"""
+        <div class="item-row">
+          <div class="item-num">{idx}</div>
+          <div class="item-name">{item.get('name', '')}</div>
+          <div class="item-unit">{item.get('unit', 'шт')}</div>
+          <div class="item-qty">{self.format_currency(item.get('quantity', 0))}</div>
+          <div class="item-price">{self.format_currency(item.get('price', 0))}</div>
+          <div class="item-amount">{self.format_currency(item.get('amount', 0))} грн</div>
+        </div>"""
             
             # Prepare context for variable replacement
             context = {
@@ -340,16 +340,18 @@ class OrderService:
                 'supplier_email': supplier_data.get('email', ''),
                 'supplier_phone': supplier_data.get('тел', supplier_data.get('phone', '')),
                 'supplier_signature': supplier_data.get('Підпис', supplier_data.get('signature', '')),
-                # Buyer (Покупець - Основні дані)
-                'buyer_name': buyer_data.get('Назва', ''),
-                'buyer_edrpou': buyer_data.get('ЄДРПОУ', ''),
-                'buyer_address': buyer_data.get('Юридична адреса', ''),
-                'buyer_iban': buyer_data.get('р/р(IBAN)', ''),
-                'buyer_bank': buyer_data.get('Банк', ''),
-                'buyer_mfo': buyer_data.get('МФО', ''),
+                # Buyer (Покупець - Основні дані) with all new variables
+                'buyer_name': buyer_data.get('Назва', buyer_data.get('representative_name', '')),
+                'buyer_edrpou': buyer_data.get('ЄДРПОУ', buyer_data.get('edrpou', '')),
+                'buyer_address': buyer_data.get('Юридична адреса', buyer_data.get('legal_address', '')),
+                'buyer_iban': buyer_data.get('р/р(IBAN)', buyer_data.get('iban', '')),
+                'buyer_bank': buyer_data.get('Банк', buyer_data.get('bank', '')),
+                'buyer_mfo': buyer_data.get('МФО', buyer_data.get('mfo', '')),
                 'buyer_email': buyer_data.get('email', ''),
-                'buyer_phone': buyer_data.get('тел', ''),
-                'buyer_signature': buyer_data.get('Підпис', ''),
+                'buyer_phone': buyer_data.get('тел', buyer_data.get('phone', '')),
+                'buyer_signature': buyer_data.get('Підпис', buyer_data.get('signature', '')),
+                'buyer_director': buyer_data.get('Директор', buyer_data.get('director_name', '')),
+                'buyer_position': buyer_data.get('Посада', buyer_data.get('director_position', buyer_data.get('position', ''))),
                 # Items
                 'items_rows': items_rows_html,
                 # Totals
