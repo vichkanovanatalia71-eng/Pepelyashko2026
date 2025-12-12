@@ -1380,7 +1380,7 @@ async def create_order(
                 </html>
                 """
                 
-                success = await email_service.send_email_with_attachment(
+                success = email_service.send_email_with_attachment(
                     to_email=counterparty_email,
                     subject=subject,
                     body=body,
