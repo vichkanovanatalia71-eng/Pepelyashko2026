@@ -1277,8 +1277,13 @@ async def create_order(
                 # Get company logo path if available
                 company_logo_path = None
                 if user and user.get('company_logo'):
-                    logo_filename = user.get('company_logo')
-                    potential_path = f"/app/backend/uploads/{logo_filename}"
+                    logo_value = user.get('company_logo')
+                    # Handle both formats: "uploads/filename.png" or just "filename.png"
+                    if logo_value.startswith('uploads/'):
+                        potential_path = f"/app/backend/{logo_value}"
+                    else:
+                        potential_path = f"/app/backend/uploads/{logo_value}"
+                    
                     if os.path.exists(potential_path):
                         company_logo_path = potential_path
                         logger.info(f"Found company logo at: {company_logo_path}")
