@@ -149,15 +149,33 @@ const OrderCard = ({
                       </div>
                     </div>
                     
-                    {/* Status Badge */}
-                    <div 
-                      className={`${currentStatus.bgColor} px-4 py-2 rounded-full flex items-center gap-2`}
+                    {/* Status Dropdown */}
+                    <Select 
+                      value={currentStatusKey} 
+                      onValueChange={(value) => onStatusChange && onStatusChange(order.number, value)}
                     >
-                      <StatusIcon className="w-4 h-4 text-white" />
-                      <span className="text-[13px] font-semibold text-white whitespace-nowrap">
-                        {currentStatus.label}
-                      </span>
-                    </div>
+                      <SelectTrigger 
+                        className={`w-[160px] ${currentStatus.bgColor} text-white border-none focus:ring-0 focus:ring-offset-0`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <StatusIcon className="w-4 h-4" />
+                          <SelectValue />
+                        </div>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(ORDER_STATUSES).map(([key, status]) => {
+                          const Icon = status.icon;
+                          return (
+                            <SelectItem key={key} value={key}>
+                              <div className="flex items-center gap-2">
+                                <Icon className="w-4 h-4" />
+                                <span>{status.label}</span>
+                              </div>
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   {/* Block 2: Order Parameters */}
