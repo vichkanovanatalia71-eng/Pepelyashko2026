@@ -453,48 +453,48 @@ class OrderPDFService:
                 <span class="total-value">{total_amount:,.2f} грн</span>
             </div>
 
-            <!-- Buyer - Full Width -->
+            <!-- Buyer - Full Width as List -->
             <div class="section-title">
                 <span class="section-icon">🏢</span>
                 Покупець
             </div>
             <div class="buyer-card">
-                <div class="buyer-grid">
-                    <div class="buyer-row full-width">
-                        <span class="buyer-label">Повна назва</span>
+                <div class="buyer-list">
+                    <div class="buyer-row">
+                        <span class="buyer-label">Повна назва:</span>
                         <span class="buyer-value bold">{counterparty_name}</span>
                     </div>
                     <div class="buyer-row">
-                        <span class="buyer-label">ЄДРПОУ</span>
+                        <span class="buyer-label">Код ЄДРПОУ:</span>
                         <span class="buyer-value mono">{counterparty_edrpou}</span>
                     </div>
                     <div class="buyer-row">
-                        <span class="buyer-label">Телефон</span>
-                        <span class="buyer-value">{counterparty_phone if counterparty_phone else '—'}</span>
-                    </div>
-                    <div class="buyer-row full-width">
-                        <span class="buyer-label">Юридична адреса</span>
+                        <span class="buyer-label">Юридична адреса:</span>
                         <span class="buyer-value">{counterparty_address if counterparty_address else '—'}</span>
                     </div>
                     <div class="buyer-row">
-                        <span class="buyer-label">Email</span>
-                        <span class="buyer-value">{counterparty_email if counterparty_email else '—'}</span>
+                        <span class="buyer-label">IBAN:</span>
+                        <span class="buyer-value mono">{counterparty_iban if counterparty_iban else '—'}</span>
                     </div>
                     <div class="buyer-row">
-                        <span class="buyer-label">Директор</span>
-                        <span class="buyer-value">{counterparty_director if counterparty_director else '—'}</span>
-                    </div>
-                    <div class="buyer-row">
-                        <span class="buyer-label">Банк</span>
+                        <span class="buyer-label">Банк:</span>
                         <span class="buyer-value">{counterparty_bank if counterparty_bank else '—'}</span>
                     </div>
                     <div class="buyer-row">
-                        <span class="buyer-label">МФО</span>
+                        <span class="buyer-label">МФО:</span>
                         <span class="buyer-value mono">{counterparty_mfo if counterparty_mfo else '—'}</span>
                     </div>
-                    <div class="buyer-row full-width">
-                        <span class="buyer-label">IBAN</span>
-                        <span class="buyer-value mono">{counterparty_iban if counterparty_iban else '—'}</span>
+                    <div class="buyer-row">
+                        <span class="buyer-label">{counterparty_position if counterparty_position else 'Директор'}:</span>
+                        <span class="buyer-value">{counterparty_director if counterparty_director else '—'}</span>
+                    </div>
+                    <div class="buyer-row">
+                        <span class="buyer-label">Телефон:</span>
+                        <span class="buyer-value">{counterparty_phone if counterparty_phone else '—'}</span>
+                    </div>
+                    <div class="buyer-row">
+                        <span class="buyer-label">Email:</span>
+                        <span class="buyer-value">{counterparty_email if counterparty_email else '—'}</span>
                     </div>
                 </div>
             </div>
