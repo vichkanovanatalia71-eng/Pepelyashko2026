@@ -1549,15 +1549,22 @@ const FullDashboard = () => {
     if (!viewingContract) return;
     
     try {
-      const response = await axios.get(`${API_URL}/api/contracts/${viewingContract._id}/pdf`, {
-        responseType: 'blob'
-      });
+      const timestamp = new Date().getTime();
+      const response = await axios.get(
+        `${API_URL}/api/contracts/${viewingContract._id}/pdf?t=${timestamp}`,
+        { 
+          responseType: 'blob', 
+          headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' } 
+        }
+      );
       
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
       window.open(url, '_blank');
+      setTimeout(() => window.URL.revokeObjectURL(url), 100);
+      toast.success('PDF договору відкрито для перегляду');
     } catch (error) {
       console.error('Error viewing contract PDF:', error);
-      toast.error('Помилка при перегляді PDF');
+      toast.error('Помилка при перегляді PDF договору');
     }
   };
 
