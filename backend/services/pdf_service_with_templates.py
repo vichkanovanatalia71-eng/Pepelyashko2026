@@ -754,7 +754,9 @@ class PDFServiceWithTemplates:
             if not template:
                 raise Exception("Contract template not found")
             
-            logger.info(f"Contract template loaded: {template.name} (sub_type: {template.sub_type})")
+            logger.info(f"Contract template loaded: {template.name} (sub_type: {template.sub_type}, id: {template.id})")
+            logger.info(f"Template content length: {len(template.content)}")
+            logger.info(f"Template content preview: {template.content[:200]}...")
             
             # Prepare context
             context = self._prepare_contract_context(contract, supplier, counterparty)
