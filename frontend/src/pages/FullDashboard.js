@@ -4297,7 +4297,7 @@ const FullDashboard = () => {
 
       {/* Counterparty Details Dialog */}
       <Dialog open={showCounterpartyDialog} onOpenChange={setShowCounterpartyDialog}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-[90vw] lg:max-w-7xl max-h-[95vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-2xl">
               {editingCounterparty ? 'Редагування Контрагента' : 'Картка Контрагента'}
