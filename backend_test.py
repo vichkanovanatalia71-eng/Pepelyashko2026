@@ -255,71 +255,49 @@ class ContractTestSuite:
             logger.error(f"❌ Тест редагування дати контракту провалився: {str(e)}")
             return False
     
-    def test_template_service_logic(self):
-        """Test 4: Test template service logic to get default template for user"""
+    def test_get_all_contracts_endpoint(self):
+        """Test 4: Test GET /api/contracts endpoint"""
         logger.info("=" * 80)
-        logger.info("ТЕСТ 4: ПЕРЕВІРКА ЛОГІКИ СЕРВІСУ ШАБЛОНІВ")
+        logger.info("ТЕСТ 4: ТЕСТУВАННЯ ОТРИМАННЯ СПИСКУ КОНТРАКТІВ")
         logger.info("=" * 80)
         
         try:
-            # Test the template service endpoint that should return user's template
-            logger.info("Отримання дефолтного шаблону для користувача...")
-            
-            # Get user's invoice template (should prioritize user template over system)
             response = requests.get(
-                f"{self.api_url}/templates/invoice/user",
+                f"{self.api_url}/contracts",
                 headers=self.get_auth_headers(),
                 timeout=30
             )
             
             if response.status_code != 200:
-                logger.error(f"❌ Помилка отримання користувацького шаблону: {response.status_code} - {response.text}")
+                logger.error(f"❌ Помилка отримання контрактів: {response.status_code} - {response.text}")
                 return False
             
-            user_template = response.json()
-            logger.info("✅ Користувацький шаблон отримано успішно")
+            contracts = response.json()
+            logger.info(f"✅ Отримано {len(contracts)} контрактів")
             
-            # Verify it's the user's template, not system default
-            template_id = user_template.get('_id')
-            user_id = user_template.get('user_id')
-            is_default = user_template.get('is_default', False)
-            
-            if is_default and not user_id:
-                logger.error("❌ Повернуто системний шаблон замість користувацького")
-                return False
-            
-            if user_id:
-                logger.info(f"✅ Повернуто користувацький шаблон (user_id: {user_id})")
+            # Check if our created contract is in the list
+            if self.created_contract_number:
+                found_contract = None
+                for contract in contracts:
+                    if contract.get('number') == self.created_contract_number:
+                        found_contract = contract
+                        break
+                
+                if found_contract:
+                    logger.info(f"✅ Створений контракт {self.created_contract_number} знайдено в списку")
+                    logger.info(f"   Предмет: {found_contract.get('subject', 'N/A')}")
+                    logger.info(f"   Сума: {found_contract.get('amount', 'N/A')}")
+                    logger.info(f"   Тип: {found_contract.get('contract_type', 'N/A')}")
+                    return True
+                else:
+                    logger.error(f"❌ Створений контракт {self.created_contract_number} не знайдено в списку")
+                    return False
             else:
-                logger.warning("⚠️  Шаблон не має user_id - може бути системним")
-            
-            # Check that this matches our found user template ID
-            if self.user_template_id and template_id == self.user_template_id:
-                logger.info("✅ ID шаблону співпадає з раніше знайденим користувацьким шаблоном")
-            else:
-                logger.warning(f"⚠️  ID шаблону не співпадає. Очікувався: {self.user_template_id}, отримано: {template_id}")
-            
-            # Verify template contains custom markers
-            template_content = user_template.get('content', '')
-            custom_markers = [
-                "ТЕСТОВИЙ РАХУНОК",
-                "TEST USER TEMPLATE 12345"
-            ]
-            
-            found_markers = []
-            for marker in custom_markers:
-                if marker in template_content:
-                    found_markers.append(marker)
-            
-            if found_markers:
-                logger.info(f"✅ Шаблон містить користувацькі маркери: {found_markers}")
+                logger.info("✅ Endpoint працює, але немає створеного контракту для перевірки")
                 return True
-            else:
-                logger.error("❌ Шаблон не містить очікуваних користувацьких маркерів")
-                return False
             
         except Exception as e:
-            logger.error(f"❌ Тест логіки сервісу шаблонів провалився: {str(e)}")
+            logger.error(f"❌ Тест отримання списку контрактів провалився: {str(e)}")
             return False
     
     def check_custom_template_pdf_content(self, pdf_path):
