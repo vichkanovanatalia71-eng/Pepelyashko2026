@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 """
-Backend Test Suite for User Template Usage in PDF Generation
-Tests that user's custom template is used in PDF generation instead of system default:
-- Verify user template exists and contains custom text
-- Generate PDF and verify custom template usage
-- Compare with system template
-- Test template service logic
+Backend Test Suite for Contract Editing and New Numbering Format
+Tests contract functionality according to Ukrainian review request:
+- Contract creation with new numbering format
+- Contract date editing functionality
+- Contract update endpoint testing
 """
 
 import requests
