@@ -4877,6 +4877,11 @@ const FullDashboard = () => {
         onDelete={deleteContract}
         onViewPDF={viewContractPDF}
         onSendEmail={sendContractEmail}
+        onUpdate={updateContract}
+        onStatusChange={updateContractStatus}
+        onCreateInvoice={createInvoiceFromContract}
+        onCreateAct={createActFromContract}
+        onCreateWaybill={createWaybillFromContract}
         formatDateUkrainian={formatDateUkrainian}
       />
 
