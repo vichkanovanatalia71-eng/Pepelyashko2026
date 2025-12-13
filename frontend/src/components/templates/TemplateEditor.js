@@ -438,13 +438,19 @@ const TemplateEditor = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       
-      // Group templates by type
+      // Group templates by type and sub_type
       const grouped = {};
       response.data.forEach(template => {
         if (template.user_id || template.is_default) {
+          // For contracts, use type_subType as key
+          let key = template.template_type;
+          if (template.template_type === 'contract' && template.sub_type) {
+            key = `contract_${template.sub_type}`;
+          }
+          
           // Store user templates, or system defaults if no user template exists
-          if (!grouped[template.template_type] || template.user_id) {
-            grouped[template.template_type] = template;
+          if (!grouped[key] || template.user_id) {
+            grouped[key] = template;
           }
         }
       });
@@ -459,6 +465,12 @@ const TemplateEditor = () => {
   };
 
   const getCurrentTemplate = () => {
+    // For contracts, use combined key with sub_type
+    if (selectedType === 'contract') {
+      const key = `contract_${selectedSubType}`;
+      // Try sub_type specific template first, then fallback to generic contract
+      return templates[key] || templates['contract'] || null;
+    }
     return templates[selectedType] || null;
   };
 
