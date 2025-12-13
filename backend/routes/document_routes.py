@@ -2705,13 +2705,21 @@ async def generate_contract_pdf(
             template_id or contract_dict.get('template_id')
         )
         
-        # Return PDF file
+        # Return PDF file with no-cache headers
         from fastapi.responses import FileResponse
-        return FileResponse(
+        from starlette.responses import Response
+        
+        response = FileResponse(
             pdf_path,
             media_type="application/pdf",
-            filename=f"contract_{contract_dict.get('number', 'unknown')}.pdf"
+            filename=f"contract_{contract_dict.get('number', 'unknown')}.pdf",
+            headers={
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Pragma": "no-cache",
+                "Expires": "0"
+            }
         )
+        return response
         
     except HTTPException:
         raise
