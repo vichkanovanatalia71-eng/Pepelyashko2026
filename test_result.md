@@ -1310,3 +1310,26 @@ agent_communication:
     message: "🎉 AUTOMATIC DOCUMENT UPDATE FUNCTIONALITY TESTING COMPLETED SUCCESSFULLY! Протестовано повний сценарій автоматичного оновлення документів при зміні замовлення згідно з review request. Всі ключові компоненти працюють: 1) Кнопка Редагувати в рахунках ✅, 2) Діалог підтвердження з правильним текстом ✅, 3) Кнопка Відкрити замовлення ✅, 4) Редагування замовлення ✅, 5) Зміна кількості позицій ✅, 6) Збереження змін ✅. Функціональність повністю реалізована та готова до використання. Рекомендую main agent завершити роботу з цією функцією."
   - agent: "testing"
     message: "🚨 КРИТИЧНА ПРОБЛЕМА ВИЯВЛЕНА: Кнопка 'Системний шаблон' у редакторі шаблонів НЕ ПРАЦЮЄ! Тестування показало що після редагування та скорочення шаблону накладної (з 3442 до 232 символів), натискання кнопки 'Системний шаблон' НЕ відновлює повний системний шаблон. Контент залишається скороченим. Функція handleResetToDefault в /app/frontend/src/components/templates/TemplateEditor.js потребує виправлення. Всі інші кроки (авторизація, навігація, редагування, збереження) працюють коректно. ПОТРІБНО НЕГАЙНЕ ВИПРАВЛЕННЯ!"
+
+  - task: "Contract Date Editing and Number Format Testing"
+    implemented: true
+    working: "needs_testing"
+    file: "/app/frontend/src/components/dialogs/ContractDialog.js, /app/backend/services/document_service_mongo.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "needs_testing"
+        agent: "main"
+        comment: "Виправлено синтаксичну помилку в ContractDialog.js (рядок 300 - зайва закриваюча дужка). Потрібно протестувати: 1) Редагування дати контракту в режимі редагування, 2) Новий формат номера контракту: <останні 4 цифри ЄДРПОУ>-<порядковий номер>."
+
+test_plan:
+  current_focus:
+    - "Contract Date Editing and Number Format Testing"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+  - agent: "main"
+    message: "Виправлено синтаксичну помилку в ContractDialog.js. Потрібно протестувати: 1) Відкрити існуючий контракт, натиснути 'Редагувати', змінити дату, зберегти, перевірити що дата змінилася. 2) Створити новий контракт і перевірити що номер має формат: <останні 4 цифри ЄДРПОУ контрагента>-<порядковий номер>. Логін: user1@example.com/password123"
