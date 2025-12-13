@@ -2156,10 +2156,13 @@ const FullDashboard = () => {
     try {
       const payload = {
         counterparty_edrpou: foundCounterparty.edrpou,
-        contract_type: contractForm.contract_type || foundCounterparty.contract_type,
+        contract_type: contractForm.contract_type || foundCounterparty.contract_type || 'goods',
         subject: contractForm.subject,
         amount: parseFloat(contractForm.amount),
-        based_on_order: contractForm.based_on_order || null
+        based_on_order: contractForm.based_on_order || null,
+        execution_form: contractForm.execution_form || null,
+        specification_required: contractForm.specification_required || false,
+        quantity_variation_allowed: contractForm.quantity_variation_allowed || false
       };
 
       await axios.post(`${API_URL}/api/contracts`, payload);
@@ -2171,7 +2174,10 @@ const FullDashboard = () => {
         contract_type: '',
         subject: '',
         amount: 0,
-        based_on_order: ''
+        based_on_order: '',
+        execution_form: '',
+        specification_required: false,
+        quantity_variation_allowed: false
       });
       setSearchEdrpou('');
       setFoundCounterparty(null);
