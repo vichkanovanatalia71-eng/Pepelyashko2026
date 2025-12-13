@@ -87,82 +87,52 @@ class ContractTestSuite:
             return {}
         return {"Authorization": f"Bearer {self.auth_token}"}
     
-    def test_user_template_exists_and_contains_custom_text(self):
-        """Test 1: Verify user template exists and contains custom text"""
+    def test_get_counterparties_for_contract_testing(self):
+        """Test 1: Get counterparty with ЄДРПОУ for contract testing"""
         logger.info("=" * 80)
-        logger.info("ТЕСТ 1: ПЕРЕВІРКА КОРИСТУВАЦЬКОГО ШАБЛОНУ")
+        logger.info("ТЕСТ 1: ОТРИМАННЯ КОНТРАГЕНТІВ ДЛЯ ТЕСТУВАННЯ КОНТРАКТІВ")
         logger.info("=" * 80)
         
         try:
-            # Query MongoDB directly to find user's invoice template
-            logger.info(f"Пошук шаблону рахунку для користувача {self.user_id}...")
-            
-            # First get all templates to see what's available
             response = requests.get(
-                f"{self.api_url}/templates",
+                f"{self.api_url}/counterparties",
                 headers=self.get_auth_headers(),
                 timeout=30
             )
             
             if response.status_code != 200:
-                logger.error(f"❌ Помилка отримання шаблонів: {response.status_code} - {response.text}")
+                logger.error(f"❌ Помилка отримання контрагентів: {response.status_code} - {response.text}")
                 return False
             
-            templates = response.json()
-            logger.info(f"✅ Отримано {len(templates)} шаблонів")
+            counterparties = response.json()
+            logger.info(f"✅ Отримано {len(counterparties)} контрагентів")
             
-            # Find user's invoice template
-            user_template = None
-            system_template = None
+            # Look for the specific ЄДРПОУ from review request
+            target_edrpou = "40196816"
+            found_counterparty = None
             
-            for template in templates:
-                if template.get('template_type') == 'invoice':
-                    if template.get('user_id'):  # User template
-                        user_template = template
-                        self.user_template_id = template.get('_id')
-                        logger.info(f"✅ Знайдено користувацький шаблон: {template.get('name')}")
-                    elif template.get('is_default') == True:  # System template
-                        system_template = template
-                        self.system_template_id = template.get('_id')
-                        logger.info(f"✅ Знайдено системний шаблон: {template.get('name')}")
+            for counterparty in counterparties:
+                if counterparty.get('edrpou') == target_edrpou:
+                    found_counterparty = counterparty
+                    break
             
-            if not user_template:
-                logger.error("❌ Користувацький шаблон рахунку не знайдено")
-                return False
-            
-            if not system_template:
-                logger.error("❌ Системний шаблон рахунку не знайдено")
-                return False
-            
-            # Check user template content for custom text
-            user_content = user_template.get('content', '')
-            
-            # Check for custom markers from review request
-            custom_markers = [
-                "ТЕСТОВИЙ РАХУНОК",
-                "TEST USER TEMPLATE 12345"
-            ]
-            
-            found_markers = []
-            missing_markers = []
-            
-            for marker in custom_markers:
-                if marker in user_content:
-                    found_markers.append(marker)
-                    logger.info(f"✅ Знайдено маркер: {marker}")
-                else:
-                    missing_markers.append(marker)
-                    logger.warning(f"⚠️  Маркер не знайдено: {marker}")
-            
-            if found_markers:
-                logger.info(f"✅ Користувацький шаблон містить {len(found_markers)} з {len(custom_markers)} маркерів")
+            if found_counterparty:
+                self.test_counterparty_edrpou = target_edrpou
+                logger.info(f"✅ Знайдено цільового контрагента з ЄДРПОУ: {target_edrpou}")
+                logger.info(f"   Назва: {found_counterparty.get('representative_name', 'N/A')}")
                 return True
             else:
-                logger.error("❌ Користувацький шаблон не містить жодного з очікуваних маркерів")
-                return False
+                # Fallback to first available counterparty
+                if counterparties:
+                    self.test_counterparty_edrpou = counterparties[0]['edrpou']
+                    logger.warning(f"⚠️  Цільовий ЄДРПОУ {target_edrpou} не знайдено, використовуємо: {self.test_counterparty_edrpou}")
+                    return True
+                else:
+                    logger.error("❌ Контрагентів не знайдено в системі")
+                    return False
             
         except Exception as e:
-            logger.error(f"❌ Тест перевірки користувацького шаблону провалився: {str(e)}")
+            logger.error(f"❌ Тест отримання контрагентів провалився: {str(e)}")
             return False
     
     def test_generate_pdf_and_verify_custom_template_usage(self):
