@@ -3738,16 +3738,16 @@ const FullDashboard = () => {
                 {orders.length === 0 ? (
                   <p className="text-center py-8 text-gray-500">Немає замовлень</p>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                     {orders.map((order) => (
                       <Card 
                         key={order._id} 
                         className={`card-hover ${currentTheme.cardBg} border-2 ${currentTheme.cardBorder} ${currentTheme.shadow} transition-all duration-300`}
                       >
                         <CardContent className="p-4">
-                          <div className="flex justify-between items-center">
+                          <div className="flex flex-col gap-3">
                             <div className="flex-1 cursor-pointer" onClick={() => openOrderDialog(order)}>
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-2 flex-wrap">
                                 <p className={`font-medium ${currentTheme.text}`}>№{order.number}</p>
                                 {order.is_paid ? (
                                   <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">✅ Сплачено</span>
@@ -3755,9 +3755,11 @@ const FullDashboard = () => {
                                   <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full font-medium">⏳ Не сплачено</span>
                                 )}
                               </div>
-                              <p className="text-sm text-gray-600">{order.counterparty_name}</p>
-                              <p className={`font-bold ${currentTheme.text}`}>{order.total_amount} грн</p>
-                              <p className="text-xs text-gray-500">{order.date}</p>
+                              <p className="text-sm text-gray-600 truncate">{order.counterparty_name}</p>
+                              <div className="flex items-center justify-between mt-1">
+                                <p className={`font-bold ${currentTheme.text}`}>{order.total_amount} грн</p>
+                                <p className="text-xs text-gray-500">{order.date}</p>
+                              </div>
                             </div>
                             <div className="flex gap-2 items-center flex-wrap">
                               <Select
@@ -3767,7 +3769,7 @@ const FullDashboard = () => {
                                 }}
                               >
                                 <SelectTrigger 
-                                  className="w-[130px] h-8 text-xs"
+                                  className="w-[110px] h-8 text-xs"
                                   onClick={(e) => e.stopPropagation()}
                                 >
                                   <SelectValue />
@@ -3807,9 +3809,9 @@ const FullDashboard = () => {
                                   downloadOrderPDF(order.number);
                                 }}
                                 title="Завантажити PDF"
-                                className="border-blue-500 text-blue-600 hover:bg-blue-50"
+                                className="border-blue-500 text-blue-600 hover:bg-blue-50 h-8 px-2"
                               >
-                                📄 PDF
+                                📄
                               </Button>
                               <Button
                                 size="sm"
@@ -3819,9 +3821,9 @@ const FullDashboard = () => {
                                   openOrderEmailDialog(order);
                                 }}
                                 title="Надіслати Email"
-                                className="border-green-500 text-green-600 hover:bg-green-50"
+                                className="border-green-500 text-green-600 hover:bg-green-50 h-8 px-2"
                               >
-                                ✉️ Email
+                                ✉️
                               </Button>
                               <Button
                                 size="sm"
@@ -3830,9 +3832,9 @@ const FullDashboard = () => {
                                   e.stopPropagation();
                                   openOrderDialog(order);
                                 }}
-                                className={`border-2 ${currentTheme.border} ${currentTheme.hover} ${currentTheme.textLight} hover:scale-105 transition-all duration-300`}
+                                className={`border-2 ${currentTheme.border} ${currentTheme.hover} ${currentTheme.textLight} h-8 px-2`}
                               >
-                                Переглянути
+                                👁️
                               </Button>
                               <Button
                                 size="sm"
@@ -3841,9 +3843,9 @@ const FullDashboard = () => {
                                   setSelectedOrder(order);
                                   setShowOrderSelectionDialog(true);
                                 }}
-                                className={`${currentTheme.buttonBg} ${currentTheme.buttonHover} text-white hover:scale-105 transition-all duration-300`}
+                                className={`${currentTheme.buttonBg} ${currentTheme.buttonHover} text-white h-8 px-2 text-xs`}
                               >
-                                Створити документи
+                                + Док
                               </Button>
                             </div>
                           </div>
