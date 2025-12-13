@@ -2,7 +2,7 @@ import React from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Eye, Mail, Trash2, FileText, Package, Settings, CheckCircle } from 'lucide-react';
+import { Eye, Mail, Trash2, FileText, Package, Settings, CheckCircle, MapPin, Shield, AlertTriangle, PenTool } from 'lucide-react';
 import CommentsSection from '../comments/CommentsSection';
 
 // Contract type labels
@@ -20,6 +20,31 @@ const EXECUTION_FORM_LABELS = {
   'annual_volume': 'В межах річного/квартального обсягу'
 };
 
+// Warranty period labels
+const WARRANTY_PERIOD_LABELS = {
+  '12_months': '12 місяців',
+  '24_months': '24 місяці',
+  '36_months': '36 місяців',
+  'not_applicable': 'Не передбачено'
+};
+
+// Penalty rate labels
+const PENALTY_RATE_LABELS = {
+  '0.01': '0,01% на день',
+  '0.05': '0,05% на день',
+  '0.1': '0,1% на день',
+  '0.5': '0,5% на день',
+  '1.0': '1,0% на день',
+  'not_applicable': 'Не передбачено'
+};
+
+// Signing format labels
+const SIGNING_FORMAT_LABELS = {
+  'paper': 'Паперовий примірник',
+  'electronic': 'Електронний підпис (КЕП)',
+  'both': 'Обидва варіанти'
+};
+
 const ContractDialog = ({
   open,
   onClose,
@@ -34,6 +59,14 @@ const ContractDialog = ({
 
   const contractTypeLabel = CONTRACT_TYPE_LABELS[contract.contract_type] || contract.contract_type || 'Не вказано';
   const executionFormLabel = EXECUTION_FORM_LABELS[contract.execution_form] || contract.execution_form || null;
+  const warrantyPeriodLabel = WARRANTY_PERIOD_LABELS[contract.warranty_period] || contract.warranty_period || null;
+  const penaltyRateLabel = PENALTY_RATE_LABELS[contract.penalty_rate] || contract.penalty_rate || null;
+  const signingFormatLabel = SIGNING_FORMAT_LABELS[contract.signing_format] || contract.signing_format || null;
+
+  // Generate contract term text
+  const contractDate = contract.date ? new Date(contract.date) : new Date();
+  const contractYear = contractDate.getFullYear();
+  const contractTermText = `з ${formatDateUkrainian(contract.date)} до 31 грудня ${contractYear} року`;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -54,6 +87,12 @@ const ContractDialog = ({
               <Label className="text-sm text-gray-600">Дата</Label>
               <p className="text-lg font-semibold">{formatDateUkrainian(contract.date)}</p>
             </div>
+          </div>
+          
+          {/* Contract Term */}
+          <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+            <Label className="text-sm text-gray-600">Строк дії договору</Label>
+            <p className="text-base font-medium">{contractTermText}</p>
           </div>
           
           {/* Counterparty */}
@@ -101,6 +140,48 @@ const ContractDialog = ({
             <p className="text-base mt-1 p-3 bg-gray-50 rounded">{contract.subject}</p>
           </div>
 
+          {/* Delivery Address */}
+          {contract.delivery_address && (
+            <div className="p-3 bg-gray-50 rounded-lg">
+              <div className="flex items-center gap-2 mb-1">
+                <MapPin className="w-4 h-4 text-rose-600" />
+                <Label className="text-sm text-gray-600">Адреса доставки</Label>
+              </div>
+              <p className="text-base font-medium">{contract.delivery_address}</p>
+            </div>
+          )}
+
+          {/* Additional Contract Details */}
+          <div className="grid grid-cols-3 gap-4">
+            {warrantyPeriodLabel && (
+              <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                <div className="flex items-center gap-2 mb-1">
+                  <Shield className="w-4 h-4 text-green-600" />
+                  <Label className="text-sm text-gray-600">Гарантія</Label>
+                </div>
+                <p className="text-base font-medium text-green-700">{warrantyPeriodLabel}</p>
+              </div>
+            )}
+            {penaltyRateLabel && (
+              <div className="p-3 bg-orange-50 rounded-lg border border-orange-200">
+                <div className="flex items-center gap-2 mb-1">
+                  <AlertTriangle className="w-4 h-4 text-orange-600" />
+                  <Label className="text-sm text-gray-600">Пеня</Label>
+                </div>
+                <p className="text-base font-medium text-orange-700">{penaltyRateLabel}</p>
+              </div>
+            )}
+            {signingFormatLabel && (
+              <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
+                <div className="flex items-center gap-2 mb-1">
+                  <PenTool className="w-4 h-4 text-purple-600" />
+                  <Label className="text-sm text-gray-600">Підписання</Label>
+                </div>
+                <p className="text-base font-medium text-purple-700">{signingFormatLabel}</p>
+              </div>
+            )}
+          </div>
+
           {/* Additional Options */}
           {(contract.specification_required || contract.quantity_variation_allowed) && (
             <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
@@ -121,6 +202,12 @@ const ContractDialog = ({
               </div>
             </div>
           )}
+
+          {/* Payment Terms (Auto-generated) */}
+          <div className="p-3 bg-gray-50 rounded-lg border">
+            <Label className="text-sm text-gray-600 mb-1 block">Умови оплати</Label>
+            <p className="text-sm">Оплата здійснюється протягом 10 (десяти) календарних днів після дати постачання/підписання акту приймання-передачі.</p>
+          </div>
 
           {/* Amount */}
           <div className="bg-rose-100 p-4 rounded-lg border-2 border-rose-300">
