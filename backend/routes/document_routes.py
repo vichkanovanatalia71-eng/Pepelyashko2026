@@ -2662,11 +2662,12 @@ async def update_contract(
 @router.get("/contracts/{contract_id}/pdf")
 async def generate_contract_pdf(
     contract_id: str,
+    template_id: str = None,
     current_user: dict = Depends(get_current_user)
 ):
-    """Generate PDF for a specific contract."""
+    """Generate PDF for a specific contract using template."""
     from server import db as database
-    from services.contract_pdf_service import ContractPDFService
+    from services.pdf_service_with_templates import PDFServiceWithTemplates
     
     document_service = DocumentServiceMongo(database)
     
@@ -2679,14 +2680,15 @@ async def generate_contract_pdf(
                 detail="Договір не знайдено"
             )
         
-        
         # Convert Pydantic model to dict
         contract_dict = contract.model_dump()
+        
         # Get supplier details
         supplier = await database.users.find_one(
             {"_id": current_user["_id"]},
             {"_id": 0}
         )
+        supplier["_id"] = current_user["_id"]  # Add back for template service
         
         # Get counterparty details
         counterparty = await database.counterparties.find_one(
@@ -2694,16 +2696,14 @@ async def generate_contract_pdf(
             {"_id": 0}
         )
         
-        # Prepare contract data for PDF
-        contract_data = {
-            **contract_dict,
-            "supplier_details": supplier,
-            "counterparty_details": counterparty or {}
-        }
-        
-        # Generate PDF
-        pdf_service = ContractPDFService()
-        pdf_path = pdf_service.generate_pdf(contract_data)
+        # Generate PDF using template service
+        pdf_service = PDFServiceWithTemplates(database)
+        pdf_path = await pdf_service.generate_contract_pdf(
+            contract_dict,
+            supplier or {},
+            counterparty or {},
+            template_id or contract_dict.get('template_id')
+        )
         
         # Return PDF file
         from fastapi.responses import FileResponse
