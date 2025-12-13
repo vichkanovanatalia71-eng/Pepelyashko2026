@@ -2549,6 +2549,115 @@ async def get_all_contracts(
         )
 
 
+# Valid contract statuses
+CONTRACT_STATUSES = ['draft', 'active', 'completed', 'terminated', 'expired']
+
+
+@router.patch("/contracts/{contract_number}/status")
+async def update_contract_status(
+    contract_number: str,
+    status_value: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Update status of a contract."""
+    from server import db as database
+    from datetime import datetime
+    
+    if status_value not in CONTRACT_STATUSES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Невірний статус. Допустимі: {', '.join(CONTRACT_STATUSES)}"
+        )
+    
+    try:
+        result = await database.contracts.update_one(
+            {"number": contract_number, "user_id": current_user["_id"]},
+            {"$set": {
+                "status": status_value,
+                "updated_at": datetime.utcnow()
+            }}
+        )
+        
+        if result.matched_count == 0:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Договір не знайдено"
+            )
+        
+        logger.info(f"Contract {contract_number} status updated to {status_value}")
+        return {"message": "Статус оновлено", "status": status_value}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating contract status: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Помилка при оновленні статусу"
+        )
+
+
+@router.put("/contracts/{contract_number}")
+async def update_contract(
+    contract_number: str,
+    contract_data: dict,
+    current_user: dict = Depends(get_current_user)
+):
+    """Update contract details."""
+    from server import db as database
+    from datetime import datetime
+    
+    try:
+        # Get existing contract
+        existing_contract = await database.contracts.find_one(
+            {"number": contract_number, "user_id": current_user["_id"]}
+        )
+        
+        if not existing_contract:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Договір не знайдено"
+            )
+        
+        # Build update data
+        update_data = {
+            "subject": contract_data.get("subject", existing_contract.get("subject")),
+            "amount": float(contract_data.get("amount", existing_contract.get("amount", 0))),
+            "contract_type": contract_data.get("contract_type", existing_contract.get("contract_type")),
+            "execution_form": contract_data.get("execution_form", existing_contract.get("execution_form")),
+            "delivery_address": contract_data.get("delivery_address", existing_contract.get("delivery_address")),
+            "warranty_period": contract_data.get("warranty_period", existing_contract.get("warranty_period")),
+            "penalty_rate": contract_data.get("penalty_rate", existing_contract.get("penalty_rate")),
+            "signing_format": contract_data.get("signing_format", existing_contract.get("signing_format")),
+            "specification_required": contract_data.get("specification_required", existing_contract.get("specification_required", False)),
+            "quantity_variation_allowed": contract_data.get("quantity_variation_allowed", existing_contract.get("quantity_variation_allowed", False)),
+            "updated_at": datetime.utcnow()
+        }
+        
+        await database.contracts.update_one(
+            {"number": contract_number, "user_id": current_user["_id"]},
+            {"$set": update_data}
+        )
+        
+        logger.info(f"Contract {contract_number} updated")
+        
+        # Return updated contract
+        updated_contract = await database.contracts.find_one(
+            {"number": contract_number, "user_id": current_user["_id"]},
+            {"_id": 0}
+        )
+        updated_contract["id"] = existing_contract["_id"]
+        
+        return updated_contract
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating contract: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Помилка при оновленні договору"
+        )
+
+
 @router.get("/contracts/{contract_id}/pdf")
 async def generate_contract_pdf(
     contract_id: str,
