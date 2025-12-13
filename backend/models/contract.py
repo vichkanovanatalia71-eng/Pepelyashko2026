@@ -16,6 +16,7 @@ class ContractModel(BaseModel):
     contract_type: Optional[str] = Field(None, description="Тип договору: goods, services, goods_and_services")
     subject: str = Field(..., description="Предмет договору")
     amount: float = Field(..., description="Сума договору")
+    status: Optional[str] = Field("active", description="Статус: draft, active, completed, terminated, expired")
     based_on_order: Optional[str] = Field(None, description="Номер замовлення")
     execution_form: Optional[str] = Field(None, description="Формат виконання: one_time, periodic, with_specifications, annual_volume")
     specification_required: Optional[bool] = Field(False, description="Специфікація обов'язкова")
