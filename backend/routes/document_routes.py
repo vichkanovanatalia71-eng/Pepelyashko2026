@@ -2620,6 +2620,7 @@ async def update_contract(
         
         # Build update data
         update_data = {
+            "date": contract_data.get("date", existing_contract.get("date")),
             "subject": contract_data.get("subject", existing_contract.get("subject")),
             "amount": float(contract_data.get("amount", existing_contract.get("amount", 0))),
             "contract_type": contract_data.get("contract_type", existing_contract.get("contract_type")),
