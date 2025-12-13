@@ -3880,6 +3880,74 @@ const FullDashboard = () => {
                     </div>
                   </div>
 
+                  {/* Delivery Address */}
+                  <div className="space-y-2">
+                    <Label>Адреса доставки</Label>
+                    <Input
+                      value={contractForm.delivery_address}
+                      onChange={(e) => setContractForm({...contractForm, delivery_address: e.target.value})}
+                      placeholder="Введіть адресу доставки товарів/послуг"
+                    />
+                  </div>
+
+                  {/* Warranty Period */}
+                  <div className="space-y-2">
+                    <Label>Гарантійний термін</Label>
+                    <Select 
+                      value={contractForm.warranty_period} 
+                      onValueChange={(value) => setContractForm({...contractForm, warranty_period: value})}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Оберіть гарантійний термін" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="12_months">12 місяців</SelectItem>
+                        <SelectItem value="24_months">24 місяці</SelectItem>
+                        <SelectItem value="36_months">36 місяців</SelectItem>
+                        <SelectItem value="not_applicable">Не передбачено</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Penalty Rate */}
+                  <div className="space-y-2">
+                    <Label>Санкції за порушення (% на день)</Label>
+                    <Select 
+                      value={contractForm.penalty_rate} 
+                      onValueChange={(value) => setContractForm({...contractForm, penalty_rate: value})}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Оберіть розмір пені" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="0.01">0,01% на день</SelectItem>
+                        <SelectItem value="0.05">0,05% на день</SelectItem>
+                        <SelectItem value="0.1">0,1% на день</SelectItem>
+                        <SelectItem value="0.5">0,5% на день</SelectItem>
+                        <SelectItem value="1.0">1,0% на день</SelectItem>
+                        <SelectItem value="not_applicable">Не передбачено</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Signing Format */}
+                  <div className="space-y-2">
+                    <Label>Формат підписання</Label>
+                    <Select 
+                      value={contractForm.signing_format} 
+                      onValueChange={(value) => setContractForm({...contractForm, signing_format: value})}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Оберіть формат підписання" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="paper">Паперовий примірник</SelectItem>
+                        <SelectItem value="electronic">Електронний підпис (КЕП)</SelectItem>
+                        <SelectItem value="both">Обидва варіанти</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
                   <div className="p-4 bg-rose-50 border rounded">
                     <div className="flex justify-between">
                       <span className="font-semibold">Загальна сума:</span>
