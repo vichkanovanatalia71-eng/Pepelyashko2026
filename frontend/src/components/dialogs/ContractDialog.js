@@ -297,7 +297,7 @@ const ContractDialog = ({
                   type="number"
                   step="0.01"
                   value={editForm.amount}
-                  onChange={(e) => setEditForm({...editForm, amount: parseFloat(e.target.value) || 0})}}
+                  onChange={(e) => setEditForm({...editForm, amount: parseFloat(e.target.value) || 0})}
                 />
               </div>
 
