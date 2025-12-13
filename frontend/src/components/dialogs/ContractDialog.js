@@ -158,7 +158,7 @@ const ContractDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto">
+      <DialogContent className="max-w-[90vw] lg:max-w-7xl max-h-[95vh] overflow-y-auto">
         <DialogHeader className="pb-4 border-b">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">

@@ -101,7 +101,7 @@ const OrderCard = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[720px] p-0 bg-transparent border-none shadow-none overflow-visible max-h-[90vh]">
+      <DialogContent className="max-w-[90vw] lg:max-w-7xl p-0 bg-transparent border-none shadow-none overflow-visible max-h-[95vh]">
         {/* Hidden title for accessibility */}
         <VisuallyHidden>
           <DialogTitle>Замовлення №{order.number}</DialogTitle>
