@@ -158,460 +158,301 @@ const ContractDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-[90vw] lg:max-w-7xl max-h-[95vh] overflow-y-auto">
-        <DialogHeader className="pb-4 border-b">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-rose-100 rounded-xl flex items-center justify-center">
-                <FileText className="w-6 h-6 text-rose-600" />
-              </div>
-              <div>
-                <DialogTitle className="text-2xl text-rose-700 flex items-center gap-2">
-                  Договір №{contract.number}
-                  <button onClick={copyContractNumber} className="p-1 hover:bg-gray-100 rounded">
-                    <Copy className="w-4 h-4 text-gray-400" />
-                  </button>
-                </DialogTitle>
-                <DialogDescription className="flex items-center gap-2 mt-1">
-                  <Building2 className="w-4 h-4" />
-                  {contract.counterparty_name}
-                </DialogDescription>
-              </div>
+      <DialogContent className="max-w-[95vw] lg:max-w-[1400px] max-h-[90vh] overflow-hidden p-0">
+        {/* Compact Header */}
+        <div className="flex items-center justify-between px-6 py-3 border-b bg-rose-50">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-rose-100 rounded-lg flex items-center justify-center">
+              <FileText className="w-5 h-5 text-rose-600" />
             </div>
-            <div className="flex items-center gap-2">
-              {/* Status Badge */}
-              <span className={`px-3 py-1 rounded-full text-sm font-medium border ${statusColor}`}>
-                {statusLabel}
-              </span>
-              {/* Edit/Save buttons */}
-              {!isEditing ? (
-                <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
-                  <Pencil className="w-4 h-4 mr-1" /> Редагувати
+            <div>
+              <DialogTitle className="text-xl text-rose-700 flex items-center gap-2">
+                Договір №{contract.number}
+                <button onClick={copyContractNumber} className="p-1 hover:bg-rose-100 rounded">
+                  <Copy className="w-3 h-3 text-gray-400" />
+                </button>
+              </DialogTitle>
+              <DialogDescription className="text-sm flex items-center gap-1">
+                <Building2 className="w-3 h-3" />
+                {contract.counterparty_name}
+              </DialogDescription>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className={`px-3 py-1 rounded-full text-xs font-medium border ${statusColor}`}>
+              {statusLabel}
+            </span>
+            {!isEditing ? (
+              <Button variant="outline" size="sm" onClick={() => setIsEditing(true)} className="h-8">
+                <Pencil className="w-3 h-3 mr-1" /> Редагувати
+              </Button>
+            ) : (
+              <div className="flex gap-1">
+                <Button variant="outline" size="sm" onClick={handleCancel} className="h-8">
+                  <X className="w-3 h-3 mr-1" /> Скасувати
                 </Button>
-              ) : (
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={handleCancel}>
-                    <X className="w-4 h-4 mr-1" /> Скасувати
-                  </Button>
-                  <Button size="sm" onClick={handleSave} className="bg-green-600 hover:bg-green-700 text-white">
-                    <Save className="w-4 h-4 mr-1" /> Зберегти
-                  </Button>
-                </div>
-              )}
-            </div>
-          </div>
-        </DialogHeader>
-        
-        <div className="space-y-6 pt-4">
-          {/* Validity indicator */}
-          {!isExpired ? (
-            <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
-              <BadgeCheck className="w-5 h-5 text-green-600" />
-              <span className="text-green-700 font-medium">Договір дійсний</span>
-              <span className="text-green-600 text-sm">• залишилось {daysRemaining} днів</span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-              <XCircle className="w-5 h-5 text-red-600" />
-              <span className="text-red-700 font-medium">Термін дії договору закінчився</span>
-            </div>
-          )}
-
-          {/* Basic Info */}
-          <div className="grid grid-cols-3 gap-4">
-            <div className="p-3 bg-gray-50 rounded-lg">
-              <Label className="text-xs text-gray-500 uppercase">Номер</Label>
-              <p className="text-lg font-bold text-gray-800">№{contract.number}</p>
-            </div>
-            <div className="p-3 bg-gray-50 rounded-lg">
-              <Label className="text-xs text-gray-500 uppercase">Дата укладання</Label>
-              <p className="text-lg font-semibold">{formatDateUkrainian(contract.date)}</p>
-            </div>
-            <div className="p-3 bg-gray-50 rounded-lg">
-              <Label className="text-xs text-gray-500 uppercase">ЄДРПОУ контрагента</Label>
-              <p className="text-lg font-mono font-semibold">{contract.counterparty_edrpou}</p>
-            </div>
-          </div>
-          
-          {/* Contract Term */}
-          <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-            <div className="flex items-center gap-2 mb-1">
-              <Calendar className="w-4 h-4 text-blue-600" />
-              <Label className="text-sm text-blue-700 font-medium">Строк дії договору</Label>
-            </div>
-            <p className="text-base font-medium">{contractTermText}</p>
-          </div>
-          
-          {/* Counterparty */}
-          <div className="bg-rose-50 p-4 rounded-lg border border-rose-200">
-            <div className="flex items-center gap-2 mb-2">
-              <Building2 className="w-4 h-4 text-rose-600" />
-              <Label className="text-sm text-gray-600">Контрагент</Label>
-            </div>
-            <p className="text-lg font-semibold">{contract.counterparty_name}</p>
-            <p className="text-sm text-gray-600 mt-1">ЄДРПОУ: {contract.counterparty_edrpou}</p>
-          </div>
-
-          {/* Based on Order */}
-          {contract.based_on_order && (
-            <div className="flex items-center gap-2 p-3 bg-indigo-50 border border-indigo-200 rounded-lg">
-              <FileCheck className="w-4 h-4 text-indigo-600" />
-              <span className="text-sm text-indigo-700">
-                Створено на основі замовлення <strong>№{contract.based_on_order}</strong>
-              </span>
-            </div>
-          )}
-
-          {/* Edit Mode or View Mode */}
-          {isEditing ? (
-            /* EDIT MODE */
-            <div className="space-y-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <h3 className="font-semibold text-yellow-800 flex items-center gap-2">
-                <Pencil className="w-4 h-4" /> Режим редагування
-              </h3>
-              
-              {/* Date */}
-              <div className="space-y-2">
-                <Label>Дата договору</Label>
-                <Input
-                  type="date"
-                  value={editForm.date}
-                  onChange={(e) => setEditForm({...editForm, date: e.target.value})}
-                />
-              </div>
-
-              {/* Subject */}
-              <div className="space-y-2">
-                <Label>Предмет договору</Label>
-                <Input
-                  value={editForm.subject}
-                  onChange={(e) => setEditForm({...editForm, subject: e.target.value})}
-                  placeholder="Предмет договору"
-                />
-              </div>
-
-              {/* Amount */}
-              <div className="space-y-2">
-                <Label>Сума договору (грн)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={editForm.amount}
-                  onChange={(e) => setEditForm({...editForm, amount: parseFloat(e.target.value) || 0})}
-                />
-              </div>
-
-              {/* Contract Type */}
-              <div className="space-y-2">
-                <Label>Тип договору</Label>
-                <Select value={editForm.contract_type} onValueChange={(v) => setEditForm({...editForm, contract_type: v})}>
-                  <SelectTrigger><SelectValue placeholder="Оберіть тип" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="goods">Поставка товарів</SelectItem>
-                    <SelectItem value="services">Надання послуг</SelectItem>
-                    <SelectItem value="goods_and_services">Поставка товарів та надання послуг</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Execution Form */}
-              <div className="space-y-2">
-                <Label>Формат виконання</Label>
-                <Select value={editForm.execution_form} onValueChange={(v) => setEditForm({...editForm, execution_form: v})}>
-                  <SelectTrigger><SelectValue placeholder="Оберіть формат" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="one_time">Разова поставка / послуга</SelectItem>
-                    <SelectItem value="periodic">Періодичне виконання</SelectItem>
-                    <SelectItem value="with_specifications">З окремими специфікаціями</SelectItem>
-                    <SelectItem value="annual_volume">В межах річного/квартального обсягу</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Delivery Address */}
-              <div className="space-y-2">
-                <Label>Адреса доставки</Label>
-                <Input
-                  value={editForm.delivery_address}
-                  onChange={(e) => setEditForm({...editForm, delivery_address: e.target.value})}
-                  placeholder="Адреса доставки"
-                />
-              </div>
-
-              {/* Warranty, Penalty, Signing */}
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label>Гарантія</Label>
-                  <Select value={editForm.warranty_period} onValueChange={(v) => setEditForm({...editForm, warranty_period: v})}>
-                    <SelectTrigger><SelectValue placeholder="Оберіть" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="12_months">12 місяців</SelectItem>
-                      <SelectItem value="24_months">24 місяці</SelectItem>
-                      <SelectItem value="36_months">36 місяців</SelectItem>
-                      <SelectItem value="not_applicable">Не передбачено</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Пеня</Label>
-                  <Select value={editForm.penalty_rate} onValueChange={(v) => setEditForm({...editForm, penalty_rate: v})}>
-                    <SelectTrigger><SelectValue placeholder="Оберіть" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="0.01">0,01% на день</SelectItem>
-                      <SelectItem value="0.05">0,05% на день</SelectItem>
-                      <SelectItem value="0.1">0,1% на день</SelectItem>
-                      <SelectItem value="0.5">0,5% на день</SelectItem>
-                      <SelectItem value="1.0">1,0% на день</SelectItem>
-                      <SelectItem value="not_applicable">Не передбачено</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Підписання</Label>
-                  <Select value={editForm.signing_format} onValueChange={(v) => setEditForm({...editForm, signing_format: v})}>
-                    <SelectTrigger><SelectValue placeholder="Оберіть" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="paper">Паперовий</SelectItem>
-                      <SelectItem value="electronic">Електронний (КЕП)</SelectItem>
-                      <SelectItem value="both">Обидва варіанти</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              {/* Checkboxes */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={editForm.specification_required}
-                    onChange={(e) => setEditForm({...editForm, specification_required: e.target.checked})}
-                    className="h-4 w-4 rounded border-gray-300"
-                  />
-                  <span className="text-sm">Специфікація обов'язкова</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={editForm.quantity_variation_allowed}
-                    onChange={(e) => setEditForm({...editForm, quantity_variation_allowed: e.target.checked})}
-                    className="h-4 w-4 rounded border-gray-300"
-                  />
-                  <span className="text-sm">Варіативність обсягу</span>
-                </div>
-              </div>
-            </div>
-          ) : (
-            /* VIEW MODE */
-            <>
-              {/* Contract Type & Execution Form */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Package className="w-4 h-4 text-rose-600" />
-                    <Label className="text-xs text-gray-500 uppercase">Тип договору</Label>
-                  </div>
-                  <p className="text-base font-medium">{contractTypeLabel}</p>
-                </div>
-                {executionFormLabel && (
-                  <div className="p-3 bg-gray-50 rounded-lg">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Settings className="w-4 h-4 text-rose-600" />
-                      <Label className="text-xs text-gray-500 uppercase">Формат виконання</Label>
-                    </div>
-                    <p className="text-base font-medium">{executionFormLabel}</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Subject */}
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <div className="flex items-center gap-2 mb-1">
-                  <FileText className="w-4 h-4 text-rose-600" />
-                  <Label className="text-xs text-gray-500 uppercase">Предмет договору</Label>
-                </div>
-                <p className="text-base">{contract.subject}</p>
-              </div>
-
-              {/* Delivery Address */}
-              {contract.delivery_address && (
-                <div className="p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-2 mb-1">
-                    <MapPin className="w-4 h-4 text-rose-600" />
-                    <Label className="text-xs text-gray-500 uppercase">Адреса доставки</Label>
-                  </div>
-                  <p className="text-base font-medium">{contract.delivery_address}</p>
-                </div>
-              )}
-
-              {/* Contract Details Grid */}
-              <div className="grid grid-cols-3 gap-4">
-                {warrantyPeriodLabel && (
-                  <div className="p-3 bg-green-50 rounded-lg border border-green-200">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Shield className="w-4 h-4 text-green-600" />
-                      <Label className="text-xs text-gray-500 uppercase">Гарантія</Label>
-                    </div>
-                    <p className="text-base font-medium text-green-700">{warrantyPeriodLabel}</p>
-                  </div>
-                )}
-                {penaltyRateLabel && (
-                  <div className="p-3 bg-orange-50 rounded-lg border border-orange-200">
-                    <div className="flex items-center gap-2 mb-1">
-                      <AlertTriangle className="w-4 h-4 text-orange-600" />
-                      <Label className="text-xs text-gray-500 uppercase">Пеня</Label>
-                    </div>
-                    <p className="text-base font-medium text-orange-700">{penaltyRateLabel}</p>
-                  </div>
-                )}
-                {signingFormatLabel && (
-                  <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
-                    <div className="flex items-center gap-2 mb-1">
-                      <PenTool className="w-4 h-4 text-purple-600" />
-                      <Label className="text-xs text-gray-500 uppercase">Підписання</Label>
-                    </div>
-                    <p className="text-base font-medium text-purple-700">{signingFormatLabel}</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Additional Options */}
-              {(contract.specification_required || contract.quantity_variation_allowed) && (
-                <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
-                  <Label className="text-xs text-gray-500 uppercase mb-2 block">Додаткові умови</Label>
-                  <div className="space-y-2">
-                    {contract.specification_required && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <CheckCircle className="w-4 h-4 text-green-600" />
-                        <span>Специфікація обов'язкова</span>
-                      </div>
-                    )}
-                    {contract.quantity_variation_allowed && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <CheckCircle className="w-4 h-4 text-green-600" />
-                        <span>Варіативність обсягу</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Payment Terms */}
-              <div className="p-3 bg-gray-50 rounded-lg border">
-                <div className="flex items-center gap-2 mb-1">
-                  <CreditCard className="w-4 h-4 text-gray-600" />
-                  <Label className="text-xs text-gray-500 uppercase">Умови оплати</Label>
-                </div>
-                <p className="text-sm">Оплата здійснюється протягом 10 (десяти) календарних днів після дати постачання/підписання акту приймання-передачі.</p>
-              </div>
-            </>
-          )}
-
-          {/* Amount */}
-          <div className="bg-rose-100 p-4 rounded-lg border-2 border-rose-300">
-            <Label className="text-xs text-gray-600 uppercase">Загальна сума договору</Label>
-            <p className="text-3xl font-bold text-rose-700">{(isEditing ? editForm.amount : contract.amount)?.toFixed(2) || '0.00'} грн</p>
-          </div>
-
-          {/* Status Change */}
-          {onStatusChange && (
-            <div className="p-4 bg-gray-50 rounded-lg border">
-              <Label className="text-xs text-gray-500 uppercase mb-2 block">Змінити статус договору</Label>
-              <div className="flex gap-2 flex-wrap">
-                {Object.entries(CONTRACT_STATUS_LABELS).map(([key, label]) => (
-                  <Button
-                    key={key}
-                    variant={contract.status === key ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => onStatusChange(contract.number, key)}
-                    className={contract.status === key ? 'bg-rose-600 text-white' : ''}
-                  >
-                    {label}
-                  </Button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Create Related Documents */}
-          <div className="p-4 bg-indigo-50 rounded-lg border border-indigo-200">
-            <Label className="text-xs text-indigo-700 uppercase mb-3 block flex items-center gap-2">
-              <Plus className="w-4 h-4" /> Створити документ на основі договору
-            </Label>
-            <div className="grid grid-cols-3 gap-3">
-              {onCreateInvoice && (
-                <Button 
-                  variant="outline" 
-                  onClick={() => onCreateInvoice(contract)}
-                  className="flex items-center gap-2 border-green-300 hover:bg-green-50"
-                >
-                  <Receipt className="w-4 h-4 text-green-600" />
-                  <span>Рахунок</span>
+                <Button size="sm" onClick={handleSave} className="bg-green-600 hover:bg-green-700 text-white h-8">
+                  <Save className="w-3 h-3 mr-1" /> Зберегти
                 </Button>
-              )}
-              {onCreateAct && (
-                <Button 
-                  variant="outline"
-                  onClick={() => onCreateAct(contract)}
-                  className="flex items-center gap-2 border-amber-300 hover:bg-amber-50"
-                >
-                  <FileCheck className="w-4 h-4 text-amber-600" />
-                  <span>Акт</span>
-                </Button>
-              )}
-              {onCreateWaybill && (
-                <Button 
-                  variant="outline"
-                  onClick={() => onCreateWaybill(contract)}
-                  className="flex items-center gap-2 border-purple-300 hover:bg-purple-50"
-                >
-                  <Truck className="w-4 h-4 text-purple-600" />
-                  <span>Накладна</span>
-                </Button>
-              )}
-            </div>
-          </div>
-          
-          {/* Main Actions */}
-          <div className="flex gap-2 pt-4 border-t">
-            <Button 
-              onClick={onViewPDF}
-              disabled={loading}
-              className="flex-1 bg-rose-600 hover:bg-rose-700 text-white"
-            >
-              <Eye className="w-4 h-4 mr-2" /> Переглянути PDF
-            </Button>
-            <Button 
-              onClick={onSendEmail}
-              disabled={loading}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              <Mail className="w-4 h-4 mr-2" /> Надіслати Email
-            </Button>
-            <Button 
-              onClick={onDelete}
-              disabled={loading}
-              variant="destructive"
-              className="flex-1"
-            >
-              <Trash2 className="w-4 h-4 mr-2" /> Видалити
-            </Button>
-          </div>
-
-          {/* Quick Actions */}
-          <div className="flex gap-2 justify-center">
-            <Button variant="ghost" size="sm" onClick={() => window.print()}>
-              <Printer className="w-4 h-4 mr-1" /> Друк
-            </Button>
-            <Button variant="ghost" size="sm" onClick={onViewPDF}>
-              <Download className="w-4 h-4 mr-1" /> Завантажити PDF
-            </Button>
+              </div>
+            )}
           </div>
         </div>
-          
-        {/* Comments Section */}
-        <div className="mt-6 pt-6 border-t">
-          <CommentsSection entityType="contract" entityId={contract.number} />
+        
+        {/* Main Content - Horizontal Layout */}
+        <div className="flex gap-4 p-4 overflow-auto max-h-[calc(90vh-140px)]">
+          {/* Left Column - Main Info */}
+          <div className="flex-1 min-w-[400px] space-y-3">
+            {/* Validity + Term Row */}
+            <div className="flex gap-2">
+              {!isExpired ? (
+                <div className="flex-1 flex items-center gap-2 p-2 bg-green-50 border border-green-200 rounded-lg text-sm">
+                  <BadgeCheck className="w-4 h-4 text-green-600" />
+                  <span className="text-green-700 font-medium">Дійсний</span>
+                  <span className="text-green-600 text-xs">• {daysRemaining} днів</span>
+                </div>
+              ) : (
+                <div className="flex-1 flex items-center gap-2 p-2 bg-red-50 border border-red-200 rounded-lg text-sm">
+                  <XCircle className="w-4 h-4 text-red-600" />
+                  <span className="text-red-700 font-medium">Термін закінчився</span>
+                </div>
+              )}
+              <div className="flex-1 flex items-center gap-2 p-2 bg-blue-50 border border-blue-200 rounded-lg text-sm">
+                <Calendar className="w-4 h-4 text-blue-600" />
+                <span className="text-blue-700">{contractTermText}</span>
+              </div>
+            </div>
+
+            {/* Basic Info Grid */}
+            <div className="grid grid-cols-4 gap-2">
+              <div className="p-2 bg-gray-50 rounded text-center">
+                <p className="text-[10px] text-gray-500 uppercase">Номер</p>
+                <p className="text-sm font-bold">№{contract.number}</p>
+              </div>
+              <div className="p-2 bg-gray-50 rounded text-center">
+                <p className="text-[10px] text-gray-500 uppercase">Дата</p>
+                <p className="text-sm font-semibold">{formatDateUkrainian(contract.date)}</p>
+              </div>
+              <div className="p-2 bg-gray-50 rounded text-center">
+                <p className="text-[10px] text-gray-500 uppercase">ЄДРПОУ</p>
+                <p className="text-sm font-mono">{contract.counterparty_edrpou}</p>
+              </div>
+              <div className="p-2 bg-rose-100 rounded text-center border border-rose-200">
+                <p className="text-[10px] text-gray-500 uppercase">Сума</p>
+                <p className="text-sm font-bold text-rose-700">{(isEditing ? editForm.amount : contract.amount)?.toFixed(2)} грн</p>
+              </div>
+            </div>
+
+            {isEditing ? (
+              /* EDIT MODE - Compact */
+              <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg space-y-2">
+                <h3 className="font-semibold text-yellow-800 text-sm flex items-center gap-1">
+                  <Pencil className="w-3 h-3" /> Редагування
+                </h3>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label className="text-xs">Дата</Label>
+                    <Input type="date" value={editForm.date} onChange={(e) => setEditForm({...editForm, date: e.target.value})} className="h-8 text-sm" />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Сума (грн)</Label>
+                    <Input type="number" step="0.01" value={editForm.amount} onChange={(e) => setEditForm({...editForm, amount: parseFloat(e.target.value) || 0})} className="h-8 text-sm" />
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-xs">Предмет договору</Label>
+                  <Input value={editForm.subject} onChange={(e) => setEditForm({...editForm, subject: e.target.value})} className="h-8 text-sm" />
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <div>
+                    <Label className="text-xs">Тип</Label>
+                    <Select value={editForm.contract_type} onValueChange={(v) => setEditForm({...editForm, contract_type: v})}>
+                      <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="goods">Товари</SelectItem>
+                        <SelectItem value="services">Послуги</SelectItem>
+                        <SelectItem value="goods_and_services">Товари і послуги</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-xs">Гарантія</Label>
+                    <Select value={editForm.warranty_period} onValueChange={(v) => setEditForm({...editForm, warranty_period: v})}>
+                      <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="12_months">12 міс</SelectItem>
+                        <SelectItem value="24_months">24 міс</SelectItem>
+                        <SelectItem value="36_months">36 міс</SelectItem>
+                        <SelectItem value="not_applicable">Ні</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-xs">Підпис</Label>
+                    <Select value={editForm.signing_format} onValueChange={(v) => setEditForm({...editForm, signing_format: v})}>
+                      <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="paper">Папір</SelectItem>
+                        <SelectItem value="electronic">КЕП</SelectItem>
+                        <SelectItem value="both">Обидва</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              /* VIEW MODE - Compact */
+              <>
+                {/* Subject */}
+                <div className="p-2 bg-gray-50 rounded">
+                  <p className="text-[10px] text-gray-500 uppercase flex items-center gap-1">
+                    <FileText className="w-3 h-3" /> Предмет договору
+                  </p>
+                  <p className="text-sm">{contract.subject}</p>
+                </div>
+
+                {/* Contract Details Row */}
+                <div className="grid grid-cols-5 gap-2">
+                  <div className="p-2 bg-gray-50 rounded text-center">
+                    <p className="text-[10px] text-gray-500 uppercase">Тип</p>
+                    <p className="text-xs font-medium">{contractTypeLabel}</p>
+                  </div>
+                  {executionFormLabel && (
+                    <div className="p-2 bg-gray-50 rounded text-center">
+                      <p className="text-[10px] text-gray-500 uppercase">Формат</p>
+                      <p className="text-xs font-medium">{executionFormLabel}</p>
+                    </div>
+                  )}
+                  {warrantyPeriodLabel && (
+                    <div className="p-2 bg-green-50 rounded text-center border border-green-200">
+                      <p className="text-[10px] text-gray-500 uppercase">Гарантія</p>
+                      <p className="text-xs font-medium text-green-700">{warrantyPeriodLabel}</p>
+                    </div>
+                  )}
+                  {penaltyRateLabel && (
+                    <div className="p-2 bg-orange-50 rounded text-center border border-orange-200">
+                      <p className="text-[10px] text-gray-500 uppercase">Пеня</p>
+                      <p className="text-xs font-medium text-orange-700">{penaltyRateLabel}</p>
+                    </div>
+                  )}
+                  {signingFormatLabel && (
+                    <div className="p-2 bg-purple-50 rounded text-center border border-purple-200">
+                      <p className="text-[10px] text-gray-500 uppercase">Підпис</p>
+                      <p className="text-xs font-medium text-purple-700">{signingFormatLabel}</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Delivery Address if exists */}
+                {contract.delivery_address && (
+                  <div className="p-2 bg-gray-50 rounded flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-rose-600" />
+                    <div>
+                      <p className="text-[10px] text-gray-500 uppercase">Адреса доставки</p>
+                      <p className="text-sm">{contract.delivery_address}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Additional Options */}
+                {(contract.specification_required || contract.quantity_variation_allowed) && (
+                  <div className="flex gap-3 text-xs">
+                    {contract.specification_required && (
+                      <span className="flex items-center gap-1 text-green-700">
+                        <CheckCircle className="w-3 h-3" /> Специфікація обов'язкова
+                      </span>
+                    )}
+                    {contract.quantity_variation_allowed && (
+                      <span className="flex items-center gap-1 text-green-700">
+                        <CheckCircle className="w-3 h-3" /> Варіативність обсягу
+                      </span>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Based on Order */}
+            {contract.based_on_order && (
+              <div className="flex items-center gap-2 p-2 bg-indigo-50 border border-indigo-200 rounded text-sm">
+                <FileCheck className="w-4 h-4 text-indigo-600" />
+                <span className="text-indigo-700">На основі замовлення <strong>№{contract.based_on_order}</strong></span>
+              </div>
+            )}
+          </div>
+
+          {/* Right Column - Actions & Status */}
+          <div className="w-[320px] space-y-3">
+            {/* Status Change */}
+            {onStatusChange && (
+              <div className="p-3 bg-gray-50 rounded-lg border">
+                <p className="text-[10px] text-gray-500 uppercase mb-2">Статус</p>
+                <div className="flex gap-1 flex-wrap">
+                  {Object.entries(CONTRACT_STATUS_LABELS).map(([key, label]) => (
+                    <Button
+                      key={key}
+                      variant={contract.status === key ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => onStatusChange(contract.number, key)}
+                      className={`h-7 text-xs ${contract.status === key ? 'bg-rose-600 text-white' : ''}`}
+                    >
+                      {label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Create Documents */}
+            <div className="p-3 bg-indigo-50 rounded-lg border border-indigo-200">
+              <p className="text-[10px] text-indigo-700 uppercase mb-2 flex items-center gap-1">
+                <Plus className="w-3 h-3" /> Створити документ
+              </p>
+              <div className="grid grid-cols-3 gap-2">
+                {onCreateInvoice && (
+                  <Button variant="outline" size="sm" onClick={() => onCreateInvoice(contract)} className="h-8 text-xs border-green-300 hover:bg-green-50">
+                    <Receipt className="w-3 h-3 mr-1 text-green-600" /> Рахунок
+                  </Button>
+                )}
+                {onCreateAct && (
+                  <Button variant="outline" size="sm" onClick={() => onCreateAct(contract)} className="h-8 text-xs border-amber-300 hover:bg-amber-50">
+                    <FileCheck className="w-3 h-3 mr-1 text-amber-600" /> Акт
+                  </Button>
+                )}
+                {onCreateWaybill && (
+                  <Button variant="outline" size="sm" onClick={() => onCreateWaybill(contract)} className="h-8 text-xs border-purple-300 hover:bg-purple-50">
+                    <Truck className="w-3 h-3 mr-1 text-purple-600" /> Накладна
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {/* Main Actions */}
+            <div className="space-y-2">
+              <Button onClick={onViewPDF} disabled={loading} className="w-full bg-rose-600 hover:bg-rose-700 text-white h-9">
+                <Eye className="w-4 h-4 mr-2" /> Переглянути PDF
+              </Button>
+              <Button onClick={onSendEmail} disabled={loading} className="w-full bg-blue-600 hover:bg-blue-700 text-white h-9">
+                <Mail className="w-4 h-4 mr-2" /> Надіслати Email
+              </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => window.print()} className="flex-1 h-8">
+                  <Printer className="w-3 h-3 mr-1" /> Друк
+                </Button>
+                <Button variant="outline" size="sm" onClick={onViewPDF} className="flex-1 h-8">
+                  <Download className="w-3 h-3 mr-1" /> PDF
+                </Button>
+                <Button variant="destructive" size="sm" onClick={onDelete} disabled={loading} className="flex-1 h-8">
+                  <Trash2 className="w-3 h-3 mr-1" /> Видалити
+                </Button>
+              </div>
+            </div>
+
+            {/* Comments - Compact */}
+            <div className="border rounded-lg p-2 max-h-[200px] overflow-y-auto">
+              <CommentsSection entityType="contract" entityId={contract.number} compact />
+            </div>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
