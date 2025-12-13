@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Протестуй функціональність редагування контрактів та нового формату нумерації. Логін: user1@example.com/password123. Тестування: 1) Створення нового контракту з ЄДРПОУ 40196816, перевірка формату нумерації <останні 4 цифри ЄДРПОУ>-<номер>, 2) Редагування дати контракту через PUT /api/contracts/{contract_id}, 3) Перевірка endpoint оновлення контракту."
+user_problem_statement: "Протестуй генерацію PDF договору на основі шаблону. Логін: user1@example.com/password123. Тестування: 1) Авторизуйся через POST /api/auth/login, 2) Отримай список договорів через GET /api/contracts, 3) Візьми ID першого договору, 4) Запитай PDF через GET /api/contracts/{contract_id}/pdf, 5) Перевір що endpoint повертає PDF файл (Content-Type: application/pdf), 6) Перевір логи backend - повинен бути запис 'Generated contract PDF' з /tmp/document_pdfs/, 7) Перевір що розмір PDF більше 10KB, 8) Перевір відкриття PDF в браузері без помилок, 9) Перевір toast повідомлення 'PDF договору відкрито для перегляду'."
 
 frontend:
   - task: "System Template Button Functionality in Template Editor"
