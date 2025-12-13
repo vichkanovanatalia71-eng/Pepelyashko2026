@@ -11,6 +11,7 @@ const API_URL = process.env.REACT_APP_BACKEND_URL;
 const TemplateEditor = () => {
   const [templates, setTemplates] = useState({});
   const [selectedType, setSelectedType] = useState('invoice');
+  const [selectedSubType, setSelectedSubType] = useState('goods'); // For contracts: goods or services
   const [loading, setLoading] = useState(false);
   const [viewMode, setViewMode] = useState('preview');
   const [isEditing, setIsEditing] = useState(false);
@@ -22,6 +23,11 @@ const TemplateEditor = () => {
     { key: 'act', label: 'Акт', icon: FileCheck },
     { key: 'waybill', label: 'Накладна', icon: Truck },
     { key: 'contract', label: 'Договір', icon: FileSignature },
+  ];
+
+  const contractSubTypes = [
+    { key: 'goods', label: 'Для товарів' },
+    { key: 'services', label: 'Для послуг' },
   ];
 
   // Available variables for each template type
