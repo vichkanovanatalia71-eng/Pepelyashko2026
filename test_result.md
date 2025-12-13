@@ -962,12 +962,12 @@ test_plan:
   completed_tests:
     - "Order PDF Generation with Drive Upload"
     - "Order Email Functionality Fix - Beautiful Dialog Instead of Simple Prompt"
-  completed_tests:
     - "Counterparty Search by ЄДРПОУ in 'Основні дані'"
     - "UI/UX Design Update - surdo.org.ua Style"
     - "Google Drive Service Integration"
     - "Contract PDF Generation with Drive Upload"
     - "Contract Email with Drive Link"
+    - "Contract PDF Generation Template Testing"
     - "Invoice PDF Generation with Drive Upload"
     - "Act PDF Generation with Drive Upload"
     - "Waybill PDF Generation with Drive Upload"
