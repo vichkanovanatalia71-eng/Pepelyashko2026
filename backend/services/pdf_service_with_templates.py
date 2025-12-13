@@ -697,3 +697,302 @@ class PDFServiceWithTemplates:
         }
         
         return context
+
+    async def generate_contract_pdf(
+        self, 
+        contract: Dict[str, Any],
+        supplier: Dict[str, Any],
+        counterparty: Dict[str, Any],
+        template_id: Optional[str] = None
+    ) -> str:
+        """
+        Generate contract PDF using template.
+        
+        Args:
+            contract: Contract data
+            supplier: Supplier (user) data
+            counterparty: Counterparty data
+            template_id: Optional template ID (uses default if not provided)
+            
+        Returns:
+            Path to generated PDF file
+        """
+        try:
+            logger.info(f"Starting PDF generation for contract: {contract.get('number')}")
+            
+            # Get template
+            if template_id:
+                template = await self.template_service.get_template_by_id(
+                    template_id, 
+                    supplier.get('_id')
+                )
+            else:
+                template = await self.template_service.get_default_template(
+                    supplier.get('_id'),
+                    'contract'
+                )
+            
+            if not template:
+                raise Exception("Contract template not found")
+            
+            logger.info("Contract template loaded successfully")
+            
+            # Prepare context
+            context = self._prepare_contract_context(contract, supplier, counterparty)
+            
+            logger.info("Contract context prepared successfully")
+            
+            # Render template
+            html_content = self.renderer.render(template.content, context)
+            
+            logger.info("Contract template rendered successfully")
+            
+            # Generate PDF
+            contract_number = contract.get('number', 'unknown')
+            safe_number = contract_number.replace('/', '_').replace('\\', '_')
+            pdf_filename = f"contract_{safe_number}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+            pdf_path = self.output_dir / pdf_filename
+            
+            HTML(string=html_content).write_pdf(pdf_path)
+            
+            logger.info(f"Generated contract PDF: {pdf_path}")
+            return str(pdf_path)
+            
+        except Exception as e:
+            logger.error(f"Error generating contract PDF: {str(e)}", exc_info=True)
+            raise
+
+    def _prepare_contract_context(
+        self,
+        contract: Dict[str, Any],
+        supplier: Dict[str, Any],
+        counterparty: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Prepare context variables for contract template."""
+        
+        # Format date
+        date_value = contract.get('date', datetime.now())
+        if isinstance(date_value, str):
+            formatted_date = self._format_date_ukrainian(date_value)
+            date_obj = self._parse_date(date_value)
+        elif isinstance(date_value, datetime):
+            formatted_date = self._format_date_ukrainian(date_value.isoformat())
+            date_obj = date_value
+        else:
+            formatted_date = self._format_date_ukrainian(datetime.now().isoformat())
+            date_obj = datetime.now()
+        
+        # Extract place of compilation from supplier address
+        place_of_compilation = self._extract_city_from_address(supplier.get('legal_address', ''))
+        
+        # Get logo path
+        logo_url = supplier.get('logo_url', '')
+        logo_file_path = ''
+        if logo_url:
+            if logo_url.startswith('uploads/'):
+                logo_file_path = f'/app/backend/{logo_url}'
+            else:
+                logo_file_path = f'/app/backend/uploads/{logo_url}'
+            if not os.path.exists(logo_file_path):
+                logo_file_path = ''
+        
+        # Calculate end date (31 грудня of the same year by default)
+        end_date = f"31 грудня {date_obj.year} року" if date_obj else "31 грудня 2025 року"
+        
+        # Contract type labels
+        contract_type_labels = {
+            'goods': 'Поставка товарів',
+            'services': 'Надання послуг',
+            'goods_and_services': 'Поставка товарів та надання послуг'
+        }
+        contract_type = contract.get('contract_type', 'goods')
+        contract_type_label = contract_type_labels.get(contract_type, contract_type)
+        
+        # Execution form labels
+        execution_form_labels = {
+            'one_time': 'Разова поставка / послуга',
+            'periodic': 'Періодичне виконання',
+            'with_specifications': 'З окремими специфікаціями',
+            'annual_volume': 'В межах річного/квартального обсягу'
+        }
+        execution_form = contract.get('execution_form', '')
+        execution_form_label = execution_form_labels.get(execution_form, execution_form)
+        
+        # Warranty period labels
+        warranty_labels = {
+            '12_months': '12 місяців',
+            '24_months': '24 місяці',
+            '36_months': '36 місяців',
+            'not_applicable': 'Не передбачено'
+        }
+        warranty_period = contract.get('warranty_period', '')
+        warranty_label = warranty_labels.get(warranty_period, warranty_period)
+        
+        # Penalty rate labels
+        penalty_labels = {
+            '0.01': '0,01% на день',
+            '0.05': '0,05% на день',
+            '0.1': '0,1% на день',
+            '0.5': '0,5% на день',
+            '1.0': '1,0% на день',
+            'not_applicable': 'Не передбачено'
+        }
+        penalty_rate = contract.get('penalty_rate', '')
+        penalty_label = penalty_labels.get(penalty_rate, penalty_rate)
+        
+        # Signing format labels
+        signing_labels = {
+            'paper': 'Паперовий',
+            'electronic': 'Електронний (КЕП)',
+            'both': 'Обидва варіанти'
+        }
+        signing_format = contract.get('signing_format', '')
+        signing_label = signing_labels.get(signing_format, signing_format)
+        
+        # VAT status
+        is_vat_payer = supplier.get('is_vat_payer', False)
+        vat_note = '' if is_vat_payer else 'без ПДВ'
+        supplier_vat_status = 'Платник ПДВ' if is_vat_payer else 'Не є платником ПДВ'
+        
+        counterparty_is_vat = counterparty.get('is_vat_payer', False)
+        counterparty_vat_status = 'Платник ПДВ' if counterparty_is_vat else 'Не є платником ПДВ'
+        
+        context = {
+            # Contract main info
+            'contract_number': contract.get('number', ''),
+            'number': contract.get('number', ''),
+            'contract_date': formatted_date,
+            'date': formatted_date,
+            'contract_date_raw': str(date_value)[:10] if date_value else '',
+            'place_of_compilation': place_of_compilation,
+            'city': place_of_compilation,
+            
+            # Contract subject and terms
+            'contract_subject': contract.get('subject', ''),
+            'subject': contract.get('subject', ''),
+            'contract_type': contract_type_label,
+            'contract_type_raw': contract_type,
+            'execution_form': execution_form_label,
+            'execution_form_raw': execution_form,
+            
+            # Contract amount
+            'contract_amount': f"{float(contract.get('amount', 0)):,.2f}".replace(',', ' '),
+            'amount': f"{float(contract.get('amount', 0)):,.2f}".replace(',', ' '),
+            'total_amount': f"{float(contract.get('amount', 0)):,.2f}".replace(',', ' '),
+            'amount_raw': float(contract.get('amount', 0)),
+            
+            # Contract terms
+            'contract_term': f"з {formatted_date} до {end_date}",
+            'start_date': formatted_date,
+            'end_date': end_date,
+            'payment_terms': 'Оплата здійснюється протягом 10 (десяти) календарних днів після дати постачання/підписання акту приймання-передачі.',
+            
+            # Contract details
+            'delivery_address': contract.get('delivery_address', ''),
+            'warranty_period': warranty_label,
+            'warranty_period_raw': warranty_period,
+            'penalty_rate': penalty_label,
+            'penalty_rate_raw': penalty_rate,
+            'signing_format': signing_label,
+            'signing_format_raw': signing_format,
+            'specification_required': 'Так' if contract.get('specification_required') else 'Ні',
+            'quantity_variation_allowed': 'Так' if contract.get('quantity_variation_allowed') else 'Ні',
+            
+            # Based on order
+            'based_on_order': contract.get('based_on_order', ''),
+            
+            # VAT info
+            'vat_note': vat_note,
+            
+            # Supplier info
+            'supplier_name': supplier.get('representative_name', ''),
+            'supplier_company_name': supplier.get('representative_name', ''),
+            'supplier_edrpou': supplier.get('edrpou', ''),
+            'supplier_code': supplier.get('edrpou', ''),
+            'supplier_address': supplier.get('legal_address', ''),
+            'supplier_legal_address': supplier.get('legal_address', ''),
+            'supplier_email': supplier.get('email', ''),
+            'supplier_phone': supplier.get('phone', ''),
+            'supplier_iban': supplier.get('bank_account', supplier.get('iban', '')),
+            'supplier_bank_account': supplier.get('bank_account', supplier.get('iban', '')),
+            'supplier_mfo': supplier.get('mfo', ''),
+            'supplier_bank': supplier.get('bank_name', supplier.get('bank', '')),
+            'supplier_bank_name': supplier.get('bank_name', supplier.get('bank', '')),
+            'supplier_director': supplier.get('director_name', ''),
+            'supplier_director_name': supplier.get('director_name', ''),
+            'supplier_director_position': supplier.get('director_position', 'Директор'),
+            'supplier_position': supplier.get('director_position', 'Директор'),
+            'supplier_representative': supplier.get('represented_by', ''),
+            'supplier_represented_by': supplier.get('represented_by', ''),
+            'supplier_signature': supplier.get('signature', ''),
+            'supplier_acts_on': supplier.get('contract_type', 'Статуту'),
+            'supplier_vat_status': supplier_vat_status,
+            'supplier_logo': logo_file_path,
+            'supplier_logo_url': logo_file_path,
+            
+            # Counterparty/Buyer info
+            'buyer_name': counterparty.get('representative_name', contract.get('counterparty_name', '')),
+            'buyer_company_name': counterparty.get('representative_name', contract.get('counterparty_name', '')),
+            'counterparty_name': counterparty.get('representative_name', contract.get('counterparty_name', '')),
+            
+            'buyer_edrpou': counterparty.get('edrpou', contract.get('counterparty_edrpou', '')),
+            'buyer_code': counterparty.get('edrpou', contract.get('counterparty_edrpou', '')),
+            'counterparty_edrpou': counterparty.get('edrpou', contract.get('counterparty_edrpou', '')),
+            
+            'buyer_address': counterparty.get('legal_address', ''),
+            'buyer_legal_address': counterparty.get('legal_address', ''),
+            'buyer_email': counterparty.get('email', ''),
+            'buyer_phone': counterparty.get('phone', ''),
+            
+            'buyer_iban': counterparty.get('bank_account', counterparty.get('iban', '')),
+            'buyer_bank_account': counterparty.get('bank_account', counterparty.get('iban', '')),
+            'buyer_mfo': counterparty.get('mfo', ''),
+            'buyer_bank': counterparty.get('bank_name', counterparty.get('bank', '')),
+            'buyer_bank_name': counterparty.get('bank_name', counterparty.get('bank', '')),
+            
+            'buyer_director': counterparty.get('director_name', ''),
+            'buyer_director_name': counterparty.get('director_name', ''),
+            'buyer_director_position': counterparty.get('director_position', 'Директор'),
+            'buyer_position': counterparty.get('director_position', 'Директор'),
+            'buyer_representative': counterparty.get('represented_by', ''),
+            'buyer_represented_by': counterparty.get('represented_by', ''),
+            'buyer_signature': counterparty.get('signature', ''),
+            'buyer_acts_on': counterparty.get('contract_type', 'Статуту'),
+            'buyer_vat_status': counterparty_vat_status,
+        }
+        
+        return context
+
+    def _format_date_ukrainian(self, date_str: str) -> str:
+        """Format date in Ukrainian format."""
+        try:
+            if isinstance(date_str, str):
+                date_obj = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+            else:
+                date_obj = date_str
+            
+            months_ua = {
+                1: 'січня', 2: 'лютого', 3: 'березня', 4: 'квітня',
+                5: 'травня', 6: 'червня', 7: 'липня', 8: 'серпня',
+                9: 'вересня', 10: 'жовтня', 11: 'листопада', 12: 'грудня'
+            }
+            
+            day = date_obj.day
+            month = months_ua[date_obj.month]
+            year = date_obj.year
+            
+            return f"{day} {month} {year} року"
+        except:
+            return "дата не вказана"
+    
+    def _parse_date(self, date_str: str) -> datetime:
+        """Parse date string to datetime object."""
+        try:
+            if isinstance(date_str, str):
+                return datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+            elif isinstance(date_str, datetime):
+                return date_str
+            else:
+                return datetime.now()
+        except:
+            return datetime.now()
