@@ -135,54 +135,67 @@ class ContractTestSuite:
             logger.error(f"❌ Тест отримання контрагентів провалився: {str(e)}")
             return False
     
-    def test_generate_pdf_and_verify_custom_template_usage(self):
-        """Test 2: Generate PDF for invoice and verify custom template usage"""
+    def test_create_contract_with_new_numbering_format(self):
+        """Test 2: Create new contract and verify numbering format"""
         logger.info("=" * 80)
-        logger.info("ТЕСТ 2: ГЕНЕРАЦІЯ PDF ТА ПЕРЕВІРКА ВИКОРИСТАННЯ КОРИСТУВАЦЬКОГО ШАБЛОНУ")
+        logger.info("ТЕСТ 2: СТВОРЕННЯ НОВОГО КОНТРАКТУ З НОВИМ ФОРМАТОМ НУМЕРАЦІЇ")
         logger.info("=" * 80)
         
+        if not self.test_counterparty_edrpou:
+            logger.error("❌ Немає ЄДРПОУ контрагента для тестування")
+            return False
+        
         try:
-            logger.info(f"Генерація PDF для рахунку {self.test_invoice_number}...")
+            # Test payload exactly as specified in review request
+            contract_data = {
+                "counterparty_edrpou": self.test_counterparty_edrpou,
+                "subject": "Тестовий договір для перевірки нумерації",
+                "amount": 10000,
+                "contract_type": "goods"
+            }
             
-            # Generate PDF via API endpoint
-            response = requests.get(
-                f"{self.api_url}/invoices/pdf/{self.test_invoice_number}",
-                headers=self.get_auth_headers(),
+            logger.info(f"Створення контракту з ЄДРПОУ: {self.test_counterparty_edrpou}")
+            
+            response = requests.post(
+                f"{self.api_url}/contracts",
+                json=contract_data,
+                headers={**self.get_auth_headers(), 'Content-Type': 'application/json'},
                 timeout=30
             )
             
-            if response.status_code != 200:
-                logger.error(f"❌ Помилка генерації PDF: {response.status_code} - {response.text}")
+            if response.status_code != 201:
+                logger.error(f"❌ Помилка створення контракту: {response.status_code} - {response.text}")
                 return False
             
-            # Check Content-Type
-            content_type = response.headers.get('content-type', '')
-            if 'application/pdf' not in content_type:
-                logger.error(f"❌ Неправильний Content-Type: {content_type}")
+            result = response.json()
+            contract_number = result.get('number')
+            
+            if not contract_number:
+                logger.error("❌ Номер контракту не повернуто в відповіді")
                 return False
             
-            pdf_size = len(response.content)
-            logger.info("✅ PDF згенеровано успішно")
-            logger.info(f"   Content-Type: {content_type}")
-            logger.info(f"   Розмір файлу: {pdf_size} байт ({pdf_size/1024:.1f} KB)")
+            self.created_contract_number = contract_number
+            logger.info(f"✅ Контракт створено успішно з номером: {contract_number}")
             
-            # Check minimum size requirement (~150KB from review request)
-            if pdf_size < 100 * 1024:  # 100KB minimum
-                logger.error(f"❌ PDF файл занадто малий: {pdf_size/1024:.1f} KB (очікувалося >100KB)")
+            # Verify numbering format: <останні 4 цифри ЄДРПОУ>-<номер>
+            expected_prefix = self.test_counterparty_edrpou[-4:]  # Last 4 digits of ЄДРПОУ
+            
+            if not contract_number.startswith(expected_prefix + "-"):
+                logger.error(f"❌ Неправильний формат номера контракту")
+                logger.error(f"   Очікувався формат: {expected_prefix}-XXXX")
+                logger.error(f"   Отримано: {contract_number}")
                 return False
-            else:
-                logger.info(f"✅ Розмір PDF відповідає вимогам (>{100} KB)")
             
-            # Save PDF to temporary file for text extraction
-            with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as temp_pdf:
-                temp_pdf.write(response.content)
-                temp_pdf_path = temp_pdf.name
+            logger.info(f"✅ КРИТЕРІЙ УСПІХУ: Номер контракту має правильний формат")
+            logger.info(f"   ЄДРПОУ: {self.test_counterparty_edrpou}")
+            logger.info(f"   Останні 4 цифри: {expected_prefix}")
+            logger.info(f"   Номер контракту: {contract_number}")
+            logger.info(f"   Формат відповідає: {expected_prefix}-XXXX ✅")
             
-            # Extract and check PDF content for custom template markers
-            return self.check_custom_template_pdf_content(temp_pdf_path)
+            return True
             
         except Exception as e:
-            logger.error(f"❌ Тест генерації PDF провалився: {str(e)}")
+            logger.error(f"❌ Тест створення контракту провалився: {str(e)}")
             return False
     
     def test_compare_with_system_template(self):
