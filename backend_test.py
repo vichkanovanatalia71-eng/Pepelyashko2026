@@ -47,6 +47,7 @@ class ContractTestSuite:
         
         # Test data from review request
         self.test_counterparty_edrpou = None
+        self.created_contract_id = None
         self.created_contract_number = None
         self.test_results = {}
     
