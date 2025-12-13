@@ -109,7 +109,7 @@ const OrderCard = ({
         </VisuallyHidden>
         
         {/* Outer container with light gray background */}
-        <div className="bg-[#EEF2F5] p-6 rounded-[16px] max-h-[85vh] overflow-y-auto">
+        <div className="bg-[#EEF2F5] p-4 rounded-[16px] max-h-[85vh] overflow-y-auto">
           {/* Main Card */}
           <div 
             className="bg-white rounded-[12px] relative"
@@ -121,29 +121,28 @@ const OrderCard = ({
             {/* Close button */}
             <button
               onClick={onClose}
-              className="absolute top-4 right-4 z-10 p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+              className="absolute top-3 right-3 z-10 p-1.5 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
             >
-              <X className="w-5 h-5 text-gray-500" />
+              <X className="w-4 h-4 text-gray-500" />
             </button>
 
             {/* Card Content */}
-            <div className="p-8">
+            <div className="p-5">
               {/* View Mode */}
               {!editingOrder && (
                 <>
-                  {/* Block 1: Hero */}
-                  <div className="flex items-start justify-between mb-8 pb-6 border-b border-gray-100">
-                    <div className="flex items-start gap-4">
-                      {/* Logo placeholder or icon */}
-                      <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center flex-shrink-0">
-                        <FileText className="w-6 h-6 text-white" />
+                  {/* Block 1: Hero - Compact */}
+                  <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-100">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center flex-shrink-0">
+                        <FileText className="w-5 h-5 text-white" />
                       </div>
                       <div>
-                        <h1 className="text-[24px] font-semibold text-[#1B1B1B] tracking-tight">
+                        <h1 className="text-[20px] font-semibold text-[#1B1B1B] tracking-tight">
                           Замовлення №{order.number}
                         </h1>
-                        <p className="text-[14px] text-gray-500 mt-1 flex items-center gap-2">
-                          <Calendar className="w-4 h-4" />
+                        <p className="text-[12px] text-gray-500 flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
                           {formatDateUkrainian(order.date)}
                         </p>
                       </div>
@@ -155,10 +154,10 @@ const OrderCard = ({
                       onValueChange={(value) => onStatusChange && onStatusChange(order.number, value)}
                     >
                       <SelectTrigger 
-                        className={`w-[160px] ${currentStatus.bgColor} text-white border-none focus:ring-0 focus:ring-offset-0`}
+                        className={`w-[140px] h-8 text-sm ${currentStatus.bgColor} text-white border-none focus:ring-0 focus:ring-offset-0`}
                       >
                         <div className="flex items-center gap-2">
-                          <StatusIcon className="w-4 h-4" />
+                          <StatusIcon className="w-3 h-3" />
                           <SelectValue />
                         </div>
                       </SelectTrigger>
@@ -168,7 +167,7 @@ const OrderCard = ({
                           return (
                             <SelectItem key={key} value={key}>
                               <div className="flex items-center gap-2">
-                                <Icon className="w-4 h-4" />
+                                <Icon className="w-3 h-3" />
                                 <span>{status.label}</span>
                               </div>
                             </SelectItem>
@@ -178,262 +177,117 @@ const OrderCard = ({
                     </Select>
                   </div>
 
-                  {/* Block 2: Order Parameters */}
-                  <div className="grid grid-cols-4 gap-6 mb-8">
-                    <div>
-                      <p className="text-[12px] font-medium text-gray-400 uppercase tracking-wide mb-1">
-                        Номер
-                      </p>
-                      <p className="text-[16px] font-semibold text-[#1B1B1B]">
-                        №{order.number}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-[12px] font-medium text-gray-400 uppercase tracking-wide mb-1">
-                        Дата створення
-                      </p>
-                      <p className="text-[16px] font-semibold text-[#1B1B1B]">
-                        {formatDateUkrainian(order.date)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-[12px] font-medium text-gray-400 uppercase tracking-wide mb-1">
-                        Номер ТТН
-                      </p>
-                      <p className="text-[16px] font-semibold text-[#1B1B1B]">
-                        {order.ttn_number || '—'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-[12px] font-medium text-gray-400 uppercase tracking-wide mb-1">
-                        Загальна сума
-                      </p>
-                      <p className="text-[18px] font-bold text-blue-600">
-                        {formatAmount(order.total_amount)} грн
-                      </p>
-                    </div>
-                  </div>
+                  {/* Main Content - Horizontal Layout */}
+                  <div className="flex gap-4">
+                    {/* Left Column */}
+                    <div className="flex-1 min-w-[500px]">
+                      {/* Block 2: Order Parameters - Compact */}
+                      <div className="grid grid-cols-4 gap-3 mb-4">
+                        <div className="p-2 bg-gray-50 rounded text-center">
+                          <p className="text-[10px] text-gray-500 uppercase">Номер</p>
+                          <p className="text-sm font-semibold">№{order.number}</p>
+                        </div>
+                        <div className="p-2 bg-gray-50 rounded text-center">
+                          <p className="text-[10px] text-gray-500 uppercase">Дата</p>
+                          <p className="text-sm font-semibold">{formatDateUkrainian(order.date)}</p>
+                        </div>
+                        <div className="p-2 bg-gray-50 rounded text-center">
+                          <p className="text-[10px] text-gray-500 uppercase">ТТН</p>
+                          <p className="text-sm font-semibold">{order.ttn_number || '—'}</p>
+                        </div>
+                        <div className="p-2 bg-blue-50 rounded text-center border border-blue-200">
+                          <p className="text-[10px] text-gray-500 uppercase">Сума</p>
+                          <p className="text-sm font-bold text-blue-600">{formatAmount(order.total_amount)} грн</p>
+                        </div>
+                      </div>
 
-                  {/* Block 3: Order Items - ТОВАРИ ТА ПОСЛУГИ */}
-                  <div className="mb-8">
-                    <h2 className="text-[16px] font-semibold text-[#1B1B1B] mb-4 flex items-center gap-2">
-                      <Package className="w-5 h-5 text-blue-500" />
-                      ТОВАРИ ТА ПОСЛУГИ
-                    </h2>
-                    
-                    {/* Items Header */}
-                    <div className="bg-gray-50 rounded-t-lg px-4 py-3 grid grid-cols-12 gap-2 text-[12px] font-semibold text-gray-500 uppercase tracking-wide">
-                      <div className="col-span-1">№</div>
-                      <div className="col-span-5">Найменування</div>
-                      <div className="col-span-1 text-center">Од.</div>
-                      <div className="col-span-2 text-right">Кількість</div>
-                      <div className="col-span-1 text-right">Ціна</div>
-                      <div className="col-span-2 text-right">Сума</div>
-                    </div>
-                    
-                    {/* Items List */}
-                    <div className="border border-gray-100 border-t-0 rounded-b-lg divide-y divide-gray-100">
-                      {order.items?.map((item, index) => (
-                        <div 
-                          key={index}
-                          className="px-4 py-3 grid grid-cols-12 gap-2 items-center hover:bg-gray-50 transition-colors"
-                        >
-                          <div className="col-span-1 text-[13px] text-gray-500">
-                            {index + 1}
+                      {/* Block 3: Order Items - Compact */}
+                      <div className="mb-4">
+                        <h2 className="text-[13px] font-semibold text-[#1B1B1B] mb-2 flex items-center gap-2">
+                          <Package className="w-4 h-4 text-blue-500" />
+                          ТОВАРИ
+                        </h2>
+                        
+                        {/* Items Table - Compact */}
+                        <div className="border border-gray-200 rounded-lg overflow-hidden">
+                          <div className="bg-gray-50 px-3 py-2 grid grid-cols-12 gap-1 text-[10px] font-semibold text-gray-500 uppercase">
+                            <div className="col-span-1">№</div>
+                            <div className="col-span-5">Найменування</div>
+                            <div className="col-span-1 text-center">Од.</div>
+                            <div className="col-span-2 text-right">К-сть</div>
+                            <div className="col-span-1 text-right">Ціна</div>
+                            <div className="col-span-2 text-right">Сума</div>
                           </div>
-                          <div className="col-span-5 text-[14px] font-medium text-[#1B1B1B]">
-                            {item.name}
-                          </div>
-                          <div className="col-span-1 text-[13px] text-gray-500 text-center">
-                            {item.unit}
-                          </div>
-                          <div className="col-span-2 text-[14px] text-[#1B1B1B] text-right">
-                            {item.quantity}
-                          </div>
-                          <div className="col-span-1 text-[14px] text-[#1B1B1B] text-right">
-                            {formatAmount(item.price)}
-                          </div>
-                          <div className="col-span-2 text-[14px] font-semibold text-[#1B1B1B] text-right">
-                            {formatAmount(item.amount)} грн
+                          <div className="max-h-[150px] overflow-y-auto">
+                            {order.items?.map((item, index) => (
+                              <div key={index} className="px-3 py-2 grid grid-cols-12 gap-1 items-center border-t border-gray-100 text-xs">
+                                <div className="col-span-1 text-gray-500">{index + 1}</div>
+                                <div className="col-span-5 font-medium truncate">{item.name}</div>
+                                <div className="col-span-1 text-gray-500 text-center">{item.unit}</div>
+                                <div className="col-span-2 text-right">{item.quantity}</div>
+                                <div className="col-span-1 text-right">{formatAmount(item.price)}</div>
+                                <div className="col-span-2 text-right font-semibold">{formatAmount(item.amount)} грн</div>
+                              </div>
+                            ))}
                           </div>
                         </div>
-                      ))}
-                    </div>
-                    
-                    {/* Total Amount - Premium Style */}
-                    <div className="mt-4 bg-blue-50 rounded-xl p-5 border border-blue-100">
-                      <div className="flex justify-between items-center">
-                        <span className="text-[15px] font-semibold text-blue-900">
-                          Загальна сума замовлення:
-                        </span>
-                        <span className="text-[22px] font-bold text-blue-600">
-                          {formatAmount(order.total_amount)} грн
-                        </span>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Block 4: Customer/Buyer Details - ПОКУПЕЦЬ */}
-                  <div className="bg-[#F7F9FA] rounded-xl p-6 mb-8">
-                    <h2 className="text-[16px] font-semibold text-[#1B1B1B] mb-4 flex items-center gap-2">
-                      <Building2 className="w-5 h-5 text-blue-500" />
-                      ПОКУПЕЦЬ
-                    </h2>
-                    
-                    {/* Two-column layout for buyer details */}
-                    <div className="space-y-3">
-                      {/* Повна назва */}
-                      <div className="flex items-start py-2 border-b border-gray-200">
-                        <span className="text-[13px] font-medium text-gray-500 w-40 flex-shrink-0">
-                          Повна назва
-                        </span>
-                        <span className="text-[14px] font-semibold text-[#1B1B1B]">
-                          {order.counterparty_name || '—'}
-                        </span>
+                    {/* Right Column - Buyer & Actions */}
+                    <div className="w-[320px] space-y-3">
+                      {/* Buyer - Compact */}
+                      <div className="bg-[#F7F9FA] rounded-lg p-3">
+                        <h2 className="text-[12px] font-semibold text-[#1B1B1B] mb-2 flex items-center gap-1">
+                          <Building2 className="w-4 h-4 text-blue-500" />
+                          ПОКУПЕЦЬ
+                        </h2>
+                        <div className="space-y-1 text-xs">
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">Назва:</span>
+                            <span className="font-medium text-right max-w-[180px] truncate">{order.counterparty_name || '—'}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">ЄДРПОУ:</span>
+                            <span className="font-medium">{order.counterparty_edrpou || '—'}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">Тел:</span>
+                            <span>{order.counterparty_phone || order.buyer_phone || '—'}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">Email:</span>
+                            <span className="truncate max-w-[150px]">{order.counterparty_email || order.buyer_email || '—'}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">IBAN:</span>
+                            <span className="font-mono text-[10px]">{(order.counterparty_iban || order.buyer_iban || '—').slice(0, 20)}...</span>
+                          </div>
+                        </div>
                       </div>
-                      
-                      {/* Код ЄДРПОУ */}
-                      <div className="flex items-start py-2 border-b border-gray-200">
-                        <span className="text-[13px] font-medium text-gray-500 w-40 flex-shrink-0">
-                          Код ЄДРПОУ
-                        </span>
-                        <span className="text-[14px] font-semibold text-[#1B1B1B]">
-                          {order.counterparty_edrpou || '—'}
-                        </span>
-                      </div>
-                      
-                      {/* Юридична адреса */}
-                      <div className="flex items-start py-2 border-b border-gray-200">
-                        <span className="text-[13px] font-medium text-gray-500 w-40 flex-shrink-0">
-                          Юридична адреса
-                        </span>
-                        <span className="text-[14px] text-[#1B1B1B]">
-                          {order.counterparty_address || order.buyer_address || '—'}
-                        </span>
-                      </div>
-                      
-                      {/* Телефон */}
-                      <div className="flex items-start py-2 border-b border-gray-200">
-                        <span className="text-[13px] font-medium text-gray-500 w-40 flex-shrink-0">
-                          Телефон
-                        </span>
-                        <span className="text-[14px] text-[#1B1B1B]">
-                          {order.counterparty_phone || order.buyer_phone || '—'}
-                        </span>
-                      </div>
-                      
-                      {/* Email */}
-                      <div className="flex items-start py-2 border-b border-gray-200">
-                        <span className="text-[13px] font-medium text-gray-500 w-40 flex-shrink-0">
-                          Email
-                        </span>
-                        <span className="text-[14px] text-[#1B1B1B]">
-                          {order.counterparty_email || order.buyer_email || '—'}
-                        </span>
-                      </div>
-                      
-                      {/* Банк */}
-                      <div className="flex items-start py-2 border-b border-gray-200">
-                        <span className="text-[13px] font-medium text-gray-500 w-40 flex-shrink-0">
-                          Банк
-                        </span>
-                        <span className="text-[14px] text-[#1B1B1B]">
-                          {order.counterparty_bank || order.buyer_bank || '—'}
-                        </span>
-                      </div>
-                      
-                      {/* IBAN */}
-                      <div className="flex items-start py-2 border-b border-gray-200">
-                        <span className="text-[13px] font-medium text-gray-500 w-40 flex-shrink-0">
-                          IBAN
-                        </span>
-                        <span className="text-[14px] text-[#1B1B1B] font-mono">
-                          {order.counterparty_iban || order.buyer_iban || '—'}
-                        </span>
-                      </div>
-                      
-                      {/* МФО */}
-                      <div className="flex items-start py-2 border-b border-gray-200">
-                        <span className="text-[13px] font-medium text-gray-500 w-40 flex-shrink-0">
-                          МФО
-                        </span>
-                        <span className="text-[14px] text-[#1B1B1B]">
-                          {order.counterparty_mfo || order.buyer_mfo || '—'}
-                        </span>
-                      </div>
-                      
-                      {/* Директор */}
-                      <div className="flex items-start py-2 border-b border-gray-200">
-                        <span className="text-[13px] font-medium text-gray-500 w-40 flex-shrink-0">
-                          Директор
-                        </span>
-                        <span className="text-[14px] text-[#1B1B1B]">
-                          {order.counterparty_director || order.buyer_director || '—'}
-                        </span>
-                      </div>
-                      
-                      {/* Посада */}
-                      <div className="flex items-start py-2">
-                        <span className="text-[13px] font-medium text-gray-500 w-40 flex-shrink-0">
-                          Посада
-                        </span>
-                        <span className="text-[14px] text-[#1B1B1B]">
-                          {order.counterparty_position || order.buyer_position || '—'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
 
-                  {/* Block 5: Control Message */}
-                  <div className="bg-blue-50 rounded-xl p-5 mb-6 border border-blue-100">
-                    <p className="text-[14px] font-semibold text-blue-900 mb-1">
-                      Замовлення готове до обробки
-                    </p>
-                    <p className="text-[13px] text-blue-700">
-                      Ви можете переглянути PDF, надіслати на email або редагувати дані замовлення.
-                    </p>
-                  </div>
+                      {/* Actions */}
+                      <div className="space-y-2">
+                        <Button onClick={onPreviewPDF} className="w-full bg-blue-500 hover:bg-blue-600 text-white h-9">
+                          <Eye className="w-4 h-4 mr-2" /> Переглянути PDF
+                        </Button>
+                        <Button variant="outline" onClick={onSendEmail} className="w-full h-9">
+                          <Mail className="w-4 h-4 mr-2 text-blue-500" /> Email
+                        </Button>
+                        <div className="flex gap-2">
+                          <Button onClick={onStartEdit} variant="outline" className="flex-1 h-8 text-sm">
+                            <Edit className="w-3 h-3 mr-1" /> Редагувати
+                          </Button>
+                          <Button variant="destructive" onClick={onDelete} disabled={loading} className="flex-1 h-8 text-sm">
+                            <Trash2 className="w-3 h-3 mr-1" /> Видалити
+                          </Button>
+                        </div>
+                      </div>
 
-                  {/* Comments Section */}
-                  <div className="border-t border-gray-100 pt-6">
-                    <CommentsSection entityType="order" entityId={order.number} />
-                  </div>
-
-                  {/* Block 6: Footer / Actions */}
-                  <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-100">
-                    <Button 
-                      variant="ghost" 
-                      onClick={onDelete}
-                      disabled={loading}
-                      className="text-red-500 hover:text-red-600 hover:bg-red-50"
-                    >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      {loading ? 'Видалення...' : 'Видалити'}
-                    </Button>
-                    <div className="flex gap-3">
-                      <Button 
-                        variant="outline" 
-                        onClick={onSendEmail}
-                        className="border-gray-200 hover:border-blue-300 hover:bg-blue-50"
-                      >
-                        <Mail className="w-4 h-4 mr-2 text-blue-500" />
-                        Email
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        onClick={onPreviewPDF}
-                        className="border-gray-200 hover:border-blue-300 hover:bg-blue-50"
-                      >
-                        <Eye className="w-4 h-4 mr-2 text-blue-500" />
-                        Переглянути PDF
-                      </Button>
-                      <Button 
-                        onClick={onStartEdit}
-                        className="bg-blue-500 hover:bg-blue-600 text-white"
-                      >
-                        <Edit className="w-4 h-4 mr-2" />
-                        Редагувати
-                      </Button>
+                      {/* Comments - Compact */}
+                      <div className="border rounded-lg p-2 max-h-[150px] overflow-y-auto">
+                        <CommentsSection entityType="order" entityId={order.number} compact />
+                      </div>
                     </div>
                   </div>
                 </>
