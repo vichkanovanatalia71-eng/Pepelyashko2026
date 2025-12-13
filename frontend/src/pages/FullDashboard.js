@@ -1581,6 +1581,109 @@ const FullDashboard = () => {
     }
   };
 
+  // Update contract
+  const updateContract = async (contractNumber, updateData) => {
+    setLoading(true);
+    try {
+      const response = await axios.put(`${API_URL}/api/contracts/${contractNumber}`, updateData);
+      toast.success('Договір успішно оновлено!');
+      
+      // Update local state
+      setViewingContract({...viewingContract, ...response.data});
+      await loadAllData();
+    } catch (error) {
+      console.error('Error updating contract:', error);
+      toast.error(error.response?.data?.detail || 'Помилка оновлення договору');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Update contract status
+  const updateContractStatus = async (contractNumber, newStatus) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.patch(
+        `${API_URL}/api/contracts/${contractNumber}/status?status_value=${newStatus}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      const statusLabels = {
+        'draft': 'Чернетка',
+        'active': 'Діючий',
+        'completed': 'Виконано',
+        'terminated': 'Розірвано',
+        'expired': 'Завершено'
+      };
+      toast.success(`Статус оновлено: ${statusLabels[newStatus] || newStatus}`);
+      
+      // Update viewing contract if open
+      if (viewingContract && viewingContract.number === contractNumber) {
+        setViewingContract({...viewingContract, status: newStatus});
+      }
+      
+      await loadAllData();
+    } catch (error) {
+      console.error('Error updating contract status:', error);
+      toast.error('Помилка оновлення статусу');
+    }
+  };
+
+  // Create invoice from contract
+  const createInvoiceFromContract = (contract) => {
+    // Navigate to invoice tab with pre-filled data
+    setActiveTab('invoices');
+    setSearchEdrpou(contract.counterparty_edrpou);
+    searchCounterparty(contract.counterparty_edrpou);
+    setInvoiceForm(prev => ({
+      ...prev,
+      counterparty_edrpou: contract.counterparty_edrpou,
+      counterparty_name: contract.counterparty_name,
+      based_on_contract: contract.number,
+      items: [],
+      total_amount: contract.amount || 0
+    }));
+    closeContractDialog();
+    toast.info(`Створення рахунку на основі договору №${contract.number}`);
+  };
+
+  // Create act from contract
+  const createActFromContract = (contract) => {
+    setActiveTab('acts');
+    setSearchEdrpou(contract.counterparty_edrpou);
+    searchCounterparty(contract.counterparty_edrpou);
+    setActForm(prev => ({
+      ...prev,
+      counterparty_edrpou: contract.counterparty_edrpou,
+      counterparty_name: contract.counterparty_name,
+      based_on_contract: contract.number,
+      items: [],
+      total_amount: contract.amount || 0
+    }));
+    closeContractDialog();
+    toast.info(`Створення акту на основі договору №${contract.number}`);
+  };
+
+  // Create waybill from contract
+  const createWaybillFromContract = (contract) => {
+    setActiveTab('waybills');
+    setSearchEdrpou(contract.counterparty_edrpou);
+    searchCounterparty(contract.counterparty_edrpou);
+    setWaybillForm(prev => ({
+      ...prev,
+      counterparty_edrpou: contract.counterparty_edrpou,
+      counterparty_name: contract.counterparty_name,
+      based_on_contract: contract.number,
+      items: [],
+      total_amount: contract.amount || 0
+    }));
+    closeContractDialog();
+    toast.info(`Створення накладної на основі договору №${contract.number}`);
+  };
+    }
+  };
+
   const deleteAct = async () => {
     if (!viewingAct) return;
     if (!window.confirm(`Ви впевнені, що хочете видалити акт №${viewingAct.number}?`)) return;
