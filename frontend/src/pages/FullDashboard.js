@@ -3785,9 +3785,46 @@ const FullDashboard = () => {
                     <Input
                       value={contractForm.subject}
                       onChange={(e) => setContractForm({...contractForm, subject: e.target.value})}
-                      placeholder="Опис предмету договору"
+                      placeholder="Наприклад: Поставка офісної техніки та сервісне обслуговування"
                       required
                     />
+                  </div>
+
+                  {/* Contract Type */}
+                  <div className="space-y-2">
+                    <Label>Тип договору</Label>
+                    <Select 
+                      value={contractForm.contract_type} 
+                      onValueChange={(value) => setContractForm({...contractForm, contract_type: value})}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Оберіть тип договору" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="goods">Поставка товарів</SelectItem>
+                        <SelectItem value="services">Надання послуг</SelectItem>
+                        <SelectItem value="goods_and_services">Поставка товарів та надання послуг</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Execution Form */}
+                  <div className="space-y-2">
+                    <Label>Формат виконання договору</Label>
+                    <Select 
+                      value={contractForm.execution_form} 
+                      onValueChange={(value) => setContractForm({...contractForm, execution_form: value})}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Оберіть формат виконання" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="one_time">Разова поставка / послуга</SelectItem>
+                        <SelectItem value="periodic">Періодичне виконання</SelectItem>
+                        <SelectItem value="with_specifications">З окремими специфікаціями</SelectItem>
+                        <SelectItem value="annual_volume">В межах річного/квартального обсягу</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div className="space-y-2">
@@ -3800,6 +3837,37 @@ const FullDashboard = () => {
                       placeholder="0.00"
                       required
                     />
+                  </div>
+
+                  {/* Additional Options */}
+                  <div className="space-y-3 p-4 bg-gray-50 rounded-lg border">
+                    <Label className="text-sm font-medium text-gray-700">Додаткові умови</Label>
+                    
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id="specification_required"
+                        checked={contractForm.specification_required}
+                        onChange={(e) => setContractForm({...contractForm, specification_required: e.target.checked})}
+                        className="h-4 w-4 rounded border-gray-300 text-rose-600 focus:ring-rose-500"
+                      />
+                      <label htmlFor="specification_required" className="text-sm text-gray-700">
+                        Специфікація обов'язкова (кожна операція оформлюється окремим додатком)
+                      </label>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id="quantity_variation"
+                        checked={contractForm.quantity_variation_allowed}
+                        onChange={(e) => setContractForm({...contractForm, quantity_variation_allowed: e.target.checked})}
+                        className="h-4 w-4 rounded border-gray-300 text-rose-600 focus:ring-rose-500"
+                      />
+                      <label htmlFor="quantity_variation" className="text-sm text-gray-700">
+                        Варіативність обсягу (можливість зміни обсягу в межах специфікацій)
+                      </label>
+                    </div>
                   </div>
 
                   <div className="p-4 bg-rose-50 border rounded">
