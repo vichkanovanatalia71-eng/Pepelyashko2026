@@ -346,9 +346,19 @@ class DocumentServiceMongo:
         """Create a new contract."""
         contract_id = str(uuid.uuid4())
         
-        # Generate contract number (simple sequential)
-        existing_count = await self.contracts.count_documents({"user_id": user_id})
-        contract_number = f"{existing_count + 1:04d}"
+        # Generate contract number: last 4 digits of EDRPOU + "-" + order number (or sequential)
+        edrpou_suffix = contract_data.counterparty_edrpou[-4:] if len(contract_data.counterparty_edrpou) >= 4 else contract_data.counterparty_edrpou
+        
+        if contract_data.based_on_order:
+            # Use order number if contract is based on order
+            contract_number = f"{edrpou_suffix}-{contract_data.based_on_order}"
+        else:
+            # Generate sequential number for contracts without order
+            existing_count = await self.contracts.count_documents({
+                "user_id": user_id,
+                "counterparty_edrpou": contract_data.counterparty_edrpou
+            })
+            contract_number = f"{edrpou_suffix}-{existing_count + 1:04d}"
         
         contract_dict = {
             "_id": contract_id,
