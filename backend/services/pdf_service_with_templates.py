@@ -706,7 +706,7 @@ class PDFServiceWithTemplates:
         template_id: Optional[str] = None
     ) -> str:
         """
-        Generate contract PDF using template.
+        Generate contract PDF using template based on contract type (goods/services).
         
         Args:
             contract: Contract data
@@ -720,6 +720,15 @@ class PDFServiceWithTemplates:
         try:
             logger.info(f"Starting PDF generation for contract: {contract.get('number')}")
             
+            # Determine sub_type based on contract_type
+            contract_type = contract.get('contract_type', 'goods')
+            if contract_type == 'services':
+                sub_type = 'services'
+            else:
+                sub_type = 'goods'  # Default to goods for 'goods' and 'goods_and_services'
+            
+            logger.info(f"Contract type: {contract_type}, using template sub_type: {sub_type}")
+            
             # Get template
             if template_id:
                 template = await self.template_service.get_template_by_id(
@@ -727,6 +736,16 @@ class PDFServiceWithTemplates:
                     supplier.get('_id')
                 )
             else:
+                # Get template based on sub_type (goods or services)
+                template = await self.template_service.get_default_template(
+                    supplier.get('_id'),
+                    'contract',
+                    sub_type
+                )
+            
+            if not template:
+                logger.warning(f"Template for sub_type '{sub_type}' not found, trying fallback")
+                # Fallback to any contract template
                 template = await self.template_service.get_default_template(
                     supplier.get('_id'),
                     'contract'
@@ -735,7 +754,7 @@ class PDFServiceWithTemplates:
             if not template:
                 raise Exception("Contract template not found")
             
-            logger.info("Contract template loaded successfully")
+            logger.info(f"Contract template loaded: {template.name} (sub_type: {template.sub_type})")
             
             # Prepare context
             context = self._prepare_contract_context(contract, supplier, counterparty)
