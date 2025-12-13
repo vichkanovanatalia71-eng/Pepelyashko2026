@@ -3374,17 +3374,17 @@ class ContractTestSuite:
             return False
 
 def main():
-    """Main test runner for user template usage in PDF generation"""
+    """Main test runner for contract functionality"""
     logger.info("=" * 100)
-    logger.info("ТЕСТУВАННЯ ВИКОРИСТАННЯ КОРИСТУВАЦЬКОГО ШАБЛОНУ В PDF ГЕНЕРАЦІЇ")
-    logger.info("Перевірити що система використовує користувацький шаблон з '🔵 ТЕСТОВИЙ РАХУНОК' замість системного")
+    logger.info("ТЕСТУВАННЯ ФУНКЦІОНАЛЬНОСТІ РЕДАГУВАННЯ КОНТРАКТІВ ТА НОВОГО ФОРМАТУ НУМЕРАЦІЇ")
+    logger.info("Перевірити створення контрактів з новим форматом нумерації та редагування дати")
     logger.info("=" * 100)
     
     # Initialize test suite
-    test_suite = UserTemplateTestSuite()
+    test_suite = ContractTestSuite()
     
     try:
-        # Run all user template tests
+        # Run all contract tests
         success = test_suite.run_all_tests()
         return success
         
@@ -3393,4 +3393,5 @@ def main():
         return False
 
 if __name__ == "__main__":
-    main()
+    success = main()
+    sys.exit(0 if success else 1)
