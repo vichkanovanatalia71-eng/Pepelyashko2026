@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Тестування преміального PDF замовлення. Перевірити: 1) Відкриття замовлення з повними даними покупця (№0019), 2) Натискання 'Переглянути PDF', 3) Перевірка що PDF генерується з новим дизайном (Hero, параметри, товари, покупець з усіма полями, підписи). Логін: user1@example.com/password123."
+user_problem_statement: "Протестуй функціональність редагування контрактів та нового формату нумерації. Логін: user1@example.com/password123. Тестування: 1) Створення нового контракту з ЄДРПОУ 40196816, перевірка формату нумерації <останні 4 цифри ЄДРПОУ>-<номер>, 2) Редагування дати контракту через PUT /api/contracts/{contract_id}, 3) Перевірка endpoint оновлення контракту."
 
 frontend:
   - task: "System Template Button Functionality in Template Editor"
