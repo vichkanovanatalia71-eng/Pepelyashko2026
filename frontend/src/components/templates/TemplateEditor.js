@@ -634,11 +634,45 @@ const TemplateEditor = () => {
 
             {templateTypes.map(type => (
               <TabsContent key={type.key} value={type.key} className="space-y-4">
+                {/* Sub-type selector for contracts */}
+                {type.key === 'contract' && (
+                  <div className="flex items-center gap-4 p-3 bg-rose-50 border border-rose-200 rounded-lg mb-4">
+                    <span className="text-sm font-medium text-rose-700">Тип договору:</span>
+                    <div className="flex gap-2">
+                      {contractSubTypes.map(subType => (
+                        <Button
+                          key={subType.key}
+                          variant={selectedSubType === subType.key ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => {
+                            setSelectedSubType(subType.key);
+                            setIsEditing(false);
+                            setViewMode('preview');
+                          }}
+                          className={selectedSubType === subType.key 
+                            ? 'bg-rose-600 hover:bg-rose-700 text-white' 
+                            : 'border-rose-300 text-rose-700 hover:bg-rose-100'
+                          }
+                        >
+                          {subType.label}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
                 {currentTemplate ? (
                   <>
                     <div className="flex items-center justify-between mb-4">
                       <div>
-                        <h3 className="text-lg font-semibold">{getTemplateTypeLabel(selectedType)}</h3>
+                        <h3 className="text-lg font-semibold">
+                          {getTemplateTypeLabel(selectedType)}
+                          {selectedType === 'contract' && (
+                            <span className="ml-2 text-sm font-normal text-rose-600">
+                              ({selectedSubType === 'goods' ? 'для товарів' : 'для послуг'})
+                            </span>
+                          )}
+                        </h3>
                         <p className="text-sm text-gray-500">
                           Редагуйте HTML-код шаблону для налаштування PDF
                         </p>
