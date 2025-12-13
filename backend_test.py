@@ -3314,150 +3314,64 @@ class ContractTestSuite:
             return False
 
     def run_all_tests(self):
-        """Run all tests for user template usage in PDF generation"""
-        logger.info("🚀 ПОЧАТОК ТЕСТУВАННЯ ВИКОРИСТАННЯ КОРИСТУВАЦЬКОГО ШАБЛОНУ В PDF")
+        """Run all contract tests and return summary"""
+        logger.info("🚀 ПОЧАТОК ТЕСТУВАННЯ ФУНКЦІОНАЛЬНОСТІ КОНТРАКТІВ")
         logger.info("=" * 100)
         
-        # Test results tracking
-        test_results = {}
+        # Test if backend is healthy first
+        if not self.test_health_check():
+            logger.error("❌ Backend health check failed - aborting tests")
+            return False
         
-        # Health check first
-        test_results['health_check'] = self.test_health_check()
-        
-        # Authentication
+        # Authenticate first
         if not self.authenticate():
-            logger.error("❌ Автентифікація провалилася - зупинка тестування")
+            logger.error("❌ Authentication failed - aborting tests")
             return False
         
-        # User template verification tests
-        test_results['user_template_check'] = self.test_user_template_exists_and_contains_custom_text()
-        test_results['pdf_generation_custom'] = self.test_generate_pdf_and_verify_custom_template_usage()
-        test_results['system_template_compare'] = self.test_compare_with_system_template()
-        test_results['template_service_logic'] = self.test_template_service_logic()
-        
-        # Print summary
-        logger.info("=" * 100)
-        logger.info("📊 ПІДСУМОК ТЕСТУВАННЯ ВИКОРИСТАННЯ КОРИСТУВАЦЬКОГО ШАБЛОНУ")
-        logger.info("=" * 100)
-        
-        passed_tests = sum(1 for result in test_results.values() if result)
-        total_tests = len(test_results)
-        success_rate = (passed_tests / total_tests) * 100
-        
-        # Critical assessment
-        critical_tests = ['user_template_check', 'pdf_generation_custom']
-        critical_passed = sum(1 for test in critical_tests if test_results.get(test, False))
-        
-        logger.info(f"Пройдено тестів: {passed_tests}/{total_tests} ({success_rate:.1f}%)")
-        logger.info(f"Критичні тести: {critical_passed}/{len(critical_tests)} пройдено")
-        logger.info("")
-        
-        for test_name, result in test_results.items():
-            status = "✅ ПРОЙДЕНО" if result else "❌ ПРОВАЛЕНО"
-            logger.info(f"{test_name}: {status}")
-        
-        logger.info("=" * 100)
-        
-        # Detailed results for each test category
-        logger.info("📋 ДЕТАЛЬНІ РЕЗУЛЬТАТИ:")
-        logger.info("")
-        
-        if test_results.get('libpangoft2_check'):
-            logger.info("✅ БІБЛІОТЕКА libpangoft2-1.0-0: Встановлена та працює")
-        else:
-            logger.info("❌ БІБЛІОТЕКА libpangoft2-1.0-0: НЕ встановлена або не працює")
-        
-        if test_results.get('template_reset'):
-            logger.info("✅ СКИДАННЯ ШАБЛОНУ: Функціональність працює коректно")
-        else:
-            logger.info("❌ СКИДАННЯ ШАБЛОНУ: Помилки в функціональності")
-        
-        if test_results.get('pdf_with_new_template'):
-            logger.info("✅ ГЕНЕРАЦІЯ PDF: Новий шаблон використовується правильно")
-        else:
-            logger.info("❌ ГЕНЕРАЦІЯ PDF: Проблеми з новим шаблоном")
-        
-        if test_results.get('system_template_content'):
-            logger.info("✅ СИСТЕМНИЙ ШАБЛОН: Контент відповідає вимогам")
-        else:
-            logger.info("❌ СИСТЕМНИЙ ШАБЛОН: Контент не відповідає вимогам")
-        
-        logger.info("=" * 100)
-        
-        if critical_passed == len(critical_tests):
-            logger.info("🎉 КРИТИЧНІ ТЕСТИ ПРОЙДЕНО - КОРИСТУВАЦЬКИЙ ШАБЛОН ВИКОРИСТОВУЄТЬСЯ!")
-            logger.info("   Система правильно використовує користувацький шаблон для генерації PDF")
-            return True
-        elif critical_passed > 0:
-            logger.info("⚠️  ЧАСТКОВО УСПІШНО - ПОТРЕБУЄ ДОДАТКОВОЇ ПЕРЕВІРКИ")
-            logger.info("   Деякі аспекти користувацького шаблону працюють")
-            return True
-        else:
-            logger.error("💥 КРИТИЧНІ ТЕСТИ ПРОВАЛИЛИСЯ")
-            logger.error("   Користувацький шаблон НЕ використовується в PDF генерації")
-            return False
+        # Run all tests
+        tests = [
+            ("Отримання контрагентів для тестування", self.test_get_counterparties_for_contract_testing),
+            ("Створення контракту з новим форматом нумерації", self.test_create_contract_with_new_numbering_format),
+            ("Редагування дати контракту через PUT endpoint", self.test_contract_date_editing_endpoint),
+            ("Отримання списку контрактів", self.test_get_all_contracts_endpoint),
+        ]
         
         results = []
         passed = 0
-        failed = 0
+        total = len(tests)
         
         for test_name, test_func in tests:
-            logger.info(f"\n{'='*60}")
-            logger.info(f"RUNNING TEST: {test_name}")
-            logger.info(f"{'='*60}")
-            
+            logger.info(f"\n🔄 Виконання тесту: {test_name}")
             try:
-                success = test_func()
-                results.append((test_name, success))
-                if success:
+                result = test_func()
+                results.append((test_name, result))
+                if result:
                     passed += 1
-                    logger.info(f"✅ {test_name}: PASSED")
+                    logger.info(f"✅ {test_name}: ПРОЙДЕНО")
                 else:
-                    failed += 1
-                    logger.error(f"❌ {test_name}: FAILED")
+                    logger.error(f"❌ {test_name}: ПРОВАЛЕНО")
             except Exception as e:
-                failed += 1
-                logger.error(f"❌ {test_name}: FAILED with exception: {str(e)}")
+                logger.error(f"💥 {test_name}: ПОМИЛКА - {str(e)}")
                 results.append((test_name, False))
         
         # Print summary
-        logger.info("\n" + "=" * 80)
-        logger.info("КРИТИЧНІ ПЕРЕВІРКИ - ПІДСУМОК")
-        logger.info("=" * 80)
+        logger.info("\n" + "=" * 100)
+        logger.info("📊 ПІДСУМОК ТЕСТУВАННЯ КОНТРАКТІВ")
+        logger.info("=" * 100)
         
-        critical_checks = [
-            "✅ Всі ендпоінти відповідають без помилок",
-            "✅ PDF файли створюються коректно", 
-            "✅ Google Drive інтеграція працює",
-            "✅ based_on_order правильно записується та фільтрується",
-            "✅ Нумерація замовлень послідовна",
-            "✅ Новий функціонал email для замовлень працює",
-            "✅ Дані з Google Sheets правильно підтягуються"
-        ]
-        
-        for check in critical_checks:
-            logger.info(check)
-        
-        logger.info("\n" + "=" * 80)
-        logger.info("ДЕТАЛЬНІ РЕЗУЛЬТАТИ ТЕСТІВ")
-        logger.info("=" * 80)
-        
-        for test_name, success in results:
-            status = "✅ ПРАЦЮЄ" if success else "❌ НЕ ПРАЦЮЄ"
+        for test_name, result in results:
+            status = "✅ ПРОЙДЕНО" if result else "❌ ПРОВАЛЕНО"
             logger.info(f"{status}: {test_name}")
         
-        logger.info(f"\nЗагалом тестів: {len(tests)}")
-        logger.info(f"Пройшли: {passed}")
-        logger.info(f"Провалилися: {failed}")
-        logger.info(f"Відсоток успіху: {(passed/len(tests)*100):.1f}%")
+        success_rate = (passed / total) * 100
+        logger.info(f"\n🎯 РЕЗУЛЬТАТ: {passed}/{total} тестів пройдено ({success_rate:.1f}%)")
         
-        overall_success = failed == 0
-        if overall_success:
-            logger.info("\n🎉 ВСІ ТЕСТИ ПРОЙШЛИ УСПІШНО!")
+        if passed == total:
+            logger.info("🎉 ВСІ ТЕСТИ КОНТРАКТІВ ПРОЙДЕНО УСПІШНО!")
+            return True
         else:
-            logger.error(f"\n💥 {failed} ТЕСТІВ ПРОВАЛИЛОСЯ!")
-        
-        return overall_success
+            logger.error(f"⚠️  {total - passed} тестів провалено")
+            return False
 
 def main():
     """Main test runner for user template usage in PDF generation"""
