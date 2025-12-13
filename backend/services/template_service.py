@@ -42,6 +42,7 @@ class TemplateService:
             "user_id": user_id,
             "is_default": False,
             "template_type": template_data.template_type,
+            "sub_type": template_data.sub_type,
             "name": template_data.name,
             "content": template_data.content,
             "variables": variables,
