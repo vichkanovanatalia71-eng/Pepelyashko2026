@@ -360,6 +360,7 @@ class DocumentServiceMongo:
             "contract_type": contract_data.contract_type,
             "subject": contract_data.subject,
             "amount": contract_data.amount,
+            "status": "active",
             "based_on_order": contract_data.based_on_order,
             "execution_form": contract_data.execution_form,
             "specification_required": contract_data.specification_required or False,
