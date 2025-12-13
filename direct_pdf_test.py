@@ -16,7 +16,7 @@ def test_pdf_endpoints():
     """Test the three PDF generation endpoints directly"""
     
     # Use the backend URL from frontend .env
-    backend_url = "https://b2b-orders-2.preview.emergentagent.com/api"
+    backend_url = "https://doc-automator-3.preview.emergentagent.com/api"
     
     # Test payload as specified in review request
     test_payload = {
