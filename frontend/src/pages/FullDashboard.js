@@ -2965,7 +2965,7 @@ const FullDashboard = () => {
                       }
                       
                       return (
-                        <div className="space-y-2">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                           {filteredCounterparties.map((counterparty) => (
                             <Card 
                               key={counterparty._id} 
@@ -2974,14 +2974,14 @@ const FullDashboard = () => {
                             >
                               <CardContent className="p-4">
                                 <div className="flex items-center justify-between">
-                                  <div className="flex-1">
-                                    <p className={`font-semibold text-lg ${currentTheme.text}`}>{counterparty.representative_name}</p>
+                                  <div className="flex-1 min-w-0">
+                                    <p className={`font-semibold text-base ${currentTheme.text} truncate`}>{counterparty.representative_name}</p>
                                     <p className={`text-sm ${currentTheme.textLight}`}>ЄДРПОУ: {counterparty.edrpou}</p>
-                                    <p className="text-sm text-gray-600">
-                                      {counterparty.email} | {counterparty.phone}
+                                    <p className="text-xs text-gray-500 truncate">
+                                      {counterparty.email}
                                     </p>
                                   </div>
-                                  <Eye className={`w-5 h-5 ${currentTheme.textLight}`} />
+                                  <Eye className={`w-5 h-5 ${currentTheme.textLight} flex-shrink-0 ml-2`} />
                                 </div>
                               </CardContent>
                             </Card>
