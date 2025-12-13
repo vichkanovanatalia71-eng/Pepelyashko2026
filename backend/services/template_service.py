@@ -103,20 +103,45 @@ class TemplateService:
             templates.append(TemplateModel(**template))
         return templates
     
-    async def get_default_template(self, user_id: str, template_type: str) -> Optional[TemplateModel]:
-        """Get default template for a document type - prioritizes user's template."""
-        # First try to find user's template (any user template, not just default)
-        template_doc = await self.collection.find_one({
+    async def get_default_template(self, user_id: str, template_type: str, sub_type: str = None) -> Optional[TemplateModel]:
+        """Get default template for a document type - prioritizes user's template.
+        
+        Args:
+            user_id: Owner user ID
+            template_type: Type of template (invoice, act, waybill, order, contract)
+            sub_type: Sub-type for contracts (goods, services) - optional
+        """
+        query = {
             "user_id": user_id,
             "template_type": template_type
-        })
+        }
+        
+        # Add sub_type filter for contracts
+        if template_type == "contract" and sub_type:
+            query["sub_type"] = sub_type
+        
+        # First try to find user's template
+        template_doc = await self.collection.find_one(query)
         
         # If not found, get system default
         if not template_doc:
-            template_doc = await self.collection.find_one({
+            system_query = {
                 "user_id": None,
                 "template_type": template_type,
                 "is_default": True
+            }
+            if template_type == "contract" and sub_type:
+                system_query["sub_type"] = sub_type
+            
+            template_doc = await self.collection.find_one(system_query)
+        
+        # Fallback: if still not found and it's a contract, try without sub_type
+        if not template_doc and template_type == "contract":
+            template_doc = await self.collection.find_one({
+                "$or": [
+                    {"user_id": user_id, "template_type": template_type},
+                    {"user_id": None, "template_type": template_type, "is_default": True}
+                ]
             })
         
         if template_doc:
