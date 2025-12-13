@@ -498,13 +498,34 @@ const TemplateEditor = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      await axios.put(
-        `${API_URL}/api/templates/${currentTemplate._id}`,
-        { content: editedContent },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
       
-      toast.success('Шаблон успішно оновлено!');
+      // Check if we need to create a new user template (if current is system default)
+      if (!currentTemplate.user_id) {
+        // Create a new user template based on system template
+        const templateData = {
+          template_type: selectedType,
+          sub_type: selectedType === 'contract' ? selectedSubType : null,
+          name: `Мій шаблон ${selectedType === 'contract' 
+            ? (selectedSubType === 'goods' ? 'договору (товари)' : 'договору (послуги)') 
+            : selectedType}`,
+          content: editedContent
+        };
+        
+        await axios.post(
+          `${API_URL}/api/templates`,
+          templateData,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      } else {
+        // Update existing user template
+        await axios.put(
+          `${API_URL}/api/templates/${currentTemplate._id}`,
+          { content: editedContent },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      }
+      
+      toast.success('Шаблон успішно збережено!');
       setIsEditing(false);
       
       await loadAllTemplates();
