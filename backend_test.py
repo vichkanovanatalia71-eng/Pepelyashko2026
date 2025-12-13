@@ -46,10 +46,8 @@ class ContractTestSuite:
         self.auth_token = None
         
         # Test data from review request
-        self.user_id = "b3678469-180d-41b7-8ff4-64a3b343439f"
-        self.test_invoice_number = "1968-5"  # From review request
-        self.user_template_id = None
-        self.system_template_id = None
+        self.test_counterparty_edrpou = None
+        self.created_contract_number = None
         self.test_results = {}
     
     def authenticate(self):
