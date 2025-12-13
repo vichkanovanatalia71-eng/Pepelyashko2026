@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
-const CommentsSection = ({ entityType, entityId }) => {
+const CommentsSection = ({ entityType, entityId, compact = false }) => {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(false);
