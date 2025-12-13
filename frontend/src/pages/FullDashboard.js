@@ -1681,8 +1681,6 @@ const FullDashboard = () => {
     closeContractDialog();
     toast.info(`Створення накладної на основі договору №${contract.number}`);
   };
-    }
-  };
 
   const deleteAct = async () => {
     if (!viewingAct) return;
