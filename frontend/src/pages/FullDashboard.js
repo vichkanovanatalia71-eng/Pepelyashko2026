@@ -185,7 +185,11 @@ const FullDashboard = () => {
     based_on_order: '',
     execution_form: '',
     specification_required: false,
-    quantity_variation_allowed: false
+    quantity_variation_allowed: false,
+    delivery_address: '',
+    warranty_period: '',
+    penalty_rate: '',
+    signing_format: ''
   });
 
   // Edit invoice form
