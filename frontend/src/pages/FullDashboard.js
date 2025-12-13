@@ -4297,110 +4297,115 @@ const FullDashboard = () => {
 
       {/* Counterparty Details Dialog */}
       <Dialog open={showCounterpartyDialog} onOpenChange={setShowCounterpartyDialog}>
-        <DialogContent className="max-w-[90vw] lg:max-w-7xl max-h-[95vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-2xl">
+        <DialogContent className="max-w-[95vw] lg:max-w-[1400px] max-h-[90vh] overflow-hidden p-0">
+          <DialogHeader className="px-6 py-3 border-b bg-gray-50">
+            <DialogTitle className="text-xl">
               {editingCounterparty ? 'Редагування Контрагента' : 'Картка Контрагента'}
             </DialogTitle>
           </DialogHeader>
           
           {viewingCounterparty && !editingCounterparty && (
-            <div className="space-y-6">
-              {/* View Mode - Counterparty Details */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-sm text-gray-600">ЄДРПОУ</Label>
-                  <p className="text-lg font-semibold">{viewingCounterparty.edrpou}</p>
-                </div>
-                <div>
-                  <Label className="text-sm text-gray-600">Назва</Label>
-                  <p className="text-lg font-semibold">{viewingCounterparty.representative_name}</p>
-                </div>
-                <div className="md:col-span-2">
-                  <Label className="text-sm text-gray-600">Юридична адреса</Label>
-                  <p className="text-lg">{viewingCounterparty.legal_address || 'Не вказано'}</p>
-                </div>
-                <div>
-                  <Label className="text-sm text-gray-600">р/р (IBAN)</Label>
-                  <p className="text-lg font-mono">{viewingCounterparty.iban}</p>
-                </div>
-                <div>
-                  <Label className="text-sm text-gray-600">Банк</Label>
-                  <p className="text-lg">{viewingCounterparty.bank || 'Не вказано'}</p>
-                </div>
-                <div>
-                  <Label className="text-sm text-gray-600">МФО</Label>
-                  <p className="text-lg">{viewingCounterparty.mfo || 'Не вказано'}</p>
-                </div>
-                <div>
-                  <Label className="text-sm text-gray-600">Email</Label>
-                  <p className="text-lg">{viewingCounterparty.email}</p>
-                </div>
-                <div>
-                  <Label className="text-sm text-gray-600">Телефон</Label>
-                  <p className="text-lg">{viewingCounterparty.phone}</p>
-                </div>
-                <div>
-                  <Label className="text-sm text-gray-600">ПІБ керівника</Label>
-                  <p className="text-lg">{viewingCounterparty.director_name || 'Не вказано'}</p>
-                </div>
-                <div>
-                  <Label className="text-sm text-gray-600">Посада</Label>
-                  <p className="text-lg">{viewingCounterparty.position || 'Не вказано'}</p>
-                </div>
-                <div className="md:col-span-2">
-                  <Label className="text-sm text-gray-600">В особі</Label>
-                  <p className="text-lg">{viewingCounterparty.represented_by || 'Не вказано'}</p>
-                </div>
-                <div className="md:col-span-2">
-                  <Label className="text-sm text-gray-600">Підпис</Label>
-                  <p className="text-lg">{viewingCounterparty.signature || 'Не вказано'}</p>
-                </div>
-                <div>
-                  <Label className="text-sm text-gray-600">Податковий статус</Label>
-                  <p className="text-lg">
+            <div className="flex gap-4 p-4 overflow-auto max-h-[calc(90vh-100px)]">
+              {/* Left Column - Main Info */}
+              <div className="flex-1 min-w-[400px] space-y-3">
+                {/* Basic Info Grid */}
+                <div className="grid grid-cols-4 gap-2">
+                  <div className="p-2 bg-gray-50 rounded text-center">
+                    <p className="text-[10px] text-gray-500 uppercase">ЄДРПОУ</p>
+                    <p className="text-sm font-bold font-mono">{viewingCounterparty.edrpou}</p>
+                  </div>
+                  <div className="p-2 bg-gray-50 rounded col-span-2">
+                    <p className="text-[10px] text-gray-500 uppercase">Назва</p>
+                    <p className="text-sm font-semibold truncate">{viewingCounterparty.representative_name}</p>
+                  </div>
+                  <div className="p-2 rounded text-center">
                     {viewingCounterparty.vat_payer ? (
-                      <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-semibold">
-                        Платник ПДВ ({viewingCounterparty.vat_rate || 20}%)
+                      <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">
+                        ПДВ {viewingCounterparty.vat_rate || 20}%
                       </span>
                     ) : (
-                      <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-semibold">
-                        Платник ЄП
+                      <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">
+                        ЄП
                       </span>
                     )}
-                  </p>
+                  </div>
+                </div>
+
+                {/* Contact & Bank Info - Compact */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="p-2 bg-gray-50 rounded">
+                    <p className="text-[10px] text-gray-500 uppercase">Юридична адреса</p>
+                    <p className="text-xs">{viewingCounterparty.legal_address || '—'}</p>
+                  </div>
+                  <div className="p-2 bg-gray-50 rounded">
+                    <p className="text-[10px] text-gray-500 uppercase">IBAN</p>
+                    <p className="text-xs font-mono">{viewingCounterparty.iban || '—'}</p>
+                  </div>
+                  <div className="p-2 bg-gray-50 rounded">
+                    <p className="text-[10px] text-gray-500 uppercase">Банк / МФО</p>
+                    <p className="text-xs">{viewingCounterparty.bank || '—'} / {viewingCounterparty.mfo || '—'}</p>
+                  </div>
+                  <div className="p-2 bg-gray-50 rounded">
+                    <p className="text-[10px] text-gray-500 uppercase">Контакти</p>
+                    <p className="text-xs">{viewingCounterparty.email} | {viewingCounterparty.phone}</p>
+                  </div>
+                  <div className="p-2 bg-gray-50 rounded">
+                    <p className="text-[10px] text-gray-500 uppercase">Керівник</p>
+                    <p className="text-xs">{viewingCounterparty.director_name || '—'} ({viewingCounterparty.position || '—'})</p>
+                  </div>
+                  <div className="p-2 bg-gray-50 rounded">
+                    <p className="text-[10px] text-gray-500 uppercase">В особі</p>
+                    <p className="text-xs">{viewingCounterparty.represented_by || '—'}</p>
+                  </div>
                 </div>
               </div>
 
-              {/* Documents Section */}
+              {/* Right Column - Documents */}
               {counterpartyDocuments && (
-                <div className="border-t pt-4">
-                  <h3 className="text-lg font-semibold mb-4">Документи контрагента</h3>
+                <div className="w-[400px] space-y-2">
+                  <h3 className="text-sm font-semibold">Документи контрагента</h3>
                   
-                  <div className="space-y-4">
-                    {/* Orders */}
-                    {counterpartyDocuments.orders?.length > 0 && (
-                      <div>
-                        <h4 className="font-medium mb-2">Замовлення ({counterpartyDocuments.orders.length})</h4>
-                        <div className="space-y-2">
-                          {counterpartyDocuments.orders.map((order) => (
-                            <Card key={order._id}>
-                              <CardContent className="p-3">
-                                <div className="flex justify-between items-center">
-                                  <div>
-                                    <p className="font-medium">№{order.number}</p>
-                                    <p className="text-sm text-gray-600">
-                                      {new Date(order.date).toLocaleDateString('uk-UA')}
-                                    </p>
-                                  </div>
-                                  <p className="font-bold">{order.total_amount} грн</p>
-                                </div>
-                              </CardContent>
-                            </Card>
-                          ))}
-                        </div>
+                  {/* Orders */}
+                  {counterpartyDocuments.orders?.length > 0 && (
+                    <div className="border rounded-lg p-2 max-h-[200px] overflow-y-auto">
+                      <h4 className="text-xs font-medium mb-1 text-gray-500">Замовлення ({counterpartyDocuments.orders.length})</h4>
+                      <div className="space-y-1">
+                        {counterpartyDocuments.orders.slice(0, 5).map((order) => (
+                          <div key={order._id} className="flex justify-between items-center p-1 bg-gray-50 rounded text-xs">
+                            <span>№{order.number}</span>
+                            <span className="font-semibold">{order.total_amount} грн</span>
+                          </div>
+                        ))}
                       </div>
-                    )}
+                    </div>
+                  )}
+
+                  {/* Invoices */}
+                  {counterpartyDocuments.invoices?.length > 0 && (
+                    <div className="border rounded-lg p-2 max-h-[150px] overflow-y-auto">
+                      <h4 className="text-xs font-medium mb-1 text-gray-500">Рахунки ({counterpartyDocuments.invoices.length})</h4>
+                      <div className="space-y-1">
+                        {counterpartyDocuments.invoices.slice(0, 5).map((inv) => (
+                          <div key={inv._id} className="flex justify-between items-center p-1 bg-gray-50 rounded text-xs">
+                            <span>№{inv.number}</span>
+                            <span className="font-semibold">{inv.total_amount} грн</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Actions */}
+                  <div className="flex gap-2 pt-2">
+                    <Button variant="outline" size="sm" onClick={() => startEditingCounterparty(viewingCounterparty)} className="flex-1">
+                      <Edit2 className="w-3 h-3 mr-1" /> Редагувати
+                    </Button>
+                    <Button variant="destructive" size="sm" onClick={() => deleteCounterparty(viewingCounterparty._id)} className="flex-1">
+                      <Trash2 className="w-3 h-3 mr-1" /> Видалити
+                    </Button>
+                  </div>
+                </div>
+              )}
 
                     {/* Invoices */}
                     {counterpartyDocuments.invoices?.length > 0 && (
