@@ -4406,46 +4406,6 @@ const FullDashboard = () => {
                   </div>
                 </div>
               )}
-
-                    {/* Invoices */}
-                    {counterpartyDocuments.invoices?.length > 0 && (
-                      <div>
-                        <h4 className="font-medium mb-2">Рахунки ({counterpartyDocuments.invoices.length})</h4>
-                        <div className="space-y-2">
-                          {counterpartyDocuments.invoices.map((invoice) => (
-                            <Card key={invoice._id}>
-                              <CardContent className="p-3">
-                                <div className="flex justify-between items-center">
-                                  <div>
-                                    <p className="font-medium">№{invoice.number}</p>
-                                    <p className="text-sm text-gray-600">
-                                      {new Date(invoice.date).toLocaleDateString('uk-UA')}
-                                    </p>
-                                  </div>
-                                  <p className="font-bold">{invoice.total_amount} грн</p>
-                                </div>
-                              </CardContent>
-                            </Card>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Acts, Waybills, Contracts similar... */}
-                    
-                    {counterpartyDocuments.orders?.length === 0 && 
-                     counterpartyDocuments.invoices?.length === 0 && 
-                     counterpartyDocuments.acts?.length === 0 && (
-                      <p className="text-center text-gray-500 py-4">
-                        Немає документів для цього контрагента
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )}
-              
-              {/* Comments Section */}
-              <CommentsSection entityType="counterparty" entityId={viewingCounterparty.edrpou} />
             </div>
           )}
           
