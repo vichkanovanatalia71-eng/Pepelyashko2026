@@ -270,6 +270,16 @@ const ContractDialog = ({
                 <Pencil className="w-4 h-4" /> Режим редагування
               </h3>
               
+              {/* Date */}
+              <div className="space-y-2">
+                <Label>Дата договору</Label>
+                <Input
+                  type="date"
+                  value={editForm.date}
+                  onChange={(e) => setEditForm({...editForm, date: e.target.value})}
+                />
+              </div>
+
               {/* Subject */}
               <div className="space-y-2">
                 <Label>Предмет договору</Label>
@@ -287,7 +297,7 @@ const ContractDialog = ({
                   type="number"
                   step="0.01"
                   value={editForm.amount}
-                  onChange={(e) => setEditForm({...editForm, amount: parseFloat(e.target.value) || 0})}
+                  onChange={(e) => setEditForm({...editForm, amount: parseFloat(e.target.value) || 0})}}
                 />
               </div>
 
