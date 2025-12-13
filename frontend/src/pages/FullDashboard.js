@@ -4849,7 +4849,7 @@ const FullDashboard = () => {
 
       {/* Profile Dialog */}
       <Dialog open={showProfileDialog} onOpenChange={setShowProfileDialog}>
-        <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto p-0">
+        <DialogContent className="max-w-[90vw] lg:max-w-7xl max-h-[95vh] overflow-y-auto p-0">
           <ProfileCard 
             user={user}
             onUpdate={async () => {
