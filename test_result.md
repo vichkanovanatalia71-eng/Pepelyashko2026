@@ -458,6 +458,18 @@ backend:
         agent: "testing"
         comment: "🎯 НОВА АРХІТЕКТУРА ПРОТЕСТОВАНА УСПІШНО (85.7% тестів пройшли)! ФАЗА 1 - СТВОРЕННЯ БЕЗ PDF: ✅ POST /api/invoices/create працює (рахунок 1968-1 створено БЕЗ PDF), ✅ POST /api/acts/create працює (акт 1968-22 створено БЕЗ PDF), ✅ POST /api/waybills/create працює (накладна 1968-3 створена БЕЗ PDF). ФАЗА 2 - ГЕНЕРАЦІЯ НА ВИМОГУ: ✅ POST /api/invoices/{number}/generate-pdf працює (PDF 51K згенеровано), ✅ GET /api/invoices/pdf/{number} працює (51880 bytes завантажено). ФАЗА 3 - КЕШУВАННЯ: ✅ Повторна генерація використовує існуючий PDF. ФАЗА 4 - СТАРІ ДОКУМЕНТИ: ✅ GET /api/orders/55/related-documents працює (6 рахунків знайдено включно з №23, №25), ✅ PDF для старого документа #23 згенеровано з актуальними даними. ФАЗА 5 - EMAIL: ✅ POST /api/invoices/send-email працює. КРИТИЧНІ ПЕРЕВІРКИ: ✅ PDF генерується тільки на вимогу, ✅ Кеш Google Sheets очищається, ✅ Номери співпадають, ✅ Timestamp зберігається, ✅ Старі документи працюють. ОБМЕЖЕННЯ: Google Sheets API quota exceeded під час тестування - тимчасове обмеження."
 
+  - task: "Contract Editing and New Numbering Format"
+    implemented: true
+    working: true
+    file: "/app/backend/routes/document_routes.py, /app/backend/services/document_service_mongo.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "🎉 ФУНКЦІОНАЛЬНІСТЬ РЕДАГУВАННЯ КОНТРАКТІВ ТА НОВОГО ФОРМАТУ НУМЕРАЦІЇ ПРОТЕСТОВАНО УСПІШНО! Протестовано згідно з українським review request всі критерії: 1) АВТОРИЗАЦІЯ ✅ - успішний вхід як user1@example.com/password123, отримано access_token, 2) ОТРИМАННЯ КОНТРАГЕНТІВ ✅ - GET /api/counterparties повертає 22 контрагенти, знайдено цільового контрагента з ЄДРПОУ 40196816 (КОМУНАЛЬНЕ НЕКОМЕРЦІЙНЕ ПІДПРИЄМСТВО БАЛТСЬКИЙ ЦЕНТР ПЕРВИННОЇ МЕДИКО-САНІТАРНОЇ ДОПОМОГИ), 3) СТВОРЕННЯ КОНТРАКТУ З НОВИМ ФОРМАТОМ НУМЕРАЦІЇ ✅ - POST /api/contracts створює контракт з номером 6816-0005, формат відповідає вимогам <останні 4 цифри ЄДРПОУ>-<номер> (40196816 → 6816-XXXX), 4) РЕДАГУВАННЯ ДАТИ КОНТРАКТУ ✅ - PUT /api/contracts/{contract_number} з полем date успішно оновлює дату з 2025-12-13 на 2025-12-14, виправлено відсутнє поле date в update_data backend коду, 5) ОТРИМАННЯ СПИСКУ КОНТРАКТІВ ✅ - GET /api/contracts повертає 8 контрактів, створений контракт 6816-0005 присутній в списку з правильними даними (предмет: 'Тестовий договір для перевірки нумерації', сума: 10000.0, тип: goods). КРИТЕРІЇ УСПІХУ ДОСЯГНУТО: ✅ Номер контракту має правильний формат 6816-XXXX, ✅ Дата контракту оновлюється через PUT endpoint, ✅ Всі API endpoints працюють коректно, ✅ Контракт з'являється в списку з правильними даними. РЕЗУЛЬТАТ: 4/4 тестів пройдено (100%) - ФУНКЦІОНАЛЬНІСТЬ КОНТРАКТІВ ПРАЦЮЄ ПОВНІСТЮ!"
+
   - task: "Act Generation from Orders"
     implemented: true
     working: "needs_testing"
