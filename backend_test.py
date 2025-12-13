@@ -198,85 +198,61 @@ class ContractTestSuite:
             logger.error(f"❌ Тест створення контракту провалився: {str(e)}")
             return False
     
-    def test_compare_with_system_template(self):
-        """Test 3: Compare user template with system template"""
+    def test_contract_date_editing_endpoint(self):
+        """Test 3: Test contract date editing via PUT endpoint"""
         logger.info("=" * 80)
-        logger.info("ТЕСТ 3: ПОРІВНЯННЯ З СИСТЕМНИМ ШАБЛОНОМ")
+        logger.info("ТЕСТ 3: ТЕСТУВАННЯ РЕДАГУВАННЯ ДАТИ КОНТРАКТУ ЧЕРЕЗ PUT ENDPOINT")
         logger.info("=" * 80)
         
-        if not self.system_template_id:
-            logger.error("❌ Немає ID системного шаблону для порівняння")
+        if not self.created_contract_number:
+            logger.error("❌ Немає номера створеного контракту для тестування")
             return False
         
         try:
-            # Get system default template
-            response = requests.get(
-                f"{self.api_url}/templates/{self.system_template_id}",
-                headers=self.get_auth_headers(),
+            # Test updating contract date
+            from datetime import datetime, timedelta
+            
+            # Calculate new date (tomorrow)
+            new_date = (datetime.now() + timedelta(days=1)).strftime('%Y-%m-%d')
+            
+            update_data = {
+                "date": new_date
+            }
+            
+            logger.info(f"Оновлення дати контракту {self.created_contract_number} на: {new_date}")
+            
+            response = requests.put(
+                f"{self.api_url}/contracts/{self.created_contract_number}",
+                json=update_data,
+                headers={**self.get_auth_headers(), 'Content-Type': 'application/json'},
                 timeout=30
             )
             
             if response.status_code != 200:
-                logger.error(f"❌ Помилка отримання системного шаблону: {response.status_code} - {response.text}")
+                logger.error(f"❌ Помилка оновлення контракту: {response.status_code} - {response.text}")
                 return False
             
-            system_template = response.json()
-            logger.info("✅ Системний шаблон отримано успішно")
+            result = response.json()
+            updated_date = result.get('date')
             
-            # Verify it's marked as default
-            if not system_template.get('is_default'):
-                logger.error("❌ Шаблон не позначений як системний (is_default: false)")
+            if not updated_date:
+                logger.error("❌ Дата не повернута в відповіді")
                 return False
+            
+            # Check if date was updated (allow for different formats)
+            if new_date in str(updated_date) or updated_date.startswith(new_date):
+                logger.info(f"✅ КРИТЕРІЙ УСПІХУ: Дата контракту оновлена успішно")
+                logger.info(f"   Нова дата: {updated_date}")
+                logger.info(f"   Очікувана дата: {new_date}")
+                return True
             else:
-                logger.info("✅ Шаблон правильно позначений як системний (is_default: true)")
-            
-            # Check that system template does NOT contain custom text
-            system_content = system_template.get('content', '')
-            
-            custom_markers = [
-                "ТЕСТОВИЙ РАХУНОК",
-                "TEST USER TEMPLATE 12345"
-            ]
-            
-            found_custom_in_system = []
-            for marker in custom_markers:
-                if marker in system_content:
-                    found_custom_in_system.append(marker)
-            
-            if found_custom_in_system:
-                logger.error(f"❌ Системний шаблон містить користувацькі маркери: {found_custom_in_system}")
+                logger.error(f"❌ Дата не оновилася правильно")
+                logger.error(f"   Очікувана: {new_date}")
+                logger.error(f"   Отримана: {updated_date}")
                 return False
-            else:
-                logger.info("✅ Системний шаблон НЕ містить користувацькі маркери")
-            
-            # Check that system template contains standard text
-            standard_markers = [
-                "Рахунок на оплату",
-                "ПОСТАЧАЛЬНИК",
-                "ПОКУПЕЦЬ"
-            ]
-            
-            found_standard = []
-            missing_standard = []
-            
-            for marker in standard_markers:
-                if marker in system_content:
-                    found_standard.append(marker)
-                else:
-                    missing_standard.append(marker)
-            
-            if missing_standard:
-                logger.error(f"❌ Системний шаблон не містить стандартні елементи: {missing_standard}")
-                return False
-            else:
-                logger.info("✅ Системний шаблон містить всі стандартні елементи:")
-                for marker in found_standard:
-                    logger.info(f"   ✓ {marker}")
-            
-            return True
             
         except Exception as e:
-            logger.error(f"❌ Тест порівняння з системним шаблоном провалився: {str(e)}")
+            logger.error(f"❌ Тест редагування дати контракту провалився: {str(e)}")
             return False
     
     def test_template_service_logic(self):
