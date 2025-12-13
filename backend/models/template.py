@@ -19,6 +19,7 @@ class TemplateModel(BaseModel):
     user_id: Optional[str] = Field(None, description="Owner user ID (None for system templates)")
     is_default: bool = Field(False, description="Is this a system default template?")
     template_type: str = Field(..., description="Type of document: invoice, act, waybill, order, contract")
+    sub_type: Optional[str] = Field(None, description="Sub-type for contracts: goods, services")
     name: str = Field(..., description="Template name")
     content: str = Field(..., description="HTML template content")
     variables: List[str] = Field(default_factory=list, description="Available variables for this template")
@@ -35,6 +36,7 @@ class TemplateModel(BaseModel):
                 "user_id": "user123",
                 "is_default": False,
                 "template_type": "invoice",
+                "sub_type": None,
                 "name": "Мій шаблон рахунку",
                 "content": "<html>...</html>",
                 "variables": ["invoice_number", "date", "counterparty_name"],
