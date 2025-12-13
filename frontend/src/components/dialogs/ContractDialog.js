@@ -92,6 +92,7 @@ const ContractDialog = ({
   useEffect(() => {
     if (contract) {
       setEditForm({
+        date: contract.date ? contract.date.split('T')[0] : '',
         subject: contract.subject || '',
         amount: contract.amount || 0,
         contract_type: contract.contract_type || '',
