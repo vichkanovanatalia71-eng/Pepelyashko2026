@@ -127,6 +127,42 @@ const CommentsSection = ({ entityType, entityId, compact = false }) => {
     });
   };
 
+  if (compact) {
+    return (
+      <div className="space-y-2">
+        <div className="flex items-center gap-2 text-xs text-gray-500">
+          <MessageSquare className="w-3 h-3" />
+          <span>Коментарі {comments.length > 0 && `(${comments.length})`}</span>
+        </div>
+        
+        {/* Compact add comment */}
+        <div className="flex gap-1">
+          <input
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+            placeholder="Коментар..."
+            className="flex-1 h-7 px-2 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+            disabled={loading}
+            onKeyPress={(e) => e.key === 'Enter' && handleAddComment()}
+          />
+          <Button onClick={handleAddComment} disabled={loading || !newComment.trim()} size="sm" className="h-7 px-2">
+            <Send className="w-3 h-3" />
+          </Button>
+        </div>
+
+        {/* Compact comments list */}
+        <div className="space-y-1 max-h-[120px] overflow-y-auto">
+          {comments.map((comment) => (
+            <div key={comment._id} className="p-2 bg-gray-50 rounded text-xs">
+              <p className="text-gray-800">{comment.text}</p>
+              <p className="text-gray-400 text-[10px] mt-1">{formatDate(comment.created_at)}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <Card className="mt-4">
       <CardHeader>
