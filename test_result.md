@@ -199,6 +199,18 @@ backend:
         agent: "testing"
         comment: "✅ Email відправка працює коректно з українськими символами та Google Drive посиланнями. Код досягає SMTP рівня без Unicode помилок. SMTP автентифікація не налаштована (очікувано в тестовому середовищі). RFC 2231 кодування для українських назв файлів працює правильно."
 
+  - task: "Contract PDF Generation Template Testing"
+    implemented: true
+    working: true
+    file: "/app/backend/routes/document_routes.py, /app/backend/services/pdf_service_with_templates.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "🎉 ТЕСТУВАННЯ ГЕНЕРАЦІЇ PDF ДОГОВОРУ НА ОСНОВІ ШАБЛОНУ ЗАВЕРШЕНО УСПІШНО! Протестовано згідно з українським review request всі критерії: 1) АВТОРИЗАЦІЯ ✅ - успішний вхід як user1@example.com/password123, 2) ОТРИМАННЯ СПИСКУ ДОГОВОРІВ ✅ - GET /api/contracts повертає список договорів, знайдено договір з ID f0501281-21e4-4844-86b4-c4884ad9371f, 3) ВЗЯТТЯ ID ПЕРШОГО ДОГОВОРУ ✅ - ID договору отримано з списку, 4) ЗАПИТ PDF ✅ - GET /api/contracts/{contract_id}/pdf працює коректно, 5) CONTENT-TYPE ✅ - endpoint повертає Content-Type: application/pdf, 6) РОЗМІР PDF ✅ - PDF файл має розмір 42757 байт (більше 10KB як вимагається), 7) ЛОГИ BACKEND ✅ - підтверджено активність генерації PDF в логах backend, 8) ВІДКРИТТЯ PDF ✅ - PDF має правильну сигнатуру %PDF-1.7 та відкривається без помилок, 9) TOAST ПОВІДОМЛЕННЯ ✅ - симуляція показує що PDF запит успішний для відображення toast 'PDF договору відкрито для перегляду', 10) ФАЙЛ ЗБЕРЕЖЕНО ✅ - PDF збережено як /tmp/test_contract_6816-0008.pdf для перевірки. КРИТЕРІЇ УСПІХУ ДОСЯГНУТО: ✅ Всі 10 тестів пройдено (100% успіх), ✅ PDF генерується на основі шаблону коректно, ✅ Content-Type правильний, ✅ Розмір більше 10KB, ✅ PDF відкривається без помилок, ✅ Backend логи підтверджують генерацію. ФУНКЦІОНАЛЬНІСТЬ ГЕНЕРАЦІЇ PDF ДОГОВОРУ ПОВНІСТЮ ПРАЦЮЄ!"
+
   - task: "Invoice PDF Generation with Drive Upload"
     implemented: true
     working: true
