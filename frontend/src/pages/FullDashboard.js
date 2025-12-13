@@ -2166,7 +2166,11 @@ const FullDashboard = () => {
         based_on_order: contractForm.based_on_order || null,
         execution_form: contractForm.execution_form || null,
         specification_required: contractForm.specification_required || false,
-        quantity_variation_allowed: contractForm.quantity_variation_allowed || false
+        quantity_variation_allowed: contractForm.quantity_variation_allowed || false,
+        delivery_address: contractForm.delivery_address || null,
+        warranty_period: contractForm.warranty_period || null,
+        penalty_rate: contractForm.penalty_rate || null,
+        signing_format: contractForm.signing_format || null
       };
 
       await axios.post(`${API_URL}/api/contracts`, payload);
@@ -2181,7 +2185,11 @@ const FullDashboard = () => {
         based_on_order: '',
         execution_form: '',
         specification_required: false,
-        quantity_variation_allowed: false
+        quantity_variation_allowed: false,
+        delivery_address: '',
+        warranty_period: '',
+        penalty_rate: '',
+        signing_format: ''
       });
       setSearchEdrpou('');
       setFoundCounterparty(null);
