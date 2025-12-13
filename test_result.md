@@ -955,7 +955,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Updated PDF Order Structure for Buyer Verification"
+    - "Contract PDF Generation Template Testing"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
