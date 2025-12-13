@@ -20,6 +20,10 @@ class ContractModel(BaseModel):
     execution_form: Optional[str] = Field(None, description="Формат виконання: one_time, periodic, with_specifications, annual_volume")
     specification_required: Optional[bool] = Field(False, description="Специфікація обов'язкова")
     quantity_variation_allowed: Optional[bool] = Field(False, description="Варіативність обсягу")
+    delivery_address: Optional[str] = Field(None, description="Адреса доставки")
+    warranty_period: Optional[str] = Field(None, description="Гарантійний термін: 12_months, 24_months, 36_months, not_applicable")
+    penalty_rate: Optional[str] = Field(None, description="Санкції за порушення (% на день)")
+    signing_format: Optional[str] = Field(None, description="Формат підписання: paper, electronic, both")
     pdf_path: Optional[str] = Field(None, description="Path to generated PDF")
     pdf_generated_at: Optional[datetime] = Field(None, description="PDF generation timestamp")
     template_id: Optional[str] = Field(None, description="Template used for this document")
@@ -40,6 +44,10 @@ class ContractCreate(BaseModel):
     execution_form: Optional[str] = Field(None, description="Формат виконання: one_time, periodic, with_specifications, annual_volume")
     specification_required: Optional[bool] = Field(False, description="Специфікація обов'язкова")
     quantity_variation_allowed: Optional[bool] = Field(False, description="Варіативність обсягу")
+    delivery_address: Optional[str] = Field(None, description="Адреса доставки")
+    warranty_period: Optional[str] = Field(None, description="Гарантійний термін: 12_months, 24_months, 36_months, not_applicable")
+    penalty_rate: Optional[str] = Field(None, description="Санкції за порушення (% на день)")
+    signing_format: Optional[str] = Field(None, description="Формат підписання: paper, electronic, both")
     template_id: Optional[str] = Field(None, description="Custom template ID")
     
     class Config:
@@ -51,6 +59,10 @@ class ContractCreate(BaseModel):
                 "amount": 50000.0,
                 "execution_form": "one_time",
                 "specification_required": False,
-                "quantity_variation_allowed": False
+                "quantity_variation_allowed": False,
+                "delivery_address": "м. Київ, вул. Хрещатик, 1",
+                "warranty_period": "12_months",
+                "penalty_rate": "0.1",
+                "signing_format": "paper"
             }
         }
