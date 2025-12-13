@@ -526,9 +526,14 @@ const TemplateEditor = () => {
     try {
       const token = localStorage.getItem('token');
       
+      // For contracts, include sub_type in the request
+      const systemEndpoint = selectedType === 'contract' 
+        ? `${API_URL}/api/templates/system/${selectedType}?sub_type=${selectedSubType}`
+        : `${API_URL}/api/templates/system/${selectedType}`;
+      
       // 1. Завантажуємо системний шаблон напряму
       const systemResponse = await axios.get(
-        `${API_URL}/api/templates/system/${selectedType}`,
+        systemEndpoint,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       
@@ -543,9 +548,12 @@ const TemplateEditor = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       
-      const userTemplatesToDelete = allTemplatesResponse.data.filter(
-        t => t.template_type === selectedType && t.user_id
-      );
+      const userTemplatesToDelete = allTemplatesResponse.data.filter(t => {
+        if (selectedType === 'contract') {
+          return t.template_type === 'contract' && t.sub_type === selectedSubType && t.user_id;
+        }
+        return t.template_type === selectedType && t.user_id;
+      });
       
       console.log('User templates to delete:', userTemplatesToDelete.length);
       
@@ -563,9 +571,10 @@ const TemplateEditor = () => {
       }
       
       // 3. Оновлюємо локальний стан - показуємо системний шаблон
+      const templateKey = selectedType === 'contract' ? `contract_${selectedSubType}` : selectedType;
       setTemplates(prev => ({
         ...prev,
-        [selectedType]: systemTemplate
+        [templateKey]: systemTemplate
       }));
       
       toast.success('Системний шаблон завантажено!');
