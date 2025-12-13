@@ -3440,6 +3440,63 @@ class ContractTestSuite:
         except Exception as e:
             logger.error(f"❌ Failed to get counterparties: {str(e)}")
             return False
+    
+    def run_contract_pdf_tests(self):
+        """Run contract PDF generation tests as specified in Ukrainian review request"""
+        logger.info("🚀 ПОЧАТОК ТЕСТУВАННЯ ГЕНЕРАЦІЇ PDF ДОГОВОРУ")
+        logger.info("=" * 80)
+        logger.info("Тестування згідно з українським review request:")
+        logger.info("1. Авторизація через POST /api/auth/login")
+        logger.info("2. Отримання списку договорів через GET /api/contracts")
+        logger.info("3. Взяття ID першого договору")
+        logger.info("4. Запит PDF через GET /api/contracts/{contract_id}/pdf")
+        logger.info("5. Перевірка Content-Type: application/pdf")
+        logger.info("6. Перевірка логів backend")
+        logger.info("7. Перевірка розміру PDF більше 10KB")
+        logger.info("8. Перевірка відкриття PDF без помилок")
+        logger.info("=" * 80)
+        
+        # Test results tracking
+        test_methods = [
+            ("Health Check", self.test_health_check),
+            ("Авторизація", self.authenticate),
+            ("Отримання контрагентів", self.test_get_counterparties_for_contract_testing),
+            ("Створення договору", self.test_create_contract_with_new_numbering_format),
+            ("Редагування дати договору", self.test_contract_date_editing_endpoint),
+            ("Отримання списку договорів", self.test_get_all_contracts_endpoint),
+            ("Генерація PDF договору", self.test_contract_pdf_generation_endpoint),
+            ("Перевірка логів PDF", self.test_backend_logs_for_pdf_generation),
+            ("Відкриття PDF в браузері", self.test_pdf_opens_in_browser),
+            ("Toast повідомлення", self.test_toast_message_simulation)
+        ]
+        
+        passed_tests = 0
+        total_tests = len(test_methods)
+        
+        for test_name, test_method in test_methods:
+            logger.info(f"\n🔍 Виконання тесту: {test_name}")
+            try:
+                if test_method():
+                    logger.info(f"✅ {test_name}: ПРОЙДЕНО")
+                    passed_tests += 1
+                else:
+                    logger.error(f"❌ {test_name}: ПРОВАЛЕНО")
+            except Exception as e:
+                logger.error(f"❌ {test_name}: ПОМИЛКА - {str(e)}")
+        
+        # Final results
+        logger.info("\n" + "=" * 80)
+        logger.info("📊 ПІДСУМКИ ТЕСТУВАННЯ PDF ДОГОВОРУ")
+        logger.info("=" * 80)
+        logger.info(f"Пройдено тестів: {passed_tests}/{total_tests}")
+        logger.info(f"Відсоток успіху: {(passed_tests/total_tests)*100:.1f}%")
+        
+        if passed_tests == total_tests:
+            logger.info("🎉 ВСІ ТЕСТИ PDF ДОГОВОРУ ПРОЙДЕНО УСПІШНО!")
+            return True
+        else:
+            logger.error(f"⚠️  {total_tests - passed_tests} тестів провалилося")
+            return False
 
     def run_all_tests(self):
         """Run all contract tests and return summary"""
