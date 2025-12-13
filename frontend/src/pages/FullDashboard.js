@@ -182,7 +182,10 @@ const FullDashboard = () => {
     contract_type: '',
     subject: '',
     amount: 0,
-    based_on_order: ''
+    based_on_order: '',
+    execution_form: '',
+    specification_required: false,
+    quantity_variation_allowed: false
   });
 
   // Edit invoice form
