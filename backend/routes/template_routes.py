@@ -287,18 +287,35 @@ async def delete_template(
 @router.get("/system/{template_type}", response_model=TemplateModel)
 async def get_system_template(
     template_type: str,
+    sub_type: str = None,
     current_user: dict = Depends(get_current_user)
 ):
     """Get system default template for a specific type."""
     from server import db as database
     
     try:
-        # Get system template (user_id = None, is_default = True)
-        system_template = await database.templates.find_one({
+        # Build query
+        query = {
             "template_type": template_type,
             "user_id": None,
             "is_default": True
-        })
+        }
+        
+        # Add sub_type filter for contracts
+        if template_type == "contract" and sub_type:
+            query["sub_type"] = sub_type
+        
+        # Get system template (user_id = None, is_default = True)
+        system_template = await database.templates.find_one(query)
+        
+        # Fallback: if contract with sub_type not found, try without sub_type
+        if not system_template and template_type == "contract":
+            fallback_query = {
+                "template_type": template_type,
+                "user_id": None,
+                "is_default": True
+            }
+            system_template = await database.templates.find_one(fallback_query)
         
         if not system_template:
             raise HTTPException(
@@ -306,7 +323,7 @@ async def get_system_template(
                 detail="Системний шаблон не знайдено"
             )
         
-        logger.info(f"System template retrieved: {template_type}")
+        logger.info(f"System template retrieved: {template_type}, sub_type: {sub_type}")
         return TemplateModel(**system_template)
     except HTTPException:
         raise
