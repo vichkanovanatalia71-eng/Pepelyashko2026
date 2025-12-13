@@ -30,7 +30,7 @@ const InvoiceList = ({
             {searchValue ? 'Рахунків за таким запитом не знайдено' : 'Немає рахунків'}
           </p>
         ) : (
-          <div className="space-y-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
             {filteredInvoices.map((invoice) => (
               <DocumentCard
                 key={invoice._id}
@@ -45,7 +45,7 @@ const InvoiceList = ({
               >
                 <div>
                   <p className={`font-medium ${theme.text}`}>№{invoice.number}</p>
-                  <p className="text-sm text-gray-600">{invoice.counterparty_name}</p>
+                  <p className="text-sm text-gray-600 truncate">{invoice.counterparty_name}</p>
                   <p className="text-xs text-gray-500">
                     {new Date(invoice.date).toLocaleDateString('uk-UA')}
                   </p>

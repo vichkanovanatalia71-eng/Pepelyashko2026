@@ -30,7 +30,7 @@ const ActList = ({
             {searchValue ? 'Актів за таким запитом не знайдено' : 'Немає актів'}
           </p>
         ) : (
-          <div className="space-y-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
             {filteredActs.map((act) => (
               <DocumentCard
                 key={act._id}
@@ -45,7 +45,7 @@ const ActList = ({
               >
                 <div>
                   <p className={`font-medium ${theme.text}`}>№{act.number}</p>
-                  <p className="text-sm text-gray-600">{act.counterparty_name}</p>
+                  <p className="text-sm text-gray-600 truncate">{act.counterparty_name}</p>
                   <p className="text-xs text-gray-500">
                     {new Date(act.date).toLocaleDateString('uk-UA')}
                   </p>
