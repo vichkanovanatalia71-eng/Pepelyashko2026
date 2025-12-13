@@ -48,6 +48,7 @@ class TemplateModel(BaseModel):
 class TemplateCreate(BaseModel):
     """Model for creating a template."""
     template_type: str = Field(..., description="Type of document: invoice, act, waybill, order, contract")
+    sub_type: Optional[str] = Field(None, description="Sub-type for contracts: goods, services")
     name: str = Field(..., description="Template name")
     content: str = Field(..., description="HTML template content")
     variables: Optional[List[str]] = Field(None, description="Available variables")
@@ -55,10 +56,11 @@ class TemplateCreate(BaseModel):
     class Config:
         json_schema_extra = {
             "example": {
-                "template_type": "invoice",
-                "name": "Мій шаблон рахунку",
-                "content": "<html><body>Рахунок №{{invoice_number}}</body></html>",
-                "variables": ["invoice_number", "date", "counterparty_name"]
+                "template_type": "contract",
+                "sub_type": "goods",
+                "name": "Договір поставки товарів",
+                "content": "<html><body>Договір №{{contract_number}}</body></html>",
+                "variables": ["contract_number", "date", "counterparty_name"]
             }
         }
 
