@@ -1457,10 +1457,17 @@ const FullDashboard = () => {
   const filterContractsByEdrpou = (contracts) => {
     if (!searchEdrpouContracts) return contracts;
     const searchTerm = searchEdrpouContracts.toLowerCase();
-    return contracts.filter(contract => 
-      contract.counterparty_edrpou.includes(searchEdrpouContracts) ||
-      contract.counterparty_name.toLowerCase().includes(searchTerm)
-    );
+    return contracts.filter(contract => {
+      // Search by EDRPOU
+      if (contract.counterparty_edrpou && contract.counterparty_edrpou.includes(searchEdrpouContracts)) return true;
+      // Search by counterparty name
+      if (contract.counterparty_name && contract.counterparty_name.toLowerCase().includes(searchTerm)) return true;
+      // Search by contract number
+      if (contract.number && contract.number.toLowerCase().includes(searchTerm)) return true;
+      // Search by subject
+      if (contract.subject && contract.subject.toLowerCase().includes(searchTerm)) return true;
+      return false;
+    });
   };
 
   const previewInvoicePDF = async () => {
