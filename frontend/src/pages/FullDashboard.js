@@ -3735,6 +3735,10 @@ const FullDashboard = () => {
                   onSearchEdrpouChange={setSearchEdrpouOrders}
                   paymentFilter={paymentFilterOrders}
                   onPaymentFilterChange={setPaymentFilterOrders}
+                  sortBy={ordersSortBy}
+                  onSortByChange={setOrdersSortBy}
+                  viewMode={ordersViewMode}
+                  onViewModeChange={setOrdersViewMode}
                 />
 
                 {orders.length === 0 ? (
