@@ -984,14 +984,17 @@ class PDFServiceWithTemplates:
             # Counterparty/Buyer info
             'buyer_name': counterparty.get('representative_name', contract.get('counterparty_name', '')),
             'buyer_company_name': counterparty.get('representative_name', contract.get('counterparty_name', '')),
+            'buyer_short_name': counterparty.get('short_name', counterparty.get('representative_name', contract.get('counterparty_name', ''))),
             'counterparty_name': counterparty.get('representative_name', contract.get('counterparty_name', '')),
             
             'buyer_edrpou': counterparty.get('edrpou', contract.get('counterparty_edrpou', '')),
             'buyer_code': counterparty.get('edrpou', contract.get('counterparty_edrpou', '')),
             'counterparty_edrpou': counterparty.get('edrpou', contract.get('counterparty_edrpou', '')),
+            'buyer_ipn': counterparty.get('ipn', counterparty.get('edrpou', contract.get('counterparty_edrpou', ''))),
             
             'buyer_address': counterparty.get('legal_address', ''),
             'buyer_legal_address': counterparty.get('legal_address', ''),
+            'buyer_actual_address': counterparty.get('actual_address', counterparty.get('legal_address', '')),
             'buyer_email': counterparty.get('email', ''),
             'buyer_phone': counterparty.get('phone', ''),
             
@@ -1005,11 +1008,14 @@ class PDFServiceWithTemplates:
             'buyer_director_name': counterparty.get('director_name', ''),
             'buyer_director_position': counterparty.get('director_position', 'Директор'),
             'buyer_position': counterparty.get('director_position', 'Директор'),
-            'buyer_representative': counterparty.get('represented_by', ''),
-            'buyer_represented_by': counterparty.get('represented_by', ''),
-            'buyer_signature': counterparty.get('signature', ''),
+            'buyer_representative': counterparty.get('represented_by', counterparty.get('director_name', '')),
+            'buyer_represented_by': counterparty.get('represented_by', counterparty.get('director_name', '')),
+            'buyer_signature': counterparty.get('signature', counterparty.get('director_name', '')),
             'buyer_acts_on': counterparty.get('contract_type', 'Статуту'),
+            'buyer_basis': counterparty.get('contract_type', 'Статуту'),
+            'buyer_contract_type': counterparty.get('contract_type', 'Статуту'),
             'buyer_vat_status': counterparty_vat_status,
+            'buyer_is_vat_payer': counterparty_is_vat,
         }
         
         return context
