@@ -1419,10 +1419,17 @@ const FullDashboard = () => {
   const filterActsByEdrpou = (acts) => {
     if (!searchEdrpouActs) return acts;
     const searchTerm = searchEdrpouActs.toLowerCase();
-    return acts.filter(act => 
-      act.counterparty_edrpou.includes(searchEdrpouActs) ||
-      act.counterparty_name.toLowerCase().includes(searchTerm)
-    );
+    return acts.filter(act => {
+      // Search by EDRPOU
+      if (act.counterparty_edrpou && act.counterparty_edrpou.includes(searchEdrpouActs)) return true;
+      // Search by counterparty name
+      if (act.counterparty_name && act.counterparty_name.toLowerCase().includes(searchTerm)) return true;
+      // Search by act number
+      if (act.number && act.number.toLowerCase().includes(searchTerm)) return true;
+      // Search by item name
+      if (act.items && act.items.some(item => item.name && item.name.toLowerCase().includes(searchTerm))) return true;
+      return false;
+    });
   };
 
   const filterWaybillsByEdrpou = (waybills) => {
