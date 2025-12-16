@@ -3342,6 +3342,10 @@ const FullDashboard = () => {
               onEditAct={startEditingAct}
               theme={currentTheme}
               filterByEdrpou={filterActsByEdrpou}
+              sortBy={actsSortBy}
+              onSortByChange={setActsSortBy}
+              viewMode={actsViewMode}
+              onViewModeChange={setActsViewMode}
             />
           </TabsContent>
 
