@@ -28,7 +28,7 @@ const OrderFilters = ({
           <Input
             id="search-edrpou"
             type="text"
-            placeholder="Назва або ЄДРПОУ"
+            placeholder="Номер, назва або ЄДРПОУ"
             value={searchEdrpou}
             onChange={(e) => onSearchEdrpouChange(e.target.value)}
             className="h-9"
