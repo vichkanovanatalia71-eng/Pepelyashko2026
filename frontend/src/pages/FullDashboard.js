@@ -213,6 +213,8 @@ const FullDashboard = () => {
   const [searchEdrpouContracts, setSearchEdrpouContracts] = useState('');
   const [searchEdrpouOrders, setSearchEdrpouOrders] = useState('');
   const [paymentFilterOrders, setPaymentFilterOrders] = useState('all');
+  const [ordersSortBy, setOrdersSortBy] = useState('date_desc');
+  const [ordersViewMode, setOrdersViewMode] = useState('grid2');
   const [foundCounterparty, setFoundCounterparty] = useState(null);
   
   // Selected counterparty for viewing documents
