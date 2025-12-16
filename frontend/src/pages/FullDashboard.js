@@ -3509,22 +3509,17 @@ const FullDashboard = () => {
               </CardContent>
             </Card>
 
-            <DocumentListGeneric
-              documents={waybills}
-              title="Список Накладних"
+            <WaybillList
+              waybills={waybills}
               searchValue={searchEdrpouWaybills}
               onSearchChange={setSearchEdrpouWaybills}
-              onViewDocument={openWaybillDialog}
+              onViewWaybill={openWaybillDialog}
               theme={currentTheme}
               filterByEdrpou={filterWaybillsByEdrpou}
-              emptyMessage="Немає накладних"
-              renderContent={(waybill, theme) => (
-                <>
-                  <p className={`font-medium ${theme.text}`}>№{waybill.number}</p>
-                  <p className="text-sm text-gray-600">{waybill.counterparty_name}</p>
-                  <p className={`font-bold ${theme.text}`}>{waybill.total_amount} грн</p>
-                </>
-              )}
+              sortBy={waybillsSortBy}
+              onSortByChange={setWaybillsSortBy}
+              viewMode={waybillsViewMode}
+              onViewModeChange={setWaybillsViewMode}
             />
           </TabsContent>
 
