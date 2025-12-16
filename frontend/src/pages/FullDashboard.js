@@ -224,6 +224,9 @@ const FullDashboard = () => {
   // Waybill filters
   const [waybillsSortBy, setWaybillsSortBy] = useState('date_desc');
   const [waybillsViewMode, setWaybillsViewMode] = useState('grid2');
+  // Contract filters
+  const [contractsSortBy, setContractsSortBy] = useState('date_desc');
+  const [contractsViewMode, setContractsViewMode] = useState('grid2');
   const [foundCounterparty, setFoundCounterparty] = useState(null);
   
   // Selected counterparty for viewing documents
