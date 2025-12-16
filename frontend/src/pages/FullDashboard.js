@@ -215,6 +215,9 @@ const FullDashboard = () => {
   const [paymentFilterOrders, setPaymentFilterOrders] = useState('all');
   const [ordersSortBy, setOrdersSortBy] = useState('date_desc');
   const [ordersViewMode, setOrdersViewMode] = useState('grid2');
+  // Invoice filters
+  const [invoicesSortBy, setInvoicesSortBy] = useState('date_desc');
+  const [invoicesViewMode, setInvoicesViewMode] = useState('grid2');
   const [foundCounterparty, setFoundCounterparty] = useState(null);
   
   // Selected counterparty for viewing documents
