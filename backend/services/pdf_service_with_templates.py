@@ -878,13 +878,23 @@ class PDFServiceWithTemplates:
         counterparty_is_vat = counterparty.get('is_vat_payer', False)
         counterparty_vat_status = 'Платник ПДВ' if counterparty_is_vat else 'Не є платником ПДВ'
         
+        # Convert amount to words
+        amount_value = float(contract.get('amount', 0))
+        amount_text = self._amount_to_words(amount_value)
+        
         context = {
             # Contract main info
             'contract_number': contract.get('number', ''),
             'number': contract.get('number', ''),
+            'document_number': contract.get('number', ''),
             'contract_date': formatted_date,
             'date': formatted_date,
+            'document_date': formatted_date,
+            'document_date_text': formatted_date,
+            'contract_date_text': formatted_date,
+            'contract_date_text_full': formatted_date,
             'contract_date_raw': str(date_value)[:10] if date_value else '',
+            'document_year': str(date_obj.year) if date_obj else str(datetime.now().year),
             'place_of_compilation': place_of_compilation,
             'city': place_of_compilation,
             
@@ -892,29 +902,41 @@ class PDFServiceWithTemplates:
             'contract_subject': contract.get('subject', ''),
             'subject': contract.get('subject', ''),
             'contract_type': contract_type_label,
+            'contract_type_text': contract_type_label,
             'contract_type_raw': contract_type,
             'execution_form': execution_form_label,
+            'execution_form_text': execution_form_label,
             'execution_form_raw': execution_form,
             
             # Contract amount
-            'contract_amount': f"{float(contract.get('amount', 0)):,.2f}".replace(',', ' '),
-            'amount': f"{float(contract.get('amount', 0)):,.2f}".replace(',', ' '),
-            'total_amount': f"{float(contract.get('amount', 0)):,.2f}".replace(',', ' '),
-            'amount_raw': float(contract.get('amount', 0)),
+            'contract_amount': f"{amount_value:,.2f}".replace(',', ' '),
+            'amount': f"{amount_value:,.2f}".replace(',', ' '),
+            'total_amount': f"{amount_value:,.2f}".replace(',', ' '),
+            'amount_raw': amount_value,
+            'contract_amount_text': amount_text,
+            'total_amount_text': amount_text,
+            'total_amount_words': amount_text,
+            'amount_in_words': amount_text,
             
             # Contract terms
             'contract_term': f"з {formatted_date} до {end_date}",
             'start_date': formatted_date,
+            'contract_start_date': formatted_date,
             'end_date': end_date,
+            'contract_end_date': end_date,
+            'contract_end_date_text': end_date,
             'payment_terms': 'Оплата здійснюється протягом 10 (десяти) календарних днів після дати постачання/підписання акту приймання-передачі.',
             
             # Contract details
             'delivery_address': contract.get('delivery_address', ''),
             'warranty_period': warranty_label,
+            'warranty_period_text': warranty_label,
             'warranty_period_raw': warranty_period,
             'penalty_rate': penalty_label,
+            'penalty_rate_text': penalty_label,
             'penalty_rate_raw': penalty_rate,
             'signing_format': signing_label,
+            'signing_format_text': signing_label,
             'signing_format_raw': signing_format,
             'specification_required': 'Так' if contract.get('specification_required') else 'Ні',
             'quantity_variation_allowed': 'Так' if contract.get('quantity_variation_allowed') else 'Ні',
@@ -924,6 +946,8 @@ class PDFServiceWithTemplates:
             
             # VAT info
             'vat_note': vat_note,
+            'is_vat_payer': is_vat_payer,
+            'supplier_is_vat_payer': is_vat_payer,
             
             # Supplier info
             'supplier_name': supplier.get('representative_name', ''),
