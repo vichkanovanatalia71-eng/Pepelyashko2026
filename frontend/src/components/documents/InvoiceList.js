@@ -191,22 +191,22 @@ const InvoiceList = ({
                 /* GRID VIEW */
                 <Card 
                   key={invoice._id} 
-                  className={`card-hover ${theme.cardBg} border ${theme.cardBorder} ${theme.shadow} transition-all duration-300 group cursor-pointer`}
+                  className={`card-hover ${theme.cardBg} border ${theme.cardBorder} ${theme.shadow} transition-all duration-300 group cursor-pointer overflow-hidden`}
                   onClick={() => onViewInvoice(invoice)}
                 >
                   <CardContent className="p-3">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between">
-                          <span className={`font-semibold ${theme.text}`}>№{invoice.number}</span>
-                          <span className="text-xs text-gray-500">
+                    <div className="flex justify-between items-start gap-2">
+                      <div className="flex-1 min-w-0 overflow-hidden">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className={`font-semibold ${theme.text} shrink-0`}>№{invoice.number}</span>
+                          <span className="text-xs text-gray-500 shrink-0">
                             {new Date(invoice.date).toLocaleDateString('uk-UA')}
                           </span>
                         </div>
-                        <p className="text-sm text-gray-600 truncate mt-1">{invoice.counterparty_name}</p>
+                        <p className="text-sm text-gray-600 truncate mt-1" title={invoice.counterparty_name}>{invoice.counterparty_name}</p>
                         <p className={`font-bold ${theme.text} mt-1`}>{invoice.total_amount} грн</p>
                       </div>
-                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" onClick={(e) => e.stopPropagation()}>
                         <Button size="sm" variant="ghost" onClick={() => onViewInvoice(invoice)} className="h-7 px-2">
                           <Eye className="w-4 h-4" />
                         </Button>
