@@ -3159,6 +3159,10 @@ const FullDashboard = () => {
               onEditInvoice={startEditingInvoice}
               theme={currentTheme}
               filterByEdrpou={filterInvoicesByEdrpou}
+              sortBy={invoicesSortBy}
+              onSortByChange={setInvoicesSortBy}
+              viewMode={invoicesViewMode}
+              onViewModeChange={setInvoicesViewMode}
             />
           </TabsContent>
 
