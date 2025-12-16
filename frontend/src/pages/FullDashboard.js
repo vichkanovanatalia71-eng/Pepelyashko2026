@@ -35,7 +35,7 @@ import {
 import { documentThemes } from '../theme/documentThemes';
 import '../styles/animations.css';
 import { InvoiceDialog, ActDialog, WaybillDialog, ContractDialog, EditDocumentConfirmDialog, OrderCard } from '../components/dialogs';
-import { InvoiceList, ActList, WaybillList, DocumentListGeneric } from '../components/documents';
+import { InvoiceList, ActList, WaybillList, ContractList, DocumentListGeneric } from '../components/documents';
 import TemplateEditor from '../components/templates/TemplateEditor';
 import ProfileCard from '../components/ProfileCard';
 import OrderFilters from '../components/OrderFilters';
