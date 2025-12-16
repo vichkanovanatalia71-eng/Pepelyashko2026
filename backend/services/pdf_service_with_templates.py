@@ -1053,3 +1053,92 @@ class PDFServiceWithTemplates:
                 return datetime.now()
         except:
             return datetime.now()
+
+    def _amount_to_words(self, amount: float) -> str:
+        """Convert amount to Ukrainian words."""
+        try:
+            units = ['', 'одна', 'дві', 'три', 'чотири', "п'ять", 'шість', 'сім', 'вісім', "дев'ять"]
+            teens = ['десять', 'одинадцять', 'дванадцять', 'тринадцять', 'чотирнадцять', 
+                     "п'ятнадцять", 'шістнадцять', 'сімнадцять', 'вісімнадцять', "дев'ятнадцять"]
+            tens = ['', '', 'двадцять', 'тридцять', 'сорок', "п'ятдесят", 
+                    'шістдесят', 'сімдесят', 'вісімдесят', "дев'яносто"]
+            hundreds = ['', 'сто', 'двісті', 'триста', 'чотириста', "п'ятсот", 
+                       'шістсот', 'сімсот', 'вісімсот', "дев'ятсот"]
+            
+            def three_digits(n, gender='f'):
+                """Convert 3-digit number to words."""
+                if n == 0:
+                    return ''
+                result = []
+                h = n // 100
+                t = (n % 100) // 10
+                u = n % 10
+                
+                if h > 0:
+                    result.append(hundreds[h])
+                if t == 1:
+                    result.append(teens[u])
+                else:
+                    if t > 1:
+                        result.append(tens[t])
+                    if u > 0:
+                        if gender == 'm':
+                            m_units = ['', 'один', 'два', 'три', 'чотири', "п'ять", 
+                                      'шість', 'сім', 'вісім', "дев'ять"]
+                            result.append(m_units[u])
+                        else:
+                            result.append(units[u])
+                return ' '.join(result)
+            
+            if amount == 0:
+                return 'нуль гривень 00 копійок'
+            
+            hrn = int(amount)
+            kop = int(round((amount - hrn) * 100))
+            
+            result_parts = []
+            
+            # Millions
+            if hrn >= 1000000:
+                millions = hrn // 1000000
+                hrn = hrn % 1000000
+                mil_word = three_digits(millions, 'm')
+                if millions % 10 == 1 and millions % 100 != 11:
+                    result_parts.append(f"{mil_word} мільйон")
+                elif 2 <= millions % 10 <= 4 and (millions % 100 < 10 or millions % 100 >= 20):
+                    result_parts.append(f"{mil_word} мільйони")
+                else:
+                    result_parts.append(f"{mil_word} мільйонів")
+            
+            # Thousands
+            if hrn >= 1000:
+                thousands = hrn // 1000
+                hrn = hrn % 1000
+                th_word = three_digits(thousands, 'f')
+                if thousands % 10 == 1 and thousands % 100 != 11:
+                    result_parts.append(f"{th_word} тисяча")
+                elif 2 <= thousands % 10 <= 4 and (thousands % 100 < 10 or thousands % 100 >= 20):
+                    result_parts.append(f"{th_word} тисячі")
+                else:
+                    result_parts.append(f"{th_word} тисяч")
+            
+            # Hundreds, tens, units
+            if hrn > 0:
+                result_parts.append(three_digits(hrn, 'f'))
+            
+            # Currency word
+            hrn_total = int(amount)
+            if hrn_total % 10 == 1 and hrn_total % 100 != 11:
+                currency = 'гривня'
+            elif 2 <= hrn_total % 10 <= 4 and (hrn_total % 100 < 10 or hrn_total % 100 >= 20):
+                currency = 'гривні'
+            else:
+                currency = 'гривень'
+            
+            result_parts.append(currency)
+            result_parts.append(f"{kop:02d} коп.")
+            
+            return ' '.join(result_parts).strip()
+        except Exception as e:
+            logger.error(f"Error converting amount to words: {e}")
+            return f"{amount:.2f} грн"
