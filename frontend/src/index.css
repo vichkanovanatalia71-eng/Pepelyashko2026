@@ -87,11 +87,13 @@
   [data-sonner-toast] [data-title] {
     font-weight: 600 !important;
     font-size: 0.9375rem !important;
+    color: inherit !important;
   }
   
   [data-sonner-toast] [data-description] {
-    opacity: 0.9 !important;
+    opacity: 1 !important;
     font-size: 0.875rem !important;
+    color: inherit !important;
   }
   
   [data-sonner-toast] [data-close-button] {
