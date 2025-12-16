@@ -3744,119 +3744,128 @@ const FullDashboard = () => {
                 {orders.length === 0 ? (
                   <p className="text-center py-8 text-gray-500">Немає замовлень</p>
                 ) : (
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                    {orders.map((order) => (
-                      <Card 
-                        key={order._id} 
-                        className={`card-hover ${currentTheme.cardBg} border-2 ${currentTheme.cardBorder} ${currentTheme.shadow} transition-all duration-300`}
-                      >
-                        <CardContent className="p-4">
-                          <div className="flex flex-col gap-3">
-                            <div className="flex-1 cursor-pointer" onClick={() => openOrderDialog(order)}>
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <p className={`font-medium ${currentTheme.text}`}>№{order.number}</p>
-                                {order.is_paid ? (
-                                  <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">✅ Сплачено</span>
-                                ) : (
-                                  <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full font-medium">⏳ Не сплачено</span>
-                                )}
-                              </div>
-                              <p className="text-sm text-gray-600 truncate">{order.counterparty_name}</p>
-                              <div className="flex items-center justify-between mt-1">
-                                <p className={`font-bold ${currentTheme.text}`}>{order.total_amount} грн</p>
-                                <p className="text-xs text-gray-500">{order.date}</p>
-                              </div>
-                            </div>
-                            <div className="flex gap-2 items-center flex-wrap">
-                              <Select
-                                value={order.status || (order.is_paid ? 'paid' : 'new')}
-                                onValueChange={(value) => {
-                                  updateOrderStatus(order.number, value);
-                                }}
-                              >
-                                <SelectTrigger 
-                                  className="w-[110px] h-8 text-xs"
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="new">
-                                    <span className="flex items-center gap-2">
-                                      <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-                                      Нове
-                                    </span>
-                                  </SelectItem>
-                                  <SelectItem value="in_progress">
-                                    <span className="flex items-center gap-2">
-                                      <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-                                      В роботі
-                                    </span>
-                                  </SelectItem>
-                                  <SelectItem value="shipped">
-                                    <span className="flex items-center gap-2">
-                                      <span className="w-2 h-2 rounded-full bg-purple-500"></span>
-                                      Відправлено
-                                    </span>
-                                  </SelectItem>
-                                  <SelectItem value="paid">
-                                    <span className="flex items-center gap-2">
-                                      <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                                      Сплачено
-                                    </span>
-                                  </SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  downloadOrderPDF(order.number);
-                                }}
-                                title="Завантажити PDF"
-                                className="border-blue-500 text-blue-600 hover:bg-blue-50 h-8 px-2"
-                              >
-                                📄
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  openOrderEmailDialog(order);
-                                }}
-                                title="Надіслати Email"
-                                className="border-green-500 text-green-600 hover:bg-green-50 h-8 px-2"
-                              >
-                                ✉️
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  openOrderDialog(order);
-                                }}
-                                className={`border-2 ${currentTheme.border} ${currentTheme.hover} ${currentTheme.textLight} h-8 px-2`}
-                              >
-                                👁️
-                              </Button>
-                              <Button
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setSelectedOrder(order);
-                                  setShowOrderSelectionDialog(true);
-                                }}
-                                className={`${currentTheme.buttonBg} ${currentTheme.buttonHover} text-white h-8 px-2 text-xs`}
-                              >
-                                + Док
-                              </Button>
-                            </div>
+                  <div className={
+                    ordersViewMode === 'list' 
+                      ? 'flex flex-col gap-2' 
+                      : ordersViewMode === 'grid3' 
+                        ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3'
+                        : 'grid grid-cols-1 lg:grid-cols-2 gap-3'
+                  }>
+                    {[...orders]
+                      .sort((a, b) => {
+                        switch (ordersSortBy) {
+                          case 'date_asc':
+                            return new Date(a.date || a.created_at || 0) - new Date(b.date || b.created_at || 0);
+                          case 'date_desc':
+                            return new Date(b.date || b.created_at || 0) - new Date(a.date || a.created_at || 0);
+                          case 'number_asc':
+                            return parseInt(a.number || 0) - parseInt(b.number || 0);
+                          case 'number_desc':
+                            return parseInt(b.number || 0) - parseInt(a.number || 0);
+                          case 'amount_asc':
+                            return (a.total_amount || 0) - (b.total_amount || 0);
+                          case 'amount_desc':
+                            return (b.total_amount || 0) - (a.total_amount || 0);
+                          case 'counterparty_asc':
+                            return (a.counterparty_name || '').localeCompare(b.counterparty_name || '', 'uk');
+                          case 'counterparty_desc':
+                            return (b.counterparty_name || '').localeCompare(a.counterparty_name || '', 'uk');
+                          default:
+                            return 0;
+                        }
+                      })
+                      .map((order) => (
+                      ordersViewMode === 'list' ? (
+                        /* LIST VIEW - Compact horizontal row */
+                        <div 
+                          key={order._id} 
+                          className={`flex items-center gap-3 p-3 rounded-lg border ${currentTheme.cardBorder} ${currentTheme.cardBg} hover:shadow-md transition-all cursor-pointer`}
+                          onClick={() => openOrderDialog(order)}
+                        >
+                          <div className="flex items-center gap-2 min-w-[100px]">
+                            <span className={`font-semibold ${currentTheme.text}`}>№{order.number}</span>
+                            {order.is_paid ? (
+                              <span className="w-2 h-2 rounded-full bg-green-500" title="Сплачено"></span>
+                            ) : (
+                              <span className="w-2 h-2 rounded-full bg-yellow-500" title="Не сплачено"></span>
+                            )}
                           </div>
-                        </CardContent>
-                      </Card>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm truncate">{order.counterparty_name}</p>
+                          </div>
+                          <div className="text-right min-w-[90px]">
+                            <p className={`font-bold text-sm ${currentTheme.text}`}>{order.total_amount} грн</p>
+                          </div>
+                          <div className="text-xs text-gray-500 min-w-[80px] text-right">{order.date}</div>
+                          <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+                            <Select
+                              value={order.status || (order.is_paid ? 'paid' : 'new')}
+                              onValueChange={(value) => updateOrderStatus(order.number, value)}
+                            >
+                              <SelectTrigger className="w-[90px] h-7 text-xs">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="new"><span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500"></span>Нове</span></SelectItem>
+                                <SelectItem value="in_progress"><span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500"></span>В роботі</span></SelectItem>
+                                <SelectItem value="shipped"><span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-purple-500"></span>Відправл.</span></SelectItem>
+                                <SelectItem value="paid"><span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500"></span>Сплачено</span></SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <Button size="sm" variant="ghost" onClick={() => downloadOrderPDF(order.number)} className="h-7 px-2" title="PDF">📄</Button>
+                            <Button size="sm" variant="ghost" onClick={() => openOrderEmailDialog(order)} className="h-7 px-2" title="Email">✉️</Button>
+                            <Button size="sm" variant="ghost" onClick={() => { setSelectedOrder(order); setShowOrderSelectionDialog(true); }} className="h-7 px-2" title="Документи">+</Button>
+                          </div>
+                        </div>
+                      ) : (
+                        /* GRID VIEW - Compact card */
+                        <Card 
+                          key={order._id} 
+                          className={`card-hover ${currentTheme.cardBg} border ${currentTheme.cardBorder} ${currentTheme.shadow} transition-all duration-300`}
+                        >
+                          <CardContent className="p-3">
+                            <div className="flex flex-col gap-2">
+                              <div className="flex-1 cursor-pointer" onClick={() => openOrderDialog(order)}>
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2">
+                                    <span className={`font-semibold ${currentTheme.text}`}>№{order.number}</span>
+                                    {order.is_paid ? (
+                                      <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-medium">✓</span>
+                                    ) : (
+                                      <span className="text-xs bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded font-medium">⏳</span>
+                                    )}
+                                  </div>
+                                  <span className="text-xs text-gray-500">{order.date}</span>
+                                </div>
+                                <p className="text-sm text-gray-600 truncate mt-1">{order.counterparty_name}</p>
+                                <p className={`font-bold ${currentTheme.text} mt-1`}>{order.total_amount} грн</p>
+                              </div>
+                              <div className="flex gap-1 items-center flex-wrap pt-1 border-t border-gray-100">
+                                <Select
+                                  value={order.status || (order.is_paid ? 'paid' : 'new')}
+                                  onValueChange={(value) => updateOrderStatus(order.number, value)}
+                                >
+                                  <SelectTrigger className="w-[90px] h-7 text-xs" onClick={(e) => e.stopPropagation()}>
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="new"><span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500"></span>Нове</span></SelectItem>
+                                    <SelectItem value="in_progress"><span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500"></span>В роботі</span></SelectItem>
+                                    <SelectItem value="shipped"><span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-purple-500"></span>Відправл.</span></SelectItem>
+                                    <SelectItem value="paid"><span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500"></span>Сплачено</span></SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <div className="flex gap-1 ml-auto">
+                                  <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); downloadOrderPDF(order.number); }} className="h-7 px-2" title="PDF">📄</Button>
+                                  <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); openOrderEmailDialog(order); }} className="h-7 px-2" title="Email">✉️</Button>
+                                  <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); openOrderDialog(order); }} className="h-7 px-2" title="Переглянути">👁️</Button>
+                                  <Button size="sm" onClick={(e) => { e.stopPropagation(); setSelectedOrder(order); setShowOrderSelectionDialog(true); }} className={`${currentTheme.buttonBg} ${currentTheme.buttonHover} text-white h-7 px-2 text-xs`} title="Створити документ">+</Button>
+                                </div>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )
                     ))}
                   </div>
                 )}
