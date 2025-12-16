@@ -1438,10 +1438,17 @@ const FullDashboard = () => {
   const filterWaybillsByEdrpou = (waybills) => {
     if (!searchEdrpouWaybills) return waybills;
     const searchTerm = searchEdrpouWaybills.toLowerCase();
-    return waybills.filter(wb => 
-      wb.counterparty_edrpou.includes(searchEdrpouWaybills) ||
-      wb.counterparty_name.toLowerCase().includes(searchTerm)
-    );
+    return waybills.filter(wb => {
+      // Search by EDRPOU
+      if (wb.counterparty_edrpou && wb.counterparty_edrpou.includes(searchEdrpouWaybills)) return true;
+      // Search by counterparty name
+      if (wb.counterparty_name && wb.counterparty_name.toLowerCase().includes(searchTerm)) return true;
+      // Search by waybill number
+      if (wb.number && wb.number.toLowerCase().includes(searchTerm)) return true;
+      // Search by item name
+      if (wb.items && wb.items.some(item => item.name && item.name.toLowerCase().includes(searchTerm))) return true;
+      return false;
+    });
   };
 
   const filterContractsByEdrpou = (contracts) => {
