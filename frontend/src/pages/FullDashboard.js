@@ -4148,23 +4148,17 @@ const FullDashboard = () => {
               </CardContent>
             </Card>
 
-            <DocumentListGeneric
-              documents={contracts}
-              title="Список Договорів"
+            <ContractList
+              contracts={contracts}
               searchValue={searchEdrpouContracts}
               onSearchChange={setSearchEdrpouContracts}
-              onViewDocument={openContractDialog}
+              onViewContract={openContractDialog}
               theme={currentTheme}
               filterByEdrpou={filterContractsByEdrpou}
-              emptyMessage="Немає договорів"
-              renderContent={(contract, theme) => (
-                <>
-                  <p className={`font-medium ${theme.text}`}>№{contract.number}</p>
-                  <p className="text-sm text-gray-600">{contract.counterparty_name}</p>
-                  <p className="text-sm">{contract.subject}</p>
-                  <p className={`font-bold ${theme.text}`}>{contract.amount} грн</p>
-                </>
-              )}
+              sortBy={contractsSortBy}
+              onSortByChange={setContractsSortBy}
+              viewMode={contractsViewMode}
+              onViewModeChange={setContractsViewMode}
             />
           </TabsContent>
 
