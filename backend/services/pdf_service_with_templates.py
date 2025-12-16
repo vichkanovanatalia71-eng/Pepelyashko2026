@@ -870,17 +870,27 @@ class PDFServiceWithTemplates:
         signing_format = contract.get('signing_format', '')
         signing_label = signing_labels.get(signing_format, signing_format)
         
-        # VAT status
-        is_vat_payer = supplier.get('is_vat_payer', False)
+        # VAT status - check both 'vat_payer' and 'is_vat_payer' fields
+        is_vat_payer = supplier.get('vat_payer', supplier.get('is_vat_payer', False))
+        supplier_vat_rate = supplier.get('vat_rate', 20.0) if is_vat_payer else 0.0
         vat_note = '' if is_vat_payer else 'без ПДВ'
         supplier_vat_status = 'Платник ПДВ' if is_vat_payer else 'Не є платником ПДВ'
         
-        counterparty_is_vat = counterparty.get('is_vat_payer', False)
+        counterparty_is_vat = counterparty.get('vat_payer', counterparty.get('is_vat_payer', False))
+        counterparty_vat_rate = counterparty.get('vat_rate', 20.0) if counterparty_is_vat else 0.0
         counterparty_vat_status = 'Платник ПДВ' if counterparty_is_vat else 'Не є платником ПДВ'
         
-        # Convert amount to words
+        # Convert amount to words and calculate VAT
         amount_value = float(contract.get('amount', 0))
         amount_text = self._amount_to_words(amount_value)
+        
+        # Calculate VAT amounts
+        if is_vat_payer and supplier_vat_rate > 0:
+            vat_amount = amount_value * supplier_vat_rate / (100 + supplier_vat_rate)
+            amount_without_vat = amount_value - vat_amount
+        else:
+            vat_amount = 0.0
+            amount_without_vat = amount_value
         
         context = {
             # Contract main info
