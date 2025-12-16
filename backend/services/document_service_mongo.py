@@ -259,12 +259,13 @@ class DocumentServiceMongo:
         """Get all orders for a user with optional filters."""
         query = {"user_id": user_id}
         
-        # Add search filter if provided (search by EDRPOU, company name, or order number)
+        # Add search filter if provided (search by EDRPOU, company name, order number, or item name)
         if edrpou_filter:
             query["$or"] = [
                 {"counterparty_edrpou": {"$regex": edrpou_filter, "$options": "i"}},
                 {"counterparty_name": {"$regex": edrpou_filter, "$options": "i"}},
-                {"number": {"$regex": edrpou_filter, "$options": "i"}}
+                {"number": {"$regex": edrpou_filter, "$options": "i"}},
+                {"items.name": {"$regex": edrpou_filter, "$options": "i"}}
             ]
         
         # Add payment status filter if provided
