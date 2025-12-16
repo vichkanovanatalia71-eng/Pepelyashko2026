@@ -1396,14 +1396,21 @@ const FullDashboard = () => {
     }
   };
 
-  // Filter functions for search - by EDRPOU or Company Name
+  // Filter functions for search - by EDRPOU, Company Name, Number, or Item Name
   const filterInvoicesByEdrpou = (invoices) => {
     if (!searchEdrpouInvoices) return invoices;
     const searchTerm = searchEdrpouInvoices.toLowerCase();
-    return invoices.filter(inv => 
-      inv.counterparty_edrpou.includes(searchEdrpouInvoices) ||
-      inv.counterparty_name.toLowerCase().includes(searchTerm)
-    );
+    return invoices.filter(inv => {
+      // Search by EDRPOU
+      if (inv.counterparty_edrpou && inv.counterparty_edrpou.includes(searchEdrpouInvoices)) return true;
+      // Search by counterparty name
+      if (inv.counterparty_name && inv.counterparty_name.toLowerCase().includes(searchTerm)) return true;
+      // Search by invoice number
+      if (inv.number && inv.number.toLowerCase().includes(searchTerm)) return true;
+      // Search by item name
+      if (inv.items && inv.items.some(item => item.name && item.name.toLowerCase().includes(searchTerm))) return true;
+      return false;
+    });
   };
 
   const filterActsByEdrpou = (acts) => {
