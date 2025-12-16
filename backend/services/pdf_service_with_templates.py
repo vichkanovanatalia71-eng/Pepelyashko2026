@@ -957,7 +957,13 @@ class PDFServiceWithTemplates:
             # VAT info
             'vat_note': vat_note,
             'is_vat_payer': is_vat_payer,
+            'vat_rate': supplier_vat_rate,
+            'vat_amount': f"{vat_amount:,.2f}".replace(',', ' '),
+            'vat_amount_text': self._amount_to_words(vat_amount) if vat_amount > 0 else '',
+            'amount_without_vat': f"{amount_without_vat:,.2f}".replace(',', ' '),
+            'amount_without_vat_text': self._amount_to_words(amount_without_vat),
             'supplier_is_vat_payer': is_vat_payer,
+            'supplier_vat_rate': supplier_vat_rate,
             
             # Supplier info
             'supplier_name': supplier.get('representative_name', ''),
