@@ -1032,6 +1032,7 @@ class PDFServiceWithTemplates:
             'buyer_contract_type': counterparty.get('contract_type', 'Статуту'),
             'buyer_vat_status': counterparty_vat_status,
             'buyer_is_vat_payer': counterparty_is_vat,
+            'buyer_vat_rate': counterparty_vat_rate,
         }
         
         return context
