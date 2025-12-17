@@ -1039,6 +1039,32 @@ class PDFServiceWithTemplates:
             'buyer_vat_rate': counterparty_vat_rate,
         }
         
+        # Add items data if available
+        if items:
+            # Generate items table HTML
+            items_html = self.renderer.generate_items_table_html(items)
+            
+            # Format items for template iteration
+            formatted_items = []
+            for item in items:
+                formatted_items.append({
+                    'name': item.get('name', ''),
+                    'unit': item.get('unit', 'шт'),
+                    'qty': item.get('quantity', item.get('qty', 0)),
+                    'quantity': item.get('quantity', item.get('qty', 0)),
+                    'price': item.get('price', 0),
+                    'sum': item.get('amount', item.get('sum', 0)),
+                    'amount': item.get('amount', item.get('sum', 0)),
+                })
+            
+            context['items'] = formatted_items
+            context['items_table'] = items_html
+            context['items_count'] = len(formatted_items)
+        else:
+            context['items'] = []
+            context['items_table'] = ''
+            context['items_count'] = 0
+        
         return context
 
     def _format_date_ukrainian(self, date_str: str) -> str:
