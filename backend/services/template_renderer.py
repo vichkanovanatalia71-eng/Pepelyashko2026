@@ -153,8 +153,13 @@ class TemplateRenderer:
         result = re.sub(pattern, replace_conditional, template, flags=re.DOTALL)
         return result
     
-    def generate_items_table_html(self, items: List[Dict[str, Any]]) -> str:
-        """Generate HTML table rows for items."""
+    def generate_items_table_html(self, items: List[Dict[str, Any]], for_contract: bool = False) -> str:
+        """Generate HTML table rows for items.
+        
+        Args:
+            items: List of item dictionaries
+            for_contract: If True, generates rows for contract specification table (different CSS classes)
+        """
         if not items:
             return ''
         
@@ -162,11 +167,34 @@ class TemplateRenderer:
         for idx, item in enumerate(items, 1):
             name = item.get('name', '')
             unit = item.get('unit', 'шт')
-            quantity = item.get('quantity', 0)
+            quantity = item.get('quantity', item.get('qty', 0))
             price = item.get('price', 0)
-            amount = item.get('amount', 0)
+            amount = item.get('amount', item.get('sum', 0))
             
-            rows_html += f'''
+            # Ensure numeric values
+            try:
+                quantity = float(quantity) if quantity else 0
+                price = float(price) if price else 0
+                amount = float(amount) if amount else 0
+            except (ValueError, TypeError):
+                quantity = 0
+                price = 0
+                amount = 0
+            
+            if for_contract:
+                # Format for contract specification table
+                rows_html += f'''
+    <tr>
+      <td class="ctr">{idx}</td>
+      <td>{name}</td>
+      <td class="ctr">{unit}</td>
+      <td class="ctr"><span class="b">{quantity:.0f}</span></td>
+      <td class="num"><span class="b">{price:.2f}</span></td>
+      <td class="num"><span class="b">{amount:.2f}</span></td>
+    </tr>'''
+            else:
+                # Format for invoice/act/waybill
+                rows_html += f'''
         <tr>
           <td class="col-n">{idx}</td>
           <td class="col-name">{name}</td>
