@@ -703,7 +703,8 @@ class PDFServiceWithTemplates:
         contract: Dict[str, Any],
         supplier: Dict[str, Any],
         counterparty: Dict[str, Any],
-        template_id: Optional[str] = None
+        template_id: Optional[str] = None,
+        items: List[Dict[str, Any]] = None
     ) -> str:
         """
         Generate contract PDF using template based on contract type (goods/services).
@@ -713,6 +714,7 @@ class PDFServiceWithTemplates:
             supplier: Supplier (user) data
             counterparty: Counterparty data
             template_id: Optional template ID (uses default if not provided)
+            items: Optional list of items (from order)
             
         Returns:
             Path to generated PDF file
