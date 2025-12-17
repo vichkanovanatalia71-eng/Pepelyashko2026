@@ -1022,8 +1022,8 @@ class PDFServiceWithTemplates:
             
             'buyer_director': counterparty.get('director_name', ''),
             'buyer_director_name': counterparty.get('director_name', ''),
-            'buyer_director_position': counterparty.get('director_position', 'Директор'),
-            'buyer_position': counterparty.get('director_position', 'Директор'),
+            'buyer_director_position': counterparty.get('director_position') or counterparty.get('position', 'Директор'),
+            'buyer_position': counterparty.get('director_position') or counterparty.get('position', 'Директор'),
             'buyer_representative': counterparty.get('represented_by', counterparty.get('director_name', '')),
             'buyer_represented_by': counterparty.get('represented_by', counterparty.get('director_name', '')),
             'buyer_signature': counterparty.get('signature', counterparty.get('director_name', '')),
