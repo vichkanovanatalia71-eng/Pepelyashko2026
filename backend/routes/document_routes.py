@@ -2692,7 +2692,7 @@ async def generate_contract_pdf(
         
         # Get counterparty details
         counterparty = await database.counterparties.find_one(
-            {"edrpou": contract_dict.get("counterparty_edrpou"), "user_id": current_user["_id"]},
+            {"edrpou": contract_dict.get("counterparty_edrpou"), "user_id": str(current_user["_id"])},
             {"_id": 0}
         )
         
@@ -2764,7 +2764,7 @@ async def email_contract(
         
         # Get counterparty details
         counterparty = await database.counterparties.find_one(
-            {"edrpou": contract_dict.get("counterparty_edrpou"), "user_id": current_user["_id"]},
+            {"edrpou": contract_dict.get("counterparty_edrpou"), "user_id": str(current_user["_id"])},
             {"_id": 0}
         )
         
