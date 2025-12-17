@@ -2699,6 +2699,7 @@ async def generate_contract_pdf(
         # Get items from based_on_order if exists
         items = []
         based_on_order = contract_dict.get('based_on_order')
+        logger.info(f"Contract based_on_order: {based_on_order}")
         if based_on_order:
             order = await database.orders.find_one(
                 {"number": based_on_order, "user_id": str(current_user["_id"])},
@@ -2706,6 +2707,11 @@ async def generate_contract_pdf(
             )
             if order:
                 items = order.get('items', [])
+                logger.info(f"Found {len(items)} items from order {based_on_order}")
+            else:
+                logger.warning(f"Order {based_on_order} not found for user")
+        else:
+            logger.info("No based_on_order set for this contract")
         
         # Generate PDF using template service
         pdf_service = PDFServiceWithTemplates(database)
