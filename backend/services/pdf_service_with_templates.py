@@ -789,9 +789,11 @@ class PDFServiceWithTemplates:
         self,
         contract: Dict[str, Any],
         supplier: Dict[str, Any],
-        counterparty: Dict[str, Any]
+        counterparty: Dict[str, Any],
+        items: List[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """Prepare context variables for contract template."""
+        items = items or []
         
         # Format date
         date_value = contract.get('date', datetime.now())
