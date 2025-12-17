@@ -2696,13 +2696,25 @@ async def generate_contract_pdf(
             {"_id": 0}
         )
         
+        # Get items from based_on_order if exists
+        items = []
+        based_on_order = contract_dict.get('based_on_order')
+        if based_on_order:
+            order = await database.orders.find_one(
+                {"number": based_on_order, "user_id": str(current_user["_id"])},
+                {"_id": 0}
+            )
+            if order:
+                items = order.get('items', [])
+        
         # Generate PDF using template service
         pdf_service = PDFServiceWithTemplates(database)
         pdf_path = await pdf_service.generate_contract_pdf(
             contract_dict,
             supplier or {},
             counterparty or {},
-            template_id or contract_dict.get('template_id')
+            template_id or contract_dict.get('template_id'),
+            items
         )
         
         # Return PDF file with no-cache headers
