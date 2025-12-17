@@ -1,124 +1,167 @@
 <analysis>**original_problem_statement:**
-The user initiated this session with several requests:
-1.  Fix a recurring bug where the System Template button failed to revert a user-edited template back to the system's default version.
-2.  Completely redesign the Order Card UI to a premium, minimalist B2B style, similar to Stripe or HubSpot.
-3.  Ensure the newly designed Order Card is populated with all available buyer (counterparty) variables.
-4.  Update the Order PDF template to match the new visual design of the Order Card.
-5.  Make the Order PDF more compact to consistently fit on a single A4 page.
-6.  Remove supplier information and signature blocks from the Order PDF.
-7.  Implement a status system for orders with a dropdown menu, including statuses: Нове (New), В роботі (In Progress), Відправлено (Sent), and Сплачено (Paid).
-8.  Implement an automation to automatically send the generated Order PDF to the counterparty's email address whenever a new order is created with the status Нове (New).
+The user's initial problem statement from the previous session was to finalize contract management features, fix PDF generation bugs, and overhaul the UI. In this session, the user's requests expanded to include:
 
-**User's preferred language**: Ukrainian. The next agent **MUST** respond in Ukrainian only.
+1.  **Toast Notification Visibility:** Fix pop-up toast notifications that were too transparent and unreadable.
+2.  **Document List Feature Parity:** Implement a comprehensive set of features across all document lists (Orders, Invoices, Acts, Waybills, Contracts):
+    *   **Advanced Sorting:** Add dropdowns to sort by various criteria (date, amount, counterparty, number).
+    *   **Multiple View Modes:** Add controls to switch between a detailed list view, a 2-column grid, and a 3-column grid.
+    *   **Enhanced Search:** Extend the search functionality to include document numbers and the names of items/products/services within the documents.
+3.  **UI Bug Fix:** Fix long counterparty names overflowing their container in the card view.
+4.  **Contract PDF Generation Bugs:** A series of critical bug fixes for contract PDFs:
+    *   Ensure all template variables are available and correctly populated.
+    *   Fix an issue where the buyer's signature () was not appearing.
+    *   Fix an issue where the buyer's position was not appearing.
+    *   Fix a critical bug where the specification table (list of items/products) was appearing empty in the generated PDF for contracts based on an order.
+    *   Resolve a  in the backend PDF service.
+
+**User's preferred language**: Ukrainian
 
 **what currently exists?**
-The application is a full-stack React/FastAPI/MongoDB document management system. All user requests from this session have been successfully implemented.
-- The System Template button bug has been fully resolved on both the backend and frontend.
-- A new, premium-designed  component has replaced the old order dialog. It fetches and displays full counterparty data.
-- The Order PDF template now matches the new design, is compact, and excludes supplier/signature blocks.
-- A comprehensive order status system (new, in_progress, sent, paid) is in place, manageable via dropdowns in the UI.
-- An automated email notification system sends the Order PDF to the counterparty when a new order is created.
+The application's UI has been significantly enhanced. All primary document lists (Orders, Invoices, Acts, Waybills, Contracts) now feature a unified and powerful interface with controls for sorting, switching between list/grid views, and an expanded search capability that includes document numbers and item names. Toast notifications have been restyled to be opaque and clearly readable.
+
+The backend contract PDF generation has undergone extensive debugging and is now more robust. It correctly populates numerous variables, including amount in words, VAT details, and signatures. Crucially, it now correctly fetches items from a related order and includes them in a specification table within the contract PDF.
 
 **Last working item**:
-- **Last item agent was working:** Implementing a feature to automatically send an email with the Order PDF to the counterparty upon the creation of a new order with the status Нове (New).
+- **Last item agent was working:** Fixing a critical bug where the specification table in the contract PDF was empty, even when the contract was based on an order with items. The agent identified that the API endpoint was incorrectly expecting a contract UUID () while the frontend was sending the contract number.
 - **Status:** USER VERIFICATION PENDING
-- **Agent Testing Done:** Y (The agent successfully created a new order via an API script and verified from backend logs that the PDF was generated and the email was dispatched to the correct address. A UI screenshot also confirmed the new order appeared in the main list.)
-- **Which testing method agent to use?** Manual testing by the user. The user should be asked to create a new order and confirm if they (or the specified counterparty) receive the email with the PDF attachment.
+- **Agent Testing Done:** Y (Agent modified the backend route from  to  and updated the corresponding service to query by . Using  and checking backend logs, the agent confirmed that the correct order items are now being fetched and passed to the PDF generation context.)
+- **Which testing method agent to use?** Manual testing by the user. The agent should ask the user to generate a PDF for a contract that is based on an order and confirm that the specification table now contains the correct items.
 - **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
-- None. All issues have been resolved.
+- **Issue 1: (P0) Verify Contract PDF Specification Table Fix**
+  - **Description:** The user reported that the items table in the contract PDF was empty. The agent fixed the backend route and logic to correctly fetch items. The user needs to verify the fix.
+  - **Attempted fixes:**
+    1.  Changed the API endpoint in  from  to .
+    2.  Updated the  service method in  to  to query the database by the  field instead of .
+    3.  Confirmed via backend logs that items are now being correctly passed to the PDF context.
+  - **Next debug checklist:** Ask the user to test generating a contract PDF again. If it fails, check browser cache and re-examine the backend logs for the new request.
+  - **Why fix this issue and what will be achieved with the fix?** This is a critical feature for generating valid contracts for goods. The fix will make the contract generation complete and usable.
+  - **Status:** USER VERIFICATION PENDING
+  - **Is recurring issue?** N
+  - **Should Test frontend/backend/both after fix?** User verification is needed.
+  - **Blocked on other issue:** None.
+- **Issue 2: (P1) Verify Contract Template Caching Fix**
+  - **Description:** From the previous session, the user reported that edits to contract templates were not appearing in new PDFs. An anti-caching fix was implemented, but the user never verified it.
+  - **Attempted fixes:** Added cache-busting headers on the backend and a timestamp query parameter on the frontend.
+  - **Next debug checklist:** After Issue 1 is resolved, ask the user to test this flow: edit a template, save it, and generate a new PDF to see if the change is reflected immediately.
+  - **Why fix this issue and what will be achieved with the fix?** This is essential for the template editor feature to be useful.
+  - **Status:** USER VERIFICATION PENDING
+  - **Is recurring issue?** Y (Carried over from the previous fork)
+  - **Should Test frontend/backend/both after fix?** User verification is needed.
+  - **Blocked on other issue:** None.
 
 **In progress Task List**:
 - None.
 
 **Upcoming and Future Tasks**
 - **Upcoming Tasks:**
-    - **(P1) Refactor **: Extract the dialog logic for Counterparties into a dedicated component to reduce the size and complexity of this file, similar to what was done for Orders.
-    - **(P1) Refactor **: The component's variable lists are hardcoded. Refactor this to load variables dynamically from a static JSON file or a dedicated backend endpoint to improve maintainability.
+    - **(P1) Refactor Document List Components**: The newly created , , , and  components share a lot of duplicated code for sorting and view controls. This should be extracted into a reusable child component.
+    - **(P1) Refactor **: Extract the dialog logic for Counterparties into a dedicated component to reduce the size and complexity of this file.
+    - **(P1) Refactor **: The component's variable lists are hardcoded. Refactor this to load variables dynamically from a static JSON file or a dedicated backend endpoint.
 - **Future Tasks:**
-    - **(P0) E-Signature Implementation:** The user previously requested this but explicitly asked to **postpone** it for now. This should not be worked on until the user requests it again.
+    - **(P0) E-Signature Implementation:** This was explicitly **postponed** by the user. Do not work on this until requested again.
     - **(P2) Code Cleanup**: Remove any remaining unused state and functions from .
     - **(P2) Implement Dashboards/Graphs**: Create visual analytics based on document data.
     - **(P2) Implement Template Version History**: Allow users to revert to previous versions of their saved templates.
 
 **Completed work in this session**
-- **System Template Bug Fix (DONE):** Resolved a critical, recurring bug in  and  that prevented users from reverting to default templates.
-- **Order Card Redesign (DONE):** Created a new component  implementing a premium B2B design and refactored  to use it, significantly improving UI and code structure.
-- **Enrich Order Data (DONE):** Modified  to fetch full counterparty details when viewing an order, ensuring all buyer data is correctly displayed in the .
-- **Order PDF Generation Overhaul (DONE):** The PDF generation logic in  was rewritten to produce a compact, single-page PDF that matches the new UI design and excludes supplier/signature information.
-- **Order Status System (DONE):** Replaced the boolean  flag with a flexible string-based  field. Updated backend models, routes (), and frontend components (, ) to support the new statuses via dropdown menus.
-- **Automated Email on New Order (DONE):** The  endpoint in  was enhanced to automatically generate and email the Order PDF to the counterparty when an order is created with Нове status.
+- **UI Feature Implementation (DONE):**
+  - Implemented sorting, multiple view modes (list, 2-col, 3-col grid), and enhanced search (by number, item name) for Orders, Invoices, Acts, Waybills, and Contracts.
+- **UI Bug Fixes (DONE):**
+  - Fixed toast notifications to be opaque and readable by adjusting CSS in .
+  - Fixed long counterparty names overflowing document cards by applying  and  styles.
+- **Contract PDF Generation Overhaul (DONE):**
+  - **Added Missing Variables:** Implemented logic in  to add numerous missing variables to the PDF context, including  (using  library), VAT calculations, and aliases.
+  - **Fixed :** Debugged and resolved an issue where the buyer's signature wasn't appearing, which involved fixing a template syntax error ( -> ) and ensuring correct data fetching.
+  - **Fixed :** Added a fallback to use the  field if  is empty for a counterparty.
+  - **Fixed Empty Specification Table:** Resolved the critical bug preventing item lists from appearing in contract PDFs by changing the API route to use  instead of .
+  - **Fixed Backend Crash:** Resolved a  by adding the correct import in .
 
 **Earlier issues found/mentioned but not fixed**
 - None.
 
 **Known issue recurrence from previous fork**
-- **Issue recurrence in previous fork:** The System Template button bug was a recurring issue at the start of this session.
-- **Recurrence count:** It failed multiple times during debugging in this session before a robust fix was implemented.
-- **Status:** RESOLVED
+- **Issue recurrence in this fork:** Contract Template Caching.
+- **Recurrence count:** 1 (in this session, carried over and unverified).
+- **Status:** USER VERIFICATION PENDING.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Component Refactoring:** The monolithic order dialog in  was successfully extracted into a dedicated  component, improving separation of concerns.
-- **Data Enrichment (Client-Side Join):** The application now fetches related counterparty data on the frontend when an order dialog is opened to provide a complete view.
-- **Dynamic PDF Generation:** The backend service  now constructs a complex, styled HTML document as an f-string and renders it into a PDF, demonstrating advanced server-side rendering.
-- **Event-Driven Automation:** Logic was added to the create order API endpoint to trigger a secondary action (sending an email) based on the input data (order status).
+- **Feature Parity Implementation:** Systematically applying a new feature set (sort, view, search) across multiple similar but distinct components ().
+- **Dynamic Frontend Views:** Using React state () and conditional classing () to dynamically change the layout of lists between single, double, and triple column grids.
+- **Advanced Backend Filtering:** Modifying MongoDB queries to perform complex searches, including case-insensitive text search across multiple fields () and within arrays of objects ().
+- **Backend Route Debugging:** Identifying and fixing a critical mismatch between the frontend's API call parameter (a document number) and the backend route's expectation (a UUID).
+- **Python  library:** Used to convert numerical currency amounts into Ukrainian text for legal documents.
+- **Direct Database Debugging/Fixing:** Inspecting and directly modifying a record (a template) in the MongoDB database to fix a template syntax error.
 
 **key DB schema**
-- : The  (boolean) field has been replaced by  (string), which can hold values like 'new', 'in_progress', 'sent', 'paid'.
+- No schema changes were made. Work involved correctly utilizing existing fields like , , , , and .
 
 **changes in tech stack**
-- None.
+- Added  python library to the backend.
 
 **All files of reference**
-- : The new premium component for viewing/editing orders.
-- : The main dashboard page, which now uses  and contains the logic for handling order status changes.
-- : Contains the complete logic and HTML/CSS for generating the new compact Order PDF.
-- : Contains the API endpoints for creating orders, updating status, and the auto-email logic.
+- **Primary Logic:** 
+- **List Components:**
+  - 
+  - 
+  - 
+  - 
+  - 
+- **Backend Services:**
+  -  (contract PDF logic)
+  -  (filtering logic)
+- **Backend Routes:** 
+- **Global Styles:**  (for toast notifications)
 
 **Areas that need refactoring**:
-- ****: This file is still large and contains inline dialog logic for Counterparties. This logic should be extracted into a separate  component for consistency and maintainability.
-- ****: The lists of available template variables are hardcoded. This should be refactored to load them from a dynamic source (e.g., a JSON file or an API endpoint).
+- ****: This file has grown even larger and more complex. It now manages state for sorting and view modes for five different document types, making it brittle and hard to maintain.
+- **Document List Components**: , , , and  contain nearly identical JSX and logic for rendering the filter/sort/view controls. This should be extracted into a single, reusable component that accepts props to customize labels and behavior.
+- ****: The hardcoded lists of template variables remain a maintenance issue.
 
 **key api endpoints**
-- : (Modified) Creates a new order. Now triggers an email if  is 'new'.
-- : (New) Updates the status of a specific order.
-- : (Modified) Generates a PDF using the new compact template.
-- : (Modified) Backend logic updated to prevent overwriting of system templates.
+- ****: (MODIFIED) Now accepts a  (string) instead of a  (UUID).
+- ****: (MODIFIED) The  query parameter now also filters by  and .
+- **, , **: (MODIFIED) The filtering logic on the frontend, which consumes these endpoints, was updated to perform client-side searching by number and item name.
 
 **Critical Info for New Agent**
-- All user requests from this session are complete. The immediate next step is to ask the user to verify the latest feature: the automatic email sending when a new order is created.
-- The user has explicitly stated to **postpone** the implementation of E-Signatures. Do not suggest or begin work on this feature.
-- After user verification, the next logical steps are the refactoring tasks for  and . Propose this plan to the user.
+- **Verification Priority:** Your first action MUST be to ask the user to verify the fix for the contract's specification table (Issue #1). Guide them to generate a PDF for a contract linked to an order.
+- **Second Verification:** If the first verification is successful, immediately follow up by asking the user to verify the template caching fix from the previous session (Issue #2).
+- **API Route Change:** Be aware of the critical change to the contract PDF endpoint, which now uses the document's  instead of its UUID uid=0(root) gid=0(root) groups=0(root). This was the solution to the last major bug.
+- **Refactoring Opportunity:** The document list components are prime candidates for refactoring. After resolving the pending verification issues, you should propose creating a shared component for the sort/view controls to reduce code duplication.
 
 **documents created in this job**
 - 
+- 
 
 **Last 10 User Messages and any pending user messages**
-1.  **User:** Redesign the Order Card with a premium B2B look. (COMPLETED)
-2.  **User:** Add all buyer variables to the newly designed card. (COMPLETED)
-3.  **User:** Pointed out that buyer data was not appearing in the card. (COMPLETED - Fixed by fetching counterparty data).
-4.  **User:** Update the Order PDF to match the new Order Card's design. (COMPLETED)
-5.  **User:** Make the Order PDF more compact to fit on one page. (COMPLETED)
-6.  **User:** Remove the supplier and signature blocks from the Order PDF. (COMPLETED)
-7.  **User:** Add a dropdown menu for order statuses ('new', 'in progress', 'sent', 'paid'). (COMPLETED)
-8.  **User:** Automatically send an email with the PDF when a new order is created with the status 'new'. (COMPLETED - PENDING USER VERIFICATION)
-There are no pending messages.
+1.  **User:** Fix missing in contract PDF. (COMPLETED)
+2.  **User:** Items/products are missing from the contract PDF specification. (IN PROGRESS - fix implemented, pending verification)
+3.  **User:** PDF generation for contracts is throwing an error. (COMPLETED - Fixed  on backend)
+4.  **User:** The specification table is still empty in the contract PDF. (IN PROGRESS - this led to the discovery of the uid=0(root) gid=0(root) groups=0(root) vs  route mismatch)
+5.  **User:** No, the data for the specification table was not pulled into the contract PDF. (IN PROGRESS - confirming the issue persists before the final fix)
+6.  **User:** Provided context that the agent should check logs after they try to generate a PDF. (HANDLED)
+7.  **User:** The contract still shows  (COMPLETED - pointed to a template syntax error)
+8.  **User:** The position of the counterparty is still not displayed in the contract. (COMPLETED - fixed by adding a fallback for the position field)
+9.  **User:** There are no variables for the order items in the contract template. (COMPLETED - implemented the logic to add items to the context)
+10. **User:** There is an error when I click to generate a contract PDF. (COMPLETED - fixed  on backend)
 
 **Project Health Check:**
 - **Broken:** None.
 - **Mocked:** None.
+- **Pending Verification:** Contract PDF item table, Contract template caching.
 
 **3rd Party Integrations**
 - **YouScore API:** For fetching Ukrainian company data.
-- **SMTP (via smtplib):** For sending emails with PDF attachments.
+- **smtplib (Python native):** Used for sending emails via SMTP.
+- **num2words:** (New) Python library for converting numbers to text.
 
 **Testing status**
-- **Testing agent used after significant changes:** YES (For the System Template button bug).
-- **Troubleshoot agent used after agent stuck in loop:** YES (For the System Template button bug).
+- **Testing agent used after significant changes:** NO
+- **Troubleshoot agent used after agent stuck in loop:** NO
 - **Test files created:** None.
 - **Known regressions:** None.
 
@@ -128,4 +171,4 @@ There are no pending messages.
     - Password: 
 
 **What agent forgot to execute**
-- The agent successfully completed all tasks requested by the user during this session. No tasks were forgotten.</analysis>
+- The agent was unable to get the user to verify the original pending task from the last fork (template caching fix) because the user immediately started providing a stream of new, higher-priority requests. The agent correctly prioritized the user's immediate needs.</analysis>
