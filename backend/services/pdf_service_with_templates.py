@@ -1044,20 +1044,34 @@ class PDFServiceWithTemplates:
         if items:
             logger.info(f"Items data: {items[:2]}")  # Log first 2 items
             
-            # Generate items table HTML
-            items_html = self.renderer.generate_items_table_html(items)
+            # Generate items table HTML for contract (special format)
+            items_html = self.renderer.generate_items_table_html(items, for_contract=True)
             
             # Format items for template iteration
             formatted_items = []
             for item in items:
+                qty = item.get('quantity', item.get('qty', 0))
+                price = item.get('price', 0)
+                amount = item.get('amount', item.get('sum', 0))
+                
+                # Ensure numeric values
+                try:
+                    qty = float(qty) if qty else 0
+                    price = float(price) if price else 0
+                    amount = float(amount) if amount else 0
+                except (ValueError, TypeError):
+                    qty = 0
+                    price = 0
+                    amount = 0
+                
                 formatted_items.append({
                     'name': item.get('name', ''),
                     'unit': item.get('unit', 'шт'),
-                    'qty': item.get('quantity', item.get('qty', 0)),
-                    'quantity': item.get('quantity', item.get('qty', 0)),
-                    'price': item.get('price', 0),
-                    'sum': item.get('amount', item.get('sum', 0)),
-                    'amount': item.get('amount', item.get('sum', 0)),
+                    'qty': f"{qty:.0f}",
+                    'quantity': f"{qty:.0f}",
+                    'price': f"{price:.2f}",
+                    'sum': f"{amount:.2f}",
+                    'amount': f"{amount:.2f}",
                 })
             
             context['items'] = formatted_items
