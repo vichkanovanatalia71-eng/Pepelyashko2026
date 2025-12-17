@@ -6,7 +6,7 @@ from pathlib import Path
 from datetime import datetime
 from weasyprint import HTML
 import logging
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from services.template_renderer import TemplateRenderer
 from services.template_service import TemplateService
 
