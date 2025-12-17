@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8" />
+  <title>Договір № {{contract_number}} від {{contract_date_text_full}}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <style>
+    /* =========================
+       BLOCK: PAGE / PAGINATION
+       ========================= */
+    @page{
+      size:A4;
+      margin:1.2cm 0.75cm 1.2cm 0.75cm;
+      @bottom-center{
+        content:"Сторінка " counter(page) " з " counter(pages);
+        font:11px "Times New Roman",serif;
+        color:#111;
+      }
+    }
+
+    /* =========================
+       BLOCK: BASE TYPOGRAPHY
+       ========================= */
+    html,body{
+      margin:0; padding:0;
+      background:#fff; color:#111;
+      font:12px/1.25 "Times New Roman",serif;
+    }
+    .wrap{ max-width:18.5cm; margin:0 auto; }
+    p{ margin:0 0 8px 0; text-align:justify; }
+    .center{ text-align:center; }
+    .right{ text-align:right; }
+    .b{ font-weight:bold; }
+
+    /* =========================
+       BLOCK: HEADINGS
+       ========================= */
+    .doc-title{
+      font-size:16px; font-weight:bold;
+      text-align:center; margin:0 0 6px 0;
+      letter-spacing:.2px;
+    }
+    .doc-subtitle{
+      font-size:12px; font-weight:bold;
+      text-align:center; margin:0 0 10px 0;
+      text-transform:lowercase;
+    }
+    .place-row{
+      display:flex; justify-content:flex-end;
+      margin:0 0 10px 0;
+    }
+    .section-title{
+      text-align:center;
+      font-weight:bold;
+      margin:12px 0 8px 0;
+      text-transform:uppercase;
+    }
+
+    /* =========================
+       BLOCK: LIST INDENTS
+       ========================= */
+    .sub{ margin-left:18px; }
+    .sub2{ margin-left:36px; }
+
+    /* =========================
+       BLOCK: TABLES (SPECIFICATION)
+       ========================= */
+    table.spec{
+      width:100%;
+      border-collapse:collapse;
+      table-layout:fixed;
+      margin:10px 0 8px 0;
+      font-size:10.5px;
+    }
+    table.spec th, table.spec td{
+      border:0.6px solid #555;
+      padding:4px 5px;
+      vertical-align:top;
+      word-break:break-word;
+      overflow-wrap:break-word;
+    }
+    table.spec th{ text-align:center; font-weight:bold; }
+    .ctr{ text-align:center; }
+    .num{ text-align:right; white-space:nowrap; }
+
+    /* =========================
+       BLOCK: REQUISITES (2 COLUMNS, NO BORDERS)
+       ========================= */
+    .requisites{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      column-gap:20px;
+      margin-top:10px;
+    }
+    .req-col{ width:100%; }
+    .req-title{
+      text-align:center;
+      font-weight:bold;
+      margin:0 0 6px 0;
+      text-transform:uppercase;
+    }
+    .req-row{ margin:0 0 4px 0; }
+    .label{ font-weight:normal; }
+    .val{ font-weight:bold; }
+
+    /* =========================
+       BLOCK: SIGNATURES (2 EQUAL COLUMNS)
+       ========================= */
+    .signatures{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      column-gap:40px;
+      margin-top:14px;
+    }
+    .sign-col{ width:100%; }
+    .sign-line{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      width:100%;
+    }
+    .sign-position{ white-space:nowrap; }
+    .sign-blank{
+      flex:1;
+      border-bottom:1px solid #111;
+      height:0;
+      transform:translateY(-2px);
+      min-width:10px;
+    }
+    .sign-name{ white-space:nowrap; font-weight:bold; }
+
+    /* =========================
+       BLOCK: PAGE BREAKS
+       ========================= */
+    .page-break{ page-break-before:always; }
+  </style>
+</head>
+
+<body>
+  <div class="page-footer" aria-hidden="true"></div>
+
+  <div class="wrap">
+
+    <!-- ПРЕАМБУЛА -->
+
+<div class="doc-title">
+  ДОГОВІР № <strong>{{contract_number}}</strong> від <strong>{{contract_date_text_full}}</strong>
+</div>
+
+<div class="doc-subtitle">
+  про постачання товарів
+</div>
+
+<div class="doc-city">
+  <strong>{{city}}</strong>
+</div>
+
+<p class="paragraph">
+  <strong>     {{supplier_name}}</strong>
+  (код ЄДРПОУ <strong>{{supplier_edrpou}}</strong>),
+  далі — «Постачальник»,
+  в особі <strong>{{supplier_representative}}</strong>,
+  що діє на підставі <strong>{{supplier_basis}}</strong>, з однієї сторони,
+  та <strong>{{buyer_name}}</strong>
+  (код ЄДРПОУ <strong>{{buyer_edrpou}}</strong>),
+  далі — «Покупець»,
+  в особі <strong>{{buyer_representative}}</strong>,
+  що діє на підставі <strong>{{buyer_basis}}</strong>, з другої сторони,
+  разом надалі — «Сторони», а кожна окремо — «Сторона»,
+  уклали цей Договір про таке:
+</p>
+
+<!-- 1. ПРЕДМЕТ ДОГОВОРУ -->
+<p class="section-title">1. ПРЕДМЕТ ДОГОВОРУ</p>
+
+<p class="paragraph">
+  1.1. За цим Договором Постачальник зобов'язується передати у власність Покупця товар,
+  визначений цим Договором та відповідними супровідними документами,
+  а Покупець зобов'язується прийняти та оплатити такий товар
+  на умовах цього Договору.
+</p>
+
+<p class="paragraph">
+  1.2. Найменування, асортимент, кількість, одиниці виміру, ціна за одиницю
+  та загальна вартість товару визначаються у
+  <strong>Рахунках</strong> та/або <strong>Видаткових накладних</strong>,
+  що оформлюються Постачальником та є невід'ємною частиною цього Договору.
+</p>
+
+<p class="paragraph">
+  1.3. У разі якщо Сторонами передбачено оформлення Специфікації,
+  вона оформлюється як Додаток до цього Договору та є його невід'ємною частиною.
+</p>
+
+<p class="paragraph">
+  1.4. Допускається варіативність обсягу поставки товару в межах,
+  погоджених Сторонами у відповідних Рахунках або Видаткових накладних,
+  без необхідності внесення змін до цього Договору.
+</p>
+
+<p class="paragraph">
+  1.5. Право власності на товар переходить від Постачальника до Покупця
+  з моменту підписання Сторонами <strong>Видаткової накладної</strong>.
+</p>
+
+<p class="paragraph">
+  1.6. Датою поставки товару вважається дата підписання
+  <strong>Видаткової накладної</strong> уповноваженими представниками Сторін.
+</p>
+
+<p class="paragraph">
+  1.7. Цей Договір не регулює надання послуг, виконання робіт або оформлення актів
+  виконаних робіт, а поширюється виключно на відносини з постачання товарів.
+</p>
+
+<p class="section-title">2. ЦІНА ДОГОВОРУ ТА ПОРЯДОК РОЗРАХУНКІВ</p>
+
+<p class="paragraph">
+  2.1. Ціна цього Договору визначається Специфікацією (Додаток 1) і становить
+  <strong>{{total_amount}} грн</strong>
+  (<strong>{{total_amount_text}}</strong>{{#if supplier_is_vat_payer}}, у тому числі ПДВ {{supplier_vat_rate}}% — {{vat_amount}} грн{{/if}}).
+</p>
+
+<p class="paragraph">
+  2.2.
+  {{#if supplier_is_vat_payer}}
+    Постачальник є платником податку на додану вартість. Ставка ПДВ становить
+    <strong>{{supplier_vat_rate}}</strong>%.
+  {{else}}
+    Постачальник не є платником податку на додану вартість. ПДВ не нараховується та не включається
+    до ціни товару.
+  {{/if}}
+</p>
+
+<p class="paragraph">
+  2.3. Розрахунки між Сторонами здійснюються у безготівковій формі шляхом перерахування коштів
+  на поточний рахунок Постачальника.
+</p>
+
+<p class="paragraph">
+  2.4. Оплата за товар здійснюється у порядку післяплати протягом
+  <strong>10 (десяти)</strong> календарних днів з дати підписання Сторонами
+  <strong>Видаткової накладної або виставленого Рахунку</strong>.
+</p>
+
+<p class="paragraph">
+  2.5. Датою оплати вважається дата фактичного зарахування коштів
+  на поточний рахунок Постачальника.
+</p>
+
+<p class="paragraph">
+  2.6. У призначенні платежу Покупець зазначає:
+  «Оплата за Договором № <strong>{{contract_number}}</strong>
+  від <strong>{{contract_date_text_full}}</strong>,
+  Рахунок <strong>№</strong>».
+</p>
+
+<p class="paragraph">
+  2.7. У разі порушення строків оплати Покупець сплачує пеню у розмірі
+  <strong>{{penalty_rate_text}}</strong> від суми простроченого платежу
+  за кожен день прострочення.
+</p>
+
+<p class="paragraph">
+  2.8. Усі розрахунки за цим Договором здійснюються
+  <strong>у національній валюті України — гривні</strong>.
+</p>
+
+<p class="section-title">3. ПОРЯДОК ТА УМОВИ ПОСТАЧАННЯ ТОВАРУ</p>
+
+<p class="paragraph">
+  3.1. Постачальник зобов'язується поставити Покупцеві товар,
+  визначений цим Договором, у кількості, асортименті та за ціною,
+  що зазначені у Специфікації (Додаток 1),
+  відповідно до умов цього Договору.
+</p>
+
+<p class="paragraph">
+  3.2. Поставка товару здійснюється на умовах, погоджених Сторонами
+  у Специфікації (Додаток 1) та/або шляхом взаємної домовленості.
+</p>
+
+<p class="paragraph">
+  3.3. Місце поставки товару Сторони погоджують між собою окремо
+  у кожному конкретному випадку шляхом взаємної домовленості.
+</p>
+
+<p class="paragraph">
+  3.4. Строки поставки товару визначаються Специфікацією (Додаток 1)
+  та/або шляхом взаємної домовленості і є обов'язковими для виконання Сторонами.
+</p>
+
+<p class="paragraph">
+  3.5. Право власності на товар та ризик його випадкової втрати
+  або пошкодження переходять від Постачальника до Покупця
+  з моменту підписання Сторонами
+  <strong>Видаткової накладної</strong>.
+</p>
+
+<p class="paragraph">
+  3.6. Поставка товару підтверджується належним чином оформленою
+  <strong>Видатковою накладною</strong>, яка є первинним обліковим
+  документом відповідно до вимог законодавства України.
+</p>
+
+<p class="paragraph">
+  3.7. Часткова поставка товару допускається лише у випадку,
+  якщо це прямо передбачено Специфікацією (Додаток 1)
+  або погоджено Сторонами у письмовій формі.
+</p>
+
+<p class="paragraph">
+  3.8. Разом з товаром Постачальник зобов'язаний передати Покупцеві
+  всі документи, що стосуються товару та є обов'язковими відповідно
+  до законодавства України та умов цього Договору
+  (у тому числі сертифікати відповідності, паспорти якості — за наявності).
+</p>
+
+<p class="section-title">4. ПРИЙМАННЯ ТОВАРУ. ПЕРВИННІ ДОКУМЕНТИ</p>
+
+<p class="paragraph">
+  4.1. Приймання Товару за кількістю, комплектністю, найменуванням та зовнішнім виглядом
+  здійснюється Покупцем у момент фактичного отримання Товару за супровідними документами:
+  <strong>Видатковою накладною</strong>,
+  паспортами якості, сертифікатами тощо (за наявності/за потреби).
+</p>
+
+<p class="paragraph">
+  4.2. Приймання Товару за якістю здійснюється <strong>в день отримання Товару</strong>.
+</p>
+
+<p class="paragraph">
+  4.3. У разі виявлення недостачі, пошкодження, невідповідності або інших недоліків Товару
+  Покупець має право зазначити відповідні зауваження у <strong>Видатковій накладній</strong>
+  та/або скласти акт розбіжностей у порядку, погодженому Сторонами.
+</p>
+
+<p class="paragraph">
+  4.4. Усі первинні документи повинні відповідати вимогам статті 9 Закону України
+  «Про бухгалтерський облік та фінансову звітність в Україні», зокрема містити:
+  назву документа, дату складання, реквізити Сторін, опис господарської операції (Товар),
+  одиниці виміру, кількість, ціну, загальну суму, підписи уповноважених осіб
+  (включно з КЕП/УЕП).
+</p>
+
+<p class="paragraph">
+  4.5. Первинні документи можуть оформлюватись як у паперовій, так і в електронній формі,
+  з використанням кваліфікованого електронного підпису (КЕП) чи удосконаленого електронного
+  підпису (УЕП) відповідно до Закону України «Про електронні довірчі послуги».
+</p>
+
+<p class="section-title">5. ЯКІСТЬ, ГАРАНТІЯ, РЕКЛАМАЦІЇ</p>
+
+<p class="paragraph">
+  5.1. Якість Товару має відповідати:
+  вимогам, зазначеним у <strong>Специфікації (Додаток 1)</strong>,
+  нормативним документам України (технічним регламентам, стандартам, ДСТУ),
+  а також паспортам якості, сертифікатам відповідності/походження та іншим документам,
+  що підтверджують якість — якщо це передбачено договором або законодавством.
+</p>
+
+<p class="paragraph">
+  5.2. Постачальник надає гарантію на Товар строком:
+  <strong>{{warranty_period}}</strong> з моменту отримання Покупцем Товару (дата <strong>Видаткової накладної</strong>).
+</p>
+
+<p class="paragraph">
+  5.3. У разі виявлення дефектів/невідповідностей Покупець має право подати письмову рекламацію
+  (із зазначенням кількості, суті дефекту, фото/відео доказів — за наявності)
+  протягом гарантійного строку або строку, передбаченого законодавством.
+  Рекламація надсилається на e-mail Постачальника: <strong>{{supplier_email}}</strong>.
+</p>
+
+<p class="paragraph">
+  5.4. Постачальник зобов'язаний протягом <strong>5</strong> робочих днів
+  з моменту отримання рекламації:
+  розглянути її, надати письмову відповідь та вжити узгоджені заходи, зокрема:
+  ремонт, заміна, повторна поставка, повернення коштів або інші дії за домовленістю Сторін.
+</p>
+
+<p class="paragraph">
+  5.5. Витрати, пов'язані з гарантійним усуненням недоліків, несе Постачальник
+  (включаючи транспортування, експертизу тощо), якщо інше не встановлено додатковими умовами
+  або письмовою домовленістю Сторін.
+</p>
+
+<p class="paragraph">
+  5.6. Гарантія не поширюється на дефекти, що виникли внаслідок:
+  порушення Покупцем правил експлуатації, монтажу, зберігання або транспортування;
+  стороннього втручання (несанкціонованого ремонту, модернізації);
+  дії третіх осіб або форс-мажорних обставин.
+</p>
+
+<p class="section-title">6. ПРАВА ТА ОБОВ'ЯЗКИ СТОРІН</p>
+
+<p class="paragraph">
+  6.1. Постачальник зобов'язаний:
+</p>
+
+<p class="paragraph">
+  6.1.1. Поставити Покупцеві Товар відповідно до умов цього Договору
+  у повному обсязі, у строки та на умовах, визначених:
+  цим Договором та <strong>Специфікацією (Додаток 1)</strong>.
+</p>
+
+<p class="paragraph">
+  6.1.2. Передати Покупцеві належним чином оформлені первинні документи,
+  зокрема <strong>Видаткові накладні</strong>, рахунки, товарно-транспортні накладні (за потреби),
+  податкові накладні (у разі якщо Постачальник є платником ПДВ).
+</p>
+
+<p class="paragraph">
+  6.1.3. Поставити Товар належної якості, у тарі та/або упаковці,
+  що забезпечує його збереження під час транспортування і зберігання.
+</p>
+
+<p class="paragraph">
+  6.2. Покупець зобов'язаний:
+</p>
+
+<p class="paragraph">
+  6.2.1. Прийняти поставлений Товар та підписати <strong>Видаткову накладну</strong>
+  або, у разі виявлення зауважень, надати їх Постачальнику у строки та порядку,
+  визначені цим Договором.
+</p>
+
+<p class="paragraph">
+  6.2.2. Своєчасно та в повному обсязі оплатити Товар
+  відповідно до умов цього Договору та/або <strong>Рахунку</strong>.
+</p>
+
+<p class="section-title">7. ВІДПОВІДАЛЬНІСТЬ СТОРІН</p>
+
+<p class="paragraph">
+  7.1. За невиконання або неналежне виконання зобов'язань за цим Договором
+  Сторони несуть відповідальність відповідно до чинного законодавства України
+  та умов цього Договору.
+</p>
+
+<p class="paragraph">
+  7.2. У разі порушення строків поставки Товару Постачальник сплачує Покупцеві
+  пеню у розмірі <strong>{{penalty_rate_text}}</strong>
+  від вартості непоставленого в строк Товару за кожен день прострочення.
+</p>
+
+<p class="paragraph">
+  7.3. У разі порушення Покупцем строків оплати Товару Покупець сплачує
+  Постачальнику пеню у розмірі <strong>{{penalty_rate_text}}</strong>
+  від суми простроченого платежу за кожен день прострочення.
+</p>
+
+<p class="paragraph">
+  7.4. Сплата пені або штрафних санкцій не звільняє Сторону від обов'язку
+  належного виконання своїх зобов'язань за цим Договором у повному обсязі.
+</p>
+
+<p class="section-title">8. ФОРС-МАЖОРНІ ОБСТАВИНИ</p>
+
+<p class="paragraph">
+  8.1. Сторони звільняються від відповідальності за часткове або повне
+  невиконання зобов'язань за цим Договором, якщо таке невиконання стало
+  наслідком дії обставин непереборної сили (форс-мажорних обставин),
+  які виникли після укладення цього Договору та безпосередньо унеможливили
+  виконання відповідних зобов'язань.
+</p>
+
+<p class="paragraph">
+  8.2. До форс-мажорних обставин, зокрема, належать: війна або воєнні дії,
+  збройні конфлікти, блокади, терористичні акти, надзвичайні ситуації
+  техногенного або природного характеру, пожежі, повені, землетруси,
+  епідемії, пандемії, рішення органів державної влади чи місцевого
+  самоврядування, що унеможливлюють виконання зобов'язань за цим Договором.
+</p>
+
+<p class="paragraph">
+  8.3. Сторона, для якої настали форс-мажорні обставини, зобов'язана
+  письмово повідомити іншу Сторону про їх настання та характер
+  протягом <strong>10 (десяти) календарних днів</strong>
+  з моменту виникнення таких обставин.
+</p>
+
+<p class="paragraph">
+  8.4. Належним підтвердженням наявності форс-мажорних обставин є
+  сертифікат (довідка), виданий <strong>Торгово-промисловою палатою України</strong>
+  або уповноваженим нею регіональним органом.
+</p>
+
+<p class="section-title">9. СТРОК ДІЇ ДОГОВОРУ ТА ПОРЯДОК ЙОГО РОЗІРВАННЯ</p>
+
+<p class="paragraph">
+  9.1. Цей Договір набирає чинності з моменту його підписання Сторонами
+  та діє з <strong>{{contract_date_text_full}}</strong> по
+  <strong>{{contract_end_date_text}}</strong>,
+  але в будь-якому випадку — до повного виконання Сторонами своїх
+  зобов'язань за цим Договором.
+</p>
+
+<p class="paragraph">
+  9.2. Цей Договір може бути розірвано:
+  шляхом укладення письмової угоди Сторін про розірвання,
+  або в односторонньому порядку у випадках, передбачених цим Договором
+  та/або чинним законодавством України.
+</p>
+
+<p class="paragraph">
+  9.3. Сторона, яка ініціює розірвання цього Договору в односторонньому порядку,
+  зобов'язана письмово повідомити іншу Сторону не пізніше ніж за
+  <strong>16 (шістнадцять) календарних днів</strong> до дати розірвання.
+</p>
+
+<p class="section-title">10. ПОРЯДОК ВИРІШЕННЯ СПОРІВ</p>
+
+<p class="paragraph">
+  10.1. Усі спори, розбіжності або вимоги, що виникають між Сторонами
+  у зв'язку з укладенням, виконанням, зміною, тлумаченням або розірванням
+  цього Договору, Сторони зобов'язуються вирішувати шляхом переговорів
+  та взаємних консультацій.
+</p>
+
+<p class="paragraph">
+  10.2. У разі якщо Сторони не дійшли згоди шляхом переговорів,
+  спір підлягає вирішенню у судовому порядку відповідно до законодавства України.
+</p>
+
+<p class="section-title">11. ІНШІ УМОВИ</p>
+
+<p class="paragraph">
+  11.1. Цей Договір є повною та остаточною домовленістю між Сторонами щодо
+  предмета цього Договору та замінює собою всі попередні усні або письмові
+  домовленості, переговори, листування та протоколи намірів.
+</p>
+
+<p class="paragraph">
+  11.2. Усі зміни та доповнення до цього Договору є чинними лише за умови,
+  що вони оформлені у письмовій формі, підписані уповноваженими
+  представниками обох Сторін.
+</p>
+
+<p class="paragraph">
+  11.3. Мовою цього Договору є українська.
+</p>
+
+<p class="section-title">12. РЕКВІЗИТИ ТА ПІДПИСИ СТОРІН</p>
+
+<!-- РЕКВІЗИТИ: 2 колонки -->
+<div class="requisites">
+  <!-- ПОКУПЕЦЬ (ліва колонка) -->
+  <div class="req-col">
+    <div class="req-title">ПОКУПЕЦЬ</div>
+
+    <div class="req-row"><span class="label">Найменування: </span><span class="val"><strong>{{buyer_name}}</strong></span></div>
+    <div class="req-row"><span class="label">Код ЄДРПОУ: </span><span class="val"><strong>{{buyer_edrpou}}</strong></span></div>
+    <div class="req-row"><span class="label">Юридична адреса: </span><span class="val"><strong>{{buyer_address}}</strong></span></div>
+
+    <div class="req-row"><span class="label">р/р (IBAN): </span><span class="val"><strong>{{buyer_iban}}</strong></span></div>
+    <div class="req-row"><span class="label">Банк: </span><span class="val"><strong>{{buyer_bank}}</strong></span></div>
+    <div class="req-row"><span class="label">МФО: </span><span class="val"><strong>{{buyer_mfo}}</strong></span></div>
+
+    <div class="req-row"><span class="label">E-mail: </span><span class="val"><strong>{{buyer_email}}</strong></span></div>
+    <div class="req-row"><span class="label">Телефон: </span><span class="val"><strong>{{buyer_phone}}</strong></span></div>
+  </div>
+
+  <!-- ПОСТАЧАЛЬНИК (права колонка) -->
+  <div class="req-col">
+    <div class="req-title">ПОСТАЧАЛЬНИК</div>
+
+    <div class="req-row"><span class="label">Найменування: </span><span class="val"><strong>{{supplier_name}}</strong></span></div>
+    <div class="req-row"><span class="label">Код ЄДРПОУ: </span><span class="val"><strong>{{supplier_edrpou}}</strong></span></div>
+    <div class="req-row"><span class="label">Юридична адреса: </span><span class="val"><strong>{{supplier_address}}</strong></span></div>
+
+    <div class="req-row"><span class="label">р/р (IBAN): </span><span class="val"><strong>{{supplier_iban}}</strong></span></div>
+    <div class="req-row"><span class="label">Банк: </span><span class="val"><strong>{{supplier_bank}}</strong></span></div>
+    <div class="req-row"><span class="label">МФО: </span><span class="val"><strong>{{supplier_mfo}}</strong></span></div>
+
+    <div class="req-row"><span class="label">E-mail: </span><span class="val"><strong>{{supplier_email}}</strong></span></div>
+    <div class="req-row"><span class="label">Телефон: </span><span class="val"><strong>{{supplier_phone}}</strong></span></div>
+  </div>
+</div>
+
+<!-- ПІДПИСИ: 2 колонки -->
+<div class="signatures">
+  <!-- ПОКУПЕЦЬ -->
+  <div class="sign-col">
+    <div class="sign-line">
+      <span class="sign-position"><strong>{{buyer_position}}</strong></span>
+      <span class="sign-blank"></span>
+      <span class="sign-name"><strong>{{buyer_signature}}</strong></span>
+    </div>
+  </div>
+
+  <!-- ПОСТАЧАЛЬНИК -->
+  <div class="sign-col">
+    <div class="sign-line">
+      <span class="sign-position"><strong>{{supplier_position}}</strong></span>
+      <span class="sign-blank"></span>
+      <span class="sign-name"><strong>{{supplier_signature}}</strong></span>
+    </div>
+  </div>
+</div>
+
+<!-- =========================
+     ДОДАТОК 1 / СПЕЦИФІКАЦІЯ
+     ========================= -->
+<div class="page-break" style="page-break-before:always;"></div>
+
+<p class="right">
+  Додаток № 1<br>
+  до Договору поставки № <span class="b">{{contract_number}}</span><br>
+  від <span class="b">{{contract_date_text_full}}</span>
+</p>
+
+<p class="doc-title center" style="margin-top:10px; margin-bottom:14px;">
+  СПЕЦИФІКАЦІЯ
+</p>
+
+<p class="paragraph">
+  <span class="b">{{supplier_name}}</span>, в особі <span class="b">{{supplier_position}}</span> <span class="b">{{supplier_representative}}</span>,
+  який(яка) діє на підставі <span class="b">{{supplier_basis}}</span>,
+  далі – «Постачальник», з однієї сторони, та
+  <span class="b">{{buyer_name}}</span>, в особі <span class="b">{{buyer_position}}</span> <span class="b">{{buyer_representative}}</span>,
+  який(яка) діє на підставі <span class="b">{{buyer_basis}}</span>,
+  далі – «Покупець», з другої сторони, уклали цю Специфікацію до Договору поставки
+  № <span class="b">{{contract_number}}</span> від <span class="b">{{contract_date_text_full}}</span>,
+  далі – «Договір», про наступне:
+</p>
+
+<p class="paragraph">
+  1. Постачальник зобов'язується передати у власність Покупцю на умовах, визначених Договором та цією Специфікацією, наступний Товар:
+</p>
+
+<!-- Таблиця товарів -->
+{{#if items_count}}
+<table class="spec">
+  <thead>
+    <tr>
+      <th class="ctr" style="width:7%;">№<br>п/п</th>
+      <th style="width:43%;">Найменування та опис Товару</th>
+      <th class="ctr" style="width:12%;">Одиниця<br>виміру</th>
+      <th class="ctr" style="width:10%;">К-ть</th>
+      <th class="ctr" style="width:14%;">Ціна за<br>одиницю<br>(грн)</th>
+      <th class="ctr" style="width:14%;">Загальна<br>вартість<br>(грн)</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    {{items_table}}
+
+    <!-- Підсумки -->
+    {{#if supplier_is_vat_payer}}
+      <tr>
+        <td colspan="5" class="num b">РАЗОМ без ПДВ:</td>
+        <td class="num b">{{amount_without_vat}}</td>
+      </tr>
+      <tr>
+        <td colspan="5" class="num b">ПДВ ({{supplier_vat_rate}}%):</td>
+        <td class="num b">{{vat_amount}}</td>
+      </tr>
+      <tr>
+        <td colspan="5" class="num b">Разом із ПДВ:</td>
+        <td class="num b">{{total_amount}}</td>
+      </tr>
+    {{else}}
+      <tr>
+        <td colspan="5" class="num b">РАЗОМ:</td>
+        <td class="num b">{{total_amount}}</td>
+      </tr>
+    {{/if}}
+  </tbody>
+</table>
+{{else}}
+<p class="paragraph">
+  <em>Таблиця товарів буде доповнена згідно з Замовленням.</em>
+</p>
+{{/if}}
+
+<!-- Фраза під таблицею -->
+{{#if supplier_is_vat_payer}}
+<p class="paragraph">
+  Загальна вартість Товару складає <span class="b">{{total_amount}} грн</span>
+  (<span class="b">{{total_amount_text}}</span>, у тому числі ПДВ {{supplier_vat_rate}}%: <span class="b">{{vat_amount}} грн</span>).
+</p>
+{{else}}
+<p class="paragraph">
+  Загальна вартість Товару складає <span class="b">{{total_amount}} грн</span>
+  (<span class="b">{{total_amount_text}}</span>). ПДВ не нараховується.
+</p>
+{{/if}}
+
+<p class="paragraph">
+  2. Строк поставки Товару: протягом 10 (десяти) робочих днів з дати підписання цієї Специфікації.
+</p>
+
+<p class="paragraph">
+  3. Ця Специфікація є невід'ємною частиною Договору № <span class="b">{{contract_number}}</span> від <span class="b">{{contract_date_text_full}}</span>.
+</p>
+
+<!-- ПІДПИСИ СПЕЦИФІКАЦІЇ -->
+<div class="signatures" style="margin-top:30px;">
+  <div class="sign-col">
+    <div class="req-title">ПОКУПЕЦЬ</div>
+    <div class="sign-line" style="margin-top:20px;">
+      <span class="sign-position"><strong>{{buyer_position}}</strong></span>
+      <span class="sign-blank"></span>
+      <span class="sign-name"><strong>{{buyer_signature}}</strong></span>
+    </div>
+  </div>
+
+  <div class="sign-col">
+    <div class="req-title">ПОСТАЧАЛЬНИК</div>
+    <div class="sign-line" style="margin-top:20px;">
+      <span class="sign-position"><strong>{{supplier_position}}</strong></span>
+      <span class="sign-blank"></span>
+      <span class="sign-name"><strong>{{supplier_signature}}</strong></span>
+    </div>
+  </div>
+</div>
+
+  </div>
+</body>
+</html>
