@@ -1040,7 +1040,10 @@ class PDFServiceWithTemplates:
         }
         
         # Add items data if available
+        logger.info(f"Contract items received: {len(items) if items else 0} items")
         if items:
+            logger.info(f"Items data: {items[:2]}")  # Log first 2 items
+            
             # Generate items table HTML
             items_html = self.renderer.generate_items_table_html(items)
             
@@ -1060,7 +1063,9 @@ class PDFServiceWithTemplates:
             context['items'] = formatted_items
             context['items_table'] = items_html
             context['items_count'] = len(formatted_items)
+            logger.info(f"Formatted items for context: {formatted_items}")
         else:
+            logger.warning("No items passed to contract context!")
             context['items'] = []
             context['items_table'] = ''
             context['items_count'] = 0
