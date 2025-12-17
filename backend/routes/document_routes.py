@@ -2672,8 +2672,10 @@ async def generate_contract_pdf(
     document_service = DocumentServiceMongo(database)
     
     try:
-        # Get contract details
-        contract = await document_service.get_contract_by_id(current_user["_id"], contract_id)
+        # Get contract details - try by number first, then by id
+        contract = await document_service.get_contract_by_number(current_user["_id"], contract_id)
+        if not contract:
+            contract = await document_service.get_contract_by_id(current_user["_id"], contract_id)
         if not contract:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
