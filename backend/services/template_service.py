@@ -626,4 +626,39 @@ class TemplateService:
                 logger.info("✅ Default waybill template created")
             else:
                 logger.warning(f"Default waybill template file not found: {waybill_template_path}")
+        
+        # Check if default contract template exists (for goods)
+        existing_contract_goods = await self.collection.find_one({
+            "user_id": None,
+            "template_type": "contract",
+            "sub_type": "goods",
+            "is_default": True
+        })
+        
+        if not existing_contract_goods:
+            # Load default contract goods template from file
+            contract_goods_template_path = "/app/backend/templates/default_contract_goods_template.html"
+            if os.path.exists(contract_goods_template_path):
+                with open(contract_goods_template_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                
+                default_contract_goods_template = {
+                    "_id": str(uuid.uuid4()),
+                    "user_id": None,
+                    "is_default": True,
+                    "template_type": "contract",
+                    "sub_type": "goods",
+                    "name": "Стандартний шаблон договору поставки товарів",
+                    "content": content,
+                    "variables": self._extract_variables(content),
+                    "version_history": [],
+                    "current_version": 1,
+                    "created_at": datetime.utcnow(),
+                    "updated_at": datetime.utcnow()
+                }
+                
+                await self.collection.insert_one(default_contract_goods_template)
+                logger.info("✅ Default contract (goods) template created")
+            else:
+                logger.warning(f"Default contract goods template file not found: {contract_goods_template_path}")
 
