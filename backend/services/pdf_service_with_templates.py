@@ -721,6 +721,9 @@ class PDFServiceWithTemplates:
         """
         try:
             logger.info(f"Starting PDF generation for contract: {contract.get('number')}")
+            logger.info(f"Items passed to generate_contract_pdf: {len(items) if items else 0} items")
+            if items:
+                logger.info(f"First item: {items[0] if items else 'None'}")
             
             # Determine sub_type based on contract_type
             contract_type = contract.get('contract_type', 'goods')
