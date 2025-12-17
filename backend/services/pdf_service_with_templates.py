@@ -761,7 +761,7 @@ class PDFServiceWithTemplates:
             logger.info(f"Template content preview: {template.content[:200]}...")
             
             # Prepare context
-            context = self._prepare_contract_context(contract, supplier, counterparty)
+            context = self._prepare_contract_context(contract, supplier, counterparty, items or [])
             
             logger.info("Contract context prepared successfully")
             
