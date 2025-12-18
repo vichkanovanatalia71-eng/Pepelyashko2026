@@ -2646,7 +2646,7 @@ async def update_contract(
         }
         
         await database.contracts.update_one(
-            {"number": contract_number, "user_id": current_user["_id"]},
+            {"number": contract_number, "user_id": user_id},
             {"$set": update_data}
         )
         
