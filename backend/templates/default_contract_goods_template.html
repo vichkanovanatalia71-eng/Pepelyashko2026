@@ -1117,15 +1117,91 @@
 <!-- Фраза під таблицею -->
 {{#if supplier_is_vat_payer}}
 <p class="paragraph">
-  Загальна вартість Товару складає <span class="b">{{total_amount}} грн</span>
+  2. Загальна вартість Товару складає <span class="b">{{total_amount}} грн</span>
   (<span class="b">{{total_amount_text}}</span>), у тому числі ПДВ {{supplier_vat_rate}}% — <span class="b">{{vat_amount_text}}</span>.
 </p>
 {{else}}
 <p class="paragraph">
-  Загальна вартість Товару складає <span class="b">{{total_amount}} грн</span>
+  2. Загальна вартість Товару складає <span class="b">{{total_amount}} грн</span>
   (<span class="b">{{total_amount_text}}</span>) без ПДВ.
 </p>
 {{/if}}
+
+<p class="paragraph">
+  3. Розрахунки за цією Специфікацією здійснюються у національній валюті України — гривні.
+</p>
+
+<p class="paragraph">
+  4. Місце та спосіб доставки товару визначаються Сторонами окремо шляхом письмового погодження без внесення змін до цієї Специфікації, якщо інше не передбачено договором.
+</p>
+
+<p class="paragraph">
+  5. Строки поставки товару погоджуються Сторонами окремо у письмовій формі.
+</p>
+
+<p class="paragraph">
+  6. Оплата за товар здійснюється протягом п'яти робочих днів з дати отримання рахунку або з дати підписання видаткової накладної, залежно від того, яка подія настала раніше, шляхом безготівкового перерахування коштів на рахунок Постачальника.
+</p>
+
+<p class="paragraph">
+  7. У разі розбіжностей між умовами договору поставки та цією Специфікацією застосовуються умови цієї Специфікації, яка є невід'ємною частиною договору.
+</p>
+
+<!-- РЕКВІЗИТИ СПЕЦИФІКАЦІЇ -->
+<div class="requisites" style="margin-top:20px;">
+  <!-- ПОКУПЕЦЬ -->
+  <div class="req-col">
+    <div class="req-title">ПОКУПЕЦЬ</div>
+
+    <div class="req-row"><span class="label">Найменування: </span><span class="val"><strong>{{buyer_name}}</strong></span></div>
+    <div class="req-row"><span class="label">Код ЄДРПОУ: </span><span class="val"><strong>{{buyer_edrpou}}</strong></span></div>
+    <div class="req-row"><span class="label">Юридична адреса: </span><span class="val"><strong>{{buyer_address}}</strong></span></div>
+
+    <div class="req-row"><span class="label">р/р (IBAN): </span><span class="val"><strong>{{buyer_iban}}</strong></span></div>
+    <div class="req-row"><span class="label">Банк: </span><span class="val"><strong>{{buyer_bank}}</strong></span></div>
+    <div class="req-row"><span class="label">МФО: </span><span class="val"><strong>{{buyer_mfo}}</strong></span></div>
+
+    <div class="req-row"><span class="label">E-mail: </span><span class="val"><strong>{{buyer_email}}</strong></span></div>
+    <div class="req-row"><span class="label">Телефон: </span><span class="val"><strong>{{buyer_phone}}</strong></span></div>
+  </div>
+
+  <!-- ПОСТАЧАЛЬНИК -->
+  <div class="req-col">
+    <div class="req-title">ПОСТАЧАЛЬНИК</div>
+
+    <div class="req-row"><span class="label">Найменування: </span><span class="val"><strong>{{supplier_name}}</strong></span></div>
+    <div class="req-row"><span class="label">Код ЄДРПОУ: </span><span class="val"><strong>{{supplier_edrpou}}</strong></span></div>
+    <div class="req-row"><span class="label">Юридична адреса: </span><span class="val"><strong>{{supplier_address}}</strong></span></div>
+
+    <div class="req-row"><span class="label">р/р (IBAN): </span><span class="val"><strong>{{supplier_iban}}</strong></span></div>
+    <div class="req-row"><span class="label">Банк: </span><span class="val"><strong>{{supplier_bank}}</strong></span></div>
+    <div class="req-row"><span class="label">МФО: </span><span class="val"><strong>{{supplier_mfo}}</strong></span></div>
+
+    <div class="req-row"><span class="label">E-mail: </span><span class="val"><strong>{{supplier_email}}</strong></span></div>
+    <div class="req-row"><span class="label">Телефон: </span><span class="val"><strong>{{supplier_phone}}</strong></span></div>
+  </div>
+</div>
+
+<!-- ПІДПИСИ СПЕЦИФІКАЦІЇ -->
+<div class="signatures" style="margin-top:20px;">
+  <!-- ПОКУПЕЦЬ -->
+  <div class="sign-col">
+    <div class="sign-line">
+      <span class="sign-position"><strong>{{buyer_position}}</strong></span>
+      <span class="sign-blank"></span>
+      <span class="sign-name"><strong>{{buyer_signature}}</strong></span>
+    </div>
+  </div>
+
+  <!-- ПОСТАЧАЛЬНИК -->
+  <div class="sign-col">
+    <div class="sign-line">
+      <span class="sign-position"><strong>{{supplier_position}}</strong></span>
+      <span class="sign-blank"></span>
+      <span class="sign-name"><strong>{{supplier_signature}}</strong></span>
+    </div>
+  </div>
+</div>
 
   </div>
 </body>
