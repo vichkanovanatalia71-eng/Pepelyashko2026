@@ -661,4 +661,39 @@ class TemplateService:
                 logger.info("✅ Default contract (goods) template created")
             else:
                 logger.warning(f"Default contract goods template file not found: {contract_goods_template_path}")
+        
+        # Check if default contract services template exists
+        existing_contract_services = await self.collection.find_one({
+            "user_id": None,
+            "template_type": "contract",
+            "sub_type": "services",
+            "is_default": True
+        })
+        
+        if not existing_contract_services:
+            # Load default contract services template from file
+            contract_services_template_path = "/app/backend/templates/default_contract_services_template.html"
+            if os.path.exists(contract_services_template_path):
+                with open(contract_services_template_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                
+                default_contract_services_template = {
+                    "_id": str(uuid.uuid4()),
+                    "user_id": None,
+                    "is_default": True,
+                    "template_type": "contract",
+                    "sub_type": "services",
+                    "name": "Системний шаблон договору надання послуг",
+                    "content": content,
+                    "variables": self._extract_variables(content),
+                    "version_history": [],
+                    "current_version": 1,
+                    "created_at": datetime.utcnow(),
+                    "updated_at": datetime.utcnow()
+                }
+                
+                await self.collection.insert_one(default_contract_services_template)
+                logger.info("✅ Default contract (services) template created")
+            else:
+                logger.warning(f"Default contract services template file not found: {contract_services_template_path}")
 
