@@ -2645,16 +2645,17 @@ async def update_contract(
             "updated_at": datetime.utcnow()
         }
         
+        # Use the actual _id from found contract for update
         await database.contracts.update_one(
-            {"number": contract_number, "user_id": user_id},
+            {"_id": existing_contract["_id"]},
             {"$set": update_data}
         )
         
-        logger.info(f"Contract {contract_number} updated")
+        logger.info(f"Contract {existing_contract.get('number')} updated")
         
         # Return updated contract
         updated_contract = await database.contracts.find_one(
-            {"number": contract_number, "user_id": user_id},
+            {"_id": existing_contract["_id"]},
             {"_id": 0}
         )
         updated_contract["id"] = existing_contract["_id"]
