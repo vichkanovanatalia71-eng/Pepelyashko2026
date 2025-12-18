@@ -2654,7 +2654,7 @@ async def update_contract(
         
         # Return updated contract
         updated_contract = await database.contracts.find_one(
-            {"number": contract_number, "user_id": current_user["_id"]},
+            {"number": contract_number, "user_id": user_id},
             {"_id": 0}
         )
         updated_contract["id"] = existing_contract["_id"]
