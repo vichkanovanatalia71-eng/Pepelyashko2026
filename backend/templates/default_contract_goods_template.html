@@ -1115,10 +1115,17 @@
 {{/if}}
 
 <!-- Фраза під таблицею -->
+{{#if supplier_is_vat_payer}}
 <p class="paragraph">
   Загальна вартість Товару складає <span class="b">{{total_amount}} грн</span>
-  (<span class="b">{{total_amount_text}}</span>){{#if supplier_is_vat_payer}}, у тому числі ПДВ {{supplier_vat_rate}}%: <span class="b">{{vat_amount}} грн</span>{{/if}}.
+  (<span class="b">{{total_amount_text}}</span>), у тому числі ПДВ {{supplier_vat_rate}}% — <span class="b">{{vat_amount_text}}</span>.
 </p>
+{{else}}
+<p class="paragraph">
+  Загальна вартість Товару складає <span class="b">{{total_amount}} грн</span>
+  (<span class="b">{{total_amount_text}}</span>) без ПДВ.
+</p>
+{{/if}}
 
   </div>
 </body>
