@@ -2607,12 +2607,23 @@ async def update_contract(
     from datetime import datetime
     
     try:
-        # Get existing contract
+        logger.info(f"Updating contract: {contract_number}")
+        logger.info(f"Current user _id: {current_user.get('_id')}")
+        logger.info(f"Contract data: {contract_data}")
+        
+        # Get existing contract - try with string user_id
+        user_id = str(current_user["_id"]) if current_user.get("_id") else None
         existing_contract = await database.contracts.find_one(
-            {"number": contract_number, "user_id": current_user["_id"]}
+            {"number": contract_number, "user_id": user_id}
         )
         
         if not existing_contract:
+            # Try without user_id filter for debugging
+            any_contract = await database.contracts.find_one({"number": contract_number})
+            if any_contract:
+                logger.warning(f"Contract found but user_id mismatch. Contract user_id: {any_contract.get('user_id')}, current user_id: {user_id}")
+            else:
+                logger.warning(f"Contract {contract_number} not found at all")
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Договір не знайдено"
