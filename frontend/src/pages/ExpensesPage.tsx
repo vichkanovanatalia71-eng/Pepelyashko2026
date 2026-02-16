@@ -1,5 +1,5 @@
 import { useEffect, useState, FormEvent } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, X } from "lucide-react";
 import api from "../api/client";
 import type { Expense, ExpenseCategory } from "../types";
 
@@ -52,59 +52,61 @@ export default function ExpensesPage() {
   const total = expenses.reduce((sum, e) => sum + e.amount, 0);
   const categoryName = (id: number | null) =>
     categories.find((c) => c.id === id)?.name ?? "—";
+  const fmt = (n: number) =>
+    n.toLocaleString("uk-UA", { minimumFractionDigits: 2 });
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-8">
         <div>
-          <h2 className="text-2xl font-bold text-gray-800">Витрати</h2>
+          <h2 className="text-2xl font-bold text-white">Витрати</h2>
           <p className="text-gray-500 text-sm mt-1">
-            Всього: {total.toLocaleString("uk-UA", { minimumFractionDigits: 2 })} &#8372;
+            Всього: <span className="text-red-400 font-semibold">{fmt(total)} &#8372;</span>
           </p>
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
-          className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+          className="btn-accent flex items-center gap-2"
         >
-          <Plus size={18} />
-          Додати витрату
+          {showForm ? <X size={18} /> : <Plus size={18} />}
+          {showForm ? "Закрити" : "Додати витрату"}
         </button>
       </div>
 
+      {/* Add form */}
       {showForm && (
         <form
           onSubmit={handleSubmit}
-          className="bg-white rounded-xl p-6 shadow-sm border mb-6 grid grid-cols-1 md:grid-cols-2 gap-4"
+          className="card-neo p-6 mb-6 grid grid-cols-1 md:grid-cols-2 gap-5"
         >
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Сума</label>
+            <label className="label-dark">Сума</label>
             <input
               type="number"
               step="0.01"
               required
               value={form.amount}
               onChange={(e) => setForm({ ...form, amount: e.target.value })}
-              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
+              className="input-dark"
+              placeholder="0.00"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Дата</label>
+            <label className="label-dark">Дата</label>
             <input
               type="date"
               required
               value={form.date}
               onChange={(e) => setForm({ ...form, date: e.target.value })}
-              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
+              className="input-dark"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Категорія
-            </label>
+            <label className="label-dark">Категорія</label>
             <select
               value={form.category_id}
               onChange={(e) => setForm({ ...form, category_id: e.target.value })}
-              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
+              className="select-dark"
             >
               <option value="">Без категорії</option>
               {categories.map((cat) => (
@@ -115,50 +117,72 @@ export default function ExpensesPage() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Опис</label>
+            <label className="label-dark">Опис</label>
             <input
               type="text"
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
-              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
+              className="input-dark"
+              placeholder="Додатковий опис..."
             />
           </div>
-          <div className="md:col-span-2">
-            <button
-              type="submit"
-              className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-            >
+          <div className="md:col-span-2 flex gap-3">
+            <button type="submit" className="btn-accent">
               Зберегти
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowForm(false)}
+              className="btn-ghost"
+            >
+              Скасувати
             </button>
           </div>
         </form>
       )}
 
-      <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+      {/* Table */}
+      <div className="card-neo overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 border-b">
-            <tr>
-              <th className="text-left px-4 py-3 text-gray-500 font-medium">Дата</th>
-              <th className="text-left px-4 py-3 text-gray-500 font-medium">Сума</th>
-              <th className="text-left px-4 py-3 text-gray-500 font-medium">Категорія</th>
-              <th className="text-left px-4 py-3 text-gray-500 font-medium">Опис</th>
-              <th className="px-4 py-3"></th>
+          <thead>
+            <tr className="border-b border-dark-50/10">
+              <th className="text-left px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                Дата
+              </th>
+              <th className="text-left px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                Сума
+              </th>
+              <th className="text-left px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                Категорія
+              </th>
+              <th className="text-left px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                Опис
+              </th>
+              <th className="px-5 py-4"></th>
             </tr>
           </thead>
           <tbody>
             {expenses.map((expense) => (
-              <tr key={expense.id} className="border-b last:border-0 hover:bg-gray-50">
-                <td className="px-4 py-3">{expense.date}</td>
-                <td className="px-4 py-3 font-medium text-red-600">
-                  {expense.amount.toLocaleString("uk-UA", { minimumFractionDigits: 2 })}{" "}
-                  &#8372;
+              <tr
+                key={expense.id}
+                className="border-b border-dark-50/5 hover:bg-dark-200/50 transition-colors"
+              >
+                <td className="px-5 py-4 text-gray-300">{expense.date}</td>
+                <td className="px-5 py-4 font-semibold text-red-400">
+                  -{fmt(expense.amount)} &#8372;
                 </td>
-                <td className="px-4 py-3">{categoryName(expense.category_id)}</td>
-                <td className="px-4 py-3 text-gray-500">{expense.description}</td>
-                <td className="px-4 py-3">
+                <td className="px-5 py-4">
+                  <span className="px-2.5 py-1 text-xs font-medium rounded-lg bg-dark-400 text-gray-400 border border-dark-50/10">
+                    {categoryName(expense.category_id)}
+                  </span>
+                </td>
+                <td className="px-5 py-4 text-gray-500">
+                  {expense.description || "—"}
+                </td>
+                <td className="px-5 py-4">
                   <button
                     onClick={() => handleDelete(expense.id)}
-                    className="text-gray-400 hover:text-red-500 transition-colors"
+                    className="p-1.5 rounded-lg text-gray-600 hover:text-red-400 hover:bg-red-500/10 transition-all"
                   >
                     <Trash2 size={16} />
                   </button>
@@ -167,8 +191,8 @@ export default function ExpensesPage() {
             ))}
             {expenses.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-gray-400">
-                  Витрат поки немає
+                <td colSpan={5} className="px-5 py-12 text-center text-gray-600">
+                  Витрат поки немає. Натисніть «Додати витрату» щоб почати.
                 </td>
               </tr>
             )}
