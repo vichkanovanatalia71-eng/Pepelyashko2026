@@ -1,0 +1,51 @@
+import { createContext, useContext, useState, useCallback, ReactNode } from "react";
+import api from "../api/client";
+import type { User } from "../types";
+
+interface AuthContextType {
+  token: string | null;
+  user: User | null;
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => void;
+}
+
+const AuthContext = createContext<AuthContextType | null>(null);
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [token, setToken] = useState<string | null>(
+    () => localStorage.getItem("token")
+  );
+  const [user, setUser] = useState<User | null>(null);
+
+  const login = useCallback(async (email: string, password: string) => {
+    const form = new URLSearchParams();
+    form.append("username", email);
+    form.append("password", password);
+    const { data } = await api.post("/auth/login", form);
+    localStorage.setItem("token", data.access_token);
+    setToken(data.access_token);
+
+    const meRes = await api.get("/auth/me", {
+      headers: { Authorization: `Bearer ${data.access_token}` },
+    });
+    setUser(meRes.data);
+  }, []);
+
+  const logout = useCallback(() => {
+    localStorage.removeItem("token");
+    setToken(null);
+    setUser(null);
+  }, []);
+
+  return (
+    <AuthContext.Provider value={{ token, user, login, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export function useAuth() {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
+  return ctx;
+}
