@@ -2,8 +2,9 @@ from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.doctor import Doctor
-from app.models.nhsu import NhsuRecord, NhsuMonthlyExtra, AGE_GROUPS
+from app.models.nhsu import NhsuRecord, NhsuSettings, AGE_GROUPS
 from app.schemas.nhsu import (
+    AgeGroupSummary,
     DoctorAgeGroupRow,
     DoctorSummary,
     NhsuMonthlyReport,
@@ -11,6 +12,21 @@ from app.schemas.nhsu import (
 )
 
 AGE_GROUP_LABELS = {g["key"]: g["label"] for g in AGE_GROUPS}
+AGE_GROUP_KEYS = [g["key"] for g in AGE_GROUPS]
+
+
+async def get_or_create_settings(db: AsyncSession, user_id: int) -> NhsuSettings:
+    """Отримати або створити налаштування НСЗУ для користувача."""
+    result = await db.execute(
+        select(NhsuSettings).where(NhsuSettings.user_id == user_id)
+    )
+    settings = result.scalar_one_or_none()
+    if not settings:
+        settings = NhsuSettings(user_id=user_id)
+        db.add(settings)
+        await db.commit()
+        await db.refresh(settings)
+    return settings
 
 
 async def save_monthly_data(
@@ -18,7 +34,10 @@ async def save_monthly_data(
     user_id: int,
     data: NhsuMonthlySaveRequest,
 ) -> None:
-    """Зберегти/оновити всі записи НСЗУ за місяць (повна перезапис)."""
+    """Зберегти щомісячні дані (тільки пацієнти). Знімок налаштувань автоматично."""
+
+    settings = await get_or_create_settings(db, user_id)
+    coefficients = settings.get_coefficients_dict()
 
     # Видалити існуючі записи за цей місяць
     await db.execute(
@@ -29,42 +48,23 @@ async def save_monthly_data(
         )
     )
 
-    # Зберегти нові записи
+    # Зберегти нові записи зі знімком поточних налаштувань
     for rec in data.records:
+        coeff = coefficients.get(rec.age_group, 0)
         record = NhsuRecord(
             user_id=user_id,
             doctor_id=rec.doctor_id,
             year=data.year,
             month=data.month,
-            capitation_rate=data.capitation_rate,
+            capitation_rate=float(settings.capitation_rate),
             age_group=rec.age_group,
-            age_coefficient=rec.age_coefficient,
+            age_coefficient=coeff,
+            ep_rate=float(settings.ep_rate),
+            vz_rate=float(settings.vz_rate),
             patient_count=rec.patient_count,
             non_verified=rec.non_verified,
         )
         db.add(record)
-
-    # Зберегти/оновити додаткові дані
-    if data.extra:
-        result = await db.execute(
-            select(NhsuMonthlyExtra).where(
-                NhsuMonthlyExtra.user_id == user_id,
-                NhsuMonthlyExtra.year == data.year,
-                NhsuMonthlyExtra.month == data.month,
-            )
-        )
-        extra = result.scalar_one_or_none()
-        if extra:
-            for field, value in data.extra.model_dump().items():
-                setattr(extra, field, value)
-        else:
-            extra = NhsuMonthlyExtra(
-                user_id=user_id,
-                year=data.year,
-                month=data.month,
-                **data.extra.model_dump(),
-            )
-            db.add(extra)
 
     await db.commit()
 
@@ -75,9 +75,8 @@ async def get_monthly_report(
     year: int,
     month: int,
 ) -> NhsuMonthlyReport | None:
-    """Отримати повний звіт НСЗУ за місяць."""
+    """Отримати повний звіт НСЗУ за місяць з підсумками у різних розрізах."""
 
-    # Отримати всі записи за місяць
     result = await db.execute(
         select(NhsuRecord)
         .where(
@@ -99,18 +98,12 @@ async def get_monthly_report(
     )
     doctors_map = {d.id: d for d in doc_result.scalars().all()}
 
-    # Отримати додаткові дані
-    extra_result = await db.execute(
-        select(NhsuMonthlyExtra).where(
-            NhsuMonthlyExtra.user_id == user_id,
-            NhsuMonthlyExtra.year == year,
-            NhsuMonthlyExtra.month == month,
-        )
-    )
-    extra = extra_result.scalar_one_or_none()
-
-    # Згрупувати по лікарях
+    # Зібрати інфо зі знімків
     capitation_rate = float(records[0].capitation_rate)
+    ep_rate = float(records[0].ep_rate)
+    vz_rate = float(records[0].vz_rate)
+
+    # ── По лікарях ──────────────────────────────────────────────────
     doctors_data: dict[int, list[NhsuRecord]] = {}
     for r in records:
         doctors_data.setdefault(r.doctor_id, []).append(r)
@@ -119,7 +112,11 @@ async def get_monthly_report(
     grand_total_patients = 0
     grand_total_non_verified = 0.0
     grand_total_amount = 0.0
-    grand_total_ep_vz = 0.0
+    grand_total_ep = 0.0
+    grand_total_vz = 0.0
+
+    # ── По вікових групах (сумарно) ─────────────────────────────────
+    ag_totals: dict[str, dict] = {}
 
     for doc_id, doc_records in doctors_data.items():
         doctor = doctors_map.get(doc_id)
@@ -127,28 +124,53 @@ async def get_monthly_report(
             continue
 
         rows = []
-        total_patients = 0
-        total_amount = 0.0
-        total_ep_vz = 0.0
+        doc_patients = 0
+        doc_non_verified = 0.0
+        doc_amount = 0.0
+        doc_ep = 0.0
+        doc_vz = 0.0
 
         for r in doc_records:
             amount = r.amount
-            ep_vz = r.ep_vz
+            ep = r.ep_amount
+            vz = r.vz_amount
+            nv = float(r.non_verified)
+
             rows.append(
                 DoctorAgeGroupRow(
                     age_group=r.age_group,
                     age_group_label=AGE_GROUP_LABELS.get(r.age_group, r.age_group),
                     age_coefficient=float(r.age_coefficient),
                     patient_count=r.patient_count,
-                    non_verified=float(r.non_verified),
+                    non_verified=nv,
                     amount=amount,
-                    ep_vz=ep_vz,
+                    ep_amount=ep,
+                    vz_amount=vz,
+                    ep_vz_amount=round(ep + vz, 2),
                 )
             )
-            total_patients += r.patient_count
-            total_amount += amount
-            total_ep_vz += ep_vz
-            grand_total_non_verified += float(r.non_verified)
+            doc_patients += r.patient_count
+            doc_non_verified += nv
+            doc_amount += amount
+            doc_ep += ep
+            doc_vz += vz
+
+            # Накопичення по вікових групах
+            if r.age_group not in ag_totals:
+                ag_totals[r.age_group] = {
+                    "age_coefficient": float(r.age_coefficient),
+                    "patients": 0,
+                    "non_verified": 0.0,
+                    "amount": 0.0,
+                    "ep": 0.0,
+                    "vz": 0.0,
+                }
+            ag = ag_totals[r.age_group]
+            ag["patients"] += r.patient_count
+            ag["non_verified"] += nv
+            ag["amount"] += amount
+            ag["ep"] += ep
+            ag["vz"] += vz
 
         doctor_summaries.append(
             DoctorSummary(
@@ -156,36 +178,51 @@ async def get_monthly_report(
                 doctor_name=doctor.full_name,
                 is_owner=doctor.is_owner,
                 rows=rows,
-                total_patients=total_patients,
-                total_amount=round(total_amount, 2),
-                total_ep_vz=round(total_ep_vz, 2),
+                total_patients=doc_patients,
+                total_non_verified=round(doc_non_verified, 1),
+                total_amount=round(doc_amount, 2),
+                total_ep=round(doc_ep, 2),
+                total_vz=round(doc_vz, 2),
+                total_ep_vz=round(doc_ep + doc_vz, 2),
             )
         )
-        grand_total_patients += total_patients
-        grand_total_amount += total_amount
-        grand_total_ep_vz += total_ep_vz
+        grand_total_patients += doc_patients
+        grand_total_non_verified += doc_non_verified
+        grand_total_amount += doc_amount
+        grand_total_ep += doc_ep
+        grand_total_vz += doc_vz
 
-    # Фінансові підсумки
-    esv_amount = float(extra.esv_amount) if extra else 1902.34
-    paid_services = float(extra.paid_services_amount) if extra else 0.0
-    owner_decl = float(extra.owner_declaration_income) if extra else 0.0
-    owner_other = float(extra.owner_other_doctor_income) if extra else 0.0
-    total_income = owner_decl + owner_other + paid_services
-    withdrawal = owner_decl + owner_other
+    # Побудувати підсумки по вікових групах
+    age_group_summaries = []
+    for ag_key in AGE_GROUP_KEYS:
+        if ag_key in ag_totals:
+            ag = ag_totals[ag_key]
+            age_group_summaries.append(
+                AgeGroupSummary(
+                    age_group=ag_key,
+                    age_group_label=AGE_GROUP_LABELS.get(ag_key, ag_key),
+                    age_coefficient=ag["age_coefficient"],
+                    total_patients=ag["patients"],
+                    total_non_verified=round(ag["non_verified"], 1),
+                    total_amount=round(ag["amount"], 2),
+                    total_ep=round(ag["ep"], 2),
+                    total_vz=round(ag["vz"], 2),
+                    total_ep_vz=round(ag["ep"] + ag["vz"], 2),
+                )
+            )
 
     return NhsuMonthlyReport(
         year=year,
         month=month,
         capitation_rate=capitation_rate,
+        ep_rate=ep_rate,
+        vz_rate=vz_rate,
         doctors=doctor_summaries,
+        age_group_totals=age_group_summaries,
         grand_total_patients=grand_total_patients,
         grand_total_non_verified=round(grand_total_non_verified, 1),
         grand_total_amount=round(grand_total_amount, 2),
-        grand_total_ep_vz=round(grand_total_ep_vz, 2),
-        esv_amount=esv_amount,
-        paid_services_amount=paid_services,
-        owner_declaration_income=owner_decl,
-        owner_other_doctor_income=owner_other,
-        total_income=round(total_income, 2),
-        withdrawal_amount=round(withdrawal, 2),
+        grand_total_ep=round(grand_total_ep, 2),
+        grand_total_vz=round(grand_total_vz, 2),
+        grand_total_ep_vz=round(grand_total_ep + grand_total_vz, 2),
     )

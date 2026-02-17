@@ -9,12 +9,41 @@ from app.models.user import User
 from app.schemas.nhsu import (
     DoctorCreate,
     DoctorResponse,
+    DoctorUpdate,
     NhsuMonthlyReport,
     NhsuMonthlySaveRequest,
+    NhsuSettingsInput,
+    NhsuSettingsResponse,
 )
-from app.services.nhsu import get_monthly_report, save_monthly_data
+from app.services.nhsu import get_monthly_report, get_or_create_settings, save_monthly_data
 
 router = APIRouter()
+
+
+# ── Налаштування НСЗУ ───────────────────────────────────────────────
+
+
+@router.get("/settings", response_model=NhsuSettingsResponse)
+async def get_settings(
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    settings = await get_or_create_settings(db, user.id)
+    return settings
+
+
+@router.put("/settings", response_model=NhsuSettingsResponse)
+async def update_settings(
+    data: NhsuSettingsInput,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    settings = await get_or_create_settings(db, user.id)
+    for field, value in data.model_dump().items():
+        setattr(settings, field, value)
+    await db.commit()
+    await db.refresh(settings)
+    return settings
 
 
 # ── Лікарі ──────────────────────────────────────────────────────────
@@ -46,6 +75,26 @@ async def create_doctor(
     return doctor
 
 
+@router.put("/doctors/{doctor_id}", response_model=DoctorResponse)
+async def update_doctor(
+    doctor_id: int,
+    doctor_in: DoctorUpdate,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    result = await db.execute(
+        select(Doctor).where(Doctor.id == doctor_id, Doctor.user_id == user.id)
+    )
+    doctor = result.scalar_one_or_none()
+    if not doctor:
+        raise HTTPException(status_code=404, detail="Лікаря не знайдено")
+    for field, value in doctor_in.model_dump(exclude_unset=True).items():
+        setattr(doctor, field, value)
+    await db.commit()
+    await db.refresh(doctor)
+    return doctor
+
+
 @router.delete("/doctors/{doctor_id}", status_code=204)
 async def delete_doctor(
     doctor_id: int,
@@ -62,7 +111,7 @@ async def delete_doctor(
     await db.commit()
 
 
-# ── Вікові групи (довідник) ──────────────────────────────────────────
+# ── Вікові групи (статичний довідник) ────────────────────────────────
 
 
 @router.get("/age-groups")
@@ -81,9 +130,6 @@ async def save_monthly(
 ):
     if not 1 <= data.month <= 12:
         raise HTTPException(status_code=400, detail="Місяць має бути від 1 до 12")
-    if data.capitation_rate <= 0:
-        raise HTTPException(status_code=400, detail="Капітаційна ставка має бути > 0")
-
     await save_monthly_data(db, user.id, data)
     return {"status": "ok"}
 

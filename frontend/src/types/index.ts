@@ -61,7 +61,18 @@ export interface Doctor {
 export interface AgeGroup {
   key: string;
   label: string;
-  default_coefficient: number;
+}
+
+export interface NhsuSettings {
+  id: number;
+  capitation_rate: number;
+  coeff_0_5: number;
+  coeff_6_17: number;
+  coeff_18_39: number;
+  coeff_40_64: number;
+  coeff_65_plus: number;
+  ep_rate: number;
+  vz_rate: number;
 }
 
 export interface DoctorAgeGroupRow {
@@ -71,7 +82,9 @@ export interface DoctorAgeGroupRow {
   patient_count: number;
   non_verified: number;
   amount: number;
-  ep_vz: number;
+  ep_amount: number;
+  vz_amount: number;
+  ep_vz_amount: number;
 }
 
 export interface DoctorSummary {
@@ -80,7 +93,22 @@ export interface DoctorSummary {
   is_owner: boolean;
   rows: DoctorAgeGroupRow[];
   total_patients: number;
+  total_non_verified: number;
   total_amount: number;
+  total_ep: number;
+  total_vz: number;
+  total_ep_vz: number;
+}
+
+export interface AgeGroupSummary {
+  age_group: string;
+  age_group_label: string;
+  age_coefficient: number;
+  total_patients: number;
+  total_non_verified: number;
+  total_amount: number;
+  total_ep: number;
+  total_vz: number;
   total_ep_vz: number;
 }
 
@@ -88,15 +116,14 @@ export interface NhsuMonthlyReport {
   year: number;
   month: number;
   capitation_rate: number;
+  ep_rate: number;
+  vz_rate: number;
   doctors: DoctorSummary[];
+  age_group_totals: AgeGroupSummary[];
   grand_total_patients: number;
   grand_total_non_verified: number;
   grand_total_amount: number;
+  grand_total_ep: number;
+  grand_total_vz: number;
   grand_total_ep_vz: number;
-  esv_amount: number;
-  paid_services_amount: number;
-  owner_declaration_income: number;
-  owner_other_doctor_income: number;
-  total_income: number;
-  withdrawal_amount: number;
 }

@@ -8,6 +8,11 @@ class DoctorCreate(BaseModel):
     is_owner: bool = False
 
 
+class DoctorUpdate(BaseModel):
+    full_name: str | None = None
+    is_owner: bool | None = None
+
+
 class DoctorResponse(BaseModel):
     id: int
     full_name: str
@@ -17,61 +22,46 @@ class DoctorResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
-# ── NHSU Record (per doctor / age group / month) ───────────────────
+# ── Settings ────────────────────────────────────────────────────────
 
-class NhsuRecordInput(BaseModel):
+class NhsuSettingsInput(BaseModel):
+    capitation_rate: float = 1007.3
+    coeff_0_5: float = 2.465
+    coeff_6_17: float = 1.25
+    coeff_18_39: float = 0.616
+    coeff_40_64: float = 0.86
+    coeff_65_plus: float = 1.3
+    ep_rate: float = 5.0   # %
+    vz_rate: float = 5.0   # %
+
+
+class NhsuSettingsResponse(BaseModel):
+    id: int
+    capitation_rate: float
+    coeff_0_5: float
+    coeff_6_17: float
+    coeff_18_39: float
+    coeff_40_64: float
+    coeff_65_plus: float
+    ep_rate: float
+    vz_rate: float
+
+    model_config = {"from_attributes": True}
+
+
+# ── Monthly Input (only patient data) ──────────────────────────────
+
+class MonthlyRecordInput(BaseModel):
     doctor_id: int
     age_group: str  # "0_5", "6_17", "18_39", "40_64", "65_plus"
-    age_coefficient: float
     patient_count: int
     non_verified: float = 0
 
 
-class NhsuRecordResponse(BaseModel):
-    id: int
-    doctor_id: int
-    year: int
-    month: int
-    capitation_rate: float
-    age_group: str
-    age_coefficient: float
-    patient_count: int
-    non_verified: float
-    amount: float
-    ep_vz: float
-
-    model_config = {"from_attributes": True}
-
-
-# ── Monthly Extra Data ──────────────────────────────────────────────
-
-class NhsuMonthlyExtraInput(BaseModel):
-    esv_amount: float = 1902.34
-    paid_services_amount: float = 0
-    owner_declaration_income: float = 0
-    owner_other_doctor_income: float = 0
-
-
-class NhsuMonthlyExtraResponse(BaseModel):
-    id: int
-    year: int
-    month: int
-    esv_amount: float
-    paid_services_amount: float
-    owner_declaration_income: float
-    owner_other_doctor_income: float
-
-    model_config = {"from_attributes": True}
-
-
-# ── Bulk Input (save entire month at once) ──────────────────────────
-
 class NhsuMonthlySaveRequest(BaseModel):
     year: int
-    month: int
-    capitation_rate: float
-    records: list[NhsuRecordInput]
-    extra: NhsuMonthlyExtraInput | None = None
+    month: int  # 1-12
+    records: list[MonthlyRecordInput]
 
 
 # ── Calculated Report ───────────────────────────────────────────────
@@ -82,8 +72,10 @@ class DoctorAgeGroupRow(BaseModel):
     age_coefficient: float
     patient_count: int
     non_verified: float
-    amount: float
-    ep_vz: float
+    amount: float       # Сума за пацієнтів
+    ep_amount: float    # Єдиний податок
+    vz_amount: float    # Військовий збір
+    ep_vz_amount: float # ЄП + ВЗ разом
 
 
 class DoctorSummary(BaseModel):
@@ -92,7 +84,23 @@ class DoctorSummary(BaseModel):
     is_owner: bool
     rows: list[DoctorAgeGroupRow]
     total_patients: int
+    total_non_verified: float
     total_amount: float
+    total_ep: float
+    total_vz: float
+    total_ep_vz: float
+
+
+class AgeGroupSummary(BaseModel):
+    """Підсумок по віковій групі (по всіх лікарях)."""
+    age_group: str
+    age_group_label: str
+    age_coefficient: float
+    total_patients: int
+    total_non_verified: float
+    total_amount: float
+    total_ep: float
+    total_vz: float
     total_ep_vz: float
 
 
@@ -100,15 +108,16 @@ class NhsuMonthlyReport(BaseModel):
     year: int
     month: int
     capitation_rate: float
+    ep_rate: float
+    vz_rate: float
+    # По лікарях
     doctors: list[DoctorSummary]
+    # По вікових групах (сумарно)
+    age_group_totals: list[AgeGroupSummary]
+    # Загальні підсумки
     grand_total_patients: int
     grand_total_non_verified: float
     grand_total_amount: float
+    grand_total_ep: float
+    grand_total_vz: float
     grand_total_ep_vz: float
-    # Extra financial data
-    esv_amount: float
-    paid_services_amount: float
-    owner_declaration_income: float
-    owner_other_doctor_income: float
-    total_income: float  # Разом
-    withdrawal_amount: float  # Виведення на картку

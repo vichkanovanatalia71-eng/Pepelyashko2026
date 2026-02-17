@@ -2,7 +2,7 @@ from app.models.user import User
 from app.models.income import Income
 from app.models.expense import Expense, ExpenseCategory
 from app.models.doctor import Doctor
-from app.models.nhsu import NhsuRecord, NhsuMonthlyExtra
+from app.models.nhsu import NhsuSettings, NhsuRecord
 
 __all__ = [
     "User",
@@ -10,6 +10,6 @@ __all__ = [
     "Expense",
     "ExpenseCategory",
     "Doctor",
+    "NhsuSettings",
     "NhsuRecord",
-    "NhsuMonthlyExtra",
 ]
