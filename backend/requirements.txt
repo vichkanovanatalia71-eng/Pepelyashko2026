@@ -13,7 +13,7 @@ passlib[bcrypt]==1.7.4
 python-multipart==0.0.20
 
 # Validation & Settings
-pydantic==2.10.4
+pydantic[email]==2.10.4
 pydantic-settings==2.7.1
 
 # Date/time utilities
