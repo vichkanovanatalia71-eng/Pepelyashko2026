@@ -3,7 +3,7 @@ import axios from 'axios';
 
 const AuthContext = createContext(null);
 
-const API_URL = process.env.REACT_APP_BACKEND_URL;
+const API_URL = import.meta.env.VITE_BACKEND_URL || '';
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -42,17 +42,24 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const response = await axios.post(`${API_URL}/api/auth/login`, {
-        email,
-        password,
+      const formData = new URLSearchParams();
+      formData.append('username', email);
+      formData.append('password', password);
+
+      const response = await axios.post(`${API_URL}/api/auth/login`, formData, {
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       });
 
-      const { access_token, user: userData } = response.data;
-      
+      const { access_token } = response.data;
+
       localStorage.setItem('token', access_token);
       setToken(access_token);
-      setUser(userData);
-      
+
+      const meResponse = await axios.get(`${API_URL}/api/auth/me`, {
+        headers: { Authorization: `Bearer ${access_token}` },
+      });
+      setUser(meResponse.data);
+
       return { success: true };
     } catch (error) {
       console.error('Login error:', error);
@@ -63,23 +70,16 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async (email, password, fullName, companyName, phone) => {
+  const register = async (email, password, fullName) => {
     try {
-      const response = await axios.post(`${API_URL}/api/auth/register`, {
+      await axios.post(`${API_URL}/api/auth/register`, {
         email,
         password,
         full_name: fullName,
-        company_name: companyName,
-        phone,
       });
 
-      const { access_token, user: userData } = response.data;
-      
-      localStorage.setItem('token', access_token);
-      setToken(access_token);
-      setUser(userData);
-      
-      return { success: true };
+      // Auto-login after registration
+      return await login(email, password);
     } catch (error) {
       console.error('Register error:', error);
       return {

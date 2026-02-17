@@ -5,7 +5,7 @@ import { MessageSquare, Send, Trash2, Edit2, X } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
 
-const API_URL = process.env.REACT_APP_BACKEND_URL;
+const API_URL = import.meta.env.VITE_BACKEND_URL || '';
 
 const CommentsSection = ({ entityType, entityId, compact = false }) => {
   const [comments, setComments] = useState([]);

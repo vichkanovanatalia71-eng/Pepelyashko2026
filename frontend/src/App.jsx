@@ -1,6 +1,6 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { Toaster } from '@/components/ui/sonner';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
@@ -29,7 +29,7 @@ const ProtectedRoute = ({ children }) => {
 
 function App() {
   return (
-    <>
+    <AuthProvider>
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
@@ -51,7 +51,7 @@ function App() {
         />
       </Routes>
       <Toaster />
-    </>
+    </AuthProvider>
   );
 }
 

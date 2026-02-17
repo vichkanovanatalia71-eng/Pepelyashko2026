@@ -10,7 +10,7 @@ import { Edit, Download, Mail, Trash2, Upload, Building2, Phone, MapPin, CreditC
 import axios from 'axios';
 import { toast } from 'sonner';
 
-const API_URL = process.env.REACT_APP_BACKEND_URL;
+const API_URL = import.meta.env.VITE_BACKEND_URL || '';
 
 const ProfileCard = ({ user, onUpdate, onDelete }) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
