@@ -4,6 +4,7 @@ import Dashboard from "./pages/Dashboard";
 import IncomesPage from "./pages/IncomesPage";
 import ExpensesPage from "./pages/ExpensesPage";
 import TaxesPage from "./pages/TaxesPage";
+import NhsuPage from "./pages/NhsuPage";
 import LoginPage from "./pages/LoginPage";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
 
@@ -30,6 +31,7 @@ export default function App() {
           <Route path="incomes" element={<IncomesPage />} />
           <Route path="expenses" element={<ExpensesPage />} />
           <Route path="taxes" element={<TaxesPage />} />
+          <Route path="nhsu" element={<NhsuPage />} />
         </Route>
       </Routes>
     </AuthProvider>

@@ -4,6 +4,7 @@ import {
   TrendingUp,
   TrendingDown,
   Receipt,
+  HeartPulse,
   LogOut,
   Stethoscope,
 } from "lucide-react";
@@ -14,6 +15,7 @@ const navItems = [
   { to: "/incomes", icon: TrendingUp, label: "Доходи" },
   { to: "/expenses", icon: TrendingDown, label: "Витрати" },
   { to: "/taxes", icon: Receipt, label: "Податки" },
+  { to: "/nhsu", icon: HeartPulse, label: "НСЗУ" },
 ];
 
 export default function Layout() {
