@@ -1,4 +1,7 @@
-from datetime import date
+from __future__ import annotations
+
+from datetime import date as Date
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -8,15 +11,15 @@ class IncomeCreate(BaseModel):
     description: str = ""
     source: str = ""
     payment_method: str = "cash"
-    date: date
+    date: Date
 
 
 class IncomeUpdate(BaseModel):
-    amount: float | None = None
-    description: str | None = None
-    source: str | None = None
-    payment_method: str | None = None
-    date: date | None = None
+    amount: Optional[float] = None
+    description: Optional[str] = None
+    source: Optional[str] = None
+    payment_method: Optional[str] = None
+    date: Optional[Date] = None
 
 
 class IncomeResponse(BaseModel):
@@ -25,6 +28,6 @@ class IncomeResponse(BaseModel):
     description: str
     source: str
     payment_method: str
-    date: date
+    date: Date
 
     model_config = {"from_attributes": True}

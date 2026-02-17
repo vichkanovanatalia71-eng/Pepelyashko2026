@@ -1,4 +1,7 @@
-from datetime import date
+from __future__ import annotations
+
+from datetime import date as Date
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -19,22 +22,22 @@ class ExpenseCategoryResponse(BaseModel):
 class ExpenseCreate(BaseModel):
     amount: float
     description: str = ""
-    category_id: int | None = None
-    date: date
+    category_id: Optional[int] = None
+    date: Date
 
 
 class ExpenseUpdate(BaseModel):
-    amount: float | None = None
-    description: str | None = None
-    category_id: int | None = None
-    date: date | None = None
+    amount: Optional[float] = None
+    description: Optional[str] = None
+    category_id: Optional[int] = None
+    date: Optional[Date] = None
 
 
 class ExpenseResponse(BaseModel):
     id: int
     amount: float
     description: str
-    category_id: int | None
-    date: date
+    category_id: Optional[int]
+    date: Date
 
     model_config = {"from_attributes": True}

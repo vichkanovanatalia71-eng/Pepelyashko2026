@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 

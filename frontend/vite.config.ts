@@ -4,6 +4,17 @@ import path from "path";
 
 export default defineConfig({
   plugins: [react()],
+  esbuild: {
+    loader: "tsx",
+    include: /\.[jt]sx?$/,
+  },
+  optimizeDeps: {
+    esbuildOptions: {
+      loader: {
+        ".js": "jsx",
+      },
+    },
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
