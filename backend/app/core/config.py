@@ -20,6 +20,9 @@ class Settings(BaseSettings):
     fop_tax_rate: float = 0.05  # 5% єдиний податок
     esv_monthly: float = 1760.00  # ЄСВ мінімальний (оновлюється щорічно)
 
+    # AI — Claude API key for image analysis
+    anthropic_api_key: str = ""
+
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 
 

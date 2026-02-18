@@ -7,6 +7,7 @@ import {
   HeartPulse,
   LogOut,
   Stethoscope,
+  Settings,
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 
@@ -16,6 +17,7 @@ const navItems = [
   { to: "/expenses", icon: TrendingDown, label: "Витрати" },
   { to: "/taxes", icon: Receipt, label: "Податки" },
   { to: "/nhsu", icon: HeartPulse, label: "НСЗУ" },
+  { to: "/settings", icon: Settings, label: "Налаштування" },
 ];
 
 export default function Layout() {

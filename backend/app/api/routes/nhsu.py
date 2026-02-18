@@ -1,7 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+import asyncio
+import base64
+import json
+from typing import List, Optional
+
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.core.deps import get_current_user, get_db
 from app.models.doctor import Doctor
 from app.models.nhsu import AGE_GROUPS
@@ -19,6 +25,34 @@ from app.services.nhsu import get_monthly_report, get_or_create_settings, save_m
 
 router = APIRouter()
 
+_AI_PROMPT = """Ти аналізуєш скріншот або фото звіту з порталу НСЗУ (Національна служба здоров'я України) або документу з даними про декларації лікаря.
+
+Знайди та вилучи такі дані:
+1. Ім'я лікаря (якщо видно)
+2. Кількість активних декларацій (пацієнтів) по вікових групах:
+   - Вік 0-5 років
+   - Вік 6-17 років
+   - Вік 18-39 років
+   - Вік 40-64 років
+   - Вік 65+ років (понад 65)
+   - Всього декларацій
+
+Поверни ТІЛЬКИ JSON об'єкт без пояснень, markdown або додаткового тексту:
+{
+  "doctor_name": "ПІБ лікаря або null якщо не видно",
+  "age_0_5": число,
+  "age_6_17": число,
+  "age_18_39": число,
+  "age_40_64": число,
+  "age_65_plus": число,
+  "total": число,
+  "confidence": "high або medium або low",
+  "notes": "примітки щодо якості даних"
+}
+
+Якщо значення невизначено — використай 0.
+"""
+
 
 # ── Налаштування НСЗУ ───────────────────────────────────────────────
 
@@ -28,8 +62,8 @@ async def get_settings(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    settings = await get_or_create_settings(db, user.id)
-    return settings
+    s = await get_or_create_settings(db, user.id)
+    return s
 
 
 @router.put("/settings", response_model=NhsuSettingsResponse)
@@ -38,12 +72,12 @@ async def update_settings(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    settings = await get_or_create_settings(db, user.id)
+    s = await get_or_create_settings(db, user.id)
     for field, value in data.model_dump().items():
-        setattr(settings, field, value)
+        setattr(s, field, value)
     await db.commit()
-    await db.refresh(settings)
-    return settings
+    await db.refresh(s)
+    return s
 
 
 # ── Лікарі ──────────────────────────────────────────────────────────
@@ -148,3 +182,117 @@ async def get_monthly(
             detail="Дані за цей місяць не знайдено",
         )
     return report
+
+
+# ── AI аналіз зображень ──────────────────────────────────────────────
+
+
+def _parse_ai_json(text: str) -> dict:
+    """Вилучає JSON з відповіді моделі."""
+    try:
+        start = text.find("{")
+        end = text.rfind("}") + 1
+        if start >= 0 and end > start:
+            return json.loads(text[start:end])
+    except Exception:
+        pass
+    return {
+        "doctor_name": None,
+        "age_0_5": 0,
+        "age_6_17": 0,
+        "age_18_39": 0,
+        "age_40_64": 0,
+        "age_65_plus": 0,
+        "total": 0,
+        "confidence": "low",
+        "notes": "Не вдалося розпізнати дані з зображення",
+    }
+
+
+async def _analyze_one(client, image_bytes: bytes, media_type: str) -> dict:
+    """Викликає Claude API для одного зображення (в окремому потоці)."""
+    b64 = base64.standard_b64encode(image_bytes).decode("utf-8")
+
+    def _sync_call():
+        msg = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=512,
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "image",
+                            "source": {
+                                "type": "base64",
+                                "media_type": media_type,
+                                "data": b64,
+                            },
+                        },
+                        {"type": "text", "text": _AI_PROMPT},
+                    ],
+                }
+            ],
+        )
+        return msg.content[0].text
+
+    text = await asyncio.to_thread(_sync_call)
+    return _parse_ai_json(text)
+
+
+@router.post("/analyze-image")
+async def analyze_image(
+    images: List[UploadFile] = File(...),
+    doctor_ids: Optional[str] = Form(None),
+    user: User = Depends(get_current_user),
+):
+    """Аналізує зображення за допомогою Claude AI та повертає розпізнані дані НСЗУ.
+
+    - images: один або кілька файлів зображень
+    - doctor_ids: необов'язковий рядок з id лікарів через кому (відповідно до images)
+    """
+    if not settings.anthropic_api_key:
+        raise HTTPException(
+            status_code=503,
+            detail="AI сервіс не налаштований. Додайте ANTHROPIC_API_KEY у змінні середовища.",
+        )
+
+    try:
+        import anthropic as anthropic_sdk
+        client = anthropic_sdk.Anthropic(api_key=settings.anthropic_api_key)
+    except ImportError:
+        raise HTTPException(
+            status_code=503,
+            detail="Бібліотека anthropic не встановлена. Перебудуйте Docker образ.",
+        )
+
+    # Розбираємо doctor_ids
+    parsed_ids: List[Optional[int]] = []
+    if doctor_ids:
+        for part in doctor_ids.split(","):
+            try:
+                parsed_ids.append(int(part.strip()))
+            except ValueError:
+                parsed_ids.append(None)
+
+    results = []
+    for i, image_file in enumerate(images):
+        raw = await image_file.read()
+        media_type = image_file.content_type or "image/png"
+        # Обмеження: max 10 MB
+        if len(raw) > 10 * 1024 * 1024:
+            results.append({
+                "doctor_id": parsed_ids[i] if i < len(parsed_ids) else None,
+                "filename": image_file.filename,
+                "error": "Файл перевищує ліміт 10 MB",
+            })
+            continue
+
+        data = await _analyze_one(client, raw, media_type)
+        results.append({
+            "doctor_id": parsed_ids[i] if i < len(parsed_ids) else None,
+            "filename": image_file.filename,
+            **data,
+        })
+
+    return {"results": results}

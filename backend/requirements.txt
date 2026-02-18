@@ -26,3 +26,6 @@ httpx==0.28.1
 
 # Dev
 python-dotenv==1.0.1
+
+# AI (Claude API for image analysis)
+anthropic>=0.40.0

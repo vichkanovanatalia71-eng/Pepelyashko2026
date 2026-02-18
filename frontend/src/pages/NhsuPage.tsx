@@ -1,30 +1,24 @@
-import { useEffect, useState, FormEvent } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
-  ChevronLeft,
-  ChevronRight,
-  Edit3,
-  Plus,
-  Save,
-  Settings,
-  Table2,
-  Trash2,
-  UserPlus,
-  X,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
+  ResponsiveContainer, PieChart, Pie, Cell, Legend,
+} from "recharts";
+import {
+  ChevronLeft, ChevronRight, Upload, X, Save, RefreshCw,
+  Sparkles, Users, BadgeDollarSign, TrendingDown, ShieldAlert,
+  FileImage, Plus, CheckCircle2, AlertCircle,
 } from "lucide-react";
 import api from "../api/client";
 import type {
-  AgeGroup,
-  Doctor,
-  NhsuMonthlyReport,
-  NhsuSettings,
+  AgeGroup, Doctor, DoctorSummary,
+  NhsuMonthlyReport, NhsuSettings,
 } from "../types";
 
 const MONTH_NAMES = [
-  "Січень", "Лютий", "Березень", "Квітень", "Травень", "Червень",
-  "Липень", "Серпень", "Вересень", "Жовтень", "Листопад", "Грудень",
+  "Січень","Лютий","Березень","Квітень","Травень","Червень",
+  "Липень","Серпень","Вересень","Жовтень","Листопад","Грудень",
 ];
-
-type Tab = "data" | "settings";
+const PIE_COLORS = ["#6366f1","#22d3ee","#f59e0b","#10b981","#f43f5e"];
 
 interface RecordInput {
   doctor_id: number;
@@ -32,77 +26,50 @@ interface RecordInput {
   patient_count: string;
   non_verified: string;
 }
+interface UploadedImage {
+  file: File;
+  preview: string;
+  doctorId: number | null;
+  analyzed: boolean;
+  error?: string;
+  result?: Record<string, number>;
+}
+
+const fmt = (n: number) =>
+  n.toLocaleString("uk-UA", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const fmt2 = (n: number) =>
+  n.toLocaleString("uk-UA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 export default function NhsuPage() {
   const now = new Date();
-  const [tab, setTab] = useState<Tab>("data");
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
+  const [selectedDoctorId, setSelectedDoctorId] = useState<number | "all">("all");
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [ageGroups, setAgeGroups] = useState<AgeGroup[]>([]);
   const [settings, setSettings] = useState<NhsuSettings | null>(null);
   const [report, setReport] = useState<NhsuMonthlyReport | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [editMode, setEditMode] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const [records, setRecords] = useState<RecordInput[]>([]);
+  const [saving, setSaving] = useState(false);
+  const [saveMsg, setSaveMsg] = useState("");
+  const [images, setImages] = useState<UploadedImage[]>([]);
+  const [analyzing, setAnalyzing] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Settings form
-  const [settingsForm, setSettingsForm] = useState({
-    capitation_rate: "",
-    coeff_0_5: "", coeff_6_17: "", coeff_18_39: "", coeff_40_64: "", coeff_65_plus: "",
-    ep_rate: "", vz_rate: "",
-  });
-  const [settingsSaving, setSettingsSaving] = useState(false);
-
-  // Doctor form
-  const [showDoctorForm, setShowDoctorForm] = useState(false);
-  const [newDoctorName, setNewDoctorName] = useState("");
-  const [newDoctorIsOwner, setNewDoctorIsOwner] = useState(false);
-  const [editingDoctor, setEditingDoctor] = useState<Doctor | null>(null);
-
-  const fmt = (n: number) =>
-    n.toLocaleString("uk-UA", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-
-  const fmt2 = (n: number) =>
-    n.toLocaleString("uk-UA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
-  // ── Load data ────────────────────────────────────────────────────
-
-  useEffect(() => {
-    loadInitialData();
-  }, []);
-
-  useEffect(() => {
-    if (tab === "data") loadReport();
-  }, [year, month, tab]);
+  useEffect(() => { loadInitialData(); }, []);
+  useEffect(() => { loadReport(); }, [year, month]);
 
   async function loadInitialData() {
     try {
-      const [docRes, agRes, setRes] = await Promise.all([
+      const [d, a, s] = await Promise.all([
         api.get("/nhsu/doctors"),
         api.get("/nhsu/age-groups"),
         api.get("/nhsu/settings"),
       ]);
-      setDoctors(docRes.data);
-      setAgeGroups(agRes.data);
-      setSettings(setRes.data);
-      fillSettingsForm(setRes.data);
-    } catch (error) {
-      console.error("Failed to load initial data:", error);
-    }
-  }
-
-  function fillSettingsForm(s: NhsuSettings) {
-    setSettingsForm({
-      capitation_rate: String(s.capitation_rate),
-      coeff_0_5: String(s.coeff_0_5),
-      coeff_6_17: String(s.coeff_6_17),
-      coeff_18_39: String(s.coeff_18_39),
-      coeff_40_64: String(s.coeff_40_64),
-      coeff_65_plus: String(s.coeff_65_plus),
-      ep_rate: String(s.ep_rate),
-      vz_rate: String(s.vz_rate),
-    });
+      setDoctors(d.data); setAgeGroups(a.data); setSettings(s.data);
+    } catch {}
   }
 
   async function loadReport() {
@@ -110,643 +77,423 @@ export default function NhsuPage() {
     try {
       const { data } = await api.get("/nhsu/monthly", { params: { year, month } });
       setReport(data);
-      setEditMode(false);
-    } catch {
-      setReport(null);
-    } finally {
-      setLoading(false);
-    }
+    } catch { setReport(null); }
+    finally { setLoading(false); }
   }
 
-  // ── Settings handlers ────────────────────────────────────────────
-
-  async function handleSaveSettings(e: FormEvent) {
-    e.preventDefault();
-    setSettingsSaving(true);
-    try {
-      const { data } = await api.put("/nhsu/settings", {
-        capitation_rate: parseFloat(settingsForm.capitation_rate),
-        coeff_0_5: parseFloat(settingsForm.coeff_0_5),
-        coeff_6_17: parseFloat(settingsForm.coeff_6_17),
-        coeff_18_39: parseFloat(settingsForm.coeff_18_39),
-        coeff_40_64: parseFloat(settingsForm.coeff_40_64),
-        coeff_65_plus: parseFloat(settingsForm.coeff_65_plus),
-        ep_rate: parseFloat(settingsForm.ep_rate),
-        vz_rate: parseFloat(settingsForm.vz_rate),
-      });
-      setSettings(data);
-    } catch (error) {
-      console.error("Failed to save settings:", error);
-    } finally {
-      setSettingsSaving(false);
-    }
+  function prevMonth() {
+    if (month === 1) { setMonth(12); setYear(y => y - 1); } else setMonth(m => m - 1);
+  }
+  function nextMonth() {
+    if (month === 12) { setMonth(1); setYear(y => y + 1); } else setMonth(m => m + 1);
   }
 
-  // ── Doctor handlers ──────────────────────────────────────────────
+  /* filtered data */
+  const filteredDoctors: DoctorSummary[] = report
+    ? selectedDoctorId === "all"
+      ? report.doctors
+      : report.doctors.filter(d => d.doctor_id === selectedDoctorId)
+    : [];
 
-  async function handleAddDoctor(e: FormEvent) {
-    e.preventDefault();
-    if (!newDoctorName.trim()) return;
-    try {
-      await api.post("/nhsu/doctors", {
-        full_name: newDoctorName.trim(),
-        is_owner: newDoctorIsOwner,
-      });
-      setNewDoctorName("");
-      setNewDoctorIsOwner(false);
-      setShowDoctorForm(false);
-      await loadInitialData();
-    } catch (error) {
-      console.error("Failed to add doctor:", error);
-    }
-  }
+  const totals = filteredDoctors.reduce(
+    (a, d) => ({
+      patients: a.patients + d.total_patients,
+      nonVer: a.nonVer + d.total_non_verified,
+      amount: a.amount + d.total_amount,
+      ep: a.ep + d.total_ep,
+      vz: a.vz + d.total_vz,
+      epVz: a.epVz + d.total_ep_vz,
+    }),
+    { patients: 0, nonVer: 0, amount: 0, ep: 0, vz: 0, epVz: 0 },
+  );
 
-  async function handleUpdateDoctor(e: FormEvent) {
-    e.preventDefault();
-    if (!editingDoctor) return;
-    try {
-      await api.put(`/nhsu/doctors/${editingDoctor.id}`, {
-        full_name: editingDoctor.full_name,
-        is_owner: editingDoctor.is_owner,
-      });
-      setEditingDoctor(null);
-      await loadInitialData();
-    } catch (error) {
-      console.error("Failed to update doctor:", error);
-    }
-  }
+  /* chart data */
+  const ageBarData = ageGroups.map(ag => ({
+    name: ag.label.replace("від ", "").replace("понад ", ""),
+    patients: filteredDoctors.reduce((s, d) => {
+      const r = d.rows.find(x => x.age_group === ag.key);
+      return s + (r ? r.patient_count : 0);
+    }, 0),
+  }));
 
-  async function handleDeleteDoctor(id: number) {
-    if (!confirm("Видалити лікаря?")) return;
-    try {
-      await api.delete(`/nhsu/doctors/${id}`);
-      await loadInitialData();
-    } catch (error) {
-      console.error("Failed to delete doctor:", error);
-    }
-  }
+  const doctorBarData = filteredDoctors.map(d => ({
+    name: d.doctor_name.split(" ")[0],
+    amount: Math.round(d.total_amount),
+  }));
 
-  // ── Monthly data handlers ────────────────────────────────────────
+  const pieData = filteredDoctors.map(d => ({
+    name: d.doctor_name.split(" ")[0],
+    value: d.total_patients,
+  }));
 
-  function initEditForm() {
-    if (report) {
-      const recs: RecordInput[] = [];
-      for (const doc of report.doctors) {
-        for (const row of doc.rows) {
-          recs.push({
-            doctor_id: doc.doctor_id,
-            age_group: row.age_group,
-            patient_count: String(row.patient_count),
-            non_verified: String(row.non_verified),
-          });
-        }
+  /* modal */
+  function openModal() {
+    const recs: RecordInput[] = [];
+    for (const doc of doctors) {
+      for (const ag of ageGroups) {
+        const ex = report?.doctors.find(d => d.doctor_id === doc.id)?.rows.find(r => r.age_group === ag.key);
+        recs.push({
+          doctor_id: doc.id, age_group: ag.key,
+          patient_count: ex ? String(ex.patient_count) : "0",
+          non_verified: ex ? String(ex.non_verified) : "0",
+        });
       }
-      setRecords(recs);
-    } else {
-      const recs: RecordInput[] = [];
-      for (const doc of doctors) {
-        for (const ag of ageGroups) {
-          recs.push({
-            doctor_id: doc.id,
-            age_group: ag.key,
-            patient_count: "0",
-            non_verified: "0",
-          });
-        }
-      }
-      setRecords(recs);
     }
-    setEditMode(true);
+    setRecords(recs); setImages([]); setSaveMsg(""); setShowModal(true);
   }
 
-  function updateRecord(doctorId: number, ageGroup: string, field: string, value: string) {
-    setRecords((prev) =>
-      prev.map((r) =>
-        r.doctor_id === doctorId && r.age_group === ageGroup
-          ? { ...r, [field]: value }
-          : r
-      )
-    );
+  function updateRecord(docId: number, ag: string, field: string, val: string) {
+    setRecords(p => p.map(r => r.doctor_id === docId && r.age_group === ag ? { ...r, [field]: val } : r));
   }
 
-  async function handleSaveMonthly(e: FormEvent) {
-    e.preventDefault();
+  /* images */
+  function handleFiles(files: FileList | File[]) {
+    const arr = Array.from(files).filter(f => f.type.startsWith("image/"));
+    setImages(p => [...p, ...arr.map(f => ({
+      file: f, preview: URL.createObjectURL(f),
+      doctorId: doctors.length === 1 ? doctors[0].id : null,
+      analyzed: false,
+    }))]);
+  }
+
+  function removeImage(i: number) {
+    setImages(p => { URL.revokeObjectURL(p[i].preview); return p.filter((_, idx) => idx !== i); });
+  }
+
+  /* AI analyze */
+  async function analyzeImages() {
+    if (!images.length) return;
+    setAnalyzing(true);
+    try {
+      const fd = new FormData();
+      const ids: string[] = [];
+      images.forEach(img => { fd.append("images", img.file); ids.push(img.doctorId != null ? String(img.doctorId) : ""); });
+      fd.append("doctor_ids", ids.join(","));
+      const { data } = await api.post("/nhsu/analyze-image", fd, { headers: { "Content-Type": "multipart/form-data" } });
+      const results: Record<string, unknown>[] = data.results;
+      const mapping: Record<string, string> = { age_0_5: "0_5", age_6_17: "6_17", age_18_39: "18_39", age_40_64: "40_64", age_65_plus: "65_plus" };
+      setImages(p => p.map((img, i) => {
+        const res = results[i];
+        if (!res) return img;
+        if (res.error) return { ...img, analyzed: true, error: String(res.error) };
+        if (img.doctorId) {
+          setRecords(prev => prev.map(r => {
+            if (r.doctor_id !== img.doctorId) return r;
+            const aiKey = Object.entries(mapping).find(([, v]) => v === r.age_group)?.[0];
+            if (aiKey && res[aiKey] !== undefined) return { ...r, patient_count: String(res[aiKey]) };
+            return r;
+          }));
+        }
+        return { ...img, analyzed: true, result: {
+          age_0_5: Number(res.age_0_5) || 0, age_6_17: Number(res.age_6_17) || 0,
+          age_18_39: Number(res.age_18_39) || 0, age_40_64: Number(res.age_40_64) || 0,
+          age_65_plus: Number(res.age_65_plus) || 0,
+        }};
+      }));
+    } catch (e: unknown) {
+      const msg = (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail ?? "Помилка AI";
+      setImages(p => p.map(img => ({ ...img, error: msg })));
+    } finally { setAnalyzing(false); }
+  }
+
+  /* save */
+  async function handleSave() {
+    setSaving(true); setSaveMsg("");
     try {
       await api.post("/nhsu/monthly", {
-        year,
-        month,
-        records: records.map((r) => ({
-          doctor_id: r.doctor_id,
-          age_group: r.age_group,
+        year, month,
+        records: records.map(r => ({
+          doctor_id: r.doctor_id, age_group: r.age_group,
           patient_count: parseInt(r.patient_count) || 0,
           non_verified: parseFloat(r.non_verified) || 0,
         })),
       });
-      await loadReport();
-    } catch (error) {
-      console.error("Failed to save:", error);
-    }
+      setSaveMsg("Збережено"); await loadReport();
+      setTimeout(() => setShowModal(false), 600);
+    } catch (e: unknown) {
+      setSaveMsg((e as { response?: { data?: { detail?: string } } })?.response?.data?.detail ?? "Помилка");
+    } finally { setSaving(false); }
   }
 
-  function prevMonth() {
-    if (month === 1) { setMonth(12); setYear(year - 1); }
-    else setMonth(month - 1);
-  }
-
-  function nextMonth() {
-    if (month === 12) { setMonth(1); setYear(year + 1); }
-    else setMonth(month + 1);
-  }
-
-  // Коефіцієнт для вікової групи з налаштувань
-  function getCoeff(ageGroup: string): number {
-    if (!settings) return 0;
-    const map: Record<string, number> = {
-      "0_5": settings.coeff_0_5,
-      "6_17": settings.coeff_6_17,
-      "18_39": settings.coeff_18_39,
-      "40_64": settings.coeff_40_64,
-      "65_plus": settings.coeff_65_plus,
-    };
-    return map[ageGroup] ?? 0;
-  }
-
-  // Обчислення для попереднього перегляду
-  function calcAmount(patients: number, nonVer: number, ageGroup: string) {
-    if (!settings) return 0;
-    return (settings.capitation_rate * getCoeff(ageGroup) * (patients - nonVer)) / 12;
-  }
-
-  // ── Render ───────────────────────────────────────────────────────
+  const tooltipStyle = { background: "#1a1a2e", border: "1px solid #ffffff15", borderRadius: 8 };
 
   return (
-    <div>
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-2xl font-bold text-white">Розрахунок НСЗУ</h2>
-          <p className="text-gray-500 text-sm mt-1">
-            Капітаційна ставка, коефіцієнти та розрахунки за договором ПМГ
-          </p>
+    <div className="space-y-6">
+      {/* ── FILTER BAR ── */}
+      <div className="card-neo p-5">
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="flex-1 min-w-[180px]">
+            <h2 className="text-xl font-bold text-white">Розрахунок НСЗУ</h2>
+            <p className="text-xs text-gray-500 mt-0.5">Капітаційна ставка &middot; ПМГ</p>
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-gray-500">Лікар</label>
+            <select
+              className="bg-dark-300 border border-dark-50/20 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-accent-500/50 min-w-[200px]"
+              value={selectedDoctorId}
+              onChange={e => setSelectedDoctorId(e.target.value === "all" ? "all" : Number(e.target.value))}
+            >
+              <option value="all">Всі лікарі</option>
+              {doctors.map(d => <option key={d.id} value={d.id}>{d.full_name}</option>)}
+            </select>
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-gray-500">Період</label>
+            <div className="flex items-center gap-2 bg-dark-300 border border-dark-50/20 rounded-xl px-3 py-2">
+              <button onClick={prevMonth} className="text-gray-400 hover:text-white"><ChevronLeft size={16} /></button>
+              <span className="text-sm text-white font-medium min-w-[130px] text-center">{MONTH_NAMES[month-1]} {year}</span>
+              <button onClick={nextMonth} className="text-gray-400 hover:text-white"><ChevronRight size={16} /></button>
+            </div>
+          </div>
+          <div className="flex flex-col justify-end">
+            <button onClick={openModal} disabled={!doctors.length}
+              className="flex items-center gap-2 px-5 py-2.5 bg-accent-500/10 hover:bg-accent-500/20 text-accent-400 rounded-xl text-sm font-semibold border border-accent-500/20 disabled:opacity-40 mt-5">
+              <Plus size={16} />{report ? "Редагувати" : "Заповнити"}
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 mb-6 bg-dark-500 p-1 rounded-xl w-fit">
-        <button
-          onClick={() => setTab("data")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-            tab === "data"
-              ? "bg-dark-300 text-white shadow-neo-sm"
-              : "text-gray-500 hover:text-gray-300"
-          }`}
-        >
-          <Table2 size={16} />
-          Дані
-        </button>
-        <button
-          onClick={() => setTab("settings")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-            tab === "settings"
-              ? "bg-dark-300 text-white shadow-neo-sm"
-              : "text-gray-500 hover:text-gray-300"
-          }`}
-        >
-          <Settings size={16} />
-          Налаштування
-        </button>
-      </div>
-
-      {/* ═══════════════════════════════════════════════════════════════
-          TAB: SETTINGS
-          ═══════════════════════════════════════════════════════════════ */}
-      {tab === "settings" && (
-        <>
-          {/* Doctors Management */}
-          <div className="card-neo p-5 mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-white font-semibold">Лікарі</h3>
-              <button
-                onClick={() => { setShowDoctorForm(!showDoctorForm); setEditingDoctor(null); }}
-                className="btn-ghost flex items-center gap-2 text-sm"
-              >
-                {showDoctorForm ? <X size={16} /> : <UserPlus size={16} />}
-                {showDoctorForm ? "Закрити" : "Додати лікаря"}
-              </button>
-            </div>
-
-            {/* Add doctor form */}
-            {showDoctorForm && (
-              <form onSubmit={handleAddDoctor} className="flex items-end gap-3 mb-4 p-4 bg-dark-400/50 rounded-xl">
-                <div className="flex-1">
-                  <label className="label-dark">ПІБ лікаря</label>
-                  <input
-                    type="text" value={newDoctorName}
-                    onChange={(e) => setNewDoctorName(e.target.value)}
-                    className="input-dark" placeholder="Прізвище І.П." required
-                  />
-                </div>
-                <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer pb-2">
-                  <input
-                    type="checkbox" checked={newDoctorIsOwner}
-                    onChange={(e) => setNewDoctorIsOwner(e.target.checked)}
-                    className="rounded border-dark-50/20"
-                  />
-                  Власник ФОП
-                </label>
-                <button type="submit" className="btn-accent">Додати</button>
-              </form>
-            )}
-
-            {/* Edit doctor form */}
-            {editingDoctor && (
-              <form onSubmit={handleUpdateDoctor} className="flex items-end gap-3 mb-4 p-4 bg-dark-400/50 rounded-xl">
-                <div className="flex-1">
-                  <label className="label-dark">ПІБ лікаря</label>
-                  <input
-                    type="text" value={editingDoctor.full_name}
-                    onChange={(e) => setEditingDoctor({ ...editingDoctor, full_name: e.target.value })}
-                    className="input-dark" required
-                  />
-                </div>
-                <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer pb-2">
-                  <input
-                    type="checkbox" checked={editingDoctor.is_owner}
-                    onChange={(e) => setEditingDoctor({ ...editingDoctor, is_owner: e.target.checked })}
-                    className="rounded border-dark-50/20"
-                  />
-                  Власник ФОП
-                </label>
-                <button type="submit" className="btn-accent">Зберегти</button>
-                <button type="button" onClick={() => setEditingDoctor(null)} className="btn-ghost">
-                  Скасувати
-                </button>
-              </form>
-            )}
-
-            {/* Doctors list */}
-            {doctors.length === 0 ? (
-              <p className="text-gray-600 text-sm">Лікарів ще не додано.</p>
-            ) : (
-              <div className="space-y-2">
-                {doctors.map((doc) => (
-                  <div
-                    key={doc.id}
-                    className="flex items-center justify-between px-4 py-3 bg-dark-400/30 rounded-xl"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="text-gray-200">{doc.full_name}</span>
-                      {doc.is_owner && (
-                        <span className="text-xs bg-accent-500/10 text-accent-400 px-2 py-0.5 rounded-lg">
-                          Власник ФОП
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => { setEditingDoctor(doc); setShowDoctorForm(false); }}
-                        className="p-1.5 rounded-lg text-gray-600 hover:text-accent-400 hover:bg-accent-500/10 transition-all"
-                      >
-                        <Edit3 size={14} />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteDoctor(doc.id)}
-                        className="p-1.5 rounded-lg text-gray-600 hover:text-red-400 hover:bg-red-500/10 transition-all"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Settings Form */}
-          <form onSubmit={handleSaveSettings}>
-            <div className="card-neo p-5 mb-6">
-              <h3 className="text-white font-semibold mb-4">Капітаційна ставка</h3>
-              <div className="max-w-xs">
-                <label className="label-dark">Ставка (грн)</label>
-                <input
-                  type="number" step="0.1"
-                  value={settingsForm.capitation_rate}
-                  onChange={(e) => setSettingsForm({ ...settingsForm, capitation_rate: e.target.value })}
-                  className="input-dark" required
-                />
-              </div>
-            </div>
-
-            <div className="card-neo p-5 mb-6">
-              <h3 className="text-white font-semibold mb-4">Вікові коефіцієнти</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                {ageGroups.map((ag) => {
-                  const fieldKey = `coeff_${ag.key}` as keyof typeof settingsForm;
-                  return (
-                    <div key={ag.key}>
-                      <label className="label-dark text-xs">{ag.label}</label>
-                      <input
-                        type="number" step="0.001"
-                        value={settingsForm[fieldKey]}
-                        onChange={(e) => setSettingsForm({ ...settingsForm, [fieldKey]: e.target.value })}
-                        className="input-dark" required
-                      />
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="card-neo p-5 mb-6">
-              <h3 className="text-white font-semibold mb-4">Податкові ставки</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-lg">
-                <div>
-                  <label className="label-dark">Єдиний податок (ЄП), %</label>
-                  <input
-                    type="number" step="0.01"
-                    value={settingsForm.ep_rate}
-                    onChange={(e) => setSettingsForm({ ...settingsForm, ep_rate: e.target.value })}
-                    className="input-dark" required
-                  />
-                </div>
-                <div>
-                  <label className="label-dark">Військовий збір (ВЗ), %</label>
-                  <input
-                    type="number" step="0.01"
-                    value={settingsForm.vz_rate}
-                    onChange={(e) => setSettingsForm({ ...settingsForm, vz_rate: e.target.value })}
-                    className="input-dark" required
-                  />
-                </div>
-              </div>
-            </div>
-
-            <button
-              type="submit" disabled={settingsSaving}
-              className="btn-accent flex items-center gap-2"
-            >
-              <Save size={18} />
-              {settingsSaving ? "Збереження..." : "Зберегти налаштування"}
-            </button>
-          </form>
-        </>
+      {/* ── LOADING ── */}
+      {loading && (
+        <div className="flex items-center justify-center h-48">
+          <div className="w-8 h-8 border-2 border-accent-500/30 border-t-accent-500 rounded-full animate-spin" />
+        </div>
       )}
 
-      {/* ═══════════════════════════════════════════════════════════════
-          TAB: DATA
-          ═══════════════════════════════════════════════════════════════ */}
-      {tab === "data" && (
-        <>
-          {/* Month Selector */}
-          <div className="flex items-center justify-center gap-4 mb-6">
-            <button onClick={prevMonth} className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-dark-300 transition-all">
-              <ChevronLeft size={20} />
-            </button>
-            <h3 className="text-lg font-semibold text-white min-w-[200px] text-center">
-              {MONTH_NAMES[month - 1]} {year}
-            </h3>
-            <button onClick={nextMonth} className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-dark-300 transition-all">
-              <ChevronRight size={20} />
-            </button>
-            <div className="ml-4">
-              {!editMode ? (
-                <button onClick={initEditForm} className="btn-accent flex items-center gap-2 text-sm">
-                  <Plus size={16} />
-                  {report ? "Редагувати" : "Заповнити"}
+      {/* ── EMPTY ── */}
+      {!loading && !report && (
+        <div className="card-neo px-5 py-16 text-center">
+          <p className="text-gray-500">Дані за {MONTH_NAMES[month-1].toLowerCase()} {year} ще не заповнені.</p>
+          {!doctors.length && <p className="text-xs text-gray-600 mt-2">Додайте лікарів у <span className="text-accent-400">Налаштуваннях</span>.</p>}
+        </div>
+      )}
+
+      {/* ── DASHBOARD ── */}
+      {!loading && report && (<>
+        {/* KPI */}
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
+          {[
+            { label: "Пацієнти", value: totals.patients, color: "text-white", Icon: Users },
+            { label: "Не верифіковані", value: fmt(totals.nonVer), color: "text-yellow-400", Icon: AlertCircle },
+            { label: "Сума (брутто)", value: fmt2(totals.amount), color: "text-emerald-400", Icon: BadgeDollarSign },
+            { label: `ЄП (${report.ep_rate}%)`, value: fmt2(totals.ep), color: "text-red-400", Icon: TrendingDown },
+            { label: `ВЗ (${report.vz_rate}%)`, value: fmt2(totals.vz), color: "text-orange-400", Icon: ShieldAlert },
+            { label: "Чистий дохід", value: fmt2(totals.amount - totals.epVz), color: "text-accent-400", Icon: BadgeDollarSign },
+          ].map(({ label, value, color, Icon }) => (
+            <div key={label} className="card-neo p-4 space-y-2">
+              <div className="flex items-center gap-1.5"><Icon size={14} className="text-gray-500" /><p className="text-xs text-gray-500 uppercase">{label}</p></div>
+              <p className={`text-xl font-bold font-mono ${color}`}>{value}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* CHARTS */}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+          <div className="card-neo p-5">
+            <p className="text-sm font-semibold text-white mb-4">Пацієнти по вікових групах</p>
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={ageBarData} margin={{ top: 0, right: 0, left: -20, bottom: 30 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" />
+                <XAxis dataKey="name" tick={{ fill: "#6b7280", fontSize: 11 }} angle={-25} textAnchor="end" />
+                <YAxis tick={{ fill: "#6b7280", fontSize: 11 }} />
+                <Tooltip contentStyle={tooltipStyle} />
+                <Bar dataKey="patients" fill="#6366f1" radius={[4,4,0,0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="card-neo p-5">
+            <p className="text-sm font-semibold text-white mb-4">Надходження по лікарях (грн)</p>
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={doctorBarData} margin={{ top: 0, right: 0, left: -10, bottom: 30 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" />
+                <XAxis dataKey="name" tick={{ fill: "#6b7280", fontSize: 11 }} angle={-25} textAnchor="end" />
+                <YAxis tick={{ fill: "#6b7280", fontSize: 11 }} />
+                <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => [`${v.toLocaleString("uk-UA")} грн`, "Сума"]} />
+                <Bar dataKey="amount" fill="#22d3ee" radius={[4,4,0,0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="card-neo p-5">
+            <p className="text-sm font-semibold text-white mb-4">Розподіл пацієнтів</p>
+            <ResponsiveContainer width="100%" height={220}>
+              <PieChart>
+                <Pie data={pieData} cx="50%" cy="50%" innerRadius={55} outerRadius={85} paddingAngle={3} dataKey="value">
+                  {pieData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
+                </Pie>
+                <Legend formatter={v => <span style={{ color: "#9ca3af", fontSize: 12 }}>{v}</span>} />
+                <Tooltip contentStyle={tooltipStyle} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* DETAIL TABLES */}
+        {filteredDoctors.map(doc => (
+          <div key={doc.doctor_id} className="card-neo overflow-hidden">
+            <div className="px-5 py-3 border-b border-dark-50/10 flex items-center gap-3 bg-dark-400/30">
+              <h4 className="text-white font-semibold">{doc.doctor_name}</h4>
+              {doc.is_owner && <span className="text-xs bg-accent-500/10 text-accent-400 px-2 py-0.5 rounded-full border border-accent-500/20">Власник</span>}
+              <span className="ml-auto text-xs text-gray-500 font-mono">{doc.total_patients} пац. &middot; {fmt2(doc.total_amount)} грн</span>
+            </div>
+            <table className="w-full text-sm">
+              <thead><tr className="border-b border-dark-50/10">
+                {["Вікова група","Коеф.","Пацієнти","Не вериф.","Сума","ЄП","ВЗ","ЄП+ВЗ"].map(h =>
+                  <th key={h} className="px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase text-right first:text-left">{h}</th>
+                )}
+              </tr></thead>
+              <tbody>
+                {doc.rows.map(r => (
+                  <tr key={r.age_group} className="border-b border-dark-50/5 hover:bg-dark-200/40">
+                    <td className="px-4 py-2.5 text-gray-300">{r.age_group_label}</td>
+                    <td className="px-4 py-2.5 text-right text-gray-500">{r.age_coefficient}</td>
+                    <td className="px-4 py-2.5 text-right text-gray-200 font-mono">{r.patient_count}</td>
+                    <td className="px-4 py-2.5 text-right text-yellow-400/70 font-mono">{r.non_verified}</td>
+                    <td className="px-4 py-2.5 text-right text-emerald-400 font-mono">{fmt(r.amount)}</td>
+                    <td className="px-4 py-2.5 text-right text-red-400/70 font-mono">{fmt(r.ep_amount)}</td>
+                    <td className="px-4 py-2.5 text-right text-orange-400/70 font-mono">{fmt(r.vz_amount)}</td>
+                    <td className="px-4 py-2.5 text-right text-red-400 font-mono">{fmt(r.ep_vz_amount)}</td>
+                  </tr>
+                ))}
+                <tr className="bg-dark-400/40 font-semibold">
+                  <td className="px-4 py-2.5 text-gray-300">Всього</td><td />
+                  <td className="px-4 py-2.5 text-right text-white font-mono">{doc.total_patients}</td>
+                  <td className="px-4 py-2.5 text-right text-yellow-400/70 font-mono">{fmt(doc.total_non_verified)}</td>
+                  <td className="px-4 py-2.5 text-right text-emerald-400 font-mono">{fmt(doc.total_amount)}</td>
+                  <td className="px-4 py-2.5 text-right text-red-400/70 font-mono">{fmt(doc.total_ep)}</td>
+                  <td className="px-4 py-2.5 text-right text-orange-400/70 font-mono">{fmt(doc.total_vz)}</td>
+                  <td className="px-4 py-2.5 text-right text-red-400 font-mono">{fmt(doc.total_ep_vz)}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        ))}
+      </>)}
+
+      {/* ══ MODAL ══ */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm overflow-y-auto py-8 px-4">
+          <div className="bg-dark-600 border border-dark-50/10 rounded-2xl shadow-2xl w-full max-w-4xl">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-dark-50/10">
+              <div>
+                <h3 className="text-lg font-bold text-white">Заповнення — {MONTH_NAMES[month-1]} {year}</h3>
+                <p className="text-xs text-gray-500 mt-0.5">Завантажте скріншоти НСЗУ або введіть вручну</p>
+              </div>
+              <button onClick={() => setShowModal(false)} className="p-2 text-gray-500 hover:text-white hover:bg-dark-300 rounded-xl"><X size={20} /></button>
+            </div>
+            <div className="p-6 space-y-6">
+              {/* IMAGE UPLOAD */}
+              <div>
+                <p className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                  <Sparkles size={16} className="text-accent-400" />AI аналіз зображень
+                </p>
+                <div
+                  onDrop={e => { e.preventDefault(); handleFiles(e.dataTransfer.files); }}
+                  onDragOver={e => e.preventDefault()}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="border-2 border-dashed border-dark-50/20 hover:border-accent-500/40 rounded-xl p-6 text-center cursor-pointer transition-all group"
+                >
+                  <Upload size={28} className="mx-auto text-gray-600 group-hover:text-accent-400 mb-2" />
+                  <p className="text-sm text-gray-500">Перетягніть скріншоти або <span className="text-accent-400 underline">оберіть файли</span></p>
+                  <p className="text-xs text-gray-600 mt-1">PNG, JPG, WEBP &middot; до 10 MB</p>
+                  <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden"
+                    onChange={e => e.target.files && handleFiles(e.target.files)} />
+                </div>
+                {images.length > 0 && (
+                  <div className="mt-3 space-y-2">
+                    {images.map((img, i) => (
+                      <div key={i} className="flex items-center gap-3 bg-dark-400/40 rounded-xl px-4 py-3 border border-dark-50/10">
+                        <img src={img.preview} alt="" className="w-12 h-12 object-cover rounded-lg border border-dark-50/20" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-gray-300 truncate">{img.file.name}</p>
+                          {img.analyzed && !img.error && <p className="text-xs text-emerald-400 flex items-center gap-1"><CheckCircle2 size={12} />Проаналізовано</p>}
+                          {img.error && <p className="text-xs text-red-400 flex items-center gap-1"><AlertCircle size={12} />{img.error}</p>}
+                        </div>
+                        <select className="bg-dark-300 border border-dark-50/20 rounded-xl px-3 py-1.5 text-sm text-white"
+                          value={img.doctorId ?? ""}
+                          onChange={e => setImages(p => p.map((im, idx) => idx === i ? { ...im, doctorId: e.target.value ? Number(e.target.value) : null } : im))}>
+                          <option value="">— Лікар —</option>
+                          {doctors.map(d => <option key={d.id} value={d.id}>{d.full_name}</option>)}
+                        </select>
+                        <button onClick={() => removeImage(i)} className="p-1.5 text-gray-600 hover:text-red-400 rounded-lg"><X size={15} /></button>
+                      </div>
+                    ))}
+                    <button onClick={analyzeImages} disabled={analyzing || images.every(im => !im.doctorId)}
+                      className="flex items-center gap-2 w-full justify-center px-4 py-2.5 bg-accent-500/10 hover:bg-accent-500/20 text-accent-400 rounded-xl text-sm font-semibold border border-accent-500/20 disabled:opacity-40">
+                      {analyzing ? <><RefreshCw size={15} className="animate-spin" />Аналізую&hellip;</> : <><Sparkles size={15} />Аналізувати за допомогою ШІ</>}
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="border-t border-dark-50/10" />
+
+              {/* MANUAL INPUT */}
+              {settings && doctors.map(doc => {
+                const coeffMap: Record<string, keyof NhsuSettings> = {
+                  "0_5":"coeff_0_5","6_17":"coeff_6_17","18_39":"coeff_18_39","40_64":"coeff_40_64","65_plus":"coeff_65_plus",
+                };
+                return (
+                  <div key={doc.id} className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <FileImage size={15} className="text-accent-400" />
+                      <p className="text-sm font-semibold text-white">{doc.full_name}</p>
+                      {doc.is_owner && <span className="text-xs bg-accent-500/10 text-accent-400 px-2 py-0.5 rounded-full border border-accent-500/20">Власник</span>}
+                    </div>
+                    <div className="overflow-hidden rounded-xl border border-dark-50/10">
+                      <table className="w-full text-sm">
+                        <thead><tr className="bg-dark-400/40 border-b border-dark-50/10">
+                          <th className="text-left px-4 py-2.5 text-xs text-gray-500 uppercase">Вікова група</th>
+                          <th className="text-center px-4 py-2.5 text-xs text-gray-500 uppercase">Коеф.</th>
+                          <th className="text-center px-4 py-2.5 text-xs text-gray-500 uppercase">Пацієнти</th>
+                          <th className="text-center px-4 py-2.5 text-xs text-gray-500 uppercase">Не верифіковані</th>
+                          <th className="text-right px-4 py-2.5 text-xs text-gray-500 uppercase">Сума</th>
+                        </tr></thead>
+                        <tbody>
+                          {ageGroups.map(ag => {
+                            const rec = records.find(r => r.doctor_id === doc.id && r.age_group === ag.key);
+                            if (!rec) return null;
+                            const coeff = Number(settings[coeffMap[ag.key]] ?? 0);
+                            const p = parseInt(rec.patient_count) || 0;
+                            const nv = parseFloat(rec.non_verified) || 0;
+                            const preview = (settings.capitation_rate * coeff * (p - nv)) / 12;
+                            return (
+                              <tr key={ag.key} className="border-b border-dark-50/5">
+                                <td className="px-4 py-2.5 text-gray-300">{ag.label}</td>
+                                <td className="px-4 py-2.5 text-center text-gray-500">{coeff}</td>
+                                <td className="px-4 py-2.5 text-center">
+                                  <input type="number" min={0} value={rec.patient_count}
+                                    onChange={e => updateRecord(doc.id, ag.key, "patient_count", e.target.value)}
+                                    className="bg-dark-300 border border-dark-50/20 rounded-lg px-3 py-1.5 text-sm text-white text-center w-24 focus:outline-none focus:border-accent-500/50" />
+                                </td>
+                                <td className="px-4 py-2.5 text-center">
+                                  <input type="number" min={0} step={0.5} value={rec.non_verified}
+                                    onChange={e => updateRecord(doc.id, ag.key, "non_verified", e.target.value)}
+                                    className="bg-dark-300 border border-dark-50/20 rounded-lg px-3 py-1.5 text-sm text-white text-center w-24 focus:outline-none focus:border-accent-500/50" />
+                                </td>
+                                <td className="px-4 py-2.5 text-right text-emerald-400 font-mono">{fmt(preview)} грн</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* SAVE */}
+              <div className="flex items-center gap-4 pt-2">
+                <button onClick={handleSave} disabled={saving}
+                  className="flex items-center gap-2 px-6 py-2.5 bg-accent-500/10 hover:bg-accent-500/20 text-accent-400 rounded-xl text-sm font-semibold border border-accent-500/20 disabled:opacity-50">
+                  {saving ? <><RefreshCw size={15} className="animate-spin" />Збереження&hellip;</> : <><Save size={15} />Зберегти</>}
                 </button>
-              ) : (
-                <button onClick={() => setEditMode(false)} className="btn-ghost flex items-center gap-2 text-sm">
-                  <X size={16} />
-                  Скасувати
-                </button>
-              )}
+                {saveMsg && <span className={`text-sm ${saveMsg === "Збережено" ? "text-emerald-400" : "text-red-400"}`}>{saveMsg}</span>}
+                <button onClick={() => setShowModal(false)} className="ml-auto text-sm text-gray-500 hover:text-gray-300">Скасувати</button>
+              </div>
             </div>
           </div>
-
-          {/* ── Edit Mode ──────────────────────────────────────────── */}
-          {editMode && settings && (
-            <form onSubmit={handleSaveMonthly}>
-              <div className="card-neo-inset px-4 py-3 mb-4 text-sm text-gray-400">
-                Ставка: <span className="text-white font-medium">{fmt2(settings.capitation_rate)} грн</span>
-                {" | "}ЄП: <span className="text-white">{settings.ep_rate}%</span>
-                {" | "}ВЗ: <span className="text-white">{settings.vz_rate}%</span>
-                <span className="ml-2 text-gray-600">(змінити у Налаштуваннях)</span>
-              </div>
-
-              {doctors.map((doc) => (
-                <div key={doc.id} className="card-neo p-5 mb-4">
-                  <h4 className="text-white font-semibold mb-3">
-                    {doc.full_name}
-                    {doc.is_owner && (
-                      <span className="ml-2 text-xs bg-accent-500/10 text-accent-400 px-2 py-1 rounded-lg">
-                        Власник ФОП
-                      </span>
-                    )}
-                  </h4>
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-dark-50/10">
-                        <th className="text-left px-3 py-2 text-xs font-semibold text-gray-500 uppercase">Вікова група</th>
-                        <th className="text-center px-3 py-2 text-xs font-semibold text-gray-500 uppercase">Коеф.</th>
-                        <th className="text-left px-3 py-2 text-xs font-semibold text-gray-500 uppercase">К-ть пацієнтів</th>
-                        <th className="text-left px-3 py-2 text-xs font-semibold text-gray-500 uppercase">Не верифіковані</th>
-                        <th className="text-right px-3 py-2 text-xs font-semibold text-gray-500 uppercase">Сума</th>
-                        <th className="text-right px-3 py-2 text-xs font-semibold text-gray-500 uppercase">ЄП ({settings.ep_rate}%)</th>
-                        <th className="text-right px-3 py-2 text-xs font-semibold text-gray-500 uppercase">ВЗ ({settings.vz_rate}%)</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {ageGroups.map((ag) => {
-                        const rec = records.find((r) => r.doctor_id === doc.id && r.age_group === ag.key);
-                        if (!rec) return null;
-                        const patients = parseInt(rec.patient_count) || 0;
-                        const nonVer = parseFloat(rec.non_verified) || 0;
-                        const amount = calcAmount(patients, nonVer, ag.key);
-                        const ep = amount * settings.ep_rate / 100;
-                        const vz = amount * settings.vz_rate / 100;
-                        return (
-                          <tr key={ag.key} className="border-b border-dark-50/5">
-                            <td className="px-3 py-2 text-gray-400">{ag.label}</td>
-                            <td className="px-3 py-2 text-center text-gray-500">{getCoeff(ag.key)}</td>
-                            <td className="px-3 py-2">
-                              <input
-                                type="number" value={rec.patient_count}
-                                onChange={(e) => updateRecord(doc.id, ag.key, "patient_count", e.target.value)}
-                                className="input-dark w-24"
-                              />
-                            </td>
-                            <td className="px-3 py-2">
-                              <input
-                                type="number" step="0.5" value={rec.non_verified}
-                                onChange={(e) => updateRecord(doc.id, ag.key, "non_verified", e.target.value)}
-                                className="input-dark w-24"
-                              />
-                            </td>
-                            <td className="px-3 py-2 text-right text-emerald-400 font-mono">{fmt(amount)}</td>
-                            <td className="px-3 py-2 text-right text-red-400/70 font-mono">{fmt(ep)}</td>
-                            <td className="px-3 py-2 text-right text-yellow-400/70 font-mono">{fmt(vz)}</td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              ))}
-
-              <button type="submit" className="btn-accent flex items-center gap-2">
-                <Save size={18} />
-                Зберегти дані за {MONTH_NAMES[month - 1].toLowerCase()}
-              </button>
-            </form>
-          )}
-
-          {/* ── Loading ────────────────────────────────────────────── */}
-          {!editMode && loading && (
-            <div className="flex items-center justify-center h-64">
-              <div className="w-8 h-8 border-2 border-accent-500/30 border-t-accent-500 rounded-full animate-spin" />
-            </div>
-          )}
-
-          {/* ── Empty State ────────────────────────────────────────── */}
-          {!editMode && !loading && !report && (
-            <div className="card-neo px-5 py-12 text-center text-gray-600">
-              Дані за {MONTH_NAMES[month - 1].toLowerCase()} {year} ще не заповнені.
-            </div>
-          )}
-
-          {/* ── Report View ────────────────────────────────────────── */}
-          {!editMode && !loading && report && (
-            <>
-              {/* Info badge */}
-              <div className="card-neo-inset px-4 py-3 mb-6 text-sm text-gray-400">
-                Ставка: <span className="text-white font-medium">{fmt2(report.capitation_rate)} грн</span>
-                {" | "}ЄП: <span className="text-white">{report.ep_rate}%</span>
-                {" | "}ВЗ: <span className="text-white">{report.vz_rate}%</span>
-              </div>
-
-              {/* Per-doctor tables */}
-              {report.doctors.map((doc) => (
-                <div key={doc.doctor_id} className="card-neo overflow-hidden mb-6">
-                  <div className="px-5 py-4 border-b border-dark-50/10 flex items-center gap-3">
-                    <h4 className="text-white font-semibold">{doc.doctor_name}</h4>
-                    {doc.is_owner && (
-                      <span className="text-xs bg-accent-500/10 text-accent-400 px-2 py-1 rounded-lg">
-                        Власник ФОП
-                      </span>
-                    )}
-                  </div>
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-dark-50/10">
-                        <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">Вікова група</th>
-                        <th className="text-center px-3 py-3 text-xs font-semibold text-gray-500 uppercase">Коеф.</th>
-                        <th className="text-center px-3 py-3 text-xs font-semibold text-gray-500 uppercase">Пацієнти</th>
-                        <th className="text-center px-3 py-3 text-xs font-semibold text-gray-500 uppercase">Не вериф.</th>
-                        <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Сума</th>
-                        <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">ЄП ({report.ep_rate}%)</th>
-                        <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">ВЗ ({report.vz_rate}%)</th>
-                        <th className="text-right px-5 py-3 text-xs font-semibold text-gray-500 uppercase">ЄП+ВЗ</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {doc.rows.map((row) => (
-                        <tr key={row.age_group} className="border-b border-dark-50/5 hover:bg-dark-200/50">
-                          <td className="px-5 py-3 text-gray-300">{row.age_group_label}</td>
-                          <td className="px-3 py-3 text-center text-gray-500">{row.age_coefficient}</td>
-                          <td className="px-3 py-3 text-center text-gray-300 font-mono">{row.patient_count}</td>
-                          <td className="px-3 py-3 text-center text-yellow-400/70 font-mono">{row.non_verified}</td>
-                          <td className="px-4 py-3 text-right text-emerald-400 font-mono">{fmt(row.amount)}</td>
-                          <td className="px-4 py-3 text-right text-red-400/70 font-mono">{fmt(row.ep_amount)}</td>
-                          <td className="px-4 py-3 text-right text-yellow-400/70 font-mono">{fmt(row.vz_amount)}</td>
-                          <td className="px-5 py-3 text-right text-red-400 font-mono">{fmt(row.ep_vz_amount)}</td>
-                        </tr>
-                      ))}
-                      {/* Doctor total row */}
-                      <tr className="bg-dark-400/50 font-semibold">
-                        <td className="px-5 py-3 text-gray-300">Всього</td>
-                        <td className="px-3 py-3"></td>
-                        <td className="px-3 py-3 text-center text-white font-mono">{doc.total_patients}</td>
-                        <td className="px-3 py-3 text-center text-yellow-400/70 font-mono">{fmt(doc.total_non_verified)}</td>
-                        <td className="px-4 py-3 text-right text-emerald-400 font-mono">{fmt(doc.total_amount)}</td>
-                        <td className="px-4 py-3 text-right text-red-400/70 font-mono">{fmt(doc.total_ep)}</td>
-                        <td className="px-4 py-3 text-right text-yellow-400/70 font-mono">{fmt(doc.total_vz)}</td>
-                        <td className="px-5 py-3 text-right text-red-400 font-mono">{fmt(doc.total_ep_vz)}</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              ))}
-
-              {/* Summary by age groups */}
-              {report.age_group_totals.length > 0 && (
-                <div className="card-neo overflow-hidden mb-6">
-                  <div className="px-5 py-4 border-b border-dark-50/10">
-                    <h4 className="text-white font-semibold">Підсумок по вікових групах (всі лікарі)</h4>
-                  </div>
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-dark-50/10">
-                        <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">Вікова група</th>
-                        <th className="text-center px-3 py-3 text-xs font-semibold text-gray-500 uppercase">Коеф.</th>
-                        <th className="text-center px-3 py-3 text-xs font-semibold text-gray-500 uppercase">Пацієнти</th>
-                        <th className="text-center px-3 py-3 text-xs font-semibold text-gray-500 uppercase">Не вериф.</th>
-                        <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Сума</th>
-                        <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">ЄП</th>
-                        <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">ВЗ</th>
-                        <th className="text-right px-5 py-3 text-xs font-semibold text-gray-500 uppercase">ЄП+ВЗ</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {report.age_group_totals.map((ag) => (
-                        <tr key={ag.age_group} className="border-b border-dark-50/5 hover:bg-dark-200/50">
-                          <td className="px-5 py-3 text-gray-300">{ag.age_group_label}</td>
-                          <td className="px-3 py-3 text-center text-gray-500">{ag.age_coefficient}</td>
-                          <td className="px-3 py-3 text-center text-gray-300 font-mono">{ag.total_patients}</td>
-                          <td className="px-3 py-3 text-center text-yellow-400/70 font-mono">{fmt(ag.total_non_verified)}</td>
-                          <td className="px-4 py-3 text-right text-emerald-400 font-mono">{fmt(ag.total_amount)}</td>
-                          <td className="px-4 py-3 text-right text-red-400/70 font-mono">{fmt(ag.total_ep)}</td>
-                          <td className="px-4 py-3 text-right text-yellow-400/70 font-mono">{fmt(ag.total_vz)}</td>
-                          <td className="px-5 py-3 text-right text-red-400 font-mono">{fmt(ag.total_ep_vz)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-
-              {/* Grand Total Cards */}
-              <div className="card-neo p-5 mb-6">
-                <h4 className="text-white font-semibold mb-4">Всього за договором ПМГ</h4>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                  <div className="card-neo-inset p-4">
-                    <p className="text-xs text-gray-500 uppercase mb-1">Пацієнти</p>
-                    <p className="text-xl font-bold text-white font-mono">{report.grand_total_patients}</p>
-                  </div>
-                  <div className="card-neo-inset p-4">
-                    <p className="text-xs text-gray-500 uppercase mb-1">Не вериф.</p>
-                    <p className="text-xl font-bold text-yellow-400 font-mono">{fmt(report.grand_total_non_verified)}</p>
-                  </div>
-                  <div className="card-neo-inset p-4">
-                    <p className="text-xs text-gray-500 uppercase mb-1">Сума</p>
-                    <p className="text-xl font-bold text-emerald-400 font-mono">{fmt(report.grand_total_amount)}</p>
-                  </div>
-                  <div className="card-neo-inset p-4">
-                    <p className="text-xs text-gray-500 uppercase mb-1">ЄП ({report.ep_rate}%)</p>
-                    <p className="text-xl font-bold text-red-400/80 font-mono">{fmt(report.grand_total_ep)}</p>
-                  </div>
-                  <div className="card-neo-inset p-4">
-                    <p className="text-xs text-gray-500 uppercase mb-1">ВЗ ({report.vz_rate}%)</p>
-                    <p className="text-xl font-bold text-yellow-400/80 font-mono">{fmt(report.grand_total_vz)}</p>
-                  </div>
-                  <div className="card-neo-inset p-4">
-                    <p className="text-xs text-gray-500 uppercase mb-1">ЄП+ВЗ</p>
-                    <p className="text-xl font-bold text-red-400 font-mono">{fmt(report.grand_total_ep_vz)}</p>
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
-        </>
+        </div>
       )}
     </div>
   );
