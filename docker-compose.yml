@@ -28,6 +28,13 @@ services:
         condition: service_healthy
     volumes:
       - ./backend:/app
+      # Persist generated documents between container restarts
+      - backend_generated_acts:/app/generated_acts
+      - backend_generated_contracts:/app/generated_contracts
+      - backend_generated_documents:/app/generated_documents
+      - backend_generated_invoices:/app/generated_invoices
+      - backend_generated_orders:/app/generated_orders
+      - backend_uploads:/app/uploads
 
   frontend:
     build: ./frontend
@@ -41,3 +48,9 @@ services:
 
 volumes:
   postgres_data:
+  backend_generated_acts:
+  backend_generated_contracts:
+  backend_generated_documents:
+  backend_generated_invoices:
+  backend_generated_orders:
+  backend_uploads:
