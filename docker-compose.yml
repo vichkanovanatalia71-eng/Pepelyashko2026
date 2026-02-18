@@ -9,6 +9,11 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d pepelyashko"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   backend:
     build: ./backend
@@ -19,7 +24,8 @@ services:
       SECRET_KEY: dev-secret-key
       DEBUG: "true"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     volumes:
       - ./backend:/app
 
