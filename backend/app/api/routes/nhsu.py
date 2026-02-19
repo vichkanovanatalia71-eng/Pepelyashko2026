@@ -13,6 +13,7 @@ from app.core.deps import get_current_user, get_db
 from app.models.doctor import Doctor
 from app.models.nhsu import AGE_GROUPS
 from app.models.user import User
+from app.models.user_api_keys import UserApiKeys
 from app.schemas.nhsu import (
     DoctorCreate,
     DoctorResponse,
@@ -282,6 +283,7 @@ async def _analyze_one(client, image_bytes: bytes, media_type: str) -> dict:
 async def analyze_image(
     images: List[UploadFile] = File(...),
     doctor_ids: Optional[str] = Form(None),
+    db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
     """Аналізує зображення за допомогою Claude AI та повертає розпізнані дані НСЗУ.
@@ -289,15 +291,22 @@ async def analyze_image(
     - images: один або кілька файлів зображень
     - doctor_ids: необов'язковий рядок з id лікарів через кому (відповідно до images)
     """
-    if not settings.anthropic_api_key:
+    # Визначаємо ключ: спочатку з БД користувача, потім із env
+    user_keys_result = await db.execute(
+        select(UserApiKeys).where(UserApiKeys.user_id == user.id)
+    )
+    user_keys = user_keys_result.scalar_one_or_none()
+    anthropic_key = (user_keys.anthropic_key if user_keys else None) or settings.anthropic_api_key
+
+    if not anthropic_key:
         raise HTTPException(
             status_code=503,
-            detail="AI сервіс не налаштований. Додайте ANTHROPIC_API_KEY у змінні середовища.",
+            detail="AI сервіс не налаштований. Додайте Anthropic API ключ у Налаштуваннях або встановіть ANTHROPIC_API_KEY.",
         )
 
     try:
         import anthropic as anthropic_sdk
-        client = anthropic_sdk.Anthropic(api_key=settings.anthropic_api_key)
+        client = anthropic_sdk.Anthropic(api_key=anthropic_key)
     except ImportError:
         raise HTTPException(
             status_code=503,

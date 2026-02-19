@@ -9,6 +9,11 @@ import {
   RefreshCw,
   Stethoscope,
   PercentCircle,
+  KeyRound,
+  Eye,
+  EyeOff,
+  CheckCircle2,
+  XCircle,
 } from "lucide-react";
 import { Doctor, NhsuSettings } from "../types";
 
@@ -39,9 +44,29 @@ export default function SettingsPage() {
   const [settingsLoading, setSettingsLoading] = useState(false);
   const [settingsMsg, setSettingsMsg] = useState("");
 
+  // ── API ключі ──
+  interface ApiKeysStatus {
+    anthropic_key_set: boolean;
+    anthropic_key_masked: string | null;
+    openai_key_set: boolean;
+    openai_key_masked: string | null;
+    xai_key_set: boolean;
+    xai_key_masked: string | null;
+  }
+  const [apiKeysStatus, setApiKeysStatus] = useState<ApiKeysStatus | null>(null);
+  const [anthropicInput, setAnthropicInput] = useState("");
+  const [openaiInput, setOpenaiInput] = useState("");
+  const [xaiInput, setXaiInput] = useState("");
+  const [showAnthropicKey, setShowAnthropicKey] = useState(false);
+  const [showOpenaiKey, setShowOpenaiKey] = useState(false);
+  const [showXaiKey, setShowXaiKey] = useState(false);
+  const [apiKeysLoading, setApiKeysLoading] = useState(false);
+  const [apiKeysMsg, setApiKeysMsg] = useState("");
+
   useEffect(() => {
     loadDoctors();
     loadSettings();
+    loadApiKeys();
   }, []);
 
   async function loadDoctors() {
@@ -99,6 +124,42 @@ export default function SettingsPage() {
     } finally {
       setSettingsLoading(false);
     }
+  }
+
+  async function loadApiKeys() {
+    try {
+      const res = await axios.get(`${API}/api/settings/api-keys`, { headers });
+      setApiKeysStatus(res.data);
+    } catch {}
+  }
+
+  async function handleSaveApiKeys() {
+    setApiKeysLoading(true);
+    setApiKeysMsg("");
+    try {
+      const payload: Record<string, string | null> = {};
+      // undefined = skip (don't send), "" = clear, value = save
+      if (anthropicInput !== "") payload.anthropic_key = anthropicInput;
+      if (openaiInput !== "") payload.openai_key = openaiInput;
+      if (xaiInput !== "") payload.xai_key = xaiInput;
+      await axios.put(`${API}/api/settings/api-keys`, payload, { headers });
+      setApiKeysMsg("Ключі збережено");
+      setAnthropicInput("");
+      setOpenaiInput("");
+      setXaiInput("");
+      await loadApiKeys();
+    } catch (e: any) {
+      setApiKeysMsg(e?.response?.data?.detail ?? "Помилка збереження");
+    } finally {
+      setApiKeysLoading(false);
+    }
+  }
+
+  async function handleClearApiKey(field: "anthropic_key" | "openai_key" | "xai_key") {
+    try {
+      await axios.put(`${API}/api/settings/api-keys`, { [field]: "" }, { headers });
+      await loadApiKeys();
+    } catch {}
   }
 
   return (
@@ -201,6 +262,118 @@ export default function SettingsPage() {
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* ── API ключі ── */}
+      <div className="card-neo p-6 space-y-5">
+        <div className="flex items-center gap-2 mb-1">
+          <KeyRound size={18} className="text-accent-400" />
+          <h2 className="text-lg font-semibold text-white">API ключі</h2>
+          <span className="text-xs text-gray-500 ml-1">для AI-аналізу зображень</span>
+        </div>
+
+        {[
+          {
+            label: "Claude (Anthropic)",
+            field: "anthropic_key" as const,
+            input: anthropicInput,
+            setInput: setAnthropicInput,
+            show: showAnthropicKey,
+            setShow: setShowAnthropicKey,
+            isSet: apiKeysStatus?.anthropic_key_set,
+            masked: apiKeysStatus?.anthropic_key_masked,
+            placeholder: "sk-ant-…",
+          },
+          {
+            label: "ChatGPT (OpenAI)",
+            field: "openai_key" as const,
+            input: openaiInput,
+            setInput: setOpenaiInput,
+            show: showOpenaiKey,
+            setShow: setShowOpenaiKey,
+            isSet: apiKeysStatus?.openai_key_set,
+            masked: apiKeysStatus?.openai_key_masked,
+            placeholder: "sk-…",
+          },
+          {
+            label: "Grok (xAI)",
+            field: "xai_key" as const,
+            input: xaiInput,
+            setInput: setXaiInput,
+            show: showXaiKey,
+            setShow: setShowXaiKey,
+            isSet: apiKeysStatus?.xai_key_set,
+            masked: apiKeysStatus?.xai_key_masked,
+            placeholder: "xai-…",
+          },
+        ].map(({ label, field, input, setInput, show, setShow, isSet, masked, placeholder }) => (
+          <div key={field} className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label className="text-sm text-gray-300 font-medium">{label}</label>
+              {isSet ? (
+                <span className="flex items-center gap-1 text-xs text-green-400">
+                  <CheckCircle2 size={12} />
+                  Налаштовано: <span className="font-mono text-gray-400">{masked}</span>
+                </span>
+              ) : (
+                <span className="flex items-center gap-1 text-xs text-gray-600">
+                  <XCircle size={12} />
+                  Не налаштовано
+                </span>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <input
+                  type={show ? "text" : "password"}
+                  className="w-full bg-dark-300 border border-dark-50/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-accent-500/50 pr-10 font-mono"
+                  placeholder={isSet ? "Введіть новий ключ для заміни" : placeholder}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShow(!show)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+                >
+                  {show ? <EyeOff size={15} /> : <Eye size={15} />}
+                </button>
+              </div>
+              {isSet && (
+                <button
+                  onClick={() => handleClearApiKey(field)}
+                  className="px-3 py-2.5 text-xs text-red-400 hover:bg-red-500/10 rounded-xl border border-red-500/20 transition-all"
+                  title="Видалити ключ"
+                >
+                  <Trash2 size={14} />
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+
+        <div className="flex items-center gap-3 pt-1">
+          <button
+            onClick={handleSaveApiKeys}
+            disabled={apiKeysLoading || (!anthropicInput && !openaiInput && !xaiInput)}
+            className="flex items-center gap-2 px-5 py-2.5 bg-accent-500/10 hover:bg-accent-500/20 text-accent-400 rounded-xl text-sm font-medium transition-all border border-accent-500/20 disabled:opacity-50"
+          >
+            {apiKeysLoading ? (
+              <RefreshCw size={15} className="animate-spin" />
+            ) : (
+              <Save size={15} />
+            )}
+            Зберегти ключі
+          </button>
+          {apiKeysMsg && (
+            <span className="text-xs text-accent-400">{apiKeysMsg}</span>
+          )}
+        </div>
+
+        <p className="text-xs text-gray-600">
+          Ключі зберігаються в зашифрованому вигляді та використовуються лише для AI-аналізу зображень НСЗУ.
+          Ключ Claude (Anthropic) є пріоритетним для аналізу скріншотів.
+        </p>
       </div>
 
       {/* ── Налаштування НСЗУ ── */}
