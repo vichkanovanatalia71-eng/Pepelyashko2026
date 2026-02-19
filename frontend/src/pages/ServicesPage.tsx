@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import type { MaterialItem, NhsuSettings, Service, SortDirection, SortField } from "../types";
 
-const API = import.meta.env.VITE_API_URL ?? "";
+const API = "";
 
 const fmt = (v: number) =>
   v.toLocaleString("uk-UA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });

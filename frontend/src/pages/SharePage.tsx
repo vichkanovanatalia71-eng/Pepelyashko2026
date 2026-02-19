@@ -26,7 +26,7 @@ import {
   Legend,
 } from "recharts";
 
-const API = import.meta.env.VITE_API_URL ?? "";
+const API = "";
 const MONTHS_UA = [
   "", "Січень", "Лютий", "Березень", "Квітень",
   "Травень", "Червень", "Липень", "Серпень",

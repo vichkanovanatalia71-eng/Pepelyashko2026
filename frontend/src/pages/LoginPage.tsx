@@ -4,7 +4,7 @@ import { Stethoscope, Mail, CheckCircle } from "lucide-react";
 import axios from "axios";
 import { useAuth } from "../hooks/useAuth";
 
-const API = import.meta.env.VITE_API_URL ?? "";
+const API = "";
 
 type Tab = "login" | "register";
 

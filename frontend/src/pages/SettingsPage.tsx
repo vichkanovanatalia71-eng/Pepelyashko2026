@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { Doctor, NhsuSettings } from "../types";
 
-const API = import.meta.env.VITE_API_URL ?? "";
+const API = "";
 
 const AGE_LABELS: Record<string, string> = {
   coeff_0_5: "0–5 років",

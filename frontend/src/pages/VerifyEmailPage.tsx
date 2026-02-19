@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { CheckCircle, XCircle, Loader, Stethoscope } from "lucide-react";
 import axios from "axios";
 
-const API = import.meta.env.VITE_API_URL ?? "";
+const API = "";
 
 type Status = "loading" | "success" | "error" | "already";
 
