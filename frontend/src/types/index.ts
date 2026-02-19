@@ -112,6 +112,41 @@ export interface AgeGroupSummary {
   total_ep_vz: number;
 }
 
+// ── Платні послуги ───────────────────────────────────────────────────
+
+export interface MaterialItem {
+  name: string;
+  unit: string;
+  quantity: number;
+  cost: number;
+}
+
+export interface Service {
+  id: number;
+  code: string;
+  name: string;
+  price: number;
+  materials: MaterialItem[];
+  // Розраховані фінансові поля
+  total_materials_cost: number;
+  ep_amount: number;
+  vz_amount: number;
+  total_costs: number;
+  net_income: number;
+  doctor_income: number;
+  org_income: number;
+}
+
+export type SortField =
+  | "code"
+  | "name"
+  | "price"
+  | "total_materials_cost"
+  | "doctor_income"
+  | "org_income";
+
+export type SortDirection = "asc" | "desc";
+
 export interface NhsuMonthlyReport {
   year: number;
   month: number;

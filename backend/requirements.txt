@@ -32,3 +32,6 @@ anthropic>=0.40.0
 
 # Email
 aiosmtplib>=3.0.0
+
+# Excel export
+openpyxl>=3.1.0

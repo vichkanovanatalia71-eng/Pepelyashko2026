@@ -6,6 +6,7 @@ import ExpensesPage from "./pages/ExpensesPage";
 import TaxesPage from "./pages/TaxesPage";
 import NhsuPage from "./pages/NhsuPage";
 import SettingsPage from "./pages/SettingsPage";
+import ServicesPage from "./pages/ServicesPage";
 import LoginPage from "./pages/LoginPage";
 import VerifyEmailPage from "./pages/VerifyEmailPage";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
@@ -36,6 +37,7 @@ export default function App() {
           <Route path="taxes" element={<TaxesPage />} />
           <Route path="nhsu" element={<NhsuPage />} />
           <Route path="settings" element={<SettingsPage />} />
+          <Route path="services" element={<ServicesPage />} />
         </Route>
       </Routes>
     </AuthProvider>
