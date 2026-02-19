@@ -72,4 +72,31 @@
   .label-dark {
     @apply block text-sm font-medium text-gray-400 mb-1.5;
   }
+
+  /* ── 3D hover effects ── */
+  .card-3d-hover {
+    transition: transform 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                box-shadow 0.28s ease;
+    will-change: transform;
+  }
+  .card-3d-hover:hover {
+    transform: perspective(900px) translateZ(16px) rotateX(-1.5deg);
+    box-shadow:
+      0 28px 64px rgba(0, 0, 0, 0.55),
+      0 8px 24px rgba(99, 102, 241, 0.18),
+      0 0 0 1px rgba(99, 102, 241, 0.08);
+  }
+
+  .kpi-3d-hover {
+    transition: transform 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                box-shadow 0.22s ease;
+    will-change: transform;
+  }
+  .kpi-3d-hover:hover {
+    transform: perspective(500px) translateZ(14px) scale(1.04);
+    box-shadow:
+      0 18px 48px rgba(0, 0, 0, 0.52),
+      0 4px 18px rgba(99, 102, 241, 0.22),
+      0 0 0 1px rgba(99, 102, 241, 0.1);
+  }
 }

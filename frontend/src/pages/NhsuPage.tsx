@@ -44,6 +44,16 @@ interface AiHistoryEntry {
   confidence: string; notes: string;
   totals: { age_0_5:number; age_6_17:number; age_18_39:number; age_40_64:number; age_65_plus:number };
 }
+interface MonthRangeEntry {
+  year: number; month: number; label: string; has_data: boolean;
+  amount: number; ep: number; vz: number; epVz: number; net: number;
+}
+interface RangeSummary {
+  totalAmount: number; totalEp: number; totalVz: number;
+  totalEpVz: number; totalNet: number;
+  monthsWithData: number; months: MonthRangeEntry[];
+  ep_rate: number; vz_rate: number;
+}
 
 // ─── Helpers ─────────────────────────────────────────────────────────
 const fmt  = (n: number) => n.toLocaleString("uk-UA",{minimumFractionDigits:1,maximumFractionDigits:1});
@@ -88,6 +98,13 @@ export default function NhsuPage() {
   const [aiHistory,   setAiHistory]   = useState<AiHistoryEntry[]>(loadHistory);
   const [showHistory, setShowHistory] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Range period state
+  const [rangeMode,     setRangeMode]     = useState(false);
+  const [rangeEndYear,  setRangeEndYear]  = useState(now.getFullYear());
+  const [rangeEndMonth, setRangeEndMonth] = useState(now.getMonth() + 1);
+  const [rangeData,     setRangeData]     = useState<RangeSummary | null>(null);
+  const [rangeLoading,  setRangeLoading]  = useState(false);
 
   // Close doctor dropdown on outside click
   useEffect(() => {
@@ -136,9 +153,57 @@ export default function NhsuPage() {
 
   useEffect(() => { loadTrend(); }, [loadTrend]);
 
+  // Load and aggregate range data
+  const loadRangeData = useCallback(async () => {
+    if (!rangeMode) { setRangeData(null); return; }
+    setRangeLoading(true);
+    try {
+      const months: {year:number; month:number}[] = [];
+      let y = year, m = month;
+      while ((y < rangeEndYear || (y === rangeEndYear && m <= rangeEndMonth)) && months.length < 24) {
+        months.push({year:y, month:m});
+        if (++m > 12) { m = 1; y++; }
+      }
+      if (!months.length) { setRangeData(null); return; }
+
+      const results = await Promise.all(
+        months.map(({year,month}) =>
+          api.get("/nhsu/monthly", {params:{year,month}})
+             .then(r => r.data as NhsuMonthlyReport)
+             .catch(() => null),
+        ),
+      );
+
+      const ep_rate = results.find(Boolean)?.ep_rate ?? 5;
+      const vz_rate = results.find(Boolean)?.vz_rate ?? 5;
+      let totalAmount=0, totalEp=0, totalVz=0, totalEpVz=0, totalNet=0, monthsWithData=0;
+
+      const monthEntries: MonthRangeEntry[] = months.map(({year,month}, i) => {
+        const r = results[i];
+        if (!r) return {year,month,label:`${MONTH_NAMES[month-1]} ${year}`,has_data:false,amount:0,ep:0,vz:0,epVz:0,net:0};
+        monthsWithData++;
+        const filtered = selectedDoctorIds.size===0 ? r.doctors : r.doctors.filter(d=>selectedDoctorIds.has(d.doctor_id));
+        const amt  = filtered.reduce((s,d)=>s+d.total_amount,0);
+        const ep   = filtered.reduce((s,d)=>s+d.total_ep,0);
+        const vz   = filtered.reduce((s,d)=>s+d.total_vz,0);
+        const epVz = filtered.reduce((s,d)=>s+d.total_ep_vz,0);
+        totalAmount+=amt; totalEp+=ep; totalVz+=vz; totalEpVz+=epVz; totalNet+=amt-epVz;
+        return {year,month,label:`${MONTH_NAMES[month-1]} ${year}`,has_data:true,amount:amt,ep,vz,epVz,net:amt-epVz};
+      });
+
+      setRangeData({totalAmount,totalEp,totalVz,totalEpVz,totalNet,monthsWithData,months:monthEntries,ep_rate,vz_rate});
+    } finally { setRangeLoading(false); }
+  }, [rangeMode, year, month, rangeEndYear, rangeEndMonth, selectedDoctorIds]);
+
+  useEffect(() => { loadRangeData(); }, [loadRangeData]);
+
   // Period nav
   const prevMonth = () => { if(month===1){setMonth(12);setYear(y=>y-1);}else setMonth(m=>m-1); };
   const nextMonth = () => { if(month===12){setMonth(1);setYear(y=>y+1);}else setMonth(m=>m+1); };
+
+  // Range end nav
+  const prevRangeEnd = () => { if(rangeEndMonth===1){setRangeEndMonth(12);setRangeEndYear(y=>y-1);}else setRangeEndMonth(m=>m-1); };
+  const nextRangeEnd = () => { if(rangeEndMonth===12){setRangeEndMonth(1);setRangeEndYear(y=>y+1);}else setRangeEndMonth(m=>m+1); };
 
   // Doctor multi-select
   const toggleDoctor = (id: number) => setSelectedDoctorIds(prev => {
@@ -328,7 +393,7 @@ export default function NhsuPage() {
     <div className="space-y-5">
 
       {/* ── FILTER BAR ── */}
-      <div className="card-neo p-5">
+      <div className="card-neo card-3d-hover p-5">
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex-1 min-w-[160px]">
             <h2 className="text-xl font-bold text-white">Розрахунок НСЗУ</h2>
@@ -370,11 +435,38 @@ export default function NhsuPage() {
 
           {/* Period */}
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-gray-500">Період</label>
-            <div className="flex items-center gap-1 bg-dark-300 border border-dark-50/20 rounded-xl px-3 py-2">
-              <button onClick={prevMonth} className="text-gray-400 hover:text-white p-0.5"><ChevronLeft size={15}/></button>
-              <span className="text-sm text-white font-medium min-w-[130px] text-center">{MONTH_NAMES[month-1]} {year}</span>
-              <button onClick={nextMonth} className="text-gray-400 hover:text-white p-0.5"><ChevronRight size={15}/></button>
+            <div className="flex items-center justify-between">
+              <label className="text-xs text-gray-500">{rangeMode ? "Від" : "Період"}</label>
+              <button
+                onClick={() => { setRangeMode(v => !v); setRangeData(null); }}
+                className={`text-xs px-2 py-0.5 rounded-lg border transition-colors ${
+                  rangeMode
+                    ? "bg-accent-500/20 text-accent-400 border-accent-500/30"
+                    : "bg-dark-300 text-gray-500 border-dark-50/20 hover:text-gray-300"
+                }`}
+              >
+                {rangeMode ? "Діапазон ✕" : "Діапазон"}
+              </button>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 bg-dark-300 border border-dark-50/20 rounded-xl px-3 py-2">
+                <button onClick={prevMonth} className="text-gray-400 hover:text-white p-0.5"><ChevronLeft size={15}/></button>
+                <span className="text-sm text-white font-medium min-w-[120px] text-center">{MONTH_NAMES[month-1]} {year}</span>
+                <button onClick={nextMonth} className="text-gray-400 hover:text-white p-0.5"><ChevronRight size={15}/></button>
+              </div>
+              {rangeMode && (
+                <>
+                  <span className="text-gray-600 text-xs">—</span>
+                  <div className="flex flex-col gap-0.5">
+                    <label className="text-xs text-gray-500">До</label>
+                    <div className="flex items-center gap-1 bg-dark-300 border border-accent-500/30 rounded-xl px-3 py-2">
+                      <button onClick={prevRangeEnd} className="text-gray-400 hover:text-white p-0.5"><ChevronLeft size={15}/></button>
+                      <span className="text-sm text-white font-medium min-w-[120px] text-center">{MONTH_NAMES[rangeEndMonth-1]} {rangeEndYear}</span>
+                      <button onClick={nextRangeEnd} className="text-gray-400 hover:text-white p-0.5"><ChevronRight size={15}/></button>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
@@ -421,8 +513,79 @@ export default function NhsuPage() {
         </div>
       )}
 
+      {/* ── RANGE MODE DASHBOARD ── */}
+      {rangeMode && (
+        <div className="space-y-4">
+          {rangeLoading && (
+            <div className="flex items-center justify-center h-32">
+              <div className="w-7 h-7 border-2 border-accent-500/30 border-t-accent-500 rounded-full animate-spin"/>
+            </div>
+          )}
+          {!rangeLoading && rangeData && (<>
+            {/* Range KPI cards — без пацієнтів та не верифікованих */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {([
+                { label:"Сума (брутто)",          val:fmt2(rangeData.totalAmount),  color:"text-emerald-400", Icon:BadgeDollarSign },
+                { label:`ЄП ${rangeData.ep_rate}%`, val:fmt2(rangeData.totalEp),    color:"text-red-400",     Icon:TrendingDown },
+                { label:`ВЗ ${rangeData.vz_rate}%`, val:fmt2(rangeData.totalVz),    color:"text-orange-400",  Icon:ShieldAlert },
+                { label:"Чистий дохід",           val:fmt2(rangeData.totalNet),     color:"text-accent-400",  Icon:BadgeDollarSign },
+              ] as const).map(({ label, val, color, Icon }) => (
+                <div key={label} className="card-neo kpi-3d-hover p-4 space-y-2">
+                  <div className="flex items-center gap-1.5">
+                    <Icon size={13} className="text-gray-500"/>
+                    <p className="text-xs text-gray-500 uppercase tracking-wide">{label}</p>
+                  </div>
+                  <p className={`text-xl font-bold font-mono ${color}`}>{val}</p>
+                  <p className="text-xs text-gray-600">за {rangeData.monthsWithData} міс. з даними</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Month-by-month breakdown */}
+            <div className="card-neo card-3d-hover overflow-hidden">
+              <div className="px-5 py-3 border-b border-dark-50/10 flex items-center gap-2 bg-dark-400/30">
+                <TrendingUp size={14} className="text-accent-400"/>
+                <h4 className="text-white font-semibold text-sm">Розбивка по місяцях</h4>
+                <span className="ml-auto text-xs text-gray-500">
+                  {MONTH_NAMES[month-1]} {year} — {MONTH_NAMES[rangeEndMonth-1]} {rangeEndYear}
+                </span>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead><tr className="border-b border-dark-50/10">
+                    {["Місяць","Сума (брутто)","ЄП","ВЗ","ЄП+ВЗ","Чистий дохід"].map(h=>
+                      <th key={h} className="px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase text-right first:text-left">{h}</th>
+                    )}
+                  </tr></thead>
+                  <tbody>
+                    {rangeData.months.map(m => (
+                      <tr key={`${m.year}-${m.month}`} className={`border-b border-dark-50/5 hover:bg-dark-200/40 ${!m.has_data ? "opacity-35" : ""}`}>
+                        <td className="px-4 py-2.5 text-gray-300">{m.label}</td>
+                        <td className="px-4 py-2.5 text-right text-emerald-400 font-mono">{m.has_data ? fmt2(m.amount) : "—"}</td>
+                        <td className="px-4 py-2.5 text-right text-red-400/70 font-mono">{m.has_data ? fmt2(m.ep) : "—"}</td>
+                        <td className="px-4 py-2.5 text-right text-orange-400/70 font-mono">{m.has_data ? fmt2(m.vz) : "—"}</td>
+                        <td className="px-4 py-2.5 text-right text-red-400 font-mono">{m.has_data ? fmt2(m.epVz) : "—"}</td>
+                        <td className="px-4 py-2.5 text-right text-accent-400 font-bold font-mono">{m.has_data ? fmt2(m.net) : "—"}</td>
+                      </tr>
+                    ))}
+                    <tr className="bg-dark-400/40 font-semibold border-t border-dark-50/15">
+                      <td className="px-4 py-2.5 text-white">Всього</td>
+                      <td className="px-4 py-2.5 text-right text-emerald-400 font-mono">{fmt2(rangeData.totalAmount)}</td>
+                      <td className="px-4 py-2.5 text-right text-red-400/70 font-mono">{fmt2(rangeData.totalEp)}</td>
+                      <td className="px-4 py-2.5 text-right text-orange-400/70 font-mono">{fmt2(rangeData.totalVz)}</td>
+                      <td className="px-4 py-2.5 text-right text-red-400 font-mono">{fmt2(rangeData.totalEpVz)}</td>
+                      <td className="px-4 py-2.5 text-right text-accent-400 font-mono">{fmt2(rangeData.totalNet)}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>)}
+        </div>
+      )}
+
       {/* ── DASHBOARD ── */}
-      {!loading && report && (<>
+      {!loading && report && !rangeMode && (<>
 
         {/* KPI cards */}
         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
@@ -434,7 +597,7 @@ export default function NhsuPage() {
             { label:`ВЗ ${report.vz_rate}%`, val:fmt2(totals.vz),         color:"text-orange-400",  Icon:ShieldAlert },
             { label:"Чистий дохід",   val:fmt2(totals.amount-totals.epVz),color:"text-accent-400",  Icon:BadgeDollarSign },
           ] as const).map(({ label, val, color, Icon }) => (
-            <div key={label} className="card-neo p-4 space-y-2">
+            <div key={label} className="card-neo kpi-3d-hover p-4 space-y-2">
               <div className="flex items-center gap-1.5">
                 <Icon size={13} className="text-gray-500"/>
                 <p className="text-xs text-gray-500 uppercase tracking-wide">{label}</p>
@@ -446,7 +609,7 @@ export default function NhsuPage() {
 
         {/* Charts */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-          <div className="card-neo p-5">
+          <div className="card-neo card-3d-hover p-5">
             <p className="text-sm font-semibold text-white mb-4">Пацієнти по вікових групах</p>
             <ResponsiveContainer width="100%" height={210}>
               <BarChart data={ageBarData} margin={{top:0,right:0,left:-20,bottom:30}}>
@@ -458,7 +621,7 @@ export default function NhsuPage() {
               </BarChart>
             </ResponsiveContainer>
           </div>
-          <div className="card-neo p-5">
+          <div className="card-neo card-3d-hover p-5">
             <p className="text-sm font-semibold text-white mb-4">Надходження по лікарях (грн)</p>
             <ResponsiveContainer width="100%" height={210}>
               <BarChart data={doctorBarData} margin={{top:0,right:0,left:-10,bottom:30}}>
@@ -470,7 +633,7 @@ export default function NhsuPage() {
               </BarChart>
             </ResponsiveContainer>
           </div>
-          <div className="card-neo p-5">
+          <div className="card-neo card-3d-hover p-5">
             <p className="text-sm font-semibold text-white mb-4">Розподіл пацієнтів</p>
             <ResponsiveContainer width="100%" height={210}>
               <PieChart>
@@ -486,7 +649,7 @@ export default function NhsuPage() {
 
         {/* Detail tables */}
         {filteredDoctors.map(doc => (
-          <div key={doc.doctor_id} className="card-neo overflow-hidden">
+          <div key={doc.doctor_id} className="card-neo card-3d-hover overflow-hidden">
             <div className="px-5 py-3 border-b border-dark-50/10 flex items-center gap-3 bg-dark-400/30">
               <h4 className="text-white font-semibold">{doc.doctor_name}</h4>
               {doc.is_owner && <span className="text-xs bg-accent-500/10 text-accent-400 px-2 py-0.5 rounded-full border border-accent-500/20">Власник</span>}
@@ -529,7 +692,7 @@ export default function NhsuPage() {
       {/* ── TREND + FORECAST ── */}
       {(trendData.some(t=>t.has_data) || trendLoading) && (
         <div className="grid grid-cols-1 xl:grid-cols-4 gap-4">
-          <div className="card-neo p-5 xl:col-span-3">
+          <div className="card-neo card-3d-hover p-5 xl:col-span-3">
             <div className="flex items-center gap-2 mb-4">
               <TrendingUp size={16} className="text-accent-400"/>
               <p className="text-sm font-semibold text-white">Тренд за 6 місяців</p>
@@ -547,7 +710,7 @@ export default function NhsuPage() {
               </LineChart>
             </ResponsiveContainer>
           </div>
-          <div className="card-neo p-5 flex flex-col justify-between">
+          <div className="card-neo kpi-3d-hover p-5 flex flex-col justify-between">
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <TrendingUp size={16} className="text-accent-400"/>
@@ -570,7 +733,7 @@ export default function NhsuPage() {
 
       {/* ── AI HISTORY ── */}
       {aiHistory.length > 0 && (
-        <div className="card-neo overflow-hidden">
+        <div className="card-neo card-3d-hover overflow-hidden">
           <button onClick={() => setShowHistory(v=>!v)}
             className="w-full flex items-center justify-between px-5 py-4 hover:bg-dark-300/30 transition-colors">
             <div className="flex items-center gap-2">

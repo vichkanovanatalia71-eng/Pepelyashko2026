@@ -105,7 +105,7 @@ export default function Dashboard() {
               ({ label, value, icon: Icon, arrow: Arrow, accent, iconBg, borderAccent }) => (
                 <div
                   key={label}
-                  className={`card-neo p-6 border ${borderAccent} hover:shadow-neo-lg transition-all duration-300`}
+                  className={`card-neo kpi-3d-hover p-6 border ${borderAccent}`}
                 >
                   <div className="flex items-center justify-between mb-4">
                     <div className={`p-2.5 rounded-xl ${iconBg}`}>
@@ -123,7 +123,7 @@ export default function Dashboard() {
           </div>
 
           {/* Tax summary card */}
-          <div className="card-neo p-8">
+          <div className="card-neo card-3d-hover p-8">
             <h3 className="text-lg font-semibold text-white mb-6">
               Зведення за {report.period}
             </h3>
