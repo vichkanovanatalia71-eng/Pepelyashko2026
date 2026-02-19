@@ -7,6 +7,7 @@ import TaxesPage from "./pages/TaxesPage";
 import NhsuPage from "./pages/NhsuPage";
 import SettingsPage from "./pages/SettingsPage";
 import LoginPage from "./pages/LoginPage";
+import VerifyEmailPage from "./pages/VerifyEmailPage";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -20,6 +21,7 @@ export default function App() {
     <AuthProvider>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/verify-email" element={<VerifyEmailPage />} />
         <Route
           path="/"
           element={

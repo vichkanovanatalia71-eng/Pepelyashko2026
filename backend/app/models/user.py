@@ -16,6 +16,8 @@ class User(Base):
     fop_group: Mapped[int] = mapped_column(default=3)  # Група ФОП (за замовч. 3)
     tax_rate: Mapped[float] = mapped_column(default=0.05)  # Ставка єдиного податку
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
+    verification_token: Mapped[str | None] = mapped_column(String(255), nullable=True, default=None)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )

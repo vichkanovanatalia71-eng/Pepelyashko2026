@@ -23,6 +23,14 @@ class Settings(BaseSettings):
     # AI — Claude API key for image analysis
     anthropic_api_key: str = ""
 
+    # Email / SMTP (для підтвердження реєстрації)
+    smtp_host: str = "smtp.gmail.com"
+    smtp_port: int = 587
+    smtp_user: str = ""       # напр. your@gmail.com
+    smtp_password: str = ""   # пароль додатку Gmail або SMTP-пароль
+    smtp_from: str = ""       # якщо не вказано — використовується smtp_user
+    frontend_url: str = "http://localhost:5173"  # базова URL фронтенду
+
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 
 

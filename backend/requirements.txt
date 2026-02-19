@@ -29,3 +29,6 @@ python-dotenv==1.0.1
 
 # AI (Claude API for image analysis)
 anthropic>=0.40.0
+
+# Email
+aiosmtplib>=3.0.0
