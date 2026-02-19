@@ -1,6 +1,7 @@
 import asyncio
 import base64
 import json
+from datetime import datetime, timezone
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
@@ -182,6 +183,43 @@ async def get_monthly(
             detail="Дані за цей місяць не знайдено",
         )
     return report
+
+
+# ── Тренд / прогноз (останні N місяців) ─────────────────────────────
+
+_MONTH_LABELS = ["Січ","Лют","Бер","Квіт","Тра","Чер","Лип","Сер","Вер","Жов","Лис","Гру"]
+
+
+@router.get("/monthly-summary")
+async def get_monthly_summary(
+    months: int = Query(6, ge=1, le=24),
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Останні N місяців — спрощені підсумки для тренд-графіку та прогнозування."""
+    now = datetime.now(timezone.utc)
+    results = []
+
+    for i in range(months - 1, -1, -1):
+        m = now.month - i
+        y = now.year
+        while m <= 0:
+            m += 12
+            y -= 1
+
+        report = await get_monthly_report(db, user.id, y, m)
+        results.append({
+            "year": y,
+            "month": m,
+            "label": f"{_MONTH_LABELS[m - 1]} {y}",
+            "has_data": report is not None,
+            "total_patients": report.grand_total_patients if report else 0,
+            "total_amount": float(report.grand_total_amount) if report else 0.0,
+            "net_amount": float(report.grand_total_amount - report.grand_total_ep_vz) if report else 0.0,
+            "total_ep_vz": float(report.grand_total_ep_vz) if report else 0.0,
+        })
+
+    return results
 
 
 # ── AI аналіз зображень ──────────────────────────────────────────────
