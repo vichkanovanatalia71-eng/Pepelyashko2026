@@ -537,8 +537,8 @@ export default function NhsuPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {([
                 { label:"Сума (брутто)",          val:fmt2(rangeData.totalAmount),  color:"text-emerald-400", Icon:BadgeDollarSign },
-                { label:`ЄП ${rangeData.ep_rate}%`, val:fmt2(rangeData.totalEp),    color:"text-red-400",     Icon:TrendingDown },
-                { label:`ВЗ ${rangeData.vz_rate}%`, val:fmt2(rangeData.totalVz),    color:"text-orange-400",  Icon:ShieldAlert },
+                { label:`ЄП ${settings?.ep_rate ?? rangeData.ep_rate}%`, val:fmt2(rangeData.totalEp),    color:"text-red-400",     Icon:TrendingDown },
+                { label:`ВЗ ${settings?.vz_rate ?? rangeData.vz_rate}%`, val:fmt2(rangeData.totalVz),    color:"text-orange-400",  Icon:ShieldAlert },
                 { label:"Чистий дохід",           val:fmt2(rangeData.totalNet),     color:"text-accent-400",  Icon:BadgeDollarSign },
               ] as const).map(({ label, val, color, Icon }) => (
                 <div key={label} className="card-neo kpi-3d-hover p-4 space-y-2">
@@ -604,8 +604,8 @@ export default function NhsuPage() {
             { label:"Пацієнти",       val:totals.patients,                color:"text-white",       Icon:Users },
             { label:"Не верифіковані",val:fmt(totals.nonVer),             color:"text-yellow-400",  Icon:AlertCircle },
             { label:"Сума (брутто)",  val:fmt2(totals.amount),            color:"text-emerald-400", Icon:BadgeDollarSign },
-            { label:`ЄП ${report.ep_rate}%`, val:fmt2(totals.ep),         color:"text-red-400",     Icon:TrendingDown },
-            { label:`ВЗ ${report.vz_rate}%`, val:fmt2(totals.vz),         color:"text-orange-400",  Icon:ShieldAlert },
+            { label:`ЄП ${settings?.ep_rate ?? report.ep_rate}%`, val:fmt2(totals.ep),         color:"text-red-400",     Icon:TrendingDown },
+            { label:`ВЗ ${settings?.vz_rate ?? report.vz_rate}%`, val:fmt2(totals.vz),         color:"text-orange-400",  Icon:ShieldAlert },
             { label:"Чистий дохід",   val:fmt2(totals.amount-totals.epVz),color:"text-accent-400",  Icon:BadgeDollarSign },
           ] as const).map(({ label, val, color, Icon }) => (
             <div key={label} className="card-neo kpi-3d-hover p-4 space-y-2">

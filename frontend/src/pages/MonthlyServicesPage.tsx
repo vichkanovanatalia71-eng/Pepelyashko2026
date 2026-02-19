@@ -101,6 +101,7 @@ export default function MonthlyServicesPage() {
   const [formEntries, setFormEntries] = useState<Record<number, number>>({});
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState("");
+  const [cashWarning, setCashWarning] = useState("");
 
   // ── Завантаження ──
   useEffect(() => {
@@ -175,6 +176,7 @@ export default function MonthlyServicesPage() {
     setFormCash("0");
     setFormEntries({});
     setFormError("");
+    setCashWarning("");
     setShowReportForm(true);
   }
 
@@ -186,11 +188,26 @@ export default function MonthlyServicesPage() {
     rep.entries.forEach((e) => { ent[e.service_id] = e.quantity; });
     setFormEntries(ent);
     setFormError("");
+    setCashWarning("");
     setShowReportForm(true);
   }
 
   async function handleSaveReport() {
     if (!formDoctor) { setFormError("Оберіть лікаря"); return; }
+
+    // Якщо інший лікар за цей же період вказав Готівку в касі — поточна форма також повинна мати значення
+    const cashValue = parseFloat(formCash) || 0;
+    const otherDoctorHasCash = (analytics?.reports ?? []).some(
+      (r) => r.doctor_id !== formDoctor && r.cash_in_register > 0,
+    );
+    if (otherDoctorHasCash && cashValue <= 0) {
+      setCashWarning(
+        `За ${MONTHS_UA[selectedMonth]} ${selectedYear} необхідно вказати суму у полі "Готівка в касі", оскільки за цей період інші лікарі вже вказали цей показник.`,
+      );
+      return;
+    }
+    setCashWarning("");
+
     setFormLoading(true);
     setFormError("");
     const entries = Object.entries(formEntries)
@@ -548,8 +565,17 @@ export default function MonthlyServicesPage() {
                   </div>
                 )}
                 <div>
-                  <label className="block text-xs text-gray-400 mb-1">Готівка в касі (грн)</label>
-                  <input type="number" min="0" step="0.01" value={formCash} onChange={(e) => setFormCash(e.target.value)} className="w-full bg-dark-300 border border-dark-50/20 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-accent-500/50" />
+                  <label className="block text-xs text-gray-400 mb-1">
+                    Готівка в касі (грн)
+                    {(analytics?.reports ?? []).some(r => r.doctor_id !== formDoctor && r.cash_in_register > 0) && (
+                      <span className="ml-1 text-amber-400">*</span>
+                    )}
+                  </label>
+                  <input
+                    type="number" min="0" step="0.01" value={formCash}
+                    onChange={(e) => { setFormCash(e.target.value); if (cashWarning) setCashWarning(""); }}
+                    className={`w-full bg-dark-300 border rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none ${cashWarning ? "border-amber-500/60 focus:border-amber-500" : "border-dark-50/20 focus:border-accent-500/50"}`}
+                  />
                 </div>
               </div>
 
@@ -585,6 +611,12 @@ export default function MonthlyServicesPage() {
                 </div>
               </div>
 
+              {cashWarning && (
+                <div className="flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3">
+                  <AlertCircle size={15} className="text-amber-400 mt-0.5 shrink-0" />
+                  <p className="text-xs text-amber-300">{cashWarning}</p>
+                </div>
+              )}
               {formError && <p className="text-xs text-red-400">{formError}</p>}
 
               <div className="flex items-center justify-end gap-3 pt-1">
