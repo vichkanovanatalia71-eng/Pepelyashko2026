@@ -248,9 +248,12 @@ def _parse_ai_json(text: str) -> dict:
     }
 
 
-async def _analyze_one(client, image_bytes: bytes, media_type: str) -> dict:
-    """Викликає Claude API для одного зображення (в окремому потоці)."""
+async def _analyze_with_anthropic(api_key: str, image_bytes: bytes, media_type: str) -> dict:
+    """Аналізує зображення через Anthropic Claude."""
+    import anthropic as anthropic_sdk
+
     b64 = base64.standard_b64encode(image_bytes).decode("utf-8")
+    client = anthropic_sdk.Anthropic(api_key=api_key)
 
     def _sync_call():
         msg = client.messages.create(
@@ -279,6 +282,62 @@ async def _analyze_one(client, image_bytes: bytes, media_type: str) -> dict:
     return _parse_ai_json(text)
 
 
+async def _analyze_with_openai(
+    api_key: str,
+    image_bytes: bytes,
+    media_type: str,
+    base_url: str | None = None,
+    model: str = "gpt-4o-mini",
+) -> dict:
+    """Аналізує зображення через OpenAI-сумісне API (OpenAI або xAI/Grok)."""
+    from openai import OpenAI
+
+    b64 = base64.standard_b64encode(image_bytes).decode("utf-8")
+    client_kwargs: dict = {"api_key": api_key}
+    if base_url:
+        client_kwargs["base_url"] = base_url
+    client = OpenAI(**client_kwargs)
+
+    def _sync_call():
+        resp = client.chat.completions.create(
+            model=model,
+            max_tokens=512,
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "image_url",
+                            "image_url": {"url": f"data:{media_type};base64,{b64}"},
+                        },
+                        {"type": "text", "text": _AI_PROMPT},
+                    ],
+                }
+            ],
+        )
+        return resp.choices[0].message.content
+
+    text = await asyncio.to_thread(_sync_call)
+    return _parse_ai_json(text)
+
+
+def _pick_provider(user_keys) -> tuple[str, str] | tuple[None, None]:
+    """
+    Повертає (provider, api_key) за пріоритетом: Anthropic → OpenAI → xAI.
+    Fallback на ANTHROPIC_API_KEY з env. Якщо нічого немає — (None, None).
+    """
+    if user_keys:
+        if user_keys.anthropic_key:
+            return "anthropic", user_keys.anthropic_key
+        if user_keys.openai_key:
+            return "openai", user_keys.openai_key
+        if user_keys.xai_key:
+            return "xai", user_keys.xai_key
+    if settings.anthropic_api_key:
+        return "anthropic", settings.anthropic_api_key
+    return None, None
+
+
 @router.post("/analyze-image")
 async def analyze_image(
     images: List[UploadFile] = File(...),
@@ -286,31 +345,26 @@ async def analyze_image(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    """Аналізує зображення за допомогою Claude AI та повертає розпізнані дані НСЗУ.
+    """Аналізує зображення через доступний AI-провайдер (Claude, OpenAI або xAI).
 
     - images: один або кілька файлів зображень
-    - doctor_ids: необов'язковий рядок з id лікарів через кому (відповідно до images)
+    - doctor_ids: необов'язковий рядок з id лікарів через кому
     """
-    # Визначаємо ключ: спочатку з БД користувача, потім із env
     user_keys_result = await db.execute(
         select(UserApiKeys).where(UserApiKeys.user_id == user.id)
     )
     user_keys = user_keys_result.scalar_one_or_none()
-    anthropic_key = (user_keys.anthropic_key if user_keys else None) or settings.anthropic_api_key
 
-    if not anthropic_key:
+    provider, api_key = _pick_provider(user_keys)
+
+    if not provider:
         raise HTTPException(
             status_code=503,
-            detail="AI сервіс не налаштований. Додайте Anthropic API ключ у Налаштуваннях або встановіть ANTHROPIC_API_KEY.",
-        )
-
-    try:
-        import anthropic as anthropic_sdk
-        client = anthropic_sdk.Anthropic(api_key=anthropic_key)
-    except ImportError:
-        raise HTTPException(
-            status_code=503,
-            detail="Бібліотека anthropic не встановлена. Перебудуйте Docker образ.",
+            detail=(
+                "AI сервіс не налаштований. "
+                "Додайте хоча б один API ключ у Налаштуваннях: "
+                "Anthropic (Claude), OpenAI (ChatGPT) або xAI (Grok)."
+            ),
         )
 
     # Розбираємо doctor_ids
@@ -326,7 +380,7 @@ async def analyze_image(
     for i, image_file in enumerate(images):
         raw = await image_file.read()
         media_type = image_file.content_type or "image/png"
-        # Обмеження: max 10 MB
+
         if len(raw) > 10 * 1024 * 1024:
             results.append({
                 "doctor_id": parsed_ids[i] if i < len(parsed_ids) else None,
@@ -335,11 +389,22 @@ async def analyze_image(
             })
             continue
 
-        data = await _analyze_one(client, raw, media_type)
+        if provider == "anthropic":
+            data = await _analyze_with_anthropic(api_key, raw, media_type)
+        elif provider == "openai":
+            data = await _analyze_with_openai(api_key, raw, media_type, model="gpt-4o-mini")
+        else:  # xai
+            data = await _analyze_with_openai(
+                api_key, raw, media_type,
+                base_url="https://api.x.ai/v1",
+                model="grok-2-vision-1212",
+            )
+
         results.append({
             "doctor_id": parsed_ids[i] if i < len(parsed_ids) else None,
             "filename": image_file.filename,
+            "provider": provider,
             **data,
         })
 
-    return {"results": results}
+    return {"results": results, "provider": provider}

@@ -27,8 +27,9 @@ httpx==0.28.1
 # Dev
 python-dotenv==1.0.1
 
-# AI (Claude API for image analysis)
+# AI (multi-provider: Claude, OpenAI, xAI/Grok)
 anthropic>=0.40.0
+openai>=1.0.0
 
 # Email
 aiosmtplib>=3.0.0
