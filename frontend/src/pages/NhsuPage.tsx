@@ -393,7 +393,7 @@ export default function NhsuPage() {
     <div className="space-y-5">
 
       {/* ── FILTER BAR ── */}
-      <div className="card-neo card-3d-hover p-5">
+      <div className="card-neo p-5">
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex-1 min-w-[160px]">
             <h2 className="text-xl font-bold text-white">Розрахунок НСЗУ</h2>
@@ -435,20 +435,8 @@ export default function NhsuPage() {
 
           {/* Period */}
           <div className="flex flex-col gap-1">
-            <div className="flex items-center justify-between">
-              <label className="text-xs text-gray-500">{rangeMode ? "Від" : "Період"}</label>
-              <button
-                onClick={() => { setRangeMode(v => !v); setRangeData(null); }}
-                className={`text-xs px-2 py-0.5 rounded-lg border transition-colors ${
-                  rangeMode
-                    ? "bg-accent-500/20 text-accent-400 border-accent-500/30"
-                    : "bg-dark-300 text-gray-500 border-dark-50/20 hover:text-gray-300"
-                }`}
-              >
-                {rangeMode ? "Діапазон ✕" : "Діапазон"}
-              </button>
-            </div>
-            <div className="flex items-center gap-2">
+            <label className="text-xs text-gray-500">{rangeMode ? "Від" : "Період"}</label>
+            <div className="flex items-center gap-2 flex-wrap">
               <div className="flex items-center gap-1 bg-dark-300 border border-dark-50/20 rounded-xl px-3 py-2">
                 <button onClick={prevMonth} className="text-gray-400 hover:text-white p-0.5"><ChevronLeft size={15}/></button>
                 <span className="text-sm text-white font-medium min-w-[120px] text-center">{MONTH_NAMES[month-1]} {year}</span>
@@ -467,6 +455,26 @@ export default function NhsuPage() {
                   </div>
                 </>
               )}
+              {/* "Весь рік" button */}
+              <button
+                onClick={() => {
+                  if (rangeMode) {
+                    setRangeMode(false); setRangeData(null);
+                  } else {
+                    setYear(now.getFullYear()); setMonth(1);
+                    setRangeEndYear(now.getFullYear()); setRangeEndMonth(now.getMonth() + 1);
+                    setRangeMode(true);
+                  }
+                }}
+                className={`flex items-center gap-1.5 text-xs px-3 py-2 rounded-xl border transition-colors ${
+                  rangeMode
+                    ? "bg-accent-500/20 text-accent-400 border-accent-500/40 hover:bg-accent-500/30"
+                    : "bg-dark-300 text-gray-400 border-dark-50/20 hover:text-white hover:border-dark-50/40"
+                }`}
+              >
+                <TrendingUp size={12}/>
+                {rangeMode ? "Скинути" : "Весь рік"}
+              </button>
             </div>
           </div>
 
