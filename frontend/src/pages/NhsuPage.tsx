@@ -9,6 +9,7 @@ import {
   ShieldAlert, FileImage, Plus, CheckCircle2, AlertCircle,
   Download, History, TrendingUp, Bell, Trash2,
 } from "lucide-react";
+import * as XLSX from "xlsx";
 import api from "../api/client";
 import type {
   AgeGroup, Doctor, DoctorSummary,
@@ -261,27 +262,29 @@ export default function NhsuPage() {
   const isCurrentMonth  = year===now.getFullYear() && month===now.getMonth()+1;
   const showNotification = !loading && !report && isCurrentMonth;
 
-  // CSV export
-  const exportCsv = () => {
+  // Excel export
+  const exportExcel = () => {
     if (!report) return;
-    const rows: string[][] = [
-      [`Звіт НСЗУ — ${MONTH_NAMES[month-1]} ${year}`], [],
+    const rows: (string | number)[][] = [
+      [`Звіт НСЗУ — ${MONTH_NAMES[month-1]} ${year}`],
+      [],
       ["Лікар","Вікова група","Пацієнти","Не верифіковані","Сума","ЄП","ВЗ","ЄП+ВЗ"],
       ...filteredDoctors.flatMap(d => d.rows.map(r => [
         d.doctor_name, r.age_group_label,
-        String(r.patient_count), String(r.non_verified),
-        String(r.amount), String(r.ep_amount), String(r.vz_amount), String(r.ep_vz_amount),
+        r.patient_count, r.non_verified,
+        r.amount, r.ep_amount, r.vz_amount, r.ep_vz_amount,
       ])),
       [],
-      ["Всього","",String(totals.patients),String(totals.nonVer),String(totals.amount),String(totals.ep),String(totals.vz),String(totals.epVz)],
+      ["Всього","",totals.patients,totals.nonVer,totals.amount,totals.ep,totals.vz,totals.epVz],
     ];
-    const csv  = rows.map(r => r.map(v=>`"${v}"`).join(",")).join("\r\n");
-    const blob = new Blob(["\uFEFF"+csv], { type:"text/csv;charset=utf-8;" });
-    const a    = Object.assign(document.createElement("a"),{
-      href: URL.createObjectURL(blob),
-      download: `НСЗУ_${MONTH_NAMES[month-1]}_${year}.csv`,
-    });
-    a.click(); URL.revokeObjectURL(a.href);
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws["!cols"] = [
+      { wch: 30 }, { wch: 18 }, { wch: 12 }, { wch: 18 },
+      { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 14 },
+    ];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Звіт");
+    XLSX.writeFile(wb, `НСЗУ_${MONTH_NAMES[month-1]}_${year}.xlsx`);
   };
 
   // Open fill modal
@@ -485,9 +488,9 @@ export default function NhsuPage() {
               <Plus size={15}/>{report?"Редагувати":"Заповнити"}
             </button>
             {report && (
-              <button onClick={exportCsv}
+              <button onClick={exportExcel}
                 className="flex items-center gap-2 px-4 py-2.5 bg-dark-300 hover:bg-dark-200 text-gray-300 rounded-xl text-sm border border-dark-50/20">
-                <Download size={15}/>CSV
+                <Download size={15}/>Excel
               </button>
             )}
           </div>
@@ -624,7 +627,7 @@ export default function NhsuPage() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08"/>
                 <XAxis dataKey="name" tick={{fill:"#6b7280",fontSize:11}} angle={-25} textAnchor="end"/>
                 <YAxis tick={{fill:"#6b7280",fontSize:11}}/>
-                <Tooltip contentStyle={TT_STYLE}/>
+                <Tooltip cursor={{ fill: 'transparent' }} contentStyle={TT_STYLE}/>
                 <Bar dataKey="patients" fill="#6366f1" radius={[4,4,0,0]}/>
               </BarChart>
             </ResponsiveContainer>
@@ -636,7 +639,7 @@ export default function NhsuPage() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08"/>
                 <XAxis dataKey="name" tick={{fill:"#6b7280",fontSize:11}} angle={-25} textAnchor="end"/>
                 <YAxis tick={{fill:"#6b7280",fontSize:11}}/>
-                <Tooltip contentStyle={TT_STYLE} formatter={(v:number)=>[`${v.toLocaleString("uk-UA")} грн`,"Сума"]}/>
+                <Tooltip cursor={{ fill: 'transparent' }} contentStyle={TT_STYLE} formatter={(v:number)=>[`${v.toLocaleString("uk-UA")} грн`,"Сума"]}/>
                 <Bar dataKey="amount" fill="#22d3ee" radius={[4,4,0,0]}/>
               </BarChart>
             </ResponsiveContainer>
@@ -649,7 +652,7 @@ export default function NhsuPage() {
                   {pieData.map((_,i) => <Cell key={i} fill={PIE_COLORS[i%PIE_COLORS.length]}/>)}
                 </Pie>
                 <Legend formatter={v=><span style={{color:"#9ca3af",fontSize:12}}>{v}</span>}/>
-                <Tooltip contentStyle={TT_STYLE}/>
+                <Tooltip cursor={{ fill: 'transparent' }} contentStyle={TT_STYLE}/>
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -711,7 +714,7 @@ export default function NhsuPage() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08"/>
                 <XAxis dataKey="label" tick={{fill:"#6b7280",fontSize:11}}/>
                 <YAxis tick={{fill:"#6b7280",fontSize:11}}/>
-                <Tooltip contentStyle={TT_STYLE} formatter={(v:number)=>[`${v.toLocaleString("uk-UA")} грн`]}/>
+                <Tooltip cursor={{ fill: 'transparent' }} contentStyle={TT_STYLE} formatter={(v:number)=>[`${v.toLocaleString("uk-UA")} грн`]}/>
                 <Legend formatter={v=><span style={{color:"#9ca3af",fontSize:11}}>{v}</span>}/>
                 <Line type="monotone" dataKey="total_amount"  name="Брутто"        stroke="#10b981" strokeWidth={2} dot={{r:4,fill:"#10b981"}} connectNulls={false}/>
                 <Line type="monotone" dataKey="net_amount"    name="Чистий дохід"  stroke="#6366f1" strokeWidth={2} dot={{r:4,fill:"#6366f1"}} connectNulls={false} strokeDasharray="5 3"/>
