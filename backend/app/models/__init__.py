@@ -5,6 +5,8 @@ from app.models.doctor import Doctor
 from app.models.nhsu import NhsuSettings, NhsuRecord
 from app.models.user_api_keys import UserApiKeys
 from app.models.service import Service
+from app.models.monthly_service import MonthlyPaidServicesReport, MonthlyPaidServiceEntry
+from app.models.share_report import ShareReport
 
 __all__ = [
     "User",
@@ -16,4 +18,7 @@ __all__ = [
     "NhsuRecord",
     "UserApiKeys",
     "Service",
+    "MonthlyPaidServicesReport",
+    "MonthlyPaidServiceEntry",
+    "ShareReport",
 ]

@@ -162,3 +162,99 @@ export interface NhsuMonthlyReport {
   grand_total_vz: number;
   grand_total_ep_vz: number;
 }
+
+// ── Щомісячний облік платних послуг ─────────────────────────────────
+
+export interface ReportEntry {
+  service_id: number;
+  service_code: string;
+  service_name: string;
+  quantity: number;
+}
+
+export interface MonthReport {
+  id: number;
+  doctor_id: number;
+  doctor_name: string;
+  year: number;
+  month: number;
+  cash_in_register: number;
+  status: "draft" | "final";
+  entries: ReportEntry[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DashboardData {
+  total_revenue: number;
+  total_quantity: number;
+  avg_check: number;
+  prev_month_revenue: number;
+  prev_month_quantity: number;
+  doctor_income: number;
+  materials_cost: number;
+  ep_amount: number;
+  vz_amount: number;
+  total_costs: number;
+  org_income: number;
+  cash_in_register: number;
+  bank_amount: number;
+}
+
+export interface DoctorBreakdown {
+  doctor_id: number;
+  doctor_name: string;
+  quantity: number;
+}
+
+export interface ServiceTableRow {
+  service_id: number;
+  code: string;
+  name: string;
+  price: number;
+  total_quantity: number;
+  by_doctor: DoctorBreakdown[];
+  sum: number;
+  materials: number;
+  ep_amount: number;
+  vz_amount: number;
+  to_split: number;
+  doctor_income: number;
+  org_income: number;
+}
+
+export interface MonthlyTrendRow {
+  year: number;
+  month: number;
+  quantity: number;
+  sum: number;
+  materials: number;
+  ep_amount: number;
+  vz_amount: number;
+  to_split: number;
+  doctor_income: number;
+}
+
+export interface TopMaterialRow {
+  name: string;
+  unit: string;
+  total_quantity: number;
+  total_cost: number;
+  share_pct: number;
+}
+
+export interface AnalyticsData {
+  dashboard: DashboardData;
+  services_table: ServiceTableRow[];
+  monthly_trend: MonthlyTrendRow[];
+  top_materials: TopMaterialRow[];
+  reports: MonthReport[];
+  ep_rate: number;
+  vz_rate: number;
+}
+
+export interface ShareResponse {
+  token: string;
+  url: string;
+  expires_at: string;
+}
