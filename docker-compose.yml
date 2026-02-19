@@ -17,7 +17,7 @@ services:
 
   backend:
     build: ./backend
-    command: ["bash", "./entrypoint.sh"]
+    command: ["bash", "-c", "sed -i 's/\\r$//' ./entrypoint.sh && bash ./entrypoint.sh"]
     ports:
       - "8000:8000"
     environment:
