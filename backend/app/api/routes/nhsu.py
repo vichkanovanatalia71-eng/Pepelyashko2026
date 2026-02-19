@@ -27,33 +27,109 @@ from app.services.nhsu import get_monthly_report, get_or_create_settings, save_m
 
 router = APIRouter()
 
-_AI_PROMPT = """Ти аналізуєш скріншот або фото звіту з порталу НСЗУ (Національна служба здоров'я України) або документу з даними про декларації лікаря.
+# ── Промти для AI-провайдерів ────────────────────────────────────────
 
-Знайди та вилучи такі дані:
-1. Ім'я лікаря (якщо видно)
-2. Кількість активних декларацій (пацієнтів) по вікових групах:
-   - Вік 0-5 років
-   - Вік 6-17 років
-   - Вік 18-39 років
-   - Вік 40-64 років
-   - Вік 65+ років (понад 65)
-   - Всього декларацій
+_ANTHROPIC_SYSTEM = """\
+Ти — спеціалізований OCR-асистент для обробки медичних звітів НСЗУ (Національна служба здоров'я України).
+Твоя єдина задача — точно розпізнати числові дані з зображення та повернути їх у форматі JSON.
+Відповідай ТІЛЬКИ валідним JSON без markdown, коментарів чи пояснень."""
 
-Поверни ТІЛЬКИ JSON об'єкт без пояснень, markdown або додаткового тексту:
-{
-  "doctor_name": "ПІБ лікаря або null якщо не видно",
-  "age_0_5": число,
-  "age_6_17": число,
-  "age_18_39": число,
-  "age_40_64": число,
-  "age_65_plus": число,
-  "total": число,
-  "confidence": "high або medium або low",
-  "notes": "примітки щодо якості даних"
-}
+_ANTHROPIC_PROMPT = """\
+<context>
+Це скріншот або фото зі звіту порталу НСЗУ (esoz.nhsu.gov.ua) або іншого документу з даними про декларації лікаря первинної медичної допомоги.
 
-Якщо значення невизначено — використай 0.
-"""
+Типові формати даних на скріншотах:
+- Таблиця з колонками: вікова група | кількість декларацій
+- Кругова діаграма або стовпчикова діаграма з підписами
+- Загальна інформація про лікаря з кількістю пацієнтів
+- Текстовий звіт або витяг з порталу
+</context>
+
+<task>
+Знайди та вилучи з зображення такі дані:
+
+1. **ПІБ лікаря** — прізвище, ім'я, по батькові (якщо видно на зображенні)
+2. **Кількість активних декларацій (пацієнтів) за віковими групами:**
+   - від 0 до 5 років
+   - від 6 до 17 років
+   - від 18 до 39 років
+   - від 40 до 64 років
+   - понад 65 років
+3. **Загальна кількість декларацій** (усіх вікових груп разом)
+</task>
+
+<rules>
+- Числа мають бути цілими (integer), без десяткових крапок
+- Якщо "total" не вказано явно — порахуй як суму всіх вікових груп
+- Якщо сума вікових груп не збігається з вказаним total — використай ЯВНО вказане на скріншоті значення total
+- Якщо певну вікову групу неможливо визначити — постав 0
+- Якщо зображення нечітке або дані частково видимі — все одно спробуй розпізнати, що можливо
+- confidence: "high" = всі числа чітко видимі; "medium" = деякі числа можуть бути неточними; "low" = більшість даних нерозпізнана
+</rules>
+
+<output_format>
+Поверни ТІЛЬКИ JSON:
+{"doctor_name": "ПІБ або null", "age_0_5": 0, "age_6_17": 0, "age_18_39": 0, "age_40_64": 0, "age_65_plus": 0, "total": 0, "confidence": "high", "notes": ""}
+</output_format>"""
+
+_OPENAI_SYSTEM = (
+    "Ти — спеціалізований OCR-асистент для обробки медичних звітів НСЗУ "
+    "(Національна служба здоров'я України). "
+    "Твоя єдина задача — точно розпізнати числові дані з зображення та повернути їх у форматі JSON. "
+    "Завжди відповідай ТІЛЬКИ валідним JSON об'єктом. Без markdown, без ```json, без пояснень."
+)
+
+_OPENAI_PROMPT = """\
+Проаналізуй це зображення зі звіту НСЗУ (портал esoz.nhsu.gov.ua) або іншого документу з даними про декларації лікаря.
+
+Що шукати:
+- Таблиця або діаграма з кількістю декларацій по вікових групах
+- ПІБ лікаря (прізвище, ім'я, по батькові)
+- Загальна кількість декларацій
+
+Вікові групи:
+• 0-5 років → age_0_5
+• 6-17 років → age_6_17
+• 18-39 років → age_18_39
+• 40-64 років → age_40_64
+• 65+ років → age_65_plus
+
+Правила:
+- Числа — цілі (integer)
+- Якщо total не вказано — порахуй суму вікових груп
+- Якщо вікова група не видима — постав 0
+- confidence: "high" (все чітко), "medium" (є неточності), "low" (мало даних)
+
+Поверни JSON:
+{"doctor_name": "ПІБ або null", "age_0_5": 0, "age_6_17": 0, "age_18_39": 0, "age_40_64": 0, "age_65_plus": 0, "total": 0, "confidence": "high", "notes": ""}"""
+
+_XAI_SYSTEM = _OPENAI_SYSTEM
+
+_XAI_PROMPT = """\
+Проаналізуй зображення зі звіту НСЗУ (Національна служба здоров'я України) — портал esoz.nhsu.gov.ua.
+
+Завдання: знайди кількість активних декларацій лікаря по вікових групах.
+
+Що шукати на зображенні:
+- Таблиця або графік з кількістю пацієнтів (декларацій) за віком
+- ПІБ лікаря
+- Загальна кількість декларацій
+
+Вікові групи та поля JSON:
+• від 0 до 5 років → age_0_5
+• від 6 до 17 років → age_6_17
+• від 18 до 39 років → age_18_39
+• від 40 до 64 років → age_40_64
+• понад 65 років → age_65_plus
+
+Правила:
+- Усі числа — цілі (integer), без десяткових
+- total = сума всіх вікових груп (якщо не вказано явно)
+- Якщо дані не видно — 0
+- confidence: "high"/"medium"/"low"
+
+Відповідай ТІЛЬКИ JSON без будь-якого іншого тексту:
+{"doctor_name": "ПІБ або null", "age_0_5": 0, "age_6_17": 0, "age_18_39": 0, "age_40_64": 0, "age_65_plus": 0, "total": 0, "confidence": "high", "notes": ""}"""
 
 
 # ── Налаштування НСЗУ ───────────────────────────────────────────────
@@ -249,7 +325,7 @@ def _parse_ai_json(text: str) -> dict:
 
 
 async def _analyze_with_anthropic(api_key: str, image_bytes: bytes, media_type: str) -> dict:
-    """Аналізує зображення через Anthropic Claude."""
+    """Аналізує зображення через Anthropic Claude (system + user prompt, XML-теги)."""
     import anthropic as anthropic_sdk
 
     b64 = base64.standard_b64encode(image_bytes).decode("utf-8")
@@ -258,7 +334,8 @@ async def _analyze_with_anthropic(api_key: str, image_bytes: bytes, media_type: 
     def _sync_call():
         msg = client.messages.create(
             model="claude-haiku-4-5-20251001",
-            max_tokens=512,
+            max_tokens=1024,
+            system=_ANTHROPIC_SYSTEM,
             messages=[
                 {
                     "role": "user",
@@ -271,7 +348,7 @@ async def _analyze_with_anthropic(api_key: str, image_bytes: bytes, media_type: 
                                 "data": b64,
                             },
                         },
-                        {"type": "text", "text": _AI_PROMPT},
+                        {"type": "text", "text": _ANTHROPIC_PROMPT},
                     ],
                 }
             ],
@@ -286,23 +363,21 @@ async def _analyze_with_openai(
     api_key: str,
     image_bytes: bytes,
     media_type: str,
-    base_url: str | None = None,
     model: str = "gpt-4o-mini",
 ) -> dict:
-    """Аналізує зображення через OpenAI-сумісне API (OpenAI або xAI/Grok)."""
+    """Аналізує зображення через OpenAI (system + user, JSON mode)."""
     from openai import OpenAI
 
     b64 = base64.standard_b64encode(image_bytes).decode("utf-8")
-    client_kwargs: dict = {"api_key": api_key}
-    if base_url:
-        client_kwargs["base_url"] = base_url
-    client = OpenAI(**client_kwargs)
+    client = OpenAI(api_key=api_key)
 
     def _sync_call():
         resp = client.chat.completions.create(
             model=model,
-            max_tokens=512,
+            max_tokens=1024,
+            response_format={"type": "json_object"},
             messages=[
+                {"role": "system", "content": _OPENAI_SYSTEM},
                 {
                     "role": "user",
                     "content": [
@@ -310,9 +385,44 @@ async def _analyze_with_openai(
                             "type": "image_url",
                             "image_url": {"url": f"data:{media_type};base64,{b64}"},
                         },
-                        {"type": "text", "text": _AI_PROMPT},
+                        {"type": "text", "text": _OPENAI_PROMPT},
                     ],
-                }
+                },
+            ],
+        )
+        return resp.choices[0].message.content
+
+    text = await asyncio.to_thread(_sync_call)
+    return _parse_ai_json(text)
+
+
+async def _analyze_with_xai(
+    api_key: str,
+    image_bytes: bytes,
+    media_type: str,
+) -> dict:
+    """Аналізує зображення через xAI Grok (OpenAI-сумісне API)."""
+    from openai import OpenAI
+
+    b64 = base64.standard_b64encode(image_bytes).decode("utf-8")
+    client = OpenAI(api_key=api_key, base_url="https://api.x.ai/v1")
+
+    def _sync_call():
+        resp = client.chat.completions.create(
+            model="grok-2-vision-1212",
+            max_tokens=1024,
+            messages=[
+                {"role": "system", "content": _XAI_SYSTEM},
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "image_url",
+                            "image_url": {"url": f"data:{media_type};base64,{b64}"},
+                        },
+                        {"type": "text", "text": _XAI_PROMPT},
+                    ],
+                },
             ],
         )
         return resp.choices[0].message.content
@@ -392,13 +502,9 @@ async def analyze_image(
         if provider == "anthropic":
             data = await _analyze_with_anthropic(api_key, raw, media_type)
         elif provider == "openai":
-            data = await _analyze_with_openai(api_key, raw, media_type, model="gpt-4o-mini")
+            data = await _analyze_with_openai(api_key, raw, media_type)
         else:  # xai
-            data = await _analyze_with_openai(
-                api_key, raw, media_type,
-                base_url="https://api.x.ai/v1",
-                model="grok-2-vision-1212",
-            )
+            data = await _analyze_with_xai(api_key, raw, media_type)
 
         results.append({
             "doctor_id": parsed_ids[i] if i < len(parsed_ids) else None,
