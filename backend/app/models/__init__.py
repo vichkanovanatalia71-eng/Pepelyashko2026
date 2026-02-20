@@ -10,6 +10,7 @@ from app.models.share_report import ShareReport
 from app.models.tax_payment import TaxPayment
 from app.models.staff import StaffMember
 from app.models.budget import BudgetRow, BudgetCell
+from app.models.monthly_expense import MonthlyFixedExpense, MonthlySalaryExpense
 
 __all__ = [
     "User",
@@ -29,4 +30,6 @@ __all__ = [
     "StaffMember",
     "BudgetRow",
     "BudgetCell",
+    "MonthlyFixedExpense",
+    "MonthlySalaryExpense",
 ]

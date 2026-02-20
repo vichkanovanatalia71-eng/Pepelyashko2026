@@ -9,8 +9,6 @@ import SettingsPage from "./pages/SettingsPage";
 import ProfilePage from "./pages/ProfilePage";
 import ServicesPage from "./pages/ServicesPage";
 import RevenuePage from "./pages/RevenuePage";
-import BudgetPage from "./pages/BudgetPage";
-
 import MonthlyServicesPage from "./pages/MonthlyServicesPage";
 import SharePage from "./pages/SharePage";
 import LoginPage from "./pages/LoginPage";
@@ -48,7 +46,6 @@ export default function App() {
           <Route path="services" element={<ServicesPage />} />
           <Route path="monthly-services" element={<MonthlyServicesPage />} />
           <Route path="revenue" element={<RevenuePage />} />
-          <Route path="budget" element={<BudgetPage />} />
         </Route>
       </Routes>
     </AuthProvider>

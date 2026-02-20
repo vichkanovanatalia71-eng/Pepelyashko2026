@@ -2,9 +2,10 @@
 export interface StaffMember {
   id: number;
   full_name: string;
-  role: "nurse" | "other";
+  role: "doctor" | "nurse" | "other";
   position: string;
   is_active: boolean;
+  doctor_id: number | null;
 }
 
 // ── Revenue analytics types ──────────────────────────────────────────
@@ -181,6 +182,72 @@ export interface NhsuSettings {
   ep_rate: number;
   vz_rate: number;
   esv_monthly: number;
+  pdfo_rate: number;
+  vz_zp_rate: number;
+  esv_employer_rate: number;
+}
+
+// ── Structured monthly expenses ──────────────────────────────────────
+export interface MonthlyTaxRates {
+  pdfo_rate: number;
+  vz_zp_rate: number;
+  esv_employer_rate: number;
+  ep_rate: number;
+  vz_rate: number;
+}
+
+export interface FixedExpenseRow {
+  category_key: string;
+  category_name: string;
+  amount: number;
+  is_recurring: boolean;
+}
+
+export interface SalaryExpenseRow {
+  staff_member_id: number;
+  full_name: string;
+  role: "doctor" | "nurse" | "other";
+  brutto: number;
+  pdfo: number;
+  vz_zp: number;
+  esv: number;
+  netto: number;
+  has_supplement: boolean;
+  target_net: number | null;
+  supplement: number;
+  individual_bonus: number;
+  paid_services_from_module: boolean;
+  paid_services_income: number;
+  total_employer_cost: number;
+}
+
+export interface TaxBlock {
+  nhsu_income: number;
+  paid_services_income: number;
+  total_income: number;
+  ep_rate: number;
+  vz_rate: number;
+  ep: number;
+  vz: number;
+}
+
+export interface ExpenseTotals {
+  fixed_total: number;
+  salary_total: number;
+  tax_total: number;
+  grand_total: number;
+  income: number;
+  remaining: number;
+}
+
+export interface MonthlyExpenseData {
+  year: number;
+  month: number;
+  settings: MonthlyTaxRates;
+  fixed: FixedExpenseRow[];
+  salary: SalaryExpenseRow[];
+  taxes: TaxBlock;
+  totals: ExpenseTotals;
 }
 
 export interface DoctorAgeGroupRow {

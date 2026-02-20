@@ -41,6 +41,7 @@ export default function SettingsPage() {
   // ── Колапс-стан блоків ──
   const [open, setOpen] = useState<Record<string, boolean>>({
     doctors: true,
+    doctorStaff: false,
     nurses: false,
     otherStaff: false,
     apiKeys: false,
@@ -62,6 +63,13 @@ export default function SettingsPage() {
   const [newNursePosition, setNewNursePosition] = useState("");
   const [nurseLoading, setNurseLoading] = useState(false);
   const [nurseMsg, setNurseMsg] = useState("");
+
+  // ── Лікарі (персонал) ──
+  const [doctorStaff, setDoctorStaff] = useState<StaffMember[]>([]);
+  const [newDoctorStaffName, setNewDoctorStaffName] = useState("");
+  const [newDoctorStaffPosition, setNewDoctorStaffPosition] = useState("");
+  const [doctorStaffLoading, setDoctorStaffLoading] = useState(false);
+  const [doctorStaffMsg, setDoctorStaffMsg] = useState("");
 
   // ── Інший персонал ──
   const [otherStaff, setOtherStaff] = useState<StaffMember[]>([]);
@@ -97,6 +105,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     loadDoctors();
+    loadDoctorStaff();
     loadNurses();
     loadOtherStaff();
     loadSettings();
@@ -143,6 +152,41 @@ export default function SettingsPage() {
     try {
       await axios.delete(`${API}/api/nhsu/doctors/${id}`, { headers });
       await loadDoctors();
+    } catch {}
+  }
+
+  async function loadDoctorStaff() {
+    try {
+      const res = await axios.get(`${API}/api/staff/?role=doctor`, { headers });
+      setDoctorStaff(res.data);
+    } catch {}
+  }
+
+  async function handleAddDoctorStaff() {
+    if (!newDoctorStaffName.trim()) return;
+    setDoctorStaffLoading(true);
+    setDoctorStaffMsg("");
+    try {
+      await axios.post(
+        `${API}/api/staff/`,
+        { full_name: newDoctorStaffName.trim(), role: "doctor", position: newDoctorStaffPosition.trim() },
+        { headers }
+      );
+      setNewDoctorStaffName("");
+      setNewDoctorStaffPosition("");
+      setDoctorStaffMsg("Додано");
+      await loadDoctorStaff();
+    } catch (e: any) {
+      setDoctorStaffMsg(e?.response?.data?.detail ?? "Помилка");
+    } finally {
+      setDoctorStaffLoading(false);
+    }
+  }
+
+  async function handleDeleteDoctorStaff(id: number) {
+    try {
+      await axios.delete(`${API}/api/staff/${id}`, { headers });
+      await loadDoctorStaff();
     } catch {}
   }
 
@@ -388,6 +432,83 @@ export default function SettingsPage() {
                       <td className="px-4 py-3 text-right">
                         <button
                           onClick={() => handleDeleteDoctor(d.id)}
+                          className="p-1.5 text-gray-600 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* ── Лікарі (персонал / зарплата) ── */}
+      <div className="card-neo card-3d-hover p-6 space-y-5">
+        <SectionHeader sectionKey="doctorStaff" icon={Stethoscope} title="Лікарі (персонал)" />
+
+        {open.doctorStaff && (
+          <>
+            <div className="flex flex-wrap gap-3 items-end">
+              <div className="flex-1 min-w-[160px]">
+                <label className="block text-xs text-gray-400 mb-1">ПІБ</label>
+                <input
+                  className="w-full bg-dark-300 border border-dark-50/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-accent-500/50"
+                  placeholder="Шкутова Оксана Іванівна"
+                  value={newDoctorStaffName}
+                  onChange={(e) => setNewDoctorStaffName(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleAddDoctorStaff()}
+                />
+              </div>
+              <div className="flex-1 min-w-[140px]">
+                <label className="block text-xs text-gray-400 mb-1">Посада</label>
+                <input
+                  className="w-full bg-dark-300 border border-dark-50/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-accent-500/50"
+                  placeholder="Лікар загальної практики"
+                  value={newDoctorStaffPosition}
+                  onChange={(e) => setNewDoctorStaffPosition(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleAddDoctorStaff()}
+                />
+              </div>
+              <button
+                onClick={handleAddDoctorStaff}
+                disabled={doctorStaffLoading || !newDoctorStaffName.trim()}
+                className="flex items-center gap-2 px-4 py-2.5 bg-accent-500/10 hover:bg-accent-500/20 text-accent-400 rounded-xl text-sm font-medium transition-all border border-accent-500/20 disabled:opacity-50"
+              >
+                <UserPlus size={16} />
+                Додати
+              </button>
+            </div>
+
+            {doctorStaffMsg && <p className="text-xs text-accent-400">{doctorStaffMsg}</p>}
+
+            <div className="overflow-hidden rounded-xl border border-dark-50/10">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-dark-50/10 bg-dark-300/50">
+                    <th className="text-left px-4 py-3 text-gray-400 font-medium">ПІБ</th>
+                    <th className="text-left px-4 py-3 text-gray-400 font-medium">Посада</th>
+                    <th className="px-4 py-3" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {doctorStaff.length === 0 && (
+                    <tr>
+                      <td colSpan={3} className="text-center py-6 text-gray-600 text-sm">
+                        Лікарів-співробітників ще немає. Додайте першого.
+                      </td>
+                    </tr>
+                  )}
+                  {doctorStaff.map((s) => (
+                    <tr key={s.id} className="border-b border-dark-50/5 hover:bg-dark-300/30 transition-colors">
+                      <td className="px-4 py-3 text-gray-200">{s.full_name}</td>
+                      <td className="px-4 py-3 text-gray-400">{s.position || "—"}</td>
+                      <td className="px-4 py-3 text-right">
+                        <button
+                          onClick={() => handleDeleteDoctorStaff(s.id)}
                           className="p-1.5 text-gray-600 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
                         >
                           <Trash2 size={15} />
@@ -678,9 +799,11 @@ export default function SettingsPage() {
               <div className="text-gray-500 text-sm py-4">Завантаження…</div>
             ) : (
               <>
+                {/* Податки від доходу ФОП */}
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Від доходу ФОП</p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-xs text-gray-400 mb-1">Єдиний соціальний внесок (грн/місяць)</label>
+                    <label className="block text-xs text-gray-400 mb-1">ЄСВ власника (грн/місяць)</label>
                     <input
                       type="number"
                       step="0.01"
@@ -692,7 +815,7 @@ export default function SettingsPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs text-gray-400 mb-1">Єдиний податок (%)</label>
+                    <label className="block text-xs text-gray-400 mb-1">Єдиний податок — ЄП (%)</label>
                     <input
                       type="number"
                       step="0.01"
@@ -704,7 +827,7 @@ export default function SettingsPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs text-gray-400 mb-1">Військовий збір (%)</label>
+                    <label className="block text-xs text-gray-400 mb-1">Військовий збір від доходу — ВЗ (%)</label>
                     <input
                       type="number"
                       step="0.01"
@@ -712,6 +835,47 @@ export default function SettingsPage() {
                       value={settingsForm.vz_rate ?? ""}
                       onChange={(e) =>
                         setSettingsForm((p) => ({ ...p, vz_rate: parseFloat(e.target.value) }))
+                      }
+                    />
+                  </div>
+                </div>
+
+                {/* Зарплатні ставки */}
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider pt-2">Зарплатні ставки</p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-xs text-gray-400 mb-1">ПДФО із зарплати (%)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      className="w-full bg-dark-300 border border-dark-50/20 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-accent-500/50"
+                      value={settingsForm.pdfo_rate ?? ""}
+                      onChange={(e) =>
+                        setSettingsForm((p) => ({ ...p, pdfo_rate: parseFloat(e.target.value) }))
+                      }
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-400 mb-1">ВЗ із зарплати (%)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      className="w-full bg-dark-300 border border-dark-50/20 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-accent-500/50"
+                      value={settingsForm.vz_zp_rate ?? ""}
+                      onChange={(e) =>
+                        setSettingsForm((p) => ({ ...p, vz_zp_rate: parseFloat(e.target.value) }))
+                      }
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-400 mb-1">ЄСВ роботодавця (%)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      className="w-full bg-dark-300 border border-dark-50/20 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-accent-500/50"
+                      value={settingsForm.esv_employer_rate ?? ""}
+                      onChange={(e) =>
+                        setSettingsForm((p) => ({ ...p, esv_employer_rate: parseFloat(e.target.value) }))
                       }
                     />
                   </div>
