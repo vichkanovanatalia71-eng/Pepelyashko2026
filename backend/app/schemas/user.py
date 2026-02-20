@@ -30,3 +30,14 @@ class RegisterResponse(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
+
+
+class PasswordChange(BaseModel):
+    old_password: str
+    new_password: str
+
+
+class ProfileUpdate(BaseModel):
+    full_name: str | None = None
+    fop_group: int | None = None
+    tax_rate: float | None = None

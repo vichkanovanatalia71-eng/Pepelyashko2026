@@ -9,7 +9,14 @@ from app.core.deps import get_current_user, get_db
 from app.core.email import send_verification_email
 from app.core.security import create_access_token, get_password_hash, verify_password
 from app.models.user import User
-from app.schemas.user import RegisterResponse, Token, UserCreate, UserResponse
+from app.schemas.user import (
+    PasswordChange,
+    ProfileUpdate,
+    RegisterResponse,
+    Token,
+    UserCreate,
+    UserResponse,
+)
 
 router = APIRouter()
 
@@ -113,3 +120,29 @@ async def login(
 @router.get("/me", response_model=UserResponse)
 async def get_me(current_user: User = Depends(get_current_user)):
     return current_user
+
+
+@router.put("/profile", response_model=UserResponse)
+async def update_profile(
+    profile_in: ProfileUpdate,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    for field, value in profile_in.model_dump(exclude_unset=True).items():
+        setattr(user, field, value)
+    await db.commit()
+    await db.refresh(user)
+    return user
+
+
+@router.put("/change-password")
+async def change_password(
+    data: PasswordChange,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    if not verify_password(data.old_password, user.hashed_password):
+        raise HTTPException(status_code=400, detail="Невірний поточний пароль")
+    user.hashed_password = get_password_hash(data.new_password)
+    await db.commit()
+    return {"detail": "Пароль успішно змінено"}

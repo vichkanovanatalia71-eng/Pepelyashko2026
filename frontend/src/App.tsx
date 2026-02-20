@@ -6,6 +6,7 @@ import ExpensesPage from "./pages/ExpensesPage";
 import TaxesPage from "./pages/TaxesPage";
 import NhsuPage from "./pages/NhsuPage";
 import SettingsPage from "./pages/SettingsPage";
+import ProfilePage from "./pages/ProfilePage";
 
 import MonthlyServicesPage from "./pages/MonthlyServicesPage";
 import SharePage from "./pages/SharePage";
@@ -40,6 +41,7 @@ export default function App() {
           <Route path="taxes" element={<TaxesPage />} />
           <Route path="nhsu" element={<NhsuPage />} />
           <Route path="settings" element={<SettingsPage />} />
+          <Route path="profile" element={<ProfilePage />} />
           <Route path="monthly-services" element={<MonthlyServicesPage />} />
         </Route>
       </Routes>

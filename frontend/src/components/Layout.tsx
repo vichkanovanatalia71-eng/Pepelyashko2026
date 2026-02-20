@@ -26,6 +26,7 @@ const navItems = [
   { to: "/incomes",            icon: TrendingUp,      label: "Доходи",        short: "Доходи"   },
   { to: "/expenses",           icon: TrendingDown,    label: "Витрати",       short: "Витрати"  },
   { to: "/settings",           icon: Settings,        label: "Налаштування",  short: "Налашт."  },
+  { to: "/profile",            icon: User,            label: "Профіль",       short: "Профіль"  },
 ];
 
 // Bottom bar: перші 4 + кнопка «Ще»
