@@ -8,6 +8,8 @@ import {
   ArrowDownRight,
   ChevronLeft,
   ChevronRight,
+  Bell,
+  X,
 } from "lucide-react";
 import api from "../api/client";
 import type { PeriodReport } from "../types";
@@ -52,6 +54,64 @@ export default function Dashboard() {
     n.toLocaleString("uk-UA", { minimumFractionDigits: 2 });
 
   const isCurrentMonth = year === now.getFullYear() && month === now.getMonth();
+
+  // Tax deadline reminders (Ukrainian FOP 3 group calendar)
+  const [dismissedReminders, setDismissedReminders] = useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem("dismissed_reminders") || "[]"); }
+    catch { return []; }
+  });
+
+  function dismissReminder(id: string) {
+    const updated = [...dismissedReminders, id];
+    setDismissedReminders(updated);
+    localStorage.setItem("dismissed_reminders", JSON.stringify(updated));
+  }
+
+  const reminders = (() => {
+    const items: { id: string; text: string; type: "warning" | "info" }[] = [];
+    const day = now.getDate();
+    const curMonth = now.getMonth() + 1; // 1-indexed
+    const curYear = now.getFullYear();
+
+    // Єдиний податок: до 20-го числа наступного місяця після кварталу
+    // Q1 → до 20 квітня, Q2 → до 20 липня, Q3 → до 20 жовтня, Q4 → до 20 січня
+    const taxDeadlines = [
+      { quarter: 1, deadlineMonth: 4, deadlineDay: 20 },
+      { quarter: 2, deadlineMonth: 7, deadlineDay: 20 },
+      { quarter: 3, deadlineMonth: 10, deadlineDay: 20 },
+      { quarter: 4, deadlineMonth: 1, deadlineDay: 20 },
+    ];
+
+    for (const { quarter, deadlineMonth, deadlineDay } of taxDeadlines) {
+      const deadlineYear = quarter === 4 ? curYear + 1 : curYear;
+      if (curMonth === deadlineMonth && curYear <= deadlineYear) {
+        const daysLeft = deadlineDay - day;
+        if (daysLeft > 0 && daysLeft <= 10) {
+          items.push({
+            id: `tax-q${quarter}-${curYear}`,
+            text: `Єдиний податок за Q${quarter}: залишилось ${daysLeft} дн. (до ${deadlineDay}.${String(deadlineMonth).padStart(2, "0")})`,
+            type: daysLeft <= 3 ? "warning" : "info",
+          });
+        }
+      }
+    }
+
+    // ЄСВ: до 19-го кожного місяця
+    if (day <= 19) {
+      const daysLeft = 19 - day;
+      if (daysLeft <= 7 && daysLeft > 0) {
+        items.push({
+          id: `esv-${curYear}-${curMonth}`,
+          text: `ЄСВ за ${MONTH_NAMES[curMonth === 1 ? 12 : curMonth - 1].toLowerCase()}: залишилось ${daysLeft} дн. (до 19.${String(curMonth).padStart(2, "0")})`,
+          type: daysLeft <= 3 ? "warning" : "info",
+        });
+      }
+    }
+
+    // ВЗ: до 20-го наступного місяця після кварталу (same as single tax)
+
+    return items.filter(r => !dismissedReminders.includes(r.id));
+  })();
 
   const cards = report
     ? [
@@ -128,6 +188,27 @@ export default function Dashboard() {
           </button>
         </div>
       </div>
+
+      {/* Tax reminders */}
+      {reminders.length > 0 && (
+        <div className="space-y-2 mb-5">
+          {reminders.map(r => (
+            <div key={r.id} className={`flex items-center justify-between gap-3 px-4 py-3 rounded-xl border ${
+              r.type === "warning"
+                ? "bg-red-500/10 border-red-500/20 text-red-400"
+                : "bg-yellow-500/10 border-yellow-500/20 text-yellow-400"
+            }`}>
+              <div className="flex items-center gap-2.5 min-w-0">
+                <Bell size={16} className="shrink-0" />
+                <span className="text-sm">{r.text}</span>
+              </div>
+              <button onClick={() => dismissReminder(r.id)} className="p-1 rounded-lg hover:bg-dark-300/50 transition-all shrink-0">
+                <X size={14} />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
 
       {loading ? (
         <div className="flex items-center justify-center h-64">
