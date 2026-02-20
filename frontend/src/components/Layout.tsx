@@ -15,13 +15,15 @@ import {
   X,
   ChevronRight,
   User,
+  BadgeDollarSign,
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 
 // ── Навігаційні пункти ────────────────────────────────────────────
 const navItems = [
-  { to: "/",                   icon: LayoutDashboard, label: "Дашборд",       short: "Дашборд"  },
-  { to: "/monthly-services",   icon: BarChart3,       label: "Платні послуги",short: "Послуги"  },
+  { to: "/",                   icon: LayoutDashboard,  label: "Дашборд",        short: "Дашборд"  },
+  { to: "/revenue",            icon: BadgeDollarSign,  label: "Доходи",         short: "Доходи"   },
+  { to: "/monthly-services",   icon: BarChart3,        label: "Платні послуги", short: "Послуги"  },
   { to: "/nhsu",               icon: HeartPulse,      label: "НСЗУ",          short: "НСЗУ"     },
   { to: "/taxes",              icon: Receipt,         label: "Податки",       short: "Податки"  },
   { to: "/incomes",            icon: TrendingUp,      label: "Доходи",        short: "Доходи"   },

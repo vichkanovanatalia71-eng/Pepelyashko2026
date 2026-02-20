@@ -1,3 +1,57 @@
+// ── Revenue analytics types ──────────────────────────────────────────
+export interface DoctorRevenue {
+  doctor_id: number;
+  doctor_name: string;
+  nhsu: number;
+  paid_services: number;
+  total: number;
+}
+export interface ServiceRevenue {
+  service_id: number;
+  code: string;
+  name: string;
+  quantity: number;
+  revenue: number;
+}
+export interface MonthlyRevenueTrend {
+  year: number;
+  month: number;
+  month_name: string;
+  nhsu: number;
+  paid_services: number;
+  total: number;
+}
+export interface AiRecommendation {
+  type: string;  // "risk" | "opportunity" | "warning" | "insight"
+  title: string;
+  description: string;
+  data_basis: string;
+}
+export interface IntegrityWarning {
+  type: string;
+  message: string;
+}
+export interface RevenueAnalytics {
+  year: number;
+  month: number;
+  period_label: string;
+  total: number;
+  nhsu: number;
+  paid_services: number;
+  nhsu_pct: number;
+  paid_pct: number;
+  avg_per_doctor: number;
+  prev_total: number;
+  prev_nhsu: number;
+  prev_paid: number;
+  mom_pct: number;
+  by_doctor: DoctorRevenue[];
+  top_services: ServiceRevenue[];
+  monthly_trend: MonthlyRevenueTrend[];
+  recommendations: AiRecommendation[];
+  warnings: IntegrityWarning[];
+}
+
 export interface User {
   id: number;
   email: string;
