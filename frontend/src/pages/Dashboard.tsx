@@ -83,7 +83,7 @@ export default function Dashboard() {
 
   return (
     <div>
-      <div className="mb-8">
+      <div className="mb-5 lg:mb-8">
         <h2 className="text-2xl font-bold text-white">Дашборд</h2>
         <p className="text-gray-500 text-sm mt-1">
           Огляд фінансів за поточний місяць
@@ -100,22 +100,22 @@ export default function Dashboard() {
       ) : (
         <>
           {/* Metric cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-5 mb-5 lg:mb-8">
             {cards.map(
               ({ label, value, icon: Icon, arrow: Arrow, accent, iconBg, borderAccent }) => (
                 <div
                   key={label}
-                  className={`card-neo kpi-3d-hover p-6 border ${borderAccent}`}
+                  className={`card-neo kpi-3d-hover p-4 lg:p-6 border ${borderAccent}`}
                 >
-                  <div className="flex items-center justify-between mb-4">
-                    <div className={`p-2.5 rounded-xl ${iconBg}`}>
-                      <Icon size={20} className={accent} />
+                  <div className="flex items-center justify-between mb-3 lg:mb-4">
+                    <div className={`p-2 lg:p-2.5 rounded-xl ${iconBg}`}>
+                      <Icon size={18} className={accent} />
                     </div>
-                    <Arrow size={16} className={accent} />
+                    <Arrow size={15} className={accent} />
                   </div>
-                  <p className="text-sm text-gray-500 mb-1">{label}</p>
-                  <p className={`text-2xl font-bold ${accent}`}>
-                    {fmt(value)} <span className="text-base font-normal">&#8372;</span>
+                  <p className="text-xs lg:text-sm text-gray-500 mb-1">{label}</p>
+                  <p className={`text-lg lg:text-2xl font-bold ${accent}`}>
+                    {fmt(value)} <span className="text-sm lg:text-base font-normal">&#8372;</span>
                   </p>
                 </div>
               )
@@ -123,7 +123,7 @@ export default function Dashboard() {
           </div>
 
           {/* Tax summary card */}
-          <div className="card-neo card-3d-hover p-8">
+          <div className="card-neo card-3d-hover p-5 lg:p-8">
             <h3 className="text-lg font-semibold text-white mb-6">
               Зведення за {report.period}
             </h3>

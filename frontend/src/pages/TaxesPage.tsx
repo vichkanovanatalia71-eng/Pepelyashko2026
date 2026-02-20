@@ -27,7 +27,7 @@ export default function TaxesPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-5 lg:mb-8 flex-wrap gap-3">
         <div>
           <h2 className="text-2xl font-bold text-white">Податки</h2>
           <p className="text-gray-500 text-sm mt-1">
@@ -62,7 +62,7 @@ export default function TaxesPage() {
       ) : (
         <>
           {/* Quarter cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-5 mb-5 lg:mb-8">
             {taxes.map((t) => (
               <div key={t.quarter} className="card-neo p-6">
                 <p className="text-sm text-gray-500 mb-3">{t.quarter}</p>
@@ -89,7 +89,8 @@ export default function TaxesPage() {
 
           {/* Summary table */}
           <div className="card-neo overflow-hidden">
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[500px]">
               <thead>
                 <tr className="border-b border-dark-50/10">
                   <th className="text-left px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
@@ -149,6 +150,7 @@ export default function TaxesPage() {
                 </tr>
               </tbody>
             </table>
+            </div>
           </div>
         </>
       )}

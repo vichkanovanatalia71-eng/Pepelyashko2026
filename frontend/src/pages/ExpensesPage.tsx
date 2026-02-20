@@ -57,7 +57,7 @@ export default function ExpensesPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-5 lg:mb-8 flex-wrap gap-3">
         <div>
           <h2 className="text-2xl font-bold text-white">Витрати</h2>
           <p className="text-gray-500 text-sm mt-1">
@@ -69,7 +69,8 @@ export default function ExpensesPage() {
           className="btn-accent flex items-center gap-2"
         >
           {showForm ? <X size={18} /> : <Plus size={18} />}
-          {showForm ? "Закрити" : "Додати витрату"}
+          <span className="hidden sm:inline">{showForm ? "Закрити" : "Додати витрату"}</span>
+          <span className="sm:hidden">{showForm ? "Закрити" : "Додати"}</span>
         </button>
       </div>
 
@@ -143,7 +144,8 @@ export default function ExpensesPage() {
 
       {/* Table */}
       <div className="card-neo overflow-hidden">
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+        <table className="w-full text-sm min-w-[480px]">
           <thead>
             <tr className="border-b border-dark-50/10">
               <th className="text-left px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
@@ -198,6 +200,7 @@ export default function ExpensesPage() {
             )}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );

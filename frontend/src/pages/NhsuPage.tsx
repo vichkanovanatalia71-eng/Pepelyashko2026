@@ -666,7 +666,8 @@ export default function NhsuPage() {
               {doc.is_owner && <span className="text-xs bg-accent-500/10 text-accent-400 px-2 py-0.5 rounded-full border border-accent-500/20">Власник</span>}
               <span className="ml-auto text-xs text-gray-500 font-mono">{doc.total_patients} пац. · {fmt2(doc.total_amount)} грн</span>
             </div>
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[580px]">
               <thead><tr className="border-b border-dark-50/10">
                 {["Вікова група","Коеф.","Пацієнти","Не вериф.","Сума","ЄП","ВЗ","ЄП+ВЗ"].map(h=>
                   <th key={h} className="px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase text-right first:text-left">{h}</th>
@@ -696,6 +697,7 @@ export default function NhsuPage() {
                 </tr>
               </tbody>
             </table>
+            </div>
           </div>
         ))}
       </>)}
@@ -793,8 +795,8 @@ export default function NhsuPage() {
 
       {/* ══ FILL MODAL ══ */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm overflow-y-auto py-8 px-4">
-          <div className="bg-dark-600 border border-dark-50/10 rounded-2xl shadow-2xl w-full max-w-4xl">
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm overflow-y-auto py-0 px-0 sm:py-8 sm:px-4">
+          <div className="bg-dark-600 border border-dark-50/10 rounded-none sm:rounded-2xl shadow-2xl w-full max-w-4xl min-h-full sm:min-h-0">
             <div className="flex items-center justify-between px-6 py-4 border-b border-dark-50/10">
               <div>
                 <h3 className="text-lg font-bold text-white">Заповнення — {MONTH_NAMES[month-1]} {year}</h3>
@@ -864,8 +866,8 @@ export default function NhsuPage() {
                       <p className="text-sm font-semibold text-white">{doc.full_name}</p>
                       {doc.is_owner && <span className="text-xs bg-accent-500/10 text-accent-400 px-2 py-0.5 rounded-full border border-accent-500/20">Власник</span>}
                     </div>
-                    <div className="overflow-hidden rounded-xl border border-dark-50/10">
-                      <table className="w-full text-sm">
+                    <div className="overflow-x-auto rounded-xl border border-dark-50/10">
+                      <table className="w-full text-sm min-w-[480px]">
                         <thead><tr className="bg-dark-400/40 border-b border-dark-50/10">
                           <th className="text-left px-4 py-2.5 text-xs text-gray-500 uppercase">Вікова група</th>
                           <th className="text-center px-4 py-2.5 text-xs text-gray-500 uppercase">Коеф.</th>

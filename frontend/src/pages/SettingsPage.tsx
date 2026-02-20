@@ -229,8 +229,8 @@ export default function SettingsPage() {
         {open.doctors && (
           <>
             {/* Форма додавання */}
-            <div className="flex gap-3 items-end">
-              <div className="flex-1">
+            <div className="flex flex-wrap gap-3 items-end">
+              <div className="flex-1 min-w-[160px]">
                 <label className="block text-xs text-gray-400 mb-1">ПІБ лікаря</label>
                 <input
                   className="w-full bg-dark-300 border border-dark-50/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-accent-500/50"
@@ -432,7 +432,7 @@ export default function SettingsPage() {
               <div className="text-gray-500 text-sm py-4">Завантаження…</div>
             ) : (
               <>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-xs text-gray-400 mb-1">Єдиний соціальний внесок (грн/місяць)</label>
                     <input
@@ -505,7 +505,7 @@ export default function SettingsPage() {
             ) : (
               <>
                 {/* Капітаційна ставка */}
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-xs text-gray-400 mb-1">Капітаційна ставка (грн)</label>
                     <input
@@ -523,7 +523,7 @@ export default function SettingsPage() {
                 {/* Вікові коефіцієнти */}
                 <div>
                   <p className="text-xs text-gray-400 mb-3">Вікові коефіцієнти</p>
-                  <div className="grid grid-cols-5 gap-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
                     {(Object.keys(AGE_LABELS) as (keyof NhsuSettings)[]).map((key) => (
                       <div key={key}>
                         <label className="block text-xs text-gray-500 mb-1">{AGE_LABELS[key as string]}</label>
