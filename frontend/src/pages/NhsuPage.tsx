@@ -881,7 +881,7 @@ export default function NhsuPage() {
       {/* ══ FILL MODAL ══ */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm overflow-y-auto py-0 px-0 sm:py-8 sm:px-4">
-          <div className="bg-dark-600 border border-dark-50/10 rounded-none sm:rounded-2xl shadow-2xl w-full max-w-4xl min-h-full sm:min-h-0 animate-modal-in">
+          <div className="bg-dark-600 border border-dark-50/10 rounded-none sm:rounded-2xl shadow-2xl w-full max-w-4xl min-h-full sm:min-h-0 animate-modal-in pb-20 sm:pb-0">
             <div className="flex items-center justify-between px-6 py-4 border-b border-dark-50/10">
               <div>
                 <h3 className="text-lg font-bold text-white">Заповнення — {MONTH_NAMES[month-1]} {year}</h3>

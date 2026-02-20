@@ -778,7 +778,7 @@ export default function ServicesPage() {
       {/* ── Модальне вікно форми послуги ── */}
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-dark-600 border border-dark-50/10 rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl">
+          <div className="bg-dark-600 border border-dark-50/10 rounded-2xl w-full max-w-3xl max-h-[calc(100vh-6rem)] sm:max-h-[90vh] overflow-y-auto shadow-2xl">
             <div className="flex items-center justify-between p-6 border-b border-dark-50/10">
               <h2 className="text-lg font-semibold text-white">
                 {editingService ? "Редагування послуги" : "Нова послуга"}
@@ -976,7 +976,7 @@ export default function ServicesPage() {
               )}
 
               {/* Кнопки форми */}
-              <div className="flex items-center justify-end gap-3 pt-1">
+              <div className="flex items-center justify-end gap-3 pt-1 pb-20 sm:pb-0">
                 <button
                   onClick={() => setShowForm(false)}
                   className="px-5 py-2.5 text-sm text-gray-400 hover:text-gray-200 rounded-xl border border-dark-50/20 transition-all"
@@ -1100,7 +1100,7 @@ export default function ServicesPage() {
       {/* ── Модальне вікно AI-імпорту з зображення ── */}
       {showImportModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-dark-600 border border-dark-50/10 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl">
+          <div className="bg-dark-600 border border-dark-50/10 rounded-2xl w-full max-w-4xl max-h-[calc(100vh-6rem)] sm:max-h-[90vh] overflow-y-auto shadow-2xl">
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-dark-50/10">
               <div className="flex items-center gap-3">
@@ -1333,7 +1333,7 @@ export default function ServicesPage() {
                       Вибрано {parsedServices.filter((s) => s._selected).length} з {parsedServices.length} послуг.
                       Ви можете відредагувати код, назву та ціну перед імпортом.
                     </p>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 pb-20 sm:pb-0">
                       <button
                         onClick={closeImportModal}
                         className="px-5 py-2.5 text-sm text-gray-400 hover:text-gray-200 rounded-xl border border-dark-50/20 transition-all"
