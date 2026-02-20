@@ -4,50 +4,126 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ═══════════════════════════════════════════════════════════
+   CSS CUSTOM PROPERTIES — DARK THEME (default)
+   ═══════════════════════════════════════════════════════════ */
+:root {
+  /* Page & surface */
+  --bg-page:           #0a0a0a;
+  --bg-card:           #1a1a1a;
+  --bg-card-alt:       #1e1e1e;
+  --bg-card-inset:     #151515;
+  --bg-input:          #111111;
+  --bg-hover:          rgba(255, 255, 255, 0.03);
+  --bg-active:         rgba(255, 255, 255, 0.06);
+
+  /* Text */
+  --text-primary:      #e5e5e5;
+  --text-secondary:    #9ca3af;
+  --text-muted:        #6b7280;
+  --text-dim:          #374151;
+
+  /* Borders */
+  --border:            rgba(42, 42, 42, 0.22);
+  --border-strong:     rgba(60, 60, 60, 0.35);
+  --border-focus:      rgba(249, 115, 22, 0.50);
+
+  /* Orange accent border for cards (dark premium look) */
+  --card-border-top:   rgba(249, 115, 22, 0.13);
+  --card-border-side:  rgba(249, 115, 22, 0.06);
+
+  /* Shadows */
+  --shadow-card:
+    6px 6px 14px rgba(0, 0, 0, 0.55),
+    -3px -3px 8px rgba(255, 255, 255, 0.035);
+  --shadow-sm:
+    4px 4px 8px rgba(0, 0, 0, 0.45),
+    -2px -2px 6px rgba(255, 255, 255, 0.025);
+  --shadow-inset:
+    inset 4px 4px 8px rgba(0, 0, 0, 0.40),
+    inset -2px -2px 6px rgba(255, 255, 255, 0.03);
+  --shadow-glow-accent: 0 0 20px rgba(249, 115, 22, 0.18);
+
+  /* Scrollbar */
+  --scrollbar-track:   #111111;
+  --scrollbar-thumb:   #2a2a2a;
+  --scrollbar-hover:   #3a3a3a;
+
+  /* Nav bg */
+  --bg-nav:            rgba(10, 10, 10, 0.92);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CSS CUSTOM PROPERTIES — LIGHT THEME
+   ═══════════════════════════════════════════════════════════ */
+:root.light-theme {
+  --bg-page:           #f1f5f9;
+  --bg-card:           #ffffff;
+  --bg-card-alt:       #f8fafc;
+  --bg-card-inset:     #f1f5f9;
+  --bg-input:          #f8fafc;
+  --bg-hover:          rgba(0, 0, 0, 0.03);
+  --bg-active:         rgba(0, 0, 0, 0.06);
+
+  --text-primary:      #0f172a;
+  --text-secondary:    #475569;
+  --text-muted:        #64748b;
+  --text-dim:          #94a3b8;
+
+  --border:            rgba(0, 0, 0, 0.08);
+  --border-strong:     rgba(0, 0, 0, 0.14);
+  --border-focus:      rgba(249, 115, 22, 0.50);
+
+  /* Orange accent (softer on light) */
+  --card-border-top:   rgba(249, 115, 22, 0.18);
+  --card-border-side:  rgba(0, 0, 0, 0.06);
+
+  --shadow-card:
+    0 2px 8px rgba(0, 0, 0, 0.07),
+    0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-sm:
+    0 1px 4px rgba(0, 0, 0, 0.06),
+    0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-inset:
+    inset 0 2px 4px rgba(0, 0, 0, 0.06),
+    inset 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-glow-accent: 0 0 18px rgba(249, 115, 22, 0.15);
+
+  --scrollbar-track:   #e2e8f0;
+  --scrollbar-thumb:   #cbd5e1;
+  --scrollbar-hover:   #94a3b8;
+
+  --bg-nav:            rgba(255, 255, 255, 0.92);
+}
+
 @layer base {
   body {
     font-family: "Inter", system-ui, -apple-system, sans-serif;
-    background-color: #0a0a0a;
-    color: #e5e5e5;
+    background-color: var(--bg-page);
+    color: var(--text-primary);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    /* Запобігаємо горизонтальному скролу на мобільних */
     overflow-x: hidden;
+    transition: background-color 0.25s ease, color 0.25s ease;
   }
 
-  /* Вимкнути синю підсвітку тапу на iOS/Android */
   * {
     -webkit-tap-highlight-color: transparent;
   }
 
-  /* Нативний скрол на iOS */
   main, [data-scroll] {
     -webkit-overflow-scrolling: touch;
   }
 
-  ::-webkit-scrollbar {
-    width: 4px;
-  }
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--scrollbar-track); }
+  ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-hover); }
 
-  ::-webkit-scrollbar-track {
-    background: #111111;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    background: #2a2a2a;
-    border-radius: 3px;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    background: #3a3a3a;
-  }
-
-  /* Приховати скролбар на мобільних */
   @media (max-width: 1024px) {
     ::-webkit-scrollbar { display: none; }
   }
 
-  /* Inputs: запобігаємо авто-зуму на iOS (мінімум font-size 16px) */
   @media (max-width: 1024px) {
     input[type="text"],
     input[type="number"],
@@ -61,49 +137,146 @@
   }
 }
 
+/* ═══════════════════════════════════════════════════════════
+   LIGHT THEME — Tailwind utility overrides
+   ═══════════════════════════════════════════════════════════ */
+:root.light-theme {
+  /* Main text colours */
+  .text-white   { color: #0f172a !important; }
+  .text-gray-100 { color: #1e293b !important; }
+  .text-gray-200 { color: #334155 !important; }
+  .text-gray-300 { color: #475569 !important; }
+  .text-gray-400 { color: #64748b !important; }
+  .text-gray-500 { color: #94a3b8 !important; }
+  .text-gray-600 { color: #94a3b8 !important; }
+  .text-gray-700 { color: #cbd5e1 !important; }
+
+  /* Surface backgrounds */
+  .bg-dark-600  { background-color: #ffffff !important; }
+  .bg-dark-500  { background-color: #f8fafc !important; }
+  .bg-dark-400  { background-color: #f1f5f9 !important; }
+  .bg-dark-300  { background-color: #ffffff !important; }
+  .bg-dark-200  { background-color: #f8fafc !important; }
+  .bg-dark-100  { background-color: #f1f5f9 !important; }
+
+  /* Transparency backgrounds */
+  .bg-dark-300\/50  { background-color: rgba(241,245,249,0.6) !important; }
+  .bg-dark-300\/30  { background-color: rgba(241,245,249,0.4) !important; }
+
+  /* Borders */
+  .border-dark-50\/10  { border-color: rgba(0,0,0,0.07) !important; }
+  .border-dark-50\/20  { border-color: rgba(0,0,0,0.10) !important; }
+  .border-dark-50\/15  { border-color: rgba(0,0,0,0.09) !important; }
+
+  /* Bottom nav */
+  .mobile-bottom-nav { background-color: var(--bg-nav) !important; }
+
+  /* Sidebar (desktop) */
+  .bg-dark-600.lg\:flex,
+  nav.lg\:flex    { background-color: #ffffff !important; border-right-color: rgba(0,0,0,0.08) !important; }
+
+  /* Hover states */
+  .hover\:bg-dark-200:hover  { background-color: #f1f5f9 !important; }
+  .hover\:bg-dark-300:hover  { background-color: #f8fafc !important; }
+  .hover\:bg-dark-300\/30:hover { background-color: rgba(241,245,249,0.6) !important; }
+
+  /* Dividers */
+  .divide-dark-50\/10 > * + * { border-color: rgba(0,0,0,0.07) !important; }
+
+  /* Backdrop/overlay */
+  .bg-black\/60 { background-color: rgba(0,0,0,0.45) !important; }
+  .bg-black\/70 { background-color: rgba(0,0,0,0.5) !important; }
+}
+
 @layer components {
+  /* ── Cards ────────────────────────────────────────────────── */
   .card-neo {
-    @apply bg-dark-300 rounded-2xl border border-dark-50/20 shadow-neo;
+    background-color: var(--bg-card);
+    border-radius: 1rem;
+    border: 1px solid var(--border);
+    border-top-color: var(--card-border-top);
+    box-shadow: var(--shadow-card);
+    transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
   }
 
   .card-neo-sm {
-    @apply bg-dark-300 rounded-xl border border-dark-50/20 shadow-neo-sm;
+    background-color: var(--bg-card);
+    border-radius: 0.75rem;
+    border: 1px solid var(--border);
+    border-top-color: var(--card-border-top);
+    box-shadow: var(--shadow-sm);
+    transition: background-color 0.25s ease, border-color 0.25s ease;
   }
 
   .card-neo-inset {
-    @apply bg-dark-400 rounded-xl border border-dark-50/10 shadow-neo-inset;
+    background-color: var(--bg-card-inset);
+    border-radius: 0.75rem;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-inset);
+    transition: background-color 0.25s ease;
   }
 
+  /* ── Buttons ───────────────────────────────────────────────── */
   .btn-accent {
     @apply px-5 py-2.5 bg-accent-500 text-white font-semibold rounded-xl
            hover:bg-accent-600 active:bg-accent-700
-           shadow-glow-accent transition-all duration-200;
+           transition-all duration-200;
+    box-shadow: var(--shadow-glow-accent);
   }
 
   .btn-ghost {
-    @apply px-4 py-2 text-gray-400 rounded-xl
-           hover:bg-dark-200 hover:text-white transition-all duration-200;
+    padding: 0.5rem 1rem;
+    color: var(--text-secondary);
+    border-radius: 0.75rem;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+  .btn-ghost:hover {
+    background-color: var(--bg-active);
+    color: var(--text-primary);
   }
 
+  /* ── Inputs ────────────────────────────────────────────────── */
   .input-dark {
-    @apply w-full px-4 py-3 bg-dark-500 border border-dark-50/20 rounded-xl
-           text-white placeholder-gray-500
-           focus:ring-2 focus:ring-accent-500/40 focus:border-accent-500/50
-           outline-none transition-all duration-200;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background-color: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    color: var(--text-primary);
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.25s ease;
+  }
+  .input-dark::placeholder { color: var(--text-muted); }
+  .input-dark:focus {
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.12);
   }
 
   .select-dark {
-    @apply w-full px-4 py-3 bg-dark-500 border border-dark-50/20 rounded-xl
-           text-white appearance-none
-           focus:ring-2 focus:ring-accent-500/40 focus:border-accent-500/50
-           outline-none transition-all duration-200;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background-color: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    color: var(--text-primary);
+    appearance: none;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.25s ease;
+  }
+  .select-dark:focus {
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.12);
   }
 
   .label-dark {
-    @apply block text-sm font-medium text-gray-400 mb-1.5;
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: 0.375rem;
   }
 
-  /* ── 3D hover effects (тільки на десктопі з мишею) ── */
+  /* ── 3D hover effects ──────────────────────────────────────── */
   .card-3d-hover {
     transition: transform 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94),
                 box-shadow 0.28s ease;
@@ -113,9 +286,9 @@
     .card-3d-hover:hover {
       transform: perspective(900px) translateZ(16px) rotateX(-1.5deg);
       box-shadow:
-        0 28px 64px rgba(0, 0, 0, 0.55),
-        0 8px 24px rgba(99, 102, 241, 0.18),
-        0 0 0 1px rgba(99, 102, 241, 0.08);
+        0 28px 64px rgba(0, 0, 0, 0.45),
+        0 8px 24px rgba(249, 115, 22, 0.12),
+        0 0 0 1px rgba(249, 115, 22, 0.10);
     }
   }
 
@@ -128,35 +301,36 @@
     .kpi-3d-hover:hover {
       transform: perspective(500px) translateZ(14px) scale(1.04);
       box-shadow:
-        0 18px 48px rgba(0, 0, 0, 0.52),
-        0 4px 18px rgba(99, 102, 241, 0.22),
-        0 0 0 1px rgba(99, 102, 241, 0.1);
+        0 18px 48px rgba(0, 0, 0, 0.40),
+        0 4px 18px rgba(249, 115, 22, 0.18),
+        0 0 0 1px rgba(249, 115, 22, 0.12);
     }
   }
 
-  /* ── Мобільна нижня панель навігації ── */
+  /* ── Mobile bottom nav ─────────────────────────────────────── */
   .mobile-bottom-nav {
     padding-bottom: env(safe-area-inset-bottom);
+    background-color: var(--bg-nav);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-top: 1px solid var(--border);
+    transition: background-color 0.25s ease;
   }
 
-  /* ── Модальні вікна: без прокрутки фону ── */
   .modal-overlay {
     overscroll-behavior: contain;
   }
 
-  /* ── Плавне зникнення фокусу для touch (не показуємо outline) ── */
   @media (pointer: coarse) {
     *:focus { outline: none; }
-    *:focus-visible { outline: 2px solid rgba(99, 102, 241, 0.6); }
+    *:focus-visible { outline: 2px solid rgba(249, 115, 22, 0.6); }
   }
 
-  /* ── Зона тапу: мінімум 44×44px (Apple HIG) ── */
   .tap-target {
     min-height: 44px;
     min-width: 44px;
   }
 
-  /* ── Slide-up анімація для drawer і мобільних модалок ── */
   @keyframes slideUp {
     from { transform: translateY(100%); }
     to   { transform: translateY(0); }
@@ -165,7 +339,6 @@
     animation: slideUp 0.28s cubic-bezier(0.32, 0.72, 0, 1) forwards;
   }
 
-  /* ── Fade-in для backdrop ── */
   @keyframes fadeIn {
     from { opacity: 0; }
     to   { opacity: 1; }
@@ -174,7 +347,6 @@
     animation: fadeIn 0.18s ease forwards;
   }
 
-  /* ── Анімація модальних вікон: slide-up на мобільному, scale-in на десктопі ── */
   @keyframes modalScaleIn {
     from { opacity: 0; transform: scale(0.95) translateY(12px); }
     to   { opacity: 1; transform: scale(1)    translateY(0); }
@@ -188,7 +360,6 @@
     }
   }
 
-  /* ── Зум/пружний відгук на тап для карток ── */
   @media (pointer: coarse) {
     .card-tap:active {
       transform: scale(0.98);
@@ -197,23 +368,29 @@
     }
   }
 
-  /* ── Мобільні картки: менші відступи ── */
   @media (max-width: 1024px) {
     .card-neo {
-      border-radius: 1.25rem; /* 20px */
+      border-radius: 1.25rem;
     }
 
-    /* Вирівнювання модальних вікон знизу на мобільних */
     .modal-mobile-bottom {
       @apply fixed inset-x-0 bottom-0 rounded-t-3xl;
       padding-bottom: calc(1.5rem + env(safe-area-inset-bottom));
       max-height: 92vh;
     }
 
-    /* Стилізація для активних кнопок на touch */
     button:active, a:active {
       opacity: 0.75;
       transition: opacity 0.1s;
     }
+  }
+
+  /* ── Theme transition ──────────────────────────────────────── */
+  .theme-transitioning * {
+    transition:
+      background-color 0.25s ease,
+      border-color 0.25s ease,
+      color 0.25s ease,
+      box-shadow 0.25s ease !important;
   }
 }

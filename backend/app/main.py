@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import auth, incomes, expenses, taxes, reports, nhsu, user_settings, services, monthly_services, revenue
+from app.api.routes import auth, incomes, expenses, taxes, reports, nhsu, user_settings, services, monthly_services, revenue, staff
 from app.core.config import settings
 
 app = FastAPI(
@@ -28,6 +28,7 @@ app.include_router(user_settings.router, prefix="/api/settings", tags=["settings
 app.include_router(services.router, prefix="/api/services", tags=["services"])
 app.include_router(monthly_services.router, prefix="/api/monthly-services", tags=["monthly-services"])
 app.include_router(revenue.router, prefix="/api/revenue", tags=["revenue"])
+app.include_router(staff.router, prefix="/api/staff", tags=["staff"])
 
 
 @app.get("/api/health")

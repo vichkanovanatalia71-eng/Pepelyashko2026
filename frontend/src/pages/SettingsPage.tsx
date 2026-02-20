@@ -16,8 +16,13 @@ import {
   XCircle,
   Receipt,
   ChevronDown,
+  HeartHandshake,
+  UserCog,
+  Pencil,
+  Check,
+  X,
 } from "lucide-react";
-import { Doctor, NhsuSettings } from "../types";
+import { Doctor, NhsuSettings, StaffMember } from "../types";
 
 const API = "";
 
@@ -36,6 +41,8 @@ export default function SettingsPage() {
   // ── Колапс-стан блоків ──
   const [open, setOpen] = useState<Record<string, boolean>>({
     doctors: true,
+    nurses: false,
+    otherStaff: false,
     apiKeys: false,
     taxes: true,
     nhsu: false,
@@ -48,6 +55,20 @@ export default function SettingsPage() {
   const [newIsOwner, setNewIsOwner] = useState(false);
   const [doctorLoading, setDoctorLoading] = useState(false);
   const [doctorMsg, setDoctorMsg] = useState("");
+
+  // ── Медичні сестри ──
+  const [nurses, setNurses] = useState<StaffMember[]>([]);
+  const [newNurseName, setNewNurseName] = useState("");
+  const [newNursePosition, setNewNursePosition] = useState("");
+  const [nurseLoading, setNurseLoading] = useState(false);
+  const [nurseMsg, setNurseMsg] = useState("");
+
+  // ── Інший персонал ──
+  const [otherStaff, setOtherStaff] = useState<StaffMember[]>([]);
+  const [newOtherName, setNewOtherName] = useState("");
+  const [newOtherPosition, setNewOtherPosition] = useState("");
+  const [otherLoading, setOtherLoading] = useState(false);
+  const [otherMsg, setOtherMsg] = useState("");
 
   // ── Налаштування НСЗУ ──
   const [nhsuSettings, setNhsuSettings] = useState<NhsuSettings | null>(null);
@@ -76,6 +97,8 @@ export default function SettingsPage() {
 
   useEffect(() => {
     loadDoctors();
+    loadNurses();
+    loadOtherStaff();
     loadSettings();
     loadApiKeys();
   }, []);
@@ -120,6 +143,76 @@ export default function SettingsPage() {
     try {
       await axios.delete(`${API}/api/nhsu/doctors/${id}`, { headers });
       await loadDoctors();
+    } catch {}
+  }
+
+  async function loadNurses() {
+    try {
+      const res = await axios.get(`${API}/api/staff/?role=nurse`, { headers });
+      setNurses(res.data);
+    } catch {}
+  }
+
+  async function handleAddNurse() {
+    if (!newNurseName.trim()) return;
+    setNurseLoading(true);
+    setNurseMsg("");
+    try {
+      await axios.post(
+        `${API}/api/staff/`,
+        { full_name: newNurseName.trim(), role: "nurse", position: newNursePosition.trim() },
+        { headers }
+      );
+      setNewNurseName("");
+      setNewNursePosition("");
+      setNurseMsg("Додано");
+      await loadNurses();
+    } catch (e: any) {
+      setNurseMsg(e?.response?.data?.detail ?? "Помилка");
+    } finally {
+      setNurseLoading(false);
+    }
+  }
+
+  async function handleDeleteNurse(id: number) {
+    try {
+      await axios.delete(`${API}/api/staff/${id}`, { headers });
+      await loadNurses();
+    } catch {}
+  }
+
+  async function loadOtherStaff() {
+    try {
+      const res = await axios.get(`${API}/api/staff/?role=other`, { headers });
+      setOtherStaff(res.data);
+    } catch {}
+  }
+
+  async function handleAddOtherStaff() {
+    if (!newOtherName.trim()) return;
+    setOtherLoading(true);
+    setOtherMsg("");
+    try {
+      await axios.post(
+        `${API}/api/staff/`,
+        { full_name: newOtherName.trim(), role: "other", position: newOtherPosition.trim() },
+        { headers }
+      );
+      setNewOtherName("");
+      setNewOtherPosition("");
+      setOtherMsg("Додано");
+      await loadOtherStaff();
+    } catch (e: any) {
+      setOtherMsg(e?.response?.data?.detail ?? "Помилка");
+    } finally {
+      setOtherLoading(false);
+    }
+  }
+
+  async function handleDeleteOtherStaff(id: number) {
+    try {
+      await axios.delete(`${API}/api/staff/${id}`, { headers });
+      await loadOtherStaff();
     } catch {}
   }
 
@@ -295,6 +388,160 @@ export default function SettingsPage() {
                       <td className="px-4 py-3 text-right">
                         <button
                           onClick={() => handleDeleteDoctor(d.id)}
+                          className="p-1.5 text-gray-600 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* ── Медичні сестри ── */}
+      <div className="card-neo card-3d-hover p-6 space-y-5">
+        <SectionHeader sectionKey="nurses" icon={HeartHandshake} title="Медичні сестри" />
+
+        {open.nurses && (
+          <>
+            <div className="flex flex-wrap gap-3 items-end">
+              <div className="flex-1 min-w-[160px]">
+                <label className="block text-xs text-gray-400 mb-1">ПІБ</label>
+                <input
+                  className="w-full bg-dark-300 border border-dark-50/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-accent-500/50"
+                  placeholder="Петренко Марія Іванівна"
+                  value={newNurseName}
+                  onChange={(e) => setNewNurseName(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleAddNurse()}
+                />
+              </div>
+              <div className="flex-1 min-w-[140px]">
+                <label className="block text-xs text-gray-400 mb-1">Посада</label>
+                <input
+                  className="w-full bg-dark-300 border border-dark-50/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-accent-500/50"
+                  placeholder="Медична сестра"
+                  value={newNursePosition}
+                  onChange={(e) => setNewNursePosition(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleAddNurse()}
+                />
+              </div>
+              <button
+                onClick={handleAddNurse}
+                disabled={nurseLoading || !newNurseName.trim()}
+                className="flex items-center gap-2 px-4 py-2.5 bg-accent-500/10 hover:bg-accent-500/20 text-accent-400 rounded-xl text-sm font-medium transition-all border border-accent-500/20 disabled:opacity-50"
+              >
+                <UserPlus size={16} />
+                Додати
+              </button>
+            </div>
+
+            {nurseMsg && <p className="text-xs text-accent-400">{nurseMsg}</p>}
+
+            <div className="overflow-hidden rounded-xl border border-dark-50/10">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-dark-50/10 bg-dark-300/50">
+                    <th className="text-left px-4 py-3 text-gray-400 font-medium">ПІБ</th>
+                    <th className="text-left px-4 py-3 text-gray-400 font-medium">Посада</th>
+                    <th className="px-4 py-3" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {nurses.length === 0 && (
+                    <tr>
+                      <td colSpan={3} className="text-center py-6 text-gray-600 text-sm">
+                        Медичних сестер ще немає. Додайте першу.
+                      </td>
+                    </tr>
+                  )}
+                  {nurses.map((s) => (
+                    <tr key={s.id} className="border-b border-dark-50/5 hover:bg-dark-300/30 transition-colors">
+                      <td className="px-4 py-3 text-gray-200">{s.full_name}</td>
+                      <td className="px-4 py-3 text-gray-400">{s.position || "—"}</td>
+                      <td className="px-4 py-3 text-right">
+                        <button
+                          onClick={() => handleDeleteNurse(s.id)}
+                          className="p-1.5 text-gray-600 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* ── Інший персонал ── */}
+      <div className="card-neo card-3d-hover p-6 space-y-5">
+        <SectionHeader sectionKey="otherStaff" icon={UserCog} title="Інший персонал" />
+
+        {open.otherStaff && (
+          <>
+            <div className="flex flex-wrap gap-3 items-end">
+              <div className="flex-1 min-w-[160px]">
+                <label className="block text-xs text-gray-400 mb-1">ПІБ</label>
+                <input
+                  className="w-full bg-dark-300 border border-dark-50/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-accent-500/50"
+                  placeholder="Коваленко Олег Петрович"
+                  value={newOtherName}
+                  onChange={(e) => setNewOtherName(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleAddOtherStaff()}
+                />
+              </div>
+              <div className="flex-1 min-w-[140px]">
+                <label className="block text-xs text-gray-400 mb-1">Посада</label>
+                <input
+                  className="w-full bg-dark-300 border border-dark-50/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-accent-500/50"
+                  placeholder="Адміністратор"
+                  value={newOtherPosition}
+                  onChange={(e) => setNewOtherPosition(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleAddOtherStaff()}
+                />
+              </div>
+              <button
+                onClick={handleAddOtherStaff}
+                disabled={otherLoading || !newOtherName.trim()}
+                className="flex items-center gap-2 px-4 py-2.5 bg-accent-500/10 hover:bg-accent-500/20 text-accent-400 rounded-xl text-sm font-medium transition-all border border-accent-500/20 disabled:opacity-50"
+              >
+                <UserPlus size={16} />
+                Додати
+              </button>
+            </div>
+
+            {otherMsg && <p className="text-xs text-accent-400">{otherMsg}</p>}
+
+            <div className="overflow-hidden rounded-xl border border-dark-50/10">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-dark-50/10 bg-dark-300/50">
+                    <th className="text-left px-4 py-3 text-gray-400 font-medium">ПІБ</th>
+                    <th className="text-left px-4 py-3 text-gray-400 font-medium">Посада</th>
+                    <th className="px-4 py-3" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {otherStaff.length === 0 && (
+                    <tr>
+                      <td colSpan={3} className="text-center py-6 text-gray-600 text-sm">
+                        Персоналу ще немає. Додайте першого.
+                      </td>
+                    </tr>
+                  )}
+                  {otherStaff.map((s) => (
+                    <tr key={s.id} className="border-b border-dark-50/5 hover:bg-dark-300/30 transition-colors">
+                      <td className="px-4 py-3 text-gray-200">{s.full_name}</td>
+                      <td className="px-4 py-3 text-gray-400">{s.position || "—"}</td>
+                      <td className="px-4 py-3 text-right">
+                        <button
+                          onClick={() => handleDeleteOtherStaff(s.id)}
                           className="p-1.5 text-gray-600 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
                         >
                           <Trash2 size={15} />

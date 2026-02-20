@@ -23,6 +23,7 @@ class ExpenseCreate(BaseModel):
     amount: float
     description: str = ""
     category_id: Optional[int] = None
+    staff_member_id: Optional[int] = None
     date: Date
 
 
@@ -30,6 +31,7 @@ class ExpenseUpdate(BaseModel):
     amount: Optional[float] = None
     description: Optional[str] = None
     category_id: Optional[int] = None
+    staff_member_id: Optional[int] = None
     date: Optional[Date] = None
 
 
@@ -38,6 +40,7 @@ class ExpenseResponse(BaseModel):
     amount: float
     description: str
     category_id: Optional[int]
+    staff_member_id: Optional[int]
     date: Date
 
     model_config = {"from_attributes": True}

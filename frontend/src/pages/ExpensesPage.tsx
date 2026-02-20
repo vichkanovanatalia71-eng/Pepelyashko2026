@@ -1,12 +1,13 @@
 import { useEffect, useState, FormEvent } from "react";
 import { Plus, Trash2, X, Pencil, Search, ArrowUpDown, Zap, ChevronDown, ChevronUp } from "lucide-react";
 import api from "../api/client";
-import type { Expense, ExpenseCategory, ExpenseTemplate } from "../types";
+import type { Expense, ExpenseCategory, ExpenseTemplate, StaffMember } from "../types";
 
 const emptyForm = () => ({
   amount: "",
   description: "",
   category_id: "",
+  staff_member_id: "",
   date: new Date().toISOString().split("T")[0],
 });
 
@@ -27,11 +28,21 @@ export default function ExpensesPage() {
   const [sortField, setSortField] = useState<"date" | "amount">("date");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
+  // Персонал
+  const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
+
   // Templates
   const [templates, setTemplates] = useState<ExpenseTemplate[]>([]);
   const [showTemplates, setShowTemplates] = useState(false);
   const [tplForm, setTplForm] = useState({ name: "", amount: "", description: "", category_id: "" });
   const [showTplForm, setShowTplForm] = useState(false);
+
+  async function loadStaff() {
+    try {
+      const { data } = await api.get("/staff/");
+      setStaffMembers(data);
+    } catch {}
+  }
 
   async function loadTemplates() {
     const { data } = await api.get("/expenses/templates");
@@ -76,6 +87,7 @@ export default function ExpensesPage() {
   useEffect(() => {
     loadData();
     loadTemplates();
+    loadStaff();
   }, [dateFrom, dateTo]);
 
   // Швидкі фільтри
@@ -108,6 +120,7 @@ export default function ExpensesPage() {
       amount: String(expense.amount),
       description: expense.description || "",
       category_id: expense.category_id != null ? String(expense.category_id) : "",
+      staff_member_id: expense.staff_member_id != null ? String(expense.staff_member_id) : "",
       date: expense.date,
     });
     setShowForm(true);
@@ -131,6 +144,7 @@ export default function ExpensesPage() {
       ...form,
       amount: parseFloat(form.amount),
       category_id: form.category_id ? parseInt(form.category_id) : null,
+      staff_member_id: form.staff_member_id ? parseInt(form.staff_member_id) : null,
     };
     if (editingId) {
       await api.put(`/expenses/${editingId}`, payload);
@@ -154,6 +168,9 @@ export default function ExpensesPage() {
 
   const categoryName = (id: number | null) =>
     categories.find((c) => c.id === id)?.name ?? "—";
+
+  const staffName = (id: number | null) =>
+    staffMembers.find((s) => s.id === id)?.full_name ?? null;
 
   // Фільтрація + сортування
   const filtered = expenses
@@ -367,6 +384,30 @@ export default function ExpensesPage() {
               onChange={(e) => setForm({ ...form, description: e.target.value })}
               className="input-dark" placeholder="Додатковий опис..." />
           </div>
+          {staffMembers.length > 0 && (
+            <div>
+              <label className="label-dark">Співробітник</label>
+              <select value={form.staff_member_id}
+                onChange={(e) => setForm({ ...form, staff_member_id: e.target.value })}
+                className="select-dark">
+                <option value="">Не прив'язано</option>
+                {staffMembers.filter(s => s.role === "nurse").length > 0 && (
+                  <optgroup label="Медичні сестри">
+                    {staffMembers.filter(s => s.role === "nurse").map(s => (
+                      <option key={s.id} value={s.id}>{s.full_name}{s.position ? ` (${s.position})` : ""}</option>
+                    ))}
+                  </optgroup>
+                )}
+                {staffMembers.filter(s => s.role === "other").length > 0 && (
+                  <optgroup label="Інший персонал">
+                    {staffMembers.filter(s => s.role === "other").map(s => (
+                      <option key={s.id} value={s.id}>{s.full_name}{s.position ? ` (${s.position})` : ""}</option>
+                    ))}
+                  </optgroup>
+                )}
+              </select>
+            </div>
+          )}
           <div className="md:col-span-2 flex gap-3">
             <button type="submit" className="btn-accent">
               {editingId ? "Оновити" : "Зберегти"}
@@ -397,6 +438,11 @@ export default function ExpensesPage() {
                   <span className="px-2 py-0.5 text-xs font-medium rounded-lg bg-dark-400 text-gray-400 border border-dark-50/10">
                     {categoryName(expense.category_id)}
                   </span>
+                  {staffName(expense.staff_member_id) && (
+                    <span className="px-2 py-0.5 text-xs rounded-lg bg-accent-500/10 text-accent-400 border border-accent-500/20">
+                      {staffName(expense.staff_member_id)}
+                    </span>
+                  )}
                   {expense.description && (
                     <span className="text-xs text-gray-600 truncate">{expense.description}</span>
                   )}
@@ -432,6 +478,7 @@ export default function ExpensesPage() {
                 <span className="flex items-center gap-1">Сума {sortField === "amount" && <ArrowUpDown size={11}/>}</span>
               </th>
               <th className="text-left px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Категорія</th>
+              <th className="text-left px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Співробітник</th>
               <th className="text-left px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Опис</th>
               <th className="px-5 py-4"></th>
             </tr>
@@ -446,6 +493,9 @@ export default function ExpensesPage() {
                   <span className="px-2.5 py-1 text-xs font-medium rounded-lg bg-dark-400 text-gray-400 border border-dark-50/10">
                     {categoryName(expense.category_id)}
                   </span>
+                </td>
+                <td className="px-5 py-4 text-gray-400 text-sm">
+                  {staffName(expense.staff_member_id) ?? "—"}
                 </td>
                 <td className="px-5 py-4 text-gray-500">{expense.description || "—"}</td>
                 <td className="px-5 py-4">
@@ -464,7 +514,7 @@ export default function ExpensesPage() {
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-5 py-12 text-center text-gray-600">
+                <td colSpan={6} className="px-5 py-12 text-center text-gray-600">
                   {search ? "Нічого не знайдено" : "Витрат поки немає. Натисніть «Додати витрату» щоб почати."}
                 </td>
               </tr>

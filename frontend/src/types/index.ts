@@ -1,3 +1,12 @@
+// ── Staff types ───────────────────────────────────────────────────────
+export interface StaffMember {
+  id: number;
+  full_name: string;
+  role: "nurse" | "other";
+  position: string;
+  is_active: boolean;
+}
+
 // ── Revenue analytics types ──────────────────────────────────────────
 export interface DoctorRevenue {
   doctor_id: number;
@@ -82,6 +91,7 @@ export interface Expense {
   amount: number;
   description: string;
   category_id: number | null;
+  staff_member_id: number | null;
   date: string;
 }
 

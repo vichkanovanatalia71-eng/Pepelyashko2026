@@ -52,6 +52,7 @@ async def list_expenses(
     date_from: date | None = Query(None),
     date_to: date | None = Query(None),
     category_id: int | None = Query(None),
+    staff_member_id: int | None = Query(None),
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
@@ -62,6 +63,8 @@ async def list_expenses(
         query = query.where(Expense.date <= date_to)
     if category_id:
         query = query.where(Expense.category_id == category_id)
+    if staff_member_id:
+        query = query.where(Expense.staff_member_id == staff_member_id)
     result = await db.execute(query)
     return result.scalars().all()
 

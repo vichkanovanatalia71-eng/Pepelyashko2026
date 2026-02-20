@@ -16,21 +16,24 @@ import {
   ChevronRight,
   User,
   BadgeDollarSign,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
+import { useTheme } from "../hooks/useTheme";
 
 // ── Навігаційні пункти ────────────────────────────────────────────
 const navItems = [
   { to: "/",                   icon: LayoutDashboard,  label: "Дашборд",        short: "Дашборд"  },
   { to: "/revenue",            icon: BadgeDollarSign,  label: "Доходи",         short: "Доходи"   },
   { to: "/monthly-services",   icon: BarChart3,        label: "Платні послуги", short: "Послуги"  },
-  { to: "/nhsu",               icon: HeartPulse,      label: "НСЗУ",          short: "НСЗУ"     },
-  { to: "/taxes",              icon: Receipt,         label: "Податки",       short: "Податки"  },
-  { to: "/incomes",            icon: TrendingUp,      label: "Доходи",        short: "Доходи"   },
-  { to: "/expenses",           icon: TrendingDown,    label: "Витрати",       short: "Витрати"  },
-  { to: "/services",           icon: ClipboardList,   label: "Прайс послуг",  short: "Прайс"    },
-  { to: "/settings",           icon: Settings,        label: "Налаштування",  short: "Налашт."  },
-  { to: "/profile",            icon: User,            label: "Профіль",       short: "Профіль"  },
+  { to: "/nhsu",               icon: HeartPulse,       label: "НСЗУ",           short: "НСЗУ"     },
+  { to: "/taxes",              icon: Receipt,          label: "Податки",        short: "Податки"  },
+  { to: "/incomes",            icon: TrendingUp,       label: "Надходження",    short: "Дохід"    },
+  { to: "/expenses",           icon: TrendingDown,     label: "Витрати",        short: "Витрати"  },
+  { to: "/services",           icon: ClipboardList,    label: "Прайс послуг",   short: "Прайс"    },
+  { to: "/settings",           icon: Settings,         label: "Налаштування",   short: "Налашт."  },
+  { to: "/profile",            icon: User,             label: "Профіль",        short: "Профіль"  },
 ];
 
 // Bottom bar: перші 4 + кнопка «Ще»
@@ -42,8 +45,8 @@ export default function Layout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const { toggle, isLight } = useTheme();
 
-  // «Ще» активне, якщо поточний шлях — один із extra-пунктів
   const extraActive = bottomExtra.some(({ to }) => location.pathname.startsWith(to));
 
   function handleExtraNav(to: string) {
@@ -58,16 +61,28 @@ export default function Layout() {
           DESKTOP: бокова панель (lg+)
       ══════════════════════════════════════════════ */}
       <aside className="hidden lg:flex w-72 bg-dark-600 border-r border-dark-50/10 flex-col shrink-0">
-        {/* Логотип */}
+        {/* Логотип + перемикач теми */}
         <div className="p-6 border-b border-dark-50/10">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-accent-500/10 flex items-center justify-center shadow-glow-accent">
-              <Stethoscope size={22} className="text-accent-500" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-accent-500/10 flex items-center justify-center shadow-glow-accent">
+                <Stethoscope size={22} className="text-accent-500" />
+              </div>
+              <div>
+                <h1 className="text-lg font-bold text-white tracking-tight">Pepelyashko</h1>
+                <p className="text-xs text-gray-500">Фінанси ФОП</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-lg font-bold text-white tracking-tight">Pepelyashko</h1>
-              <p className="text-xs text-gray-500">Фінанси ФОП</p>
-            </div>
+            {/* Theme toggle */}
+            <button
+              onClick={toggle}
+              title={isLight ? "Темна тема" : "Світла тема"}
+              className="w-9 h-9 rounded-xl border border-dark-50/20 flex items-center justify-center
+                         text-gray-400 hover:text-accent-400 hover:bg-accent-500/10
+                         hover:border-accent-500/30 transition-all duration-200"
+            >
+              {isLight ? <Moon size={16} /> : <Sun size={16} />}
+            </button>
           </div>
         </div>
 
@@ -195,15 +210,26 @@ export default function Layout() {
               <div className="w-10 h-1 bg-dark-50/30 rounded-full" />
             </div>
 
-            {/* Закрити */}
+            {/* Заголовок + закрити */}
             <div className="flex items-center justify-between px-5 pt-2 pb-4">
               <p className="text-sm font-semibold text-gray-300">Меню</p>
-              <button
-                onClick={() => setDrawerOpen(false)}
-                className="w-8 h-8 rounded-xl bg-dark-400 flex items-center justify-center text-gray-500 hover:text-white transition-colors"
-              >
-                <X size={16} />
-              </button>
+              <div className="flex items-center gap-2">
+                {/* Theme toggle in mobile drawer */}
+                <button
+                  onClick={toggle}
+                  title={isLight ? "Темна тема" : "Світла тема"}
+                  className="w-8 h-8 rounded-xl bg-dark-400 flex items-center justify-center
+                             text-gray-400 hover:text-accent-400 transition-colors"
+                >
+                  {isLight ? <Moon size={15} /> : <Sun size={15} />}
+                </button>
+                <button
+                  onClick={() => setDrawerOpen(false)}
+                  className="w-8 h-8 rounded-xl bg-dark-400 flex items-center justify-center text-gray-500 hover:text-white transition-colors"
+                >
+                  <X size={16} />
+                </button>
+              </div>
             </div>
 
             {/* Пункти меню */}
