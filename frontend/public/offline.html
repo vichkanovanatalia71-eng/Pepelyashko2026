@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0d0d0d" />
+  <title>Немає з'єднання — Pepelyashko</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #0d0d0d;
+      color: #e5e7eb;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 1.5rem;
+      text-align: center;
+    }
+    .icon { font-size: 3.5rem; margin-bottom: 1.5rem; }
+    h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; }
+    p { color: #6b7280; font-size: 0.9rem; margin-bottom: 1.5rem; }
+    button {
+      padding: 0.625rem 1.5rem;
+      background: #4f46e5;
+      color: white;
+      border: none;
+      border-radius: 0.75rem;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+    button:hover { background: #4338ca; }
+  </style>
+</head>
+<body>
+  <div class="icon">📡</div>
+  <h1>Немає з'єднання з мережею</h1>
+  <p>Перевірте підключення до Інтернету та спробуйте ще раз.</p>
+  <button onclick="window.location.reload()">Оновити сторінку</button>
+</body>
+</html>
