@@ -22,12 +22,50 @@ export interface Expense {
   description: string;
   category_id: number | null;
   date: string;
+  expense_type: string;
+  is_recurring: boolean;
+  employee_id: number | null;
 }
 
 export interface ExpenseCategory {
   id: number;
   name: string;
   description: string;
+}
+
+export interface Employee {
+  id: number;
+  full_name: string;
+  position: string;
+  staff_type: string;
+  salary: number;
+  is_active: boolean;
+}
+
+export interface ExpenseSummary {
+  total_fixed: number;
+  total_salary: number;
+  total_other: number;
+  total_tax: number;
+  grand_total: number;
+}
+
+export interface ExpenseByMonth {
+  month: string;
+  fixed: number;
+  salary: number;
+  other: number;
+  tax: number;
+  total: number;
+}
+
+export interface ExpenseDashboard {
+  summary: ExpenseSummary;
+  by_month: ExpenseByMonth[];
+  salary_share: number;
+  tax_share: number;
+  fixed_share: number;
+  other_share: number;
 }
 
 export interface PeriodReport {
