@@ -100,6 +100,9 @@ export default function NhsuPage() {
   const [showHistory, setShowHistory] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // YoY comparison state
+  const [prevYearReport, setPrevYearReport] = useState<NhsuMonthlyReport | null>(null);
+
   // Range period state
   const [rangeMode,     setRangeMode]     = useState(false);
   const [rangeEndYear,  setRangeEndYear]  = useState(now.getFullYear());
@@ -142,6 +145,16 @@ export default function NhsuPage() {
   }, [year, month]);
 
   useEffect(() => { loadReport(); }, [loadReport]);
+
+  // Load previous year report for YoY comparison
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data } = await api.get("/nhsu/monthly", { params: { year: year - 1, month } });
+        setPrevYearReport(data);
+      } catch { setPrevYearReport(null); }
+    })();
+  }, [year, month]);
 
   // Load trend (last 6 months) once
   const loadTrend = useCallback(async () => {
@@ -257,6 +270,25 @@ export default function NhsuPage() {
   const forecastNet = last3.length > 0
     ? Math.round(last3.reduce((s,t) => s+t.net_amount, 0) / last3.length)
     : null;
+
+  // YoY comparison data
+  const prevYearTotals = prevYearReport
+    ? (selectedDoctorIds.size === 0 ? prevYearReport.doctors : prevYearReport.doctors.filter(d => selectedDoctorIds.has(d.doctor_id)))
+        .reduce((a, d) => ({
+          patients: a.patients + d.total_patients,
+          amount: a.amount + d.total_amount,
+          epVz: a.epVz + d.total_ep_vz,
+        }), { patients: 0, amount: 0, epVz: 0 })
+    : null;
+
+  const yoyDiff = (cur: number, prev: number) => {
+    if (!prev) return cur > 0 ? { pct: "+100%", cls: "text-green-400" } : { pct: "—", cls: "text-gray-500" };
+    const d = ((cur - prev) / prev) * 100;
+    return {
+      pct: `${d >= 0 ? "+" : ""}${d.toFixed(1)}%`,
+      cls: d >= 0 ? "text-green-400" : "text-red-400",
+    };
+  };
 
   // Notification for current month
   const isCurrentMonth  = year===now.getFullYear() && month===now.getMonth()+1;
@@ -617,6 +649,59 @@ export default function NhsuPage() {
             </div>
           ))}
         </div>
+
+        {/* YoY Comparison */}
+        {prevYearTotals && (
+          <div className="card-neo p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <History size={15} className="text-purple-400" />
+              <h3 className="text-sm font-semibold text-white">
+                Порівняння рік-до-року — {MONTH_NAMES[month-1]}
+              </h3>
+              <span className="ml-auto text-xs text-gray-600">{year-1} → {year}</span>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                {
+                  label: "Пацієнти",
+                  cur: totals.patients,
+                  prev: prevYearTotals.patients,
+                  fmt: (v: number) => String(v),
+                },
+                {
+                  label: "Сума (брутто)",
+                  cur: totals.amount,
+                  prev: prevYearTotals.amount,
+                  fmt: fmt2,
+                },
+                {
+                  label: "Чистий дохід",
+                  cur: totals.amount - totals.epVz,
+                  prev: prevYearTotals.amount - prevYearTotals.epVz,
+                  fmt: fmt2,
+                },
+              ].map(({ label, cur, prev, fmt: f }) => {
+                const diff = yoyDiff(cur, prev);
+                return (
+                  <div key={label} className="rounded-xl bg-dark-300/50 border border-dark-50/10 p-3.5">
+                    <p className="text-xs text-gray-500 mb-2">{label}</p>
+                    <div className="flex items-end gap-2 flex-wrap">
+                      <div>
+                        <p className="text-xs text-gray-600">{year-1}</p>
+                        <p className="text-sm text-gray-400 font-mono">{f(prev)}</p>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-xs text-gray-600">{year}</p>
+                        <p className="text-base font-bold text-white font-mono">{f(cur)}</p>
+                      </div>
+                      <span className={`text-sm font-bold ${diff.cls}`}>{diff.pct}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Charts */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
