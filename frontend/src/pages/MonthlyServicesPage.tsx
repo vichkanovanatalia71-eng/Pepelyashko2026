@@ -367,6 +367,23 @@ export default function MonthlyServicesPage() {
     } catch {}
   }
 
+  async function handleCopyPrevious() {
+    if (!selectedDoctor) {
+      alert("Оберіть конкретного лікаря для копіювання звіту");
+      return;
+    }
+    try {
+      await axios.post(
+        `${API}/api/monthly-services/reports/copy-previous?doctor_id=${selectedDoctor}&year=${selectedYear}&month=${selectedMonth}`,
+        {},
+        { headers },
+      );
+      await Promise.all([loadAnalytics(), loadPeriodInfo()]);
+    } catch (e: any) {
+      alert(e?.response?.data?.detail ?? "Не вдалося скопіювати звіт");
+    }
+  }
+
   async function handleFinalize(id: number) {
     // Якщо каса за місяць не внесена — показуємо попередження
     if (periodInfo?.cash_for_period === null) {
@@ -492,6 +509,10 @@ export default function MonthlyServicesPage() {
           <button onClick={handleShare} className="flex items-center gap-2 px-3 py-2 text-sm text-purple-400 hover:bg-purple-500/10 rounded-xl border border-purple-500/20 transition-all tap-target">
             <Share2 size={15} />
             <span className="hidden sm:inline">Поділитися</span>
+          </button>
+          <button onClick={handleCopyPrevious} className="flex items-center gap-2 px-3 py-2 text-sm text-cyan-400 hover:bg-cyan-500/10 rounded-xl border border-cyan-500/20 transition-all tap-target" title="Копіювати з попереднього місяця">
+            <Copy size={15} />
+            <span className="hidden sm:inline">З минулого</span>
           </button>
           <button onClick={openCreateReport} className="flex items-center gap-2 px-4 py-2 bg-accent-500/10 hover:bg-accent-500/20 text-accent-400 rounded-xl text-sm font-medium transition-all border border-accent-500/20 tap-target">
             <Plus size={16} />

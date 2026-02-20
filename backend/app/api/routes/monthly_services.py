@@ -632,6 +632,73 @@ async def delete_report(
     await db.commit()
 
 
+@router.post("/reports/copy-previous", response_model=ReportResponse, status_code=201)
+async def copy_previous_month(
+    doctor_id: int = Query(...),
+    year: int = Query(...),
+    month: int = Query(...),
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Копіює записи послуг з попереднього місяця для вказаного лікаря."""
+    ex = await db.execute(
+        select(MonthlyPaidServicesReport).where(
+            MonthlyPaidServicesReport.user_id == user.id,
+            MonthlyPaidServicesReport.doctor_id == doctor_id,
+            MonthlyPaidServicesReport.year == year,
+            MonthlyPaidServicesReport.month == month,
+        )
+    )
+    if ex.scalar_one_or_none():
+        raise HTTPException(400, detail="Звіт для цього лікаря за цей місяць вже існує")
+
+    prev_year, prev_month = (year, month - 1) if month > 1 else (year - 1, 12)
+    prev_r = await db.execute(
+        select(MonthlyPaidServicesReport).where(
+            MonthlyPaidServicesReport.user_id == user.id,
+            MonthlyPaidServicesReport.doctor_id == doctor_id,
+            MonthlyPaidServicesReport.year == prev_year,
+            MonthlyPaidServicesReport.month == prev_month,
+        )
+    )
+    prev_report = prev_r.scalar_one_or_none()
+    if not prev_report:
+        raise HTTPException(404, detail="Звіт за попередній місяць не знайдено")
+
+    entries_r = await db.execute(
+        select(MonthlyPaidServiceEntry).where(
+            MonthlyPaidServiceEntry.report_id == prev_report.id
+        )
+    )
+    prev_entries = entries_r.scalars().all()
+
+    new_report = MonthlyPaidServicesReport(
+        user_id=user.id,
+        doctor_id=doctor_id,
+        year=year,
+        month=month,
+        cash_in_register=0,
+        status="draft",
+    )
+    db.add(new_report)
+    await db.flush()
+
+    for e in prev_entries:
+        db.add(MonthlyPaidServiceEntry(
+            report_id=new_report.id,
+            service_id=e.service_id,
+            quantity=e.quantity,
+        ))
+
+    await db.commit()
+    await db.refresh(new_report)
+
+    svcs_r = await db.execute(select(Service).where(Service.user_id == user.id))
+    svcs_all = {s.id: s for s in svcs_r.scalars().all()}
+    result = await _build_report_responses(db, [new_report], svcs_all)
+    return result[0]
+
+
 # ── Інформація про готівку за місяць ──────────────────────────────
 
 
