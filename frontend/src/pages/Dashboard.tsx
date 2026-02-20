@@ -11,6 +11,7 @@ import {
   Bell,
   X,
 } from "lucide-react";
+import { LineChart, Line, ResponsiveContainer, Tooltip } from "recharts";
 import api from "../api/client";
 import type { PeriodReport } from "../types";
 
@@ -26,6 +27,37 @@ export default function Dashboard() {
   const [month, setMonth] = useState(now.getMonth()); // 0-indexed
   const [report, setReport] = useState<PeriodReport | null>(null);
   const [loading, setLoading] = useState(true);
+  const [sparklines, setSparklines] = useState<
+    { income: number; expenses: number; profit: number; taxes: number }[]
+  >([]);
+
+  // Load last 6 months for sparklines on mount
+  useEffect(() => {
+    (async () => {
+      const results = [];
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const y = d.getFullYear();
+        const m = d.getMonth();
+        const dateFrom = `${y}-${String(m + 1).padStart(2, "0")}-01`;
+        const lastDay = new Date(y, m + 1, 0).getDate();
+        const dateTo = `${y}-${String(m + 1).padStart(2, "0")}-${lastDay}`;
+        try {
+          const res = await api.get("/reports/period", { params: { date_from: dateFrom, date_to: dateTo } });
+          results.push({
+            income: res.data.total_income,
+            expenses: res.data.total_expenses,
+            profit: res.data.net_profit,
+            taxes: res.data.total_taxes,
+          });
+        } catch {
+          results.push({ income: 0, expenses: 0, profit: 0, taxes: 0 });
+        }
+      }
+      setSparklines(results);
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function prevMonth() {
     if (month === 0) { setMonth(11); setYear(y => y - 1); }
@@ -121,8 +153,10 @@ export default function Dashboard() {
           icon: TrendingUp,
           arrow: ArrowUpRight,
           accent: "text-emerald-400",
+          sparkColor: "#34d399",
           iconBg: "bg-emerald-500/10",
           borderAccent: "border-emerald-500/20",
+          sparkKey: "income" as const,
         },
         {
           label: "Витрати",
@@ -130,8 +164,10 @@ export default function Dashboard() {
           icon: TrendingDown,
           arrow: ArrowDownRight,
           accent: "text-red-400",
+          sparkColor: "#f87171",
           iconBg: "bg-red-500/10",
           borderAccent: "border-red-500/20",
+          sparkKey: "expenses" as const,
         },
         {
           label: "Чистий прибуток",
@@ -139,8 +175,10 @@ export default function Dashboard() {
           icon: Wallet,
           arrow: report.net_profit >= 0 ? ArrowUpRight : ArrowDownRight,
           accent: report.net_profit >= 0 ? "text-accent-400" : "text-red-400",
+          sparkColor: report.net_profit >= 0 ? "#818cf8" : "#f87171",
           iconBg: "bg-accent-500/10",
           borderAccent: "border-accent-500/20",
+          sparkKey: "profit" as const,
         },
         {
           label: "Податки",
@@ -148,8 +186,10 @@ export default function Dashboard() {
           icon: Receipt,
           arrow: ArrowDownRight,
           accent: "text-yellow-400",
+          sparkColor: "#fbbf24",
           iconBg: "bg-yellow-500/10",
           borderAccent: "border-yellow-500/20",
+          sparkKey: "taxes" as const,
         },
       ]
     : [];
@@ -226,7 +266,7 @@ export default function Dashboard() {
           {/* Metric cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-5 mb-5 lg:mb-8">
             {cards.map(
-              ({ label, value, icon: Icon, arrow: Arrow, accent, iconBg, borderAccent }) => (
+              ({ label, value, icon: Icon, arrow: Arrow, accent, iconBg, borderAccent, sparkColor, sparkKey }) => (
                 <div
                   key={label}
                   className={`card-neo kpi-3d-hover p-4 lg:p-6 border ${borderAccent}`}
@@ -241,6 +281,27 @@ export default function Dashboard() {
                   <p className={`text-lg lg:text-2xl font-bold ${accent}`}>
                     {fmt(value)} <span className="text-sm lg:text-base font-normal">&#8372;</span>
                   </p>
+                  {sparklines.length >= 2 && (
+                    <div className="mt-3 h-10">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={sparklines}>
+                          <Tooltip
+                            contentStyle={{ background: "#1a1a2e", border: "1px solid #ffffff15", borderRadius: 6, fontSize: 11 }}
+                            formatter={(v: number) => [`${v.toLocaleString("uk-UA", { minimumFractionDigits: 0, maximumFractionDigits: 0 })} ₴`]}
+                            labelFormatter={() => ""}
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey={sparkKey}
+                            stroke={sparkColor}
+                            strokeWidth={1.5}
+                            dot={false}
+                            isAnimationActive={false}
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
                 </div>
               )
             )}
