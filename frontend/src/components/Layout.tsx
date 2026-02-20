@@ -10,6 +10,7 @@ import {
   Stethoscope,
   Settings,
   BarChart3,
+  ClipboardList,
   MoreHorizontal,
   X,
   ChevronRight,
@@ -25,6 +26,7 @@ const navItems = [
   { to: "/taxes",              icon: Receipt,         label: "Податки",       short: "Податки"  },
   { to: "/incomes",            icon: TrendingUp,      label: "Доходи",        short: "Доходи"   },
   { to: "/expenses",           icon: TrendingDown,    label: "Витрати",       short: "Витрати"  },
+  { to: "/services",           icon: ClipboardList,   label: "Прайс послуг",  short: "Прайс"    },
   { to: "/settings",           icon: Settings,        label: "Налаштування",  short: "Налашт."  },
   { to: "/profile",            icon: User,            label: "Профіль",       short: "Профіль"  },
 ];

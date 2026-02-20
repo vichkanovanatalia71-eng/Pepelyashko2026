@@ -18,7 +18,6 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { Doctor, NhsuSettings } from "../types";
-import ServicesPage from "./ServicesPage";
 
 const API = "";
 
@@ -565,8 +564,6 @@ export default function SettingsPage() {
         )}
       </div>
 
-      {/* ── Послуги ── */}
-      <ServicesPage />
     </div>
   );
 }
