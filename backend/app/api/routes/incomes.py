@@ -7,17 +7,49 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import get_current_user, get_db
-from app.models.income import Income
+from app.models.income import Income, IncomeCategory
 from app.models.user import User
-from app.schemas.income import IncomeCreate, IncomeResponse, IncomeUpdate
+from app.schemas.income import (
+    IncomeCategoryCreate,
+    IncomeCategoryResponse,
+    IncomeCreate,
+    IncomeResponse,
+    IncomeUpdate,
+)
 
 router = APIRouter()
+
+
+# --- Categories ---
+
+
+@router.get("/categories", response_model=list[IncomeCategoryResponse])
+async def list_categories(db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(IncomeCategory).order_by(IncomeCategory.name))
+    return result.scalars().all()
+
+
+@router.post("/categories", response_model=IncomeCategoryResponse, status_code=201)
+async def create_category(
+    cat_in: IncomeCategoryCreate,
+    db: AsyncSession = Depends(get_db),
+    _user: User = Depends(get_current_user),
+):
+    category = IncomeCategory(**cat_in.model_dump())
+    db.add(category)
+    await db.commit()
+    await db.refresh(category)
+    return category
+
+
+# --- Incomes ---
 
 
 @router.get("/", response_model=list[IncomeResponse])
 async def list_incomes(
     date_from: date | None = Query(None),
     date_to: date | None = Query(None),
+    category_id: int | None = Query(None),
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
@@ -26,6 +58,8 @@ async def list_incomes(
         query = query.where(Income.date >= date_from)
     if date_to:
         query = query.where(Income.date <= date_to)
+    if category_id:
+        query = query.where(Income.category_id == category_id)
     result = await db.execute(query)
     return result.scalars().all()
 

@@ -1,7 +1,7 @@
 import { useEffect, useState, FormEvent } from "react";
 import { Plus, Trash2, X, Pencil, Search, ArrowUpDown, ChevronDown } from "lucide-react";
 import api from "../api/client";
-import type { Income } from "../types";
+import type { Income, IncomeCategory } from "../types";
 
 const PAYMENT_LABELS: Record<string, string> = {
   cash: "Готівка",
@@ -14,11 +14,13 @@ const emptyForm = () => ({
   description: "",
   source: "",
   payment_method: "cash",
+  category_id: "" as string,
   date: new Date().toISOString().split("T")[0],
 });
 
 export default function IncomesPage() {
   const [incomes, setIncomes] = useState<Income[]>([]);
+  const [categories, setCategories] = useState<IncomeCategory[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState(emptyForm());
@@ -27,6 +29,7 @@ export default function IncomesPage() {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [quickFilter, setQuickFilter] = useState<string>("all");
+  const [categoryFilter, setCategoryFilter] = useState<string>("");
 
   // #8 — Пошук і сортування
   const [search, setSearch] = useState("");
@@ -37,13 +40,23 @@ export default function IncomesPage() {
     const params: Record<string, string> = {};
     if (dateFrom) params.date_from = dateFrom;
     if (dateTo) params.date_to = dateTo;
+    if (categoryFilter) params.category_id = categoryFilter;
     const { data } = await api.get("/incomes/", { params });
     setIncomes(data);
   }
 
+  async function loadCategories() {
+    const { data } = await api.get("/incomes/categories");
+    setCategories(data);
+  }
+
+  useEffect(() => {
+    loadCategories();
+  }, []);
+
   useEffect(() => {
     loadIncomes();
-  }, [dateFrom, dateTo]);
+  }, [dateFrom, dateTo, categoryFilter]);
 
   // Швидкі фільтри
   function applyQuickFilter(key: string) {
@@ -68,6 +81,9 @@ export default function IncomesPage() {
     }
   }
 
+  // Мапа категорій для відображення
+  const catMap = new Map(categories.map(c => [c.id, c.name]));
+
   // Відкрити форму для редагування
   function handleEdit(income: Income) {
     setEditingId(income.id);
@@ -76,6 +92,7 @@ export default function IncomesPage() {
       description: income.description || "",
       source: income.source || "",
       payment_method: income.payment_method,
+      category_id: income.category_id ? String(income.category_id) : "",
       date: income.date,
     });
     setShowForm(true);
@@ -95,7 +112,11 @@ export default function IncomesPage() {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    const payload = { ...form, amount: parseFloat(form.amount) };
+    const payload = {
+      ...form,
+      amount: parseFloat(form.amount),
+      category_id: form.category_id ? parseInt(form.category_id) : null,
+    };
     if (editingId) {
       await api.put(`/incomes/${editingId}`, payload);
     } else {
@@ -123,6 +144,7 @@ export default function IncomesPage() {
       const q = search.toLowerCase();
       return (i.source || "").toLowerCase().includes(q) ||
              (i.description || "").toLowerCase().includes(q) ||
+             (i.category_id ? (catMap.get(i.category_id) || "").toLowerCase().includes(q) : false) ||
              String(i.amount).includes(q);
     })
     .sort((a, b) => {
@@ -157,7 +179,7 @@ export default function IncomesPage() {
         </button>
       </div>
 
-      {/* #2 — Фільтри за датою + #8 Пошук */}
+      {/* #2 — Фільтри за датою + #8 Пошук + #10 Фільтр категорій */}
       <div className="card-neo p-3 sm:p-4 mb-4 space-y-3">
         <div className="flex flex-wrap items-center gap-2">
           {[
@@ -185,11 +207,23 @@ export default function IncomesPage() {
               className="bg-dark-300 border border-dark-50/20 rounded-xl px-2 py-1.5 text-xs text-white w-[120px]" />
           </div>
         </div>
-        <div className="relative">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
-          <input type="text" value={search} onChange={e => setSearch(e.target.value)}
-            placeholder="Пошук по джерелу, опису..."
-            className="w-full bg-dark-300 border border-dark-50/20 rounded-xl pl-8 pr-3 py-2 text-sm text-white placeholder-gray-600" />
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative flex-1 min-w-[200px]">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+            <input type="text" value={search} onChange={e => setSearch(e.target.value)}
+              placeholder="Пошук по джерелу, опису, категорії..."
+              className="w-full bg-dark-300 border border-dark-50/20 rounded-xl pl-8 pr-3 py-2 text-sm text-white placeholder-gray-600" />
+          </div>
+          {categories.length > 0 && (
+            <select value={categoryFilter}
+              onChange={e => setCategoryFilter(e.target.value)}
+              className="bg-dark-300 border border-dark-50/20 rounded-xl px-3 py-2 text-sm text-white min-w-[140px]">
+              <option value="">Всі категорії</option>
+              {categories.map(c => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+          )}
         </div>
       </div>
 
@@ -230,7 +264,18 @@ export default function IncomesPage() {
               <option value="bank_transfer">Банківський переказ</option>
             </select>
           </div>
-          <div className="md:col-span-2">
+          <div>
+            <label className="label-dark">Категорія</label>
+            <select value={form.category_id}
+              onChange={(e) => setForm({ ...form, category_id: e.target.value })}
+              className="select-dark">
+              <option value="">Без категорії</option>
+              {categories.map(c => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+          </div>
+          <div>
             <label className="label-dark">Опис</label>
             <input type="text" value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
@@ -267,6 +312,11 @@ export default function IncomesPage() {
                   <span className="px-2 py-0.5 text-xs font-medium rounded-lg bg-dark-400 text-gray-400 border border-dark-50/10">
                     {PAYMENT_LABELS[income.payment_method] || income.payment_method}
                   </span>
+                  {income.category_id && catMap.get(income.category_id) && (
+                    <span className="px-2 py-0.5 text-xs font-medium rounded-lg bg-accent-500/10 text-accent-400 border border-accent-500/20">
+                      {catMap.get(income.category_id)}
+                    </span>
+                  )}
                   {income.description && (
                     <span className="text-xs text-gray-600 truncate">{income.description}</span>
                   )}
@@ -290,7 +340,7 @@ export default function IncomesPage() {
       {/* Desktop table */}
       <div className="hidden sm:block card-neo overflow-hidden">
         <div className="overflow-x-auto">
-        <table className="w-full text-sm min-w-[560px]">
+        <table className="w-full text-sm min-w-[660px]">
           <thead>
             <tr className="border-b border-dark-50/10">
               <th className="text-left px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer select-none hover:text-gray-300"
@@ -302,6 +352,7 @@ export default function IncomesPage() {
                 <span className="flex items-center gap-1">Сума {sortField === "amount" && <ArrowUpDown size={11}/>}</span>
               </th>
               <th className="text-left px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Джерело</th>
+              <th className="text-left px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Категорія</th>
               <th className="text-left px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Оплата</th>
               <th className="text-left px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Опис</th>
               <th className="px-5 py-4"></th>
@@ -314,6 +365,15 @@ export default function IncomesPage() {
                 <td className="px-5 py-4 text-gray-300">{income.date}</td>
                 <td className="px-5 py-4 font-semibold text-emerald-400">+{fmt(income.amount)} &#8372;</td>
                 <td className="px-5 py-4 text-gray-300">{income.source || "—"}</td>
+                <td className="px-5 py-4">
+                  {income.category_id && catMap.get(income.category_id) ? (
+                    <span className="px-2.5 py-1 text-xs font-medium rounded-lg bg-accent-500/10 text-accent-400 border border-accent-500/20">
+                      {catMap.get(income.category_id)}
+                    </span>
+                  ) : (
+                    <span className="text-gray-600">—</span>
+                  )}
+                </td>
                 <td className="px-5 py-4">
                   <span className="px-2.5 py-1 text-xs font-medium rounded-lg bg-dark-400 text-gray-400 border border-dark-50/10">
                     {PAYMENT_LABELS[income.payment_method] || income.payment_method}
@@ -336,7 +396,7 @@ export default function IncomesPage() {
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-5 py-12 text-center text-gray-600">
+                <td colSpan={7} className="px-5 py-12 text-center text-gray-600">
                   {search ? "Нічого не знайдено" : "Доходів поки немає. Натисніть «Додати дохід» щоб почати."}
                 </td>
               </tr>

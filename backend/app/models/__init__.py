@@ -1,5 +1,5 @@
 from app.models.user import User
-from app.models.income import Income
+from app.models.income import Income, IncomeCategory
 from app.models.expense import Expense, ExpenseCategory
 from app.models.doctor import Doctor
 from app.models.nhsu import NhsuSettings, NhsuRecord
@@ -12,6 +12,7 @@ from app.models.tax_payment import TaxPayment
 __all__ = [
     "User",
     "Income",
+    "IncomeCategory",
     "Expense",
     "ExpenseCategory",
     "Doctor",

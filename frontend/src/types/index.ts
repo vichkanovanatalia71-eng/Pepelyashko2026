@@ -13,7 +13,14 @@ export interface Income {
   description: string;
   source: string;
   payment_method: string;
+  category_id: number | null;
   date: string;
+}
+
+export interface IncomeCategory {
+  id: number;
+  name: string;
+  description: string;
 }
 
 export interface Expense {
