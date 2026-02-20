@@ -478,7 +478,7 @@ export default function ServicesPage() {
 
   // ── Фінансовий підсумок у формі ──
   const ep_rate = nhsuSettings?.ep_rate ?? 5;
-  const vz_rate = nhsuSettings?.vz_rate ?? 1;
+  const vz_rate = nhsuSettings?.vz_rate ?? 1.5;
   const formPriceNum = parseFloat(formPrice) || 0;
   const formCalc = calcFinancials(formPriceNum, formMaterials, ep_rate, vz_rate);
 

@@ -41,7 +41,7 @@ async def _get_tax_rates(db: AsyncSession, user_id: int) -> tuple[float, float]:
     settings = result.scalar_one_or_none()
     if settings:
         return float(settings.ep_rate), float(settings.vz_rate)
-    return 5.0, 1.0  # defaults: ЄП 5%, ВЗ 1%
+    return 5.0, 1.5  # defaults: ЄП 5%, ВЗ 1.5%
 
 
 def _calc(service: Service, ep_rate: float, vz_rate: float) -> dict:

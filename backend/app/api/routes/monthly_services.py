@@ -56,7 +56,7 @@ MONTHS_UA = [
 async def _get_tax_rates(db: AsyncSession, user_id: int) -> tuple[float, float]:
     r = await db.execute(select(NhsuSettings).where(NhsuSettings.user_id == user_id))
     s = r.scalar_one_or_none()
-    return (float(s.ep_rate), float(s.vz_rate)) if s else (5.0, 1.0)
+    return (float(s.ep_rate), float(s.vz_rate)) if s else (5.0, 1.5)
 
 
 async def _get_doctor_name(db: AsyncSession, doctor_id: int) -> str:

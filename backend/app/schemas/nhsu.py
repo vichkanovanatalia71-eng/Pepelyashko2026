@@ -36,7 +36,7 @@ class NhsuSettingsInput(BaseModel):
     coeff_40_64: float = 0.86
     coeff_65_plus: float = 1.3
     ep_rate: float = 5.0   # %
-    vz_rate: float = 5.0   # %
+    vz_rate: float = 1.5   # %
 
 
 class NhsuSettingsResponse(BaseModel):

@@ -176,7 +176,7 @@ export default function NhsuPage() {
       );
 
       const ep_rate = results.find(Boolean)?.ep_rate ?? 5;
-      const vz_rate = results.find(Boolean)?.vz_rate ?? 5;
+      const vz_rate = results.find(Boolean)?.vz_rate ?? 1.5;
       let totalAmount=0, totalEp=0, totalVz=0, totalEpVz=0, totalNet=0, monthsWithData=0;
 
       const monthEntries: MonthRangeEntry[] = months.map(({year,month}, i) => {
