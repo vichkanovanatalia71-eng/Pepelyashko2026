@@ -7,13 +7,15 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import get_current_user, get_db
-from app.models.expense import Expense, ExpenseCategory
+from app.models.expense import Expense, ExpenseCategory, ExpenseTemplate
 from app.models.user import User
 from app.schemas.expense import (
     ExpenseCategoryCreate,
     ExpenseCategoryResponse,
     ExpenseCreate,
     ExpenseResponse,
+    ExpenseTemplateCreate,
+    ExpenseTemplateResponse,
     ExpenseUpdate,
 )
 
@@ -110,4 +112,79 @@ async def delete_expense(
     if not expense:
         raise HTTPException(status_code=404, detail="Витрату не знайдено")
     await db.delete(expense)
+    await db.commit()
+
+
+# --- Recurring expense templates ---
+
+
+@router.get("/templates", response_model=list[ExpenseTemplateResponse])
+async def list_templates(
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    result = await db.execute(
+        select(ExpenseTemplate)
+        .where(ExpenseTemplate.user_id == user.id)
+        .order_by(ExpenseTemplate.name)
+    )
+    return result.scalars().all()
+
+
+@router.post("/templates", response_model=ExpenseTemplateResponse, status_code=201)
+async def create_template(
+    tpl_in: ExpenseTemplateCreate,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    tpl = ExpenseTemplate(user_id=user.id, **tpl_in.model_dump())
+    db.add(tpl)
+    await db.commit()
+    await db.refresh(tpl)
+    return tpl
+
+
+@router.post("/templates/{template_id}/apply", response_model=ExpenseResponse, status_code=201)
+async def apply_template(
+    template_id: int,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    from datetime import date as today_date
+    result = await db.execute(
+        select(ExpenseTemplate).where(
+            ExpenseTemplate.id == template_id, ExpenseTemplate.user_id == user.id
+        )
+    )
+    tpl = result.scalar_one_or_none()
+    if not tpl:
+        raise HTTPException(status_code=404, detail="Шаблон не знайдено")
+    expense = Expense(
+        user_id=user.id,
+        amount=tpl.amount,
+        description=tpl.description,
+        category_id=tpl.category_id,
+        date=today_date.today(),
+    )
+    db.add(expense)
+    await db.commit()
+    await db.refresh(expense)
+    return expense
+
+
+@router.delete("/templates/{template_id}", status_code=204)
+async def delete_template(
+    template_id: int,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    result = await db.execute(
+        select(ExpenseTemplate).where(
+            ExpenseTemplate.id == template_id, ExpenseTemplate.user_id == user.id
+        )
+    )
+    tpl = result.scalar_one_or_none()
+    if not tpl:
+        raise HTTPException(status_code=404, detail="Шаблон не знайдено")
+    await db.delete(tpl)
     await db.commit()

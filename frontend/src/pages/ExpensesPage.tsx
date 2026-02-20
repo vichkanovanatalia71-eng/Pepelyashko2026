@@ -1,7 +1,7 @@
 import { useEffect, useState, FormEvent } from "react";
-import { Plus, Trash2, X, Pencil, Search, ArrowUpDown } from "lucide-react";
+import { Plus, Trash2, X, Pencil, Search, ArrowUpDown, Zap, ChevronDown, ChevronUp } from "lucide-react";
 import api from "../api/client";
-import type { Expense, ExpenseCategory } from "../types";
+import type { Expense, ExpenseCategory, ExpenseTemplate } from "../types";
 
 const emptyForm = () => ({
   amount: "",
@@ -27,6 +27,40 @@ export default function ExpensesPage() {
   const [sortField, setSortField] = useState<"date" | "amount">("date");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
+  // Templates
+  const [templates, setTemplates] = useState<ExpenseTemplate[]>([]);
+  const [showTemplates, setShowTemplates] = useState(false);
+  const [tplForm, setTplForm] = useState({ name: "", amount: "", description: "", category_id: "" });
+  const [showTplForm, setShowTplForm] = useState(false);
+
+  async function loadTemplates() {
+    const { data } = await api.get("/expenses/templates");
+    setTemplates(data);
+  }
+
+  async function handleApplyTemplate(tpl: ExpenseTemplate) {
+    await api.post(`/expenses/templates/${tpl.id}/apply`);
+    loadData();
+  }
+
+  async function handleDeleteTemplate(id: number) {
+    await api.delete(`/expenses/templates/${id}`);
+    loadTemplates();
+  }
+
+  async function handleSaveTemplate(e: FormEvent) {
+    e.preventDefault();
+    await api.post("/expenses/templates", {
+      name: tplForm.name,
+      amount: parseFloat(tplForm.amount),
+      description: tplForm.description,
+      category_id: tplForm.category_id ? parseInt(tplForm.category_id) : null,
+    });
+    setTplForm({ name: "", amount: "", description: "", category_id: "" });
+    setShowTplForm(false);
+    loadTemplates();
+  }
+
   async function loadData() {
     const params: Record<string, string> = {};
     if (dateFrom) params.date_from = dateFrom;
@@ -41,6 +75,7 @@ export default function ExpensesPage() {
 
   useEffect(() => {
     loadData();
+    loadTemplates();
   }, [dateFrom, dateTo]);
 
   // Швидкі фільтри
@@ -195,6 +230,101 @@ export default function ExpensesPage() {
             placeholder="Пошук по категорії, опису..."
             className="w-full bg-dark-300 border border-dark-50/20 rounded-xl pl-8 pr-3 py-2 text-sm text-white placeholder-gray-600" />
         </div>
+      </div>
+
+      {/* Templates panel */}
+      <div className="card-neo mb-4">
+        <button
+          onClick={() => setShowTemplates(v => !v)}
+          className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-gray-300 hover:text-white transition-colors"
+        >
+          <span className="flex items-center gap-2">
+            <Zap size={15} className="text-amber-400" />
+            Шаблони повторюваних витрат
+            {templates.length > 0 && (
+              <span className="px-2 py-0.5 text-xs rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                {templates.length}
+              </span>
+            )}
+          </span>
+          {showTemplates ? <ChevronUp size={15} className="text-gray-500" /> : <ChevronDown size={15} className="text-gray-500" />}
+        </button>
+
+        {showTemplates && (
+          <div className="border-t border-dark-50/10 p-4 space-y-3">
+            {templates.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {templates.map(tpl => (
+                  <div key={tpl.id} className="flex items-center gap-1.5 bg-dark-300/60 border border-dark-50/10 rounded-xl px-3 py-2">
+                    <div className="mr-1">
+                      <p className="text-xs font-medium text-gray-200">{tpl.name}</p>
+                      <p className="text-xs text-amber-400 font-mono">{tpl.amount.toLocaleString("uk-UA")} ₴</p>
+                    </div>
+                    <button
+                      onClick={() => handleApplyTemplate(tpl)}
+                      title="Застосувати (створити витрату сьогодні)"
+                      className="p-1.5 rounded-lg text-emerald-500 hover:bg-emerald-500/10 transition-all"
+                    >
+                      <Plus size={13} />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteTemplate(tpl.id)}
+                      title="Видалити шаблон"
+                      className="p-1.5 rounded-lg text-gray-600 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-600">Шаблонів поки немає.</p>
+            )}
+
+            <button
+              onClick={() => setShowTplForm(v => !v)}
+              className="flex items-center gap-1.5 text-xs text-accent-400 hover:text-accent-300 transition-colors"
+            >
+              <Plus size={13} /> Новий шаблон
+            </button>
+
+            {showTplForm && (
+              <form onSubmit={handleSaveTemplate} className="grid grid-cols-2 gap-3 pt-2">
+                <div>
+                  <label className="label-dark">Назва шаблону</label>
+                  <input type="text" required value={tplForm.name}
+                    onChange={e => setTplForm(f => ({ ...f, name: e.target.value }))}
+                    className="input-dark" placeholder="Оренда, зв'язок..." />
+                </div>
+                <div>
+                  <label className="label-dark">Сума</label>
+                  <input type="number" step="0.01" required value={tplForm.amount}
+                    onChange={e => setTplForm(f => ({ ...f, amount: e.target.value }))}
+                    className="input-dark" placeholder="0.00" />
+                </div>
+                <div>
+                  <label className="label-dark">Категорія</label>
+                  <select value={tplForm.category_id}
+                    onChange={e => setTplForm(f => ({ ...f, category_id: e.target.value }))}
+                    className="select-dark">
+                    <option value="">Без категорії</option>
+                    {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="label-dark">Опис</label>
+                  <input type="text" value={tplForm.description}
+                    onChange={e => setTplForm(f => ({ ...f, description: e.target.value }))}
+                    className="input-dark" placeholder="Необов'язково" />
+                </div>
+                <div className="col-span-2 flex gap-2">
+                  <button type="submit" className="btn-accent text-sm py-2">Зберегти шаблон</button>
+                  <button type="button" onClick={() => setShowTplForm(false)} className="btn-ghost text-sm py-2">Скасувати</button>
+                </div>
+              </form>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Form */}

@@ -1,6 +1,6 @@
 from app.models.user import User
 from app.models.income import Income, IncomeCategory
-from app.models.expense import Expense, ExpenseCategory
+from app.models.expense import Expense, ExpenseCategory, ExpenseTemplate
 from app.models.doctor import Doctor
 from app.models.nhsu import NhsuSettings, NhsuRecord
 from app.models.user_api_keys import UserApiKeys

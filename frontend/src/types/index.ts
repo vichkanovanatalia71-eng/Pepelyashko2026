@@ -37,6 +37,14 @@ export interface ExpenseCategory {
   description: string;
 }
 
+export interface ExpenseTemplate {
+  id: number;
+  name: string;
+  amount: number;
+  description: string;
+  category_id: number | null;
+}
+
 export interface PeriodReport {
   period: string;
   total_income: number;

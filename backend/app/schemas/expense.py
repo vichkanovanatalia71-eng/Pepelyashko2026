@@ -41,3 +41,20 @@ class ExpenseResponse(BaseModel):
     date: Date
 
     model_config = {"from_attributes": True}
+
+
+class ExpenseTemplateCreate(BaseModel):
+    name: str
+    amount: float
+    description: str = ""
+    category_id: Optional[int] = None
+
+
+class ExpenseTemplateResponse(BaseModel):
+    id: int
+    name: str
+    amount: float
+    description: str
+    category_id: Optional[int]
+
+    model_config = {"from_attributes": True}
