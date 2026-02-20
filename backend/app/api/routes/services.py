@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import io
+import logging
 from decimal import Decimal
+from typing import List
 
 import openpyxl
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -22,6 +24,9 @@ from app.schemas.service import (
     ServiceResponse,
     ServiceUpdate,
 )
+from app.services.ai_provider import analyze_image, get_provider, parse_ai_json
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -213,6 +218,171 @@ async def seed_services(
         created.append(s["code"])
     await db.commit()
     return {"deleted": "all", "created": len(created), "codes": created}
+
+
+# ── AI-аналіз зображень послуг ─────────────────────────────────────
+
+_SERVICE_AI_SYSTEM = """\
+Ти — спеціалізований OCR-асистент для розпізнавання прайс-листів медичних послуг.
+Твоя задача — точно розпізнати дані послуг з зображення та повернути їх у форматі JSON.
+Відповідай ТІЛЬКИ валідним JSON без markdown, коментарів чи пояснень."""
+
+_SERVICE_AI_PROMPT = """\
+<context>
+Це зображення прайс-листа, таблиці або списку медичних послуг.
+На зображенні можуть бути: назви послуг, коди послуг, ціни, матеріали та їх вартість.
+</context>
+
+<task>
+Розпізнай ВСІ послуги з зображення. Для кожної послуги вилучи:
+
+1. **code** — код або номер послуги (якщо є). Якщо коду немає — генеруй порядковий номер як рядок: "001", "002", "003"...
+2. **name** — повна назва послуги українською мовою
+3. **price** — ціна послуги для клієнта (в грн). Якщо ціна не вказана — постав 0.
+4. **materials** — список матеріалів/витрат (якщо видно на зображенні):
+   - name: назва матеріалу
+   - unit: одиниця виміру (штука, пара, мл тощо)
+   - quantity: кількість (число)
+   - cost: загальна вартість цього матеріалу (грн, число)
+   Якщо матеріали не вказані — повертай порожній масив [].
+</task>
+
+<rules>
+- Розпізнай ВСІ послуги, навіть якщо їх десятки
+- Ціни — числа (float), наприклад 150.0, 2500.00
+- quantity та cost — числа (float)
+- Якщо код не видно — використай порядкові номери: "001", "002" тощо
+- Якщо назва частково видима — вкажи те, що вдалося розпізнати
+- НЕ вигадуй послуги, яких немає на зображенні
+- confidence: "high" = все чітко видно, "medium" = є неточності, "low" = дані погано розпізнані
+</rules>
+
+<output_format>
+Поверни ТІЛЬКИ JSON:
+{
+  "services": [
+    {
+      "code": "001",
+      "name": "Назва послуги",
+      "price": 100.0,
+      "materials": [
+        {"name": "Матеріал", "unit": "штука", "quantity": 1, "cost": 5.0}
+      ]
+    }
+  ],
+  "total_found": 5,
+  "confidence": "high",
+  "notes": ""
+}
+</output_format>"""
+
+
+@router.post("/analyze-image")
+async def analyze_services_image(
+    images: List[UploadFile] = File(...),
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Аналізує зображення прайс-листа через AI та повертає розпізнані послуги."""
+    provider, api_key = await get_provider(db, user.id)
+
+    if not provider:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "AI сервіс не налаштований. "
+                "Додайте хоча б один API ключ у Налаштуваннях: "
+                "Anthropic (Claude), OpenAI (ChatGPT) або xAI (Grok)."
+            ),
+        )
+
+    all_services = []
+    notes_parts = []
+
+    for image_file in images:
+        raw = await image_file.read()
+        media_type = image_file.content_type or "image/png"
+
+        if len(raw) > 10 * 1024 * 1024:
+            notes_parts.append(f"Файл {image_file.filename} перевищує 10 MB — пропущено")
+            continue
+
+        try:
+            text = await analyze_image(
+                provider, api_key, raw, media_type,
+                _SERVICE_AI_SYSTEM, _SERVICE_AI_PROMPT,
+            )
+            data = parse_ai_json(text, {"services": [], "confidence": "low", "notes": "Не вдалося розпізнати"})
+
+            services_list = data.get("services", [])
+            for svc in services_list:
+                # Normalise materials
+                materials = []
+                for m in svc.get("materials", []):
+                    materials.append({
+                        "name": str(m.get("name", "")),
+                        "unit": str(m.get("unit", "")),
+                        "quantity": float(m.get("quantity", 0)),
+                        "cost": float(m.get("cost", 0)),
+                    })
+                all_services.append({
+                    "code": str(svc.get("code", "")),
+                    "name": str(svc.get("name", "")),
+                    "price": float(svc.get("price", 0)),
+                    "materials": materials,
+                })
+
+            if data.get("notes"):
+                notes_parts.append(f"{image_file.filename}: {data['notes']}")
+
+        except Exception as exc:
+            logger.exception("AI analysis failed for %s", image_file.filename)
+            notes_parts.append(f"Помилка аналізу {image_file.filename}: {exc}")
+
+    return {
+        "services": all_services,
+        "total_found": len(all_services),
+        "provider": provider,
+        "notes": "; ".join(notes_parts) if notes_parts else "",
+    }
+
+
+@router.post("/bulk-create", response_model=list[ServiceResponse])
+async def bulk_create_services(
+    services_in: list[ServiceCreate],
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Масове створення послуг. Пропускає дублікати за кодом."""
+    # Отримати існуючі коди
+    result = await db.execute(
+        select(Service.code).where(Service.user_id == user.id)
+    )
+    existing_codes = {row[0] for row in result.all()}
+
+    ep_rate, vz_rate = await _get_tax_rates(db, user.id)
+    created = []
+
+    for svc_in in services_in:
+        if svc_in.code in existing_codes:
+            continue  # skip duplicate
+
+        service = Service(
+            user_id=user.id,
+            code=svc_in.code,
+            name=svc_in.name,
+            price=svc_in.price,
+            materials=[m.model_dump() for m in svc_in.materials],
+        )
+        db.add(service)
+        existing_codes.add(svc_in.code)
+        created.append(service)
+
+    await db.commit()
+    for svc in created:
+        await db.refresh(svc)
+
+    return [_to_response(s, ep_rate, vz_rate) for s in created]
 
 
 # ── Масові операції (до /{service_id}!) ───────────────────────────────

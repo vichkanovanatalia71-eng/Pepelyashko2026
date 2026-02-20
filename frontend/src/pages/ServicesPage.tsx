@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import { useAuth } from "../hooks/useAuth";
 import {
@@ -16,6 +16,11 @@ import {
   RefreshCw,
   X,
   CheckSquare,
+  ImagePlus,
+  Upload,
+  Sparkles,
+  Check,
+  AlertCircle,
 } from "lucide-react";
 import type { MaterialItem, NhsuSettings, Service, SortDirection, SortField } from "../types";
 
@@ -102,6 +107,26 @@ export default function ServicesPage() {
   const [showBulkPriceChange, setShowBulkPriceChange] = useState(false);
   const [bulkPricePercent, setBulkPricePercent] = useState("");
   const [bulkPriceLoading, setBulkPriceLoading] = useState(false);
+
+  // ── AI-імпорт з зображення ──
+  interface ParsedService {
+    code: string;
+    name: string;
+    price: number;
+    materials: MaterialItem[];
+    _selected: boolean;
+  }
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importStep, setImportStep] = useState<"upload" | "preview">("upload");
+  const [importLoading, setImportLoading] = useState(false);
+  const [importSaving, setImportSaving] = useState(false);
+  const [importError, setImportError] = useState("");
+  const [importNotes, setImportNotes] = useState("");
+  const [importProvider, setImportProvider] = useState("");
+  const [parsedServices, setParsedServices] = useState<ParsedService[]>([]);
+  const [importResult, setImportResult] = useState<{ created: number; skipped: number } | null>(null);
+  const importFileRef = useRef<HTMLInputElement>(null);
+  const [dragOver, setDragOver] = useState(false);
 
   // ── Завантаження ──
   useEffect(() => {
@@ -324,6 +349,133 @@ export default function ServicesPage() {
     setBulkPriceLoading(false);
   }
 
+  // ── AI-імпорт з зображення ──
+  function openImportModal() {
+    setShowImportModal(true);
+    setImportStep("upload");
+    setImportLoading(false);
+    setImportSaving(false);
+    setImportError("");
+    setImportNotes("");
+    setImportProvider("");
+    setParsedServices([]);
+    setImportResult(null);
+  }
+
+  function closeImportModal() {
+    setShowImportModal(false);
+    setParsedServices([]);
+    setImportResult(null);
+  }
+
+  async function handleImportFiles(files: FileList | null) {
+    if (!files || files.length === 0) return;
+
+    setImportLoading(true);
+    setImportError("");
+    setImportNotes("");
+    setParsedServices([]);
+    setImportResult(null);
+
+    try {
+      const fd = new FormData();
+      for (let i = 0; i < files.length; i++) {
+        fd.append("images", files[i]);
+      }
+
+      const res = await axios.post(`${API}/api/services/analyze-image`, fd, {
+        headers: { ...headers, "Content-Type": "multipart/form-data" },
+        timeout: 120000, // 2 min for AI
+      });
+
+      const data = res.data;
+      setImportProvider(data.provider || "");
+      setImportNotes(data.notes || "");
+
+      if (data.services && data.services.length > 0) {
+        setParsedServices(
+          data.services.map((s: any) => ({
+            code: s.code || "",
+            name: s.name || "",
+            price: s.price || 0,
+            materials: (s.materials || []).map((m: any) => ({
+              name: m.name || "",
+              unit: m.unit || "",
+              quantity: m.quantity || 0,
+              cost: m.cost || 0,
+            })),
+            _selected: true,
+          }))
+        );
+        setImportStep("preview");
+      } else {
+        setImportError("AI не зміг розпізнати жодної послуги на зображенні. Спробуйте інше зображення з кращою якістю.");
+      }
+    } catch (e: any) {
+      const msg = e?.response?.data?.detail || e?.message || "Помилка аналізу зображення";
+      setImportError(msg);
+    } finally {
+      setImportLoading(false);
+    }
+  }
+
+  function handleImportDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setDragOver(false);
+    handleImportFiles(e.dataTransfer.files);
+  }
+
+  function toggleParsedService(idx: number) {
+    setParsedServices((prev) =>
+      prev.map((s, i) => (i === idx ? { ...s, _selected: !s._selected } : s))
+    );
+  }
+
+  function updateParsedService(idx: number, field: "code" | "name" | "price", value: string | number) {
+    setParsedServices((prev) =>
+      prev.map((s, i) => (i === idx ? { ...s, [field]: value } : s))
+    );
+  }
+
+  function removeParsedService(idx: number) {
+    setParsedServices((prev) => prev.filter((_, i) => i !== idx));
+  }
+
+  function toggleAllParsed() {
+    const allSelected = parsedServices.every((s) => s._selected);
+    setParsedServices((prev) => prev.map((s) => ({ ...s, _selected: !allSelected })));
+  }
+
+  async function handleImportConfirm() {
+    const selected = parsedServices.filter((s) => s._selected);
+    if (selected.length === 0) return;
+
+    setImportSaving(true);
+    setImportError("");
+
+    try {
+      const payload = selected.map((s) => ({
+        code: s.code,
+        name: s.name,
+        price: s.price,
+        materials: s.materials,
+      }));
+
+      const res = await axios.post(`${API}/api/services/bulk-create`, payload, { headers });
+      const created = res.data.length;
+      const skipped = selected.length - created;
+      setImportResult({ created, skipped });
+      await loadServices();
+
+      // Auto-close after success
+      setTimeout(() => closeImportModal(), 2000);
+    } catch (e: any) {
+      setImportError(e?.response?.data?.detail || "Помилка збереження послуг");
+    } finally {
+      setImportSaving(false);
+    }
+  }
+
   // ── Фінансовий підсумок у формі ──
   const ep_rate = nhsuSettings?.ep_rate ?? 5;
   const vz_rate = nhsuSettings?.vz_rate ?? 1;
@@ -361,13 +513,22 @@ export default function ServicesPage() {
             </p>
           </div>
         </div>
-        <button
-          onClick={openCreate}
-          className="flex items-center gap-2 px-4 py-2.5 bg-accent-500/10 hover:bg-accent-500/20 text-accent-400 rounded-xl text-sm font-medium transition-all border border-accent-500/20"
-        >
-          <Plus size={16} />
-          Додати послугу
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={openImportModal}
+            className="flex items-center gap-2 px-4 py-2.5 bg-violet-500/10 hover:bg-violet-500/20 text-violet-400 rounded-xl text-sm font-medium transition-all border border-violet-500/20"
+          >
+            <ImagePlus size={16} />
+            Імпорт з фото (AI)
+          </button>
+          <button
+            onClick={openCreate}
+            className="flex items-center gap-2 px-4 py-2.5 bg-accent-500/10 hover:bg-accent-500/20 text-accent-400 rounded-xl text-sm font-medium transition-all border border-accent-500/20"
+          >
+            <Plus size={16} />
+            Додати послугу
+          </button>
+        </div>
       </div>
 
       {/* Search & Filters */}
@@ -931,6 +1092,270 @@ export default function ServicesPage() {
                 {bulkPriceLoading && <RefreshCw size={13} className="animate-spin" />}
                 Застосувати
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Модальне вікно AI-імпорту з зображення ── */}
+      {showImportModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-dark-600 border border-dark-50/10 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl">
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-dark-50/10">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center">
+                  <Sparkles size={16} className="text-violet-400" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold text-white">
+                    Імпорт послуг з зображення (AI)
+                  </h2>
+                  <p className="text-xs text-gray-500">
+                    Завантажте фото прайс-листа — AI розпізнає всі послуги автоматично
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={closeImportModal}
+                className="p-2 text-gray-500 hover:text-gray-300 hover:bg-dark-300 rounded-lg transition-all"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-5">
+              {/* Результат імпорту */}
+              {importResult && (
+                <div className="flex items-center gap-3 p-4 bg-green-500/10 border border-green-500/20 rounded-xl">
+                  <Check size={18} className="text-green-400" />
+                  <div className="text-sm">
+                    <span className="text-green-400 font-medium">
+                      Імпортовано: {importResult.created} послуг(и)
+                    </span>
+                    {importResult.skipped > 0 && (
+                      <span className="text-gray-400 ml-2">
+                        (пропущено {importResult.skipped} — дублікати за кодом)
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Крок 1: Завантаження */}
+              {importStep === "upload" && !importResult && (
+                <>
+                  <div
+                    onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                    onDragLeave={() => setDragOver(false)}
+                    onDrop={handleImportDrop}
+                    onClick={() => importFileRef.current?.click()}
+                    className={`flex flex-col items-center justify-center gap-4 py-16 border-2 border-dashed rounded-2xl cursor-pointer transition-all ${
+                      dragOver
+                        ? "border-violet-400 bg-violet-500/10"
+                        : "border-dark-50/20 hover:border-violet-500/30 hover:bg-dark-300/30"
+                    }`}
+                  >
+                    {importLoading ? (
+                      <>
+                        <RefreshCw size={36} className="text-violet-400 animate-spin" />
+                        <div className="text-center">
+                          <p className="text-sm text-violet-400 font-medium">AI аналізує зображення...</p>
+                          <p className="text-xs text-gray-500 mt-1">Це може зайняти до хвилини</p>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="w-16 h-16 rounded-2xl bg-violet-500/10 flex items-center justify-center">
+                          <Upload size={28} className="text-violet-400" />
+                        </div>
+                        <div className="text-center">
+                          <p className="text-sm text-gray-300">
+                            Перетягніть зображення сюди або{" "}
+                            <span className="text-violet-400 font-medium">натисніть для вибору</span>
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            PNG, JPG, WebP — до 10 MB. Можна кілька файлів.
+                          </p>
+                        </div>
+                      </>
+                    )}
+                    <input
+                      ref={importFileRef}
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      onChange={(e) => handleImportFiles(e.target.files)}
+                    />
+                  </div>
+
+                  {importError && (
+                    <div className="flex items-start gap-3 p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
+                      <AlertCircle size={16} className="text-red-400 mt-0.5 shrink-0" />
+                      <p className="text-sm text-red-400">{importError}</p>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* Крок 2: Попередній перегляд */}
+              {importStep === "preview" && !importResult && (
+                <>
+                  {/* Info bar */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Sparkles size={14} className="text-violet-400" />
+                      <span className="text-sm text-gray-300">
+                        Розпізнано <strong className="text-white">{parsedServices.length}</strong> послуг
+                      </span>
+                      {importProvider && (
+                        <span className="text-xs text-gray-500 ml-2">
+                          через {importProvider === "anthropic" ? "Claude" : importProvider === "openai" ? "ChatGPT" : "Grok"}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={toggleAllParsed}
+                        className="text-xs text-gray-400 hover:text-gray-200 transition-colors"
+                      >
+                        {parsedServices.every((s) => s._selected) ? "Зняти все" : "Вибрати все"}
+                      </button>
+                      <button
+                        onClick={() => { setImportStep("upload"); setParsedServices([]); }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-400 hover:text-gray-200 rounded-lg border border-dark-50/20 transition-all"
+                      >
+                        <ImagePlus size={13} />
+                        Інше фото
+                      </button>
+                    </div>
+                  </div>
+
+                  {importNotes && (
+                    <div className="flex items-start gap-2 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-xl">
+                      <AlertCircle size={14} className="text-yellow-400 mt-0.5 shrink-0" />
+                      <p className="text-xs text-yellow-400">{importNotes}</p>
+                    </div>
+                  )}
+
+                  {/* Table */}
+                  <div className="overflow-x-auto rounded-xl border border-dark-50/10">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="bg-dark-300/50 border-b border-dark-50/10">
+                          <th className="px-3 py-2.5 w-10">
+                            <input
+                              type="checkbox"
+                              checked={parsedServices.every((s) => s._selected)}
+                              onChange={toggleAllParsed}
+                              className="accent-violet-500 w-4 h-4 cursor-pointer"
+                            />
+                          </th>
+                          <th className="text-left px-3 py-2.5 text-gray-400 font-medium w-20">Код</th>
+                          <th className="text-left px-3 py-2.5 text-gray-400 font-medium">Назва</th>
+                          <th className="text-left px-3 py-2.5 text-gray-400 font-medium w-28">Ціна (грн)</th>
+                          <th className="text-left px-3 py-2.5 text-gray-400 font-medium w-16">Матеріали</th>
+                          <th className="px-3 py-2.5 w-10" />
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {parsedServices.map((svc, idx) => (
+                          <tr
+                            key={idx}
+                            className={`border-b border-dark-50/5 transition-colors ${
+                              svc._selected ? "bg-violet-500/5" : "opacity-50"
+                            }`}
+                          >
+                            <td className="px-3 py-2">
+                              <input
+                                type="checkbox"
+                                checked={svc._selected}
+                                onChange={() => toggleParsedService(idx)}
+                                className="accent-violet-500 w-4 h-4 cursor-pointer"
+                              />
+                            </td>
+                            <td className="px-3 py-2">
+                              <input
+                                type="text"
+                                value={svc.code}
+                                onChange={(e) => updateParsedService(idx, "code", e.target.value)}
+                                className="w-full bg-dark-300 border border-dark-50/10 rounded-lg px-2 py-1.5 text-xs text-white font-mono focus:outline-none focus:border-violet-500/40"
+                              />
+                            </td>
+                            <td className="px-3 py-2">
+                              <input
+                                type="text"
+                                value={svc.name}
+                                onChange={(e) => updateParsedService(idx, "name", e.target.value)}
+                                className="w-full bg-dark-300 border border-dark-50/10 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:border-violet-500/40"
+                              />
+                            </td>
+                            <td className="px-3 py-2">
+                              <input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={svc.price}
+                                onChange={(e) => updateParsedService(idx, "price", parseFloat(e.target.value) || 0)}
+                                className="w-full bg-dark-300 border border-dark-50/10 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:border-violet-500/40"
+                              />
+                            </td>
+                            <td className="px-3 py-2 text-center">
+                              <span className="text-xs text-gray-400">
+                                {svc.materials.length}
+                              </span>
+                            </td>
+                            <td className="px-1 py-2">
+                              <button
+                                onClick={() => removeParsedService(idx)}
+                                className="p-1 text-gray-600 hover:text-red-400 rounded transition-colors"
+                              >
+                                <X size={14} />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {importError && (
+                    <div className="flex items-start gap-3 p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
+                      <AlertCircle size={16} className="text-red-400 mt-0.5 shrink-0" />
+                      <p className="text-sm text-red-400">{importError}</p>
+                    </div>
+                  )}
+
+                  {/* Actions */}
+                  <div className="flex items-center justify-between pt-2">
+                    <p className="text-xs text-gray-500">
+                      Вибрано {parsedServices.filter((s) => s._selected).length} з {parsedServices.length} послуг.
+                      Ви можете відредагувати код, назву та ціну перед імпортом.
+                    </p>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={closeImportModal}
+                        className="px-5 py-2.5 text-sm text-gray-400 hover:text-gray-200 rounded-xl border border-dark-50/20 transition-all"
+                      >
+                        Скасувати
+                      </button>
+                      <button
+                        onClick={handleImportConfirm}
+                        disabled={importSaving || parsedServices.filter((s) => s._selected).length === 0}
+                        className="flex items-center gap-2 px-5 py-2.5 bg-violet-500/10 hover:bg-violet-500/20 text-violet-400 rounded-xl text-sm font-medium transition-all border border-violet-500/20 disabled:opacity-50"
+                      >
+                        {importSaving ? (
+                          <RefreshCw size={14} className="animate-spin" />
+                        ) : (
+                          <Check size={14} />
+                        )}
+                        Імпортувати {parsedServices.filter((s) => s._selected).length} послуг
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
