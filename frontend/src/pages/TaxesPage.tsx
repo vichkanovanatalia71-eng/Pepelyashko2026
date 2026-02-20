@@ -1,21 +1,58 @@
 import { useEffect, useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Check } from "lucide-react";
 import api from "../api/client";
 import type { TaxSummary } from "../types";
+
+interface PaymentStatus {
+  year: number;
+  quarter: number;
+  tax_type: string;
+  is_paid: boolean;
+}
+
+const TAX_TYPES = [
+  { key: "single_tax", label: "Єдиний", color: "text-accent-400" },
+  { key: "esv", label: "ЄСВ", color: "text-yellow-400" },
+  { key: "vz", label: "ВЗ", color: "text-orange-400" },
+];
 
 export default function TaxesPage() {
   const [taxes, setTaxes] = useState<TaxSummary[]>([]);
   const [year, setYear] = useState(new Date().getFullYear());
   const [loading, setLoading] = useState(true);
+  const [payments, setPayments] = useState<PaymentStatus[]>([]);
 
   useEffect(() => {
     setLoading(true);
-    api
-      .get("/taxes/quarterly", { params: { year } })
-      .then((res) => setTaxes(res.data))
-      .catch(() => setTaxes([]))
+    Promise.all([
+      api.get("/taxes/quarterly", { params: { year } }),
+      api.get("/taxes/payments", { params: { year } }),
+    ])
+      .then(([taxRes, payRes]) => {
+        setTaxes(taxRes.data);
+        setPayments(payRes.data);
+      })
+      .catch(() => { setTaxes([]); setPayments([]); })
       .finally(() => setLoading(false));
   }, [year]);
+
+  function isPaid(quarter: number, taxType: string): boolean {
+    return payments.some(
+      p => p.quarter === quarter && p.tax_type === taxType && p.is_paid
+    );
+  }
+
+  async function togglePayment(quarter: number, taxType: string) {
+    const { data } = await api.post("/taxes/payments/toggle", {
+      year, quarter, tax_type: taxType,
+    });
+    setPayments(prev => {
+      const filtered = prev.filter(
+        p => !(p.quarter === quarter && p.tax_type === taxType)
+      );
+      return [...filtered, data];
+    });
+  }
 
   const totalIncome = taxes.reduce((s, t) => s + t.income, 0);
   const totalSingleTax = taxes.reduce((s, t) => s + t.single_tax, 0);
@@ -25,6 +62,9 @@ export default function TaxesPage() {
 
   const fmt = (n: number) =>
     n.toLocaleString("uk-UA", { minimumFractionDigits: 2 });
+
+  // Extract quarter number from "Q1 2026" string
+  const qNum = (q: string) => parseInt(q.charAt(1));
 
   return (
     <div>
@@ -64,38 +104,64 @@ export default function TaxesPage() {
         <>
           {/* Quarter cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-5 mb-5 lg:mb-8">
-            {taxes.map((t) => (
-              <div key={t.quarter} className="card-neo p-6">
-                <p className="text-sm text-gray-500 mb-3">{t.quarter}</p>
-                <p className="text-lg font-bold text-white mb-4">
-                  {fmt(t.income)} <span className="text-sm font-normal text-gray-500">&#8372;</span>
-                </p>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Єдиний (5%)</span>
-                    <span className="text-accent-400 font-medium">{fmt(t.single_tax)}</span>
+            {taxes.map((t) => {
+              const q = qNum(t.quarter);
+              const allPaid = TAX_TYPES.every(tt => isPaid(q, tt.key));
+              return (
+                <div key={t.quarter} className={`card-neo p-4 sm:p-6 border ${allPaid ? "border-emerald-500/30" : "border-dark-50/20"}`}>
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-sm text-gray-500">{t.quarter}</p>
+                    {allPaid && (
+                      <span className="px-2 py-0.5 text-xs font-medium rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
+                        Сплачено
+                      </span>
+                    )}
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">ЄСВ</span>
-                    <span className="text-yellow-400 font-medium">{fmt(t.esv)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">ВЗ (1.5%)</span>
-                    <span className="text-orange-400 font-medium">{fmt(t.vz)}</span>
-                  </div>
-                  <div className="border-t border-dark-50/10 pt-2 flex justify-between">
-                    <span className="text-gray-400 font-medium">Всього</span>
-                    <span className="text-red-400 font-bold">{fmt(t.total)} &#8372;</span>
+                  <p className="text-lg font-bold text-white mb-4">
+                    {fmt(t.income)} <span className="text-sm font-normal text-gray-500">&#8372;</span>
+                  </p>
+                  <div className="space-y-2 text-sm">
+                    {[
+                      { key: "single_tax", label: "Єдиний (5%)", value: t.single_tax, color: "text-accent-400" },
+                      { key: "esv", label: "ЄСВ", value: t.esv, color: "text-yellow-400" },
+                      { key: "vz", label: "ВЗ (1.5%)", value: t.vz, color: "text-orange-400" },
+                    ].map(row => {
+                      const paid = isPaid(q, row.key);
+                      return (
+                        <div key={row.key} className="flex items-center justify-between gap-1">
+                          <button
+                            onClick={() => togglePayment(q, row.key)}
+                            className={`flex items-center gap-1.5 text-left ${paid ? "text-gray-600 line-through" : "text-gray-500"}`}
+                          >
+                            <span className={`w-4 h-4 rounded flex items-center justify-center shrink-0 border transition-all ${
+                              paid
+                                ? "bg-emerald-500/20 border-emerald-500/40"
+                                : "border-dark-50/30 hover:border-gray-500"
+                            }`}>
+                              {paid && <Check size={10} className="text-emerald-400" />}
+                            </span>
+                            {row.label}
+                          </button>
+                          <span className={`${row.color} font-medium ${paid ? "line-through opacity-50" : ""}`}>
+                            {fmt(row.value)}
+                          </span>
+                        </div>
+                      );
+                    })}
+                    <div className="border-t border-dark-50/10 pt-2 flex justify-between">
+                      <span className="text-gray-400 font-medium">Всього</span>
+                      <span className="text-red-400 font-bold">{fmt(t.total)} &#8372;</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Summary table */}
           <div className="card-neo overflow-hidden">
             <div className="overflow-x-auto">
-            <table className="w-full text-sm min-w-[500px]">
+            <table className="w-full text-sm min-w-[600px]">
               <thead>
                 <tr className="border-b border-dark-50/10">
                   <th className="text-left px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
@@ -116,32 +182,50 @@ export default function TaxesPage() {
                   <th className="text-right px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                     Всього
                   </th>
+                  <th className="text-center px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    Статус
+                  </th>
                 </tr>
               </thead>
               <tbody>
-                {taxes.map((t) => (
-                  <tr
-                    key={t.quarter}
-                    className="border-b border-dark-50/5 hover:bg-dark-200/50 transition-colors"
-                  >
-                    <td className="px-5 py-4 text-white font-medium">{t.quarter}</td>
-                    <td className="px-5 py-4 text-right text-gray-300">
-                      {fmt(t.income)} &#8372;
-                    </td>
-                    <td className="px-5 py-4 text-right text-accent-400">
-                      {fmt(t.single_tax)} &#8372;
-                    </td>
-                    <td className="px-5 py-4 text-right text-yellow-400">
-                      {fmt(t.esv)} &#8372;
-                    </td>
-                    <td className="px-5 py-4 text-right text-orange-400">
-                      {fmt(t.vz)} &#8372;
-                    </td>
-                    <td className="px-5 py-4 text-right font-semibold text-red-400">
-                      {fmt(t.total)} &#8372;
-                    </td>
-                  </tr>
-                ))}
+                {taxes.map((t) => {
+                  const q = qNum(t.quarter);
+                  const allPaid = TAX_TYPES.every(tt => isPaid(q, tt.key));
+                  return (
+                    <tr
+                      key={t.quarter}
+                      className="border-b border-dark-50/5 hover:bg-dark-200/50 transition-colors"
+                    >
+                      <td className="px-5 py-4 text-white font-medium">{t.quarter}</td>
+                      <td className="px-5 py-4 text-right text-gray-300">
+                        {fmt(t.income)} &#8372;
+                      </td>
+                      <td className={`px-5 py-4 text-right text-accent-400 ${isPaid(q, "single_tax") ? "line-through opacity-50" : ""}`}>
+                        {fmt(t.single_tax)} &#8372;
+                      </td>
+                      <td className={`px-5 py-4 text-right text-yellow-400 ${isPaid(q, "esv") ? "line-through opacity-50" : ""}`}>
+                        {fmt(t.esv)} &#8372;
+                      </td>
+                      <td className={`px-5 py-4 text-right text-orange-400 ${isPaid(q, "vz") ? "line-through opacity-50" : ""}`}>
+                        {fmt(t.vz)} &#8372;
+                      </td>
+                      <td className="px-5 py-4 text-right font-semibold text-red-400">
+                        {fmt(t.total)} &#8372;
+                      </td>
+                      <td className="px-5 py-4 text-center">
+                        {allPaid ? (
+                          <span className="px-2.5 py-1 text-xs font-medium rounded-lg bg-emerald-500/15 text-emerald-400">
+                            Сплачено
+                          </span>
+                        ) : (
+                          <span className="px-2.5 py-1 text-xs font-medium rounded-lg bg-yellow-500/15 text-yellow-400">
+                            Очікує
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
 
                 {/* Total row */}
                 <tr className="bg-dark-400/50">
@@ -161,6 +245,7 @@ export default function TaxesPage() {
                   <td className="px-5 py-4 text-right text-red-400 font-bold text-base">
                     {fmt(grandTotal)} &#8372;
                   </td>
+                  <td className="px-5 py-4"></td>
                 </tr>
               </tbody>
             </table>

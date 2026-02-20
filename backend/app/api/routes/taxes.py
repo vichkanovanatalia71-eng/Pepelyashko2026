@@ -1,6 +1,7 @@
 from datetime import date
 
 from fastapi import APIRouter, Depends, Query
+from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -8,6 +9,7 @@ from app.core.config import settings
 from app.core.deps import get_current_user, get_db
 from app.models.income import Income
 from app.models.nhsu import NhsuSettings
+from app.models.tax_payment import TaxPayment
 from app.models.user import User
 from app.schemas.report import TaxSummary
 
@@ -62,3 +64,79 @@ async def quarterly_taxes(
             )
         )
     return summaries
+
+
+# ── Tax payment status ──────────────────────────────────────────────
+
+
+class TaxPaymentStatus(BaseModel):
+    year: int
+    quarter: int
+    tax_type: str
+    is_paid: bool
+
+
+class TaxPaymentToggle(BaseModel):
+    year: int
+    quarter: int
+    tax_type: str
+
+
+@router.get("/payments", response_model=list[TaxPaymentStatus])
+async def get_tax_payments(
+    year: int = Query(...),
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    result = await db.execute(
+        select(TaxPayment).where(
+            TaxPayment.user_id == user.id,
+            TaxPayment.year == year,
+        )
+    )
+    payments = result.scalars().all()
+    return [
+        TaxPaymentStatus(
+            year=p.year, quarter=p.quarter, tax_type=p.tax_type, is_paid=p.is_paid
+        )
+        for p in payments
+    ]
+
+
+@router.post("/payments/toggle", response_model=TaxPaymentStatus)
+async def toggle_tax_payment(
+    body: TaxPaymentToggle,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    result = await db.execute(
+        select(TaxPayment).where(
+            TaxPayment.user_id == user.id,
+            TaxPayment.year == body.year,
+            TaxPayment.quarter == body.quarter,
+            TaxPayment.tax_type == body.tax_type,
+        )
+    )
+    payment = result.scalar_one_or_none()
+
+    if payment:
+        payment.is_paid = not payment.is_paid
+    else:
+        payment = TaxPayment(
+            user_id=user.id,
+            year=body.year,
+            quarter=body.quarter,
+            tax_type=body.tax_type,
+            is_paid=True,
+        )
+        db.add(payment)
+
+    await db.commit()
+    await db.refresh(payment)
+
+    return TaxPaymentStatus(
+        year=payment.year,
+        quarter=payment.quarter,
+        tax_type=payment.tax_type,
+        is_paid=payment.is_paid,
+    )
