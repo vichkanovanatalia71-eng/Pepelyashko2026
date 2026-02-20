@@ -15,6 +15,7 @@ import {
   CheckCircle2,
   XCircle,
   Receipt,
+  ChevronDown,
 } from "lucide-react";
 import { Doctor, NhsuSettings } from "../types";
 import ServicesPage from "./ServicesPage";
@@ -32,6 +33,15 @@ const AGE_LABELS: Record<string, string> = {
 export default function SettingsPage() {
   const { token } = useAuth();
   const headers = { Authorization: `Bearer ${token}` };
+
+  // ── Колапс-стан блоків ──
+  const [open, setOpen] = useState<Record<string, boolean>>({
+    doctors: true,
+    apiKeys: false,
+    taxes: true,
+    nhsu: false,
+  });
+  const toggle = (key: string) => setOpen((p) => ({ ...p, [key]: !p[key] }));
 
   // ── Лікарі ──
   const [doctors, setDoctors] = useState<Doctor[]>([]);
@@ -140,7 +150,6 @@ export default function SettingsPage() {
     setApiKeysMsg("");
     try {
       const payload: Record<string, string | null> = {};
-      // undefined = skip (don't send), "" = clear, value = save
       if (anthropicInput !== "") payload.anthropic_key = anthropicInput;
       if (openaiInput !== "") payload.openai_key = openaiInput;
       if (xaiInput !== "") payload.xai_key = xaiInput;
@@ -164,6 +173,40 @@ export default function SettingsPage() {
     } catch {}
   }
 
+  /* ── Заголовок блоку (клікабельний, 3D-ховер, шеврон) ── */
+  function SectionHeader({
+    sectionKey,
+    icon: Icon,
+    title,
+    subtitle,
+  }: {
+    sectionKey: string;
+    icon: React.ComponentType<{ size?: number; className?: string }>;
+    title: string;
+    subtitle?: string;
+  }) {
+    const isOpen = open[sectionKey];
+    return (
+      <button
+        type="button"
+        onClick={() => toggle(sectionKey)}
+        className="w-full flex items-center justify-between gap-2 group"
+      >
+        <div className="flex items-center gap-2">
+          <Icon size={18} className="text-accent-400" />
+          <h2 className="text-lg font-semibold text-white">{title}</h2>
+          {subtitle && <span className="text-xs text-gray-500 ml-1">{subtitle}</span>}
+        </div>
+        <ChevronDown
+          size={18}
+          className={`text-gray-500 group-hover:text-accent-400 transition-transform duration-300 ${
+            isOpen ? "rotate-180" : ""
+          }`}
+        />
+      </button>
+    );
+  }
+
   return (
     <div className="space-y-8 max-w-full">
       {/* Header */}
@@ -180,341 +223,344 @@ export default function SettingsPage() {
       </div>
 
       {/* ── Лікарі ── */}
-      <div className="card-neo p-6 space-y-5">
-        <div className="flex items-center gap-2 mb-1">
-          <Stethoscope size={18} className="text-accent-400" />
-          <h2 className="text-lg font-semibold text-white">Список лікарів</h2>
-        </div>
+      <div className="card-neo card-3d-hover p-6 space-y-5">
+        <SectionHeader sectionKey="doctors" icon={Stethoscope} title="Список лікарів" />
 
-        {/* Форма додавання */}
-        <div className="flex gap-3 items-end">
-          <div className="flex-1">
-            <label className="block text-xs text-gray-400 mb-1">ПІБ лікаря</label>
-            <input
-              className="w-full bg-dark-300 border border-dark-50/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-accent-500/50"
-              placeholder="Іванов Іван Іванович"
-              value={newDoctorName}
-              onChange={(e) => setNewDoctorName(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleAddDoctor()}
-            />
-          </div>
-          <label className="flex items-center gap-2 text-sm text-gray-400 pb-2.5 cursor-pointer select-none">
-            <input
-              type="checkbox"
-              checked={newIsOwner}
-              onChange={(e) => setNewIsOwner(e.target.checked)}
-              className="accent-accent-500 w-4 h-4"
-            />
-            Власник
-          </label>
-          <button
-            onClick={handleAddDoctor}
-            disabled={doctorLoading || !newDoctorName.trim()}
-            className="flex items-center gap-2 px-4 py-2.5 bg-accent-500/10 hover:bg-accent-500/20 text-accent-400 rounded-xl text-sm font-medium transition-all border border-accent-500/20 disabled:opacity-50"
-          >
-            <UserPlus size={16} />
-            Додати
-          </button>
-        </div>
-
-        {doctorMsg && (
-          <p className="text-xs text-accent-400">{doctorMsg}</p>
-        )}
-
-        {/* Таблиця лікарів */}
-        <div className="overflow-hidden rounded-xl border border-dark-50/10">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-dark-50/10 bg-dark-300/50">
-                <th className="text-left px-4 py-3 text-gray-400 font-medium">ПІБ</th>
-                <th className="text-center px-4 py-3 text-gray-400 font-medium">Власник</th>
-                <th className="px-4 py-3" />
-              </tr>
-            </thead>
-            <tbody>
-              {doctors.length === 0 && (
-                <tr>
-                  <td colSpan={3} className="text-center py-6 text-gray-600 text-sm">
-                    Лікарів ще немає. Додайте першого.
-                  </td>
-                </tr>
-              )}
-              {doctors.map((d) => (
-                <tr key={d.id} className="border-b border-dark-50/5 hover:bg-dark-300/30 transition-colors">
-                  <td className="px-4 py-3 text-gray-200">{d.full_name}</td>
-                  <td className="px-4 py-3 text-center">
-                    {d.is_owner ? (
-                      <span className="text-xs px-2 py-0.5 bg-accent-500/10 text-accent-400 rounded-full border border-accent-500/20">
-                        Власник
-                      </span>
-                    ) : (
-                      <span className="text-gray-600">—</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <button
-                      onClick={() => handleDeleteDoctor(d.id)}
-                      className="p-1.5 text-gray-600 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
-                    >
-                      <Trash2 size={15} />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* ── API ключі ── */}
-      <div className="card-neo p-6 space-y-5">
-        <div className="flex items-center gap-2 mb-1">
-          <KeyRound size={18} className="text-accent-400" />
-          <h2 className="text-lg font-semibold text-white">API ключі</h2>
-          <span className="text-xs text-gray-500 ml-1">для AI-аналізу зображень</span>
-        </div>
-
-        {[
-          {
-            label: "Claude (Anthropic)",
-            field: "anthropic_key" as const,
-            input: anthropicInput,
-            setInput: setAnthropicInput,
-            show: showAnthropicKey,
-            setShow: setShowAnthropicKey,
-            isSet: apiKeysStatus?.anthropic_key_set,
-            masked: apiKeysStatus?.anthropic_key_masked,
-            placeholder: "sk-ant-…",
-          },
-          {
-            label: "ChatGPT (OpenAI)",
-            field: "openai_key" as const,
-            input: openaiInput,
-            setInput: setOpenaiInput,
-            show: showOpenaiKey,
-            setShow: setShowOpenaiKey,
-            isSet: apiKeysStatus?.openai_key_set,
-            masked: apiKeysStatus?.openai_key_masked,
-            placeholder: "sk-…",
-          },
-          {
-            label: "Grok (xAI)",
-            field: "xai_key" as const,
-            input: xaiInput,
-            setInput: setXaiInput,
-            show: showXaiKey,
-            setShow: setShowXaiKey,
-            isSet: apiKeysStatus?.xai_key_set,
-            masked: apiKeysStatus?.xai_key_masked,
-            placeholder: "xai-…",
-          },
-        ].map(({ label, field, input, setInput, show, setShow, isSet, masked, placeholder }) => (
-          <div key={field} className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <label className="text-sm text-gray-300 font-medium">{label}</label>
-              {isSet ? (
-                <span className="flex items-center gap-1 text-xs text-green-400">
-                  <CheckCircle2 size={12} />
-                  Налаштовано: <span className="font-mono text-gray-400">{masked}</span>
-                </span>
-              ) : (
-                <span className="flex items-center gap-1 text-xs text-gray-600">
-                  <XCircle size={12} />
-                  Не налаштовано
-                </span>
-              )}
-            </div>
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <input
-                  type={show ? "text" : "password"}
-                  className="w-full bg-dark-300 border border-dark-50/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-accent-500/50 pr-10 font-mono"
-                  placeholder={isSet ? "Введіть новий ключ для заміни" : placeholder}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShow(!show)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
-                >
-                  {show ? <EyeOff size={15} /> : <Eye size={15} />}
-                </button>
-              </div>
-              {isSet && (
-                <button
-                  onClick={() => handleClearApiKey(field)}
-                  className="px-3 py-2.5 text-xs text-red-400 hover:bg-red-500/10 rounded-xl border border-red-500/20 transition-all"
-                  title="Видалити ключ"
-                >
-                  <Trash2 size={14} />
-                </button>
-              )}
-            </div>
-          </div>
-        ))}
-
-        <div className="flex items-center gap-3 pt-1">
-          <button
-            onClick={handleSaveApiKeys}
-            disabled={apiKeysLoading || (!anthropicInput && !openaiInput && !xaiInput)}
-            className="flex items-center gap-2 px-5 py-2.5 bg-accent-500/10 hover:bg-accent-500/20 text-accent-400 rounded-xl text-sm font-medium transition-all border border-accent-500/20 disabled:opacity-50"
-          >
-            {apiKeysLoading ? (
-              <RefreshCw size={15} className="animate-spin" />
-            ) : (
-              <Save size={15} />
-            )}
-            Зберегти ключі
-          </button>
-          {apiKeysMsg && (
-            <span className="text-xs text-accent-400">{apiKeysMsg}</span>
-          )}
-        </div>
-
-        <p className="text-xs text-gray-600">
-          Ключі зберігаються в зашифрованому вигляді та використовуються лише для AI-аналізу зображень НСЗУ.
-          Ключ Claude (Anthropic) є пріоритетним для аналізу скріншотів.
-        </p>
-      </div>
-
-      {/* ── Податки ── */}
-      <div className="card-neo p-6 space-y-5">
-        <div className="flex items-center gap-2 mb-1">
-          <Receipt size={18} className="text-accent-400" />
-          <h2 className="text-lg font-semibold text-white">Податки</h2>
-        </div>
-
-        {!nhsuSettings ? (
-          <div className="text-gray-500 text-sm py-4">Завантаження…</div>
-        ) : (
+        {open.doctors && (
           <>
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <label className="block text-xs text-gray-400 mb-1">Єдиний соціальний внесок (грн/місяць)</label>
+            {/* Форма додавання */}
+            <div className="flex gap-3 items-end">
+              <div className="flex-1">
+                <label className="block text-xs text-gray-400 mb-1">ПІБ лікаря</label>
                 <input
-                  type="number"
-                  step="0.01"
-                  className="w-full bg-dark-300 border border-dark-50/20 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-accent-500/50"
-                  value={settingsForm.esv_monthly ?? ""}
-                  onChange={(e) =>
-                    setSettingsForm((p) => ({ ...p, esv_monthly: parseFloat(e.target.value) }))
-                  }
+                  className="w-full bg-dark-300 border border-dark-50/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-accent-500/50"
+                  placeholder="Іванов Іван Іванович"
+                  value={newDoctorName}
+                  onChange={(e) => setNewDoctorName(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleAddDoctor()}
                 />
               </div>
-              <div>
-                <label className="block text-xs text-gray-400 mb-1">Єдиний податок (%)</label>
+              <label className="flex items-center gap-2 text-sm text-gray-400 pb-2.5 cursor-pointer select-none">
                 <input
-                  type="number"
-                  step="0.01"
-                  className="w-full bg-dark-300 border border-dark-50/20 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-accent-500/50"
-                  value={settingsForm.ep_rate ?? ""}
-                  onChange={(e) =>
-                    setSettingsForm((p) => ({ ...p, ep_rate: parseFloat(e.target.value) }))
-                  }
+                  type="checkbox"
+                  checked={newIsOwner}
+                  onChange={(e) => setNewIsOwner(e.target.checked)}
+                  className="accent-accent-500 w-4 h-4"
                 />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-400 mb-1">Військовий збір (%)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  className="w-full bg-dark-300 border border-dark-50/20 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-accent-500/50"
-                  value={settingsForm.vz_rate ?? ""}
-                  onChange={(e) =>
-                    setSettingsForm((p) => ({ ...p, vz_rate: parseFloat(e.target.value) }))
-                  }
-                />
-              </div>
+                Власник
+              </label>
+              <button
+                onClick={handleAddDoctor}
+                disabled={doctorLoading || !newDoctorName.trim()}
+                className="flex items-center gap-2 px-4 py-2.5 bg-accent-500/10 hover:bg-accent-500/20 text-accent-400 rounded-xl text-sm font-medium transition-all border border-accent-500/20 disabled:opacity-50"
+              >
+                <UserPlus size={16} />
+                Додати
+              </button>
             </div>
 
-            <div className="flex items-center gap-3 pt-1">
-              <button
-                onClick={handleSaveSettings}
-                disabled={settingsLoading}
-                className="flex items-center gap-2 px-5 py-2.5 bg-accent-500/10 hover:bg-accent-500/20 text-accent-400 rounded-xl text-sm font-medium transition-all border border-accent-500/20 disabled:opacity-50"
-              >
-                {settingsLoading ? (
-                  <RefreshCw size={15} className="animate-spin" />
-                ) : (
-                  <Save size={15} />
-                )}
-                Зберегти
-              </button>
-              {settingsMsg && (
-                <span className="text-xs text-accent-400">{settingsMsg}</span>
-              )}
+            {doctorMsg && (
+              <p className="text-xs text-accent-400">{doctorMsg}</p>
+            )}
+
+            {/* Таблиця лікарів */}
+            <div className="overflow-hidden rounded-xl border border-dark-50/10">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-dark-50/10 bg-dark-300/50">
+                    <th className="text-left px-4 py-3 text-gray-400 font-medium">ПІБ</th>
+                    <th className="text-center px-4 py-3 text-gray-400 font-medium">Власник</th>
+                    <th className="px-4 py-3" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {doctors.length === 0 && (
+                    <tr>
+                      <td colSpan={3} className="text-center py-6 text-gray-600 text-sm">
+                        Лікарів ще немає. Додайте першого.
+                      </td>
+                    </tr>
+                  )}
+                  {doctors.map((d) => (
+                    <tr key={d.id} className="border-b border-dark-50/5 hover:bg-dark-300/30 transition-colors">
+                      <td className="px-4 py-3 text-gray-200">{d.full_name}</td>
+                      <td className="px-4 py-3 text-center">
+                        {d.is_owner ? (
+                          <span className="text-xs px-2 py-0.5 bg-accent-500/10 text-accent-400 rounded-full border border-accent-500/20">
+                            Власник
+                          </span>
+                        ) : (
+                          <span className="text-gray-600">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <button
+                          onClick={() => handleDeleteDoctor(d.id)}
+                          className="p-1.5 text-gray-600 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </>
         )}
       </div>
 
-      {/* ── Параметри розрахунку НСЗУ ── */}
-      <div className="card-neo p-6 space-y-5">
-        <div className="flex items-center gap-2 mb-1">
-          <PercentCircle size={18} className="text-accent-400" />
-          <h2 className="text-lg font-semibold text-white">Параметри розрахунку НСЗУ</h2>
-        </div>
+      {/* ── API ключі ── */}
+      <div className="card-neo card-3d-hover p-6 space-y-5">
+        <SectionHeader sectionKey="apiKeys" icon={KeyRound} title="API ключі" subtitle="для AI-аналізу зображень" />
 
-        {!nhsuSettings ? (
-          <div className="text-gray-500 text-sm py-4">Завантаження…</div>
-        ) : (
+        {open.apiKeys && (
           <>
-            {/* Капітаційна ставка */}
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <label className="block text-xs text-gray-400 mb-1">Капітаційна ставка (грн)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  className="w-full bg-dark-300 border border-dark-50/20 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-accent-500/50"
-                  value={settingsForm.capitation_rate ?? ""}
-                  onChange={(e) =>
-                    setSettingsForm((p) => ({ ...p, capitation_rate: parseFloat(e.target.value) }))
-                  }
-                />
-              </div>
-            </div>
-
-            {/* Вікові коефіцієнти */}
-            <div>
-              <p className="text-xs text-gray-400 mb-3">Вікові коефіцієнти</p>
-              <div className="grid grid-cols-5 gap-3">
-                {(Object.keys(AGE_LABELS) as (keyof NhsuSettings)[]).map((key) => (
-                  <div key={key}>
-                    <label className="block text-xs text-gray-500 mb-1">{AGE_LABELS[key as string]}</label>
+            {[
+              {
+                label: "Claude (Anthropic)",
+                field: "anthropic_key" as const,
+                input: anthropicInput,
+                setInput: setAnthropicInput,
+                show: showAnthropicKey,
+                setShow: setShowAnthropicKey,
+                isSet: apiKeysStatus?.anthropic_key_set,
+                masked: apiKeysStatus?.anthropic_key_masked,
+                placeholder: "sk-ant-…",
+              },
+              {
+                label: "ChatGPT (OpenAI)",
+                field: "openai_key" as const,
+                input: openaiInput,
+                setInput: setOpenaiInput,
+                show: showOpenaiKey,
+                setShow: setShowOpenaiKey,
+                isSet: apiKeysStatus?.openai_key_set,
+                masked: apiKeysStatus?.openai_key_masked,
+                placeholder: "sk-…",
+              },
+              {
+                label: "Grok (xAI)",
+                field: "xai_key" as const,
+                input: xaiInput,
+                setInput: setXaiInput,
+                show: showXaiKey,
+                setShow: setShowXaiKey,
+                isSet: apiKeysStatus?.xai_key_set,
+                masked: apiKeysStatus?.xai_key_masked,
+                placeholder: "xai-…",
+              },
+            ].map(({ label, field, input, setInput, show, setShow, isSet, masked, placeholder }) => (
+              <div key={field} className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm text-gray-300 font-medium">{label}</label>
+                  {isSet ? (
+                    <span className="flex items-center gap-1 text-xs text-green-400">
+                      <CheckCircle2 size={12} />
+                      Налаштовано: <span className="font-mono text-gray-400">{masked}</span>
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1 text-xs text-gray-600">
+                      <XCircle size={12} />
+                      Не налаштовано
+                    </span>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
                     <input
-                      type="number"
-                      step="0.001"
-                      className="w-full bg-dark-300 border border-dark-50/20 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-accent-500/50"
-                      value={(settingsForm[key] as number) ?? ""}
-                      onChange={(e) =>
-                        setSettingsForm((p) => ({ ...p, [key]: parseFloat(e.target.value) }))
-                      }
+                      type={show ? "text" : "password"}
+                      className="w-full bg-dark-300 border border-dark-50/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-accent-500/50 pr-10 font-mono"
+                      placeholder={isSet ? "Введіть новий ключ для заміни" : placeholder}
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShow(!show)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+                    >
+                      {show ? <EyeOff size={15} /> : <Eye size={15} />}
+                    </button>
                   </div>
-                ))}
+                  {isSet && (
+                    <button
+                      onClick={() => handleClearApiKey(field)}
+                      className="px-3 py-2.5 text-xs text-red-400 hover:bg-red-500/10 rounded-xl border border-red-500/20 transition-all"
+                      title="Видалити ключ"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  )}
+                </div>
               </div>
-            </div>
+            ))}
 
-            {/* Кнопки */}
             <div className="flex items-center gap-3 pt-1">
               <button
-                onClick={handleSaveSettings}
-                disabled={settingsLoading}
+                onClick={handleSaveApiKeys}
+                disabled={apiKeysLoading || (!anthropicInput && !openaiInput && !xaiInput)}
                 className="flex items-center gap-2 px-5 py-2.5 bg-accent-500/10 hover:bg-accent-500/20 text-accent-400 rounded-xl text-sm font-medium transition-all border border-accent-500/20 disabled:opacity-50"
               >
-                {settingsLoading ? (
+                {apiKeysLoading ? (
                   <RefreshCw size={15} className="animate-spin" />
                 ) : (
                   <Save size={15} />
                 )}
-                Зберегти налаштування
+                Зберегти ключі
               </button>
-              {settingsMsg && (
-                <span className="text-xs text-accent-400">{settingsMsg}</span>
+              {apiKeysMsg && (
+                <span className="text-xs text-accent-400">{apiKeysMsg}</span>
               )}
             </div>
+
+            <p className="text-xs text-gray-600">
+              Ключі зберігаються в зашифрованому вигляді та використовуються лише для AI-аналізу зображень НСЗУ.
+              Ключ Claude (Anthropic) є пріоритетним для аналізу скріншотів.
+            </p>
+          </>
+        )}
+      </div>
+
+      {/* ── Податки ── */}
+      <div className="card-neo card-3d-hover p-6 space-y-5">
+        <SectionHeader sectionKey="taxes" icon={Receipt} title="Податки" />
+
+        {open.taxes && (
+          <>
+            {!nhsuSettings ? (
+              <div className="text-gray-500 text-sm py-4">Завантаження…</div>
+            ) : (
+              <>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-xs text-gray-400 mb-1">Єдиний соціальний внесок (грн/місяць)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      className="w-full bg-dark-300 border border-dark-50/20 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-accent-500/50"
+                      value={settingsForm.esv_monthly ?? ""}
+                      onChange={(e) =>
+                        setSettingsForm((p) => ({ ...p, esv_monthly: parseFloat(e.target.value) }))
+                      }
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-400 mb-1">Єдиний податок (%)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      className="w-full bg-dark-300 border border-dark-50/20 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-accent-500/50"
+                      value={settingsForm.ep_rate ?? ""}
+                      onChange={(e) =>
+                        setSettingsForm((p) => ({ ...p, ep_rate: parseFloat(e.target.value) }))
+                      }
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-400 mb-1">Військовий збір (%)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      className="w-full bg-dark-300 border border-dark-50/20 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-accent-500/50"
+                      value={settingsForm.vz_rate ?? ""}
+                      onChange={(e) =>
+                        setSettingsForm((p) => ({ ...p, vz_rate: parseFloat(e.target.value) }))
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 pt-1">
+                  <button
+                    onClick={handleSaveSettings}
+                    disabled={settingsLoading}
+                    className="flex items-center gap-2 px-5 py-2.5 bg-accent-500/10 hover:bg-accent-500/20 text-accent-400 rounded-xl text-sm font-medium transition-all border border-accent-500/20 disabled:opacity-50"
+                  >
+                    {settingsLoading ? (
+                      <RefreshCw size={15} className="animate-spin" />
+                    ) : (
+                      <Save size={15} />
+                    )}
+                    Зберегти
+                  </button>
+                  {settingsMsg && (
+                    <span className="text-xs text-accent-400">{settingsMsg}</span>
+                  )}
+                </div>
+              </>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* ── Параметри розрахунку НСЗУ ── */}
+      <div className="card-neo card-3d-hover p-6 space-y-5">
+        <SectionHeader sectionKey="nhsu" icon={PercentCircle} title="Параметри розрахунку НСЗУ" />
+
+        {open.nhsu && (
+          <>
+            {!nhsuSettings ? (
+              <div className="text-gray-500 text-sm py-4">Завантаження…</div>
+            ) : (
+              <>
+                {/* Капітаційна ставка */}
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-xs text-gray-400 mb-1">Капітаційна ставка (грн)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      className="w-full bg-dark-300 border border-dark-50/20 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-accent-500/50"
+                      value={settingsForm.capitation_rate ?? ""}
+                      onChange={(e) =>
+                        setSettingsForm((p) => ({ ...p, capitation_rate: parseFloat(e.target.value) }))
+                      }
+                    />
+                  </div>
+                </div>
+
+                {/* Вікові коефіцієнти */}
+                <div>
+                  <p className="text-xs text-gray-400 mb-3">Вікові коефіцієнти</p>
+                  <div className="grid grid-cols-5 gap-3">
+                    {(Object.keys(AGE_LABELS) as (keyof NhsuSettings)[]).map((key) => (
+                      <div key={key}>
+                        <label className="block text-xs text-gray-500 mb-1">{AGE_LABELS[key as string]}</label>
+                        <input
+                          type="number"
+                          step="0.001"
+                          className="w-full bg-dark-300 border border-dark-50/20 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-accent-500/50"
+                          value={(settingsForm[key] as number) ?? ""}
+                          onChange={(e) =>
+                            setSettingsForm((p) => ({ ...p, [key]: parseFloat(e.target.value) }))
+                          }
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Кнопки */}
+                <div className="flex items-center gap-3 pt-1">
+                  <button
+                    onClick={handleSaveSettings}
+                    disabled={settingsLoading}
+                    className="flex items-center gap-2 px-5 py-2.5 bg-accent-500/10 hover:bg-accent-500/20 text-accent-400 rounded-xl text-sm font-medium transition-all border border-accent-500/20 disabled:opacity-50"
+                  >
+                    {settingsLoading ? (
+                      <RefreshCw size={15} className="animate-spin" />
+                    ) : (
+                      <Save size={15} />
+                    )}
+                    Зберегти налаштування
+                  </button>
+                  {settingsMsg && (
+                    <span className="text-xs text-accent-400">{settingsMsg}</span>
+                  )}
+                </div>
+              </>
+            )}
           </>
         )}
       </div>
