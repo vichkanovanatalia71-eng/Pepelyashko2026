@@ -14,6 +14,7 @@ import {
   EyeOff,
   CheckCircle2,
   XCircle,
+  Receipt,
 } from "lucide-react";
 import { Doctor, NhsuSettings } from "../types";
 import ServicesPage from "./ServicesPage";
@@ -377,28 +378,27 @@ export default function SettingsPage() {
         </p>
       </div>
 
-      {/* ── Налаштування НСЗУ ── */}
+      {/* ── Податки ── */}
       <div className="card-neo p-6 space-y-5">
         <div className="flex items-center gap-2 mb-1">
-          <PercentCircle size={18} className="text-accent-400" />
-          <h2 className="text-lg font-semibold text-white">Параметри розрахунку НСЗУ</h2>
+          <Receipt size={18} className="text-accent-400" />
+          <h2 className="text-lg font-semibold text-white">Податки</h2>
         </div>
 
         {!nhsuSettings ? (
           <div className="text-gray-500 text-sm py-4">Завантаження…</div>
         ) : (
           <>
-            {/* Капітаційна ставка та податки */}
             <div className="grid grid-cols-3 gap-4">
               <div>
-                <label className="block text-xs text-gray-400 mb-1">Капітаційна ставка (грн)</label>
+                <label className="block text-xs text-gray-400 mb-1">Єдиний соціальний внесок (грн/місяць)</label>
                 <input
                   type="number"
                   step="0.01"
                   className="w-full bg-dark-300 border border-dark-50/20 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-accent-500/50"
-                  value={settingsForm.capitation_rate ?? ""}
+                  value={settingsForm.esv_monthly ?? ""}
                   onChange={(e) =>
-                    setSettingsForm((p) => ({ ...p, capitation_rate: parseFloat(e.target.value) }))
+                    setSettingsForm((p) => ({ ...p, esv_monthly: parseFloat(e.target.value) }))
                   }
                 />
               </div>
@@ -423,6 +423,54 @@ export default function SettingsPage() {
                   value={settingsForm.vz_rate ?? ""}
                   onChange={(e) =>
                     setSettingsForm((p) => ({ ...p, vz_rate: parseFloat(e.target.value) }))
+                  }
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 pt-1">
+              <button
+                onClick={handleSaveSettings}
+                disabled={settingsLoading}
+                className="flex items-center gap-2 px-5 py-2.5 bg-accent-500/10 hover:bg-accent-500/20 text-accent-400 rounded-xl text-sm font-medium transition-all border border-accent-500/20 disabled:opacity-50"
+              >
+                {settingsLoading ? (
+                  <RefreshCw size={15} className="animate-spin" />
+                ) : (
+                  <Save size={15} />
+                )}
+                Зберегти
+              </button>
+              {settingsMsg && (
+                <span className="text-xs text-accent-400">{settingsMsg}</span>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* ── Параметри розрахунку НСЗУ ── */}
+      <div className="card-neo p-6 space-y-5">
+        <div className="flex items-center gap-2 mb-1">
+          <PercentCircle size={18} className="text-accent-400" />
+          <h2 className="text-lg font-semibold text-white">Параметри розрахунку НСЗУ</h2>
+        </div>
+
+        {!nhsuSettings ? (
+          <div className="text-gray-500 text-sm py-4">Завантаження…</div>
+        ) : (
+          <>
+            {/* Капітаційна ставка */}
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <label className="block text-xs text-gray-400 mb-1">Капітаційна ставка (грн)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  className="w-full bg-dark-300 border border-dark-50/20 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-accent-500/50"
+                  value={settingsForm.capitation_rate ?? ""}
+                  onChange={(e) =>
+                    setSettingsForm((p) => ({ ...p, capitation_rate: parseFloat(e.target.value) }))
                   }
                 />
               </div>

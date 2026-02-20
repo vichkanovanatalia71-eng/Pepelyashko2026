@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.deps import get_current_user, get_db
 from app.models.income import Income
+from app.models.nhsu import NhsuSettings
 from app.models.user import User
 from app.schemas.report import TaxSummary
 
@@ -21,6 +22,12 @@ async def quarterly_taxes(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
+    nhsu_result = await db.execute(
+        select(NhsuSettings).where(NhsuSettings.user_id == user.id)
+    )
+    nhsu = nhsu_result.scalar_one_or_none()
+    esv_monthly = float(nhsu.esv_monthly) if nhsu else settings.esv_monthly
+
     summaries = []
     for quarter, (month_start, month_end) in QUARTER_MONTHS.items():
         d_start = date(year, month_start, 1)
@@ -40,7 +47,7 @@ async def quarterly_taxes(
 
         single_tax = round(income * user.tax_rate, 2)
         months_in_quarter = 3
-        esv = round(settings.esv_monthly * months_in_quarter, 2)
+        esv = round(esv_monthly * months_in_quarter, 2)
 
         summaries.append(
             TaxSummary(

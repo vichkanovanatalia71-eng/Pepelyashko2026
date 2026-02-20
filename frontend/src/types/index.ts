@@ -73,6 +73,7 @@ export interface NhsuSettings {
   coeff_65_plus: number;
   ep_rate: number;
   vz_rate: number;
+  esv_monthly: number;
 }
 
 export interface DoctorAgeGroupRow {

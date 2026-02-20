@@ -42,6 +42,7 @@ class NhsuSettings(Base):
     # Податки (у відсотках, наприклад 5.0 = 5%)
     ep_rate: Mapped[float] = mapped_column(Numeric(5, 2), default=5.0)  # Єдиний податок
     vz_rate: Mapped[float] = mapped_column(Numeric(5, 2), default=1.5)  # Військовий збір (1.5% — базовий ФОП)
+    esv_monthly: Mapped[float] = mapped_column(Numeric(10, 2), default=1760.00)  # ЄСВ щомісяця (грн)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)

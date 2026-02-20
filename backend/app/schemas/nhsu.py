@@ -37,6 +37,7 @@ class NhsuSettingsInput(BaseModel):
     coeff_65_plus: float = 1.3
     ep_rate: float = 5.0   # %
     vz_rate: float = 1.5   # %
+    esv_monthly: float = 1760.00  # грн
 
 
 class NhsuSettingsResponse(BaseModel):
@@ -49,6 +50,7 @@ class NhsuSettingsResponse(BaseModel):
     coeff_65_plus: float
     ep_rate: float
     vz_rate: float
+    esv_monthly: float
 
     model_config = {"from_attributes": True}
 

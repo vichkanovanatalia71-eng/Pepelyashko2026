@@ -8,6 +8,7 @@ from app.core.config import settings
 from app.core.deps import get_current_user, get_db
 from app.models.expense import Expense
 from app.models.income import Income
+from app.models.nhsu import NhsuSettings
 from app.models.user import User
 from app.schemas.report import PeriodReport
 
@@ -44,9 +45,14 @@ async def period_report(
     # Calculate taxes
     tax_single = round(total_income * user.tax_rate, 2)
     # Approximate ESV based on number of months in period
+    nhsu_result = await db.execute(
+        select(NhsuSettings).where(NhsuSettings.user_id == user.id)
+    )
+    nhsu = nhsu_result.scalar_one_or_none()
+    esv_monthly = float(nhsu.esv_monthly) if nhsu else settings.esv_monthly
     days = (date_to - date_from).days + 1
     months = max(1, round(days / 30))
-    tax_esv = round(settings.esv_monthly * months, 2)
+    tax_esv = round(esv_monthly * months, 2)
     total_taxes = round(tax_single + tax_esv, 2)
 
     net_profit = round(total_income - total_expenses, 2)
