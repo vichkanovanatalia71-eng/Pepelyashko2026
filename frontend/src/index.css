@@ -218,11 +218,16 @@
 
   /* ── Buttons ───────────────────────────────────────────────── */
   .btn-accent {
-    @apply px-5 py-2.5 bg-accent-500 text-white font-semibold rounded-xl
-           hover:bg-accent-600 active:bg-accent-700
-           transition-all duration-200;
+    padding: 0.625rem 1.25rem;
+    background-color: #f97316;
+    color: #ffffff;
+    font-weight: 600;
+    border-radius: 0.75rem;
+    transition: all 0.2s;
     box-shadow: var(--shadow-glow-accent);
   }
+  .btn-accent:hover  { background-color: #ea6a0a; }
+  .btn-accent:active { background-color: #c2560a; }
 
   .btn-ghost {
     padding: 0.5rem 1rem;

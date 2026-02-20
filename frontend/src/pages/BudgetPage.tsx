@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   AlertTriangle, ChevronDown, ChevronUp, Copy, Info,
   Lightbulb, Plus, Trash2, TrendingDown, X, Check,
-  RefreshCw, BarChart2,
+  RefreshCw, BarChart2, Users,
 } from "lucide-react";
 import api from "../api/client";
 
@@ -367,31 +367,69 @@ export default function BudgetPage() {
     remaining:Object.values(data?.monthly_remaining ?? {}).reduce((a,b) => a+b, 0),
   };
 
-  // ── Render table rows ──
+  // ── Render table rows (із підтримкою зарплатних блоків) ──
   function renderRows(rows: BudgetRow[]) {
-    return rows.map((row, idx) => {
-      const num = rowNum(rows, idx);
-      const isInfo = row.is_info_row;
-      return (
+    const elements: JSX.Element[] = [];
+
+    rows.forEach((row, idx) => {
+      const num    = rowNum(rows, idx);
+      const isInfo  = row.is_info_row;
+      const isStaff = row.staff_member_id !== null;
+
+      // ── Заголовок зарплатного блоку ──────────────────────────────
+      if (row.formula_key?.startsWith("salary_brutto__")) {
+        // Витягуємо ПІБ: "Оклад (Іваненко М.)" → "Іваненко М."
+        const staffName = row.name.replace(/^Оклад \(/, "").replace(/\)$/, "");
+        elements.push(
+          <tr key={`sh-${row.staff_member_id}`} className="bg-accent-500/5 border-t-2 border-accent-500/20">
+            <td className="sticky left-0 z-10 bg-accent-500/10 px-2 py-1.5 border-r border-dark-50/5" />
+            <td className="sticky left-8 z-10 bg-accent-500/10 px-3 py-1.5 border-r border-dark-50/5">
+              <div className="flex items-center gap-2">
+                <div className="w-5 h-5 rounded-full bg-accent-500/20 flex items-center justify-center shrink-0">
+                  <Users size={11} className="text-accent-400" />
+                </div>
+                <span className="text-[11px] font-bold text-accent-400">{staffName}</span>
+                <span className="text-[10px] text-gray-600">Зарплатний блок</span>
+              </div>
+            </td>
+            {Array.from({length: 14}).map((_, i) => (
+              <td key={i} className={`bg-accent-500/5 ${i === 12 ? "border-l border-dark-50/5" : i === 13 ? "border-l border-dark-50/5" : ""}`} />
+            ))}
+          </tr>
+        );
+      }
+
+      // ── Основний рядок ────────────────────────────────────────────
+      const rowBg   = isStaff && isInfo ? "bg-blue-500/5" : "";
+      const rowBorder = isStaff ? "border-l-2 border-accent-500/15" : "";
+      const stickyBg  = isStaff && isInfo ? "bg-blue-950/60" : "bg-dark-600";
+
+      elements.push(
         <tr
           key={row.id}
-          className={`border-b border-dark-50/5 transition-colors
-            ${isInfo ? "opacity-60 italic" : "hover:bg-dark-400/20"}`}
+          className={`border-b border-dark-50/5 transition-colors ${rowBg} ${rowBorder}
+            ${isInfo ? "italic" : "hover:bg-dark-400/20"}`}
         >
           {/* # */}
-          <td className="sticky left-0 z-10 bg-dark-600 w-8 px-2 py-2 text-center text-xs text-gray-600 border-r border-dark-50/5">
+          <td className={`sticky left-0 z-10 ${stickyBg} w-8 px-2 py-2 text-center text-xs text-gray-600 border-r border-dark-50/5`}>
             {num ?? ""}
           </td>
 
           {/* Назва + badge */}
-          <td className="sticky left-8 z-10 bg-dark-600 min-w-[200px] max-w-[240px] px-3 py-2 border-r border-dark-50/5">
+          <td className={`sticky left-8 z-10 ${stickyBg} min-w-[200px] max-w-[240px] px-3 py-2 border-r border-dark-50/5`}>
             <div className="flex items-start gap-1.5">
               <div className="flex-1 min-w-0">
-                <p className={`text-xs font-medium leading-tight ${isInfo ? "text-gray-500" : "text-gray-200"} truncate`}>
+                <p className={`text-xs font-medium leading-tight truncate
+                  ${isInfo ? "text-gray-500" : isStaff ? "text-gray-300" : "text-gray-200"}`}>
                   {row.name}
+                  {isInfo && (
+                    <span className="ml-1.5 text-[9px] font-semibold text-blue-400 bg-blue-500/10 border border-blue-500/20 px-1 py-0.5 rounded not-italic">
+                      не враховується
+                    </span>
+                  )}
                 </p>
                 {row.description && (
-                  <p className="text-[10px] text-gray-600 leading-tight mt-0.5 line-clamp-2">
+                  <p className="text-[10px] text-gray-600 leading-tight mt-0.5 line-clamp-1">
                     {row.description}
                   </p>
                 )}
@@ -402,9 +440,9 @@ export default function BudgetPage() {
 
           {/* 12 місяців */}
           {Array.from({length: 12}, (_, i) => i + 1).map(m => {
-            const cell = row.months[m] ?? { value: null, is_locked: false };
-            const key  = `${row.id}-${m}`;
-            const isEditing = editKey === key;
+            const cell      = row.months[m] ?? { value: null, is_locked: false };
+            const cellKey   = `${row.id}-${m}`;
+            const isEditing = editKey === cellKey;
 
             return (
               <td key={m} className="px-1 py-1 text-right min-w-[80px]">
@@ -425,7 +463,9 @@ export default function BudgetPage() {
                     onClick={() => startEdit(row, m)}
                     className={`w-full text-right text-xs px-1.5 py-1 rounded transition-all ${cellClass(cell, isInfo)}`}
                   >
-                    {cell.value !== null ? fmt(cell.value) : (isInfo || cell.is_locked ? "—" : "···")}
+                    {cell.value !== null
+                      ? fmt(cell.value)
+                      : (isInfo || cell.is_locked ? "—" : "···")}
                   </button>
                 )}
               </td>
@@ -433,7 +473,8 @@ export default function BudgetPage() {
           })}
 
           {/* Всього за рік */}
-          <td className="px-3 py-2 text-right text-xs font-semibold text-gray-300 min-w-[90px] border-l border-dark-50/5">
+          <td className={`px-3 py-2 text-right text-xs font-semibold min-w-[90px] border-l border-dark-50/5
+            ${isInfo ? "text-gray-600" : "text-gray-300"}`}>
             {fmt(row.yearly_total)}
           </td>
 
@@ -463,6 +504,8 @@ export default function BudgetPage() {
         </tr>
       );
     });
+
+    return elements;
   }
 
   return (
