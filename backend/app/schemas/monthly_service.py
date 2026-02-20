@@ -18,7 +18,7 @@ class ReportCreate(BaseModel):
     doctor_id: int
     year: int
     month: int
-    cash_in_register: float = 0.0
+    cash_in_register: Optional[float] = None  # None = не вводилась
     entries: list[EntryInput] = []
 
 

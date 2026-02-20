@@ -98,6 +98,7 @@ export default function MonthlyServicesPage() {
   const [showExpensesModal, setShowExpensesModal] = useState(false);
   const [shareData, setShareData] = useState<ShareResponse | null>(null);
   const [deleteReportId, setDeleteReportId] = useState<number | null>(null);
+  const [finalizeWarningId, setFinalizeWarningId] = useState<number | null>(null);
 
   // ── Форма звіту ──
   const [formDoctor, setFormDoctor] = useState<number>(0);
@@ -147,14 +148,17 @@ export default function MonthlyServicesPage() {
     } catch {}
   }
 
-  async function loadPeriodInfo() {
+  async function loadPeriodInfo(): Promise<PeriodInfo | null> {
     try {
       const r = await axios.get(`${API}/api/monthly-services/period-info`, {
         headers,
         params: { year: selectedYear, month: selectedMonth },
       });
       setPeriodInfo(r.data);
-    } catch {}
+      return r.data as PeriodInfo;
+    } catch {
+      return null;
+    }
   }
 
   async function loadAnalytics() {
@@ -281,7 +285,7 @@ export default function MonthlyServicesPage() {
   function openCreateReport() {
     setEditingReport(null);
     setFormDoctor(doctors.length ? doctors[0].id : 0);
-    setFormCash("0");
+    setFormCash("");   // порожньо = каса не вводилась
     setFormEntries({});
     setFormError("");
     setCashWarning("");
@@ -296,7 +300,8 @@ export default function MonthlyServicesPage() {
   function openEditReport(rep: MonthReport) {
     setEditingReport(rep);
     setFormDoctor(rep.doctor_id);
-    setFormCash(String(rep.cash_in_register));
+    // При редагуванні — підставляємо поточну касу за місяць (зі стану periodInfo)
+    setFormCash(periodInfo?.cash_for_period != null ? String(periodInfo.cash_for_period) : "");
     const ent: Record<number, number> = {};
     rep.entries.forEach((e) => { ent[e.service_id] = e.quantity; });
     setFormEntries(ent);
@@ -312,49 +317,44 @@ export default function MonthlyServicesPage() {
 
   async function handleSaveReport() {
     if (!formDoctor) { setFormError("Оберіть лікаря"); return; }
-
-    // Перевірка готівки: якщо це останній активний лікар — поле обов'язкове
-    const cashValue = parseFloat(formCash) || 0;
-    const lastDoctorId = periodInfo?.last_active_doctor_id ?? null;
-    const isCashRequired =
-      lastDoctorId !== null &&
-      formDoctor === lastDoctorId &&
-      (editingReport
-        ? editingReport.doctor_id === lastDoctorId
-        : periodInfo?.cash_for_period === null);
-    if (isCashRequired && cashValue <= 0) {
-      setCashWarning(
-        "Необхідно зазначити суму готівки в касі на кінець періоду за обраний місяць.",
-      );
-      return;
-    }
     setCashWarning("");
+
+    // cash_in_register: null = не введена, number = введена (навіть 0 — валідне)
+    const cashPayload: number | null = formCash !== "" ? (parseFloat(formCash) || 0) : null;
 
     setFormLoading(true);
     setFormError("");
     const entries = Object.entries(formEntries)
       .filter(([, q]) => q > 0)
       .map(([sid, q]) => ({ service_id: Number(sid), quantity: q }));
-    const payload = {
-      doctor_id: formDoctor,
-      year: selectedYear,
-      month: selectedMonth,
-      cash_in_register: isCashRequired ? cashValue : 0,
-      entries,
-    };
     try {
       if (editingReport) {
         await axios.put(`${API}/api/monthly-services/reports/${editingReport.id}`, {
-          cash_in_register: payload.cash_in_register,
-          entries: payload.entries,
+          cash_in_register: cashPayload,
+          entries,
         }, { headers });
       } else {
-        await axios.post(`${API}/api/monthly-services/reports`, payload, { headers });
+        await axios.post(`${API}/api/monthly-services/reports`, {
+          doctor_id: formDoctor,
+          year: selectedYear,
+          month: selectedMonth,
+          cash_in_register: cashPayload,
+          entries,
+        }, { headers });
       }
       setShowReportForm(false);
       await Promise.all([loadAnalytics(), loadPeriodInfo()]);
     } catch (e: any) {
-      setFormError(e?.response?.data?.detail ?? "Помилка збереження");
+      if (e?.response?.status === 409) {
+        // Каса вже внесена іншим звітом — підвантажуємо актуальне значення
+        const freshInfo = await loadPeriodInfo();
+        if (freshInfo?.cash_for_period != null) {
+          setFormCash(String(freshInfo.cash_for_period));
+        }
+        setFormError("Готівка за цей місяць вже внесена. Відображено поточне значення.");
+      } else {
+        setFormError(e?.response?.data?.detail ?? "Помилка збереження");
+      }
     }
     setFormLoading(false);
   }
@@ -368,10 +368,20 @@ export default function MonthlyServicesPage() {
   }
 
   async function handleFinalize(id: number) {
+    // Якщо каса за місяць не внесена — показуємо попередження
+    if (periodInfo?.cash_for_period === null) {
+      setFinalizeWarningId(id);
+      return;
+    }
+    await _doFinalize(id);
+  }
+
+  async function _doFinalize(id: number) {
     try {
       await axios.post(`${API}/api/monthly-services/reports/${id}/finalize`, {}, { headers });
       await loadAnalytics();
     } catch {}
+    setFinalizeWarningId(null);
   }
 
   async function handleUnfinalize(id: number) {
@@ -452,12 +462,11 @@ export default function MonthlyServicesPage() {
       .slice(0, 5), [analytics]);
 
   // ── Чи показувати поле "Готівка в касі" ──
-  const _lastDoctorId = periodInfo?.last_active_doctor_id ?? null;
-  const showCashField =
-    _lastDoctorId !== null &&
-    (editingReport
-      ? editingReport.doctor_id === _lastDoctorId
-      : formDoctor === _lastDoctorId && periodInfo?.cash_for_period === null);
+  // При створенні: показуємо будь-якому лікарю, якщо каса за місяць ще не внесена.
+  // При редагуванні: показуємо завжди (щоб можна було оновити касу).
+  const showCashField = editingReport
+    ? true
+    : periodInfo?.cash_for_period === null;
 
   // ═══════════════════════════════════════════════════════════════════
   // RENDER
@@ -697,11 +706,12 @@ export default function MonthlyServicesPage() {
                 {showCashField ? (
                   <div>
                     <label className="block text-xs text-gray-400 mb-1">
-                      Готівка в касі (грн) <span className="text-red-400">*</span>
-                      <span className="ml-1.5 text-gray-600">(вноситься один раз за місяць)</span>
+                      Готівка в касі (грн)
+                      <span className="ml-1.5 text-gray-600">(вноситься один раз за {MONTHS_UA[selectedMonth]})</span>
                     </label>
                     <input
-                      type="number" min="0" step="0.01" value={formCash}
+                      type="number" min="0" step="0.01" placeholder="0"
+                      value={formCash}
                       onChange={(e) => { setFormCash(e.target.value); if (cashWarning) setCashWarning(""); }}
                       className={`w-full bg-dark-300 border rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none ${cashWarning ? "border-amber-500/60 focus:border-amber-500" : "border-dark-50/20 focus:border-accent-500/50"}`}
                     />
@@ -709,7 +719,9 @@ export default function MonthlyServicesPage() {
                 ) : periodInfo?.cash_for_period != null ? (
                   <div className="flex items-center gap-2 text-xs text-gray-500 self-end pb-3">
                     <Banknote size={13} className="text-yellow-500/60 shrink-0" />
-                    Готівка за {MONTHS_UA[selectedMonth]}: <span className="text-yellow-400 font-medium ml-1">{fmt(periodInfo.cash_for_period)} грн</span>
+                    Готівка за {MONTHS_UA[selectedMonth]}:
+                    <span className="text-yellow-400 font-medium ml-1">{fmt(periodInfo.cash_for_period)} грн</span>
+                    <span className="text-gray-600">(вже внесена)</span>
                   </div>
                 ) : null}
               </div>
@@ -1106,6 +1118,33 @@ export default function MonthlyServicesPage() {
             <div className="flex gap-3 justify-end">
               <button onClick={() => setDeleteReportId(null)} className="px-4 py-2 text-sm text-gray-400 hover:text-gray-200 rounded-xl border border-dark-50/20 transition-all">Скасувати</button>
               <button onClick={() => handleDeleteReport(deleteReportId)} className="px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 rounded-xl border border-red-500/20 transition-all">Видалити</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Попередження: зафіксувати без каси ── */}
+      {finalizeWarningId !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-dark-600 border border-amber-500/20 rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+            <div className="flex items-start gap-3 mb-4">
+              <AlertCircle size={20} className="text-amber-400 shrink-0 mt-0.5" />
+              <div>
+                <h3 className="text-base font-semibold text-white mb-1">Готівку не внесено</h3>
+                <p className="text-sm text-amber-300">
+                  Необхідно зазначити суму готівки в касі на кінець місяця
+                  ({MONTHS_UA[selectedMonth]} {selectedYear}).
+                </p>
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 mb-5">
+              Ви можете закрити це вікно, відредагувати звіт і ввести готівку — або зафіксувати звіт без каси.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button onClick={() => setFinalizeWarningId(null)} className="px-4 py-2 text-sm text-gray-400 hover:text-gray-200 rounded-xl border border-dark-50/20 transition-all">Скасувати</button>
+              <button onClick={() => _doFinalize(finalizeWarningId)} className="px-4 py-2 text-sm text-amber-400 hover:bg-amber-500/10 rounded-xl border border-amber-500/20 transition-all">
+                Зафіксувати без каси
+              </button>
             </div>
           </div>
         </div>

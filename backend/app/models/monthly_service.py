@@ -52,3 +52,24 @@ class MonthlyPaidServiceEntry(Base):
     )
     service_id: Mapped[int] = mapped_column(ForeignKey("services.id"), index=True)
     quantity: Mapped[int] = mapped_column(Integer, default=0)
+
+
+class MonthlyPeriodCash(Base):
+    """Готівка в касі на кінець місяця — один запис на (user, рік, місяць)."""
+
+    __tablename__ = "monthly_period_cash"
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id", "period_year", "period_month",
+            name="uq_period_cash",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    period_year: Mapped[int] = mapped_column(Integer)
+    period_month: Mapped[int] = mapped_column(Integer)
+    amount: Mapped[float] = mapped_column(Numeric(12, 2), default=0.0)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )

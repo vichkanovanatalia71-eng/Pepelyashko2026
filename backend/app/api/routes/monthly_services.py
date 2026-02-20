@@ -20,7 +20,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.deps import get_current_user, get_db
 from app.models.doctor import Doctor
 from app.models.user_api_keys import UserApiKeys
-from app.models.monthly_service import MonthlyPaidServiceEntry, MonthlyPaidServicesReport
+from app.models.monthly_service import (
+    MonthlyPaidServiceEntry,
+    MonthlyPaidServicesReport,
+    MonthlyPeriodCash,
+)
 from app.models.nhsu import NhsuSettings
 from app.models.service import Service
 from app.models.share_report import ShareReport
@@ -85,6 +89,49 @@ def _calc_row(price: float, mat_cost: float, qty: int, ep_r: float, vz_r: float)
         "doctor_income": round(to_split1 * Q / 2, 2),
         "org_income": round(to_split1 * Q / 2, 2),
     }
+
+
+async def _get_period_cash(
+    db: AsyncSession, user_id: int, year: int, month: int
+) -> Optional[float]:
+    """Повертає готівку за місяць або None якщо ще не внесена."""
+    r = await db.execute(
+        select(MonthlyPeriodCash).where(
+            MonthlyPeriodCash.user_id == user_id,
+            MonthlyPeriodCash.period_year == year,
+            MonthlyPeriodCash.period_month == month,
+        )
+    )
+    record = r.scalar_one_or_none()
+    return float(record.amount) if record is not None else None
+
+
+async def _set_period_cash(
+    db: AsyncSession, user_id: int, year: int, month: int, amount: float
+) -> tuple[float, bool]:
+    """Встановлює готівку за місяць. Повертає (amount, created).
+
+    Якщо запис вже існує — повертає існуюче значення без змін (False).
+    """
+    r = await db.execute(
+        select(MonthlyPeriodCash).where(
+            MonthlyPeriodCash.user_id == user_id,
+            MonthlyPeriodCash.period_year == year,
+            MonthlyPeriodCash.period_month == month,
+        )
+    )
+    existing = r.scalar_one_or_none()
+    if existing is not None:
+        return float(existing.amount), False   # вже є — не перезаписуємо
+
+    cash_rec = MonthlyPeriodCash(
+        user_id=user_id,
+        period_year=year,
+        period_month=month,
+        amount=amount,
+    )
+    db.add(cash_rec)
+    return amount, True
 
 
 async def _build_analytics(
@@ -188,8 +235,9 @@ async def _build_analytics(
             mat_agg[key]["qty"] += float(mat.get("quantity", 0)) * qty
             mat_agg[key]["cost"] += float(mat.get("cost", 0)) * qty
 
-    # Готівка
-    cash = round(sum(float(r.cash_in_register) for r in cur_reports), 2)
+    # Готівка: бере з окремої таблиці (один запис на período)
+    period_cash = await _get_period_cash(db, user_id, year, month)
+    cash = round(period_cash, 2) if period_cash is not None else 0.0
 
     # ── Попередній місяць (MoM) ──
     prev_year, prev_month = (year, month - 1) if month > 1 else (year - 1, 12)
@@ -390,12 +438,23 @@ async def create_report(
             detail=f"Звіт для цього лікаря та місяця вже існує",
         )
 
+    # Зберігаємо готівку за місяць (якщо передана) — один запис на période
+    if body.cash_in_register is not None:
+        existing_cash = await _get_period_cash(db, user.id, body.year, body.month)
+        if existing_cash is not None:
+            raise HTTPException(
+                409,
+                detail=f"Готівка за цей місяць вже внесена ({existing_cash} грн). "
+                       "Щоб змінити — відредагуйте або видаліть існуючий запис.",
+            )
+        await _set_period_cash(db, user.id, body.year, body.month, body.cash_in_register)
+
     report = MonthlyPaidServicesReport(
         user_id=user.id,
         doctor_id=body.doctor_id,
         year=body.year,
         month=body.month,
-        cash_in_register=body.cash_in_register,
+        cash_in_register=0,   # готівка зберігається в monthly_period_cash
         status="draft",
     )
     db.add(report)
@@ -457,8 +516,25 @@ async def update_report(
     if report.status == "final":
         raise HTTPException(403, detail="Фінальний звіт не можна редагувати")
 
+    # Оновлюємо готівку за місяць (upsert у monthly_period_cash)
     if body.cash_in_register is not None:
-        report.cash_in_register = body.cash_in_register
+        pc_r = await db.execute(
+            select(MonthlyPeriodCash).where(
+                MonthlyPeriodCash.user_id == user.id,
+                MonthlyPeriodCash.period_year == report.year,
+                MonthlyPeriodCash.period_month == report.month,
+            )
+        )
+        pc = pc_r.scalar_one_or_none()
+        if pc is not None:
+            pc.amount = body.cash_in_register
+        else:
+            db.add(MonthlyPeriodCash(
+                user_id=user.id,
+                period_year=report.year,
+                period_month=report.month,
+                amount=body.cash_in_register,
+            ))
 
     if body.entries is not None:
         # Видалити старі записи
@@ -566,22 +642,13 @@ async def get_period_info(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    """Повертає останнього активного лікаря та готівку за період.
+    """Повертає інформацію про готівку за місяць.
 
-    Використовується у формі звіту, щоб показати поле «Готівка в касі»
-    тільки останньому активному лікарю і лише якщо за цей місяць
-    готівку ще не внесено.
+    cash_for_period = None → каса ще не внесена, поле показувати для будь-якого лікаря.
+    cash_for_period = float → каса вже внесена, поле приховати.
     """
-    # Останній активний лікар (за порядком створення — найбільший id)
-    dr_r = await db.execute(
-        select(Doctor)
-        .where(Doctor.user_id == user.id, Doctor.is_active == True)
-        .order_by(Doctor.id.asc())
-    )
-    active_doctors = dr_r.scalars().all()
-    last_active_doctor_id = active_doctors[-1].id if active_doctors else None
+    cash_for_period = await _get_period_cash(db, user.id, year, month)
 
-    # Чи є вже готівка за цей місяць?
     reps_r = await db.execute(
         select(MonthlyPaidServicesReport).where(
             MonthlyPaidServicesReport.user_id == user.id,
@@ -589,13 +656,10 @@ async def get_period_info(
             MonthlyPaidServicesReport.month == month,
         )
     )
-    reports = reps_r.scalars().all()
-    cash_report = next((r for r in reports if float(r.cash_in_register) > 0), None)
-    cash_for_period = float(cash_report.cash_in_register) if cash_report else None
-    submitted_doctor_ids = [r.doctor_id for r in reports]
+    submitted_doctor_ids = [r.doctor_id for r in reps_r.scalars().all()]
 
     return PeriodInfoResponse(
-        last_active_doctor_id=last_active_doctor_id,
+        last_active_doctor_id=None,   # більше не використовується
         cash_for_period=cash_for_period,
         submitted_doctor_ids=submitted_doctor_ids,
     )
