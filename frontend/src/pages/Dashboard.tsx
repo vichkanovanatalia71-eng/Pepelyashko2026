@@ -6,18 +6,37 @@ import {
   Receipt,
   ArrowUpRight,
   ArrowDownRight,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import api from "../api/client";
 import type { PeriodReport } from "../types";
 
+const MONTH_NAMES = [
+  "Січень", "Лютий", "Березень", "Квітень",
+  "Травень", "Червень", "Липень", "Серпень",
+  "Вересень", "Жовтень", "Листопад", "Грудень",
+];
+
 export default function Dashboard() {
+  const now = new Date();
+  const [year, setYear] = useState(now.getFullYear());
+  const [month, setMonth] = useState(now.getMonth()); // 0-indexed
   const [report, setReport] = useState<PeriodReport | null>(null);
   const [loading, setLoading] = useState(true);
 
+  function prevMonth() {
+    if (month === 0) { setMonth(11); setYear(y => y - 1); }
+    else setMonth(m => m - 1);
+  }
+
+  function nextMonth() {
+    if (month === 11) { setMonth(0); setYear(y => y + 1); }
+    else setMonth(m => m + 1);
+  }
+
   useEffect(() => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth();
+    setLoading(true);
     const dateFrom = `${year}-${String(month + 1).padStart(2, "0")}-01`;
     const lastDay = new Date(year, month + 1, 0).getDate();
     const dateTo = `${year}-${String(month + 1).padStart(2, "0")}-${lastDay}`;
@@ -27,18 +46,12 @@ export default function Dashboard() {
       .then((res) => setReport(res.data))
       .catch(() => setReport(null))
       .finally(() => setLoading(false));
-  }, []);
+  }, [year, month]);
 
   const fmt = (n: number) =>
     n.toLocaleString("uk-UA", { minimumFractionDigits: 2 });
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-2 border-accent-500/30 border-t-accent-500 rounded-full animate-spin" />
-      </div>
-    );
-  }
+  const isCurrentMonth = year === now.getFullYear() && month === now.getMonth();
 
   const cards = report
     ? [
@@ -83,16 +96,46 @@ export default function Dashboard() {
 
   return (
     <div>
-      <div className="mb-5 lg:mb-8">
-        <h2 className="text-2xl font-bold text-white">Дашборд</h2>
-        <p className="text-gray-500 text-sm mt-1">
-          Огляд фінансів за поточний місяць
-        </p>
+      <div className="flex items-center justify-between mb-5 lg:mb-8 flex-wrap gap-3">
+        <div>
+          <h2 className="text-2xl font-bold text-white">Дашборд</h2>
+          <p className="text-gray-500 text-sm mt-1">
+            Огляд фінансів за {MONTH_NAMES[month].toLowerCase()} {year}
+          </p>
+        </div>
+
+        {/* Month selector */}
+        <div className="flex items-center gap-1">
+          <button
+            onClick={prevMonth}
+            className="p-2 rounded-xl bg-dark-300 border border-dark-50/10 text-gray-400 hover:text-white hover:bg-dark-200 transition-all"
+          >
+            <ChevronLeft size={18} />
+          </button>
+          <span className="px-3 sm:px-4 py-2 rounded-xl bg-dark-300 border border-dark-50/10 text-white font-bold text-sm sm:text-base min-w-[120px] sm:min-w-[160px] text-center">
+            {MONTH_NAMES[month]} {year}
+          </span>
+          <button
+            onClick={nextMonth}
+            disabled={isCurrentMonth}
+            className={`p-2 rounded-xl bg-dark-300 border border-dark-50/10 transition-all ${
+              isCurrentMonth
+                ? "text-gray-700 cursor-not-allowed"
+                : "text-gray-400 hover:text-white hover:bg-dark-200"
+            }`}
+          >
+            <ChevronRight size={18} />
+          </button>
+        </div>
       </div>
 
-      {!report ? (
+      {loading ? (
+        <div className="flex items-center justify-center h-64">
+          <div className="w-8 h-8 border-2 border-accent-500/30 border-t-accent-500 rounded-full animate-spin" />
+        </div>
+      ) : !report ? (
         <div className="card-neo p-12 text-center">
-          <p className="text-gray-500 text-lg">Немає даних за поточний місяць</p>
+          <p className="text-gray-500 text-lg">Немає даних за {MONTH_NAMES[month].toLowerCase()} {year}</p>
           <p className="text-gray-600 text-sm mt-2">
             Додайте перший дохід або витрату
           </p>
