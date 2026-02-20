@@ -20,6 +20,7 @@ export default function TaxesPage() {
   const totalIncome = taxes.reduce((s, t) => s + t.income, 0);
   const totalSingleTax = taxes.reduce((s, t) => s + t.single_tax, 0);
   const totalEsv = taxes.reduce((s, t) => s + t.esv, 0);
+  const totalVz = taxes.reduce((s, t) => s + t.vz, 0);
   const grandTotal = taxes.reduce((s, t) => s + t.total, 0);
 
   const fmt = (n: number) =>
@@ -78,6 +79,10 @@ export default function TaxesPage() {
                     <span className="text-gray-500">ЄСВ</span>
                     <span className="text-yellow-400 font-medium">{fmt(t.esv)}</span>
                   </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">ВЗ (1.5%)</span>
+                    <span className="text-orange-400 font-medium">{fmt(t.vz)}</span>
+                  </div>
                   <div className="border-t border-dark-50/10 pt-2 flex justify-between">
                     <span className="text-gray-400 font-medium">Всього</span>
                     <span className="text-red-400 font-bold">{fmt(t.total)} &#8372;</span>
@@ -106,6 +111,9 @@ export default function TaxesPage() {
                     ЄСВ
                   </th>
                   <th className="text-right px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    ВЗ
+                  </th>
+                  <th className="text-right px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                     Всього
                   </th>
                 </tr>
@@ -126,6 +134,9 @@ export default function TaxesPage() {
                     <td className="px-5 py-4 text-right text-yellow-400">
                       {fmt(t.esv)} &#8372;
                     </td>
+                    <td className="px-5 py-4 text-right text-orange-400">
+                      {fmt(t.vz)} &#8372;
+                    </td>
                     <td className="px-5 py-4 text-right font-semibold text-red-400">
                       {fmt(t.total)} &#8372;
                     </td>
@@ -143,6 +154,9 @@ export default function TaxesPage() {
                   </td>
                   <td className="px-5 py-4 text-right text-yellow-400 font-bold">
                     {fmt(totalEsv)} &#8372;
+                  </td>
+                  <td className="px-5 py-4 text-right text-orange-400 font-bold">
+                    {fmt(totalVz)} &#8372;
                   </td>
                   <td className="px-5 py-4 text-right text-red-400 font-bold text-base">
                     {fmt(grandTotal)} &#8372;

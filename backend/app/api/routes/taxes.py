@@ -27,6 +27,7 @@ async def quarterly_taxes(
     )
     nhsu = nhsu_result.scalar_one_or_none()
     esv_monthly = float(nhsu.esv_monthly) if nhsu else settings.esv_monthly
+    vz_rate = float(nhsu.vz_rate) / 100 if nhsu else 0.015
 
     summaries = []
     for quarter, (month_start, month_end) in QUARTER_MONTHS.items():
@@ -48,6 +49,7 @@ async def quarterly_taxes(
         single_tax = round(income * user.tax_rate, 2)
         months_in_quarter = 3
         esv = round(esv_monthly * months_in_quarter, 2)
+        vz = round(income * vz_rate, 2)
 
         summaries.append(
             TaxSummary(
@@ -55,7 +57,8 @@ async def quarterly_taxes(
                 income=income,
                 single_tax=single_tax,
                 esv=esv,
-                total=round(single_tax + esv, 2),
+                vz=vz,
+                total=round(single_tax + esv + vz, 2),
             )
         )
     return summaries

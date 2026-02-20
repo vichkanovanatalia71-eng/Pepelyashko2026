@@ -50,10 +50,12 @@ async def period_report(
     )
     nhsu = nhsu_result.scalar_one_or_none()
     esv_monthly = float(nhsu.esv_monthly) if nhsu else settings.esv_monthly
+    vz_rate = float(nhsu.vz_rate) / 100 if nhsu else 0.015
     days = (date_to - date_from).days + 1
     months = max(1, round(days / 30))
     tax_esv = round(esv_monthly * months, 2)
-    total_taxes = round(tax_single + tax_esv, 2)
+    tax_vz = round(total_income * vz_rate, 2)
+    total_taxes = round(tax_single + tax_esv + tax_vz, 2)
 
     net_profit = round(total_income - total_expenses, 2)
     income_after_taxes = round(net_profit - total_taxes, 2)
@@ -65,6 +67,7 @@ async def period_report(
         net_profit=net_profit,
         tax_single=tax_single,
         tax_esv=tax_esv,
+        tax_vz=tax_vz,
         total_taxes=total_taxes,
         income_after_taxes=income_after_taxes,
     )

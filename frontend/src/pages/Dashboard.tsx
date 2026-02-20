@@ -151,6 +151,16 @@ export default function Dashboard() {
 
               <div className="flex items-center justify-between py-3 border-b border-dark-50/10">
                 <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 rounded-full bg-orange-400" />
+                  <span className="text-gray-400">Військовий збір (1.5%)</span>
+                </div>
+                <span className="font-semibold text-gray-200">
+                  {fmt(report.tax_vz)} &#8372;
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between py-3 border-b border-dark-50/10">
+                <div className="flex items-center gap-3">
                   <div className="w-2 h-2 rounded-full bg-red-400" />
                   <span className="text-gray-400">Всього податків</span>
                 </div>

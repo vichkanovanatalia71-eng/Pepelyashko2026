@@ -37,6 +37,7 @@ export interface PeriodReport {
   net_profit: number;
   tax_single: number;
   tax_esv: number;
+  tax_vz: number;
   total_taxes: number;
   income_after_taxes: number;
 }
@@ -46,6 +47,7 @@ export interface TaxSummary {
   income: number;
   single_tax: number;
   esv: number;
+  vz: number;
   total: number;
 }
 
