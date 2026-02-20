@@ -8,7 +8,6 @@ import {
   LogOut,
   Stethoscope,
   Settings,
-  ClipboardList,
   BarChart3,
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
@@ -19,7 +18,6 @@ const navItems = [
   { to: "/expenses", icon: TrendingDown, label: "Витрати" },
   { to: "/taxes", icon: Receipt, label: "Податки" },
   { to: "/nhsu", icon: HeartPulse, label: "НСЗУ" },
-  { to: "/services", icon: ClipboardList, label: "Послуги" },
   { to: "/monthly-services", icon: BarChart3, label: "Платні послуги" },
   { to: "/settings", icon: Settings, label: "Налаштування" },
 ];

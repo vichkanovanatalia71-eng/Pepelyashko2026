@@ -12,13 +12,14 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 import openpyxl
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
 from fastapi.responses import StreamingResponse
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import get_current_user, get_db
 from app.models.doctor import Doctor
+from app.models.user_api_keys import UserApiKeys
 from app.models.monthly_service import MonthlyPaidServiceEntry, MonthlyPaidServicesReport
 from app.models.nhsu import NhsuSettings
 from app.models.service import Service
@@ -764,3 +765,169 @@ async def _cleanup_expired(db: AsyncSession, user_id: int) -> None:
     for share in r.scalars().all():
         await db.delete(share)
     await db.commit()
+
+
+# ── AI-аналіз зображень (платні послуги) ──────────────────────────────
+
+_PS_SYSTEM = """\
+Ти — спеціалізований OCR-асистент для обробки звітів про платні медичні послуги ФОП-лікаря.
+Твоя задача — точно розпізнати дані зі скріншоту або фото звіту та повернути їх у форматі JSON.
+Відповідай ТІЛЬКИ валідним JSON без markdown, коментарів чи пояснень."""
+
+_PS_PROMPT = """\
+<context>
+Це скріншот або фото звіту про надані платні медичні послуги. Документ може містити:
+- Таблицю з переліком послуг, кількістю та сумами
+- Ім'я лікаря
+- Суму готівки в касі
+- Перелік наданих послуг із кількістю за період (місяць)
+</context>
+
+<task>
+Знайди та вилучи з зображення:
+
+1. **Ім'я лікаря** (якщо видно)
+2. **Готівка в касі** — загальна сума готівки (число, грн)
+3. **Перелік послуг** — для кожної послуги:
+   - Назва послуги (точно як написано)
+   - Кількість наданих послуг за період
+</task>
+
+<rules>
+- Кількість — ціле число (integer)
+- Готівка — число з можливими десятковими (float)
+- Назви послуг — записуй ТОЧНО як на зображенні, не скорочуй
+- Якщо дані не видно — пропускай послугу
+- confidence: "high" = всі дані чітко видимі; "medium" = деякі дані неточні; "low" = більшість не розпізнано
+</rules>
+
+<output_format>
+Поверни ТІЛЬКИ JSON:
+{
+  "doctor_name": "ПІБ або null",
+  "cash_in_register": 0,
+  "services": [
+    {"name": "Назва послуги", "quantity": 0}
+  ],
+  "confidence": "high",
+  "notes": ""
+}
+</output_format>"""
+
+
+@router.post("/analyze-image")
+async def analyze_paid_services_image(
+    images: list[UploadFile] = File(...),
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Аналізує зображення звіту платних послуг через AI."""
+    from app.api.routes.nhsu import (
+        _analyze_with_anthropic,
+        _analyze_with_openai,
+        _analyze_with_xai,
+        _parse_ai_json,
+        _pick_provider,
+    )
+
+    user_keys_result = await db.execute(
+        select(UserApiKeys).where(UserApiKeys.user_id == user.id)
+    )
+    user_keys = user_keys_result.scalar_one_or_none()
+    provider, api_key = _pick_provider(user_keys)
+
+    if not provider:
+        raise HTTPException(
+            status_code=503,
+            detail="AI сервіс не налаштований. Додайте API ключ у Налаштуваннях.",
+        )
+
+    # Завантажуємо каталог послуг для fuzzy-matching
+    svc_result = await db.execute(
+        select(Service).where(Service.user_id == user.id).order_by(Service.code)
+    )
+    catalog = svc_result.scalars().all()
+    catalog_names = {s.id: s.name.lower().strip() for s in catalog}
+
+    results = []
+    for image_file in images:
+        raw = await image_file.read()
+        media_type = image_file.content_type or "image/png"
+
+        if len(raw) > 10 * 1024 * 1024:
+            results.append({"error": "Файл перевищує 10 MB"})
+            continue
+
+        # Перевизначаємо промти для платних послуг
+        import app.api.routes.nhsu as _nhsu_mod
+
+        original_as = _nhsu_mod._ANTHROPIC_SYSTEM
+        original_ap = _nhsu_mod._ANTHROPIC_PROMPT
+        original_os = _nhsu_mod._OPENAI_SYSTEM
+        original_op = _nhsu_mod._OPENAI_PROMPT
+        original_xs = _nhsu_mod._XAI_SYSTEM
+        original_xp = _nhsu_mod._XAI_PROMPT
+
+        _nhsu_mod._ANTHROPIC_SYSTEM = _PS_SYSTEM
+        _nhsu_mod._ANTHROPIC_PROMPT = _PS_PROMPT
+        _nhsu_mod._OPENAI_SYSTEM = _PS_SYSTEM
+        _nhsu_mod._OPENAI_PROMPT = _PS_PROMPT
+        _nhsu_mod._XAI_SYSTEM = _PS_SYSTEM
+        _nhsu_mod._XAI_PROMPT = _PS_PROMPT
+
+        try:
+            if provider == "anthropic":
+                data = await _analyze_with_anthropic(api_key, raw, media_type)
+            elif provider == "openai":
+                data = await _analyze_with_openai(api_key, raw, media_type)
+            else:
+                data = await _analyze_with_xai(api_key, raw, media_type)
+        finally:
+            _nhsu_mod._ANTHROPIC_SYSTEM = original_as
+            _nhsu_mod._ANTHROPIC_PROMPT = original_ap
+            _nhsu_mod._OPENAI_SYSTEM = original_os
+            _nhsu_mod._OPENAI_PROMPT = original_op
+            _nhsu_mod._XAI_SYSTEM = original_xs
+            _nhsu_mod._XAI_PROMPT = original_xp
+
+        # Мепінг розпізнаних послуг на каталог (fuzzy)
+        matched_entries: list[dict] = []
+        ai_services = data.get("services", [])
+        for ai_svc in ai_services:
+            ai_name = (ai_svc.get("name") or "").lower().strip()
+            qty = int(ai_svc.get("quantity", 0))
+            if not ai_name or qty <= 0:
+                continue
+            best_id = None
+            best_score = 0.0
+            for sid, cname in catalog_names.items():
+                # Simple substring/overlap matching
+                if ai_name in cname or cname in ai_name:
+                    score = len(cname) / max(len(ai_name), 1)
+                    if score > best_score:
+                        best_score = score
+                        best_id = sid
+                else:
+                    # Word overlap
+                    ai_words = set(ai_name.split())
+                    c_words = set(cname.split())
+                    overlap = len(ai_words & c_words)
+                    total = max(len(ai_words | c_words), 1)
+                    score = overlap / total
+                    if score > best_score and score >= 0.4:
+                        best_score = score
+                        best_id = sid
+            if best_id:
+                matched_entries.append({"service_id": best_id, "quantity": qty})
+
+        results.append({
+            "doctor_name": data.get("doctor_name"),
+            "cash_in_register": float(data.get("cash_in_register", 0)),
+            "entries": matched_entries,
+            "raw_services": ai_services,
+            "confidence": data.get("confidence", "low"),
+            "notes": data.get("notes", ""),
+            "provider": provider,
+        })
+
+    return {"results": results, "provider": provider}

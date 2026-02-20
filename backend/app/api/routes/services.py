@@ -6,7 +6,7 @@ from decimal import Decimal
 import openpyxl
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import get_current_user, get_db
@@ -78,6 +78,141 @@ def _to_response(service: Service, ep_rate: float, vz_rate: float) -> ServiceRes
         materials=materials,
         **calc,
     )
+
+
+# ── Сидування каталогу послуг ──────────────────────────────────────────
+
+_SEED_SERVICES = [
+    {"code":"001","name":"Прийом лікаря без декларації","price":400.0,"materials":[
+        {"name":"Рукавички нестерильні (1 пара)","unit":"пара","quantity":1,"cost":5.0},
+        {"name":"Шпатель (1 штука)","unit":"штука","quantity":1,"cost":2.0},
+        {"name":"Аскорбінова кислота (1 штука)","unit":"штука","quantity":1,"cost":12.0}]},
+    {"code":"002","name":"Глюкоза крові","price":110.0,"materials":[
+        {"name":"Рукавички нестерильні (1 пара)","unit":"пара","quantity":1,"cost":5.0},
+        {"name":"Тест-смужка (1 штука)","unit":"штука","quantity":1,"cost":10.0},
+        {"name":"Спиртова серветка (1 штука)","unit":"штука","quantity":1,"cost":1.0},
+        {"name":"Ланцет (1 штука)","unit":"штука","quantity":1,"cost":1.0}]},
+    {"code":"003","name":"Глюкоза крові з навантаженням","price":250.0,"materials":[
+        {"name":"Рукавички нестерильні (2 пари)","unit":"пара","quantity":2,"cost":10.0},
+        {"name":"Спиртова серветка (2 штуки)","unit":"штука","quantity":2,"cost":2.0},
+        {"name":"Тест-смужка (2 штуки)","unit":"штука","quantity":2,"cost":20.0},
+        {"name":"Ланцет (2 штуки)","unit":"штука","quantity":2,"cost":2.0},
+        {"name":"Глюкоза-тест порошок для орального розчину (1 штука)","unit":"штука","quantity":1,"cost":70.0},
+        {"name":"Шпатель (1 штука)","unit":"штука","quantity":1,"cost":2.0},
+        {"name":"Одноразовий стаканчик (1 штука)","unit":"штука","quantity":1,"cost":1.0}]},
+    {"code":"004","name":"Електрокардіографія","price":150.0,"materials":[
+        {"name":"Амортизація та стрічка","unit":"послуга","quantity":1,"cost":50.0},
+        {"name":"Рукавички нестерильні (1 пара)","unit":"пара","quantity":1,"cost":5.0}]},
+    {"code":"005","name":"Швидкий тест на антиген COVID-19","price":250.0,"materials":[
+        {"name":"Експрес-тест на антиген COVID-19 (1 штука)","unit":"штука","quantity":1,"cost":50.0},
+        {"name":"Рукавички нестерильні (1 пара)","unit":"пара","quantity":1,"cost":5.0},
+        {"name":"Маска медична 3-шарова (1 штука)","unit":"штука","quantity":1,"cost":1.50}]},
+    {"code":"006","name":"Загальний аналіз сечі","price":150.0,"materials":[
+        {"name":"Рукавички нестерильні (2 пари)","unit":"пара","quantity":2,"cost":10.0},
+        {"name":"Тест-смужки U-11, Mindray (1 штука)","unit":"штука","quantity":1,"cost":20.0},
+        {"name":"Амортизація","unit":"послуга","quantity":1,"cost":15.0}]},
+    {"code":"007","name":"Внутрішньовенне введення лікарського засобу","price":100.0,"materials":[
+        {"name":"Шприц 10,0 мл (2 штуки)","unit":"штука","quantity":2,"cost":8.0},
+        {"name":"Рукавички нестерильні (1 пара)","unit":"пара","quantity":1,"cost":5.0},
+        {"name":"Спиртова серветка (2 штуки)","unit":"штука","quantity":2,"cost":2.0},
+        {"name":"Лейкопластир (1 штука)","unit":"штука","quantity":1,"cost":2.50},
+        {"name":"Шприц 20,0 мл (1 штука)","unit":"штука","quantity":1,"cost":5.0}]},
+    {"code":"008","name":"Внутрішньом\u2019язове введення лікарського засобу","price":80.0,"materials":[
+        {"name":"Шприц 5,0 мл (2 штуки)","unit":"штука","quantity":2,"cost":8.0},
+        {"name":"Рукавички нестерильні (1 пара)","unit":"пара","quantity":1,"cost":5.0},
+        {"name":"Спиртова серветка (2 штуки)","unit":"штука","quantity":2,"cost":2.0},
+        {"name":"Шприц 2,0 мл (2 штуки)","unit":"штука","quantity":2,"cost":6.0}]},
+    {"code":"009","name":"Підшкірне введення лікарського засобу","price":80.0,"materials":[
+        {"name":"Шприц 5,0 мл (1 штука)","unit":"штука","quantity":1,"cost":4.0},
+        {"name":"Рукавички нестерильні (1 пара)","unit":"пара","quantity":1,"cost":5.0},
+        {"name":"Спиртова серветка (2 штуки)","unit":"штука","quantity":2,"cost":2.0},
+        {"name":"Шприц 2,0 мл (1 штука)","unit":"штука","quantity":1,"cost":3.0}]},
+    {"code":"010","name":"Інфузійне введення лікарського засобу","price":200.0,"materials":[
+        {"name":"Шприц 5,0 мл (1 штука)","unit":"штука","quantity":1,"cost":4.0},
+        {"name":"Рукавички нестерильні (1 пара)","unit":"пара","quantity":1,"cost":5.0},
+        {"name":"Спиртова серветка (2 штуки)","unit":"штука","quantity":2,"cost":2.0},
+        {"name":"Шприц 10,0 мл (1 штука)","unit":"штука","quantity":1,"cost":4.0},
+        {"name":"Інфузійна система (1 штука)","unit":"штука","quantity":1,"cost":15.0},
+        {"name":"Пластир для фіксації канюлі внутрішньовенної (1 штука)","unit":"штука","quantity":1,"cost":4.0}]},
+    {"code":"011","name":"Взяття біологічного матеріалу (венозна кров)","price":100.0,"materials":[
+        {"name":"Шприц 5,0 мл (1 штука)","unit":"штука","quantity":1,"cost":4.0},
+        {"name":"Рукавички нестерильні (1 пара)","unit":"пара","quantity":1,"cost":5.0},
+        {"name":"Спиртова серветка (2 штуки)","unit":"штука","quantity":2,"cost":2.0},
+        {"name":"Шприц інсуліновий 1,0 мл (1 штука)","unit":"штука","quantity":1,"cost":5.0}]},
+    {"code":"012","name":"Прийом лікаря-спеціаліста","price":500.0,"materials":[
+        {"name":"Рукавички нестерильні (1 пара)","unit":"пара","quantity":1,"cost":5.0},
+        {"name":"Шпатель (1 штука)","unit":"штука","quantity":1,"cost":2.0},
+        {"name":"Аскорбінова кислота (1 штука)","unit":"штука","quantity":1,"cost":12.0}]},
+    {"code":"013","name":"Консультація лікаря на дому","price":600.0,"materials":[
+        {"name":"Рукавички нестерильні (1 пара)","unit":"пара","quantity":1,"cost":5.0},
+        {"name":"Шпатель (1 штука)","unit":"штука","quantity":1,"cost":2.0},
+        {"name":"Послуги таксі — середній показник","unit":"послуга","quantity":1,"cost":150.0}]},
+    {"code":"014","name":"Комбінований швидкий тест для визначення антигена COVID-19 та грипу А/В","price":350.0,"materials":[
+        {"name":"Комбінований швидкий тест для визначення антигена COVID-19 та грипу А/В (1 штука)","unit":"штука","quantity":1,"cost":105.0},
+        {"name":"Рукавички нестерильні (1 пара)","unit":"пара","quantity":1,"cost":5.0},
+        {"name":"Маска медична 3-шарова (1 штука)","unit":"штука","quantity":1,"cost":1.50}]},
+    {"code":"015","name":"Швидкий тест для діагностики стрептококової ангіни","price":400.0,"materials":[
+        {"name":"Швидкий тест для діагностики стрептококової ангіни CITO TEST STREP A (1 штука)","unit":"штука","quantity":1,"cost":255.0},
+        {"name":"Рукавички нестерильні (1 пара)","unit":"пара","quantity":1,"cost":5.0},
+        {"name":"Маска медична 3-шарова (1 штука)","unit":"штука","quantity":1,"cost":1.50}]},
+    {"code":"016","name":"Визначення рівня сечової кислоти у крові тест-смужками","price":200.0,"materials":[
+        {"name":"Рукавички нестерильні (1 пара)","unit":"пара","quantity":1,"cost":5.0},
+        {"name":"Тест-смужка (1 штука)","unit":"штука","quantity":1,"cost":35.0},
+        {"name":"Спиртова серветка (1 штука)","unit":"штука","quantity":1,"cost":1.0},
+        {"name":"Ланцет (1 штука)","unit":"штука","quantity":1,"cost":1.0}]},
+    {"code":"017","name":"Швидкий тест для визначення С-реактивного білка","price":250.0,"materials":[
+        {"name":"Швидкий тест для визначення С-реактивного білка (1 штука)","unit":"штука","quantity":1,"cost":75.0},
+        {"name":"Рукавички нестерильні (1 пара)","unit":"пара","quantity":1,"cost":5.0},
+        {"name":"Спиртова серветка (1 штука)","unit":"штука","quantity":1,"cost":1.0},
+        {"name":"Ланцет (1 штука)","unit":"штука","quantity":1,"cost":1.0}]},
+    {"code":"018","name":"Швидкий тест на феритин","price":350.0,"materials":[
+        {"name":"Швидкий тест на феритин (1 штука)","unit":"штука","quantity":1,"cost":113.0},
+        {"name":"Рукавички нестерильні (1 пара)","unit":"пара","quantity":1,"cost":5.0},
+        {"name":"Спиртова серветка (1 штука)","unit":"штука","quantity":1,"cost":1.0},
+        {"name":"Ланцет (1 штука)","unit":"штука","quantity":1,"cost":1.0}]},
+    {"code":"019","name":"Швидкий тест на вітамін D","price":500.0,"materials":[
+        {"name":"Швидкий тест на вітамін D (1 штука)","unit":"штука","quantity":1,"cost":148.0},
+        {"name":"Рукавички нестерильні (1 пара)","unit":"пара","quantity":1,"cost":5.0},
+        {"name":"Спиртова серветка (1 штука)","unit":"штука","quantity":1,"cost":1.0},
+        {"name":"Ланцет (1 штука)","unit":"штука","quantity":1,"cost":1.0}]},
+    {"code":"020","name":"Швидкий тест на виявлення простат-специфічного антигену (ПСА)","price":340.0,"materials":[
+        {"name":"Швидкий тест на виявлення простат-специфічного антигену (ПСА) (1 штука)","unit":"штука","quantity":1,"cost":72.0},
+        {"name":"Рукавички нестерильні (1 пара)","unit":"пара","quantity":1,"cost":5.0},
+        {"name":"Спиртова серветка (1 штука)","unit":"штука","quantity":1,"cost":1.0},
+        {"name":"Ланцет (1 штука)","unit":"штука","quantity":1,"cost":1.0}]},
+    {"code":"021","name":"Тест швидкий комбінований для виявлення ВІЛ 1/2, гепатит С, гепатит В, сифіліс","price":450.0,"materials":[
+        {"name":"Тест швидкий комбінований для виявлення ВІЛ 1/2, гепатит С, гепатит В, сифіліс (1 штука)","unit":"штука","quantity":1,"cost":80.0},
+        {"name":"Рукавички нестерильні (1 пара)","unit":"пара","quantity":1,"cost":5.0},
+        {"name":"Спиртова серветка (1 штука)","unit":"штука","quantity":1,"cost":1.0},
+        {"name":"Ланцет (1 штука)","unit":"штука","quantity":1,"cost":1.0}]},
+    {"code":"022","name":"Визначення рівня гемоглобіну в крові тест-смужками","price":100.0,"materials":[
+        {"name":"Рукавички нестерильні (1 пара)","unit":"пара","quantity":1,"cost":5.0},
+        {"name":"Тест-смужка (1 штука)","unit":"штука","quantity":1,"cost":39.0},
+        {"name":"Спиртова серветка (1 штука)","unit":"штука","quantity":1,"cost":1.0},
+        {"name":"Ланцет (1 штука)","unit":"штука","quantity":1,"cost":1.0}]},
+]
+
+
+@router.post("/seed", status_code=200)
+async def seed_services(
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Видалити всі існуючі послуги та створити 22 стандартних послуги."""
+    await db.execute(delete(Service).where(Service.user_id == user.id))
+    created = []
+    for s in _SEED_SERVICES:
+        svc = Service(
+            user_id=user.id,
+            code=s["code"],
+            name=s["name"],
+            price=s["price"],
+            materials=s["materials"],
+        )
+        db.add(svc)
+        created.append(s["code"])
+    await db.commit()
+    return {"deleted": "all", "created": len(created), "codes": created}
 
 
 # ── Масові операції (до /{service_id}!) ───────────────────────────────

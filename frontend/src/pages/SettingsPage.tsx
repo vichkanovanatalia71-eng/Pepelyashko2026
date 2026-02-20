@@ -16,6 +16,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { Doctor, NhsuSettings } from "../types";
+import ServicesPage from "./ServicesPage";
 
 const API = "";
 
@@ -163,7 +164,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="space-y-8 max-w-3xl">
+    <div className="space-y-8 max-w-full">
       {/* Header */}
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-accent-500/10 flex items-center justify-center">
@@ -469,6 +470,9 @@ export default function SettingsPage() {
           </>
         )}
       </div>
+
+      {/* ── Послуги ── */}
+      <ServicesPage />
     </div>
   );
 }

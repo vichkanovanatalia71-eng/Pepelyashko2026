@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import { useAuth } from "../hooks/useAuth";
 import {
@@ -25,6 +25,10 @@ import {
   Package,
   Copy,
   AlertCircle,
+  Upload,
+  Sparkles,
+  CheckCircle2,
+  FileImage,
 } from "lucide-react";
 import {
   BarChart,
@@ -103,6 +107,13 @@ export default function MonthlyServicesPage() {
   const [formError, setFormError] = useState("");
   const [cashWarning, setCashWarning] = useState("");
 
+  // ── AI-аналіз зображень ──
+  interface AiImage { file: File; preview: string; analyzed: boolean; error?: string }
+  const [aiImages, setAiImages] = useState<AiImage[]>([]);
+  const [aiAnalyzing, setAiAnalyzing] = useState(false);
+  const [aiResult, setAiResult] = useState<string>("");
+  const aiFileRef = useRef<HTMLInputElement>(null);
+
   // ── Завантаження ──
   useEffect(() => {
     loadDoctors();
@@ -169,6 +180,60 @@ export default function MonthlyServicesPage() {
       : <ArrowDown size={11} className="ml-1 text-accent-400" />;
   }
 
+  // ── AI-зображення ──
+  const handleAiFiles = (files: FileList | File[]) => {
+    const arr = Array.from(files).filter(f => f.type.startsWith("image/"));
+    setAiImages(p => [...p, ...arr.map(f => ({ file: f, preview: URL.createObjectURL(f), analyzed: false }))]);
+  };
+  const removeAiImage = (i: number) => setAiImages(p => { URL.revokeObjectURL(p[i].preview); return p.filter((_, idx) => idx !== i); });
+
+  const analyzeAiImages = async () => {
+    if (!aiImages.length) return;
+    setAiAnalyzing(true);
+    setAiResult("");
+    try {
+      const fd = new FormData();
+      aiImages.forEach(img => fd.append("images", img.file));
+      const { data } = await axios.post(`${API}/api/monthly-services/analyze-image`, fd, {
+        headers: { ...headers, "Content-Type": "multipart/form-data" },
+      });
+      const res = data.results?.[0];
+      if (!res) throw new Error("Порожня відповідь");
+      if (res.error) { setAiResult(`Помилка: ${res.error}`); return; }
+
+      // Заповнюємо готівку
+      if (res.cash_in_register > 0) setFormCash(String(res.cash_in_register));
+
+      // Заповнюємо послуги
+      if (res.entries?.length) {
+        setFormEntries(prev => {
+          const next = { ...prev };
+          for (const e of res.entries) {
+            next[e.service_id] = (next[e.service_id] || 0) + e.quantity;
+          }
+          return next;
+        });
+      }
+
+      // Лікар
+      if (res.doctor_name && doctors.length) {
+        const match = doctors.find(d => d.full_name.toLowerCase().includes(res.doctor_name.toLowerCase()));
+        if (match) setFormDoctor(match.id);
+      }
+
+      setAiImages(p => p.map(img => ({ ...img, analyzed: true })));
+      const matched = res.entries?.length ?? 0;
+      const total = res.raw_services?.length ?? 0;
+      setAiResult(`Розпізнано ${total} послуг, зіставлено ${matched}. Впевненість: ${res.confidence ?? "—"}`);
+    } catch (e: any) {
+      const msg = e?.response?.data?.detail ?? "Помилка AI-аналізу";
+      setAiResult(msg);
+      setAiImages(p => p.map(img => ({ ...img, error: msg })));
+    } finally {
+      setAiAnalyzing(false);
+    }
+  };
+
   // ── CRUD звітів ──
   function openCreateReport() {
     setEditingReport(null);
@@ -177,6 +242,8 @@ export default function MonthlyServicesPage() {
     setFormEntries({});
     setFormError("");
     setCashWarning("");
+    setAiImages([]);
+    setAiResult("");
     setShowReportForm(true);
   }
 
@@ -189,6 +256,8 @@ export default function MonthlyServicesPage() {
     setFormEntries(ent);
     setFormError("");
     setCashWarning("");
+    setAiImages([]);
+    setAiResult("");
     setShowReportForm(true);
   }
 
@@ -577,6 +646,52 @@ export default function MonthlyServicesPage() {
                     className={`w-full bg-dark-300 border rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none ${cashWarning ? "border-amber-500/60 focus:border-amber-500" : "border-dark-50/20 focus:border-accent-500/50"}`}
                   />
                 </div>
+              </div>
+
+              {/* ── AI-завантаження зображення ── */}
+              <div className="rounded-xl border border-dashed border-dark-50/30 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Sparkles size={15} className="text-purple-400" />
+                    <p className="text-sm font-medium text-gray-300">Розпізнавання зі скріншота</p>
+                  </div>
+                  <input ref={aiFileRef} type="file" accept="image/*" multiple className="hidden"
+                    onChange={(e) => { if (e.target.files) handleAiFiles(e.target.files); e.target.value = ""; }} />
+                  <button type="button" onClick={() => aiFileRef.current?.click()}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-purple-400 hover:bg-purple-500/10 rounded-lg border border-purple-500/20 transition-all">
+                    <Upload size={13} /> Завантажити фото
+                  </button>
+                </div>
+
+                {aiImages.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {aiImages.map((img, i) => (
+                      <div key={i} className="relative group">
+                        <img src={img.preview} alt="" className="w-16 h-16 object-cover rounded-lg border border-dark-50/20" />
+                        {img.analyzed && !img.error && <CheckCircle2 size={14} className="absolute -top-1 -right-1 text-green-400 bg-dark-600 rounded-full" />}
+                        {img.error && <AlertCircle size={14} className="absolute -top-1 -right-1 text-red-400 bg-dark-600 rounded-full" />}
+                        <button onClick={() => removeAiImage(i)}
+                          className="absolute -top-1.5 -left-1.5 w-4 h-4 bg-red-500/80 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <X size={10} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {aiImages.length > 0 && (
+                  <button type="button" onClick={analyzeAiImages} disabled={aiAnalyzing}
+                    className="flex items-center gap-2 px-4 py-2 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 rounded-xl text-xs font-medium transition-all border border-purple-500/20 disabled:opacity-50">
+                    {aiAnalyzing ? <RefreshCw size={13} className="animate-spin" /> : <Sparkles size={13} />}
+                    {aiAnalyzing ? "Аналіз…" : "Розпізнати AI"}
+                  </button>
+                )}
+
+                {aiResult && (
+                  <p className={`text-xs ${aiResult.startsWith("Помилка") ? "text-red-400" : "text-green-400"}`}>
+                    <FileImage size={12} className="inline mr-1" />{aiResult}
+                  </p>
+                )}
               </div>
 
               <div>
