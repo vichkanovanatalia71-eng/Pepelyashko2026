@@ -82,10 +82,14 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-dark-700">
+    <div className="min-h-screen flex items-center justify-center bg-dark-700
+                    px-4 py-8 pt-[calc(2rem+env(safe-area-inset-top))]
+                    pb-[calc(2rem+env(safe-area-inset-bottom))]">
       <div className="absolute inset-0 bg-gradient-to-br from-accent-500/5 via-transparent to-transparent pointer-events-none" />
+      {/* Мобільне фонове коло */}
+      <div className="absolute top-0 right-0 w-64 h-64 bg-accent-500/4 rounded-full blur-3xl pointer-events-none" />
 
-      <div className="relative w-full max-w-md card-neo p-10">
+      <div className="relative w-full max-w-md card-neo p-6 lg:p-10">
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
           <div className="w-16 h-16 rounded-2xl bg-accent-500/10 flex items-center justify-center shadow-glow-accent mb-4">

@@ -11,10 +11,22 @@
     color: #e5e5e5;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* Запобігаємо горизонтальному скролу на мобільних */
+    overflow-x: hidden;
+  }
+
+  /* Вимкнути синю підсвітку тапу на iOS/Android */
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Нативний скрол на iOS */
+  main, [data-scroll] {
+    -webkit-overflow-scrolling: touch;
   }
 
   ::-webkit-scrollbar {
-    width: 6px;
+    width: 4px;
   }
 
   ::-webkit-scrollbar-track {
@@ -28,6 +40,24 @@
 
   ::-webkit-scrollbar-thumb:hover {
     background: #3a3a3a;
+  }
+
+  /* Приховати скролбар на мобільних */
+  @media (max-width: 1024px) {
+    ::-webkit-scrollbar { display: none; }
+  }
+
+  /* Inputs: запобігаємо авто-зуму на iOS (мінімум font-size 16px) */
+  @media (max-width: 1024px) {
+    input[type="text"],
+    input[type="number"],
+    input[type="email"],
+    input[type="password"],
+    input[type="search"],
+    select,
+    textarea {
+      font-size: 16px !important;
+    }
   }
 }
 
@@ -73,18 +103,20 @@
     @apply block text-sm font-medium text-gray-400 mb-1.5;
   }
 
-  /* ── 3D hover effects ── */
+  /* ── 3D hover effects (тільки на десктопі з мишею) ── */
   .card-3d-hover {
     transition: transform 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94),
                 box-shadow 0.28s ease;
     will-change: transform;
   }
-  .card-3d-hover:hover {
-    transform: perspective(900px) translateZ(16px) rotateX(-1.5deg);
-    box-shadow:
-      0 28px 64px rgba(0, 0, 0, 0.55),
-      0 8px 24px rgba(99, 102, 241, 0.18),
-      0 0 0 1px rgba(99, 102, 241, 0.08);
+  @media (hover: hover) and (pointer: fine) {
+    .card-3d-hover:hover {
+      transform: perspective(900px) translateZ(16px) rotateX(-1.5deg);
+      box-shadow:
+        0 28px 64px rgba(0, 0, 0, 0.55),
+        0 8px 24px rgba(99, 102, 241, 0.18),
+        0 0 0 1px rgba(99, 102, 241, 0.08);
+    }
   }
 
   .kpi-3d-hover {
@@ -92,11 +124,53 @@
                 box-shadow 0.22s ease;
     will-change: transform;
   }
-  .kpi-3d-hover:hover {
-    transform: perspective(500px) translateZ(14px) scale(1.04);
-    box-shadow:
-      0 18px 48px rgba(0, 0, 0, 0.52),
-      0 4px 18px rgba(99, 102, 241, 0.22),
-      0 0 0 1px rgba(99, 102, 241, 0.1);
+  @media (hover: hover) and (pointer: fine) {
+    .kpi-3d-hover:hover {
+      transform: perspective(500px) translateZ(14px) scale(1.04);
+      box-shadow:
+        0 18px 48px rgba(0, 0, 0, 0.52),
+        0 4px 18px rgba(99, 102, 241, 0.22),
+        0 0 0 1px rgba(99, 102, 241, 0.1);
+    }
+  }
+
+  /* ── Мобільна нижня панель навігації ── */
+  .mobile-bottom-nav {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* ── Зона тапу: мінімум 44×44px (Apple HIG) ── */
+  .tap-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* ── Slide-up анімація для drawer ── */
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to   { transform: translateY(0); }
+  }
+  .animate-slide-up {
+    animation: slideUp 0.28s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+  }
+
+  /* ── Мобільні картки: менші відступи ── */
+  @media (max-width: 1024px) {
+    .card-neo {
+      border-radius: 1.25rem; /* 20px */
+    }
+
+    /* Вирівнювання модальних вікон знизу на мобільних */
+    .modal-mobile-bottom {
+      @apply fixed inset-x-0 bottom-0 rounded-t-3xl;
+      padding-bottom: calc(1.5rem + env(safe-area-inset-bottom));
+      max-height: 92vh;
+    }
+
+    /* Стилізація для активних кнопок на touch */
+    button:active, a:active {
+      opacity: 0.75;
+      transition: opacity 0.1s;
+    }
   }
 }
