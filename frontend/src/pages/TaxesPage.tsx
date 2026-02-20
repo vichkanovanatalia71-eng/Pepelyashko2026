@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, Check } from "lucide-react";
 import api from "../api/client";
-import type { TaxSummary } from "../types";
+import type { TaxSummary, AnnualReport } from "../types";
 
 interface PaymentStatus {
   year: number;
@@ -21,18 +21,23 @@ export default function TaxesPage() {
   const [year, setYear] = useState(new Date().getFullYear());
   const [loading, setLoading] = useState(true);
   const [payments, setPayments] = useState<PaymentStatus[]>([]);
+  const [tab, setTab] = useState<"quarterly" | "annual">("quarterly");
+  const [annual, setAnnual] = useState<AnnualReport | null>(null);
 
   useEffect(() => {
     setLoading(true);
-    Promise.all([
+    const requests: Promise<any>[] = [
       api.get("/taxes/quarterly", { params: { year } }),
       api.get("/taxes/payments", { params: { year } }),
-    ])
-      .then(([taxRes, payRes]) => {
+      api.get("/reports/annual", { params: { year } }),
+    ];
+    Promise.all(requests)
+      .then(([taxRes, payRes, annualRes]) => {
         setTaxes(taxRes.data);
         setPayments(payRes.data);
+        setAnnual(annualRes.data);
       })
-      .catch(() => { setTaxes([]); setPayments([]); })
+      .catch(() => { setTaxes([]); setPayments([]); setAnnual(null); })
       .finally(() => setLoading(false));
   }, [year]);
 
@@ -96,9 +101,70 @@ export default function TaxesPage() {
         </div>
       </div>
 
+      {/* Tab switcher */}
+      <div className="flex items-center gap-2 mb-5">
+        {[
+          { key: "quarterly" as const, label: "Квартали" },
+          { key: "annual" as const, label: "Річний звіт" },
+        ].map(t => (
+          <button key={t.key} onClick={() => setTab(t.key)}
+            className={`px-4 py-2 rounded-xl text-sm font-medium transition-all border ${
+              tab === t.key
+                ? "bg-accent-500/15 text-accent-400 border-accent-500/30"
+                : "bg-dark-400/50 text-gray-400 border-dark-50/10 hover:text-white"
+            }`}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
       {loading ? (
         <div className="flex items-center justify-center h-64">
           <div className="w-8 h-8 border-2 border-accent-500/30 border-t-accent-500 rounded-full animate-spin" />
+        </div>
+      ) : tab === "annual" && annual ? (
+        /* Annual P&L table */
+        <div className="card-neo overflow-hidden">
+          <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[700px]">
+            <thead>
+              <tr className="border-b border-dark-50/10">
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Місяць</th>
+                <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Доходи</th>
+                <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Витрати</th>
+                <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Прибуток</th>
+                <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">ЄП (5%)</th>
+                <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">ЄСВ</th>
+                <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">ВЗ</th>
+                <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Після податків</th>
+              </tr>
+            </thead>
+            <tbody>
+              {annual.months.map(m => (
+                <tr key={m.month} className="border-b border-dark-50/5 hover:bg-dark-200/50 transition-colors">
+                  <td className="px-4 py-3 text-white font-medium">{m.month_name}</td>
+                  <td className="px-4 py-3 text-right text-emerald-400">{fmt(m.income)}</td>
+                  <td className="px-4 py-3 text-right text-red-400">{fmt(m.expenses)}</td>
+                  <td className={`px-4 py-3 text-right font-medium ${m.net_profit >= 0 ? "text-gray-200" : "text-red-400"}`}>{fmt(m.net_profit)}</td>
+                  <td className="px-4 py-3 text-right text-accent-400">{fmt(m.tax_single)}</td>
+                  <td className="px-4 py-3 text-right text-yellow-400">{fmt(m.tax_esv)}</td>
+                  <td className="px-4 py-3 text-right text-orange-400">{fmt(m.tax_vz)}</td>
+                  <td className={`px-4 py-3 text-right font-semibold ${m.income_after_taxes >= 0 ? "text-emerald-400" : "text-red-400"}`}>{fmt(m.income_after_taxes)}</td>
+                </tr>
+              ))}
+              <tr className="bg-dark-400/50">
+                <td className="px-4 py-3 text-white font-bold">Разом {year}</td>
+                <td className="px-4 py-3 text-right text-emerald-400 font-bold">{fmt(annual.total_income)}</td>
+                <td className="px-4 py-3 text-right text-red-400 font-bold">{fmt(annual.total_expenses)}</td>
+                <td className="px-4 py-3 text-right text-white font-bold">{fmt(annual.total_net_profit)}</td>
+                <td className="px-4 py-3 text-right text-accent-400 font-bold">{fmt(annual.total_tax_single)}</td>
+                <td className="px-4 py-3 text-right text-yellow-400 font-bold">{fmt(annual.total_tax_esv)}</td>
+                <td className="px-4 py-3 text-right text-orange-400 font-bold">{fmt(annual.total_tax_vz)}</td>
+                <td className="px-4 py-3 text-right text-emerald-400 font-bold text-base">{fmt(annual.total_income_after_taxes)}</td>
+              </tr>
+            </tbody>
+          </table>
+          </div>
         </div>
       ) : (
         <>

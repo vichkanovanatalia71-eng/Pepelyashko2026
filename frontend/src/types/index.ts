@@ -51,6 +51,32 @@ export interface TaxSummary {
   total: number;
 }
 
+export interface MonthlyPL {
+  month: number;
+  month_name: string;
+  income: number;
+  expenses: number;
+  net_profit: number;
+  tax_single: number;
+  tax_esv: number;
+  tax_vz: number;
+  total_taxes: number;
+  income_after_taxes: number;
+}
+
+export interface AnnualReport {
+  year: number;
+  months: MonthlyPL[];
+  total_income: number;
+  total_expenses: number;
+  total_net_profit: number;
+  total_tax_single: number;
+  total_tax_esv: number;
+  total_tax_vz: number;
+  total_taxes: number;
+  total_income_after_taxes: number;
+}
+
 // ── НСЗУ ────────────────────────────────────────────────────────────
 
 export interface Doctor {
