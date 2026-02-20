@@ -242,12 +242,7 @@ export default function MonthlyServicesPage() {
       }
       setAiFilledEntries(filledIds);
 
-      // Незіставлені послуги (є у raw_services але немає у entries)
-      const matchedIds = new Set((res.entries ?? []).map((e: any) => e.service_id));
-      const unmatchedRaw = (res.raw_services ?? []).filter(
-        (_: any, idx: number) => !matchedIds.has((res.entries ?? [])[idx]?.service_id)
-      );
-      // Простіше: raw_services - entries (за назвою)
+      // Незіставлені послуги: ті з raw_services, яких немає у entries
       const matchedCount = res.entries?.length ?? 0;
       const rawServices: {name: string; quantity: number}[] = res.raw_services ?? [];
       const matchedNames = new Set((res.entries ?? []).map((_: any, i: number) => rawServices[i]?.name?.toLowerCase()));
