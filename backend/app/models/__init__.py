@@ -8,6 +8,8 @@ from app.models.service import Service
 from app.models.monthly_service import MonthlyPaidServicesReport, MonthlyPaidServiceEntry
 from app.models.share_report import ShareReport
 from app.models.tax_payment import TaxPayment
+from app.models.staff import StaffMember
+from app.models.budget import BudgetRow, BudgetCell
 
 __all__ = [
     "User",
@@ -24,4 +26,7 @@ __all__ = [
     "MonthlyPaidServiceEntry",
     "ShareReport",
     "TaxPayment",
+    "StaffMember",
+    "BudgetRow",
+    "BudgetCell",
 ]
