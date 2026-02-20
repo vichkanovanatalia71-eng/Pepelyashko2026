@@ -391,9 +391,25 @@ Invoke-RestMethod -Uri "http://localhost:8000/api/auth/register" `
 
 ## 7. Повсякденна робота
 
+### Оновити код та перезапустити (найпоширеніший сценарій):
+```powershell
+cd C:\Users\Admin\Pepelyashko2026
+
+# 1. Підтягнути останні зміни (remote називається "pepelyashko", не "origin"!)
+git pull pepelyashko claude/pepelyashko-finance-app-X3X95
+
+# 2. Перезібрати образи БЕЗ кешу та запустити
+docker compose down
+docker compose build --no-cache
+docker compose up -d
+```
+
+> **Важливо:** `docker compose up --build` не завжди підхоплює нові файли через кеш.
+> Правильна послідовність — спочатку `build --no-cache`, потім `up -d`.
+
 ### Запустити проект (контейнери вже зібрані):
 ```powershell
-cd $HOME\Desktop\Pepelyashko2026
+cd C:\Users\Admin\Pepelyashko2026
 docker compose up
 ```
 
@@ -715,10 +731,15 @@ docker compose up --build
 ## Корисні команди (шпаргалка)
 
 ```powershell
+# ═══ ОНОВЛЕННЯ КОДУ ═══
+git pull pepelyashko claude/pepelyashko-finance-app-X3X95   # Підтягнути зміни
+docker compose down                                          # Зупинити
+docker compose build --no-cache                             # Перебудувати (без кешу)
+docker compose up -d                                        # Запустити у фоні
+
 # ═══ ЗАПУСК ═══
 docker compose up              # Запустити (з логами)
 docker compose up -d           # Запустити у фоні
-docker compose up --build      # Перебудувати та запустити
 
 # ═══ ЗУПИНКА ═══
 docker compose down            # Зупинити (дані зберігаються)
