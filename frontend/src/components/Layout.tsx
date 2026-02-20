@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Outlet, NavLink, useNavigate } from "react-router-dom";
+import { Outlet, NavLink, useNavigate, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
   TrendingUp,
@@ -35,7 +35,11 @@ const bottomExtra = navItems.slice(4);
 export default function Layout() {
   const { logout, user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [drawerOpen, setDrawerOpen] = useState(false);
+
+  // «Ще» активне, якщо поточний шлях — один із extra-пунктів
+  const extraActive = bottomExtra.some(({ to }) => location.pathname.startsWith(to));
 
   function handleExtraNav(to: string) {
     setDrawerOpen(false);
@@ -148,12 +152,18 @@ export default function Layout() {
           {/* Кнопка «Ще» */}
           <button
             onClick={() => setDrawerOpen(true)}
-            className="flex-1 flex flex-col items-center justify-center gap-0.5 tap-target"
+            className="flex-1 flex flex-col items-center justify-center gap-0.5 tap-target relative"
           >
-            <div className="w-9 h-9 rounded-2xl flex items-center justify-center">
-              <MoreHorizontal size={20} className="text-gray-500" />
+            {extraActive && (
+              <span className="absolute top-0 left-1/2 -translate-x-1/2 w-6 h-0.5 bg-accent-400 rounded-full" />
+            )}
+            <div className={`w-9 h-9 rounded-2xl flex items-center justify-center transition-all duration-200
+                            ${extraActive ? "bg-accent-500/15 scale-110" : ""}`}>
+              <MoreHorizontal size={20} className={`transition-colors duration-200 ${extraActive ? "text-accent-400" : "text-gray-500"}`} />
             </div>
-            <span className="text-[10px] font-medium leading-none text-gray-600">Ще</span>
+            <span className={`text-[10px] font-medium leading-none transition-colors duration-200 ${extraActive ? "text-accent-400" : "text-gray-600"}`}>
+              Ще
+            </span>
           </button>
         </div>
       </nav>
@@ -193,21 +203,28 @@ export default function Layout() {
 
             {/* Пункти меню */}
             <div className="px-4 space-y-1 pb-2">
-              {bottomExtra.map(({ to, icon: Icon, label }) => (
-                <button
-                  key={to}
-                  onClick={() => handleExtraNav(to)}
-                  className="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl
-                             text-sm font-medium text-gray-300
-                             hover:bg-dark-400 active:bg-dark-300 transition-all tap-target"
-                >
-                  <div className="w-10 h-10 rounded-xl bg-dark-400 flex items-center justify-center shrink-0">
-                    <Icon size={20} className="text-accent-400" />
-                  </div>
-                  <span className="flex-1 text-left">{label}</span>
-                  <ChevronRight size={16} className="text-gray-600" />
-                </button>
-              ))}
+              {bottomExtra.map(({ to, icon: Icon, label }) => {
+                const isActive = location.pathname.startsWith(to);
+                return (
+                  <button
+                    key={to}
+                    onClick={() => handleExtraNav(to)}
+                    className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl
+                               text-sm font-medium transition-all tap-target
+                               ${isActive
+                                 ? "bg-accent-500/10 text-accent-400 border border-accent-500/20"
+                                 : "text-gray-300 hover:bg-dark-400 active:bg-dark-300 border border-transparent"
+                               }`}
+                  >
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0
+                                    ${isActive ? "bg-accent-500/15" : "bg-dark-400"}`}>
+                      <Icon size={20} className={isActive ? "text-accent-400" : "text-accent-400"} />
+                    </div>
+                    <span className="flex-1 text-left">{label}</span>
+                    <ChevronRight size={16} className={isActive ? "text-accent-400/60" : "text-gray-600"} />
+                  </button>
+                );
+              })}
             </div>
 
             {/* Роздільник */}

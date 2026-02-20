@@ -142,8 +142,43 @@ export default function ExpensesPage() {
         </form>
       )}
 
-      {/* Table */}
-      <div className="card-neo overflow-hidden">
+      {/* Mobile card list */}
+      <div className="sm:hidden space-y-2.5">
+        {expenses.length === 0 && (
+          <div className="card-neo p-10 text-center text-gray-600 text-sm">
+            Витрат поки немає. Натисніть «Додати» щоб почати.
+          </div>
+        )}
+        {expenses.map((expense) => (
+          <div key={expense.id} className="card-neo p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs text-gray-500">{expense.date}</span>
+                  <span className="font-bold text-red-400 tabular-nums">-{fmt(expense.amount)} &#8372;</span>
+                </div>
+                <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                  <span className="px-2 py-0.5 text-xs font-medium rounded-lg bg-dark-400 text-gray-400 border border-dark-50/10">
+                    {categoryName(expense.category_id)}
+                  </span>
+                  {expense.description && (
+                    <span className="text-xs text-gray-600 truncate">{expense.description}</span>
+                  )}
+                </div>
+              </div>
+              <button
+                onClick={() => handleDelete(expense.id)}
+                className="p-2 rounded-xl text-gray-600 hover:text-red-400 hover:bg-red-500/10 transition-all shrink-0 tap-target"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop table */}
+      <div className="hidden sm:block card-neo overflow-hidden">
         <div className="overflow-x-auto">
         <table className="w-full text-sm min-w-[480px]">
           <thead>

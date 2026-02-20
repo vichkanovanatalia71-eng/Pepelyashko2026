@@ -476,47 +476,52 @@ export default function MonthlyServicesPage() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-accent-500/10 flex items-center justify-center">
+          <div className="hidden sm:flex w-10 h-10 rounded-xl bg-accent-500/10 items-center justify-center">
             <BarChart3 size={22} className="text-accent-500" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white">Платні послуги</h1>
-            <p className="text-sm text-gray-500">Щомісячний облік та аналітика</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-white">Платні послуги</h1>
+            <p className="text-xs sm:text-sm text-gray-500">Щомісячний облік та аналітика</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={handleExport} className="flex items-center gap-2 px-3 py-2 text-sm text-green-400 hover:bg-green-500/10 rounded-xl border border-green-500/20 transition-all">
-            <Download size={15} /> Excel
+          <button onClick={handleExport} className="flex items-center gap-2 px-3 py-2 text-sm text-green-400 hover:bg-green-500/10 rounded-xl border border-green-500/20 transition-all tap-target">
+            <Download size={15} />
+            <span className="hidden sm:inline">Excel</span>
           </button>
-          <button onClick={handleShare} className="flex items-center gap-2 px-3 py-2 text-sm text-purple-400 hover:bg-purple-500/10 rounded-xl border border-purple-500/20 transition-all">
-            <Share2 size={15} /> Поділитися
+          <button onClick={handleShare} className="flex items-center gap-2 px-3 py-2 text-sm text-purple-400 hover:bg-purple-500/10 rounded-xl border border-purple-500/20 transition-all tap-target">
+            <Share2 size={15} />
+            <span className="hidden sm:inline">Поділитися</span>
           </button>
-          <button onClick={openCreateReport} className="flex items-center gap-2 px-4 py-2 bg-accent-500/10 hover:bg-accent-500/20 text-accent-400 rounded-xl text-sm font-medium transition-all border border-accent-500/20">
-            <Plus size={16} /> Додати звіт
+          <button onClick={openCreateReport} className="flex items-center gap-2 px-4 py-2 bg-accent-500/10 hover:bg-accent-500/20 text-accent-400 rounded-xl text-sm font-medium transition-all border border-accent-500/20 tap-target">
+            <Plus size={16} />
+            <span className="hidden sm:inline">Додати звіт</span>
           </button>
         </div>
       </div>
 
       {/* Фільтри */}
-      <div className="card-neo p-4 flex flex-wrap items-end gap-4">
-        <div>
-          <label className="block text-xs text-gray-500 mb-1">Лікар</label>
-          <select value={selectedDoctor} onChange={(e) => setSelectedDoctor(Number(e.target.value))} className="bg-dark-300 border border-dark-50/20 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-accent-500/50">
-            <option value={0}>Всі лікарі</option>
-            {doctors.map((d) => <option key={d.id} value={d.id}>{d.full_name}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className="block text-xs text-gray-500 mb-1">Місяць</label>
-          <select value={selectedMonth} onChange={(e) => setSelectedMonth(Number(e.target.value))} className="bg-dark-300 border border-dark-50/20 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-accent-500/50">
-            {MONTHS_UA.slice(1).map((m, i) => <option key={i + 1} value={i + 1}>{m}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className="block text-xs text-gray-500 mb-1">Рік</label>
-          <select value={selectedYear} onChange={(e) => setSelectedYear(Number(e.target.value))} className="bg-dark-300 border border-dark-50/20 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-accent-500/50">
-            {[now.getFullYear() - 1, now.getFullYear(), now.getFullYear() + 1].map((y) => <option key={y} value={y}>{y}</option>)}
-          </select>
+      <div className="card-neo p-3 sm:p-4">
+        <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap sm:items-end sm:gap-4">
+          <div className="flex flex-col gap-1">
+            <label className="block text-xs text-gray-500">Лікар</label>
+            <select value={selectedDoctor} onChange={(e) => setSelectedDoctor(Number(e.target.value))} className="bg-dark-300 border border-dark-50/20 rounded-xl px-2 py-2 sm:px-3 text-xs sm:text-sm text-white focus:outline-none focus:border-accent-500/50 w-full">
+              <option value={0}>Всі</option>
+              {doctors.map((d) => <option key={d.id} value={d.id}>{d.full_name}</option>)}
+            </select>
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="block text-xs text-gray-500">Місяць</label>
+            <select value={selectedMonth} onChange={(e) => setSelectedMonth(Number(e.target.value))} className="bg-dark-300 border border-dark-50/20 rounded-xl px-2 py-2 sm:px-3 text-xs sm:text-sm text-white focus:outline-none focus:border-accent-500/50 w-full">
+              {MONTHS_UA.slice(1).map((m, i) => <option key={i + 1} value={i + 1}>{m}</option>)}
+            </select>
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="block text-xs text-gray-500">Рік</label>
+            <select value={selectedYear} onChange={(e) => setSelectedYear(Number(e.target.value))} className="bg-dark-300 border border-dark-50/20 rounded-xl px-2 py-2 sm:px-3 text-xs sm:text-sm text-white focus:outline-none focus:border-accent-500/50 w-full">
+              {[now.getFullYear() - 1, now.getFullYear(), now.getFullYear() + 1].map((y) => <option key={y} value={y}>{y}</option>)}
+            </select>
+          </div>
         </div>
       </div>
 
@@ -684,8 +689,8 @@ export default function MonthlyServicesPage() {
 
       {/* ── Форма звіту ── */}
       {showReportForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-dark-600 border border-dark-50/10 rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 sm:items-center overflow-y-auto">
+          <div className="bg-dark-600 border border-dark-50/10 rounded-none sm:rounded-2xl w-full max-w-3xl min-h-full sm:min-h-0 shadow-2xl animate-modal-in">
             <div className="flex items-center justify-between p-6 border-b border-dark-50/10">
               <h2 className="text-lg font-semibold text-white">
                 {editingReport ? "Редагування звіту" : "Новий звіт"} · {MONTHS_UA[selectedMonth]} {selectedYear}
@@ -693,7 +698,7 @@ export default function MonthlyServicesPage() {
               <button onClick={() => setShowReportForm(false)} className="p-2 text-gray-500 hover:text-gray-300 hover:bg-dark-300 rounded-lg transition-all"><X size={18} /></button>
             </div>
             <div className="p-6 space-y-5">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {!editingReport && (
                   <div>
                     <label className="block text-xs text-gray-400 mb-1">Лікар <span className="text-red-400">*</span></label>
@@ -791,8 +796,8 @@ export default function MonthlyServicesPage() {
 
               <div>
                 <p className="text-sm font-medium text-gray-300 mb-3">Кількість послуг за місяць</p>
-                <div className="rounded-xl border border-dark-50/10 overflow-hidden">
-                  <table className="w-full text-xs">
+                <div className="rounded-xl border border-dark-50/10 overflow-x-auto">
+                  <table className="w-full text-xs min-w-[320px]">
                     <thead>
                       <tr className="bg-dark-300/50 border-b border-dark-50/10">
                         <th className="text-left px-3 py-2 text-gray-500 font-medium">Код</th>
@@ -855,8 +860,8 @@ export default function MonthlyServicesPage() {
 
       {/* ── Детальна статистика послуг (Блок 1) ── */}
       {showServicesModal && d && analytics && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-dark-600 border border-dark-50/10 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 sm:items-center overflow-y-auto">
+          <div className="bg-dark-600 border border-dark-50/10 rounded-none sm:rounded-2xl w-full max-w-4xl min-h-full sm:min-h-0 shadow-2xl animate-modal-in">
             <div className="flex items-center justify-between p-6 border-b border-dark-50/10">
               <h2 className="text-lg font-semibold text-white">Детальна статистика наданих послуг</h2>
               <div className="flex gap-2">
@@ -866,7 +871,7 @@ export default function MonthlyServicesPage() {
             </div>
             <div className="p-6 space-y-6">
               {/* KPI */}
-              <div className="grid grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
                 {[
                   { label: "Оборот", value: fmt(d.total_revenue) + " грн", color: "text-white" },
                   { label: "Кількість", value: String(d.total_quantity), color: "text-accent-400" },
@@ -941,8 +946,8 @@ export default function MonthlyServicesPage() {
 
       {/* ── Дохід лікарів (Блок 2) ── */}
       {showDoctorModal && d && analytics && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-dark-600 border border-dark-50/10 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 sm:items-center overflow-y-auto">
+          <div className="bg-dark-600 border border-dark-50/10 rounded-none sm:rounded-2xl w-full max-w-4xl min-h-full sm:min-h-0 shadow-2xl animate-modal-in">
             <div className="flex items-center justify-between p-6 border-b border-dark-50/10">
               <h2 className="text-lg font-semibold text-white">{selectedDoctor ? "Дохід лікаря" : "Дохід лікарів"}</h2>
               <div className="flex gap-2">
@@ -952,7 +957,7 @@ export default function MonthlyServicesPage() {
             </div>
             <div className="p-6 space-y-6">
               {/* KPI */}
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-3 gap-3 sm:gap-4">
                 {[
                   { label: "Оборот", value: fmt(d.total_revenue) + " грн" },
                   { label: "Кількість", value: String(d.total_quantity) },
@@ -1038,8 +1043,8 @@ export default function MonthlyServicesPage() {
 
       {/* ── Витрати (Блок 3) ── */}
       {showExpensesModal && d && analytics && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-dark-600 border border-dark-50/10 rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 sm:items-center overflow-y-auto">
+          <div className="bg-dark-600 border border-dark-50/10 rounded-none sm:rounded-2xl w-full max-w-3xl min-h-full sm:min-h-0 shadow-2xl animate-modal-in">
             <div className="flex items-center justify-between p-6 border-b border-dark-50/10">
               <h2 className="text-lg font-semibold text-white">Детальна статистика витрат</h2>
               <div className="flex gap-2">
@@ -1049,7 +1054,7 @@ export default function MonthlyServicesPage() {
             </div>
             <div className="p-6 space-y-5">
               {/* KPI */}
-              <div className="grid grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
                 {[
                   { label: "Матеріали", value: fmt(d.materials_cost), color: "text-blue-400" },
                   { label: `ЄП (${analytics.ep_rate}%)`, value: fmt(d.ep_amount), color: "text-orange-400" },
@@ -1112,7 +1117,7 @@ export default function MonthlyServicesPage() {
       {/* ── Видалення звіту ── */}
       {deleteReportId !== null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-dark-600 border border-dark-50/10 rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+          <div className="bg-dark-600 border border-dark-50/10 rounded-2xl p-6 w-full max-w-sm shadow-2xl animate-modal-in">
             <h3 className="text-lg font-semibold text-white mb-2">Видалити звіт?</h3>
             <p className="text-sm text-gray-400 mb-6">Цю дію неможливо скасувати.</p>
             <div className="flex gap-3 justify-end">
@@ -1126,7 +1131,7 @@ export default function MonthlyServicesPage() {
       {/* ── Попередження: зафіксувати без каси ── */}
       {finalizeWarningId !== null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-dark-600 border border-amber-500/20 rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+          <div className="bg-dark-600 border border-amber-500/20 rounded-2xl p-6 w-full max-w-sm shadow-2xl animate-modal-in">
             <div className="flex items-start gap-3 mb-4">
               <AlertCircle size={20} className="text-amber-400 shrink-0 mt-0.5" />
               <div>
@@ -1153,7 +1158,7 @@ export default function MonthlyServicesPage() {
       {/* ── Share діалог ── */}
       {shareData && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-dark-600 border border-dark-50/10 rounded-2xl p-6 w-full max-w-md shadow-2xl">
+          <div className="bg-dark-600 border border-dark-50/10 rounded-2xl p-6 w-full max-w-md shadow-2xl animate-modal-in">
             <h3 className="text-lg font-semibold text-white mb-2">Посилання створено</h3>
             <p className="text-sm text-gray-400 mb-4">Діє 30 днів. Доступ тільки для читання.</p>
             <div className="flex gap-2 mb-4">
