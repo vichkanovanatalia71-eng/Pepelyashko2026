@@ -32,6 +32,7 @@ from app.schemas.monthly_service import (
     EntryResponse,
     ExportRequest,
     MonthlyTrendRow,
+    PeriodInfoResponse,
     PublicShareData,
     ReportCreate,
     ReportResponse,
@@ -553,6 +554,51 @@ async def delete_report(
         raise HTTPException(404, detail="Звіт не знайдено")
     await db.delete(report)
     await db.commit()
+
+
+# ── Інформація про готівку за місяць ──────────────────────────────
+
+
+@router.get("/period-info", response_model=PeriodInfoResponse)
+async def get_period_info(
+    year: int = Query(...),
+    month: int = Query(...),
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Повертає останнього активного лікаря та готівку за період.
+
+    Використовується у формі звіту, щоб показати поле «Готівка в касі»
+    тільки останньому активному лікарю і лише якщо за цей місяць
+    готівку ще не внесено.
+    """
+    # Останній активний лікар (за порядком створення — найбільший id)
+    dr_r = await db.execute(
+        select(Doctor)
+        .where(Doctor.user_id == user.id, Doctor.is_active == True)
+        .order_by(Doctor.id.asc())
+    )
+    active_doctors = dr_r.scalars().all()
+    last_active_doctor_id = active_doctors[-1].id if active_doctors else None
+
+    # Чи є вже готівка за цей місяць?
+    reps_r = await db.execute(
+        select(MonthlyPaidServicesReport).where(
+            MonthlyPaidServicesReport.user_id == user.id,
+            MonthlyPaidServicesReport.year == year,
+            MonthlyPaidServicesReport.month == month,
+        )
+    )
+    reports = reps_r.scalars().all()
+    cash_report = next((r for r in reports if float(r.cash_in_register) > 0), None)
+    cash_for_period = float(cash_report.cash_in_register) if cash_report else None
+    submitted_doctor_ids = [r.doctor_id for r in reports]
+
+    return PeriodInfoResponse(
+        last_active_doctor_id=last_active_doctor_id,
+        cash_for_period=cash_for_period,
+        submitted_doctor_ids=submitted_doctor_ids,
+    )
 
 
 # ── Аналітика ─────────────────────────────────────────────────────

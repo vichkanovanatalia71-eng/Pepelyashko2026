@@ -107,11 +107,22 @@ export default function MonthlyServicesPage() {
   const [formError, setFormError] = useState("");
   const [cashWarning, setCashWarning] = useState("");
 
+  // ── Готівка в касі (per-period) ──
+  interface PeriodInfo {
+    last_active_doctor_id: number | null;
+    cash_for_period: number | null;
+    submitted_doctor_ids: number[];
+  }
+  const [periodInfo, setPeriodInfo] = useState<PeriodInfo | null>(null);
+
   // ── AI-аналіз зображень ──
   interface AiImage { file: File; preview: string; analyzed: boolean; error?: string }
   const [aiImages, setAiImages] = useState<AiImage[]>([]);
   const [aiAnalyzing, setAiAnalyzing] = useState(false);
   const [aiResult, setAiResult] = useState<string>("");
+  const [aiStatus, setAiStatus] = useState<"idle" | "analyzing" | "done" | "partial" | "error">("idle");
+  const [aiFilledEntries, setAiFilledEntries] = useState<Set<number>>(new Set());
+  const [aiUnmatched, setAiUnmatched] = useState<{name: string; quantity: number}[]>([]);
   const aiFileRef = useRef<HTMLInputElement>(null);
 
   // ── Завантаження ──
@@ -120,6 +131,7 @@ export default function MonthlyServicesPage() {
     loadCatalogServices();
   }, []);
   useEffect(() => { loadAnalytics(); }, [selectedDoctor, selectedYear, selectedMonth]);
+  useEffect(() => { loadPeriodInfo(); }, [selectedYear, selectedMonth]);
 
   async function loadDoctors() {
     try {
@@ -132,6 +144,16 @@ export default function MonthlyServicesPage() {
     try {
       const r = await axios.get(`${API}/api/services/`, { headers });
       setCatalogServices(r.data);
+    } catch {}
+  }
+
+  async function loadPeriodInfo() {
+    try {
+      const r = await axios.get(`${API}/api/monthly-services/period-info`, {
+        headers,
+        params: { year: selectedYear, month: selectedMonth },
+      });
+      setPeriodInfo(r.data);
     } catch {}
   }
 
@@ -190,7 +212,9 @@ export default function MonthlyServicesPage() {
   const analyzeAiImages = async () => {
     if (!aiImages.length) return;
     setAiAnalyzing(true);
-    setAiResult("");
+    setAiStatus("analyzing");
+    setAiResult("Розпізнавання…");
+    setAiUnmatched([]);
     try {
       const fd = new FormData();
       aiImages.forEach(img => fd.append("images", img.file));
@@ -199,21 +223,36 @@ export default function MonthlyServicesPage() {
       });
       const res = data.results?.[0];
       if (!res) throw new Error("Порожня відповідь");
-      if (res.error) { setAiResult(`Помилка: ${res.error}`); return; }
+      if (res.error) { setAiResult(`Помилка: ${res.error}`); setAiStatus("error"); return; }
 
       // Заповнюємо готівку
       if (res.cash_in_register > 0) setFormCash(String(res.cash_in_register));
 
-      // Заповнюємо послуги
+      // Заповнюємо послуги та відстежуємо AI-заповнені
+      const filledIds = new Set<number>();
       if (res.entries?.length) {
         setFormEntries(prev => {
           const next = { ...prev };
           for (const e of res.entries) {
             next[e.service_id] = (next[e.service_id] || 0) + e.quantity;
+            filledIds.add(e.service_id);
           }
           return next;
         });
       }
+      setAiFilledEntries(filledIds);
+
+      // Незіставлені послуги (є у raw_services але немає у entries)
+      const matchedIds = new Set((res.entries ?? []).map((e: any) => e.service_id));
+      const unmatchedRaw = (res.raw_services ?? []).filter(
+        (_: any, idx: number) => !matchedIds.has((res.entries ?? [])[idx]?.service_id)
+      );
+      // Простіше: raw_services - entries (за назвою)
+      const matchedCount = res.entries?.length ?? 0;
+      const rawServices: {name: string; quantity: number}[] = res.raw_services ?? [];
+      const matchedNames = new Set((res.entries ?? []).map((_: any, i: number) => rawServices[i]?.name?.toLowerCase()));
+      const unmatched = rawServices.filter(s => !matchedNames.has(s.name?.toLowerCase()));
+      setAiUnmatched(unmatched);
 
       // Лікар
       if (res.doctor_name && doctors.length) {
@@ -222,12 +261,21 @@ export default function MonthlyServicesPage() {
       }
 
       setAiImages(p => p.map(img => ({ ...img, analyzed: true })));
-      const matched = res.entries?.length ?? 0;
-      const total = res.raw_services?.length ?? 0;
-      setAiResult(`Розпізнано ${total} послуг, зіставлено ${matched}. Впевненість: ${res.confidence ?? "—"}`);
+      const total = rawServices.length;
+      const confidence = res.confidence ?? "low";
+      const pct = total ? Math.round((matchedCount / total) * 100) : 0;
+
+      if (confidence === "low" || pct < 50) {
+        setAiStatus("partial");
+        setAiResult(`Потрібне уточнення — зіставлено ${pct}% (${matchedCount}/${total}). Впевненість: ${confidence}`);
+      } else {
+        setAiStatus("done");
+        setAiResult(`Розпізнано ${pct}% (${matchedCount}/${total} послуг). Впевненість: ${confidence}`);
+      }
     } catch (e: any) {
       const msg = e?.response?.data?.detail ?? "Помилка AI-аналізу";
       setAiResult(msg);
+      setAiStatus("error");
       setAiImages(p => p.map(img => ({ ...img, error: msg })));
     } finally {
       setAiAnalyzing(false);
@@ -244,6 +292,9 @@ export default function MonthlyServicesPage() {
     setCashWarning("");
     setAiImages([]);
     setAiResult("");
+    setAiStatus("idle");
+    setAiFilledEntries(new Set());
+    setAiUnmatched([]);
     setShowReportForm(true);
   }
 
@@ -258,20 +309,27 @@ export default function MonthlyServicesPage() {
     setCashWarning("");
     setAiImages([]);
     setAiResult("");
+    setAiStatus("idle");
+    setAiFilledEntries(new Set());
+    setAiUnmatched([]);
     setShowReportForm(true);
   }
 
   async function handleSaveReport() {
     if (!formDoctor) { setFormError("Оберіть лікаря"); return; }
 
-    // Якщо інший лікар за цей же період вказав Готівку в касі — поточна форма також повинна мати значення
+    // Перевірка готівки: якщо це останній активний лікар — поле обов'язкове
     const cashValue = parseFloat(formCash) || 0;
-    const otherDoctorHasCash = (analytics?.reports ?? []).some(
-      (r) => r.doctor_id !== formDoctor && r.cash_in_register > 0,
-    );
-    if (otherDoctorHasCash && cashValue <= 0) {
+    const lastDoctorId = periodInfo?.last_active_doctor_id ?? null;
+    const isCashRequired =
+      lastDoctorId !== null &&
+      formDoctor === lastDoctorId &&
+      (editingReport
+        ? editingReport.doctor_id === lastDoctorId
+        : periodInfo?.cash_for_period === null);
+    if (isCashRequired && cashValue <= 0) {
       setCashWarning(
-        `За ${MONTHS_UA[selectedMonth]} ${selectedYear} необхідно вказати суму у полі "Готівка в касі", оскільки за цей період інші лікарі вже вказали цей показник.`,
+        "Необхідно зазначити суму готівки в касі на кінець періоду за обраний місяць.",
       );
       return;
     }
@@ -286,7 +344,7 @@ export default function MonthlyServicesPage() {
       doctor_id: formDoctor,
       year: selectedYear,
       month: selectedMonth,
-      cash_in_register: parseFloat(formCash) || 0,
+      cash_in_register: isCashRequired ? cashValue : 0,
       entries,
     };
     try {
@@ -299,7 +357,7 @@ export default function MonthlyServicesPage() {
         await axios.post(`${API}/api/monthly-services/reports`, payload, { headers });
       }
       setShowReportForm(false);
-      await loadAnalytics();
+      await Promise.all([loadAnalytics(), loadPeriodInfo()]);
     } catch (e: any) {
       setFormError(e?.response?.data?.detail ?? "Помилка збереження");
     }
@@ -310,7 +368,7 @@ export default function MonthlyServicesPage() {
     try {
       await axios.delete(`${API}/api/monthly-services/reports/${id}`, { headers });
       setDeleteReportId(null);
-      await loadAnalytics();
+      await Promise.all([loadAnalytics(), loadPeriodInfo()]);
     } catch {}
   }
 
@@ -397,6 +455,14 @@ export default function MonthlyServicesPage() {
     [...(analytics?.services_table ?? [])]
       .sort((a, b) => b.total_quantity - a.total_quantity)
       .slice(0, 5), [analytics]);
+
+  // ── Чи показувати поле "Готівка в касі" ──
+  const _lastDoctorId = periodInfo?.last_active_doctor_id ?? null;
+  const showCashField =
+    _lastDoctorId !== null &&
+    (editingReport
+      ? editingReport.doctor_id === _lastDoctorId
+      : formDoctor === _lastDoctorId && periodInfo?.cash_for_period === null);
 
   // ═══════════════════════════════════════════════════════════════════
   // RENDER
@@ -633,19 +699,24 @@ export default function MonthlyServicesPage() {
                     </select>
                   </div>
                 )}
-                <div>
-                  <label className="block text-xs text-gray-400 mb-1">
-                    Готівка в касі (грн)
-                    {(analytics?.reports ?? []).some(r => r.doctor_id !== formDoctor && r.cash_in_register > 0) && (
-                      <span className="ml-1 text-amber-400">*</span>
-                    )}
-                  </label>
-                  <input
-                    type="number" min="0" step="0.01" value={formCash}
-                    onChange={(e) => { setFormCash(e.target.value); if (cashWarning) setCashWarning(""); }}
-                    className={`w-full bg-dark-300 border rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none ${cashWarning ? "border-amber-500/60 focus:border-amber-500" : "border-dark-50/20 focus:border-accent-500/50"}`}
-                  />
-                </div>
+                {showCashField ? (
+                  <div>
+                    <label className="block text-xs text-gray-400 mb-1">
+                      Готівка в касі (грн) <span className="text-red-400">*</span>
+                      <span className="ml-1.5 text-gray-600">(вноситься один раз за місяць)</span>
+                    </label>
+                    <input
+                      type="number" min="0" step="0.01" value={formCash}
+                      onChange={(e) => { setFormCash(e.target.value); if (cashWarning) setCashWarning(""); }}
+                      className={`w-full bg-dark-300 border rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none ${cashWarning ? "border-amber-500/60 focus:border-amber-500" : "border-dark-50/20 focus:border-accent-500/50"}`}
+                    />
+                  </div>
+                ) : periodInfo?.cash_for_period != null ? (
+                  <div className="flex items-center gap-2 text-xs text-gray-500 self-end pb-3">
+                    <Banknote size={13} className="text-yellow-500/60 shrink-0" />
+                    Готівка за {MONTHS_UA[selectedMonth]}: <span className="text-yellow-400 font-medium ml-1">{fmt(periodInfo.cash_for_period)} грн</span>
+                  </div>
+                ) : null}
               </div>
 
               {/* ── AI-завантаження зображення ── */}
@@ -687,10 +758,27 @@ export default function MonthlyServicesPage() {
                   </button>
                 )}
 
-                {aiResult && (
-                  <p className={`text-xs ${aiResult.startsWith("Помилка") ? "text-red-400" : "text-green-400"}`}>
-                    <FileImage size={12} className="inline mr-1" />{aiResult}
-                  </p>
+                {aiResult && !aiAnalyzing && (
+                  <div className="space-y-1.5">
+                    <p className={`text-xs flex items-center gap-1.5 ${
+                      aiStatus === "error" ? "text-red-400" :
+                      aiStatus === "partial" ? "text-amber-400" :
+                      "text-green-400"
+                    }`}>
+                      {aiStatus === "done" ? <CheckCircle2 size={12} /> :
+                       aiStatus === "partial" ? <AlertCircle size={12} /> :
+                       <FileImage size={12} />}
+                      {aiResult}
+                    </p>
+                    {aiUnmatched.length > 0 && (
+                      <div className="rounded-lg bg-amber-500/5 border border-amber-500/20 px-3 py-2 space-y-0.5">
+                        <p className="text-xs text-amber-400 font-medium mb-1">Не вдалось зіставити з каталогом:</p>
+                        {aiUnmatched.map((s, i) => (
+                          <p key={i} className="text-xs text-gray-500">• {s.name} <span className="text-gray-600">(к-ть: {s.quantity})</span></p>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
 
@@ -707,20 +795,32 @@ export default function MonthlyServicesPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {catalogServices.map((svc) => (
-                        <tr key={svc.id} className="border-b border-dark-50/5">
-                          <td className="px-3 py-2 font-mono text-accent-400">{svc.code}</td>
-                          <td className="px-3 py-2 text-gray-200">{svc.name}</td>
-                          <td className="px-3 py-2 text-right text-gray-400 tabular-nums">{fmt(svc.price)}</td>
-                          <td className="px-3 py-1.5">
-                            <input type="number" min="0" step="1"
-                              value={formEntries[svc.id] ?? 0}
-                              onChange={(e) => setFormEntries((p) => ({ ...p, [svc.id]: Math.max(0, parseInt(e.target.value) || 0) }))}
-                              className="w-full bg-dark-300 border border-dark-50/10 rounded-lg px-2 py-1.5 text-center text-white focus:outline-none focus:border-accent-500/40"
-                            />
-                          </td>
-                        </tr>
-                      ))}
+                      {catalogServices.map((svc) => {
+                        const isAiFilled = aiFilledEntries.has(svc.id);
+                        return (
+                          <tr key={svc.id} className={`border-b border-dark-50/5 ${isAiFilled ? "bg-purple-500/5" : ""}`}>
+                            <td className="px-3 py-2 font-mono text-accent-400">{svc.code}</td>
+                            <td className="px-3 py-2 text-gray-200">
+                              {svc.name}
+                              {isAiFilled && <Sparkles size={10} className="inline ml-1.5 text-purple-400 opacity-70" />}
+                            </td>
+                            <td className="px-3 py-2 text-right text-gray-400 tabular-nums">{fmt(svc.price)}</td>
+                            <td className="px-3 py-1.5">
+                              <input type="number" min="0" step="1"
+                                value={formEntries[svc.id] ?? 0}
+                                onChange={(e) => {
+                                  const val = Math.max(0, parseInt(e.target.value) || 0);
+                                  setFormEntries((p) => ({ ...p, [svc.id]: val }));
+                                  if (isAiFilled && val === 0) {
+                                    setAiFilledEntries(prev => { const n = new Set(prev); n.delete(svc.id); return n; });
+                                  }
+                                }}
+                                className={`w-full bg-dark-300 border rounded-lg px-2 py-1.5 text-center text-white focus:outline-none ${isAiFilled ? "border-purple-500/40 focus:border-purple-500/60" : "border-dark-50/10 focus:border-accent-500/40"}`}
+                              />
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>

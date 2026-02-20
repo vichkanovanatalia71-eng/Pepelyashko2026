@@ -166,3 +166,14 @@ class ExportRequest(BaseModel):
     doctor_id: Optional[int] = None
     year: int
     month: int
+
+
+# ── Інформація про готівку за період ────────────────────────────────
+
+
+class PeriodInfoResponse(BaseModel):
+    """Відомості про останнього лікаря та готівку для поточного місяця."""
+
+    last_active_doctor_id: Optional[int] = None
+    cash_for_period: Optional[float] = None   # None = ще не внесено
+    submitted_doctor_ids: list[int] = []
