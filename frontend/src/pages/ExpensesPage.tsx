@@ -1691,11 +1691,6 @@ export default function ExpensesPage() {
                                       </div>
                                     </div>
                                   )}
-                                  <CheckboxToggle
-                                    checked={form.paid_services_from_module}
-                                    label="Оплата за платні послуги"
-                                    onToggle={() => setSalaryForms(s => ({ ...s, [row.staff_member_id]: { ...s[row.staff_member_id], paid_services_from_module: !s[row.staff_member_id].paid_services_from_module } }))}
-                                  />
                                   <div>
                                     <label className="label-dark">Індивідуальні доплати</label>
                                     <div className="relative">
@@ -1720,7 +1715,7 @@ export default function ExpensesPage() {
                                   {form.has_supplement && calc.supplement > 0 && (
                                     <CalcRow label="Доплата до цільової суми" value={calc.supplement} color="text-amber-400" />
                                   )}
-                                  {form.paid_services_from_module && (
+                                  {row.paid_services_income > 0 && (
                                     <CalcRow label="Оплата за послуги (модуль)" value={row.paid_services_income} color="text-blue-400" locked />
                                   )}
                                   {(parseFloat(form.individual_bonus) || 0) > 0 && (

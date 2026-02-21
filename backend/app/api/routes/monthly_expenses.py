@@ -395,9 +395,9 @@ async def get_monthly_expenses(
         individual_bonus = float(rec.individual_bonus) if rec else 0.0
         paid_services_from_module = rec.paid_services_from_module if rec else False
 
-        # Для лікарів: підтягуємо дохід з платних послуг
+        # Для лікарів: завжди підтягуємо дохід з платних послуг автоматично
         paid_services_income = 0.0
-        if member.role == "doctor" and paid_services_from_module and member.doctor_id:
+        if member.role == "doctor" and member.doctor_id:
             paid_services_income = await _doctor_paid_services_income(
                 db, user.id, member.doctor_id, year, month,
                 ep_rate_pct=rates.ep_rate, vz_rate_pct=rates.vz_rate,
@@ -699,7 +699,7 @@ async def update_salary_expense(
     individual_bonus = float(rec.individual_bonus)
 
     paid_services_income = 0.0
-    if member.role == "doctor" and rec.paid_services_from_module and member.doctor_id:
+    if member.role == "doctor" and member.doctor_id:
         nhsu_s = await _get_settings(db, user.id)
         ep_pct = float(nhsu_s.ep_rate) if nhsu_s else 5.0
         vz_pct = float(nhsu_s.vz_rate) if nhsu_s else 1.5
