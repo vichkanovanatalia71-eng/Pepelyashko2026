@@ -1,16 +1,7 @@
 import os
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings
-
-
-def _resolve_database_url() -> str:
-    """Railway injects DATABASE_URL as postgres:// — convert to asyncpg."""
-    url = os.getenv("DATABASE_URL", "postgresql+asyncpg://postgres:postgres@db:5432/pepelyashko")
-    if url.startswith("postgres://"):
-        url = url.replace("postgres://", "postgresql+asyncpg://", 1)
-    elif url.startswith("postgresql://"):
-        url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
-    return url
 
 
 class Settings(BaseSettings):
@@ -18,7 +9,7 @@ class Settings(BaseSettings):
     debug: bool = False
 
     # Database
-    database_url: str = _resolve_database_url()
+    database_url: str = "postgresql+asyncpg://postgres:postgres@db:5432/pepelyashko"
 
     # Auth
     secret_key: str = "change-me-in-production"
@@ -42,6 +33,16 @@ class Settings(BaseSettings):
     smtp_password: str = ""   # пароль додатку Gmail або SMTP-пароль
     smtp_from: str = ""       # якщо не вказано — використовується smtp_user
     frontend_url: str = "http://localhost:5173"  # базова URL фронтенду
+
+    @field_validator("database_url", mode="before")
+    @classmethod
+    def fix_database_url(cls, v: str) -> str:
+        """Railway injects DATABASE_URL as postgres:// — convert to asyncpg."""
+        if v.startswith("postgres://"):
+            return v.replace("postgres://", "postgresql+asyncpg://", 1)
+        if v.startswith("postgresql://"):
+            return v.replace("postgresql://", "postgresql+asyncpg://", 1)
+        return v
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 
