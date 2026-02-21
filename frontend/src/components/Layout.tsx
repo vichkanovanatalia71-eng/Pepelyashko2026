@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Outlet, NavLink, useNavigate, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -49,6 +49,21 @@ export default function Layout() {
 
   const extraActive = bottomExtra.some(({ to }) => location.pathname.startsWith(to));
 
+  // Close drawer on ESC key
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key === "Escape" && drawerOpen) setDrawerOpen(false);
+  }, [drawerOpen]);
+
+  useEffect(() => {
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [handleKeyDown]);
+
+  // Close drawer on route change
+  useEffect(() => {
+    setDrawerOpen(false);
+  }, [location.pathname]);
+
   function handleExtraNav(to: string) {
     setDrawerOpen(false);
     navigate(to);
@@ -66,17 +81,16 @@ export default function Layout() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-accent-500/10 flex items-center justify-center shadow-glow-accent">
-                <Stethoscope size={22} className="text-accent-500" />
+                <Stethoscope size={22} className="text-accent-500" aria-hidden="true" />
               </div>
               <div>
                 <h1 className="text-lg font-bold text-white tracking-tight">Pepelyashko</h1>
                 <p className="text-xs text-gray-500">Фінанси ФОП</p>
               </div>
             </div>
-            {/* Theme toggle */}
             <button
               onClick={toggle}
-              title={isLight ? "Темна тема" : "Світла тема"}
+              aria-label={isLight ? "Увімкнути темну тему" : "Увімкнути світлу тему"}
               className="w-9 h-9 rounded-xl border border-dark-50/20 flex items-center justify-center
                          text-gray-400 hover:text-accent-400 hover:bg-accent-500/10
                          hover:border-accent-500/30 transition-all duration-200"
@@ -87,7 +101,7 @@ export default function Layout() {
         </div>
 
         {/* Навігація */}
-        <nav className="flex-1 p-4 space-y-1">
+        <nav className="flex-1 p-4 space-y-1" aria-label="Основна навігація">
           {navItems.map(({ to, icon: Icon, label }) => (
             <NavLink
               key={to}
@@ -101,7 +115,7 @@ export default function Layout() {
                 }`
               }
             >
-              <Icon size={20} />
+              <Icon size={20} aria-hidden="true" />
               {label}
             </NavLink>
           ))}
@@ -119,7 +133,7 @@ export default function Layout() {
             onClick={logout}
             className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-gray-500 hover:text-red-400 hover:bg-red-500/5 rounded-xl transition-all duration-200"
           >
-            <LogOut size={18} />
+            <LogOut size={18} aria-hidden="true" />
             Вийти
           </button>
         </div>
@@ -128,19 +142,25 @@ export default function Layout() {
       {/* ══════════════════════════════════════════════
           ОСНОВНИЙ КОНТЕНТ
       ══════════════════════════════════════════════ */}
-      <main className="flex-1 min-w-0 overflow-auto
-                       p-4 pb-[calc(5rem+env(safe-area-inset-bottom))]
-                       lg:p-8 lg:pb-8">
+      <main
+        className="flex-1 min-w-0 overflow-auto
+                   p-4 pb-[calc(5rem+env(safe-area-inset-bottom))]
+                   lg:p-8 lg:pb-8"
+        id="main-content"
+      >
         <Outlet />
       </main>
 
       {/* ══════════════════════════════════════════════
           MOBILE: нижня навігаційна панель (< lg)
       ══════════════════════════════════════════════ */}
-      <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40
-                      bg-dark-600/96 backdrop-blur-2xl
-                      border-t border-dark-50/15
-                      mobile-bottom-nav">
+      <nav
+        className="lg:hidden fixed bottom-0 inset-x-0 z-40
+                   bg-dark-600/96 backdrop-blur-2xl
+                   border-t border-dark-50/15
+                   mobile-bottom-nav"
+        aria-label="Мобільна навігація"
+      >
         <div className="flex items-stretch h-16">
           {bottomMain.map(({ to, icon: Icon, short }) => (
             <NavLink
@@ -148,16 +168,18 @@ export default function Layout() {
               to={to}
               end={to === "/"}
               className="flex-1 flex flex-col items-center justify-center gap-0.5 relative tap-target"
+              aria-label={short}
             >
               {({ isActive }) => (
                 <>
                   {isActive && (
-                    <span className="absolute top-0 left-1/2 -translate-x-1/2 w-6 h-0.5 bg-accent-400 rounded-full" />
+                    <span className="absolute top-0 left-1/2 -translate-x-1/2 w-6 h-0.5 bg-accent-400 rounded-full" aria-hidden="true" />
                   )}
                   <div className={`w-9 h-9 rounded-2xl flex items-center justify-center transition-all duration-200
                                   ${isActive ? "bg-accent-500/15 scale-110" : ""}`}>
                     <Icon
                       size={20}
+                      aria-hidden="true"
                       className={`transition-colors duration-200 ${isActive ? "text-accent-400" : "text-gray-500"}`}
                     />
                   </div>
@@ -172,14 +194,16 @@ export default function Layout() {
           {/* Кнопка «Ще» */}
           <button
             onClick={() => setDrawerOpen(true)}
+            aria-label="Показати додаткове меню"
+            aria-expanded={drawerOpen}
             className="flex-1 flex flex-col items-center justify-center gap-0.5 tap-target relative"
           >
             {extraActive && (
-              <span className="absolute top-0 left-1/2 -translate-x-1/2 w-6 h-0.5 bg-accent-400 rounded-full" />
+              <span className="absolute top-0 left-1/2 -translate-x-1/2 w-6 h-0.5 bg-accent-400 rounded-full" aria-hidden="true" />
             )}
             <div className={`w-9 h-9 rounded-2xl flex items-center justify-center transition-all duration-200
                             ${extraActive ? "bg-accent-500/15 scale-110" : ""}`}>
-              <MoreHorizontal size={20} className={`transition-colors duration-200 ${extraActive ? "text-accent-400" : "text-gray-500"}`} />
+              <MoreHorizontal size={20} aria-hidden="true" className={`transition-colors duration-200 ${extraActive ? "text-accent-400" : "text-gray-500"}`} />
             </div>
             <span className={`text-[10px] font-medium leading-none transition-colors duration-200 ${extraActive ? "text-accent-400" : "text-gray-600"}`}>
               Ще
@@ -195,29 +219,34 @@ export default function Layout() {
         <>
           {/* Backdrop */}
           <div
-            className="lg:hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm"
+            className="lg:hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm animate-fade-in"
             onClick={() => setDrawerOpen(false)}
+            aria-hidden="true"
           />
 
           {/* Панель */}
-          <div className="lg:hidden fixed inset-x-0 bottom-0 z-50
-                          bg-dark-600 rounded-t-3xl border-t border-dark-50/15
-                          shadow-neo-lg animate-slide-up
-                          pb-[env(safe-area-inset-bottom)]">
+          <div
+            className="lg:hidden fixed inset-x-0 bottom-0 z-50
+                       bg-dark-600 rounded-t-3xl border-t border-dark-50/15
+                       shadow-neo-lg animate-slide-up
+                       pb-[env(safe-area-inset-bottom)]"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Додаткове меню"
+          >
 
             {/* Ручка */}
             <div className="flex justify-center pt-3 pb-1">
-              <div className="w-10 h-1 bg-dark-50/30 rounded-full" />
+              <div className="w-10 h-1 bg-dark-50/30 rounded-full" aria-hidden="true" />
             </div>
 
             {/* Заголовок + закрити */}
             <div className="flex items-center justify-between px-5 pt-2 pb-4">
               <p className="text-sm font-semibold text-gray-300">Меню</p>
               <div className="flex items-center gap-2">
-                {/* Theme toggle in mobile drawer */}
                 <button
                   onClick={toggle}
-                  title={isLight ? "Темна тема" : "Світла тема"}
+                  aria-label={isLight ? "Увімкнути темну тему" : "Увімкнути світлу тему"}
                   className="w-8 h-8 rounded-xl bg-dark-400 flex items-center justify-center
                              text-gray-400 hover:text-accent-400 transition-colors"
                 >
@@ -225,6 +254,7 @@ export default function Layout() {
                 </button>
                 <button
                   onClick={() => setDrawerOpen(false)}
+                  aria-label="Закрити меню"
                   className="w-8 h-8 rounded-xl bg-dark-400 flex items-center justify-center text-gray-500 hover:text-white transition-colors"
                 >
                   <X size={16} />
@@ -249,24 +279,24 @@ export default function Layout() {
                   >
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0
                                     ${isActive ? "bg-accent-500/15" : "bg-dark-400"}`}>
-                      <Icon size={20} className={isActive ? "text-accent-400" : "text-accent-400"} />
+                      <Icon size={20} aria-hidden="true" className={isActive ? "text-accent-400" : "text-gray-400"} />
                     </div>
                     <span className="flex-1 text-left">{label}</span>
-                    <ChevronRight size={16} className={isActive ? "text-accent-400/60" : "text-gray-600"} />
+                    <ChevronRight size={16} aria-hidden="true" className={isActive ? "text-accent-400/60" : "text-gray-600"} />
                   </button>
                 );
               })}
             </div>
 
             {/* Роздільник */}
-            <div className="h-px bg-dark-50/10 mx-4 my-2" />
+            <div className="h-px bg-dark-50/10 mx-4 my-2" aria-hidden="true" />
 
             {/* Інфо та вихід */}
             <div className="px-4 pb-4 space-y-1">
               {user && (
                 <div className="flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-dark-400/50">
                   <div className="w-10 h-10 rounded-xl bg-accent-500/10 flex items-center justify-center shrink-0">
-                    <User size={18} className="text-accent-400" />
+                    <User size={18} aria-hidden="true" className="text-accent-400" />
                   </div>
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-gray-200 truncate">{user.full_name}</p>
@@ -281,7 +311,7 @@ export default function Layout() {
                            hover:bg-red-500/10 active:bg-red-500/15 transition-all tap-target"
               >
                 <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center shrink-0">
-                  <LogOut size={20} className="text-red-400" />
+                  <LogOut size={20} aria-hidden="true" className="text-red-400" />
                 </div>
                 <span className="flex-1 text-left">Вийти</span>
               </button>

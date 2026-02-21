@@ -7,20 +7,17 @@ import {
   ChevronLeft, ChevronRight, ChevronDown, Upload, X, Save,
   RefreshCw, Sparkles, Users, BadgeDollarSign, TrendingDown,
   ShieldAlert, FileImage, Plus, CheckCircle2, AlertCircle,
-  Download, History, TrendingUp, Bell, Trash2,
+  Download, History, TrendingUp, Trash2,
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import api from "../api/client";
+import { MONTH_NAMES, LoadingSpinner, EmptyState, AlertBanner } from "../components/shared";
 import type {
   AgeGroup, Doctor, DoctorSummary,
   NhsuMonthlyReport, NhsuSettings,
 } from "../types";
 
 // ─── Constants ───────────────────────────────────────────────────────
-const MONTH_NAMES = [
-  "Січень","Лютий","Березень","Квітень","Травень","Червень",
-  "Липень","Серпень","Вересень","Жовтень","Листопад","Грудень",
-];
 const PIE_COLORS   = ["#6366f1","#22d3ee","#f59e0b","#10b981","#f43f5e"];
 const TT_STYLE     = { background:"#1a1a2e", border:"1px solid #ffffff15", borderRadius:8 };
 const AI_HIST_KEY  = "nhsu_ai_history_v1";
@@ -473,9 +470,9 @@ export default function NhsuPage() {
             <label className="text-xs text-gray-500">{rangeMode ? "Від" : "Період"}</label>
             <div className="flex items-center gap-2 flex-wrap">
               <div className="flex items-center gap-1 bg-dark-300 border border-dark-50/20 rounded-xl px-3 py-2">
-                <button onClick={prevMonth} className="text-gray-400 hover:text-white p-0.5"><ChevronLeft size={15}/></button>
+                <button onClick={prevMonth} aria-label="Попередній місяць" className="text-gray-400 hover:text-white p-0.5"><ChevronLeft size={15}/></button>
                 <span className="text-sm text-white font-medium min-w-[120px] text-center">{MONTH_NAMES[month-1]} {year}</span>
-                <button onClick={nextMonth} className="text-gray-400 hover:text-white p-0.5"><ChevronRight size={15}/></button>
+                <button onClick={nextMonth} aria-label="Наступний місяць" className="text-gray-400 hover:text-white p-0.5"><ChevronRight size={15}/></button>
               </div>
               {rangeMode && (
                 <>
@@ -483,9 +480,9 @@ export default function NhsuPage() {
                   <div className="flex flex-col gap-0.5">
                     <label className="text-xs text-gray-500">До</label>
                     <div className="flex items-center gap-1 bg-dark-300 border border-accent-500/30 rounded-xl px-3 py-2">
-                      <button onClick={prevRangeEnd} className="text-gray-400 hover:text-white p-0.5"><ChevronLeft size={15}/></button>
+                      <button onClick={prevRangeEnd} aria-label="Попередній кінцевий місяць" className="text-gray-400 hover:text-white p-0.5"><ChevronLeft size={15}/></button>
                       <span className="text-sm text-white font-medium min-w-[120px] text-center">{MONTH_NAMES[rangeEndMonth-1]} {rangeEndYear}</span>
-                      <button onClick={nextRangeEnd} className="text-gray-400 hover:text-white p-0.5"><ChevronRight size={15}/></button>
+                      <button onClick={nextRangeEnd} aria-label="Наступний кінцевий місяць" className="text-gray-400 hover:text-white p-0.5"><ChevronRight size={15}/></button>
                     </div>
                   </div>
                 </>
@@ -507,7 +504,7 @@ export default function NhsuPage() {
                     : "bg-dark-300 text-gray-400 border-dark-50/20 hover:text-white hover:border-dark-50/40"
                 }`}
               >
-                <TrendingUp size={12}/>
+                <TrendingUp size={12} aria-hidden="true"/>
                 {rangeMode ? "Скинути" : "Весь рік"}
               </button>
             </div>
@@ -516,13 +513,15 @@ export default function NhsuPage() {
           {/* Actions */}
           <div className="flex gap-2 sm:mt-5">
             <button onClick={openModal} disabled={!doctors.length}
+              aria-label={report ? "Редагувати дані" : "Заповнити дані"}
               className="flex items-center gap-2 px-4 py-2.5 bg-accent-500/10 hover:bg-accent-500/20 text-accent-400 rounded-xl text-sm font-semibold border border-accent-500/20 disabled:opacity-40">
-              <Plus size={15}/>{report?"Редагувати":"Заповнити"}
+              <Plus size={15} aria-hidden="true"/>{report?"Редагувати":"Заповнити"}
             </button>
             {report && (
               <button onClick={exportExcel}
+                aria-label="Експортувати в Excel"
                 className="flex items-center gap-2 px-4 py-2.5 bg-dark-300 hover:bg-dark-200 text-gray-300 rounded-xl text-sm border border-dark-50/20">
-                <Download size={15}/>Excel
+                <Download size={15} aria-hidden="true"/>Excel
               </button>
             )}
           </div>
@@ -531,39 +530,31 @@ export default function NhsuPage() {
 
       {/* ── NOTIFICATION ── */}
       {showNotification && (
-        <div className="flex items-start gap-3 px-5 py-4 bg-yellow-500/5 border border-yellow-500/20 rounded-2xl">
-          <Bell size={18} className="text-yellow-400 mt-0.5 flex-shrink-0"/>
-          <div>
-            <p className="text-sm font-semibold text-yellow-400">Дані за поточний місяць відсутні</p>
-            <p className="text-xs text-gray-500 mt-0.5">
+        <AlertBanner variant="warning">
+          <span>
+            <span className="font-semibold">Дані за поточний місяць відсутні</span>
+            <span className="text-gray-500 text-xs ml-2">
               Натисніть <span className="text-accent-400">"Заповнити"</span> або завантажте скріншот НСЗУ для автоматичного AI-розпізнавання.
-            </p>
-          </div>
-        </div>
+            </span>
+          </span>
+        </AlertBanner>
       )}
 
       {/* ── LOADING ── */}
-      {loading && (
-        <div className="flex items-center justify-center h-40">
-          <div className="w-8 h-8 border-2 border-accent-500/30 border-t-accent-500 rounded-full animate-spin"/>
-        </div>
-      )}
+      {loading && <LoadingSpinner label="Завантаження звіту…" height="h-40" />}
 
       {/* ── EMPTY ── */}
       {!loading && !report && !showNotification && (
-        <div className="card-neo px-5 py-14 text-center">
-          <p className="text-gray-500">Дані за {MONTH_NAMES[month-1].toLowerCase()} {year} не заповнені.</p>
-        </div>
+        <EmptyState
+          title="Дані не заповнені"
+          description={`Дані за ${MONTH_NAMES[month-1].toLowerCase()} ${year} не заповнені.`}
+        />
       )}
 
       {/* ── RANGE MODE DASHBOARD ── */}
       {rangeMode && (
         <div className="space-y-4">
-          {rangeLoading && (
-            <div className="flex items-center justify-center h-32">
-              <div className="w-7 h-7 border-2 border-accent-500/30 border-t-accent-500 rounded-full animate-spin"/>
-            </div>
-          )}
+          {rangeLoading && <LoadingSpinner height="h-32" />}
           {!rangeLoading && rangeData && (<>
             {/* Range KPI cards — без пацієнтів та не верифікованих */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -575,10 +566,10 @@ export default function NhsuPage() {
               ] as const).map(({ label, val, color, Icon }) => (
                 <div key={label} className="card-neo kpi-3d-hover p-4 space-y-2">
                   <div className="flex items-center gap-1.5">
-                    <Icon size={13} className="text-gray-500"/>
+                    <Icon size={13} className="text-gray-500" aria-hidden="true"/>
                     <p className="text-xs text-gray-500 uppercase tracking-wide">{label}</p>
                   </div>
-                  <p className={`text-xl font-bold font-mono ${color}`}>{val}</p>
+                  <p className={`text-xl font-bold font-mono tabular-nums ${color}`}>{val}</p>
                   <p className="text-xs text-gray-600">за {rangeData.monthsWithData} міс. з даними</p>
                 </div>
               ))}
@@ -597,7 +588,7 @@ export default function NhsuPage() {
                 <table className="w-full text-sm">
                   <thead><tr className="border-b border-dark-50/10">
                     {["Місяць","Сума (брутто)","ЄП","ВЗ","ЄП+ВЗ","Чистий дохід"].map(h=>
-                      <th key={h} className="px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase text-right first:text-left">{h}</th>
+                      <th key={h} scope="col" className="px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase text-right first:text-left">{h}</th>
                     )}
                   </tr></thead>
                   <tbody>
@@ -642,10 +633,10 @@ export default function NhsuPage() {
           ] as const).map(({ label, val, color, Icon }) => (
             <div key={label} className="card-neo kpi-3d-hover p-4 space-y-2">
               <div className="flex items-center gap-1.5">
-                <Icon size={13} className="text-gray-500"/>
+                <Icon size={13} className="text-gray-500" aria-hidden="true"/>
                 <p className="text-xs text-gray-500 uppercase tracking-wide">{label}</p>
               </div>
-              <p className={`text-xl font-bold font-mono ${color}`}>{val}</p>
+              <p className={`text-xl font-bold font-mono tabular-nums ${color}`}>{val}</p>
             </div>
           ))}
         </div>
@@ -755,7 +746,7 @@ export default function NhsuPage() {
             <table className="w-full text-sm min-w-[580px]">
               <thead><tr className="border-b border-dark-50/10">
                 {["Вікова група","Коеф.","Пацієнти","Не вериф.","Сума","ЄП","ВЗ","ЄП+ВЗ"].map(h=>
-                  <th key={h} className="px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase text-right first:text-left">{h}</th>
+                  <th key={h} scope="col" className="px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase text-right first:text-left">{h}</th>
                 )}
               </tr></thead>
               <tbody>
@@ -818,7 +809,7 @@ export default function NhsuPage() {
             </div>
             {forecastNet !== null ? (
               <div className="mt-4">
-                <p className="text-3xl font-bold font-mono text-accent-400">{forecastNet.toLocaleString("uk-UA")}</p>
+                <p className="text-3xl font-bold font-mono tabular-nums text-accent-400">{forecastNet.toLocaleString("uk-UA")}</p>
                 <p className="text-xs text-gray-500 mt-1">грн / місяць</p>
                 <p className="text-xs text-gray-600 mt-3">На основі {last3.length} міс. з даними</p>
               </div>
@@ -847,7 +838,7 @@ export default function NhsuPage() {
             <div className="border-t border-dark-50/10">
               <div className="flex justify-end px-5 py-2 border-b border-dark-50/5">
                 <button onClick={clearHistory} className="flex items-center gap-1 text-xs text-gray-600 hover:text-red-400 transition-colors">
-                  <Trash2 size={11}/>Очистити все
+                  <Trash2 size={11} aria-hidden="true"/>Очистити все
                 </button>
               </div>
               <div className="divide-y divide-dark-50/5 max-h-64 overflow-y-auto">
@@ -880,14 +871,15 @@ export default function NhsuPage() {
 
       {/* ══ FILL MODAL ══ */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm overflow-y-auto py-0 px-0 sm:py-8 sm:px-4">
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm overflow-y-auto py-0 px-0 sm:py-8 sm:px-4"
+          role="dialog" aria-modal="true" onClick={(e) => { if (e.target === e.currentTarget) setShowModal(false); }}>
           <div className="bg-dark-600 border border-dark-50/10 rounded-none sm:rounded-2xl shadow-2xl w-full max-w-4xl min-h-full sm:min-h-0 animate-modal-in pb-20 sm:pb-0">
             <div className="flex items-center justify-between px-6 py-4 border-b border-dark-50/10">
               <div>
                 <h3 className="text-lg font-bold text-white">Заповнення — {MONTH_NAMES[month-1]} {year}</h3>
                 <p className="text-xs text-gray-500 mt-0.5">Завантажте скріншоти НСЗУ або введіть вручну</p>
               </div>
-              <button onClick={() => setShowModal(false)} className="p-2 text-gray-500 hover:text-white hover:bg-dark-300 rounded-xl">
+              <button onClick={() => setShowModal(false)} aria-label="Закрити вікно" className="p-2 text-gray-500 hover:text-white hover:bg-dark-300 rounded-xl">
                 <X size={20}/>
               </button>
             </div>
@@ -931,7 +923,7 @@ export default function NhsuPage() {
                     ))}
                     <button onClick={analyzeImages} disabled={analyzing||images.every(im=>!im.doctorId)}
                       className="flex items-center gap-2 w-full justify-center px-4 py-2.5 bg-accent-500/10 hover:bg-accent-500/20 text-accent-400 rounded-xl text-sm font-semibold border border-accent-500/20 disabled:opacity-40">
-                      {analyzing?<><RefreshCw size={14} className="animate-spin"/>Аналізую…</>:<><Sparkles size={14}/>Аналізувати за допомогою ШІ</>}
+                      {analyzing?<><RefreshCw size={14} className="animate-spin" aria-hidden="true"/>Аналізую…</>:<><Sparkles size={14} aria-hidden="true"/>Аналізувати за допомогою ШІ</>}
                     </button>
                   </div>
                 )}
@@ -954,11 +946,11 @@ export default function NhsuPage() {
                     <div className="overflow-x-auto rounded-xl border border-dark-50/10">
                       <table className="w-full text-sm min-w-[480px]">
                         <thead><tr className="bg-dark-400/40 border-b border-dark-50/10">
-                          <th className="text-left px-4 py-2.5 text-xs text-gray-500 uppercase">Вікова група</th>
-                          <th className="text-center px-4 py-2.5 text-xs text-gray-500 uppercase">Коеф.</th>
-                          <th className="text-center px-4 py-2.5 text-xs text-gray-500 uppercase">Пацієнти</th>
-                          <th className="text-center px-4 py-2.5 text-xs text-gray-500 uppercase">Не верифіковані</th>
-                          <th className="text-right px-4 py-2.5 text-xs text-gray-500 uppercase">Сума</th>
+                          <th scope="col" className="text-left px-4 py-2.5 text-xs text-gray-500 uppercase">Вікова група</th>
+                          <th scope="col" className="text-center px-4 py-2.5 text-xs text-gray-500 uppercase">Коеф.</th>
+                          <th scope="col" className="text-center px-4 py-2.5 text-xs text-gray-500 uppercase">Пацієнти</th>
+                          <th scope="col" className="text-center px-4 py-2.5 text-xs text-gray-500 uppercase">Не верифіковані</th>
+                          <th scope="col" className="text-right px-4 py-2.5 text-xs text-gray-500 uppercase">Сума</th>
                         </tr></thead>
                         <tbody>
                           {ageGroups.map(ag => {
@@ -997,7 +989,7 @@ export default function NhsuPage() {
               <div className="flex items-center gap-4 pt-1">
                 <button onClick={handleSave} disabled={saving}
                   className="flex items-center gap-2 px-6 py-2.5 bg-accent-500/10 hover:bg-accent-500/20 text-accent-400 rounded-xl text-sm font-semibold border border-accent-500/20 disabled:opacity-50">
-                  {saving?<><RefreshCw size={14} className="animate-spin"/>Збереження…</>:<><Save size={14}/>Зберегти</>}
+                  {saving?<><RefreshCw size={14} className="animate-spin" aria-hidden="true"/>Збереження…</>:<><Save size={14} aria-hidden="true"/>Зберегти</>}
                 </button>
                 {saveMsg && <span className={`text-sm ${saveMsg==="Збережено"?"text-emerald-400":"text-red-400"}`}>{saveMsg}</span>}
                 <button onClick={()=>setShowModal(false)} className="ml-auto text-sm text-gray-500 hover:text-gray-300">Скасувати</button>

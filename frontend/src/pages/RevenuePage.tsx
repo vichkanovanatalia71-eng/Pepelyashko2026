@@ -6,19 +6,16 @@ import {
 import {
   ChevronLeft, ChevronRight, TrendingUp, BadgeDollarSign,
   HeartPulse, Stethoscope, Users, AlertCircle, Info,
-  Lightbulb, ShieldAlert, X, ChevronDown, RefreshCw,
+  Lightbulb, ShieldAlert, X, ChevronDown,
 } from "lucide-react";
 import api from "../api/client";
 import type {
   Doctor,
   RevenueAnalytics,
 } from "../types";
+import { MONTH_NAMES } from "../components/shared/MonthNavigator";
+import { LoadingSpinner, EmptyState } from "../components/shared";
 
-// ─── Constants ──────────────────────────────────────────────────────
-const MONTHS = [
-  "Січень","Лютий","Березень","Квітень","Травень","Червень",
-  "Липень","Серпень","Вересень","Жовтень","Листопад","Грудень",
-];
 const TT = { background: "#1a1a2e", border: "1px solid #ffffff15", borderRadius: 8, fontSize: 12 };
 const PIE_COLORS = ["#818cf8", "#34d399"];
 
@@ -46,11 +43,11 @@ interface DetailModalProps {
 }
 function DetailModal({ title, onClose, children }: DetailModalProps) {
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 sm:items-center overflow-y-auto">
+    <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 sm:items-center overflow-y-auto">
       <div className="bg-dark-600 border border-dark-50/10 rounded-none sm:rounded-2xl w-full max-w-3xl min-h-full sm:min-h-0 shadow-2xl animate-modal-in pb-20 sm:pb-0">
         <div className="flex items-center justify-between p-5 border-b border-dark-50/10">
           <h3 className="text-base font-semibold text-white">{title}</h3>
-          <button onClick={onClose} className="p-1.5 text-gray-500 hover:text-gray-300 rounded-lg hover:bg-dark-300 transition-all">
+          <button onClick={onClose} aria-label="Закрити" className="p-1.5 text-gray-500 hover:text-gray-300 rounded-lg hover:bg-dark-300 transition-all">
             <X size={18} />
           </button>
         </div>
@@ -144,7 +141,7 @@ export default function RevenuePage() {
                   <ChevronLeft size={15} />
                 </button>
                 <span className="px-3 py-2 rounded-xl bg-dark-300 border border-dark-50/10 text-white font-bold text-sm min-w-[140px] text-center">
-                  {MONTHS[month - 1]} {year}
+                  {MONTH_NAMES[month - 1]} {year}
                 </span>
                 <button onClick={nextMonth} disabled={isCurrentMonth}
                   className={`p-2 rounded-xl bg-dark-300 border border-dark-50/10 transition-all ${isCurrentMonth ? "text-gray-700 cursor-not-allowed" : "text-gray-400 hover:text-white hover:bg-dark-200"}`}>
@@ -169,16 +166,10 @@ export default function RevenuePage() {
       ) : null}
 
       {/* ── Loading ── */}
-      {loading && (
-        <div className="flex items-center justify-center py-16 text-gray-500">
-          <RefreshCw size={18} className="animate-spin mr-2" /> Завантаження...
-        </div>
-      )}
+      {loading && <LoadingSpinner label="Завантаження…" />}
 
       {!loading && !data && (
-        <div className="card-neo p-12 text-center text-gray-600">
-          Немає даних за {MONTHS[month - 1].toLowerCase()} {year}
-        </div>
+        <EmptyState title={`Немає даних за ${MONTH_NAMES[month - 1].toLowerCase()} ${year}`} />
       )}
 
       {!loading && data && (<>
@@ -194,7 +185,7 @@ export default function RevenuePage() {
               <span className={`text-xs font-bold ${pctColor(data.mom_pct)}`}>{pctLabel(data.mom_pct)}</span>
             </div>
             <p className="text-xs text-gray-500 mb-1">Загальний дохід</p>
-            <p className="text-lg lg:text-2xl font-bold text-emerald-400">{fmt(data.total)} <span className="text-sm font-normal">₴</span></p>
+            <p className="text-lg lg:text-2xl font-bold text-emerald-400 tabular-nums">{fmt(data.total)} <span className="text-sm font-normal">₴</span></p>
             <p className="text-xs text-gray-600 mt-1">попередній: {fmt(data.prev_total)} ₴</p>
           </button>
 
@@ -206,7 +197,7 @@ export default function RevenuePage() {
               <span className="text-xs font-medium text-gray-500">{data.nhsu_pct}%</span>
             </div>
             <p className="text-xs text-gray-500 mb-1">НСЗУ (грязний)</p>
-            <p className="text-lg lg:text-2xl font-bold text-indigo-400">{fmt(data.nhsu)} <span className="text-sm font-normal">₴</span></p>
+            <p className="text-lg lg:text-2xl font-bold text-indigo-400 tabular-nums">{fmt(data.nhsu)} <span className="text-sm font-normal">₴</span></p>
             <p className="text-xs text-gray-600 mt-1">попередній: {fmt(data.prev_nhsu)} ₴</p>
           </button>
 
@@ -218,7 +209,7 @@ export default function RevenuePage() {
               <span className="text-xs font-medium text-gray-500">{data.paid_pct}%</span>
             </div>
             <p className="text-xs text-gray-500 mb-1">Платні послуги</p>
-            <p className="text-lg lg:text-2xl font-bold text-teal-400">{fmt(data.paid_services)} <span className="text-sm font-normal">₴</span></p>
+            <p className="text-lg lg:text-2xl font-bold text-teal-400 tabular-nums">{fmt(data.paid_services)} <span className="text-sm font-normal">₴</span></p>
             <p className="text-xs text-gray-600 mt-1">попередній: {fmt(data.prev_paid)} ₴</p>
           </button>
 
@@ -230,7 +221,7 @@ export default function RevenuePage() {
               <TrendingUp size={14} className="text-violet-400" />
             </div>
             <p className="text-xs text-gray-500 mb-1">Серед. на лікаря</p>
-            <p className="text-lg lg:text-2xl font-bold text-violet-400">{fmt(data.avg_per_doctor)} <span className="text-sm font-normal">₴</span></p>
+            <p className="text-lg lg:text-2xl font-bold text-violet-400 tabular-nums">{fmt(data.avg_per_doctor)} <span className="text-sm font-normal">₴</span></p>
             <p className="text-xs text-gray-600 mt-1">{data.by_doctor.length} лікар(ів)</p>
           </button>
         </div>
@@ -509,7 +500,7 @@ function DrillTable({ headers, rows }: { headers: string[]; rows: string[][] }) 
         <thead>
           <tr className="bg-dark-300/50 border-b border-dark-50/10">
             {headers.map(h => (
-              <th key={h} className="text-left px-3 py-2.5 text-gray-500 font-medium">{h}</th>
+              <th key={h} scope="col" className="text-left px-3 py-2.5 text-gray-500 font-medium">{h}</th>
             ))}
           </tr>
         </thead>

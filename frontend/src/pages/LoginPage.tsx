@@ -102,17 +102,20 @@ export default function LoginPage() {
         </div>
 
         {/* Tabs */}
-        <div className="flex bg-dark-300/50 rounded-xl p-1 mb-7 border border-dark-50/10">
+        <div className="flex bg-dark-300/50 rounded-xl p-1 mb-7 border border-dark-50/10" role="tablist">
           {(["login", "register"] as Tab[]).map((t) => (
             <button
               key={t}
+              role="tab"
+              aria-selected={tab === t}
               onClick={() => {
                 setTab(t);
                 setLoginError("");
                 setRegError("");
                 setRegSuccess(null);
               }}
-              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${
+              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all
+                       focus-visible:outline-2 focus-visible:outline-accent-400 ${
                 tab === t
                   ? "bg-accent-500/20 text-accent-400 border border-accent-500/30"
                   : "text-gray-500 hover:text-gray-300"
@@ -127,7 +130,7 @@ export default function LoginPage() {
         {tab === "login" && (
           <form onSubmit={handleLogin} className="space-y-5">
             {loginError && (
-              <div className="bg-red-500/10 text-red-400 px-4 py-3 rounded-xl text-sm border border-red-500/20">
+              <div className="bg-red-500/10 text-red-400 px-4 py-3 rounded-xl text-sm border border-red-500/20" role="alert">
                 {loginError}
               </div>
             )}
@@ -212,7 +215,7 @@ export default function LoginPage() {
             ) : (
               <form onSubmit={handleRegister} className="space-y-4">
                 {regError && (
-                  <div className="bg-red-500/10 text-red-400 px-4 py-3 rounded-xl text-sm border border-red-500/20">
+                  <div className="bg-red-500/10 text-red-400 px-4 py-3 rounded-xl text-sm border border-red-500/20" role="alert">
                     {regError}
                   </div>
                 )}

@@ -78,7 +78,7 @@ export default function ProfilePage() {
       {/* User info card */}
       <div className="card-neo p-6 mb-6">
         <div className="flex items-center gap-4 mb-6">
-          <div className="w-14 h-14 rounded-2xl bg-accent-500/10 flex items-center justify-center">
+          <div className="w-14 h-14 rounded-2xl bg-accent-500/10 flex items-center justify-center" aria-hidden="true">
             <User size={28} className="text-accent-400" />
           </div>
           <div>
@@ -118,16 +118,16 @@ export default function ProfilePage() {
           </div>
 
           {profileMsg && (
-            <div className="flex items-center gap-2 text-sm text-emerald-400">
-              <Check size={16} /> {profileMsg}
+            <div className="flex items-center gap-2 text-sm text-emerald-400" role="status">
+              <Check size={16} aria-hidden="true" /> {profileMsg}
             </div>
           )}
           {profileErr && (
-            <p className="text-sm text-red-400">{profileErr}</p>
+            <p className="text-sm text-red-400" role="alert">{profileErr}</p>
           )}
 
           <button type="submit" className="btn-accent flex items-center gap-2">
-            <Save size={16} /> Зберегти
+            <Save size={16} aria-hidden="true" /> Зберегти
           </button>
         </form>
       </div>
@@ -135,7 +135,7 @@ export default function ProfilePage() {
       {/* Password change card */}
       <div className="card-neo p-6">
         <div className="flex items-center gap-3 mb-5">
-          <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center" aria-hidden="true">
             <Lock size={20} className="text-amber-400" />
           </div>
           <h3 className="text-lg font-semibold text-white">Зміна пароля</h3>
@@ -146,32 +146,32 @@ export default function ProfilePage() {
             <label className="label-dark">Поточний пароль</label>
             <input type="password" value={oldPassword}
               onChange={e => setOldPassword(e.target.value)}
-              className="input-dark" required />
+              className="input-dark" required autoComplete="current-password" />
           </div>
           <div>
             <label className="label-dark">Новий пароль</label>
             <input type="password" value={newPassword}
               onChange={e => setNewPassword(e.target.value)}
-              className="input-dark" required minLength={6} />
+              className="input-dark" required minLength={6} autoComplete="new-password" />
           </div>
           <div>
             <label className="label-dark">Підтвердження нового пароля</label>
             <input type="password" value={confirmPassword}
               onChange={e => setConfirmPassword(e.target.value)}
-              className="input-dark" required />
+              className="input-dark" required autoComplete="new-password" />
           </div>
 
           {pwdMsg && (
-            <div className="flex items-center gap-2 text-sm text-emerald-400">
-              <Check size={16} /> {pwdMsg}
+            <div className="flex items-center gap-2 text-sm text-emerald-400" role="status">
+              <Check size={16} aria-hidden="true" /> {pwdMsg}
             </div>
           )}
           {pwdErr && (
-            <p className="text-sm text-red-400">{pwdErr}</p>
+            <p className="text-sm text-red-400" role="alert">{pwdErr}</p>
           )}
 
           <button type="submit" className="btn-accent flex items-center gap-2">
-            <Lock size={16} /> Змінити пароль
+            <Lock size={16} aria-hidden="true" /> Змінити пароль
           </button>
         </form>
       </div>

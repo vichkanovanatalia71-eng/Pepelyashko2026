@@ -5,6 +5,8 @@ import {
   RefreshCw, BarChart2, Users,
 } from "lucide-react";
 import api from "../api/client";
+import { MONTH_NAMES } from "../components/shared/MonthNavigator";
+import { LoadingSpinner } from "../components/shared";
 
 // ─── Types ──────────────────────────────────────────────────────────
 interface CellValue {
@@ -42,12 +44,8 @@ interface Recommendation {
 
 // ─── Constants ──────────────────────────────────────────────────────
 const MONTHS_SHORT = ["Січ","Лют","Бер","Кві","Тра","Чер","Лип","Сер","Вер","Жов","Лис","Гру"];
-const MONTHS_FULL  = ["Січень","Лютий","Березень","Квітень","Травень","Червень",
-                      "Липень","Серпень","Вересень","Жовтень","Листопад","Грудень"];
 const fmt = (n: number | null | undefined) =>
   n == null ? "—" : n.toLocaleString("uk-UA", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-const fmt2 = (n: number) =>
-  n.toLocaleString("uk-UA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 // ─── Sub-type badge ──────────────────────────────────────────────────
 function SubTypeBadge({ row }: { row: BudgetRow }) {
@@ -142,11 +140,11 @@ function CopyMonthModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+    <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
       <div className="bg-dark-600 border border-dark-50/10 rounded-2xl w-full max-w-md shadow-2xl">
         <div className="flex items-center justify-between p-5 border-b border-dark-50/10">
           <h3 className="text-sm font-semibold text-white">Скопіювати значення по місяцях</h3>
-          <button onClick={onClose} className="p-1.5 text-gray-500 hover:text-gray-300 rounded-lg hover:bg-dark-300 transition-all">
+          <button onClick={onClose} aria-label="Закрити" className="p-1.5 text-gray-500 hover:text-gray-300 rounded-lg hover:bg-dark-300 transition-all">
             <X size={16} />
           </button>
         </div>
@@ -162,7 +160,7 @@ function CopyMonthModal({
               }}
               className="w-full bg-dark-400 border border-dark-50/20 rounded-xl px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-accent-500/50"
             >
-              {MONTHS_FULL.map((m, i) => <option key={i+1} value={i+1}>{m}</option>)}
+              {MONTH_NAMES.map((m, i) => <option key={i+1} value={i+1}>{m}</option>)}
             </select>
           </div>
           <div>
@@ -525,6 +523,7 @@ export default function BudgetPage() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setYear(y => y - 1)}
+            aria-label="Попередній рік"
             className="px-3 py-2 rounded-xl bg-dark-400 border border-dark-50/15 text-gray-400 hover:text-gray-200 text-sm transition-colors"
           >
             ←
@@ -534,6 +533,7 @@ export default function BudgetPage() {
           </span>
           <button
             onClick={() => setYear(y => y + 1)}
+            aria-label="Наступний рік"
             className="px-3 py-2 rounded-xl bg-dark-400 border border-dark-50/15 text-gray-400 hover:text-gray-200 text-sm transition-colors"
           >
             →
@@ -541,6 +541,7 @@ export default function BudgetPage() {
           <button
             onClick={load}
             disabled={loading}
+            aria-label="Оновити дані"
             className="p-2 rounded-xl bg-dark-400 border border-dark-50/15 text-gray-400 hover:text-accent-400 transition-colors"
             title="Оновити"
           >
@@ -579,21 +580,21 @@ export default function BudgetPage() {
           <table className="w-full text-left border-collapse min-w-[1100px]">
             <thead>
               <tr className="border-b border-dark-50/10 bg-dark-500/50">
-                <th className="sticky left-0 z-20 bg-dark-500/80 w-8 px-2 py-2.5 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-wider border-r border-dark-50/5">
+                <th scope="col" className="sticky left-0 z-20 bg-dark-500/80 w-8 px-2 py-2.5 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-wider border-r border-dark-50/5">
                   №
                 </th>
-                <th className="sticky left-8 z-20 bg-dark-500/80 min-w-[200px] px-3 py-2.5 text-[10px] font-semibold text-gray-500 uppercase tracking-wider border-r border-dark-50/5">
+                <th scope="col" className="sticky left-8 z-20 bg-dark-500/80 min-w-[200px] px-3 py-2.5 text-[10px] font-semibold text-gray-500 uppercase tracking-wider border-r border-dark-50/5">
                   Стаття витрат
                 </th>
                 {MONTHS_SHORT.map((m, i) => (
-                  <th key={i} className="px-1 py-2.5 text-right text-[10px] font-semibold text-gray-500 uppercase tracking-wider min-w-[80px]">
+                  <th scope="col" key={i} className="px-1 py-2.5 text-right text-[10px] font-semibold text-gray-500 uppercase tracking-wider min-w-[80px]">
                     {m}
                   </th>
                 ))}
-                <th className="px-3 py-2.5 text-right text-[10px] font-semibold text-gray-500 uppercase tracking-wider min-w-[90px] border-l border-dark-50/5">
+                <th scope="col" className="px-3 py-2.5 text-right text-[10px] font-semibold text-gray-500 uppercase tracking-wider min-w-[90px] border-l border-dark-50/5">
                   Всього
                 </th>
-                <th className="px-2 py-2.5 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-wider min-w-[60px] border-l border-dark-50/5">
+                <th scope="col" className="px-2 py-2.5 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-wider min-w-[60px] border-l border-dark-50/5">
                   Дії
                 </th>
               </tr>
@@ -606,11 +607,11 @@ export default function BudgetPage() {
                     <span className="text-[10px] font-semibold text-emerald-400">Дохід (Доходи)</span>
                   </td>
                   {Array.from({length: 12}, (_, i) => i + 1).map(m => (
-                    <td key={m} className="px-1.5 py-1.5 text-right text-[10px] text-emerald-400 font-medium">
+                    <td key={m} className="px-1.5 py-1.5 text-right text-[10px] text-emerald-400 font-medium tabular-nums">
                       {fmt(data.monthly_income[m] ?? 0)}
                     </td>
                   ))}
-                  <td className="px-3 py-1.5 text-right text-[10px] text-emerald-400 font-semibold border-l border-dark-50/5">
+                  <td className="px-3 py-1.5 text-right text-[10px] text-emerald-400 font-semibold border-l border-dark-50/5 tabular-nums">
                     {fmt(yearlyTotals.income)}
                   </td>
                   <td className="border-l border-dark-50/5" />
@@ -782,11 +783,11 @@ export default function BudgetPage() {
                     <span className="text-xs font-bold text-gray-200 uppercase tracking-wide">Всього витрат</span>
                   </td>
                   {Array.from({length: 12}, (_, i) => i + 1).map(m => (
-                    <td key={m} className="px-1.5 py-3 text-right text-xs font-semibold text-gray-200">
+                    <td key={m} className="px-1.5 py-3 text-right text-xs font-semibold text-gray-200 tabular-nums">
                       {fmt(data.monthly_totals[m] ?? 0)}
                     </td>
                   ))}
-                  <td className="px-3 py-3 text-right text-xs font-bold text-gray-100 border-l border-dark-50/5">
+                  <td className="px-3 py-3 text-right text-xs font-bold text-gray-100 border-l border-dark-50/5 tabular-nums">
                     {fmt(yearlyTotals.expenses)}
                   </td>
                   <td className="border-l border-dark-50/5" />
@@ -802,7 +803,7 @@ export default function BudgetPage() {
                     const rem = data.monthly_remaining[m] ?? 0;
                     const isOver = rem < 0;
                     return (
-                      <td key={m} className="px-1.5 py-3 text-right text-xs font-semibold">
+                      <td key={m} className="px-1.5 py-3 text-right text-xs font-semibold tabular-nums">
                         <span className={isOver
                           ? "text-red-400 bg-red-500/10 px-1 py-0.5 rounded"
                           : "text-emerald-400"
@@ -814,7 +815,7 @@ export default function BudgetPage() {
                       </td>
                     );
                   })}
-                  <td className={`px-3 py-3 text-right text-xs font-bold border-l border-dark-50/5 ${yearlyTotals.remaining < 0 ? "text-red-400" : "text-emerald-400"}`}>
+                  <td className={`px-3 py-3 text-right text-xs font-bold border-l border-dark-50/5 tabular-nums ${yearlyTotals.remaining < 0 ? "text-red-400" : "text-emerald-400"}`}>
                     {yearlyTotals.remaining < 0 && "−"}
                     {fmt(Math.abs(yearlyTotals.remaining))}
                   </td>
@@ -827,10 +828,7 @@ export default function BudgetPage() {
 
         {/* Empty / loading state */}
         {loading && !data && (
-          <div className="flex items-center justify-center py-16 text-gray-500 text-sm gap-2">
-            <RefreshCw size={16} className="animate-spin" />
-            Завантаження...
-          </div>
+          <LoadingSpinner label="Завантаження…" />
         )}
       </div>
 

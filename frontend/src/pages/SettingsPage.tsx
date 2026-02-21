@@ -18,9 +18,6 @@ import {
   ChevronDown,
   HeartHandshake,
   UserCog,
-  Pencil,
-  Check,
-  X,
 } from "lucide-react";
 import { Doctor, NhsuSettings, StaffMember } from "../types";
 
@@ -273,7 +270,7 @@ export default function SettingsPage() {
     subtitle,
   }: {
     sectionKey: string;
-    icon: React.ComponentType<{ size?: number; className?: string }>;
+    icon: React.ElementType;
     title: string;
     subtitle?: string;
   }) {
@@ -282,6 +279,7 @@ export default function SettingsPage() {
       <button
         type="button"
         onClick={() => toggle(sectionKey)}
+        aria-expanded={isOpen}
         className="w-full flex items-center justify-between gap-2 group"
       >
         <div className="flex items-center gap-2">
@@ -291,6 +289,7 @@ export default function SettingsPage() {
         </div>
         <ChevronDown
           size={18}
+          aria-hidden="true"
           className={`text-gray-500 group-hover:text-accent-400 transition-transform duration-300 ${
             isOpen ? "rotate-180" : ""
           }`}
@@ -360,9 +359,9 @@ export default function SettingsPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-dark-50/10 bg-dark-300/50">
-                    <th className="text-left px-4 py-3 text-gray-400 font-medium">ПІБ</th>
-                    <th className="text-center px-4 py-3 text-gray-400 font-medium">Власник</th>
-                    <th className="px-4 py-3" />
+                    <th scope="col" className="text-left px-4 py-3 text-gray-400 font-medium">ПІБ</th>
+                    <th scope="col" className="text-center px-4 py-3 text-gray-400 font-medium">Власник</th>
+                    <th scope="col" className="px-4 py-3" />
                   </tr>
                 </thead>
                 <tbody>
@@ -388,6 +387,7 @@ export default function SettingsPage() {
                       <td className="px-4 py-3 text-right">
                         <button
                           onClick={() => handleDeleteDoctor(d.id)}
+                          aria-label="Видалити"
                           className="p-1.5 text-gray-600 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
                         >
                           <Trash2 size={15} />
@@ -445,9 +445,9 @@ export default function SettingsPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-dark-50/10 bg-dark-300/50">
-                    <th className="text-left px-4 py-3 text-gray-400 font-medium">ПІБ</th>
-                    <th className="text-left px-4 py-3 text-gray-400 font-medium">Посада</th>
-                    <th className="px-4 py-3" />
+                    <th scope="col" className="text-left px-4 py-3 text-gray-400 font-medium">ПІБ</th>
+                    <th scope="col" className="text-left px-4 py-3 text-gray-400 font-medium">Посада</th>
+                    <th scope="col" className="px-4 py-3" />
                   </tr>
                 </thead>
                 <tbody>
@@ -465,6 +465,7 @@ export default function SettingsPage() {
                       <td className="px-4 py-3 text-right">
                         <button
                           onClick={() => handleDeleteNurse(s.id)}
+                          aria-label="Видалити"
                           className="p-1.5 text-gray-600 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
                         >
                           <Trash2 size={15} />
@@ -522,9 +523,9 @@ export default function SettingsPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-dark-50/10 bg-dark-300/50">
-                    <th className="text-left px-4 py-3 text-gray-400 font-medium">ПІБ</th>
-                    <th className="text-left px-4 py-3 text-gray-400 font-medium">Посада</th>
-                    <th className="px-4 py-3" />
+                    <th scope="col" className="text-left px-4 py-3 text-gray-400 font-medium">ПІБ</th>
+                    <th scope="col" className="text-left px-4 py-3 text-gray-400 font-medium">Посада</th>
+                    <th scope="col" className="px-4 py-3" />
                   </tr>
                 </thead>
                 <tbody>
@@ -542,6 +543,7 @@ export default function SettingsPage() {
                       <td className="px-4 py-3 text-right">
                         <button
                           onClick={() => handleDeleteOtherStaff(s.id)}
+                          aria-label="Видалити"
                           className="p-1.5 text-gray-600 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
                         >
                           <Trash2 size={15} />
@@ -624,6 +626,7 @@ export default function SettingsPage() {
                     <button
                       type="button"
                       onClick={() => setShow(!show)}
+                      aria-label={show ? "Сховати ключ" : "Показати ключ"}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
                     >
                       {show ? <EyeOff size={15} /> : <Eye size={15} />}
@@ -632,6 +635,7 @@ export default function SettingsPage() {
                   {isSet && (
                     <button
                       onClick={() => handleClearApiKey(field)}
+                      aria-label="Видалити ключ"
                       className="px-3 py-2.5 text-xs text-red-400 hover:bg-red-500/10 rounded-xl border border-red-500/20 transition-all"
                       title="Видалити ключ"
                     >

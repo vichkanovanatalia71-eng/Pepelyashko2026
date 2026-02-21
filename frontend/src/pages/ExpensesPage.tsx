@@ -9,7 +9,6 @@ import {
   TrendingDown,
   Users,
   Receipt,
-  AlertCircle,
   Plus,
   Trash2,
   Edit2,
@@ -25,7 +24,14 @@ import {
   Download,
   CalendarDays,
   ImagePlus,
+  AlertCircle,
 } from "lucide-react";
+import {
+  LoadingSpinner,
+  TabBar,
+  AlertBanner,
+  EmptyState,
+} from "../components/shared";
 import * as XLSX from "xlsx";
 import {
   BarChart,
@@ -53,10 +59,7 @@ import type {
 
 // ── Constants ──────────────────────────────────────────────────────
 
-const MONTH_NAMES = [
-  "Січень","Лютий","Березень","Квітень","Травень","Червень",
-  "Липень","Серпень","Вересень","Жовтень","Листопад","Грудень",
-];
+import { MONTH_NAMES } from "../components/shared/MonthNavigator";
 
 const MONTH_SHORT = [
   "Січ","Лют","Бер","Кві","Тра","Чер",
@@ -178,11 +181,11 @@ function CalcRow({
   return (
     <div className="flex items-center justify-between text-sm gap-2">
       <div className="flex items-center gap-1.5 min-w-0 flex-1">
-        {locked && <Lock size={11} className="text-gray-600 shrink-0" />}
+        {locked && <Lock size={11} className="text-gray-600 shrink-0" aria-hidden="true" />}
         <span className="text-gray-400 truncate">{label}</span>
         {info && <span className="text-xs text-gray-600 italic shrink-0">({info})</span>}
       </div>
-      <span className={`font-mono shrink-0 ${color} ${bold ? "font-bold" : ""}`}>
+      <span className={`font-mono shrink-0 tabular-nums ${color} ${bold ? "font-bold" : ""}`}>
         {fmt(value)} ₴
       </span>
     </div>
@@ -197,10 +200,10 @@ function TaxRow({
   return (
     <div className="flex items-center justify-between text-sm gap-2">
       <div className="flex items-center gap-1.5">
-        <Lock size={11} className="text-gray-600 shrink-0" />
+        <Lock size={11} className="text-gray-600 shrink-0" aria-hidden="true" />
         <span className={bold ? "text-gray-200 font-semibold" : "text-gray-400"}>{label}</span>
       </div>
-      <span className={`font-mono ${color} ${bold ? "font-bold" : ""}`}>{fmt(value)} ₴</span>
+      <span className={`font-mono tabular-nums ${color} ${bold ? "font-bold" : ""}`}>{fmt(value)} ₴</span>
     </div>
   );
 }
@@ -213,7 +216,7 @@ function SummaryRow({
   return (
     <div className="flex items-center justify-between text-sm">
       <span className={bold ? "text-gray-200 font-semibold" : "text-gray-400"}>{label}</span>
-      <span className={`font-mono ${color} ${bold ? "font-bold" : ""}`}>{fmt(value)} ₴</span>
+      <span className={`font-mono tabular-nums ${color} ${bold ? "font-bold" : ""}`}>{fmt(value)} ₴</span>
     </div>
   );
 }
@@ -227,11 +230,11 @@ function KpiCard({
     <div className="card-neo kpi-3d-hover p-4 flex flex-col gap-2">
       <div className="flex items-center justify-between">
         <span className="text-xs text-gray-500 font-medium">{label}</span>
-        <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${color}`}>
+        <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${color}`} aria-hidden="true">
           {icon}
         </div>
       </div>
-      <p className={`font-bold text-lg font-mono leading-tight`}>
+      <p className="font-bold text-lg font-mono leading-tight tabular-nums">
         {fmt(value)} <span className="text-sm font-normal text-gray-500">₴</span>
       </p>
     </div>
@@ -268,16 +271,20 @@ function Modal({ title, onClose, children }: {
   title: string; onClose: () => void; children: React.ReactNode;
 }) {
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label={title}>
+      {/* Backdrop */}
+      <div className="absolute inset-0" onClick={onClose} />
       <div
-        className="bg-dark-600 rounded-2xl shadow-2xl w-full max-w-md"
+        className="relative bg-dark-600 rounded-2xl shadow-2xl w-full max-w-md"
         style={{ border: "1px solid #ffffff15" }}
       >
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
           <h4 className="font-semibold text-white text-sm">{title}</h4>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all"
+            aria-label="Закрити"
+            className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all
+                       focus-visible:outline-2 focus-visible:outline-accent-400"
           >
             <X size={16} />
           </button>
@@ -865,12 +872,7 @@ export default function ExpensesPage() {
 
   // ── Loading state ─────────────────────────────────────────────
   if (loading && !data) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <RefreshCw size={20} className="text-accent-400 animate-spin mr-2" />
-        <span className="text-gray-500">Завантаження...</span>
-      </div>
-    );
+    return <LoadingSpinner label="Завантаження витрат…" />;
   }
 
   // ══════════════════════════════════════════════════════════════
@@ -887,10 +889,10 @@ export default function ExpensesPage() {
           {viewMode === "month" && data && (
             <p className="text-gray-500 text-sm mt-1">
               Всього:{" "}
-              <span className="text-red-400 font-semibold">{fmt(grandWithOther)} ₴</span>
+              <span className="text-red-400 font-semibold tabular-nums">{fmt(grandWithOther)} ₴</span>
               {"  ·  "}
               Залишок:{" "}
-              <span className={remaining >= 0 ? "text-emerald-400 font-semibold" : "text-red-400 font-semibold"}>
+              <span className={`tabular-nums ${remaining >= 0 ? "text-emerald-400 font-semibold" : "text-red-400 font-semibold"}`}>
                 {remaining >= 0 ? "+" : ""}{fmt(remaining)} ₴
               </span>
               {data.is_locked && (
@@ -910,24 +912,29 @@ export default function ExpensesPage() {
             onClick={() => { load(); loadOther(); loadTrend(); loadPeriods(); }}
             className="p-2 rounded-xl text-gray-400 hover:text-white hover:bg-dark-300 transition-all"
             title="Оновити"
+            aria-label="Оновити дані"
           >
-            <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
+            <RefreshCw size={16} className={loading ? "animate-spin" : ""} aria-hidden="true" />
           </button>
 
           {/* View mode switcher */}
           <div className="flex items-center gap-1 bg-dark-500/50 border border-dark-50/15 rounded-2xl p-1">
             <button
               onClick={() => setViewMode("all")}
+              aria-label="Показати всі місяці"
+              aria-pressed={viewMode === "all"}
               className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${
                 viewMode === "all"
                   ? "bg-accent-500/20 text-accent-300 border border-accent-500/40"
                   : "text-gray-500 hover:text-gray-300"
               }`}
             >
-              <CalendarDays size={13} /> Всього
+              <CalendarDays size={13} aria-hidden="true" /> Всього
             </button>
             <button
               onClick={() => setViewMode("month")}
+              aria-label={`Показати ${MONTH_NAMES[month - 1]}`}
+              aria-pressed={viewMode === "month"}
               className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
                 viewMode === "month"
                   ? "bg-accent-500/20 text-accent-300 border border-accent-500/40"
@@ -940,31 +947,35 @@ export default function ExpensesPage() {
 
           {/* Year/Month nav */}
           {viewMode === "all" ? (
-            <div className="flex items-center gap-1 bg-dark-500/50 border border-dark-50/15 rounded-2xl px-2 py-1.5">
+            <nav className="flex items-center gap-1 bg-dark-500/50 border border-dark-50/15 rounded-2xl px-2 py-1.5" aria-label="Навігація по роках">
               <button onClick={() => setYear(y => y - 1)}
+                aria-label="Попередній рік"
                 className="p-1.5 rounded-xl text-gray-400 hover:text-white hover:bg-dark-300 transition-all">
-                <ChevronLeft size={18} />
+                <ChevronLeft size={18} aria-hidden="true" />
               </button>
-              <span className="px-3 text-sm font-semibold text-white min-w-[60px] text-center">{year}</span>
+              <span className="px-3 text-sm font-semibold text-white min-w-[60px] text-center tabular-nums">{year}</span>
               <button onClick={() => setYear(y => y + 1)}
+                aria-label="Наступний рік"
                 className="p-1.5 rounded-xl text-gray-400 hover:text-white hover:bg-dark-300 transition-all">
-                <ChevronRight size={18} />
+                <ChevronRight size={18} aria-hidden="true" />
               </button>
-            </div>
+            </nav>
           ) : (
-            <div className="flex items-center gap-1 bg-dark-500/50 border border-dark-50/15 rounded-2xl px-2 py-1.5">
+            <nav className="flex items-center gap-1 bg-dark-500/50 border border-dark-50/15 rounded-2xl px-2 py-1.5" aria-label="Навігація по місяцях">
               <button onClick={prevMonth}
+                aria-label="Попередній місяць"
                 className="p-1.5 rounded-xl text-gray-400 hover:text-white hover:bg-dark-300 transition-all">
-                <ChevronLeft size={18} />
+                <ChevronLeft size={18} aria-hidden="true" />
               </button>
               <span className="px-3 text-sm font-semibold text-white min-w-[140px] text-center">
                 {MONTH_NAMES[month - 1]} {year}
               </span>
               <button onClick={nextMonth}
+                aria-label="Наступний місяць"
                 className="p-1.5 rounded-xl text-gray-400 hover:text-white hover:bg-dark-300 transition-all">
-                <ChevronRight size={18} />
+                <ChevronRight size={18} aria-hidden="true" />
               </button>
-            </div>
+            </nav>
           )}
         </div>
       </div>
@@ -1002,9 +1013,7 @@ export default function ExpensesPage() {
 
           {/* Periods grid */}
           {periodsLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <RefreshCw size={18} className="animate-spin text-gray-500" />
-            </div>
+            <LoadingSpinner height="h-24" />
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
               {periods.map(p => (
@@ -1025,8 +1034,8 @@ export default function ExpensesPage() {
                   </div>
                   {p.has_data ? (
                     <div className="space-y-0.5">
-                      <p className="text-xs text-gray-500">Постійні: <span className="text-blue-400 font-mono">{fmt(p.fixed_total)}</span> ₴</p>
-                      <p className="text-xs text-gray-500">Зарплата: <span className="text-purple-400 font-mono">{fmt(p.salary_brutto_total)}</span> ₴</p>
+                      <p className="text-xs text-gray-500">Постійні: <span className="text-blue-400 font-mono tabular-nums">{fmt(p.fixed_total)}</span> ₴</p>
+                      <p className="text-xs text-gray-500">Зарплата: <span className="text-purple-400 font-mono tabular-nums">{fmt(p.salary_brutto_total)}</span> ₴</p>
                     </div>
                   ) : (
                     <p className="text-xs text-gray-600">Немає даних</p>
@@ -1047,71 +1056,69 @@ export default function ExpensesPage() {
               <button
                 onClick={unlockPeriod}
                 disabled={lockLoading}
+                aria-label="Розблокувати місяць для редагування"
                 className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-300 text-xs font-semibold hover:bg-amber-500/20 transition-all disabled:opacity-50"
               >
-                {lockLoading ? <RefreshCw size={13} className="animate-spin" /> : <LockOpen size={13} />}
+                {lockLoading ? <RefreshCw size={13} className="animate-spin" /> : <LockOpen size={13} aria-hidden="true" />}
                 Розблокувати
               </button>
             ) : (
               <button
                 onClick={lockPeriod}
                 disabled={lockLoading || !data}
+                aria-label="Зафіксувати місяць"
                 className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-dark-400/60 border border-dark-50/15 text-gray-300 text-xs font-semibold hover:border-amber-500/30 hover:text-amber-300 transition-all disabled:opacity-50"
               >
-                {lockLoading ? <RefreshCw size={13} className="animate-spin" /> : <Lock size={13} />}
+                {lockLoading ? <RefreshCw size={13} className="animate-spin" /> : <Lock size={13} aria-hidden="true" />}
                 Зафіксувати
               </button>
             )}
             <button
               onClick={openCopyModal}
+              aria-label="Копіювати дані з іншого місяця"
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-dark-400/60 border border-dark-50/15 text-gray-300 text-xs font-semibold hover:border-accent-500/30 hover:text-accent-300 transition-all"
             >
-              <Copy size={13} /> Копіювати з...
+              <Copy size={13} aria-hidden="true" /> Копіювати з...
             </button>
             <button
               onClick={() => setAiModal(s => ({ ...s, open: true }))}
+              aria-label="AI-аналіз витрати"
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-dark-400/60 border border-dark-50/15 text-gray-300 text-xs font-semibold hover:border-purple-500/30 hover:text-purple-300 transition-all"
             >
-              <Sparkles size={13} /> AI-аналіз
+              <Sparkles size={13} aria-hidden="true" /> AI-аналіз
             </button>
             <button
               onClick={exportExcel}
               disabled={!data}
+              aria-label="Експортувати в Excel"
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-dark-400/60 border border-dark-50/15 text-gray-300 text-xs font-semibold hover:border-emerald-500/30 hover:text-emerald-300 transition-all disabled:opacity-50"
             >
-              <Download size={13} /> Excel
+              <Download size={13} aria-hidden="true" /> Excel
             </button>
           </div>
 
           {/* Lock banner */}
           {data?.is_locked && (
-            <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-center gap-3">
-              <Lock size={14} className="text-amber-400 shrink-0" />
-              <p className="text-sm text-amber-300 flex-1">
-                Місяць <strong>{MONTH_NAMES[month - 1]} {year}</strong> зафіксовано. Для редагування розблокуйте.
-              </p>
+            <AlertBanner variant="warning">
+              Місяць <strong>{MONTH_NAMES[month - 1]} {year}</strong> зафіксовано. Для редагування{" "}
               <button
                 onClick={unlockPeriod}
-                className="text-xs text-amber-400 hover:text-amber-300 underline shrink-0"
+                className="underline hover:text-yellow-300 transition-colors"
+                aria-label="Розблокувати місяць"
               >
-                Розблокувати
-              </button>
-            </div>
+                розблокуйте
+              </button>.
+            </AlertBanner>
           )}
 
           {/* Missing salary warning */}
           {data?.missing_salary_staff && data.missing_salary_staff.length > 0 && (
-            <div className="p-4 rounded-xl bg-orange-500/10 border border-orange-500/25 flex items-start gap-3">
-              <AlertCircle size={16} className="text-orange-400 shrink-0 mt-0.5" />
-              <div>
-                <p className="text-sm font-semibold text-orange-300">
-                  Є співробітники без зарплати за {MONTH_NAMES[month - 1]}
-                </p>
-                <p className="text-xs text-orange-400/80 mt-1">
-                  {data.missing_salary_staff.join(", ")} — вкажіть дані для дотримання трудового законодавства.
-                </p>
-              </div>
-            </div>
+            <AlertBanner variant="warning">
+              <span>
+                <strong>Є співробітники без зарплати за {MONTH_NAMES[month - 1]}:</strong>{" "}
+                {data.missing_salary_staff.join(", ")} — вкажіть дані для дотримання трудового законодавства.
+              </span>
+            </AlertBanner>
           )}
         </>
       )}
@@ -1162,7 +1169,7 @@ export default function ExpensesPage() {
                   }
                 </div>
               </div>
-              <p className={`font-bold text-lg font-mono leading-tight ${
+              <p className={`font-bold text-lg font-mono leading-tight tabular-nums ${
                 remaining >= 0 ? "text-emerald-400" : "text-red-400"
               }`}>
                 {remaining >= 0 ? "+" : ""}{fmt(remaining)}{" "}
@@ -1261,9 +1268,9 @@ export default function ExpensesPage() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-dark-50/10">
-                      <th className="text-left px-5 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Назва</th>
-                      <th className="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Категорія</th>
-                      <th className="text-right px-5 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Сума</th>
+                      <th scope="col" className="text-left px-5 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Назва</th>
+                      <th scope="col" className="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Категорія</th>
+                      <th scope="col" className="text-right px-5 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Сума</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-dark-50/5">
@@ -1277,7 +1284,7 @@ export default function ExpensesPage() {
                               {badge.label}
                             </span>
                           </td>
-                          <td className="px-5 py-2.5 text-right font-mono text-gray-200">
+                          <td className="px-5 py-2.5 text-right font-mono text-gray-200 tabular-nums">
                             {fmt(row.amount)} ₴
                           </td>
                         </tr>
@@ -1289,7 +1296,7 @@ export default function ExpensesPage() {
                       <td colSpan={2} className="px-5 py-3 text-sm font-semibold text-gray-400">
                         Всього
                       </td>
-                      <td className="px-5 py-3 text-right font-bold font-mono text-white">
+                      <td className="px-5 py-3 text-right font-bold font-mono text-white tabular-nums">
                         {fmt(detailRows.reduce((s, r) => s + r.amount, 0))} ₴
                       </td>
                     </tr>
@@ -1300,21 +1307,11 @@ export default function ExpensesPage() {
           )}
 
           {/* ═══ TAB NAVIGATION ═══ */}
-          <div className="flex gap-1 overflow-x-auto pb-1">
-            {TABS.map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => changeTab(tab.id)}
-                className={`shrink-0 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                  activeTab === tab.id
-                    ? "bg-accent-500/20 text-accent-300 border border-accent-500/40"
-                    : "text-gray-500 hover:text-gray-300 hover:bg-dark-400/40 border border-transparent"
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
+          <TabBar
+            tabs={TABS.map(t => ({ id: t.id, label: t.label }))}
+            activeTab={activeTab}
+            onChange={(id) => changeTab(id as TabId)}
+          />
 
           {/* ═══ TAB PANELS ═══ */}
 
@@ -1328,7 +1325,7 @@ export default function ExpensesPage() {
                   <TrendingDown size={16} className="text-blue-400" />
                 </div>
                 <h3 className="font-semibold text-white text-sm">Постійні витрати</h3>
-                <span className="ml-auto text-sm font-mono font-semibold text-blue-400">
+                <span className="ml-auto text-sm font-mono font-semibold text-blue-400 tabular-nums">
                   {fmt(data.totals.fixed_total)} ₴
                 </span>
               </div>
@@ -1433,7 +1430,7 @@ export default function ExpensesPage() {
                 >
                   <Plus size={13} /> Додати категорію
                 </button>
-                <span className="font-bold text-blue-400 font-mono">{fmt(data.totals.fixed_total)} ₴</span>
+                <span className="font-bold text-blue-400 font-mono tabular-nums">{fmt(data.totals.fixed_total)} ₴</span>
               </div>
             </section>
           )}
@@ -1449,17 +1446,17 @@ export default function ExpensesPage() {
                   <Users size={16} className="text-purple-400" />
                 </div>
                 <h3 className="font-semibold text-white text-sm">Зарплатні витрати</h3>
-                <span className="ml-auto text-sm font-mono font-semibold text-purple-400">
+                <span className="ml-auto text-sm font-mono font-semibold text-purple-400 tabular-nums">
                   {fmt(data.totals.salary_total)} ₴
                 </span>
               </div>
 
               {data.salary.length === 0 && !data.owner ? (
-                <div className="px-5 py-10 text-center">
-                  <Users size={32} className="text-gray-700 mx-auto mb-3" />
-                  <p className="text-gray-600 text-sm">Немає активних співробітників.</p>
-                  <p className="text-gray-700 text-xs mt-1">Додайте персонал у розділі Налаштування.</p>
-                </div>
+                <EmptyState
+                  icon={<Users size={32} />}
+                  title="Немає активних співробітників"
+                  description="Додайте персонал у розділі Налаштування."
+                />
               ) : (
                 <>
                   {/* ══════════════════════════════════════════
@@ -1489,7 +1486,7 @@ export default function ExpensesPage() {
                                 <p className="font-semibold text-amber-300 text-sm">
                                   {data.owner.doctor_name} — Власник ФОП
                                 </p>
-                                <span className="ml-auto font-bold text-amber-400 font-mono">
+                                <span className="ml-auto font-bold text-amber-400 font-mono tabular-nums">
                                   {fmt(ownerCalc.total)} ₴
                                 </span>
                               </div>
@@ -1586,7 +1583,7 @@ export default function ExpensesPage() {
                               {/* Підсумок власника */}
                               <div className="flex items-center justify-between pt-2 border-t border-amber-500/20">
                                 <p className="text-sm font-semibold text-gray-300">Разом власнику за місяць</p>
-                                <p className="font-bold text-amber-400 font-mono text-lg">{fmt(ownerCalc.total)} ₴</p>
+                                <p className="font-bold text-amber-400 font-mono text-lg tabular-nums">{fmt(ownerCalc.total)} ₴</p>
                               </div>
                             </div>
                           </div>
@@ -1637,7 +1634,7 @@ export default function ExpensesPage() {
                                   </button>
                                   <div className="text-right">
                                     <p className="text-xs text-gray-500">Витрати роботодавця</p>
-                                    <p className="font-bold text-purple-400 font-mono text-base">{fmt(calc.total_employer)} ₴</p>
+                                    <p className="font-bold text-purple-400 font-mono text-base tabular-nums">{fmt(calc.total_employer)} ₴</p>
                                   </div>
                                 </div>
                               </div>
@@ -1800,7 +1797,7 @@ export default function ExpensesPage() {
                                   </button>
                                   <div className="text-right">
                                     <p className="text-xs text-gray-500">Витрати роботодавця</p>
-                                    <p className="font-bold text-purple-400 font-mono text-base">{fmt(calc.total_employer)} ₴</p>
+                                    <p className="font-bold text-purple-400 font-mono text-base tabular-nums">{fmt(calc.total_employer)} ₴</p>
                                   </div>
                                 </div>
                               </div>
@@ -1872,7 +1869,7 @@ export default function ExpensesPage() {
               {/* ── Футер ── */}
               <div className="flex items-center justify-between px-5 py-3 bg-dark-400/20 border-t border-dark-50/10">
                 <span className="text-xs text-gray-600">Персонал налаштовується в розділі Налаштування</span>
-                <span className="font-bold text-purple-400 font-mono">{fmt(data.totals.salary_total)} ₴</span>
+                <span className="font-bold text-purple-400 font-mono tabular-nums">{fmt(data.totals.salary_total)} ₴</span>
               </div>
             </section>
           )}
@@ -1887,20 +1884,18 @@ export default function ExpensesPage() {
                   <Wallet size={16} className="text-amber-400" />
                 </div>
                 <h3 className="font-semibold text-white text-sm">Інші витрати</h3>
-                <span className="ml-auto text-sm font-mono font-semibold text-amber-400">
+                <span className="ml-auto text-sm font-mono font-semibold text-amber-400 tabular-nums">
                   {fmt(otherTotal)} ₴
                 </span>
               </div>
 
               {otherLoading ? (
-                <div className="flex items-center justify-center py-10">
-                  <RefreshCw size={18} className="animate-spin text-gray-500" />
-                </div>
+                <LoadingSpinner height="h-24" />
               ) : otherExpenses.length === 0 ? (
-                <div className="px-5 py-10 text-center">
-                  <Wallet size={32} className="text-gray-700 mx-auto mb-3" />
-                  <p className="text-gray-600 text-sm">Немає інших витрат за цей місяць.</p>
-                </div>
+                <EmptyState
+                  icon={<Wallet size={32} />}
+                  title="Немає інших витрат за цей місяць"
+                />
               ) : (
                 <div className="divide-y divide-dark-50/5">
                   {otherExpenses.map((exp) => (
@@ -1916,7 +1911,7 @@ export default function ExpensesPage() {
                           {exp.category}
                         </span>
                       )}
-                      <span className="font-mono text-sm text-gray-200 shrink-0">{fmt(exp.amount)} ₴</span>
+                      <span className="font-mono text-sm text-gray-200 shrink-0 tabular-nums">{fmt(exp.amount)} ₴</span>
                       <button
                         onClick={() => setOtherModal({
                           open: true, isEdit: true, id: exp.id,
@@ -1950,7 +1945,7 @@ export default function ExpensesPage() {
                 >
                   <Plus size={13} /> Додати витрату
                 </button>
-                <span className="font-bold text-amber-400 font-mono">{fmt(otherTotal)} ₴</span>
+                <span className="font-bold text-amber-400 font-mono tabular-nums">{fmt(otherTotal)} ₴</span>
               </div>
             </section>
           )}
@@ -1965,7 +1960,7 @@ export default function ExpensesPage() {
                   <Receipt size={16} className="text-red-400" />
                 </div>
                 <h3 className="font-semibold text-white text-sm">Податки</h3>
-                <span className="ml-auto text-sm font-mono font-semibold text-red-400">
+                <span className="ml-auto text-sm font-mono font-semibold text-red-400 tabular-nums">
                   {fmt(data.totals.tax_total)} ₴
                 </span>
               </div>
@@ -2055,7 +2050,7 @@ export default function ExpensesPage() {
                     <span className="font-semibold text-sm text-gray-300">Залишок після витрат</span>
                     <div className="flex items-center gap-2">
                       {remaining < 0 && <AlertCircle size={16} className="text-red-400" />}
-                      <span className={`font-bold text-xl font-mono ${remaining >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+                      <span className={`font-bold text-xl font-mono tabular-nums ${remaining >= 0 ? "text-emerald-400" : "text-red-400"}`}>
                         {remaining >= 0 ? "+" : ""}{fmt(remaining)} ₴
                       </span>
                     </div>
@@ -2289,9 +2284,10 @@ export default function ExpensesPage() {
 
       {/* ── AI parse modal ── */}
       {aiModal.open && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="AI-аналіз витрати">
+          <div className="absolute inset-0" onClick={() => setAiModal({ open: false, text: "", file: null, loading: false, result: null })} />
           <div
-            className="bg-dark-600 rounded-2xl shadow-2xl w-full max-w-lg"
+            className="relative bg-dark-600 rounded-2xl shadow-2xl w-full max-w-lg"
             style={{ border: "1px solid #ffffff15" }}
           >
             <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
@@ -2301,7 +2297,9 @@ export default function ExpensesPage() {
               </div>
               <button
                 onClick={() => setAiModal({ open: false, text: "", file: null, loading: false, result: null })}
-                className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all"
+                aria-label="Закрити"
+                className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all
+                           focus-visible:outline-2 focus-visible:outline-accent-400"
               >
                 <X size={16} />
               </button>
@@ -2373,7 +2371,7 @@ export default function ExpensesPage() {
                       </div>
                       <div>
                         <p className="text-xs text-gray-500">Сума</p>
-                        <p className="text-emerald-400 font-bold font-mono">{fmt(aiModal.result.amount)} ₴</p>
+                        <p className="text-emerald-400 font-bold font-mono tabular-nums">{fmt(aiModal.result.amount)} ₴</p>
                       </div>
                       <div className="col-span-2">
                         <p className="text-xs text-gray-500">Назва</p>

@@ -1,5 +1,5 @@
 import { useEffect, useState, FormEvent } from "react";
-import { Plus, Trash2, X, Pencil, Search, ArrowUpDown, ChevronDown } from "lucide-react";
+import { Plus, Trash2, X, Pencil, Search, ArrowUpDown } from "lucide-react";
 import api from "../api/client";
 import type { Income, IncomeCategory } from "../types";
 
@@ -163,7 +163,7 @@ export default function IncomesPage() {
         <div>
           <h2 className="text-2xl font-bold text-white">Доходи</h2>
           <p className="text-gray-500 text-sm mt-1">
-            Всього: <span className="text-emerald-400 font-semibold">{fmt(total)} &#8372;</span>
+            Всього: <span className="text-emerald-400 font-semibold tabular-nums">{fmt(total)} &#8372;</span>
             {filtered.length !== incomes.length && (
               <span className="text-gray-600 ml-1">({filtered.length} з {incomes.length})</span>
             )}
@@ -324,10 +324,12 @@ export default function IncomesPage() {
               </div>
               <div className="flex flex-col gap-1 shrink-0">
                 <button onClick={() => handleEdit(income)}
+                  aria-label="Редагувати"
                   className="p-2 rounded-xl text-gray-600 hover:text-accent-400 hover:bg-accent-500/10 transition-all tap-target">
                   <Pencil size={14} />
                 </button>
                 <button onClick={() => handleDelete(income.id)}
+                  aria-label="Видалити"
                   className="p-2 rounded-xl text-gray-600 hover:text-red-400 hover:bg-red-500/10 transition-all tap-target">
                   <Trash2 size={14} />
                 </button>
@@ -343,19 +345,21 @@ export default function IncomesPage() {
         <table className="w-full text-sm min-w-[660px]">
           <thead>
             <tr className="border-b border-dark-50/10">
-              <th className="text-left px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer select-none hover:text-gray-300"
-                onClick={() => toggleSort("date")}>
+              <th scope="col" className="text-left px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer select-none hover:text-gray-300"
+                onClick={() => toggleSort("date")}
+                aria-label="Сортувати за датою">
                 <span className="flex items-center gap-1">Дата {sortField === "date" && <ArrowUpDown size={11}/>}</span>
               </th>
-              <th className="text-left px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer select-none hover:text-gray-300"
-                onClick={() => toggleSort("amount")}>
+              <th scope="col" className="text-left px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer select-none hover:text-gray-300"
+                onClick={() => toggleSort("amount")}
+                aria-label="Сортувати за сумою">
                 <span className="flex items-center gap-1">Сума {sortField === "amount" && <ArrowUpDown size={11}/>}</span>
               </th>
-              <th className="text-left px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Джерело</th>
-              <th className="text-left px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Категорія</th>
-              <th className="text-left px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Оплата</th>
-              <th className="text-left px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Опис</th>
-              <th className="px-5 py-4"></th>
+              <th scope="col" className="text-left px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Джерело</th>
+              <th scope="col" className="text-left px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Категорія</th>
+              <th scope="col" className="text-left px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Оплата</th>
+              <th scope="col" className="text-left px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Опис</th>
+              <th scope="col" className="px-5 py-4"></th>
             </tr>
           </thead>
           <tbody>
@@ -363,7 +367,7 @@ export default function IncomesPage() {
               <tr key={income.id}
                 className="border-b border-dark-50/5 hover:bg-dark-200/50 transition-colors">
                 <td className="px-5 py-4 text-gray-300">{income.date}</td>
-                <td className="px-5 py-4 font-semibold text-emerald-400">+{fmt(income.amount)} &#8372;</td>
+                <td className="px-5 py-4 font-semibold text-emerald-400 tabular-nums">+{fmt(income.amount)} &#8372;</td>
                 <td className="px-5 py-4 text-gray-300">{income.source || "—"}</td>
                 <td className="px-5 py-4">
                   {income.category_id && catMap.get(income.category_id) ? (
@@ -383,10 +387,12 @@ export default function IncomesPage() {
                 <td className="px-5 py-4">
                   <div className="flex items-center gap-1">
                     <button onClick={() => handleEdit(income)}
+                      aria-label="Редагувати"
                       className="p-1.5 rounded-lg text-gray-600 hover:text-accent-400 hover:bg-accent-500/10 transition-all">
                       <Pencil size={14} />
                     </button>
                     <button onClick={() => handleDelete(income.id)}
+                      aria-label="Видалити"
                       className="p-1.5 rounded-lg text-gray-600 hover:text-red-400 hover:bg-red-500/10 transition-all">
                       <Trash2 size={16} />
                     </button>

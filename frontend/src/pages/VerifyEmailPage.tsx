@@ -53,10 +53,10 @@ export default function VerifyEmailPage() {
 
         {status === "loading" && (
           <>
-            <div className="w-16 h-16 rounded-full bg-accent-500/10 flex items-center justify-center border border-accent-500/20">
+            <div className="w-16 h-16 rounded-full bg-accent-500/10 flex items-center justify-center border border-accent-500/20" aria-hidden="true">
               <Loader size={28} className="text-accent-400 animate-spin" />
             </div>
-            <div>
+            <div role="status">
               <h2 className="text-lg font-semibold text-white mb-1">Підтвердження…</h2>
               <p className="text-sm text-gray-500">Зачекайте, перевіряємо ваш токен.</p>
             </div>

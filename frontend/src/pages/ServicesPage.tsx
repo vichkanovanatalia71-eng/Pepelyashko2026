@@ -15,7 +15,6 @@ import {
   Percent,
   RefreshCw,
   X,
-  CheckSquare,
   ImagePlus,
   Upload,
   Sparkles,
@@ -23,20 +22,13 @@ import {
   AlertCircle,
 } from "lucide-react";
 import type { MaterialItem, NhsuSettings, Service, SortDirection, SortField } from "../types";
+import { LoadingSpinner, ConfirmDialog } from "../components/shared";
 
 const API = "";
 
 const fmt = (v: number) =>
   v.toLocaleString("uk-UA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-const SORT_LABELS: Record<SortField, string> = {
-  code: "Код",
-  name: "Назва",
-  price: "Ціна",
-  total_materials_cost: "Витрати",
-  doctor_income: "Дохід лікаря",
-  org_income: "Дохід орг.",
-};
 
 function emptyMaterial(): MaterialItem {
   return { name: "", unit: "", quantity: 1, cost: 0 };
@@ -518,14 +510,14 @@ export default function ServicesPage() {
             onClick={openImportModal}
             className="flex items-center gap-2 px-4 py-2.5 bg-violet-500/10 hover:bg-violet-500/20 text-violet-400 rounded-xl text-sm font-medium transition-all border border-violet-500/20"
           >
-            <ImagePlus size={16} />
+            <ImagePlus size={16} aria-hidden="true" />
             Імпорт з фото (AI)
           </button>
           <button
             onClick={openCreate}
             className="flex items-center gap-2 px-4 py-2.5 bg-accent-500/10 hover:bg-accent-500/20 text-accent-400 rounded-xl text-sm font-medium transition-all border border-accent-500/20"
           >
-            <Plus size={16} />
+            <Plus size={16} aria-hidden="true" />
             Додати послугу
           </button>
         </div>
@@ -556,7 +548,7 @@ export default function ServicesPage() {
                 : "text-gray-400 border-dark-50/20 hover:border-dark-50/30"
             }`}
           >
-            <Filter size={15} />
+            <Filter size={15} aria-hidden="true" />
             Фільтри
           </button>
         </div>
@@ -619,25 +611,26 @@ export default function ServicesPage() {
             onClick={() => setShowBulkDeleteConfirm(true)}
             className="flex items-center gap-2 px-3 py-1.5 text-sm text-red-400 hover:bg-red-500/10 rounded-lg border border-red-500/20 transition-all"
           >
-            <Trash2 size={14} />
+            <Trash2 size={14} aria-hidden="true" />
             Видалити
           </button>
           <button
             onClick={handleExport}
             className="flex items-center gap-2 px-3 py-1.5 text-sm text-green-400 hover:bg-green-500/10 rounded-lg border border-green-500/20 transition-all"
           >
-            <FileDown size={14} />
+            <FileDown size={14} aria-hidden="true" />
             Експорт Excel
           </button>
           <button
             onClick={() => setShowBulkPriceChange(true)}
             className="flex items-center gap-2 px-3 py-1.5 text-sm text-accent-400 hover:bg-accent-500/10 rounded-lg border border-accent-500/20 transition-all"
           >
-            <Percent size={14} />
+            <Percent size={14} aria-hidden="true" />
             Змінити вартість
           </button>
           <button
             onClick={() => setSelectedIds(new Set())}
+            aria-label="Зняти виділення"
             className="ml-auto p-1.5 text-gray-500 hover:text-gray-300 rounded-lg"
           >
             <X size={14} />
@@ -648,16 +641,13 @@ export default function ServicesPage() {
       {/* Таблиця послуг */}
       <div className="card-neo overflow-hidden">
         {loading ? (
-          <div className="flex items-center justify-center py-16 text-gray-500 text-sm">
-            <RefreshCw size={18} className="animate-spin mr-2" />
-            Завантаження...
-          </div>
+          <LoadingSpinner height="h-40" label="Завантаження..." />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm min-w-[960px]">
               <thead>
                 <tr className="border-b border-dark-50/10 bg-dark-300/50">
-                  <th className="px-4 py-3 w-10">
+                  <th scope="col" className="px-4 py-3 w-10">
                     <input
                       type="checkbox"
                       checked={allFilteredSelected}
@@ -680,6 +670,7 @@ export default function ServicesPage() {
                   ).map(([field, label]) => (
                     <th
                       key={label}
+                      scope="col"
                       className={`text-left px-4 py-3 text-gray-400 font-medium whitespace-nowrap ${
                         field ? "cursor-pointer hover:text-gray-200 transition-colors" : ""
                       }`}
@@ -691,7 +682,7 @@ export default function ServicesPage() {
                       </span>
                     </th>
                   ))}
-                  <th className="px-4 py-3 w-20" />
+                  <th scope="col" className="px-4 py-3 w-20" />
                 </tr>
               </thead>
               <tbody>
@@ -755,6 +746,7 @@ export default function ServicesPage() {
                           onClick={() => openEdit(svc)}
                           className="p-1.5 text-gray-500 hover:text-accent-400 hover:bg-accent-500/10 rounded-lg transition-all"
                           title="Редагувати"
+                          aria-label="Редагувати"
                         >
                           <Pencil size={14} />
                         </button>
@@ -762,6 +754,7 @@ export default function ServicesPage() {
                           onClick={() => setDeleteId(svc.id)}
                           className="p-1.5 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
                           title="Видалити"
+                          aria-label="Видалити"
                         >
                           <Trash2 size={14} />
                         </button>
@@ -777,7 +770,7 @@ export default function ServicesPage() {
 
       {/* ── Модальне вікно форми послуги ── */}
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" role="dialog" aria-modal="true" onClick={(e) => { if (e.target === e.currentTarget) setShowForm(false); }}>
           <div className="bg-dark-600 border border-dark-50/10 rounded-2xl w-full max-w-3xl max-h-[calc(100vh-6rem)] sm:max-h-[90vh] overflow-y-auto shadow-2xl">
             <div className="flex items-center justify-between p-6 border-b border-dark-50/10">
               <h2 className="text-lg font-semibold text-white">
@@ -785,6 +778,7 @@ export default function ServicesPage() {
               </h2>
               <button
                 onClick={() => setShowForm(false)}
+                aria-label="Закрити"
                 className="p-2 text-gray-500 hover:text-gray-300 hover:bg-dark-300 rounded-lg transition-all"
               >
                 <X size={18} />
@@ -845,7 +839,7 @@ export default function ServicesPage() {
                     onClick={addMaterial}
                     className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-accent-400 hover:bg-accent-500/10 rounded-lg border border-accent-500/20 transition-all"
                   >
-                    <Plus size={13} />
+                    <Plus size={13} aria-hidden="true" />
                     Додати матеріал
                   </button>
                 </div>
@@ -855,11 +849,11 @@ export default function ServicesPage() {
                     <table className="w-full text-xs">
                       <thead>
                         <tr className="bg-dark-300/50 border-b border-dark-50/10">
-                          <th className="text-left px-3 py-2 text-gray-500 font-medium">Назва</th>
-                          <th className="text-left px-3 py-2 text-gray-500 font-medium w-24">Одиниця</th>
-                          <th className="text-left px-3 py-2 text-gray-500 font-medium w-24">Кількість</th>
-                          <th className="text-left px-3 py-2 text-gray-500 font-medium w-28">Вартість (грн)</th>
-                          <th className="w-8" />
+                          <th scope="col" className="text-left px-3 py-2 text-gray-500 font-medium">Назва</th>
+                          <th scope="col" className="text-left px-3 py-2 text-gray-500 font-medium w-24">Одиниця</th>
+                          <th scope="col" className="text-left px-3 py-2 text-gray-500 font-medium w-24">Кількість</th>
+                          <th scope="col" className="text-left px-3 py-2 text-gray-500 font-medium w-28">Вартість (грн)</th>
+                          <th scope="col" className="w-8" />
                         </tr>
                       </thead>
                       <tbody>
@@ -910,6 +904,7 @@ export default function ServicesPage() {
                             <td className="px-1 py-1.5">
                               <button
                                 onClick={() => removeMaterial(idx)}
+                                aria-label="Видалити матеріал"
                                 className="p-1 text-gray-600 hover:text-red-400 rounded"
                               >
                                 <X size={13} />
@@ -936,37 +931,37 @@ export default function ServicesPage() {
                 <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 text-xs">
                   <div className="flex justify-between text-gray-400">
                     <span>Матеріали:</span>
-                    <span>{fmt(formCalc.total_materials_cost)} грн</span>
+                    <span className="tabular-nums">{fmt(formCalc.total_materials_cost)} грн</span>
                   </div>
                   <div className="flex justify-between text-orange-400/80">
                     <span>Єдиний податок ({ep_rate}%):</span>
-                    <span>{fmt(formCalc.ep_amount)} грн</span>
+                    <span className="tabular-nums">{fmt(formCalc.ep_amount)} грн</span>
                   </div>
                   <div className="flex justify-between text-orange-400/80">
                     <span>Військовий збір ({vz_rate}%):</span>
-                    <span>{fmt(formCalc.vz_amount)} грн</span>
+                    <span className="tabular-nums">{fmt(formCalc.vz_amount)} грн</span>
                   </div>
                   <div className="flex justify-between text-red-400/80 font-medium">
                     <span>Сумарні витрати:</span>
-                    <span>{fmt(formCalc.total_costs)} грн</span>
+                    <span className="tabular-nums">{fmt(formCalc.total_costs)} грн</span>
                   </div>
                   <div className="flex justify-between text-gray-300 font-medium">
                     <span>Чистий дохід:</span>
                     <span
-                      className={
+                      className={`tabular-nums ${
                         formCalc.net_income >= 0 ? "text-green-400" : "text-red-400"
-                      }
+                      }`}
                     >
                       {fmt(formCalc.net_income)} грн
                     </span>
                   </div>
                   <div className="flex justify-between text-green-400">
                     <span>Дохід лікаря:</span>
-                    <span>{fmt(formCalc.doctor_income)} грн</span>
+                    <span className="tabular-nums">{fmt(formCalc.doctor_income)} грн</span>
                   </div>
                   <div className="flex justify-between text-green-400">
                     <span>Дохід організації:</span>
-                    <span>{fmt(formCalc.org_income)} грн</span>
+                    <span className="tabular-nums">{fmt(formCalc.org_income)} грн</span>
                   </div>
                 </div>
               </div>
@@ -998,62 +993,32 @@ export default function ServicesPage() {
       )}
 
       {/* ── Підтвердження видалення одного запису ── */}
-      {deleteId !== null && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-dark-600 border border-dark-50/10 rounded-2xl p-6 w-full max-w-sm shadow-2xl">
-            <h3 className="text-lg font-semibold text-white mb-2">Видалити послугу?</h3>
-            <p className="text-sm text-gray-400 mb-6">
-              Цю дію неможливо скасувати.
-            </p>
-            <div className="flex gap-3 justify-end">
-              <button
-                onClick={() => setDeleteId(null)}
-                className="px-4 py-2 text-sm text-gray-400 hover:text-gray-200 rounded-xl border border-dark-50/20 transition-all"
-              >
-                Скасувати
-              </button>
-              <button
-                onClick={() => handleDelete(deleteId)}
-                className="px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 rounded-xl border border-red-500/20 transition-all"
-              >
-                Видалити
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmDialog
+        open={deleteId !== null}
+        title="Видалити послугу?"
+        description="Цю дію неможливо скасувати."
+        variant="danger"
+        confirmLabel="Видалити"
+        cancelLabel="Скасувати"
+        onConfirm={() => handleDelete(deleteId!)}
+        onCancel={() => setDeleteId(null)}
+      />
 
       {/* ── Підтвердження масового видалення ── */}
-      {showBulkDeleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-dark-600 border border-dark-50/10 rounded-2xl p-6 w-full max-w-sm shadow-2xl">
-            <h3 className="text-lg font-semibold text-white mb-2">
-              Видалити {selectedIds.size} послуг(и)?
-            </h3>
-            <p className="text-sm text-gray-400 mb-6">
-              Цю дію неможливо скасувати.
-            </p>
-            <div className="flex gap-3 justify-end">
-              <button
-                onClick={() => setShowBulkDeleteConfirm(false)}
-                className="px-4 py-2 text-sm text-gray-400 hover:text-gray-200 rounded-xl border border-dark-50/20 transition-all"
-              >
-                Скасувати
-              </button>
-              <button
-                onClick={handleBulkDelete}
-                className="px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 rounded-xl border border-red-500/20 transition-all"
-              >
-                Видалити все
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmDialog
+        open={showBulkDeleteConfirm}
+        title={`Видалити ${selectedIds.size} послуг(и)?`}
+        description="Цю дію неможливо скасувати."
+        variant="danger"
+        confirmLabel="Видалити все"
+        cancelLabel="Скасувати"
+        onConfirm={handleBulkDelete}
+        onCancel={() => setShowBulkDeleteConfirm(false)}
+      />
 
       {/* ── Масова зміна вартості ── */}
       {showBulkPriceChange && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" role="dialog" aria-modal="true" onClick={(e) => { if (e.target === e.currentTarget) { setShowBulkPriceChange(false); setBulkPricePercent(""); } }}>
           <div className="bg-dark-600 border border-dark-50/10 rounded-2xl p-6 w-full max-w-sm shadow-2xl">
             <h3 className="text-lg font-semibold text-white mb-2">
               Змінити вартість ({selectedIds.size} послуг)
@@ -1099,7 +1064,7 @@ export default function ServicesPage() {
 
       {/* ── Модальне вікно AI-імпорту з зображення ── */}
       {showImportModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" role="dialog" aria-modal="true" onClick={(e) => { if (e.target === e.currentTarget) closeImportModal(); }}>
           <div className="bg-dark-600 border border-dark-50/10 rounded-2xl w-full max-w-4xl max-h-[calc(100vh-6rem)] sm:max-h-[90vh] overflow-y-auto shadow-2xl">
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-dark-50/10">
@@ -1118,6 +1083,7 @@ export default function ServicesPage() {
               </div>
               <button
                 onClick={closeImportModal}
+                aria-label="Закрити"
                 className="p-2 text-gray-500 hover:text-gray-300 hover:bg-dark-300 rounded-lg transition-all"
               >
                 <X size={18} />
@@ -1226,7 +1192,7 @@ export default function ServicesPage() {
                         onClick={() => { setImportStep("upload"); setParsedServices([]); }}
                         className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-400 hover:text-gray-200 rounded-lg border border-dark-50/20 transition-all"
                       >
-                        <ImagePlus size={13} />
+                        <ImagePlus size={13} aria-hidden="true" />
                         Інше фото
                       </button>
                     </div>
@@ -1244,7 +1210,7 @@ export default function ServicesPage() {
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="bg-dark-300/50 border-b border-dark-50/10">
-                          <th className="px-3 py-2.5 w-10">
+                          <th scope="col" className="px-3 py-2.5 w-10">
                             <input
                               type="checkbox"
                               checked={parsedServices.every((s) => s._selected)}
@@ -1252,11 +1218,11 @@ export default function ServicesPage() {
                               className="accent-violet-500 w-4 h-4 cursor-pointer"
                             />
                           </th>
-                          <th className="text-left px-3 py-2.5 text-gray-400 font-medium w-20">Код</th>
-                          <th className="text-left px-3 py-2.5 text-gray-400 font-medium">Назва</th>
-                          <th className="text-left px-3 py-2.5 text-gray-400 font-medium w-28">Ціна (грн)</th>
-                          <th className="text-left px-3 py-2.5 text-gray-400 font-medium w-16">Матеріали</th>
-                          <th className="px-3 py-2.5 w-10" />
+                          <th scope="col" className="text-left px-3 py-2.5 text-gray-400 font-medium w-20">Код</th>
+                          <th scope="col" className="text-left px-3 py-2.5 text-gray-400 font-medium">Назва</th>
+                          <th scope="col" className="text-left px-3 py-2.5 text-gray-400 font-medium w-28">Ціна (грн)</th>
+                          <th scope="col" className="text-left px-3 py-2.5 text-gray-400 font-medium w-16">Матеріали</th>
+                          <th scope="col" className="px-3 py-2.5 w-10" />
                         </tr>
                       </thead>
                       <tbody>
@@ -1309,6 +1275,7 @@ export default function ServicesPage() {
                             <td className="px-1 py-2">
                               <button
                                 onClick={() => removeParsedService(idx)}
+                                aria-label="Видалити послугу"
                                 className="p-1 text-gray-600 hover:text-red-400 rounded transition-colors"
                               >
                                 <X size={14} />

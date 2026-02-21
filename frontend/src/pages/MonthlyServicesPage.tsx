@@ -10,7 +10,6 @@ import {
   Share2,
   RefreshCw,
   X,
-  Check,
   Lock,
   Unlock,
   ArrowUpDown,
@@ -30,6 +29,7 @@ import {
   CheckCircle2,
   FileImage,
 } from "lucide-react";
+import { LoadingSpinner, ConfirmDialog, AlertBanner } from "../components/shared";
 import {
   BarChart,
   Bar,
@@ -45,12 +45,10 @@ import {
 } from "recharts";
 import type {
   AnalyticsData,
-  DashboardData,
   Doctor,
   MonthReport,
   Service,
   ServiceTableRow,
-  MonthlyTrendRow,
   ShareResponse,
 } from "../types";
 
@@ -502,20 +500,20 @@ export default function MonthlyServicesPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={handleExport} className="flex items-center gap-2 px-3 py-2 text-sm text-green-400 hover:bg-green-500/10 rounded-xl border border-green-500/20 transition-all tap-target">
-            <Download size={15} />
+          <button onClick={handleExport} aria-label="Експорт у Excel" className="flex items-center gap-2 px-3 py-2 text-sm text-green-400 hover:bg-green-500/10 rounded-xl border border-green-500/20 transition-all tap-target">
+            <Download size={15} aria-hidden="true" />
             <span className="hidden sm:inline">Excel</span>
           </button>
-          <button onClick={handleShare} className="flex items-center gap-2 px-3 py-2 text-sm text-purple-400 hover:bg-purple-500/10 rounded-xl border border-purple-500/20 transition-all tap-target">
-            <Share2 size={15} />
+          <button onClick={handleShare} aria-label="Поділитися" className="flex items-center gap-2 px-3 py-2 text-sm text-purple-400 hover:bg-purple-500/10 rounded-xl border border-purple-500/20 transition-all tap-target">
+            <Share2 size={15} aria-hidden="true" />
             <span className="hidden sm:inline">Поділитися</span>
           </button>
-          <button onClick={handleCopyPrevious} className="flex items-center gap-2 px-3 py-2 text-sm text-cyan-400 hover:bg-cyan-500/10 rounded-xl border border-cyan-500/20 transition-all tap-target" title="Копіювати з попереднього місяця">
-            <Copy size={15} />
+          <button onClick={handleCopyPrevious} aria-label="Копіювати з попереднього місяця" className="flex items-center gap-2 px-3 py-2 text-sm text-cyan-400 hover:bg-cyan-500/10 rounded-xl border border-cyan-500/20 transition-all tap-target" title="Копіювати з попереднього місяця">
+            <Copy size={15} aria-hidden="true" />
             <span className="hidden sm:inline">З минулого</span>
           </button>
-          <button onClick={openCreateReport} className="flex items-center gap-2 px-4 py-2 bg-accent-500/10 hover:bg-accent-500/20 text-accent-400 rounded-xl text-sm font-medium transition-all border border-accent-500/20 tap-target">
-            <Plus size={16} />
+          <button onClick={openCreateReport} aria-label="Додати звіт" className="flex items-center gap-2 px-4 py-2 bg-accent-500/10 hover:bg-accent-500/20 text-accent-400 rounded-xl text-sm font-medium transition-all border border-accent-500/20 tap-target">
+            <Plus size={16} aria-hidden="true" />
             <span className="hidden sm:inline">Додати звіт</span>
           </button>
         </div>
@@ -548,14 +546,13 @@ export default function MonthlyServicesPage() {
 
       {/* Банер: час заповнити звіт */}
       {isEndOfMonth && !hasReportsThisMonth && selectedYear === now.getFullYear() && selectedMonth === now.getMonth() + 1 && (
-        <div className="card-neo p-4 border-l-4 border-amber-500/60 flex items-center gap-3">
-          <AlertCircle size={18} className="text-amber-400 shrink-0" />
-          <p className="text-sm text-amber-300">Наближається кінець місяця. Час заповнити звіт за {MONTHS_UA[selectedMonth]}.</p>
-        </div>
+        <AlertBanner variant="warning">
+          Наближається кінець місяця. Час заповнити звіт за {MONTHS_UA[selectedMonth]}.
+        </AlertBanner>
       )}
 
       {loading ? (
-        <div className="flex items-center justify-center py-16 text-gray-500"><RefreshCw size={18} className="animate-spin mr-2" /> Завантаження...</div>
+        <LoadingSpinner label="Завантаження..." />
       ) : d ? (
         <>
           {/* ══ Дашборд (6 блоків) ══ */}
@@ -654,12 +651,12 @@ export default function MonthlyServicesPage() {
                       </span>
                       {!isFinal ? (
                         <>
-                          <button onClick={() => openEditReport(rep)} className="p-1.5 text-gray-500 hover:text-accent-400 hover:bg-accent-500/10 rounded-lg transition-all" title="Редагувати"><Pencil size={14} /></button>
-                          <button onClick={() => handleFinalize(rep.id)} className="p-1.5 text-gray-500 hover:text-green-400 hover:bg-green-500/10 rounded-lg transition-all" title="Зафіксувати"><Lock size={14} /></button>
-                          <button onClick={() => setDeleteReportId(rep.id)} className="p-1.5 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all" title="Видалити"><Trash2 size={14} /></button>
+                          <button onClick={() => openEditReport(rep)} aria-label="Редагувати звіт" className="p-1.5 text-gray-500 hover:text-accent-400 hover:bg-accent-500/10 rounded-lg transition-all" title="Редагувати"><Pencil size={14} /></button>
+                          <button onClick={() => handleFinalize(rep.id)} aria-label="Зафіксувати звіт" className="p-1.5 text-gray-500 hover:text-green-400 hover:bg-green-500/10 rounded-lg transition-all" title="Зафіксувати"><Lock size={14} /></button>
+                          <button onClick={() => setDeleteReportId(rep.id)} aria-label="Видалити звіт" className="p-1.5 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all" title="Видалити"><Trash2 size={14} /></button>
                         </>
                       ) : (
-                        <button onClick={() => handleUnfinalize(rep.id)} className="p-1.5 text-gray-500 hover:text-amber-400 hover:bg-amber-500/10 rounded-lg transition-all" title="Розфіксувати"><Unlock size={14} /></button>
+                        <button onClick={() => handleUnfinalize(rep.id)} aria-label="Розфіксувати звіт" className="p-1.5 text-gray-500 hover:text-amber-400 hover:bg-amber-500/10 rounded-lg transition-all" title="Розфіксувати"><Unlock size={14} /></button>
                       )}
                     </div>
                   </div>
@@ -684,7 +681,7 @@ export default function MonthlyServicesPage() {
                       ["ep_amount", `ЄП`], ["vz_amount", `ВЗ`],
                       ["to_split", "До розподілу"], ["doctor_income", "Дохід лік."], ["org_income", "Дохід орг."],
                     ] as [keyof ServiceTableRow, string][]).map(([f, label]) => (
-                      <th key={f} className="text-left px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap cursor-pointer hover:text-gray-200 transition-colors" onClick={() => handleSort(f)}>
+                      <th key={f} scope="col" className="text-left px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap cursor-pointer hover:text-gray-200 transition-colors" onClick={() => handleSort(f)}>
                         <span className="inline-flex items-center">{label}<SortIcon field={f} /></span>
                       </th>
                     ))}
@@ -721,13 +718,13 @@ export default function MonthlyServicesPage() {
 
       {/* ── Форма звіту ── */}
       {showReportForm && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 sm:items-center overflow-y-auto">
-          <div className="bg-dark-600 border border-dark-50/10 rounded-none sm:rounded-2xl w-full max-w-3xl min-h-full sm:min-h-0 shadow-2xl animate-modal-in pb-20 sm:pb-0">
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 sm:items-center overflow-y-auto" role="dialog" aria-modal="true" onClick={() => setShowReportForm(false)}>
+          <div className="bg-dark-600 border border-dark-50/10 rounded-none sm:rounded-2xl w-full max-w-3xl min-h-full sm:min-h-0 shadow-2xl animate-modal-in pb-20 sm:pb-0" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-6 border-b border-dark-50/10">
               <h2 className="text-lg font-semibold text-white">
                 {editingReport ? "Редагування звіту" : "Новий звіт"} · {MONTHS_UA[selectedMonth]} {selectedYear}
               </h2>
-              <button onClick={() => setShowReportForm(false)} className="p-2 text-gray-500 hover:text-gray-300 hover:bg-dark-300 rounded-lg transition-all"><X size={18} /></button>
+              <button onClick={() => setShowReportForm(false)} aria-label="Закрити форму звіту" className="p-2 text-gray-500 hover:text-gray-300 hover:bg-dark-300 rounded-lg transition-all"><X size={18} /></button>
             </div>
             <div className="p-6 space-y-5">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -774,7 +771,7 @@ export default function MonthlyServicesPage() {
                     onChange={(e) => { if (e.target.files) handleAiFiles(e.target.files); e.target.value = ""; }} />
                   <button type="button" onClick={() => aiFileRef.current?.click()}
                     className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-purple-400 hover:bg-purple-500/10 rounded-lg border border-purple-500/20 transition-all">
-                    <Upload size={13} /> Завантажити фото
+                    <Upload size={13} aria-hidden="true" /> Завантажити фото
                   </button>
                 </div>
 
@@ -786,6 +783,7 @@ export default function MonthlyServicesPage() {
                         {img.analyzed && !img.error && <CheckCircle2 size={14} className="absolute -top-1 -right-1 text-green-400 bg-dark-600 rounded-full" />}
                         {img.error && <AlertCircle size={14} className="absolute -top-1 -right-1 text-red-400 bg-dark-600 rounded-full" />}
                         <button onClick={() => removeAiImage(i)}
+                          aria-label="Видалити зображення"
                           className="absolute -top-1.5 -left-1.5 w-4 h-4 bg-red-500/80 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                           <X size={10} />
                         </button>
@@ -797,7 +795,7 @@ export default function MonthlyServicesPage() {
                 {aiImages.length > 0 && (
                   <button type="button" onClick={analyzeAiImages} disabled={aiAnalyzing}
                     className="flex items-center gap-2 px-4 py-2 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 rounded-xl text-xs font-medium transition-all border border-purple-500/20 disabled:opacity-50">
-                    {aiAnalyzing ? <RefreshCw size={13} className="animate-spin" /> : <Sparkles size={13} />}
+                    {aiAnalyzing ? <RefreshCw size={13} className="animate-spin" aria-hidden="true" /> : <Sparkles size={13} aria-hidden="true" />}
                     {aiAnalyzing ? "Аналіз…" : "Розпізнати AI"}
                   </button>
                 )}
@@ -832,10 +830,10 @@ export default function MonthlyServicesPage() {
                   <table className="w-full text-xs min-w-[320px]">
                     <thead>
                       <tr className="bg-dark-300/50 border-b border-dark-50/10">
-                        <th className="text-left px-3 py-2 text-gray-500 font-medium">Код</th>
-                        <th className="text-left px-3 py-2 text-gray-500 font-medium">Назва</th>
-                        <th className="text-right px-3 py-2 text-gray-500 font-medium w-20">Ціна</th>
-                        <th className="text-center px-3 py-2 text-gray-500 font-medium w-28">Кількість</th>
+                        <th scope="col" className="text-left px-3 py-2 text-gray-500 font-medium">Код</th>
+                        <th scope="col" className="text-left px-3 py-2 text-gray-500 font-medium">Назва</th>
+                        <th scope="col" className="text-right px-3 py-2 text-gray-500 font-medium w-20">Ціна</th>
+                        <th scope="col" className="text-center px-3 py-2 text-gray-500 font-medium w-28">Кількість</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -881,7 +879,7 @@ export default function MonthlyServicesPage() {
               <div className="flex items-center justify-end gap-3 pt-1">
                 <button onClick={() => setShowReportForm(false)} className="px-5 py-2.5 text-sm text-gray-400 hover:text-gray-200 rounded-xl border border-dark-50/20 transition-all">Скасувати</button>
                 <button onClick={handleSaveReport} disabled={formLoading} className="flex items-center gap-2 px-5 py-2.5 bg-accent-500/10 hover:bg-accent-500/20 text-accent-400 rounded-xl text-sm font-medium transition-all border border-accent-500/20 disabled:opacity-50">
-                  {formLoading && <RefreshCw size={14} className="animate-spin" />}
+                  {formLoading && <RefreshCw size={14} className="animate-spin" aria-hidden="true" />}
                   {editingReport ? "Зберегти зміни" : "Зберегти чернетку"}
                 </button>
               </div>
@@ -892,13 +890,13 @@ export default function MonthlyServicesPage() {
 
       {/* ── Детальна статистика послуг (Блок 1) ── */}
       {showServicesModal && d && analytics && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 sm:items-center overflow-y-auto">
-          <div className="bg-dark-600 border border-dark-50/10 rounded-none sm:rounded-2xl w-full max-w-4xl min-h-full sm:min-h-0 shadow-2xl animate-modal-in pb-20 sm:pb-0">
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 sm:items-center overflow-y-auto" role="dialog" aria-modal="true" onClick={() => setShowServicesModal(false)}>
+          <div className="bg-dark-600 border border-dark-50/10 rounded-none sm:rounded-2xl w-full max-w-4xl min-h-full sm:min-h-0 shadow-2xl animate-modal-in pb-20 sm:pb-0" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-6 border-b border-dark-50/10">
               <h2 className="text-lg font-semibold text-white">Детальна статистика наданих послуг</h2>
               <div className="flex gap-2">
-                <button onClick={handleExport} className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-green-400 hover:bg-green-500/10 rounded-lg border border-green-500/20 transition-all"><Download size={13} /> Excel</button>
-                <button onClick={() => setShowServicesModal(false)} className="p-2 text-gray-500 hover:text-gray-300 hover:bg-dark-300 rounded-lg transition-all"><X size={18} /></button>
+                <button onClick={handleExport} className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-green-400 hover:bg-green-500/10 rounded-lg border border-green-500/20 transition-all"><Download size={13} aria-hidden="true" /> Excel</button>
+                <button onClick={() => setShowServicesModal(false)} aria-label="Закрити статистику послуг" className="p-2 text-gray-500 hover:text-gray-300 hover:bg-dark-300 rounded-lg transition-all"><X size={18} /></button>
               </div>
             </div>
             <div className="p-6 space-y-6">
@@ -978,13 +976,13 @@ export default function MonthlyServicesPage() {
 
       {/* ── Дохід лікарів (Блок 2) ── */}
       {showDoctorModal && d && analytics && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 sm:items-center overflow-y-auto">
-          <div className="bg-dark-600 border border-dark-50/10 rounded-none sm:rounded-2xl w-full max-w-4xl min-h-full sm:min-h-0 shadow-2xl animate-modal-in pb-20 sm:pb-0">
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 sm:items-center overflow-y-auto" role="dialog" aria-modal="true" onClick={() => setShowDoctorModal(false)}>
+          <div className="bg-dark-600 border border-dark-50/10 rounded-none sm:rounded-2xl w-full max-w-4xl min-h-full sm:min-h-0 shadow-2xl animate-modal-in pb-20 sm:pb-0" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-6 border-b border-dark-50/10">
               <h2 className="text-lg font-semibold text-white">{selectedDoctor ? "Дохід лікаря" : "Дохід лікарів"}</h2>
               <div className="flex gap-2">
-                <button onClick={handleShare} className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-purple-400 hover:bg-purple-500/10 rounded-lg border border-purple-500/20 transition-all"><Share2 size={13} /> Поділитися</button>
-                <button onClick={() => setShowDoctorModal(false)} className="p-2 text-gray-500 hover:text-gray-300 hover:bg-dark-300 rounded-lg transition-all"><X size={18} /></button>
+                <button onClick={handleShare} className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-purple-400 hover:bg-purple-500/10 rounded-lg border border-purple-500/20 transition-all"><Share2 size={13} aria-hidden="true" /> Поділитися</button>
+                <button onClick={() => setShowDoctorModal(false)} aria-label="Закрити дохід лікарів" className="p-2 text-gray-500 hover:text-gray-300 hover:bg-dark-300 rounded-lg transition-all"><X size={18} /></button>
               </div>
             </div>
             <div className="p-6 space-y-6">
@@ -1041,14 +1039,14 @@ export default function MonthlyServicesPage() {
                   <table className="w-full text-xs">
                     <thead>
                       <tr className="bg-dark-300/50 border-b border-dark-50/10">
-                        <th className="text-left px-3 py-2 text-gray-500">Місяць</th>
-                        <th className="text-right px-3 py-2 text-gray-500">К-ть</th>
-                        <th className="text-right px-3 py-2 text-gray-500">Сума</th>
-                        <th className="text-right px-3 py-2 text-gray-500">Витрати</th>
-                        <th className="text-right px-3 py-2 text-gray-500">ЄП</th>
-                        <th className="text-right px-3 py-2 text-gray-500">ВЗ</th>
-                        <th className="text-right px-3 py-2 text-gray-500">До розподілу</th>
-                        <th className="text-right px-3 py-2 text-gray-500">Дохід лікаря</th>
+                        <th scope="col" className="text-left px-3 py-2 text-gray-500">Місяць</th>
+                        <th scope="col" className="text-right px-3 py-2 text-gray-500">К-ть</th>
+                        <th scope="col" className="text-right px-3 py-2 text-gray-500">Сума</th>
+                        <th scope="col" className="text-right px-3 py-2 text-gray-500">Витрати</th>
+                        <th scope="col" className="text-right px-3 py-2 text-gray-500">ЄП</th>
+                        <th scope="col" className="text-right px-3 py-2 text-gray-500">ВЗ</th>
+                        <th scope="col" className="text-right px-3 py-2 text-gray-500">До розподілу</th>
+                        <th scope="col" className="text-right px-3 py-2 text-gray-500">Дохід лікаря</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1075,13 +1073,13 @@ export default function MonthlyServicesPage() {
 
       {/* ── Витрати (Блок 3) ── */}
       {showExpensesModal && d && analytics && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 sm:items-center overflow-y-auto">
-          <div className="bg-dark-600 border border-dark-50/10 rounded-none sm:rounded-2xl w-full max-w-3xl min-h-full sm:min-h-0 shadow-2xl animate-modal-in pb-20 sm:pb-0">
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 sm:items-center overflow-y-auto" role="dialog" aria-modal="true" onClick={() => setShowExpensesModal(false)}>
+          <div className="bg-dark-600 border border-dark-50/10 rounded-none sm:rounded-2xl w-full max-w-3xl min-h-full sm:min-h-0 shadow-2xl animate-modal-in pb-20 sm:pb-0" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-6 border-b border-dark-50/10">
               <h2 className="text-lg font-semibold text-white">Детальна статистика витрат</h2>
               <div className="flex gap-2">
-                <button onClick={handleExport} className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-green-400 hover:bg-green-500/10 rounded-lg border border-green-500/20 transition-all"><Download size={13} /> Excel</button>
-                <button onClick={() => setShowExpensesModal(false)} className="p-2 text-gray-500 hover:text-gray-300 hover:bg-dark-300 rounded-lg transition-all"><X size={18} /></button>
+                <button onClick={handleExport} className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-green-400 hover:bg-green-500/10 rounded-lg border border-green-500/20 transition-all"><Download size={13} aria-hidden="true" /> Excel</button>
+                <button onClick={() => setShowExpensesModal(false)} aria-label="Закрити статистику витрат" className="p-2 text-gray-500 hover:text-gray-300 hover:bg-dark-300 rounded-lg transition-all"><X size={18} /></button>
               </div>
             </div>
             <div className="p-6 space-y-5">
@@ -1108,12 +1106,12 @@ export default function MonthlyServicesPage() {
                     <table className="w-full text-xs">
                       <thead>
                         <tr className="bg-dark-300/50 border-b border-dark-50/10">
-                          <th className="text-left px-3 py-2 text-gray-500">#</th>
-                          <th className="text-left px-3 py-2 text-gray-500">Назва</th>
-                          <th className="text-left px-3 py-2 text-gray-500">Од.</th>
-                          <th className="text-right px-3 py-2 text-gray-500">К-ть</th>
-                          <th className="text-right px-3 py-2 text-gray-500">Сума</th>
-                          <th className="text-right px-3 py-2 text-gray-500">Частка (%)</th>
+                          <th scope="col" className="text-left px-3 py-2 text-gray-500">#</th>
+                          <th scope="col" className="text-left px-3 py-2 text-gray-500">Назва</th>
+                          <th scope="col" className="text-left px-3 py-2 text-gray-500">Од.</th>
+                          <th scope="col" className="text-right px-3 py-2 text-gray-500">К-ть</th>
+                          <th scope="col" className="text-right px-3 py-2 text-gray-500">Сума</th>
+                          <th scope="col" className="text-right px-3 py-2 text-gray-500">Частка (%)</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1147,23 +1145,21 @@ export default function MonthlyServicesPage() {
       )}
 
       {/* ── Видалення звіту ── */}
-      {deleteReportId !== null && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-dark-600 border border-dark-50/10 rounded-2xl p-6 w-full max-w-sm shadow-2xl animate-modal-in">
-            <h3 className="text-lg font-semibold text-white mb-2">Видалити звіт?</h3>
-            <p className="text-sm text-gray-400 mb-6">Цю дію неможливо скасувати.</p>
-            <div className="flex gap-3 justify-end">
-              <button onClick={() => setDeleteReportId(null)} className="px-4 py-2 text-sm text-gray-400 hover:text-gray-200 rounded-xl border border-dark-50/20 transition-all">Скасувати</button>
-              <button onClick={() => handleDeleteReport(deleteReportId)} className="px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 rounded-xl border border-red-500/20 transition-all">Видалити</button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmDialog
+        open={deleteReportId !== null}
+        title="Видалити звіт?"
+        description="Цю дію неможливо скасувати."
+        variant="danger"
+        confirmLabel="Видалити"
+        cancelLabel="Скасувати"
+        onConfirm={() => handleDeleteReport(deleteReportId!)}
+        onCancel={() => setDeleteReportId(null)}
+      />
 
       {/* ── Попередження: зафіксувати без каси ── */}
       {finalizeWarningId !== null && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-dark-600 border border-amber-500/20 rounded-2xl p-6 w-full max-w-sm shadow-2xl animate-modal-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" role="dialog" aria-modal="true" onClick={() => setFinalizeWarningId(null)}>
+          <div className="bg-dark-600 border border-amber-500/20 rounded-2xl p-6 w-full max-w-sm shadow-2xl animate-modal-in" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-start gap-3 mb-4">
               <AlertCircle size={20} className="text-amber-400 shrink-0 mt-0.5" />
               <div>
@@ -1189,13 +1185,13 @@ export default function MonthlyServicesPage() {
 
       {/* ── Share діалог ── */}
       {shareData && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-dark-600 border border-dark-50/10 rounded-2xl p-6 w-full max-w-md shadow-2xl animate-modal-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" role="dialog" aria-modal="true" onClick={() => setShareData(null)}>
+          <div className="bg-dark-600 border border-dark-50/10 rounded-2xl p-6 w-full max-w-md shadow-2xl animate-modal-in" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-semibold text-white mb-2">Посилання створено</h3>
             <p className="text-sm text-gray-400 mb-4">Діє 30 днів. Доступ тільки для читання.</p>
             <div className="flex gap-2 mb-4">
               <input readOnly value={`${window.location.origin}${shareData.url}`} className="flex-1 bg-dark-300 border border-dark-50/20 rounded-xl px-3 py-2 text-sm text-white font-mono" />
-              <button onClick={copyShareUrl} className="flex items-center gap-1.5 px-3 py-2 text-sm text-accent-400 hover:bg-accent-500/10 rounded-xl border border-accent-500/20 transition-all"><Copy size={14} /> Копіювати</button>
+              <button onClick={copyShareUrl} className="flex items-center gap-1.5 px-3 py-2 text-sm text-accent-400 hover:bg-accent-500/10 rounded-xl border border-accent-500/20 transition-all"><Copy size={14} aria-hidden="true" /> Копіювати</button>
             </div>
             <div className="flex justify-end">
               <button onClick={() => setShareData(null)} className="px-4 py-2 text-sm text-gray-400 hover:text-gray-200 rounded-xl border border-dark-50/20 transition-all">Закрити</button>

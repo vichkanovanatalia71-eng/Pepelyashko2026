@@ -1,8 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import {
-  BarChart3,
   TrendingUp,
   Stethoscope,
   Package,
@@ -66,7 +65,10 @@ export default function SharePage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-dark-700 flex items-center justify-center">
-        <p className="text-gray-400">Завантаження...</p>
+        <div className="flex items-center gap-2 text-gray-400">
+          <div className="w-5 h-5 border-2 border-accent-500/30 border-t-accent-500 rounded-full animate-spin" />
+          <span className="text-sm">Завантаження…</span>
+        </div>
       </div>
     );
   }
@@ -75,7 +77,7 @@ export default function SharePage() {
     return (
       <div className="min-h-screen bg-dark-700 flex items-center justify-center">
         <div className="card-neo p-8 text-center max-w-md">
-          <AlertCircle size={40} className="text-red-400 mx-auto mb-4" />
+          <AlertCircle size={40} className="text-red-400 mx-auto mb-4" aria-hidden="true" />
           <h1 className="text-xl font-bold text-white mb-2">Посилання недійсне</h1>
           <p className="text-gray-400 text-sm">{error || "Термін дії закінчився."}</p>
         </div>
@@ -230,14 +232,14 @@ export default function SharePage() {
                 <table className="w-full text-xs min-w-[900px]">
                   <thead>
                     <tr className="border-b border-dark-50/10 bg-dark-300/50">
-                      <th className="text-left px-3 py-2.5 text-gray-400 font-medium">Код</th>
-                      <th className="text-left px-3 py-2.5 text-gray-400 font-medium">Назва</th>
-                      <th className="text-right px-3 py-2.5 text-gray-400 font-medium">К-ть</th>
-                      <th className="text-right px-3 py-2.5 text-gray-400 font-medium">Сума</th>
-                      <th className="text-right px-3 py-2.5 text-gray-400 font-medium">Витрати</th>
-                      <th className="text-right px-3 py-2.5 text-gray-400 font-medium">До розподілу</th>
-                      <th className="text-right px-3 py-2.5 text-gray-400 font-medium">Дохід лікаря</th>
-                      <th className="text-right px-3 py-2.5 text-gray-400 font-medium">Дохід орг.</th>
+                      <th scope="col" className="text-left px-3 py-2.5 text-gray-400 font-medium">Код</th>
+                      <th scope="col" className="text-left px-3 py-2.5 text-gray-400 font-medium">Назва</th>
+                      <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium">К-ть</th>
+                      <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium">Сума</th>
+                      <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium">Витрати</th>
+                      <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium">До розподілу</th>
+                      <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium">Дохід лікаря</th>
+                      <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium">Дохід орг.</th>
                     </tr>
                   </thead>
                   <tbody>
