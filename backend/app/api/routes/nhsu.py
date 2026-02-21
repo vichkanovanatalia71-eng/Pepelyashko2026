@@ -9,6 +9,7 @@ from app.core.deps import get_current_user, get_db
 from app.services.ai_provider import analyze_image as ai_analyze_image, get_provider, parse_ai_json
 from app.models.doctor import Doctor
 from app.models.nhsu import AGE_GROUPS
+from app.models.staff import StaffMember
 from app.models.user import User
 from app.schemas.nhsu import (
     DoctorCreate,
@@ -178,6 +179,18 @@ async def create_doctor(
 ):
     doctor = Doctor(user_id=user.id, **doctor_in.model_dump())
     db.add(doctor)
+    await db.flush()  # отримуємо doctor.id до commit
+
+    if not doctor.is_owner:
+        staff = StaffMember(
+            user_id=user.id,
+            full_name=doctor.full_name,
+            role="doctor",
+            position="",
+            doctor_id=doctor.id,
+        )
+        db.add(staff)
+
     await db.commit()
     await db.refresh(doctor)
     return doctor
@@ -196,10 +209,24 @@ async def update_doctor(
     doctor = result.scalar_one_or_none()
     if not doctor:
         raise HTTPException(status_code=404, detail="Лікаря не знайдено")
-    for field, value in doctor_in.model_dump(exclude_unset=True).items():
+    updated_fields = doctor_in.model_dump(exclude_unset=True)
+    for field, value in updated_fields.items():
         setattr(doctor, field, value)
     await db.commit()
     await db.refresh(doctor)
+
+    if "full_name" in updated_fields:
+        sm_res = await db.execute(
+            select(StaffMember).where(
+                StaffMember.doctor_id == doctor.id,
+                StaffMember.is_active == True,
+            )
+        )
+        sm = sm_res.scalar_one_or_none()
+        if sm:
+            sm.full_name = doctor.full_name
+            await db.commit()
+
     return doctor
 
 
@@ -216,6 +243,18 @@ async def delete_doctor(
     if not doctor:
         raise HTTPException(status_code=404, detail="Лікаря не знайдено")
     doctor.is_active = False
+
+    sm_res = await db.execute(
+        select(StaffMember).where(
+            StaffMember.doctor_id == doctor_id,
+            StaffMember.user_id == user.id,
+            StaffMember.is_active == True,
+        )
+    )
+    sm = sm_res.scalar_one_or_none()
+    if sm:
+        sm.is_active = False
+
     await db.commit()
 
 
