@@ -38,6 +38,7 @@ import type {
   SalaryExpenseRow,
   StaffMember,
   HiredDoctorInfo,
+  Doctor,
 } from "../types";
 
 // ── Constants ──────────────────────────────────────────────────────
@@ -326,8 +327,9 @@ export default function ExpensesPage() {
   const [otherExpenses, setOtherExpenses] = useState<OtherExpense[]>([]);
   const [otherLoading, setOtherLoading]   = useState(false);
 
-  // Staff list
+  // Staff list & NHSU doctors
   const [staffList, setStaffList] = useState<StaffMember[]>([]);
+  const [doctorsList, setDoctorsList] = useState<Doctor[]>([]);
 
   // Owner hired doctor/nurse selection (persisted in localStorage)
   const [selectedHiredDoctorId, setSelectedHiredDoctorId] = useState<number | null>(() => {
@@ -351,8 +353,9 @@ export default function ExpensesPage() {
   // ── Staff modal state
   const [staffModal, setStaffModal] = useState<{
     open: boolean; isEdit: boolean; id: number | null;
-    fullName: string; position: string; role: "doctor" | "nurse" | "other"; saving: boolean;
-  }>({ open: false, isEdit: false, id: null, fullName: "", position: "", role: "other", saving: false });
+    fullName: string; position: string; role: "doctor" | "nurse" | "other";
+    doctorId: number | null; saving: boolean;
+  }>({ open: false, isEdit: false, id: null, fullName: "", position: "", role: "other", doctorId: null, saving: false });
 
   // ── Other expense modal state
   const [otherModal, setOtherModal] = useState<{
@@ -412,11 +415,20 @@ export default function ExpensesPage() {
     }
   }, [year, month]);
 
-  // ── Load staff ────────────────────────────────────────────────
+  // ── Load staff & doctors ─────────────────────────────────────
   const loadStaff = useCallback(async () => {
     try {
       const { data: resp } = await api.get<StaffMember[]>("/staff/");
       setStaffList(resp);
+    } catch (e) {
+      console.error(e);
+    }
+  }, []);
+
+  const loadDoctors = useCallback(async () => {
+    try {
+      const { data: resp } = await api.get<Doctor[]>("/nhsu/doctors/");
+      setDoctorsList(resp);
     } catch (e) {
       console.error(e);
     }
@@ -446,7 +458,7 @@ export default function ExpensesPage() {
     setTrendData(points);
   }, [year, month]);
 
-  useEffect(() => { load(); loadOther(); loadStaff(); loadTrend(); }, [load, loadOther, loadStaff, loadTrend]);
+  useEffect(() => { load(); loadOther(); loadStaff(); loadDoctors(); loadTrend(); }, [load, loadOther, loadStaff, loadDoctors, loadTrend]);
 
   // ── Month navigation ──────────────────────────────────────────
   function prevMonth() {
@@ -590,14 +602,14 @@ export default function ExpensesPage() {
           full_name: staffModal.fullName,
           position:  staffModal.position,
           role:      staffModal.role,
+          doctor_id: staffModal.role === "doctor" ? staffModal.doctorId : null,
         });
       } else {
         await api.post("/staff/", {
           full_name:  staffModal.fullName,
           position:   staffModal.position,
           role:       staffModal.role,
-          is_active:  true,
-          doctor_id:  null,
+          doctor_id:  staffModal.role === "doctor" ? staffModal.doctorId : null,
         });
       }
       setStaffModal(s => ({ ...s, open: false, saving: false }));
@@ -1114,6 +1126,7 @@ export default function ExpensesPage() {
                                   fullName: sm?.full_name ?? row.full_name,
                                   position: sm?.position ?? "",
                                   role:     row.role,
+                                  doctorId: sm?.doctor_id ?? null,
                                   saving:   false,
                                 });
                               }}
@@ -1428,7 +1441,7 @@ export default function ExpensesPage() {
                 <button
                   onClick={() => setStaffModal({
                     open: true, isEdit: false, id: null,
-                    fullName: "", position: "", role: "other", saving: false,
+                    fullName: "", position: "", role: "other", doctorId: null, saving: false,
                   })}
                   className="flex items-center gap-1.5 text-xs text-accent-400 hover:text-accent-300 transition-colors"
                 >
@@ -1728,7 +1741,7 @@ export default function ExpensesPage() {
             <label className="label-dark">Роль</label>
             <select
               value={staffModal.role}
-              onChange={e => setStaffModal(s => ({ ...s, role: e.target.value as "doctor" | "nurse" | "other" }))}
+              onChange={e => setStaffModal(s => ({ ...s, role: e.target.value as "doctor" | "nurse" | "other", doctorId: null }))}
               className="input-dark w-full"
             >
               <option value="doctor">Лікар</option>
@@ -1736,6 +1749,27 @@ export default function ExpensesPage() {
               <option value="other">Інший персонал</option>
             </select>
           </div>
+          {staffModal.role === "doctor" && (
+            <div>
+              <label className="label-dark">Лікар НСЗУ (прив'язка)</label>
+              <select
+                value={staffModal.doctorId ?? ""}
+                onChange={e => setStaffModal(s => ({
+                  ...s,
+                  doctorId: e.target.value ? parseInt(e.target.value) : null,
+                }))}
+                className="input-dark w-full"
+              >
+                <option value="">— Без прив'язки —</option>
+                {doctorsList.map(d => (
+                  <option key={d.id} value={d.id}>{d.full_name}{d.is_owner ? " (Власник)" : ""}</option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-600 mt-1">
+                Для підтягування даних з модулів НСЗУ та Платних послуг
+              </p>
+            </div>
+          )}
           <div className="flex gap-3 pt-2">
             <button
               onClick={() => setStaffModal(s => ({ ...s, open: false }))}
