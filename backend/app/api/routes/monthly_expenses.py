@@ -6,6 +6,8 @@
 from __future__ import annotations
 
 import base64
+import secrets
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
@@ -25,9 +27,11 @@ from app.models.monthly_expense import (
 from app.models.monthly_service import MonthlyPaidServiceEntry, MonthlyPaidServicesReport
 from app.models.nhsu import NhsuRecord, NhsuSettings
 from app.models.service import Service
+from app.models.share_report import ShareReport
 from app.models.staff import StaffMember
 from app.models.user import User
 from app.services.ai_provider import analyze_image, get_provider, parse_ai_json
+from app.services.nhsu import get_monthly_report
 
 router = APIRouter()
 
@@ -983,3 +987,309 @@ async def ai_parse_expense(
         confidence=float(parsed.get("confidence", 0.5)),
         note=parsed.get("note", ""),
     )
+
+
+# ══════════════════════════════════════════════════════════════════
+#   SHARE: Тимчасова публічна сторінка зведеного звіту власника ФОП
+# ══════════════════════════════════════════════════════════════════
+
+MONTHS_UA = [
+    "", "Січень", "Лютий", "Березень", "Квітень",
+    "Травень", "Червень", "Липень", "Серпень",
+    "Вересень", "Жовтень", "Листопад", "Грудень",
+]
+
+
+class OwnerShareCreate(BaseModel):
+    year: int
+    month: int
+    hired_doctor_id: Optional[int] = None
+    hired_nurse_id: Optional[int] = None
+
+
+class OwnerShareResponse(BaseModel):
+    token: str
+    url: str
+    expires_at: datetime
+
+
+async def _build_owner_share_payload(
+    db: AsyncSession,
+    user_id: int,
+    year: int,
+    month: int,
+    hired_doctor_id: Optional[int],
+    hired_nurse_id: Optional[int],
+) -> dict:
+    """Збирає повний знімок даних для share-сторінки власника ФОП."""
+    from app.api.routes.monthly_services import _build_analytics as build_paid_analytics
+
+    # ── 1. НСЗУ monthly report ──
+    nhsu_report = await get_monthly_report(db, user_id, year, month)
+    nhsu_data = None
+    if nhsu_report:
+        nhsu_data = {
+            "year": nhsu_report.year,
+            "month": nhsu_report.month,
+            "capitation_rate": nhsu_report.capitation_rate,
+            "ep_rate": nhsu_report.ep_rate,
+            "vz_rate": nhsu_report.vz_rate,
+            "doctors": [
+                {
+                    "doctor_id": d.doctor_id,
+                    "doctor_name": d.doctor_name,
+                    "is_owner": d.is_owner,
+                    "rows": [
+                        {
+                            "age_group": r.age_group,
+                            "age_group_label": r.age_group_label,
+                            "age_coefficient": r.age_coefficient,
+                            "patient_count": r.patient_count,
+                            "non_verified": r.non_verified,
+                            "amount": r.amount,
+                            "ep_amount": r.ep_amount,
+                            "vz_amount": r.vz_amount,
+                            "ep_vz_amount": r.ep_vz_amount,
+                        }
+                        for r in d.rows
+                    ],
+                    "total_patients": d.total_patients,
+                    "total_non_verified": d.total_non_verified,
+                    "total_amount": d.total_amount,
+                    "total_ep": d.total_ep,
+                    "total_vz": d.total_vz,
+                    "total_ep_vz": d.total_ep_vz,
+                }
+                for d in nhsu_report.doctors
+            ],
+            "age_group_totals": [
+                {
+                    "age_group": ag.age_group,
+                    "age_group_label": ag.age_group_label,
+                    "age_coefficient": ag.age_coefficient,
+                    "total_patients": ag.total_patients,
+                    "total_non_verified": ag.total_non_verified,
+                    "total_amount": ag.total_amount,
+                    "total_ep": ag.total_ep,
+                    "total_vz": ag.total_vz,
+                    "total_ep_vz": ag.total_ep_vz,
+                }
+                for ag in nhsu_report.age_group_totals
+            ],
+            "grand_total_patients": nhsu_report.grand_total_patients,
+            "grand_total_amount": nhsu_report.grand_total_amount,
+            "grand_total_ep": nhsu_report.grand_total_ep,
+            "grand_total_vz": nhsu_report.grand_total_vz,
+            "grand_total_ep_vz": nhsu_report.grand_total_ep_vz,
+        }
+
+    # ── 2. Платні послуги (paid services analytics) ──
+    paid_analytics = await build_paid_analytics(db, user_id, year, month, None)
+    paid_data = paid_analytics.model_dump()
+
+    # ── 3. Дані для розрахунку сформованого доходу власника ──
+    nhsu_doctors = await _nhsu_doctors_data(db, user_id, year, month)
+    owner_nhsu = next((d for d in nhsu_doctors if d["is_owner"]), None)
+    hired_nhsu_list = [d for d in nhsu_doctors if not d["is_owner"]]
+
+    nhsu_settings = await _get_settings(db, user_id)
+    ep_rate = float(nhsu_settings.ep_rate) if nhsu_settings else 5.0
+    vz_rate = float(nhsu_settings.vz_rate) if nhsu_settings else 1.5
+    esv_owner = float(nhsu_settings.esv_monthly) if nhsu_settings else 1760.0
+
+    ep_all = round(sum(d["nhsu_ep"] for d in nhsu_doctors), 2)
+    vz_all = round(sum(d["nhsu_vz"] for d in nhsu_doctors), 2)
+
+    owner_nhsu_brutto = owner_nhsu["nhsu_brutto"] if owner_nhsu else 0.0
+
+    # Розрахунок "Кошти за власні декларації"
+    own_declarations = max(
+        0,
+        round(((owner_nhsu_brutto / 2) - (ep_all + vz_all + esv_owner)) * 0.9, 2),
+    )
+
+    # Розрахунок "Кошти за декларації найманого лікаря"
+    hired_declarations = 0.0
+    hired_doctor_detail = None
+    hired_nurse_detail = None
+
+    if hired_doctor_id and hired_nurse_id:
+        hd = next((d for d in hired_nhsu_list if d["doctor_id"] == hired_doctor_id), None)
+        if hd:
+            # Знайти staff member для лікаря
+            staff_res = await db.execute(
+                select(StaffMember).where(
+                    StaffMember.user_id == user_id,
+                    StaffMember.is_active == True,
+                )
+            )
+            staff_list = staff_res.scalars().all()
+
+            sal_res = await db.execute(
+                select(MonthlySalaryExpense).where(
+                    MonthlySalaryExpense.user_id == user_id,
+                    MonthlySalaryExpense.year == year,
+                    MonthlySalaryExpense.month == month,
+                )
+            )
+            saved_salary = {r.staff_member_id: r for r in sal_res.scalars().all()}
+
+            pdfo_rate_v = float(nhsu_settings.pdfo_rate) / 100 if nhsu_settings else 0.18
+            vz_zp_rate_v = float(nhsu_settings.vz_zp_rate) / 100 if nhsu_settings else 0.05
+            esv_rate_v = float(nhsu_settings.esv_employer_rate) / 100 if nhsu_settings else 0.22
+
+            def _calc_employer_cost(staff_member_id: int) -> float:
+                rec = saved_salary.get(staff_member_id)
+                if not rec:
+                    return 0.0
+                brutto = float(rec.brutto)
+                esv = round(brutto * esv_rate_v, 2)
+                netto = round(brutto - round(brutto * pdfo_rate_v, 2) - round(brutto * vz_zp_rate_v, 2), 2)
+                supplement = 0.0
+                if rec.has_supplement and rec.target_net is not None:
+                    supplement = max(0.0, round(float(rec.target_net) - netto, 2))
+                individual_bonus = float(rec.individual_bonus)
+                return round(brutto + esv + supplement + individual_bonus, 2)
+
+            doctor_sm = next((s for s in staff_list if s.doctor_id == hired_doctor_id), None)
+            nurse_sm = next((s for s in staff_list if s.id == hired_nurse_id), None)
+
+            doctor_employer_cost = _calc_employer_cost(doctor_sm.id) if doctor_sm else 0.0
+            nurse_employer_cost = _calc_employer_cost(hired_nurse_id) if nurse_sm else 0.0
+
+            hired_declarations = max(
+                0,
+                round(
+                    (hd["nhsu_brutto"] - hd["nhsu_ep"] - hd["nhsu_vz"]
+                     - doctor_employer_cost - nurse_employer_cost) / 2 * 0.9, 2,
+                ),
+            )
+
+            hired_doctor_detail = {
+                "doctor_id": hd["doctor_id"],
+                "doctor_name": hd["doctor_name"],
+                "nhsu_brutto": hd["nhsu_brutto"],
+                "total_expenses": round(
+                    hd["nhsu_ep"] + hd["nhsu_vz"] + doctor_employer_cost + nurse_employer_cost, 2,
+                ),
+            }
+            hired_nurse_detail = {
+                "staff_member_id": hired_nurse_id,
+                "full_name": nurse_sm.full_name if nurse_sm else "—",
+            }
+
+    # Дохід від платних послуг власника
+    owner_doc_res = await db.execute(
+        select(Doctor).where(
+            Doctor.user_id == user_id,
+            Doctor.is_owner == True,
+            Doctor.is_active == True,
+        )
+    )
+    owner_doctor = owner_doc_res.scalar_one_or_none()
+    owner_paid_services = 0.0
+    if owner_doctor:
+        owner_paid_services = await _doctor_paid_services_income(
+            db, user_id, owner_doctor.id, year, month,
+            ep_rate_pct=ep_rate, vz_rate_pct=vz_rate,
+        )
+
+    total_formed_income = round(own_declarations + hired_declarations + owner_paid_services, 2)
+
+    formed_income = {
+        "own_declarations": own_declarations,
+        "own_nhsu_brutto": owner_nhsu_brutto,
+        "hired_declarations": hired_declarations,
+        "hired_doctor": hired_doctor_detail,
+        "hired_nurse": hired_nurse_detail,
+        "paid_services_income": owner_paid_services,
+        "total": total_formed_income,
+        "ep_all": ep_all,
+        "vz_all": vz_all,
+        "esv_owner": esv_owner,
+    }
+
+    return {
+        "nhsu": nhsu_data,
+        "paid_services": paid_data,
+        "formed_income": formed_income,
+    }
+
+
+@router.post("/owner-share", status_code=201)
+async def create_owner_share(
+    body: OwnerShareCreate,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Створює тимчасову публічну сторінку зведеного звіту власника ФОП (30 днів)."""
+    # Lazy cleanup expired
+    expired_res = await db.execute(
+        select(ShareReport).where(
+            ShareReport.user_id == user.id,
+            ShareReport.expires_at <= datetime.now(timezone.utc),
+        )
+    )
+    for share in expired_res.scalars().all():
+        await db.delete(share)
+    await db.commit()
+
+    payload = await _build_owner_share_payload(
+        db, user.id, body.year, body.month,
+        body.hired_doctor_id, body.hired_nurse_id,
+    )
+
+    token = secrets.token_urlsafe(32)
+    expires_at = datetime.now(timezone.utc) + timedelta(days=30)
+
+    share = ShareReport(
+        user_id=user.id,
+        token=token,
+        filter_snapshot={
+            "type": "owner_report",
+            "year": body.year,
+            "month": body.month,
+            "hired_doctor_id": body.hired_doctor_id,
+            "hired_nurse_id": body.hired_nurse_id,
+        },
+        payload_snapshot=payload,
+        expires_at=expires_at,
+        is_deleted=False,
+    )
+    db.add(share)
+    await db.commit()
+
+    return OwnerShareResponse(
+        token=token,
+        url=f"/owner-share/{token}",
+        expires_at=expires_at,
+    )
+
+
+@router.get("/owner-share/{token}/view")
+async def view_owner_share(token: str, db: AsyncSession = Depends(get_db)):
+    """Публічний ендпоінт (без авторизації) — перегляд share-сторінки власника."""
+    r = await db.execute(
+        select(ShareReport).where(
+            ShareReport.token == token,
+            ShareReport.is_deleted == False,
+            ShareReport.expires_at > datetime.now(timezone.utc),
+        )
+    )
+    share = r.scalar_one_or_none()
+    if not share:
+        raise HTTPException(404, detail="Посилання не знайдено або термін дії закінчився")
+
+    fs = share.filter_snapshot
+    if fs.get("type") != "owner_report":
+        raise HTTPException(404, detail="Посилання не знайдено")
+
+    month_name = MONTHS_UA[fs.get("month", 1)]
+    year = fs.get("year", "")
+
+    return {
+        "token": token,
+        "filter_label": f"{month_name} {year}",
+        "expires_at": share.expires_at.isoformat(),
+        "data": share.payload_snapshot,
+    }

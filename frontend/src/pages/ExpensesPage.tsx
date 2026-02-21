@@ -31,6 +31,9 @@ import {
   Activity,
   ArrowUpRight,
   ArrowDownRight,
+  Share2,
+  Link,
+  ExternalLink,
 } from "lucide-react";
 import {
   LoadingSpinner,
@@ -451,6 +454,12 @@ export default function ExpensesPage() {
   // ── KPI detail modal ──
   const [kpiModal, setKpiModal] = useState<KpiModalState>({ open: false, type: "", title: "" });
 
+  // ── Share state ──
+  const [shareLoading, setShareLoading] = useState(false);
+  const [shareModal, setShareModal] = useState<{
+    open: boolean; url: string; expiresAt: string;
+  }>({ open: false, url: "", expiresAt: "" });
+
   // ── Change tab with persistence
   function changeTab(tab: TabId) {
     setActiveTab(tab);
@@ -655,6 +664,29 @@ export default function ExpensesPage() {
     const paidServices = owner.paid_services_income;
     const total = Math.round((ownDeclarations + hiredDeclarations + paidServices) * 100) / 100;
     return { ownDeclarations, hiredDeclarations, paidServices, total };
+  }
+
+  // ── Share owner report ─────────────────────────────────────────
+  async function handleOwnerShare() {
+    setShareLoading(true);
+    try {
+      const res = await api.post("/monthly-expenses/owner-share", {
+        year,
+        month,
+        hired_doctor_id: selectedHiredDoctorId,
+        hired_nurse_id: selectedHiredNurseId,
+      });
+      const shareUrl = `${window.location.origin}${res.data.url}`;
+      setShareModal({
+        open: true,
+        url: shareUrl,
+        expiresAt: new Date(res.data.expires_at).toLocaleDateString("uk-UA"),
+      });
+    } catch (e) {
+      console.error(e);
+      alert("Помилка створення посилання");
+    }
+    setShareLoading(false);
   }
 
   // ── Dirty checks ──────────────────────────────────────────────
@@ -1956,9 +1988,24 @@ export default function ExpensesPage() {
                                 <p className="font-semibold text-amber-300 text-sm">
                                   {data.owner.doctor_name} — Власник ФОП
                                 </p>
-                                <span className="ml-auto font-bold text-amber-400 font-mono tabular-nums">
-                                  {fmt(ownerCalc.total)} ₴
-                                </span>
+                                <div className="ml-auto flex items-center gap-2">
+                                  <button
+                                    onClick={handleOwnerShare}
+                                    disabled={shareLoading}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-accent-500/10 text-accent-400 border border-accent-500/20 hover:bg-accent-500/20 transition-all disabled:opacity-50"
+                                    title="Поділитись звітом"
+                                  >
+                                    {shareLoading ? (
+                                      <div className="w-3.5 h-3.5 border-2 border-accent-500/30 border-t-accent-500 rounded-full animate-spin" />
+                                    ) : (
+                                      <Share2 size={13} />
+                                    )}
+                                    Поділитись
+                                  </button>
+                                  <span className="font-bold text-amber-400 font-mono tabular-nums">
+                                    {fmt(ownerCalc.total)} ₴
+                                  </span>
+                                </div>
                               </div>
 
                               {/* 1 — Кошти за власні декларації */}
@@ -3082,6 +3129,81 @@ export default function ExpensesPage() {
             </button>
           </div>
         </Modal>
+      )}
+
+      {/* ── Share modal ── */}
+      {shareModal.open && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Поділитись звітом">
+          <div className="absolute inset-0" onClick={() => setShareModal({ open: false, url: "", expiresAt: "" })} />
+          <div className="relative bg-dark-600 rounded-2xl shadow-2xl w-full max-w-md p-6" style={{ border: "1px solid #ffffff15" }}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Share2 size={18} className="text-accent-400" />
+                <h4 className="font-semibold text-white text-base">Посилання створено</h4>
+              </div>
+              <button
+                onClick={() => setShareModal({ open: false, url: "", expiresAt: "" })}
+                aria-label="Закрити"
+                className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <p className="text-xs text-gray-500 mb-3">
+              Сторінка доступна для перегляду без авторизації протягом 30 днів (до {shareModal.expiresAt}).
+            </p>
+            <div className="flex items-center gap-2 bg-dark-400/40 rounded-xl p-3 mb-4">
+              <Link size={14} className="text-gray-500 shrink-0" />
+              <input
+                type="text"
+                readOnly
+                value={shareModal.url}
+                className="flex-1 bg-transparent text-sm text-gray-200 font-mono outline-none"
+                onFocus={e => e.target.select()}
+              />
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(shareModal.url);
+                }}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-accent-500/10 border border-accent-500/20 text-accent-400 text-sm font-medium hover:bg-accent-500/20 transition-all"
+              >
+                <Copy size={14} /> Копіювати
+              </button>
+              <a
+                href={shareModal.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-accent-500 text-white text-sm font-semibold hover:bg-accent-400 transition-all"
+              >
+                <ExternalLink size={14} /> Відкрити
+              </a>
+            </div>
+            <div className="flex gap-2 mt-2">
+              <a
+                href={`mailto:?subject=${encodeURIComponent("Зведений звіт ФОП")}&body=${encodeURIComponent(shareModal.url)}`}
+                className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl border border-dark-50/20 text-gray-400 text-xs hover:text-white hover:border-dark-50/40 transition-all"
+              >
+                Email
+              </a>
+              <a
+                href={`viber://forward?text=${encodeURIComponent(shareModal.url)}`}
+                className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl border border-dark-50/20 text-gray-400 text-xs hover:text-white hover:border-dark-50/40 transition-all"
+              >
+                Viber
+              </a>
+              <a
+                href={`https://t.me/share/url?url=${encodeURIComponent(shareModal.url)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl border border-dark-50/20 text-gray-400 text-xs hover:text-white hover:border-dark-50/40 transition-all"
+              >
+                Telegram
+              </a>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
