@@ -37,6 +37,7 @@ import type {
   FixedExpenseRow,
   SalaryExpenseRow,
   StaffMember,
+  HiredDoctorInfo,
 } from "../types";
 
 // ── Constants ──────────────────────────────────────────────────────
@@ -328,6 +329,16 @@ export default function ExpensesPage() {
   // Staff list
   const [staffList, setStaffList] = useState<StaffMember[]>([]);
 
+  // Owner hired doctor/nurse selection (persisted in localStorage)
+  const [selectedHiredDoctorId, setSelectedHiredDoctorId] = useState<number | null>(() => {
+    const v = localStorage.getItem("owner_hired_doctor_id");
+    return v ? parseInt(v) : null;
+  });
+  const [selectedHiredNurseId, setSelectedHiredNurseId] = useState<number | null>(() => {
+    const v = localStorage.getItem("owner_hired_nurse_id");
+    return v ? parseInt(v) : null;
+  });
+
   // Charts
   const [trendData, setTrendData] = useState<TrendPoint[]>([]);
 
@@ -461,6 +472,37 @@ export default function ExpensesPage() {
     const indBonus   = parseFloat(form.individual_bonus) || 0;
     const total_employer = Math.round((brutto + esv + supplement + indBonus) * 100) / 100;
     return { pdfo, vz_zp, esv, netto, supplement, total_employer };
+  }
+
+  // ── Owner salary calculations ─────────────────────────────────
+  function calcOwnerSalary() {
+    const owner = data?.owner;
+    if (!owner) return { ownDeclarations: 0, hiredDeclarations: 0, paidServices: 0, total: 0 };
+
+    const ownDeclarations = Math.max(
+      0,
+      Math.round(((owner.nhsu_brutto / 2) - (owner.ep_all + owner.vz_all + owner.esv_owner)) * 0.9 * 100) / 100,
+    );
+
+    let hiredDeclarations = 0;
+    if (selectedHiredDoctorId !== null && selectedHiredNurseId !== null) {
+      const hd = owner.hired_doctors.find(d => d.doctor_id === selectedHiredDoctorId);
+      const nurseRow = data?.salary.find(s => s.staff_member_id === selectedHiredNurseId);
+      if (hd && nurseRow) {
+        hiredDeclarations = Math.max(
+          0,
+          Math.round(
+            (hd.nhsu_brutto - hd.nhsu_ep - hd.nhsu_vz
+              - hd.staff_total_employer_cost
+              - nurseRow.total_employer_cost) / 2 * 0.9 * 100,
+          ) / 100,
+        );
+      }
+    }
+
+    const paidServices = owner.paid_services_income;
+    const total = Math.round((ownDeclarations + hiredDeclarations + paidServices) * 100) / 100;
+    return { ownDeclarations, hiredDeclarations, paidServices, total };
   }
 
   // ── Dirty checks ──────────────────────────────────────────────
@@ -1261,6 +1303,126 @@ export default function ExpensesPage() {
                   })}
                 </div>
               )}
+
+              {/* ── Блок Власника ФОП ── */}
+              {data.owner && (() => {
+                const ownerCalc = calcOwnerSalary();
+                const nurses = data.salary.filter(s => s.role === "nurse");
+                const hd: HiredDoctorInfo | undefined = data.owner.hired_doctors.find(
+                  d => d.doctor_id === selectedHiredDoctorId
+                );
+                const nurseRow = data.salary.find(s => s.staff_member_id === selectedHiredNurseId);
+                return (
+                  <div className="border-t-2 border-amber-500/30">
+                    <div className="px-5 py-4 bg-amber-500/5">
+                      <div className="flex items-center gap-2 mb-4">
+                        <Building2 size={16} className="text-amber-400" />
+                        <p className="font-semibold text-amber-300 text-sm">
+                          {data.owner.doctor_name} — Власник ФОП
+                        </p>
+                        <span className="ml-auto font-bold text-amber-400 font-mono">
+                          {fmt(ownerCalc.total)} ₴
+                        </span>
+                      </div>
+
+                      {/* 1 — Кошти за власні декларації */}
+                      <div className="bg-dark-400/40 rounded-xl p-4 space-y-2 mb-3">
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                          Кошти за власні декларації
+                        </p>
+                        <CalcRow label="Брутто НСЗУ (власник)" value={data.owner.nhsu_brutto} color="text-white" />
+                        <CalcRow label="÷ 2" value={data.owner.nhsu_brutto / 2} color="text-amber-400" />
+                        <CalcRow label="ЄП (всі лікарі)" value={data.owner.ep_all} color="text-red-400" info="відрахування" />
+                        <CalcRow label="ВЗ (всі лікарі)" value={data.owner.vz_all} color="text-red-400" info="відрахування" />
+                        <CalcRow label="ЄСВ власника" value={data.owner.esv_owner} color="text-red-400" info="відрахування" />
+                        <div className="border-t border-dark-50/10 pt-2">
+                          <CalcRow label="= × 90%" value={ownerCalc.ownDeclarations} color="text-emerald-400" bold />
+                        </div>
+                      </div>
+
+                      {/* 2 — Кошти за декларації обраного лікаря */}
+                      <div className="bg-dark-400/40 rounded-xl p-4 space-y-3 mb-3">
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                          Кошти за декларації обраного лікаря
+                        </p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="label-dark">Обраний лікар</label>
+                            <select
+                              value={selectedHiredDoctorId ?? ""}
+                              onChange={e => {
+                                const id = e.target.value ? parseInt(e.target.value) : null;
+                                setSelectedHiredDoctorId(id);
+                                localStorage.setItem("owner_hired_doctor_id", id ? String(id) : "");
+                              }}
+                              className="input-dark w-full"
+                            >
+                              <option value="">— Оберіть лікаря —</option>
+                              {data.owner.hired_doctors.map(d => (
+                                <option key={d.doctor_id} value={d.doctor_id}>{d.doctor_name}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="label-dark">Обрана медична сестра</label>
+                            <select
+                              value={selectedHiredNurseId ?? ""}
+                              onChange={e => {
+                                const id = e.target.value ? parseInt(e.target.value) : null;
+                                setSelectedHiredNurseId(id);
+                                localStorage.setItem("owner_hired_nurse_id", id ? String(id) : "");
+                              }}
+                              className="input-dark w-full"
+                            >
+                              <option value="">— Оберіть сестру —</option>
+                              {nurses.map(n => (
+                                <option key={n.staff_member_id} value={n.staff_member_id}>{n.full_name}</option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                        {hd && nurseRow ? (
+                          <div className="space-y-2 pt-2 border-t border-dark-50/10">
+                            <CalcRow label={`Брутто НСЗУ (${hd.doctor_name})`} value={hd.nhsu_brutto} color="text-white" />
+                            <CalcRow label="ЄП лікаря" value={hd.nhsu_ep} color="text-red-400" info="відрахування" />
+                            <CalcRow label="ВЗ лікаря" value={hd.nhsu_vz} color="text-red-400" info="відрахування" />
+                            <CalcRow label="ЗП лікаря (витрати)" value={hd.staff_total_employer_cost} color="text-red-400" info="відрахування" />
+                            <CalcRow label={`ЗП сестри (${nurseRow.full_name})`} value={nurseRow.total_employer_cost} color="text-red-400" info="відрахування" />
+                            <div className="border-t border-dark-50/10 pt-2">
+                              <CalcRow label="÷ 2 × 90%" value={ownerCalc.hiredDeclarations} color="text-emerald-400" bold />
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-xs text-gray-600 italic">
+                            {data.owner.hired_doctors.length === 0
+                              ? "Немає даних НСЗУ по найманих лікарях за цей місяць"
+                              : "Оберіть лікаря та медичну сестру для розрахунку"}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* 3 — Оплата за платні послуги */}
+                      <div className="bg-dark-400/40 rounded-xl p-4 space-y-2 mb-3">
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                          Оплата за платні послуги
+                        </p>
+                        <CalcRow
+                          label="Дохід лікаря (з модуля)"
+                          value={data.owner.paid_services_income}
+                          color="text-blue-400"
+                          locked
+                        />
+                      </div>
+
+                      {/* Підсумок */}
+                      <div className="flex items-center justify-between pt-2 border-t border-amber-500/20">
+                        <p className="text-sm font-semibold text-gray-300">Разом власнику за місяць</p>
+                        <p className="font-bold text-amber-400 font-mono text-lg">{fmt(ownerCalc.total)} ₴</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
 
               <div className="flex items-center justify-between px-5 py-3 bg-dark-400/20 border-t border-dark-50/10">
                 <button

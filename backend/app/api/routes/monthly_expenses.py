@@ -13,6 +13,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import get_current_user, get_db
+from app.models.doctor import Doctor
 from app.models.monthly_expense import (
     FIXED_CATEGORY_NAMES,
     FIXED_CATEGORY_KEYS,
@@ -70,9 +71,15 @@ async def _paid_services_income(db: AsyncSession, user_id: int, year: int, month
 
 
 async def _doctor_paid_services_income(
-    db: AsyncSession, user_id: int, doctor_id: int, year: int, month: int
+    db: AsyncSession,
+    user_id: int,
+    doctor_id: int,
+    year: int,
+    month: int,
+    ep_rate_pct: float = 0.0,
+    vz_rate_pct: float = 0.0,
 ) -> float:
-    """Дохід конкретного лікаря від платних послуг (doctor_income × кількість)."""
+    """Дохід лікаря від платних послуг = (ціна − матеріали − ЄП − ВЗ) / 2 × кількість."""
     report_res = await db.execute(
         select(MonthlyPaidServicesReport).where(
             MonthlyPaidServicesReport.user_id == user_id,
@@ -89,10 +96,61 @@ async def _doctor_paid_services_income(
         .join(Service, MonthlyPaidServiceEntry.service_id == Service.id)
         .where(MonthlyPaidServiceEntry.report_id == report.id)
     )
+    ep_r = ep_rate_pct / 100
+    vz_r = vz_rate_pct / 100
     total = 0.0
     for entry, svc in entries_res.all():
-        total += float(entry.quantity) * float(svc.price)
+        price = float(svc.price)
+        mat_cost = sum(float(m.get("cost", 0)) for m in (svc.materials or []))
+        ep = round(price * ep_r, 2)
+        vz = round(price * vz_r, 2)
+        to_split = price - mat_cost - ep - vz
+        total += round(to_split / 2 * int(entry.quantity), 2)
     return round(total, 2)
+
+
+async def _nhsu_doctors_data(
+    db: AsyncSession, user_id: int, year: int, month: int
+) -> list[dict]:
+    """Повертає дані НСЗУ по лікарях за місяць: брутто, ЄП, ВЗ."""
+    records_res = await db.execute(
+        select(NhsuRecord).where(
+            NhsuRecord.user_id == user_id,
+            NhsuRecord.year == year,
+            NhsuRecord.month == month,
+        )
+    )
+    records = records_res.scalars().all()
+    if not records:
+        return []
+
+    doctor_ids = list({r.doctor_id for r in records})
+    doctors_res = await db.execute(select(Doctor).where(Doctor.id.in_(doctor_ids)))
+    doctors_map = {d.id: d for d in doctors_res.scalars().all()}
+
+    per_doctor: dict[int, dict] = {}
+    for r in records:
+        doc_id = r.doctor_id
+        if doc_id not in per_doctor:
+            doc = doctors_map.get(doc_id)
+            per_doctor[doc_id] = {
+                "doctor_id": doc_id,
+                "doctor_name": doc.full_name if doc else "",
+                "is_owner": doc.is_owner if doc else False,
+                "nhsu_brutto": 0.0,
+                "nhsu_ep": 0.0,
+                "nhsu_vz": 0.0,
+            }
+        per_doctor[doc_id]["nhsu_brutto"] = round(
+            per_doctor[doc_id]["nhsu_brutto"] + r.amount, 2
+        )
+        per_doctor[doc_id]["nhsu_ep"] = round(
+            per_doctor[doc_id]["nhsu_ep"] + r.ep_amount, 2
+        )
+        per_doctor[doc_id]["nhsu_vz"] = round(
+            per_doctor[doc_id]["nhsu_vz"] + r.vz_amount, 2
+        )
+    return list(per_doctor.values())
 
 
 # ────────────────────────────── Schemas ──────────────────────────────
@@ -150,6 +208,28 @@ class ExpenseTotals(BaseModel):
     remaining: float
 
 
+class HiredDoctorInfo(BaseModel):
+    doctor_id: int
+    doctor_name: str
+    nhsu_brutto: float
+    nhsu_ep: float
+    nhsu_vz: float
+    staff_member_id: Optional[int] = None
+    staff_brutto: float = 0.0
+    staff_total_employer_cost: float = 0.0
+
+
+class OwnerBlock(BaseModel):
+    doctor_id: int
+    doctor_name: str
+    nhsu_brutto: float
+    paid_services_income: float
+    ep_all: float
+    vz_all: float
+    esv_owner: float
+    hired_doctors: list[HiredDoctorInfo]
+
+
 class MonthlyExpenseResponse(BaseModel):
     year: int
     month: int
@@ -158,6 +238,7 @@ class MonthlyExpenseResponse(BaseModel):
     salary: list[SalaryExpenseRow]
     taxes: TaxBlock
     totals: ExpenseTotals
+    owner: Optional[OwnerBlock] = None
 
 
 class UpdateFixedRequest(BaseModel):
@@ -266,7 +347,8 @@ async def get_monthly_expenses(
         paid_services_income = 0.0
         if member.role == "doctor" and paid_services_from_module and member.doctor_id:
             paid_services_income = await _doctor_paid_services_income(
-                db, user.id, member.doctor_id, year, month
+                db, user.id, member.doctor_id, year, month,
+                ep_rate_pct=rates.ep_rate, vz_rate_pct=rates.vz_rate,
             )
 
         total_employer_cost = round(brutto + esv + supplement + individual_bonus, 2)
@@ -312,6 +394,58 @@ async def get_monthly_expenses(
     grand_total = round(fixed_total + salary_total + tax_total, 2)
     remaining = round(total_income - grand_total, 2)
 
+    # 6. Блок власника (лікар з прапорцем is_owner)
+    owner_block: Optional[OwnerBlock] = None
+    owner_doc_res = await db.execute(
+        select(Doctor).where(
+            Doctor.user_id == user.id,
+            Doctor.is_owner == True,
+            Doctor.is_active == True,
+        )
+    )
+    owner_doctor = owner_doc_res.scalar_one_or_none()
+    if owner_doctor:
+        nhsu_data = await _nhsu_doctors_data(db, user.id, year, month)
+        owner_nhsu = next((d for d in nhsu_data if d["is_owner"]), None)
+        hired_nhsu = [d for d in nhsu_data if not d["is_owner"]]
+
+        ep_all = round(sum(d["nhsu_ep"] for d in nhsu_data), 2)
+        vz_all = round(sum(d["nhsu_vz"] for d in nhsu_data), 2)
+        esv_owner = float(nhsu.esv_monthly) if nhsu else 1760.0
+
+        hired_doctors_info: list[HiredDoctorInfo] = []
+        for hd in hired_nhsu:
+            sm = next((s for s in staff_list if s.doctor_id == hd["doctor_id"]), None)
+            sal_row = next(
+                (r for r in salary_rows if sm and r.staff_member_id == sm.id), None
+            )
+            hired_doctors_info.append(HiredDoctorInfo(
+                doctor_id=hd["doctor_id"],
+                doctor_name=hd["doctor_name"],
+                nhsu_brutto=hd["nhsu_brutto"],
+                nhsu_ep=hd["nhsu_ep"],
+                nhsu_vz=hd["nhsu_vz"],
+                staff_member_id=sm.id if sm else None,
+                staff_brutto=sal_row.brutto if sal_row else 0.0,
+                staff_total_employer_cost=sal_row.total_employer_cost if sal_row else 0.0,
+            ))
+
+        owner_paid = await _doctor_paid_services_income(
+            db, user.id, owner_doctor.id, year, month,
+            ep_rate_pct=rates.ep_rate, vz_rate_pct=rates.vz_rate,
+        )
+
+        owner_block = OwnerBlock(
+            doctor_id=owner_doctor.id,
+            doctor_name=owner_doctor.full_name,
+            nhsu_brutto=owner_nhsu["nhsu_brutto"] if owner_nhsu else 0.0,
+            paid_services_income=owner_paid,
+            ep_all=ep_all,
+            vz_all=vz_all,
+            esv_owner=esv_owner,
+            hired_doctors=hired_doctors_info,
+        )
+
     return MonthlyExpenseResponse(
         year=year,
         month=month,
@@ -327,6 +461,7 @@ async def get_monthly_expenses(
             income=total_income,
             remaining=remaining,
         ),
+        owner=owner_block,
     )
 
 
@@ -477,8 +612,12 @@ async def update_salary_expense(
 
     paid_services_income = 0.0
     if member.role == "doctor" and rec.paid_services_from_module and member.doctor_id:
+        nhsu_s = await _get_settings(db, user.id)
+        ep_pct = float(nhsu_s.ep_rate) if nhsu_s else 5.0
+        vz_pct = float(nhsu_s.vz_rate) if nhsu_s else 1.5
         paid_services_income = await _doctor_paid_services_income(
-            db, user.id, member.doctor_id, body.year, body.month
+            db, user.id, member.doctor_id, body.year, body.month,
+            ep_rate_pct=ep_pct, vz_rate_pct=vz_pct,
         )
 
     total_employer_cost = round(brutto + esv + supplement + individual_bonus, 2)

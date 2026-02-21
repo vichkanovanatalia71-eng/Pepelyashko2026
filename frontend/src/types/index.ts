@@ -240,6 +240,28 @@ export interface ExpenseTotals {
   remaining: number;
 }
 
+export interface HiredDoctorInfo {
+  doctor_id: number;
+  doctor_name: string;
+  nhsu_brutto: number;
+  nhsu_ep: number;
+  nhsu_vz: number;
+  staff_member_id: number | null;
+  staff_brutto: number;
+  staff_total_employer_cost: number;
+}
+
+export interface OwnerBlock {
+  doctor_id: number;
+  doctor_name: string;
+  nhsu_brutto: number;
+  paid_services_income: number;
+  ep_all: number;
+  vz_all: number;
+  esv_owner: number;
+  hired_doctors: HiredDoctorInfo[];
+}
+
 export interface MonthlyExpenseData {
   year: number;
   month: number;
@@ -248,6 +270,7 @@ export interface MonthlyExpenseData {
   salary: SalaryExpenseRow[];
   taxes: TaxBlock;
   totals: ExpenseTotals;
+  owner?: OwnerBlock;
 }
 
 export interface DoctorAgeGroupRow {
