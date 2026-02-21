@@ -219,6 +219,12 @@ export interface SalaryExpenseRow {
   paid_services_from_module: boolean;
   paid_services_income: number;
   total_employer_cost: number;
+  // НСЗУ дані (для пов'язаних лікарів)
+  doctor_id: number | null;
+  nhsu_brutto: number;
+  nhsu_ep: number;
+  nhsu_vz: number;
+  is_owner: boolean;
 }
 
 export interface TaxBlock {

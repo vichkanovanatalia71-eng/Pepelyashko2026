@@ -187,6 +187,12 @@ class SalaryExpenseRow(BaseModel):
     paid_services_from_module: bool # для лікарів
     paid_services_income: float     # підтягується з модуля (для лікарів)
     total_employer_cost: float      # brutto + esv + supplement + individual_bonus
+    # НСЗУ дані (для пов'язаних лікарів)
+    doctor_id: Optional[int] = None
+    nhsu_brutto: float = 0.0
+    nhsu_ep: float = 0.0
+    nhsu_vz: float = 0.0
+    is_owner: bool = False
 
 
 class TaxBlock(BaseModel):
@@ -321,6 +327,10 @@ async def get_monthly_expenses(
         r.staff_member_id: r for r in salary_res.scalars().all()
     }
 
+    # 3а. Підтягуємо НСЗУ дані для всіх лікарів одразу (для уникнення дублювання запитів)
+    nhsu_data_all = await _nhsu_doctors_data(db, user.id, year, month)
+    nhsu_by_doctor_id = {d["doctor_id"]: d for d in nhsu_data_all}
+
     pdfo_rate = rates.pdfo_rate / 100
     vz_zp_rate = rates.vz_zp_rate / 100
     esv_rate = rates.esv_employer_rate / 100
@@ -353,6 +363,9 @@ async def get_monthly_expenses(
 
         total_employer_cost = round(brutto + esv + supplement + individual_bonus, 2)
 
+        # НСЗУ дані для пов'язаного лікаря
+        doctor_nhsu = nhsu_by_doctor_id.get(member.doctor_id) if member.doctor_id else None
+
         salary_rows.append(SalaryExpenseRow(
             staff_member_id=member.id,
             full_name=member.full_name,
@@ -369,6 +382,11 @@ async def get_monthly_expenses(
             paid_services_from_module=paid_services_from_module,
             paid_services_income=paid_services_income,
             total_employer_cost=total_employer_cost,
+            doctor_id=member.doctor_id,
+            nhsu_brutto=doctor_nhsu["nhsu_brutto"] if doctor_nhsu else 0.0,
+            nhsu_ep=doctor_nhsu["nhsu_ep"] if doctor_nhsu else 0.0,
+            nhsu_vz=doctor_nhsu["nhsu_vz"] if doctor_nhsu else 0.0,
+            is_owner=doctor_nhsu.get("is_owner", False) if doctor_nhsu else False,
         ))
 
     # 4. Податковий блок
@@ -405,7 +423,7 @@ async def get_monthly_expenses(
     )
     owner_doctor = owner_doc_res.scalar_one_or_none()
     if owner_doctor:
-        nhsu_data = await _nhsu_doctors_data(db, user.id, year, month)
+        nhsu_data = nhsu_data_all  # вже завантажені вище
         owner_nhsu = next((d for d in nhsu_data if d["is_owner"]), None)
         hired_nhsu = [d for d in nhsu_data if not d["is_owner"]]
 

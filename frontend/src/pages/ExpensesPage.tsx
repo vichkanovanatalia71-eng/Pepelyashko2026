@@ -18,6 +18,7 @@ import {
   BarChart3,
   Check,
   UserPlus,
+  Stethoscope,
 } from "lucide-react";
 import {
   BarChart,
@@ -1084,6 +1085,7 @@ export default function ExpensesPage() {
           ──────────────────────────────────────── */}
           {activeTab === "salary" && (
             <section className="card-neo overflow-hidden">
+              {/* ── Заголовок секції ── */}
               <div className="flex items-center gap-3 px-5 py-4 border-b border-dark-50/10 bg-dark-400/20">
                 <div className="w-8 h-8 rounded-xl bg-purple-500/15 flex items-center justify-center shrink-0">
                   <Users size={16} className="text-purple-400" />
@@ -1094,359 +1096,424 @@ export default function ExpensesPage() {
                 </span>
               </div>
 
-              {data.salary.length === 0 ? (
+              {data.salary.length === 0 && !data.owner ? (
                 <div className="px-5 py-10 text-center">
                   <Users size={32} className="text-gray-700 mx-auto mb-3" />
                   <p className="text-gray-600 text-sm">Немає активних співробітників.</p>
-                  <p className="text-gray-700 text-xs mt-1">Додайте персонал нижче.</p>
+                  <p className="text-gray-700 text-xs mt-1">Додайте персонал у розділі Налаштування.</p>
                 </div>
               ) : (
-                <div className="divide-y divide-dark-50/5">
-                  {data.salary.map((row) => {
-                    const form = salaryForms[row.staff_member_id];
-                    if (!form) return null;
-                    const calc  = calcSalary(form);
-                    const dirty = isSalaryDirty(row.staff_member_id, row);
+                <>
+                  {/* ══════════════════════════════════════════
+                      БЛОК: ЛІКАРІ (власник + найманий персонал)
+                  ══════════════════════════════════════════ */}
+                  {(data.owner || data.salary.some(r => r.role === "doctor" && !r.is_owner)) && (
+                    <div className="border-b border-dark-50/10">
+                      {/* Заголовок підсекції */}
+                      <div className="px-5 py-2.5 bg-dark-400/30 border-b border-dark-50/8 flex items-center gap-2">
+                        <Stethoscope size={13} className="text-teal-400" />
+                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Лікарі</span>
+                      </div>
 
-                    return (
-                      <div key={row.staff_member_id} className="p-5">
-                        <div className="flex items-start justify-between mb-4 gap-2">
-                          <div>
-                            <p className="font-semibold text-white text-sm">{row.full_name}</p>
-                            <span className="inline-block mt-1 px-2 py-0.5 text-xs rounded-lg bg-dark-400 text-gray-400 border border-dark-50/10">
-                              {ROLE_LABELS[row.role] ?? row.role}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2 shrink-0">
-                            <button
-                              onClick={() => {
-                                const sm = staffList.find(s => s.id === row.staff_member_id);
-                                setStaffModal({
-                                  open: true, isEdit: true, id: row.staff_member_id,
-                                  fullName: sm?.full_name ?? row.full_name,
-                                  position: sm?.position ?? "",
-                                  role:     row.role,
-                                  doctorId: sm?.doctor_id ?? null,
-                                  saving:   false,
-                                });
-                              }}
-                              className="p-1.5 rounded-lg text-gray-600 hover:text-purple-400 hover:bg-purple-500/10 transition-all"
-                              title="Редагувати"
-                            >
-                              <Edit2 size={14} />
-                            </button>
-                            <button
-                              onClick={() => deleteStaff(row.staff_member_id, row.full_name)}
-                              className="p-1.5 rounded-lg text-gray-700 hover:text-red-400 hover:bg-red-500/10 transition-all"
-                              title="Видалити"
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                            <div className="text-right">
-                              <p className="text-xs text-gray-500">Витрати роботодавця</p>
-                              <p className="font-bold text-purple-400 font-mono text-base">{fmt(calc.total_employer)} ₴</p>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          {/* Inputs */}
-                          <div className="space-y-3">
-                            <div>
-                              <label className="label-dark">Офіційна зарплата (брутто)</label>
-                              <div className="relative">
-                                <input type="number" step="0.01" min="0"
-                                  value={form.brutto}
-                                  onChange={e => setSalaryForms(s => ({
-                                    ...s,
-                                    [row.staff_member_id]: { ...s[row.staff_member_id], brutto: e.target.value }
-                                  }))}
-                                  className="input-dark pr-8 w-full"
-                                  placeholder="0.00"
-                                />
-                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 text-xs">₴</span>
+                      {/* ── Власник ФОП ── */}
+                      {data.owner && (() => {
+                        const ownerCalc = calcOwnerSalary();
+                        const nurses = data.salary.filter(s => s.role === "nurse");
+                        const hd: HiredDoctorInfo | undefined = data.owner.hired_doctors.find(
+                          d => d.doctor_id === selectedHiredDoctorId
+                        );
+                        const nurseRow = data.salary.find(s => s.staff_member_id === selectedHiredNurseId);
+                        return (
+                          <div className="border-b border-amber-500/20">
+                            <div className="px-5 py-4 bg-amber-500/5">
+                              <div className="flex items-center gap-2 mb-4">
+                                <Building2 size={16} className="text-amber-400" />
+                                <p className="font-semibold text-amber-300 text-sm">
+                                  {data.owner.doctor_name} — Власник ФОП
+                                </p>
+                                <span className="ml-auto font-bold text-amber-400 font-mono">
+                                  {fmt(ownerCalc.total)} ₴
+                                </span>
                               </div>
-                            </div>
 
-                            <CheckboxToggle
-                              checked={form.has_supplement}
-                              label="Є доплата"
-                              onToggle={() => setSalaryForms(s => ({
-                                ...s,
-                                [row.staff_member_id]: {
-                                  ...s[row.staff_member_id],
-                                  has_supplement: !s[row.staff_member_id].has_supplement,
-                                }
-                              }))}
-                            />
-
-                            {form.has_supplement && (
-                              <div>
-                                <label className="label-dark">Цільова сума на руки</label>
-                                <div className="relative">
-                                  <input type="number" step="0.01" min="0"
-                                    value={form.target_net}
-                                    onChange={e => setSalaryForms(s => ({
-                                      ...s,
-                                      [row.staff_member_id]: {
-                                        ...s[row.staff_member_id],
-                                        target_net: e.target.value,
-                                      }
-                                    }))}
-                                    className="input-dark pr-8 w-full"
-                                    placeholder="0.00"
-                                  />
-                                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 text-xs">₴</span>
+                              {/* 1 — Кошти за власні декларації */}
+                              <div className="bg-dark-400/40 rounded-xl p-4 space-y-2 mb-3">
+                                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                                  Кошти за власні декларації
+                                </p>
+                                <CalcRow label="Брутто НСЗУ (власник)" value={data.owner.nhsu_brutto} color="text-white" />
+                                <CalcRow label="÷ 2" value={data.owner.nhsu_brutto / 2} color="text-amber-400" />
+                                <CalcRow label="ЄП (всі лікарі)" value={data.owner.ep_all} color="text-red-400" info="відрахування" />
+                                <CalcRow label="ВЗ (всі лікарі)" value={data.owner.vz_all} color="text-red-400" info="відрахування" />
+                                <CalcRow label="ЄСВ власника" value={data.owner.esv_owner} color="text-red-400" info="відрахування" />
+                                <div className="border-t border-dark-50/10 pt-2">
+                                  <CalcRow label="= × 90%" value={ownerCalc.ownDeclarations} color="text-emerald-400" bold />
                                 </div>
                               </div>
-                            )}
 
-                            {row.role === "doctor" && (
-                              <>
-                                <CheckboxToggle
-                                  checked={form.paid_services_from_module}
-                                  label="Оплата за платні послуги"
-                                  onToggle={() => setSalaryForms(s => ({
-                                    ...s,
-                                    [row.staff_member_id]: {
-                                      ...s[row.staff_member_id],
-                                      paid_services_from_module:
-                                        !s[row.staff_member_id].paid_services_from_module,
-                                    }
-                                  }))}
+                              {/* 2 — Кошти за декларації обраного найманого лікаря */}
+                              {data.owner.hired_doctors.length > 0 && (
+                                <div className="bg-dark-400/40 rounded-xl p-4 space-y-3 mb-3">
+                                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                    Кошти за декларації найманого лікаря
+                                  </p>
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                      <label className="label-dark">Оберіть лікаря</label>
+                                      <select
+                                        value={selectedHiredDoctorId ?? ""}
+                                        onChange={e => {
+                                          const id = e.target.value ? parseInt(e.target.value) : null;
+                                          setSelectedHiredDoctorId(id);
+                                          localStorage.setItem("owner_hired_doctor_id", id ? String(id) : "");
+                                        }}
+                                        className="input-dark w-full"
+                                      >
+                                        <option value="">— Оберіть лікаря —</option>
+                                        {data.owner.hired_doctors.map(d => (
+                                          <option key={d.doctor_id} value={d.doctor_id}>{d.doctor_name}</option>
+                                        ))}
+                                      </select>
+                                    </div>
+                                    <div>
+                                      <label className="label-dark">Медична сестра</label>
+                                      <select
+                                        value={selectedHiredNurseId ?? ""}
+                                        onChange={e => {
+                                          const id = e.target.value ? parseInt(e.target.value) : null;
+                                          setSelectedHiredNurseId(id);
+                                          localStorage.setItem("owner_hired_nurse_id", id ? String(id) : "");
+                                        }}
+                                        className="input-dark w-full"
+                                      >
+                                        <option value="">— Оберіть сестру —</option>
+                                        {nurses.map(n => (
+                                          <option key={n.staff_member_id} value={n.staff_member_id}>{n.full_name}</option>
+                                        ))}
+                                      </select>
+                                    </div>
+                                  </div>
+                                  {hd && nurseRow ? (
+                                    <div className="space-y-2 pt-2 border-t border-dark-50/10">
+                                      <CalcRow label={`Брутто НСЗУ (${hd.doctor_name})`} value={hd.nhsu_brutto} color="text-white" />
+                                      <CalcRow label="ЄП лікаря" value={hd.nhsu_ep} color="text-red-400" info="відрахування" />
+                                      <CalcRow label="ВЗ лікаря" value={hd.nhsu_vz} color="text-red-400" info="відрахування" />
+                                      <CalcRow label="ЗП лікаря (витрати)" value={hd.staff_total_employer_cost} color="text-red-400" info="відрахування" />
+                                      <CalcRow label={`ЗП сестри (${nurseRow.full_name})`} value={nurseRow.total_employer_cost} color="text-red-400" info="відрахування" />
+                                      <div className="border-t border-dark-50/10 pt-2">
+                                        <CalcRow label="÷ 2 × 90%" value={ownerCalc.hiredDeclarations} color="text-emerald-400" bold />
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <p className="text-xs text-gray-600 italic">
+                                      Оберіть лікаря та медичну сестру для розрахунку
+                                    </p>
+                                  )}
+                                </div>
+                              )}
+
+                              {/* 3 — Оплата за платні послуги */}
+                              <div className="bg-dark-400/40 rounded-xl p-4 space-y-2 mb-3">
+                                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                                  Оплата за платні послуги
+                                </p>
+                                <CalcRow
+                                  label="Дохід лікаря (з модуля)"
+                                  value={data.owner.paid_services_income}
+                                  color="text-blue-400"
+                                  locked
                                 />
+                              </div>
+
+                              {/* Підсумок власника */}
+                              <div className="flex items-center justify-between pt-2 border-t border-amber-500/20">
+                                <p className="text-sm font-semibold text-gray-300">Разом власнику за місяць</p>
+                                <p className="font-bold text-amber-400 font-mono text-lg">{fmt(ownerCalc.total)} ₴</p>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })()}
+
+                      {/* ── Найманий персонал-лікарі ── */}
+                      <div className="divide-y divide-dark-50/5">
+                        {data.salary.filter(r => r.role === "doctor" && !r.is_owner).map((row) => {
+                          const form = salaryForms[row.staff_member_id];
+                          if (!form) return null;
+                          const calc  = calcSalary(form);
+                          const dirty = isSalaryDirty(row.staff_member_id, row);
+                          return (
+                            <div key={row.staff_member_id} className="p-5">
+                              {/* Заголовок рядка */}
+                              <div className="flex items-start justify-between mb-4 gap-2">
                                 <div>
-                                  <label className="label-dark">Індивідуальні доплати</label>
-                                  <div className="relative">
-                                    <input type="number" step="0.01" min="0"
-                                      value={form.individual_bonus}
-                                      onChange={e => setSalaryForms(s => ({
-                                        ...s,
-                                        [row.staff_member_id]: {
-                                          ...s[row.staff_member_id],
-                                          individual_bonus: e.target.value,
-                                        }
-                                      }))}
-                                      className="input-dark pr-8 w-full"
-                                      placeholder="0.00"
-                                    />
-                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 text-xs">₴</span>
+                                  <p className="font-semibold text-white text-sm">{row.full_name}</p>
+                                  <span className="inline-block mt-1 px-2 py-0.5 text-xs rounded-lg bg-teal-500/10 text-teal-400 border border-teal-500/20">
+                                    Лікар
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2 shrink-0">
+                                  <button
+                                    onClick={() => {
+                                      const sm = staffList.find(s => s.id === row.staff_member_id);
+                                      setStaffModal({
+                                        open: true, isEdit: true, id: row.staff_member_id,
+                                        fullName: sm?.full_name ?? row.full_name,
+                                        position: sm?.position ?? "",
+                                        role:     row.role,
+                                        doctorId: sm?.doctor_id ?? null,
+                                        saving:   false,
+                                      });
+                                    }}
+                                    className="p-1.5 rounded-lg text-gray-600 hover:text-purple-400 hover:bg-purple-500/10 transition-all"
+                                    title="Редагувати"
+                                  >
+                                    <Edit2 size={14} />
+                                  </button>
+                                  <button
+                                    onClick={() => deleteStaff(row.staff_member_id, row.full_name)}
+                                    className="p-1.5 rounded-lg text-gray-700 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                                    title="Видалити"
+                                  >
+                                    <Trash2 size={14} />
+                                  </button>
+                                  <div className="text-right">
+                                    <p className="text-xs text-gray-500">Витрати роботодавця</p>
+                                    <p className="font-bold text-purple-400 font-mono text-base">{fmt(calc.total_employer)} ₴</p>
                                   </div>
                                 </div>
-                              </>
-                            )}
-                          </div>
+                              </div>
 
-                          {/* Auto-calculated */}
-                          <div className="bg-dark-400/30 rounded-xl p-4 space-y-2">
-                            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
-                              Автоматичний розрахунок
-                            </p>
-                            <CalcRow label="Брутто" value={parseFloat(form.brutto) || 0} color="text-white" />
-                            <CalcRow
-                              label={`ПДФО ${data.settings.pdfo_rate}%`}
-                              value={calc.pdfo}
-                              color="text-gray-500"
-                              info="Інформаційно"
-                            />
-                            <CalcRow
-                              label={`ВЗ із ЗП ${data.settings.vz_zp_rate}%`}
-                              value={calc.vz_zp}
-                              color="text-gray-500"
-                              info="Інформаційно"
-                            />
-                            <div className="border-t border-dark-50/10 pt-2">
-                              <CalcRow label="Нетто (на руки)" value={calc.netto} color="text-emerald-400" bold />
+                              {/* НСЗУ банер (якщо є дані) */}
+                              {row.nhsu_brutto > 0 && (
+                                <div className="mb-4 p-3 rounded-xl bg-teal-500/5 border border-teal-500/20">
+                                  <p className="text-xs font-semibold text-teal-400 mb-2">НСЗУ — декларації</p>
+                                  <div className="flex flex-wrap gap-4">
+                                    <div>
+                                      <p className="text-xs text-gray-500">Брутто</p>
+                                      <p className="text-sm font-mono text-white">{fmt(row.nhsu_brutto)} ₴</p>
+                                    </div>
+                                    <div>
+                                      <p className="text-xs text-gray-500">ЄП</p>
+                                      <p className="text-sm font-mono text-red-400">−{fmt(row.nhsu_ep)} ₴</p>
+                                    </div>
+                                    <div>
+                                      <p className="text-xs text-gray-500">ВЗ</p>
+                                      <p className="text-sm font-mono text-red-400">−{fmt(row.nhsu_vz)} ₴</p>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Форма зарплати */}
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="space-y-3">
+                                  <div>
+                                    <label className="label-dark">Офіційна зарплата (брутто)</label>
+                                    <div className="relative">
+                                      <input type="number" step="0.01" min="0"
+                                        value={form.brutto}
+                                        onChange={e => setSalaryForms(s => ({ ...s, [row.staff_member_id]: { ...s[row.staff_member_id], brutto: e.target.value } }))}
+                                        className="input-dark pr-8 w-full" placeholder="0.00"
+                                      />
+                                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 text-xs">₴</span>
+                                    </div>
+                                  </div>
+                                  <CheckboxToggle
+                                    checked={form.has_supplement} label="Є доплата"
+                                    onToggle={() => setSalaryForms(s => ({ ...s, [row.staff_member_id]: { ...s[row.staff_member_id], has_supplement: !s[row.staff_member_id].has_supplement } }))}
+                                  />
+                                  {form.has_supplement && (
+                                    <div>
+                                      <label className="label-dark">Цільова сума на руки</label>
+                                      <div className="relative">
+                                        <input type="number" step="0.01" min="0"
+                                          value={form.target_net}
+                                          onChange={e => setSalaryForms(s => ({ ...s, [row.staff_member_id]: { ...s[row.staff_member_id], target_net: e.target.value } }))}
+                                          className="input-dark pr-8 w-full" placeholder="0.00"
+                                        />
+                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 text-xs">₴</span>
+                                      </div>
+                                    </div>
+                                  )}
+                                  <CheckboxToggle
+                                    checked={form.paid_services_from_module}
+                                    label="Оплата за платні послуги"
+                                    onToggle={() => setSalaryForms(s => ({ ...s, [row.staff_member_id]: { ...s[row.staff_member_id], paid_services_from_module: !s[row.staff_member_id].paid_services_from_module } }))}
+                                  />
+                                  <div>
+                                    <label className="label-dark">Індивідуальні доплати</label>
+                                    <div className="relative">
+                                      <input type="number" step="0.01" min="0"
+                                        value={form.individual_bonus}
+                                        onChange={e => setSalaryForms(s => ({ ...s, [row.staff_member_id]: { ...s[row.staff_member_id], individual_bonus: e.target.value } }))}
+                                        className="input-dark pr-8 w-full" placeholder="0.00"
+                                      />
+                                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 text-xs">₴</span>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="bg-dark-400/30 rounded-xl p-4 space-y-2">
+                                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Автоматичний розрахунок</p>
+                                  <CalcRow label="Брутто" value={parseFloat(form.brutto) || 0} color="text-white" />
+                                  <CalcRow label={`ПДФО ${data.settings.pdfo_rate}%`} value={calc.pdfo} color="text-gray-500" info="Інформаційно" />
+                                  <CalcRow label={`ВЗ із ЗП ${data.settings.vz_zp_rate}%`} value={calc.vz_zp} color="text-gray-500" info="Інформаційно" />
+                                  <div className="border-t border-dark-50/10 pt-2">
+                                    <CalcRow label="Нетто (на руки)" value={calc.netto} color="text-emerald-400" bold />
+                                  </div>
+                                  <CalcRow label={`ЄСВ роботодавця ${data.settings.esv_employer_rate}%`} value={calc.esv} color="text-red-400" />
+                                  {form.has_supplement && calc.supplement > 0 && (
+                                    <CalcRow label="Доплата до цільової суми" value={calc.supplement} color="text-amber-400" />
+                                  )}
+                                  {form.paid_services_from_module && (
+                                    <CalcRow label="Оплата за послуги (модуль)" value={row.paid_services_income} color="text-blue-400" locked />
+                                  )}
+                                  {(parseFloat(form.individual_bonus) || 0) > 0 && (
+                                    <CalcRow label="Індивідуальна доплата" value={parseFloat(form.individual_bonus) || 0} color="text-amber-400" />
+                                  )}
+                                  <div className="border-t border-dark-50/10 pt-2">
+                                    <CalcRow label="Витрати роботодавця" value={calc.total_employer} color="text-purple-400" bold />
+                                  </div>
+                                </div>
+                              </div>
+                              {dirty && (
+                                <div className="mt-4 flex justify-end">
+                                  <button onClick={() => saveSalary(row.staff_member_id)} disabled={form.saving} className="btn-accent text-sm py-2 px-5 flex items-center gap-2">
+                                    {form.saving ? <RefreshCw size={14} className="animate-spin" /> : <Save size={14} />}
+                                    Зберегти
+                                  </button>
+                                </div>
+                              )}
                             </div>
-                            <CalcRow
-                              label={`ЄСВ роботодавця ${data.settings.esv_employer_rate}%`}
-                              value={calc.esv}
-                              color="text-red-400"
-                            />
-                            {form.has_supplement && calc.supplement > 0 && (
-                              <CalcRow
-                                label="Доплата до цільової суми"
-                                value={calc.supplement}
-                                color="text-amber-400"
-                              />
-                            )}
-                            {row.role === "doctor" && form.paid_services_from_module && (
-                              <CalcRow
-                                label="Оплата за послуги (модуль)"
-                                value={row.paid_services_income}
-                                color="text-blue-400"
-                                locked
-                              />
-                            )}
-                            {row.role === "doctor" && (parseFloat(form.individual_bonus) || 0) > 0 && (
-                              <CalcRow
-                                label="Індивідуальна доплата"
-                                value={parseFloat(form.individual_bonus) || 0}
-                                color="text-amber-400"
-                              />
-                            )}
-                            <div className="border-t border-dark-50/10 pt-2">
-                              <CalcRow
-                                label="Витрати роботодавця"
-                                value={calc.total_employer}
-                                color="text-purple-400"
-                                bold
-                              />
-                            </div>
-                          </div>
-                        </div>
-
-                        {dirty && (
-                          <div className="mt-4 flex justify-end">
-                            <button
-                              onClick={() => saveSalary(row.staff_member_id)}
-                              disabled={form.saving}
-                              className="btn-accent text-sm py-2 px-5 flex items-center gap-2"
-                            >
-                              {form.saving
-                                ? <RefreshCw size={14} className="animate-spin" />
-                                : <Save size={14} />
-                              }
-                              Зберегти
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* ── Блок Власника ФОП ── */}
-              {data.owner && (() => {
-                const ownerCalc = calcOwnerSalary();
-                const nurses = data.salary.filter(s => s.role === "nurse");
-                const hd: HiredDoctorInfo | undefined = data.owner.hired_doctors.find(
-                  d => d.doctor_id === selectedHiredDoctorId
-                );
-                const nurseRow = data.salary.find(s => s.staff_member_id === selectedHiredNurseId);
-                return (
-                  <div className="border-t-2 border-amber-500/30">
-                    <div className="px-5 py-4 bg-amber-500/5">
-                      <div className="flex items-center gap-2 mb-4">
-                        <Building2 size={16} className="text-amber-400" />
-                        <p className="font-semibold text-amber-300 text-sm">
-                          {data.owner.doctor_name} — Власник ФОП
-                        </p>
-                        <span className="ml-auto font-bold text-amber-400 font-mono">
-                          {fmt(ownerCalc.total)} ₴
-                        </span>
-                      </div>
-
-                      {/* 1 — Кошти за власні декларації */}
-                      <div className="bg-dark-400/40 rounded-xl p-4 space-y-2 mb-3">
-                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
-                          Кошти за власні декларації
-                        </p>
-                        <CalcRow label="Брутто НСЗУ (власник)" value={data.owner.nhsu_brutto} color="text-white" />
-                        <CalcRow label="÷ 2" value={data.owner.nhsu_brutto / 2} color="text-amber-400" />
-                        <CalcRow label="ЄП (всі лікарі)" value={data.owner.ep_all} color="text-red-400" info="відрахування" />
-                        <CalcRow label="ВЗ (всі лікарі)" value={data.owner.vz_all} color="text-red-400" info="відрахування" />
-                        <CalcRow label="ЄСВ власника" value={data.owner.esv_owner} color="text-red-400" info="відрахування" />
-                        <div className="border-t border-dark-50/10 pt-2">
-                          <CalcRow label="= × 90%" value={ownerCalc.ownDeclarations} color="text-emerald-400" bold />
-                        </div>
-                      </div>
-
-                      {/* 2 — Кошти за декларації обраного лікаря */}
-                      <div className="bg-dark-400/40 rounded-xl p-4 space-y-3 mb-3">
-                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                          Кошти за декларації обраного лікаря
-                        </p>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <div>
-                            <label className="label-dark">Обраний лікар</label>
-                            <select
-                              value={selectedHiredDoctorId ?? ""}
-                              onChange={e => {
-                                const id = e.target.value ? parseInt(e.target.value) : null;
-                                setSelectedHiredDoctorId(id);
-                                localStorage.setItem("owner_hired_doctor_id", id ? String(id) : "");
-                              }}
-                              className="input-dark w-full"
-                            >
-                              <option value="">— Оберіть лікаря —</option>
-                              {data.owner.hired_doctors.map(d => (
-                                <option key={d.doctor_id} value={d.doctor_id}>{d.doctor_name}</option>
-                              ))}
-                            </select>
-                          </div>
-                          <div>
-                            <label className="label-dark">Обрана медична сестра</label>
-                            <select
-                              value={selectedHiredNurseId ?? ""}
-                              onChange={e => {
-                                const id = e.target.value ? parseInt(e.target.value) : null;
-                                setSelectedHiredNurseId(id);
-                                localStorage.setItem("owner_hired_nurse_id", id ? String(id) : "");
-                              }}
-                              className="input-dark w-full"
-                            >
-                              <option value="">— Оберіть сестру —</option>
-                              {nurses.map(n => (
-                                <option key={n.staff_member_id} value={n.staff_member_id}>{n.full_name}</option>
-                              ))}
-                            </select>
-                          </div>
-                        </div>
-                        {hd && nurseRow ? (
-                          <div className="space-y-2 pt-2 border-t border-dark-50/10">
-                            <CalcRow label={`Брутто НСЗУ (${hd.doctor_name})`} value={hd.nhsu_brutto} color="text-white" />
-                            <CalcRow label="ЄП лікаря" value={hd.nhsu_ep} color="text-red-400" info="відрахування" />
-                            <CalcRow label="ВЗ лікаря" value={hd.nhsu_vz} color="text-red-400" info="відрахування" />
-                            <CalcRow label="ЗП лікаря (витрати)" value={hd.staff_total_employer_cost} color="text-red-400" info="відрахування" />
-                            <CalcRow label={`ЗП сестри (${nurseRow.full_name})`} value={nurseRow.total_employer_cost} color="text-red-400" info="відрахування" />
-                            <div className="border-t border-dark-50/10 pt-2">
-                              <CalcRow label="÷ 2 × 90%" value={ownerCalc.hiredDeclarations} color="text-emerald-400" bold />
-                            </div>
-                          </div>
-                        ) : (
-                          <p className="text-xs text-gray-600 italic">
-                            {data.owner.hired_doctors.length === 0
-                              ? "Немає даних НСЗУ по найманих лікарях за цей місяць"
-                              : "Оберіть лікаря та медичну сестру для розрахунку"}
-                          </p>
-                        )}
-                      </div>
-
-                      {/* 3 — Оплата за платні послуги */}
-                      <div className="bg-dark-400/40 rounded-xl p-4 space-y-2 mb-3">
-                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
-                          Оплата за платні послуги
-                        </p>
-                        <CalcRow
-                          label="Дохід лікаря (з модуля)"
-                          value={data.owner.paid_services_income}
-                          color="text-blue-400"
-                          locked
-                        />
-                      </div>
-
-                      {/* Підсумок */}
-                      <div className="flex items-center justify-between pt-2 border-t border-amber-500/20">
-                        <p className="text-sm font-semibold text-gray-300">Разом власнику за місяць</p>
-                        <p className="font-bold text-amber-400 font-mono text-lg">{fmt(ownerCalc.total)} ₴</p>
+                          );
+                        })}
                       </div>
                     </div>
-                  </div>
-                );
-              })()}
+                  )}
 
+                  {/* ══════════════════════════════════════════
+                      БЛОК: ПЕРСОНАЛ (медсестри та інші)
+                  ══════════════════════════════════════════ */}
+                  {data.salary.some(r => r.role !== "doctor") && (
+                    <div>
+                      <div className="px-5 py-2.5 bg-dark-400/30 border-b border-dark-50/8 flex items-center gap-2">
+                        <Users size={13} className="text-purple-400" />
+                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Медичний персонал</span>
+                      </div>
+                      <div className="divide-y divide-dark-50/5">
+                        {data.salary.filter(r => r.role !== "doctor").map((row) => {
+                          const form = salaryForms[row.staff_member_id];
+                          if (!form) return null;
+                          const calc  = calcSalary(form);
+                          const dirty = isSalaryDirty(row.staff_member_id, row);
+                          return (
+                            <div key={row.staff_member_id} className="p-5">
+                              <div className="flex items-start justify-between mb-4 gap-2">
+                                <div>
+                                  <p className="font-semibold text-white text-sm">{row.full_name}</p>
+                                  <span className="inline-block mt-1 px-2 py-0.5 text-xs rounded-lg bg-dark-400 text-gray-400 border border-dark-50/10">
+                                    {ROLE_LABELS[row.role] ?? row.role}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2 shrink-0">
+                                  <button
+                                    onClick={() => {
+                                      const sm = staffList.find(s => s.id === row.staff_member_id);
+                                      setStaffModal({
+                                        open: true, isEdit: true, id: row.staff_member_id,
+                                        fullName: sm?.full_name ?? row.full_name,
+                                        position: sm?.position ?? "",
+                                        role:     row.role,
+                                        doctorId: sm?.doctor_id ?? null,
+                                        saving:   false,
+                                      });
+                                    }}
+                                    className="p-1.5 rounded-lg text-gray-600 hover:text-purple-400 hover:bg-purple-500/10 transition-all"
+                                    title="Редагувати"
+                                  >
+                                    <Edit2 size={14} />
+                                  </button>
+                                  <button
+                                    onClick={() => deleteStaff(row.staff_member_id, row.full_name)}
+                                    className="p-1.5 rounded-lg text-gray-700 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                                    title="Видалити"
+                                  >
+                                    <Trash2 size={14} />
+                                  </button>
+                                  <div className="text-right">
+                                    <p className="text-xs text-gray-500">Витрати роботодавця</p>
+                                    <p className="font-bold text-purple-400 font-mono text-base">{fmt(calc.total_employer)} ₴</p>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="space-y-3">
+                                  <div>
+                                    <label className="label-dark">Офіційна зарплата (брутто)</label>
+                                    <div className="relative">
+                                      <input type="number" step="0.01" min="0"
+                                        value={form.brutto}
+                                        onChange={e => setSalaryForms(s => ({ ...s, [row.staff_member_id]: { ...s[row.staff_member_id], brutto: e.target.value } }))}
+                                        className="input-dark pr-8 w-full" placeholder="0.00"
+                                      />
+                                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 text-xs">₴</span>
+                                    </div>
+                                  </div>
+                                  <CheckboxToggle
+                                    checked={form.has_supplement} label="Є доплата"
+                                    onToggle={() => setSalaryForms(s => ({ ...s, [row.staff_member_id]: { ...s[row.staff_member_id], has_supplement: !s[row.staff_member_id].has_supplement } }))}
+                                  />
+                                  {form.has_supplement && (
+                                    <div>
+                                      <label className="label-dark">Цільова сума на руки</label>
+                                      <div className="relative">
+                                        <input type="number" step="0.01" min="0"
+                                          value={form.target_net}
+                                          onChange={e => setSalaryForms(s => ({ ...s, [row.staff_member_id]: { ...s[row.staff_member_id], target_net: e.target.value } }))}
+                                          className="input-dark pr-8 w-full" placeholder="0.00"
+                                        />
+                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 text-xs">₴</span>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="bg-dark-400/30 rounded-xl p-4 space-y-2">
+                                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Автоматичний розрахунок</p>
+                                  <CalcRow label="Брутто" value={parseFloat(form.brutto) || 0} color="text-white" />
+                                  <CalcRow label={`ПДФО ${data.settings.pdfo_rate}%`} value={calc.pdfo} color="text-gray-500" info="Інформаційно" />
+                                  <CalcRow label={`ВЗ із ЗП ${data.settings.vz_zp_rate}%`} value={calc.vz_zp} color="text-gray-500" info="Інформаційно" />
+                                  <div className="border-t border-dark-50/10 pt-2">
+                                    <CalcRow label="Нетто (на руки)" value={calc.netto} color="text-emerald-400" bold />
+                                  </div>
+                                  <CalcRow label={`ЄСВ роботодавця ${data.settings.esv_employer_rate}%`} value={calc.esv} color="text-red-400" />
+                                  {form.has_supplement && calc.supplement > 0 && (
+                                    <CalcRow label="Доплата до цільової суми" value={calc.supplement} color="text-amber-400" />
+                                  )}
+                                  <div className="border-t border-dark-50/10 pt-2">
+                                    <CalcRow label="Витрати роботодавця" value={calc.total_employer} color="text-purple-400" bold />
+                                  </div>
+                                </div>
+                              </div>
+                              {dirty && (
+                                <div className="mt-4 flex justify-end">
+                                  <button onClick={() => saveSalary(row.staff_member_id)} disabled={form.saving} className="btn-accent text-sm py-2 px-5 flex items-center gap-2">
+                                    {form.saving ? <RefreshCw size={14} className="animate-spin" /> : <Save size={14} />}
+                                    Зберегти
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* ── Футер ── */}
               <div className="flex items-center justify-between px-5 py-3 bg-dark-400/20 border-t border-dark-50/10">
-                <button
-                  onClick={() => setStaffModal({
-                    open: true, isEdit: false, id: null,
-                    fullName: "", position: "", role: "other", doctorId: null, saving: false,
-                  })}
-                  className="flex items-center gap-1.5 text-xs text-accent-400 hover:text-accent-300 transition-colors"
-                >
-                  <UserPlus size={13} /> Додати співробітника
-                </button>
+                <span className="text-xs text-gray-600">Персонал налаштовується в розділі Налаштування</span>
                 <span className="font-bold text-purple-400 font-mono">{fmt(data.totals.salary_total)} ₴</span>
               </div>
             </section>
