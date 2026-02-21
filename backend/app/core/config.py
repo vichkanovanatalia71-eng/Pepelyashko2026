@@ -1,4 +1,16 @@
+import os
+
 from pydantic_settings import BaseSettings
+
+
+def _resolve_database_url() -> str:
+    """Railway injects DATABASE_URL as postgres:// — convert to asyncpg."""
+    url = os.getenv("DATABASE_URL", "postgresql+asyncpg://postgres:postgres@db:5432/pepelyashko")
+    if url.startswith("postgres://"):
+        url = url.replace("postgres://", "postgresql+asyncpg://", 1)
+    elif url.startswith("postgresql://"):
+        url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+    return url
 
 
 class Settings(BaseSettings):
@@ -6,15 +18,15 @@ class Settings(BaseSettings):
     debug: bool = False
 
     # Database
-    database_url: str = "postgresql+asyncpg://postgres:postgres@db:5432/pepelyashko"
+    database_url: str = _resolve_database_url()
 
     # Auth
     secret_key: str = "change-me-in-production"
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 480
 
-    # CORS
-    cors_origins: list[str] = ["http://localhost:5173", "http://localhost:3000"]
+    # CORS — Railway frontend proxies via nginx, so allow all origins
+    cors_origins: list[str] = ["*"]
 
     # Ukrainian FOP tax rates (3rd group, single tax)
     fop_tax_rate: float = 0.05  # 5% єдиний податок
