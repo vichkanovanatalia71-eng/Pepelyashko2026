@@ -33,6 +33,15 @@ app.include_router(budget.router, prefix="/api/budget", tags=["budget"])
 app.include_router(monthly_expenses.router, prefix="/api/monthly-expenses", tags=["monthly-expenses"])
 
 
+@app.get("/")
+async def root():
+    return {
+        "message": "Pepelyashko API v0.1.0",
+        "status": "running",
+        "docs": "/docs",
+    }
+
+
 @app.get("/api/health")
 async def health_check():
     return {"status": "ok"}
