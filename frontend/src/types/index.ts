@@ -235,6 +235,8 @@ export interface TaxBlock {
   vz_rate: number;
   ep: number;
   vz: number;
+  esv_owner: number;
+  esv_employer: number;
 }
 
 export interface ExpenseTotals {

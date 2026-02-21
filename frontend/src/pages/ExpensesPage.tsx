@@ -817,6 +817,8 @@ export default function ExpensesPage() {
       ...otherExpenses.map(r => ["Інші", r.name, r.amount]),
       ["Податки", `ЄП (${data.taxes.ep_rate}%)`, data.taxes.ep],
       ["Податки", `ВЗ (${data.taxes.vz_rate}%)`, data.taxes.vz],
+      ["Податки", "ЄСВ власника (щомісячно)", data.taxes.esv_owner],
+      ["Податки", `ЄСВ роботодавця (${data.settings.esv_employer_rate}%)`, data.taxes.esv_employer],
       [],
       ["", "ВСЬОГО", grandWithOther],
       ["", "Дохід", data.totals.income],
@@ -853,6 +855,8 @@ export default function ExpensesPage() {
         })),
         { name: `ЄП (${data.taxes.ep_rate}%)`,   category: "taxes", amount: data.taxes.ep },
         { name: `ВЗ (${data.taxes.vz_rate}%)`,   category: "taxes", amount: data.taxes.vz },
+        { name: "ЄСВ власника",                   category: "taxes", amount: data.taxes.esv_owner },
+        { name: `ЄСВ роботодавця (${data.settings.esv_employer_rate}%)`, category: "taxes", amount: data.taxes.esv_employer },
       ]
     : [];
 
@@ -1980,6 +1984,8 @@ export default function ExpensesPage() {
                   <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Нараховані податки</p>
                   <TaxRow label={`ЄП (${data.taxes.ep_rate}%)`}          value={data.taxes.ep} />
                   <TaxRow label={`ВЗ від доходу (${data.taxes.vz_rate}%)`} value={data.taxes.vz} />
+                  <TaxRow label="ЄСВ власника (щомісячно)"               value={data.taxes.esv_owner} />
+                  <TaxRow label={`ЄСВ роботодавця (${data.settings.esv_employer_rate}%)`} value={data.taxes.esv_employer} />
                   <div className="border-t border-dark-50/10 pt-2">
                     <TaxRow label="Разом податки" value={data.totals.tax_total} bold color="text-red-400" />
                   </div>
@@ -1994,6 +2000,7 @@ export default function ExpensesPage() {
                       { label: "ЄСВ роботодавця", value: `${data.settings.esv_employer_rate}%` },
                       { label: "ЄП", value: `${data.taxes.ep_rate}%` },
                       { label: "ВЗ від доходу", value: `${data.taxes.vz_rate}%` },
+                      { label: "ЄСВ власника", value: `${fmt(data.taxes.esv_owner)} ₴` },
                     ].map(item => (
                       <div key={item.label} className="bg-dark-500/40 rounded-lg p-3 text-center">
                         <p className="text-xs text-gray-500 mb-1">{item.label}</p>
