@@ -25,6 +25,12 @@ import {
   CalendarDays,
   ImagePlus,
   AlertCircle,
+  FileSpreadsheet,
+  Eye,
+  Target,
+  Activity,
+  ArrowUpRight,
+  ArrowDownRight,
 } from "lucide-react";
 import {
   LoadingSpinner,
@@ -44,6 +50,11 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  Line,
+  AreaChart,
+  Area,
+  Legend,
+  ComposedChart,
 } from "recharts";
 import api from "../api/client";
 import type {
@@ -145,6 +156,23 @@ interface DetailRow {
   amount: number;
 }
 
+interface AnnualMonthData {
+  month: number;
+  fixed: number;
+  salary: number;
+  taxes: number;
+  other: number;
+  income: number;
+  total: number;
+  remaining: number;
+}
+
+interface KpiModalState {
+  open: boolean;
+  type: "fixed" | "salary" | "other" | "taxes" | "total" | "remaining" | "";
+  title: string;
+}
+
 // ── Helpers ────────────────────────────────────────────────────────
 
 function initSalaryForm(row: SalaryExpenseRow): SalaryFormState {
@@ -222,16 +250,25 @@ function SummaryRow({
 }
 
 function KpiCard({
-  label, value, color, icon,
+  label, value, color, icon, onClick,
 }: {
-  label: string; value: number; color: string; icon: React.ReactNode;
+  label: string; value: number; color: string; icon: React.ReactNode; onClick?: () => void;
 }) {
   return (
-    <div className="card-neo kpi-3d-hover p-4 flex flex-col gap-2">
+    <div
+      className={`card-neo kpi-3d-hover p-4 flex flex-col gap-2 ${onClick ? "cursor-pointer hover:border-accent-500/40 transition-all" : ""}`}
+      onClick={onClick}
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={onClick ? (e) => { if (e.key === "Enter" || e.key === " ") onClick(); } : undefined}
+    >
       <div className="flex items-center justify-between">
         <span className="text-xs text-gray-500 font-medium">{label}</span>
-        <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${color}`} aria-hidden="true">
-          {icon}
+        <div className="flex items-center gap-1.5">
+          {onClick && <Eye size={11} className="text-gray-600" />}
+          <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${color}`} aria-hidden="true">
+            {icon}
+          </div>
         </div>
       </div>
       <p className="font-bold text-lg font-mono leading-tight tabular-nums">
@@ -407,6 +444,13 @@ export default function ExpensesPage() {
   }>({ open: false, text: "", file: null, loading: false, result: null });
   const aiFileRef = useRef<HTMLInputElement>(null);
 
+  // ── Annual analytics data (for "all" mode) ──
+  const [annualMonths, setAnnualMonths] = useState<AnnualMonthData[]>([]);
+  const [annualLoading, setAnnualLoading] = useState(false);
+
+  // ── KPI detail modal ──
+  const [kpiModal, setKpiModal] = useState<KpiModalState>({ open: false, type: "", title: "" });
+
   // ── Change tab with persistence
   function changeTab(tab: TabId) {
     setActiveTab(tab);
@@ -502,7 +546,7 @@ export default function ExpensesPage() {
         const { data: resp } = await api.get<MonthlyExpenseData>("/monthly-expenses/", {
           params: { year: m.year, month: m.month },
         });
-        const otherTotal = 0; // we'll try to get other separately
+        const otherTotal = 0;
         points.push({
           label: MONTH_SHORT[m.month - 1],
           fixed:  resp.totals.fixed_total,
@@ -517,7 +561,44 @@ export default function ExpensesPage() {
     setTrendData(points);
   }, [year, month]);
 
+  // ── Load annual data for analytics ────────────────────────────
+  const loadAnnualData = useCallback(async () => {
+    setAnnualLoading(true);
+    try {
+      const promises = Array.from({ length: 12 }, (_, i) => {
+        const m = i + 1;
+        return Promise.all([
+          api.get<MonthlyExpenseData>("/monthly-expenses/", { params: { year, month: m } }).then(r => r.data).catch(() => null),
+          api.get<OtherExpense[]>("/monthly-expenses/other", { params: { year, month: m } }).then(r => r.data).catch(() => []),
+        ]);
+      });
+      const results = await Promise.all(promises);
+      const annual: AnnualMonthData[] = results.map(([d, others], i) => {
+        const otherSum = (others as OtherExpense[]).reduce((s, e) => s + e.amount, 0);
+        if (!d) return { month: i + 1, fixed: 0, salary: 0, taxes: 0, other: 0, income: 0, total: 0, remaining: 0 };
+        const md = d as MonthlyExpenseData;
+        const total = md.totals.fixed_total + md.totals.salary_total + md.totals.tax_total + otherSum;
+        return {
+          month: i + 1,
+          fixed: md.totals.fixed_total,
+          salary: md.totals.salary_total,
+          taxes: md.totals.tax_total,
+          other: otherSum,
+          income: md.totals.income,
+          total,
+          remaining: md.totals.income - total,
+        };
+      });
+      setAnnualMonths(annual);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setAnnualLoading(false);
+    }
+  }, [year]);
+
   useEffect(() => { load(); loadOther(); loadStaff(); loadDoctors(); loadTrend(); loadPeriods(); }, [load, loadOther, loadStaff, loadDoctors, loadTrend, loadPeriods]);
+  useEffect(() => { if (viewMode === "all") loadAnnualData(); }, [viewMode, loadAnnualData]);
 
   // ── Month navigation ──────────────────────────────────────────
   function prevMonth() {
@@ -811,29 +892,140 @@ export default function ExpensesPage() {
     changeTab("fixed");
   }
 
-  // ── Excel export ──────────────────────────────────────────────
+  // ── Excel export (повний звіт, без ПДФО та ВЗ із ЗП) ─────────
   function exportExcel() {
     if (!data) return;
     const wb = XLSX.utils.book_new();
-    const rows: (string | number)[][] = [
-      [`Витрати за ${MONTH_NAMES[month - 1]} ${year}`],
+
+    // ── Sheet 1: Зведена таблиця ──
+    const summaryRows: (string | number)[][] = [
+      [`ЗВЕДЕНИЙ ЗВІТ ВИТРАТ — ${MONTH_NAMES[month - 1]} ${year}`],
       [],
-      ["Категорія", "Назва", "Сума (₴)"],
-      ...data.fixed.filter(r => r.amount > 0).map(r => ["Постійні", r.category_name, r.amount]),
-      ...data.salary.map(r => ["Зарплатні", r.full_name, r.total_employer_cost]),
-      ...otherExpenses.map(r => ["Інші", r.name, r.amount]),
-      ["Податки", `ЄП (${data.taxes.ep_rate}%)`, data.taxes.ep],
-      ["Податки", `ВЗ (${data.taxes.vz_rate}%)`, data.taxes.vz],
-      ["Податки", "ЄСВ власника (щомісячно)", data.taxes.esv_owner],
-      ["Податки", `ЄСВ роботодавця (${data.settings.esv_employer_rate}%)`, data.taxes.esv_employer],
+      ["РОЗДІЛ", "СТАТТЯ", "СУМА (₴)"],
       [],
-      ["", "ВСЬОГО", grandWithOther],
-      ["", "Дохід", data.totals.income],
-      ["", "Залишок", (data.totals.income) - grandWithOther],
+      ["═══ ДОХОДИ ═══", "", ""],
+      ["Дохід", "Дохід НСЗУ", data.taxes.nhsu_income],
+      ["Дохід", "Платні послуги", data.taxes.paid_services_income],
+      ["", "ЗАГАЛЬНИЙ ДОХІД", data.totals.income],
+      [],
+      ["═══ ПОСТІЙНІ ВИТРАТИ ═══", "", ""],
+      ...data.fixed.filter(r => r.amount > 0).map(r => [
+        "Постійні", `${r.category_name}${r.is_recurring ? " (постійна)" : ""}`, r.amount,
+      ] as (string | number)[]),
+      ["", "Разом постійні", data.totals.fixed_total],
+      [],
+      ["═══ ЗАРПЛАТНІ ВИТРАТИ ═══", "", ""],
     ];
-    const ws = XLSX.utils.aoa_to_sheet(rows);
-    ws["!cols"] = [{ wch: 14 }, { wch: 35 }, { wch: 16 }];
-    XLSX.utils.book_append_sheet(wb, ws, MONTH_NAMES[month - 1]);
+
+    for (const r of data.salary) {
+      const calc_esv = r.esv;
+      summaryRows.push(["Зарплата", `${r.full_name} — Брутто`, r.brutto]);
+      summaryRows.push(["Зарплата", `${r.full_name} — ЄСВ роботодавця (${data.settings.esv_employer_rate}%)`, calc_esv]);
+      if (r.supplement > 0) {
+        summaryRows.push(["Зарплата", `${r.full_name} — Доплата до цільової суми`, r.supplement]);
+      }
+      if (r.individual_bonus > 0) {
+        summaryRows.push(["Зарплата", `${r.full_name} — Індивідуальна доплата`, r.individual_bonus]);
+      }
+      if (r.paid_services_income > 0) {
+        summaryRows.push(["Зарплата", `${r.full_name} — Оплата за платні послуги`, r.paid_services_income]);
+      }
+      summaryRows.push(["Зарплата", `${r.full_name} — ВСЬОГО витрати роботодавця`, r.total_employer_cost]);
+      // НСЗУ дані
+      if (r.nhsu_brutto > 0) {
+        summaryRows.push(["Зарплата", `${r.full_name} — НСЗУ брутто`, r.nhsu_brutto]);
+        summaryRows.push(["Зарплата", `${r.full_name} — НСЗУ ЄП`, r.nhsu_ep]);
+        summaryRows.push(["Зарплата", `${r.full_name} — НСЗУ ВЗ`, r.nhsu_vz]);
+      }
+      // Нетто на руки
+      const netto = r.brutto - (r.brutto * data.settings.pdfo_rate / 100) - (r.brutto * data.settings.vz_zp_rate / 100);
+      summaryRows.push(["Зарплата", `${r.full_name} — Нетто (на руки)`, Math.round(netto * 100) / 100]);
+      summaryRows.push([]);
+    }
+    summaryRows.push(["", "Разом зарплатні", data.totals.salary_total]);
+    summaryRows.push([]);
+
+    if (otherExpenses.length > 0) {
+      summaryRows.push(["═══ ІНШІ ВИТРАТИ ═══", "", ""]);
+      for (const r of otherExpenses) {
+        summaryRows.push(["Інші", `${r.name}${r.description ? ` (${r.description})` : ""}`, r.amount]);
+      }
+      summaryRows.push(["", "Разом інші", otherTotal]);
+      summaryRows.push([]);
+    }
+
+    summaryRows.push(["═══ ПОДАТКИ ═══", "", ""]);
+    summaryRows.push(["Податки", `Єдиний податок (${data.taxes.ep_rate}%)`, data.taxes.ep]);
+    summaryRows.push(["Податки", `Військовий збір (${data.taxes.vz_rate}%)`, data.taxes.vz]);
+    summaryRows.push(["Податки", "ЄСВ власника (щомісячний)", data.taxes.esv_owner]);
+    summaryRows.push(["Податки", `ЄСВ роботодавця (${data.settings.esv_employer_rate}%)`, data.taxes.esv_employer]);
+    summaryRows.push(["", "Разом податки", data.totals.tax_total]);
+    summaryRows.push([]);
+
+    // Власник
+    if (data.owner) {
+      summaryRows.push(["═══ БЛОК ВЛАСНИКА ═══", "", ""]);
+      summaryRows.push(["Власник", data.owner.doctor_name, ""]);
+      summaryRows.push(["Власник", "НСЗУ брутто", data.owner.nhsu_brutto]);
+      summaryRows.push(["Власник", "Платні послуги (дохід лікаря)", data.owner.paid_services_income]);
+      summaryRows.push(["Власник", "ЄП всього", data.owner.ep_all]);
+      summaryRows.push(["Власник", "ВЗ всього", data.owner.vz_all]);
+      summaryRows.push(["Власник", "ЄСВ власника", data.owner.esv_owner]);
+      if (data.owner.hired_doctors.length > 0) {
+        summaryRows.push([]);
+        summaryRows.push(["Власник", "Наймані лікарі:", ""]);
+        for (const hd of data.owner.hired_doctors) {
+          summaryRows.push(["Найм. лікар", `${hd.doctor_name} — НСЗУ`, hd.nhsu_brutto]);
+          summaryRows.push(["Найм. лікар", `${hd.doctor_name} — ЄП`, hd.nhsu_ep]);
+          summaryRows.push(["Найм. лікар", `${hd.doctor_name} — ВЗ`, hd.nhsu_vz]);
+          summaryRows.push(["Найм. лікар", `${hd.doctor_name} — Витрати роботодавця`, hd.staff_total_employer_cost]);
+        }
+      }
+      summaryRows.push([]);
+    }
+
+    summaryRows.push(["═══ ПІДСУМКИ ═══", "", ""]);
+    summaryRows.push(["Підсумок", "Загальний дохід", data.totals.income]);
+    summaryRows.push(["Підсумок", "Всього витрат", grandWithOther]);
+    summaryRows.push(["Підсумок", "ЗАЛИШОК", remaining]);
+
+    // Ставки
+    summaryRows.push([]);
+    summaryRows.push(["═══ СТАВКИ ═══", "", ""]);
+    summaryRows.push(["Ставка", `ЄП`, `${data.taxes.ep_rate}%`]);
+    summaryRows.push(["Ставка", `ВЗ від доходу`, `${data.taxes.vz_rate}%`]);
+    summaryRows.push(["Ставка", `ЄСВ роботодавця`, `${data.settings.esv_employer_rate}%`]);
+    summaryRows.push(["Ставка", "ЄСВ власника (місячний)", data.taxes.esv_owner]);
+
+    const ws = XLSX.utils.aoa_to_sheet(summaryRows);
+    ws["!cols"] = [{ wch: 18 }, { wch: 48 }, { wch: 18 }];
+    XLSX.utils.book_append_sheet(wb, ws, "Зведена таблиця");
+
+    // ── Sheet 2: Персонал (детально) ──
+    const staffHeader = [
+      "ПІБ", "Роль", "Брутто", "ЄСВ роботодавця", "Доплата", "Бонус",
+      "Платні послуги", "Нетто (на руки)", "Витрати роботодавця",
+      "НСЗУ брутто", "НСЗУ ЄП", "НСЗУ ВЗ",
+    ];
+    const staffRows = data.salary.map(r => {
+      const netto = r.brutto - (r.brutto * data.settings.pdfo_rate / 100) - (r.brutto * data.settings.vz_zp_rate / 100);
+      return [
+        r.full_name, ROLE_LABELS[r.role] ?? r.role,
+        r.brutto, r.esv, r.supplement, r.individual_bonus,
+        r.paid_services_income, Math.round(netto * 100) / 100, r.total_employer_cost,
+        r.nhsu_brutto, r.nhsu_ep, r.nhsu_vz,
+      ];
+    });
+    const ws2 = XLSX.utils.aoa_to_sheet([
+      [`Персонал — ${MONTH_NAMES[month - 1]} ${year}`],
+      [],
+      staffHeader,
+      ...staffRows,
+    ]);
+    ws2["!cols"] = staffHeader.map(() => ({ wch: 16 }));
+    (ws2["!cols"] as {wch: number}[])[0] = { wch: 30 };
+    XLSX.utils.book_append_sheet(wb, ws2, "Персонал");
+
     XLSX.writeFile(wb, `витрати_${year}_${String(month).padStart(2, "0")}.xlsx`);
   }
 
@@ -1021,7 +1213,7 @@ export default function ExpensesPage() {
                   key={p.month}
                   onClick={() => { setMonth(p.month); setViewMode("month"); }}
                   className={`card-neo p-4 text-left hover:border-accent-500/40 transition-all ${
-                    p.month === month && viewMode === "month" ? "border-accent-500/40" : ""
+                    p.month === month ? "border-accent-500/40" : ""
                   }`}
                 >
                   <div className="flex items-center justify-between mb-2">
@@ -1044,6 +1236,270 @@ export default function ExpensesPage() {
               ))}
             </div>
           )}
+
+          {/* ═══ ANNUAL ANALYTICS ═══ */}
+          {!annualLoading && annualMonths.some(m => m.total > 0) && (() => {
+            const withData = annualMonths.filter(m => m.total > 0 || m.income > 0);
+            const annualFixed = annualMonths.reduce((s, m) => s + m.fixed, 0);
+            const annualSalary = annualMonths.reduce((s, m) => s + m.salary, 0);
+            const annualTaxes = annualMonths.reduce((s, m) => s + m.taxes, 0);
+            const annualOther = annualMonths.reduce((s, m) => s + m.other, 0);
+            const annualTotal = annualFixed + annualSalary + annualTaxes + annualOther;
+            const annualIncome = annualMonths.reduce((s, m) => s + m.income, 0);
+            const annualRemaining = annualIncome - annualTotal;
+            const avgPerMonth = withData.length > 0 ? annualTotal / withData.length : 0;
+            const bestMonth = withData.length > 0 ? withData.reduce((best, m) => m.remaining > best.remaining ? m : best, withData[0]) : null;
+            const worstMonth = withData.length > 0 ? withData.reduce((worst, m) => m.remaining < worst.remaining ? m : worst, withData[0]) : null;
+            const forecast = avgPerMonth * 12;
+
+            const annualPie = [
+              { name: "Постійні", value: annualFixed },
+              { name: "Зарплатні", value: annualSalary },
+              { name: "Інші", value: annualOther },
+              { name: "Податки", value: annualTaxes },
+            ].filter(d => d.value > 0);
+
+            const chartData = annualMonths.map(m => ({
+              label: MONTH_SHORT[m.month - 1],
+              fixed: m.fixed,
+              salary: m.salary,
+              other: m.other,
+              taxes: m.taxes,
+              total: m.total,
+              income: m.income,
+              remaining: m.remaining,
+            }));
+
+            // Cumulative data
+            let cumFixed = 0, cumSalary = 0, cumOther = 0, cumTaxes = 0;
+            const cumulativeData = annualMonths.map(m => {
+              cumFixed += m.fixed;
+              cumSalary += m.salary;
+              cumOther += m.other;
+              cumTaxes += m.taxes;
+              return {
+                label: MONTH_SHORT[m.month - 1],
+                fixed: cumFixed,
+                salary: cumSalary,
+                other: cumOther,
+                taxes: cumTaxes,
+                total: cumFixed + cumSalary + cumOther + cumTaxes,
+              };
+            });
+
+            return (
+              <div className="space-y-4">
+                <p className="text-sm font-semibold text-gray-400 uppercase tracking-wider mt-2">
+                  <Activity size={14} className="inline mr-1.5 -mt-0.5" />
+                  Аналітика за {year} рік
+                </p>
+
+                {/* Annual KPI Summary */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                  <div className="card-neo p-3 space-y-1">
+                    <p className="text-xs text-gray-500">Всього витрат</p>
+                    <p className="font-bold text-white font-mono tabular-nums">{fmt(annualTotal)} ₴</p>
+                  </div>
+                  <div className="card-neo p-3 space-y-1">
+                    <p className="text-xs text-gray-500">Загальний дохід</p>
+                    <p className="font-bold text-emerald-400 font-mono tabular-nums">{fmt(annualIncome)} ₴</p>
+                  </div>
+                  <div className="card-neo p-3 space-y-1">
+                    <p className="text-xs text-gray-500">Залишок</p>
+                    <p className={`font-bold font-mono tabular-nums ${annualRemaining >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+                      {annualRemaining >= 0 ? "+" : ""}{fmt(annualRemaining)} ₴
+                    </p>
+                  </div>
+                  <div className="card-neo p-3 space-y-1">
+                    <p className="text-xs text-gray-500">Середнє / міс.</p>
+                    <p className="font-bold text-blue-400 font-mono tabular-nums">{fmt(avgPerMonth)} ₴</p>
+                  </div>
+                  <div className="card-neo p-3 space-y-1">
+                    <p className="text-xs text-gray-500 flex items-center gap-1">Найкращий <ArrowUpRight size={10} className="text-emerald-400" /></p>
+                    <p className="font-bold text-emerald-400 font-mono tabular-nums text-sm">
+                      {bestMonth ? MONTH_NAMES[bestMonth.month - 1] : "—"}
+                    </p>
+                  </div>
+                  <div className="card-neo p-3 space-y-1">
+                    <p className="text-xs text-gray-500 flex items-center gap-1">Найгірший <ArrowDownRight size={10} className="text-red-400" /></p>
+                    <p className="font-bold text-red-400 font-mono tabular-nums text-sm">
+                      {worstMonth ? MONTH_NAMES[worstMonth.month - 1] : "—"}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Charts Row 1: Income vs Expenses + Pie */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {/* Line chart: Income vs Expenses */}
+                  <div className="card-neo p-4">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
+                      Дохід vs Витрати
+                    </p>
+                    <ResponsiveContainer width="100%" height={240}>
+                      <ComposedChart data={chartData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" />
+                        <XAxis dataKey="label" tick={{ fill: "#6b7280", fontSize: 11 }} axisLine={false} tickLine={false} />
+                        <YAxis tick={{ fill: "#6b7280", fontSize: 10 }} axisLine={false} tickLine={false}
+                          tickFormatter={v => `${Math.round(v / 1000)}k`} />
+                        <Tooltip contentStyle={TT_STYLE} formatter={(v: number, name: string) => [fmt(v) + " ₴", name]} />
+                        <Legend wrapperStyle={{ fontSize: 11 }} />
+                        <Bar dataKey="total" fill="#6366f1" name="Витрати" barSize={16} radius={[4, 4, 0, 0]} opacity={0.7} />
+                        <Line type="monotone" dataKey="income" stroke="#10b981" strokeWidth={2.5} name="Дохід" dot={{ r: 3, fill: "#10b981" }} />
+                      </ComposedChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  {/* Annual Pie */}
+                  <div className="card-neo p-4">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
+                      Структура витрат за рік
+                    </p>
+                    {annualPie.length > 0 ? (
+                      <div className="flex items-center gap-4">
+                        <ResponsiveContainer width="55%" height={220}>
+                          <PieChart>
+                            <Pie data={annualPie} cx="50%" cy="50%" innerRadius={55} outerRadius={90} paddingAngle={3} dataKey="value">
+                              {annualPie.map((_, idx) => (
+                                <Cell key={idx} fill={PIE_COLORS[idx % PIE_COLORS.length]} />
+                              ))}
+                            </Pie>
+                            <Tooltip contentStyle={TT_STYLE} formatter={(v: number) => [fmt(v) + " ₴"]} />
+                          </PieChart>
+                        </ResponsiveContainer>
+                        <div className="flex-1 space-y-2.5">
+                          {annualPie.map((entry, idx) => {
+                            const pct = annualTotal > 0 ? Math.round(entry.value / annualTotal * 100) : 0;
+                            return (
+                              <div key={idx} className="flex items-center gap-2">
+                                <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: PIE_COLORS[idx % PIE_COLORS.length] }} />
+                                <span className="text-xs text-gray-400 flex-1">{entry.name}</span>
+                                <span className="text-xs font-mono text-gray-300">{pct}%</span>
+                                <span className="text-xs font-mono text-gray-500">{fmt(entry.value)}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-center h-48 text-gray-600 text-sm">Немає даних</div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Charts Row 2: Stacked Categories + Cumulative Growth */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {/* Stacked bar: categories */}
+                  <div className="card-neo p-4">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
+                      Витрати за категоріями
+                    </p>
+                    <ResponsiveContainer width="100%" height={240}>
+                      <BarChart data={chartData} barSize={14}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" />
+                        <XAxis dataKey="label" tick={{ fill: "#6b7280", fontSize: 11 }} axisLine={false} tickLine={false} />
+                        <YAxis tick={{ fill: "#6b7280", fontSize: 10 }} axisLine={false} tickLine={false}
+                          tickFormatter={v => `${Math.round(v / 1000)}k`} />
+                        <Tooltip contentStyle={TT_STYLE} formatter={(v: number, name: string) => [fmt(v) + " ₴", name]} />
+                        <Legend wrapperStyle={{ fontSize: 11 }} />
+                        <Bar dataKey="fixed" stackId="a" fill="#6366f1" name="Постійні" />
+                        <Bar dataKey="salary" stackId="a" fill="#a855f7" name="Зарплатні" />
+                        <Bar dataKey="other" stackId="a" fill="#f59e0b" name="Інші" />
+                        <Bar dataKey="taxes" stackId="a" fill="#f43f5e" name="Податки" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  {/* Cumulative area chart */}
+                  <div className="card-neo p-4">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
+                      Накопичувальні витрати
+                    </p>
+                    <ResponsiveContainer width="100%" height={240}>
+                      <AreaChart data={cumulativeData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" />
+                        <XAxis dataKey="label" tick={{ fill: "#6b7280", fontSize: 11 }} axisLine={false} tickLine={false} />
+                        <YAxis tick={{ fill: "#6b7280", fontSize: 10 }} axisLine={false} tickLine={false}
+                          tickFormatter={v => `${Math.round(v / 1000)}k`} />
+                        <Tooltip contentStyle={TT_STYLE} formatter={(v: number, name: string) => [fmt(v) + " ₴", name]} />
+                        <Legend wrapperStyle={{ fontSize: 11 }} />
+                        <Area type="monotone" dataKey="fixed" stackId="1" fill="#6366f1" stroke="#6366f1" fillOpacity={0.3} name="Постійні" />
+                        <Area type="monotone" dataKey="salary" stackId="1" fill="#a855f7" stroke="#a855f7" fillOpacity={0.3} name="Зарплатні" />
+                        <Area type="monotone" dataKey="other" stackId="1" fill="#f59e0b" stroke="#f59e0b" fillOpacity={0.3} name="Інші" />
+                        <Area type="monotone" dataKey="taxes" stackId="1" fill="#f43f5e" stroke="#f43f5e" fillOpacity={0.3} name="Податки" />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                {/* Charts Row 3: Remaining trend + Forecast */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {/* Remaining (profit/loss) by month */}
+                  <div className="card-neo p-4">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
+                      Залишок (дохід − витрати) по місяцях
+                    </p>
+                    <ResponsiveContainer width="100%" height={220}>
+                      <BarChart data={chartData} barSize={18}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" />
+                        <XAxis dataKey="label" tick={{ fill: "#6b7280", fontSize: 11 }} axisLine={false} tickLine={false} />
+                        <YAxis tick={{ fill: "#6b7280", fontSize: 10 }} axisLine={false} tickLine={false}
+                          tickFormatter={v => `${Math.round(v / 1000)}k`} />
+                        <Tooltip contentStyle={TT_STYLE} formatter={(v: number) => [fmt(v) + " ₴", "Залишок"]} />
+                        <Bar dataKey="remaining" name="Залишок" radius={[4, 4, 0, 0]}>
+                          {chartData.map((entry, idx) => (
+                            <Cell key={idx} fill={entry.remaining >= 0 ? "#10b981" : "#f43f5e"} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  {/* Forecast card */}
+                  <div className="card-neo p-4">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
+                      <Target size={13} className="inline mr-1.5 -mt-0.5" />
+                      Прогноз на рік
+                    </p>
+                    <div className="space-y-4 mt-2">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="bg-dark-400/30 rounded-xl p-4 text-center">
+                          <p className="text-xs text-gray-500 mb-1">Прогноз витрат</p>
+                          <p className="font-bold text-lg text-white font-mono tabular-nums">{fmt(forecast)} ₴</p>
+                          <p className="text-xs text-gray-600 mt-1">на базі {withData.length} міс.</p>
+                        </div>
+                        <div className="bg-dark-400/30 rounded-xl p-4 text-center">
+                          <p className="text-xs text-gray-500 mb-1">Факт / Прогноз</p>
+                          <p className={`font-bold text-lg font-mono tabular-nums ${annualTotal <= forecast ? "text-emerald-400" : "text-red-400"}`}>
+                            {forecast > 0 ? Math.round(annualTotal / forecast * 100) : 0}%
+                          </p>
+                          <p className="text-xs text-gray-600 mt-1">виконання</p>
+                        </div>
+                      </div>
+                      <div className="space-y-2.5">
+                        {[
+                          { label: "Постійні / міс.", value: withData.length > 0 ? annualFixed / withData.length : 0, color: "text-blue-400" },
+                          { label: "Зарплатні / міс.", value: withData.length > 0 ? annualSalary / withData.length : 0, color: "text-purple-400" },
+                          { label: "Інші / міс.", value: withData.length > 0 ? annualOther / withData.length : 0, color: "text-amber-400" },
+                          { label: "Податки / міс.", value: withData.length > 0 ? annualTaxes / withData.length : 0, color: "text-red-400" },
+                        ].map(item => (
+                          <div key={item.label} className="flex items-center justify-between text-sm">
+                            <span className="text-gray-400">{item.label}</span>
+                            <span className={`font-mono tabular-nums ${item.color}`}>{fmt(item.value)} ₴</span>
+                          </div>
+                        ))}
+                        <div className="border-t border-dark-50/10 pt-2">
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-gray-200 font-semibold">Разом / міс.</span>
+                            <span className="font-mono font-bold text-white tabular-nums">{fmt(avgPerMonth)} ₴</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
         </div>
       )}
 
@@ -1132,41 +1588,55 @@ export default function ExpensesPage() {
               value={data.totals.fixed_total}
               color="bg-blue-500/15"
               icon={<TrendingDown size={14} className="text-blue-400" />}
+              onClick={() => setKpiModal({ open: true, type: "fixed", title: "Постійні витрати — деталізація" })}
             />
             <KpiCard
               label="Зарплатні"
               value={data.totals.salary_total}
               color="bg-purple-500/15"
               icon={<Users size={14} className="text-purple-400" />}
+              onClick={() => setKpiModal({ open: true, type: "salary", title: "Зарплатні витрати — деталізація" })}
             />
             <KpiCard
               label="Інші"
               value={otherTotal}
               color="bg-amber-500/15"
               icon={<Wallet size={14} className="text-amber-400" />}
+              onClick={() => setKpiModal({ open: true, type: "other", title: "Інші витрати — деталізація" })}
             />
             <KpiCard
               label="Податки"
               value={data.totals.tax_total}
               color="bg-red-500/15"
               icon={<Receipt size={14} className="text-red-400" />}
+              onClick={() => setKpiModal({ open: true, type: "taxes", title: "Податки — деталізація" })}
             />
             <KpiCard
               label="Всього"
               value={grandWithOther}
               color="bg-dark-400/60"
               icon={<BarChart3 size={14} className="text-gray-400" />}
+              onClick={() => setKpiModal({ open: true, type: "total", title: "Всі витрати — деталізація" })}
             />
-            <div className="card-neo kpi-3d-hover p-4 flex flex-col gap-2">
+            <div
+              className="card-neo kpi-3d-hover p-4 flex flex-col gap-2 cursor-pointer hover:border-accent-500/40 transition-all"
+              onClick={() => setKpiModal({ open: true, type: "remaining", title: "Фінансовий результат" })}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setKpiModal({ open: true, type: "remaining", title: "Фінансовий результат" }); }}
+            >
               <div className="flex items-center justify-between">
                 <span className="text-xs text-gray-500 font-medium">Залишок</span>
-                <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${
-                  remaining >= 0 ? "bg-emerald-500/15" : "bg-red-500/15"
-                }`}>
-                  {remaining >= 0
-                    ? <Check size={14} className="text-emerald-400" />
-                    : <AlertCircle size={14} className="text-red-400" />
-                  }
+                <div className="flex items-center gap-1.5">
+                  <Eye size={11} className="text-gray-600" />
+                  <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${
+                    remaining >= 0 ? "bg-emerald-500/15" : "bg-red-500/15"
+                  }`}>
+                    {remaining >= 0
+                      ? <Check size={14} className="text-emerald-400" />
+                      : <AlertCircle size={14} className="text-red-400" />
+                    }
+                  </div>
                 </div>
               </div>
               <p className={`font-bold text-lg font-mono leading-tight tabular-nums ${
@@ -2403,6 +2873,166 @@ export default function ExpensesPage() {
           </div>
         </div>
       )}
+
+      {/* ── KPI Detail modal (85% screen) ── */}
+      {kpiModal.open && data && (() => {
+        type ModalRow = { name: string; detail?: string; amount: number };
+        let rows: ModalRow[] = [];
+        let totalLabel = "Всього";
+        let totalValue = 0;
+
+        switch (kpiModal.type) {
+          case "fixed":
+            rows = data.fixed.filter(r => r.amount > 0).map(r => ({
+              name: r.category_name,
+              detail: r.is_recurring ? "Постійна" : "Разова",
+              amount: r.amount,
+            }));
+            totalValue = data.totals.fixed_total;
+            break;
+          case "salary":
+            rows = data.salary.map(r => ({
+              name: r.full_name,
+              detail: `${ROLE_LABELS[r.role] ?? r.role} · Брутто: ${fmt(r.brutto)} · ЄСВ: ${fmt(r.esv)}${r.supplement > 0 ? ` · Доплата: ${fmt(r.supplement)}` : ""}${r.individual_bonus > 0 ? ` · Бонус: ${fmt(r.individual_bonus)}` : ""}${r.paid_services_income > 0 ? ` · Платні послуги: ${fmt(r.paid_services_income)}` : ""}`,
+              amount: r.total_employer_cost,
+            }));
+            totalValue = data.totals.salary_total;
+            break;
+          case "other":
+            rows = otherExpenses.map(r => ({
+              name: r.name,
+              detail: r.description || r.category,
+              amount: r.amount,
+            }));
+            totalValue = otherTotal;
+            break;
+          case "taxes":
+            rows = [
+              { name: `Єдиний податок (${data.taxes.ep_rate}%)`, detail: `від доходу ${fmt(data.taxes.total_income)} ₴`, amount: data.taxes.ep },
+              { name: `Військовий збір (${data.taxes.vz_rate}%)`, detail: `від доходу ${fmt(data.taxes.total_income)} ₴`, amount: data.taxes.vz },
+              { name: "ЄСВ власника", detail: "Фіксований щомісячний", amount: data.taxes.esv_owner },
+              { name: `ЄСВ роботодавця (${data.settings.esv_employer_rate}%)`, detail: "Від зарплатного фонду", amount: data.taxes.esv_employer },
+            ];
+            totalValue = data.totals.tax_total;
+            break;
+          case "total":
+            rows = [
+              ...data.fixed.filter(r => r.amount > 0).map(r => ({
+                name: r.category_name, detail: "Постійні", amount: r.amount,
+              })),
+              ...data.salary.map(r => ({
+                name: r.full_name, detail: `Зарплатні · ${ROLE_LABELS[r.role] ?? r.role}`, amount: r.total_employer_cost,
+              })),
+              ...otherExpenses.map(r => ({
+                name: r.name, detail: "Інші", amount: r.amount,
+              })),
+              { name: `ЄП (${data.taxes.ep_rate}%)`, detail: "Податки", amount: data.taxes.ep },
+              { name: `ВЗ (${data.taxes.vz_rate}%)`, detail: "Податки", amount: data.taxes.vz },
+              { name: "ЄСВ власника", detail: "Податки", amount: data.taxes.esv_owner },
+              { name: `ЄСВ роботодавця (${data.settings.esv_employer_rate}%)`, detail: "Податки", amount: data.taxes.esv_employer },
+            ];
+            totalValue = grandWithOther;
+            break;
+          case "remaining":
+            totalLabel = "Залишок";
+            rows = [
+              { name: "Дохід НСЗУ", detail: "Дохід", amount: data.taxes.nhsu_income },
+              { name: "Платні послуги", detail: "Дохід", amount: data.taxes.paid_services_income },
+              { name: "Постійні витрати", detail: "Витрати", amount: -data.totals.fixed_total },
+              { name: "Зарплатні витрати", detail: "Витрати", amount: -data.totals.salary_total },
+              { name: "Інші витрати", detail: "Витрати", amount: -otherTotal },
+              { name: "Податки", detail: "Витрати", amount: -data.totals.tax_total },
+            ];
+            totalValue = remaining;
+            break;
+        }
+
+        function exportKpiExcel() {
+          const wb = XLSX.utils.book_new();
+          const header = ["Назва", "Деталі", "Сума (₴)"];
+          const dataRows = rows.map(r => [r.name, r.detail ?? "", r.amount]);
+          dataRows.push(["", totalLabel, totalValue]);
+          const ws = XLSX.utils.aoa_to_sheet([
+            [kpiModal.title],
+            [`${MONTH_NAMES[month - 1]} ${year}`],
+            [],
+            header,
+            ...dataRows,
+          ]);
+          ws["!cols"] = [{ wch: 40 }, { wch: 30 }, { wch: 18 }];
+          XLSX.utils.book_append_sheet(wb, ws, "Деталі");
+          XLSX.writeFile(wb, `${kpiModal.type}_${year}_${String(month).padStart(2, "0")}.xlsx`);
+        }
+
+        return (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label={kpiModal.title}>
+            <div className="absolute inset-0" onClick={() => setKpiModal({ open: false, type: "", title: "" })} />
+            <div
+              className="relative bg-dark-600 rounded-2xl shadow-2xl w-full flex flex-col"
+              style={{ border: "1px solid #ffffff15", maxHeight: "85vh", maxWidth: "900px" }}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0">
+                <h4 className="font-semibold text-white text-base">{kpiModal.title}</h4>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={exportKpiExcel}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 text-xs font-semibold hover:bg-emerald-500/20 transition-all"
+                  >
+                    <FileSpreadsheet size={13} /> Excel
+                  </button>
+                  <button
+                    onClick={() => setKpiModal({ open: false, type: "", title: "" })}
+                    aria-label="Закрити"
+                    className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              </div>
+              {/* Sub-header */}
+              <div className="px-6 py-2 border-b border-dark-50/10 bg-dark-400/20 shrink-0">
+                <p className="text-xs text-gray-500">
+                  {MONTH_NAMES[month - 1]} {year} · {rows.length} записів
+                </p>
+              </div>
+              {/* Table */}
+              <div className="overflow-y-auto flex-1">
+                <table className="w-full text-sm">
+                  <thead className="sticky top-0 bg-dark-600 z-10">
+                    <tr className="border-b border-dark-50/10">
+                      <th scope="col" className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Назва</th>
+                      <th scope="col" className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Деталі</th>
+                      <th scope="col" className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Сума</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-dark-50/5">
+                    {rows.map((row, idx) => (
+                      <tr key={idx} className="hover:bg-dark-400/15 transition-colors">
+                        <td className="px-6 py-3 text-gray-200">{row.name}</td>
+                        <td className="px-4 py-3 text-gray-500 text-xs">{row.detail}</td>
+                        <td className={`px-6 py-3 text-right font-mono tabular-nums ${row.amount < 0 ? "text-red-400" : "text-gray-200"}`}>
+                          {row.amount < 0 ? "−" : ""}{fmt(Math.abs(row.amount))} ₴
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot className="border-t border-dark-50/15 bg-dark-400/20">
+                    <tr>
+                      <td colSpan={2} className="px-6 py-3 text-sm font-semibold text-gray-300">{totalLabel}</td>
+                      <td className={`px-6 py-3 text-right font-bold font-mono tabular-nums text-lg ${
+                        kpiModal.type === "remaining" ? (totalValue >= 0 ? "text-emerald-400" : "text-red-400") : "text-white"
+                      }`}>
+                        {kpiModal.type === "remaining" && totalValue >= 0 ? "+" : ""}{totalValue < 0 ? "−" : ""}{fmt(Math.abs(totalValue))} ₴
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ── Other expense modal ── */}
       {otherModal.open && (
