@@ -2,9 +2,11 @@
 
 PORT="${PORT:-8000}"
 
-# Try migrations with 15s timeout — if DB isn't ready, skip and start server
-echo "Attempting database migrations (timeout 15s)..."
-timeout 15 alembic upgrade head 2>&1 || echo "WARNING: migrations skipped (DB may not be ready yet)"
+echo "=== Backend starting ==="
+echo "PORT=$PORT"
+echo "DATABASE_URL is $([ -n "$DATABASE_URL" ] && echo 'SET' || echo 'NOT SET')"
 
-echo "Starting backend server on port $PORT..."
+# Skip migrations at startup — run them manually or via Railway cron
+# This ensures the server starts immediately regardless of DB state
+echo "Starting uvicorn on port $PORT..."
 exec uvicorn app.main:app --host 0.0.0.0 --port "$PORT"
