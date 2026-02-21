@@ -4,3 +4,11 @@ import { twMerge } from "tailwind-merge"
 export function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
+
+/**
+ * Форматує число у гривневому форматі (uk-UA).
+ * Приклад: 1234.5 → "1 234,50"
+ */
+export function fmtUAH(n) {
+  return Number(n).toLocaleString("uk-UA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}

@@ -1,6 +1,3 @@
-import asyncio
-import base64
-import json
 from datetime import datetime, timezone
 from typing import List, Optional
 
@@ -8,12 +5,11 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Upload
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config import settings
 from app.core.deps import get_current_user, get_db
+from app.services.ai_provider import analyze_image as ai_analyze_image, get_provider, parse_ai_json
 from app.models.doctor import Doctor
 from app.models.nhsu import AGE_GROUPS
 from app.models.user import User
-from app.models.user_api_keys import UserApiKeys
 from app.schemas.nhsu import (
     DoctorCreate,
     DoctorResponse,
@@ -299,153 +295,30 @@ async def get_monthly_summary(
     return results
 
 
+_NHSU_AI_FALLBACK = {
+    "doctor_name": None,
+    "age_0_5": 0,
+    "age_6_17": 0,
+    "age_18_39": 0,
+    "age_40_64": 0,
+    "age_65_plus": 0,
+    "total": 0,
+    "confidence": "low",
+    "notes": "Не вдалося розпізнати дані з зображення",
+}
+
+
+def _get_nhsu_prompts(provider: str) -> tuple[str, str]:
+    """Повертає (system_prompt, user_prompt) для вказаного AI-провайдера."""
+    if provider == "anthropic":
+        return _ANTHROPIC_SYSTEM, _ANTHROPIC_PROMPT
+    elif provider == "openai":
+        return _OPENAI_SYSTEM, _OPENAI_PROMPT
+    else:  # xai
+        return _XAI_SYSTEM, _XAI_PROMPT
+
+
 # ── AI аналіз зображень ──────────────────────────────────────────────
-
-
-def _parse_ai_json(text: str) -> dict:
-    """Вилучає JSON з відповіді моделі."""
-    try:
-        start = text.find("{")
-        end = text.rfind("}") + 1
-        if start >= 0 and end > start:
-            return json.loads(text[start:end])
-    except Exception:
-        pass
-    return {
-        "doctor_name": None,
-        "age_0_5": 0,
-        "age_6_17": 0,
-        "age_18_39": 0,
-        "age_40_64": 0,
-        "age_65_plus": 0,
-        "total": 0,
-        "confidence": "low",
-        "notes": "Не вдалося розпізнати дані з зображення",
-    }
-
-
-async def _analyze_with_anthropic(api_key: str, image_bytes: bytes, media_type: str) -> dict:
-    """Аналізує зображення через Anthropic Claude (system + user prompt, XML-теги)."""
-    import anthropic as anthropic_sdk
-
-    b64 = base64.standard_b64encode(image_bytes).decode("utf-8")
-    client = anthropic_sdk.Anthropic(api_key=api_key)
-
-    def _sync_call():
-        msg = client.messages.create(
-            model="claude-haiku-4-5-20251001",
-            max_tokens=1024,
-            system=_ANTHROPIC_SYSTEM,
-            messages=[
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "image",
-                            "source": {
-                                "type": "base64",
-                                "media_type": media_type,
-                                "data": b64,
-                            },
-                        },
-                        {"type": "text", "text": _ANTHROPIC_PROMPT},
-                    ],
-                }
-            ],
-        )
-        return msg.content[0].text
-
-    text = await asyncio.to_thread(_sync_call)
-    return _parse_ai_json(text)
-
-
-async def _analyze_with_openai(
-    api_key: str,
-    image_bytes: bytes,
-    media_type: str,
-    model: str = "gpt-4o-mini",
-) -> dict:
-    """Аналізує зображення через OpenAI (system + user, JSON mode)."""
-    from openai import OpenAI
-
-    b64 = base64.standard_b64encode(image_bytes).decode("utf-8")
-    client = OpenAI(api_key=api_key)
-
-    def _sync_call():
-        resp = client.chat.completions.create(
-            model=model,
-            max_tokens=1024,
-            response_format={"type": "json_object"},
-            messages=[
-                {"role": "system", "content": _OPENAI_SYSTEM},
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "image_url",
-                            "image_url": {"url": f"data:{media_type};base64,{b64}"},
-                        },
-                        {"type": "text", "text": _OPENAI_PROMPT},
-                    ],
-                },
-            ],
-        )
-        return resp.choices[0].message.content
-
-    text = await asyncio.to_thread(_sync_call)
-    return _parse_ai_json(text)
-
-
-async def _analyze_with_xai(
-    api_key: str,
-    image_bytes: bytes,
-    media_type: str,
-) -> dict:
-    """Аналізує зображення через xAI Grok (OpenAI-сумісне API)."""
-    from openai import OpenAI
-
-    b64 = base64.standard_b64encode(image_bytes).decode("utf-8")
-    client = OpenAI(api_key=api_key, base_url="https://api.x.ai/v1")
-
-    def _sync_call():
-        resp = client.chat.completions.create(
-            model="grok-2-vision-1212",
-            max_tokens=1024,
-            messages=[
-                {"role": "system", "content": _XAI_SYSTEM},
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "image_url",
-                            "image_url": {"url": f"data:{media_type};base64,{b64}"},
-                        },
-                        {"type": "text", "text": _XAI_PROMPT},
-                    ],
-                },
-            ],
-        )
-        return resp.choices[0].message.content
-
-    text = await asyncio.to_thread(_sync_call)
-    return _parse_ai_json(text)
-
-
-def _pick_provider(user_keys) -> tuple[str, str] | tuple[None, None]:
-    """
-    Повертає (provider, api_key) за пріоритетом: Anthropic → OpenAI → xAI.
-    Fallback на ANTHROPIC_API_KEY з env. Якщо нічого немає — (None, None).
-    """
-    if user_keys:
-        if user_keys.anthropic_key:
-            return "anthropic", user_keys.anthropic_key
-        if user_keys.openai_key:
-            return "openai", user_keys.openai_key
-        if user_keys.xai_key:
-            return "xai", user_keys.xai_key
-    if settings.anthropic_api_key:
-        return "anthropic", settings.anthropic_api_key
-    return None, None
 
 
 @router.post("/analyze-image")
@@ -460,12 +333,7 @@ async def analyze_image(
     - images: один або кілька файлів зображень
     - doctor_ids: необов'язковий рядок з id лікарів через кому
     """
-    user_keys_result = await db.execute(
-        select(UserApiKeys).where(UserApiKeys.user_id == user.id)
-    )
-    user_keys = user_keys_result.scalar_one_or_none()
-
-    provider, api_key = _pick_provider(user_keys)
+    provider, api_key = await get_provider(db, user.id)
 
     if not provider:
         raise HTTPException(
@@ -476,6 +344,8 @@ async def analyze_image(
                 "Anthropic (Claude), OpenAI (ChatGPT) або xAI (Grok)."
             ),
         )
+
+    system_prompt, user_prompt = _get_nhsu_prompts(provider)
 
     # Розбираємо doctor_ids
     parsed_ids: List[Optional[int]] = []
@@ -499,12 +369,8 @@ async def analyze_image(
             })
             continue
 
-        if provider == "anthropic":
-            data = await _analyze_with_anthropic(api_key, raw, media_type)
-        elif provider == "openai":
-            data = await _analyze_with_openai(api_key, raw, media_type)
-        else:  # xai
-            data = await _analyze_with_xai(api_key, raw, media_type)
+        text = await ai_analyze_image(provider, api_key, raw, media_type, system_prompt, user_prompt)
+        data = parse_ai_json(text, _NHSU_AI_FALLBACK)
 
         results.append({
             "doctor_id": parsed_ids[i] if i < len(parsed_ids) else None,

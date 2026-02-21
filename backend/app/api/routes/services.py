@@ -12,7 +12,6 @@ from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import get_current_user, get_db
-from app.models.nhsu import NhsuSettings
 from app.models.service import Service
 from app.models.user import User
 from app.schemas.service import (
@@ -25,23 +24,13 @@ from app.schemas.service import (
     ServiceUpdate,
 )
 from app.services.ai_provider import analyze_image, get_provider, parse_ai_json
+from app.services.nhsu import get_tax_rates
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
 # ── Фінансові розрахунки ─────────────────────────────────────────────
-
-
-async def _get_tax_rates(db: AsyncSession, user_id: int) -> tuple[float, float]:
-    """Повертає (ep_rate, vz_rate) з NhsuSettings або дефолти."""
-    result = await db.execute(
-        select(NhsuSettings).where(NhsuSettings.user_id == user_id)
-    )
-    settings = result.scalar_one_or_none()
-    if settings:
-        return float(settings.ep_rate), float(settings.vz_rate)
-    return 5.0, 1.5  # defaults: ЄП 5%, ВЗ 1.5%
 
 
 def _calc(service: Service, ep_rate: float, vz_rate: float) -> dict:
@@ -360,7 +349,7 @@ async def bulk_create_services(
     )
     existing_codes = {row[0] for row in result.all()}
 
-    ep_rate, vz_rate = await _get_tax_rates(db, user.id)
+    ep_rate, vz_rate = await get_tax_rates(db, user.id)
     created = []
 
     for svc_in in services_in:
@@ -417,7 +406,7 @@ async def bulk_price_change(
     """Масова зміна ціни: нова = поточна × (1 + % / 100)."""
     if not body.ids:
         return []
-    ep_rate, vz_rate = await _get_tax_rates(db, user.id)
+    ep_rate, vz_rate = await get_tax_rates(db, user.id)
     result = await db.execute(
         select(Service).where(
             Service.id.in_(body.ids), Service.user_id == user.id
@@ -440,7 +429,7 @@ async def export_services(
     user: User = Depends(get_current_user),
 ):
     """Експорт вибраних послуг у файл Excel (.xlsx)."""
-    ep_rate, vz_rate = await _get_tax_rates(db, user.id)
+    ep_rate, vz_rate = await get_tax_rates(db, user.id)
 
     query = select(Service).where(Service.user_id == user.id)
     if body.ids:
@@ -497,7 +486,7 @@ async def list_services(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    ep_rate, vz_rate = await _get_tax_rates(db, user.id)
+    ep_rate, vz_rate = await get_tax_rates(db, user.id)
     result = await db.execute(
         select(Service)
         .where(Service.user_id == user.id)
@@ -536,7 +525,7 @@ async def create_service(
     await db.commit()
     await db.refresh(service)
 
-    ep_rate, vz_rate = await _get_tax_rates(db, user.id)
+    ep_rate, vz_rate = await get_tax_rates(db, user.id)
     return _to_response(service, ep_rate, vz_rate)
 
 
@@ -586,7 +575,7 @@ async def update_service(
     await db.commit()
     await db.refresh(service)
 
-    ep_rate, vz_rate = await _get_tax_rates(db, user.id)
+    ep_rate, vz_rate = await get_tax_rates(db, user.id)
     return _to_response(service, ep_rate, vz_rate)
 
 

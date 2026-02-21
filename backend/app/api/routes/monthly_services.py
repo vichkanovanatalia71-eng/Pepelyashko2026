@@ -19,16 +19,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import get_current_user, get_db
 from app.models.doctor import Doctor
-from app.models.user_api_keys import UserApiKeys
 from app.models.monthly_service import (
     MonthlyPaidServiceEntry,
     MonthlyPaidServicesReport,
     MonthlyPeriodCash,
 )
-from app.models.nhsu import NhsuSettings
 from app.models.service import Service
 from app.models.share_report import ShareReport
 from app.models.user import User
+from app.services.ai_provider import analyze_image as ai_analyze_image, get_provider, parse_ai_json
+from app.services.nhsu import get_tax_rates
 from app.schemas.monthly_service import (
     AnalyticsResponse,
     DashboardData,
@@ -56,12 +56,6 @@ MONTHS_UA = [
 ]
 
 # ── Утиліти ─────────────────────────────────────────────────────────
-
-
-async def _get_tax_rates(db: AsyncSession, user_id: int) -> tuple[float, float]:
-    r = await db.execute(select(NhsuSettings).where(NhsuSettings.user_id == user_id))
-    s = r.scalar_one_or_none()
-    return (float(s.ep_rate), float(s.vz_rate)) if s else (5.0, 1.5)
 
 
 async def _get_doctor_name(db: AsyncSession, doctor_id: int) -> str:
@@ -141,7 +135,7 @@ async def _build_analytics(
     month: int,
     doctor_id: Optional[int],
 ) -> AnalyticsResponse:
-    ep_rate, vz_rate = await _get_tax_rates(db, user_id)
+    ep_rate, vz_rate = await get_tax_rates(db, user_id)
 
     # ── Поточний місяць: звіти ──
     rq = select(MonthlyPaidServicesReport).where(
@@ -992,6 +986,15 @@ _PS_PROMPT = """\
 </output_format>"""
 
 
+_PS_FALLBACK = {
+    "doctor_name": None,
+    "cash_in_register": 0,
+    "services": [],
+    "confidence": "low",
+    "notes": "Не вдалося розпізнати дані з зображення",
+}
+
+
 @router.post("/analyze-image")
 async def analyze_paid_services_image(
     images: list[UploadFile] = File(...),
@@ -999,19 +1002,7 @@ async def analyze_paid_services_image(
     user: User = Depends(get_current_user),
 ):
     """Аналізує зображення звіту платних послуг через AI."""
-    from app.api.routes.nhsu import (
-        _analyze_with_anthropic,
-        _analyze_with_openai,
-        _analyze_with_xai,
-        _parse_ai_json,
-        _pick_provider,
-    )
-
-    user_keys_result = await db.execute(
-        select(UserApiKeys).where(UserApiKeys.user_id == user.id)
-    )
-    user_keys = user_keys_result.scalar_one_or_none()
-    provider, api_key = _pick_provider(user_keys)
+    provider, api_key = await get_provider(db, user.id)
 
     if not provider:
         raise HTTPException(
@@ -1035,37 +1026,8 @@ async def analyze_paid_services_image(
             results.append({"error": "Файл перевищує 10 MB"})
             continue
 
-        # Перевизначаємо промти для платних послуг
-        import app.api.routes.nhsu as _nhsu_mod
-
-        original_as = _nhsu_mod._ANTHROPIC_SYSTEM
-        original_ap = _nhsu_mod._ANTHROPIC_PROMPT
-        original_os = _nhsu_mod._OPENAI_SYSTEM
-        original_op = _nhsu_mod._OPENAI_PROMPT
-        original_xs = _nhsu_mod._XAI_SYSTEM
-        original_xp = _nhsu_mod._XAI_PROMPT
-
-        _nhsu_mod._ANTHROPIC_SYSTEM = _PS_SYSTEM
-        _nhsu_mod._ANTHROPIC_PROMPT = _PS_PROMPT
-        _nhsu_mod._OPENAI_SYSTEM = _PS_SYSTEM
-        _nhsu_mod._OPENAI_PROMPT = _PS_PROMPT
-        _nhsu_mod._XAI_SYSTEM = _PS_SYSTEM
-        _nhsu_mod._XAI_PROMPT = _PS_PROMPT
-
-        try:
-            if provider == "anthropic":
-                data = await _analyze_with_anthropic(api_key, raw, media_type)
-            elif provider == "openai":
-                data = await _analyze_with_openai(api_key, raw, media_type)
-            else:
-                data = await _analyze_with_xai(api_key, raw, media_type)
-        finally:
-            _nhsu_mod._ANTHROPIC_SYSTEM = original_as
-            _nhsu_mod._ANTHROPIC_PROMPT = original_ap
-            _nhsu_mod._OPENAI_SYSTEM = original_os
-            _nhsu_mod._OPENAI_PROMPT = original_op
-            _nhsu_mod._XAI_SYSTEM = original_xs
-            _nhsu_mod._XAI_PROMPT = original_xp
+        text = await ai_analyze_image(provider, api_key, raw, media_type, _PS_SYSTEM, _PS_PROMPT)
+        data = parse_ai_json(text, _PS_FALLBACK)
 
         # Мепінг розпізнаних послуг на каталог (fuzzy)
         matched_entries: list[dict] = []

@@ -17,6 +17,15 @@ AGE_GROUP_LABELS = {g["key"]: g["label"] for g in AGE_GROUPS}
 AGE_GROUP_KEYS = [g["key"] for g in AGE_GROUPS]
 
 
+async def get_tax_rates(db: AsyncSession, user_id: int) -> tuple[float, float]:
+    """Повертає (ep_rate, vz_rate) з NhsuSettings або дефолти (ЄП 5%, ВЗ 1.5%)."""
+    result = await db.execute(
+        select(NhsuSettings).where(NhsuSettings.user_id == user_id)
+    )
+    s = result.scalar_one_or_none()
+    return (float(s.ep_rate), float(s.vz_rate)) if s else (5.0, 1.5)
+
+
 async def get_or_create_settings(db: AsyncSession, user_id: int) -> NhsuSettings:
     """Отримати або створити налаштування НСЗУ для користувача."""
     result = await db.execute(
