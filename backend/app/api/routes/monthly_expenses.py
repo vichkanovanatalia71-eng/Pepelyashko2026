@@ -5,11 +5,12 @@
 """
 from __future__ import annotations
 
+import base64
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
 from pydantic import BaseModel
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import get_current_user, get_db
@@ -17,6 +18,7 @@ from app.models.doctor import Doctor
 from app.models.monthly_expense import (
     FIXED_CATEGORY_NAMES,
     FIXED_CATEGORY_KEYS,
+    MonthlyExpenseLock,
     MonthlyFixedExpense,
     MonthlySalaryExpense,
 )
@@ -25,6 +27,7 @@ from app.models.nhsu import NhsuRecord, NhsuSettings
 from app.models.service import Service
 from app.models.staff import StaffMember
 from app.models.user import User
+from app.services.ai_provider import analyze_image, get_provider, parse_ai_json
 
 router = APIRouter()
 
@@ -245,6 +248,43 @@ class MonthlyExpenseResponse(BaseModel):
     taxes: TaxBlock
     totals: ExpenseTotals
     owner: Optional[OwnerBlock] = None
+    is_locked: bool = False
+    missing_salary_staff: list[str] = []
+
+
+# ── Нові схеми ──
+
+class PeriodSummary(BaseModel):
+    year: int
+    month: int
+    fixed_total: float
+    salary_brutto_total: float   # сума брутто (швидкий підрахунок)
+    is_locked: bool
+    has_data: bool
+
+
+class LockRequest(BaseModel):
+    year: int
+    month: int
+
+
+class CopyFromRequest(BaseModel):
+    source_year: int
+    source_month: int
+    target_year: int
+    target_month: int
+    copy_fixed: bool = True
+    copy_salary: bool = True
+
+
+class AiParsedExpense(BaseModel):
+    category: str           # "fixed" | "other"
+    category_key: str       # для fixed — один з FIXED_CATEGORY_KEYS
+    name: str
+    amount: float
+    is_recurring: bool
+    confidence: float       # 0–1
+    note: str = ""
 
 
 class UpdateFixedRequest(BaseModel):
@@ -464,6 +504,23 @@ async def get_monthly_expenses(
             hired_doctors=hired_doctors_info,
         )
 
+    # 7. Перевірка блокування
+    lock_res = await db.execute(
+        select(MonthlyExpenseLock).where(
+            MonthlyExpenseLock.user_id == user.id,
+            MonthlyExpenseLock.year == year,
+            MonthlyExpenseLock.month == month,
+        )
+    )
+    is_locked = lock_res.scalar_one_or_none() is not None
+
+    # 8. Попередження про відсутність зарплати
+    staff_with_salary = {r.staff_member_id for r in salary_rows if r.brutto > 0}
+    missing_salary_staff = [
+        m.full_name for m in staff_list
+        if m.id not in staff_with_salary
+    ]
+
     return MonthlyExpenseResponse(
         year=year,
         month=month,
@@ -480,6 +537,8 @@ async def get_monthly_expenses(
             remaining=remaining,
         ),
         owner=owner_block,
+        is_locked=is_locked,
+        missing_salary_staff=missing_salary_staff,
     )
 
 
@@ -656,4 +715,260 @@ async def update_salary_expense(
         paid_services_from_module=rec.paid_services_from_module,
         paid_services_income=paid_services_income,
         total_employer_cost=total_employer_cost,
+    )
+
+
+# ══════════════════════════════════════════════════════════════════
+#   НОВИЙ ФУНКЦІОНАЛ: Periods / Lock / Copy / AI
+# ══════════════════════════════════════════════════════════════════
+
+
+@router.get("/periods", response_model=list[PeriodSummary])
+async def get_periods(
+    year: int = Query(...),
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Повертає список місяців з даними за рік."""
+    # Fixed totals per month
+    fixed_res = await db.execute(
+        select(
+            MonthlyFixedExpense.month,
+            func.sum(MonthlyFixedExpense.amount).label("total"),
+        ).where(
+            MonthlyFixedExpense.user_id == user.id,
+            MonthlyFixedExpense.year == year,
+            MonthlyFixedExpense.amount > 0,
+        ).group_by(MonthlyFixedExpense.month)
+    )
+    fixed_by_month: dict[int, float] = {r.month: float(r.total) for r in fixed_res}
+
+    # Salary brutto per month
+    salary_res = await db.execute(
+        select(
+            MonthlySalaryExpense.month,
+            func.sum(MonthlySalaryExpense.brutto).label("total"),
+        ).where(
+            MonthlySalaryExpense.user_id == user.id,
+            MonthlySalaryExpense.year == year,
+            MonthlySalaryExpense.brutto > 0,
+        ).group_by(MonthlySalaryExpense.month)
+    )
+    salary_by_month: dict[int, float] = {r.month: float(r.total) for r in salary_res}
+
+    # Lock status per month
+    locks_res = await db.execute(
+        select(MonthlyExpenseLock.month).where(
+            MonthlyExpenseLock.user_id == user.id,
+            MonthlyExpenseLock.year == year,
+        )
+    )
+    locked_months = {r.month for r in locks_res}
+
+    # Build result — include month if it has any data
+    months_with_data = set(fixed_by_month) | set(salary_by_month)
+
+    result = []
+    for m in range(1, 13):
+        has_data = m in months_with_data
+        result.append(PeriodSummary(
+            year=year,
+            month=m,
+            fixed_total=fixed_by_month.get(m, 0.0),
+            salary_brutto_total=salary_by_month.get(m, 0.0),
+            is_locked=m in locked_months,
+            has_data=has_data,
+        ))
+    return result
+
+
+@router.post("/lock", status_code=200)
+async def lock_period(
+    body: LockRequest,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Фіксує (блокує) місяць від редагування."""
+    existing = await db.execute(
+        select(MonthlyExpenseLock).where(
+            MonthlyExpenseLock.user_id == user.id,
+            MonthlyExpenseLock.year == body.year,
+            MonthlyExpenseLock.month == body.month,
+        )
+    )
+    if not existing.scalar_one_or_none():
+        lock = MonthlyExpenseLock(user_id=user.id, year=body.year, month=body.month)
+        db.add(lock)
+        await db.commit()
+    return {"is_locked": True}
+
+
+@router.delete("/lock", status_code=200)
+async def unlock_period(
+    year: int = Query(...),
+    month: int = Query(...),
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Розблоковує місяць для редагування."""
+    res = await db.execute(
+        select(MonthlyExpenseLock).where(
+            MonthlyExpenseLock.user_id == user.id,
+            MonthlyExpenseLock.year == year,
+            MonthlyExpenseLock.month == month,
+        )
+    )
+    lock = res.scalar_one_or_none()
+    if lock:
+        await db.delete(lock)
+        await db.commit()
+    return {"is_locked": False}
+
+
+@router.post("/copy-from", status_code=200)
+async def copy_from_period(
+    body: CopyFromRequest,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Копіює дані з одного місяця в інший."""
+    copied_fixed = 0
+    copied_salary = 0
+
+    if body.copy_fixed:
+        src_fixed = await db.execute(
+            select(MonthlyFixedExpense).where(
+                MonthlyFixedExpense.user_id == user.id,
+                MonthlyFixedExpense.year == body.source_year,
+                MonthlyFixedExpense.month == body.source_month,
+            )
+        )
+        for src in src_fixed.scalars():
+            # Перевіряємо чи вже існує запис
+            existing = await db.execute(
+                select(MonthlyFixedExpense).where(
+                    MonthlyFixedExpense.user_id == user.id,
+                    MonthlyFixedExpense.year == body.target_year,
+                    MonthlyFixedExpense.month == body.target_month,
+                    MonthlyFixedExpense.category_key == src.category_key,
+                )
+            )
+            tgt = existing.scalar_one_or_none()
+            if tgt is None:
+                tgt = MonthlyFixedExpense(
+                    user_id=user.id,
+                    year=body.target_year,
+                    month=body.target_month,
+                    category_key=src.category_key,
+                )
+                db.add(tgt)
+            tgt.amount = src.amount
+            tgt.is_recurring = src.is_recurring
+            copied_fixed += 1
+
+    if body.copy_salary:
+        src_salary = await db.execute(
+            select(MonthlySalaryExpense).where(
+                MonthlySalaryExpense.user_id == user.id,
+                MonthlySalaryExpense.year == body.source_year,
+                MonthlySalaryExpense.month == body.source_month,
+            )
+        )
+        for src in src_salary.scalars():
+            existing = await db.execute(
+                select(MonthlySalaryExpense).where(
+                    MonthlySalaryExpense.user_id == user.id,
+                    MonthlySalaryExpense.staff_member_id == src.staff_member_id,
+                    MonthlySalaryExpense.year == body.target_year,
+                    MonthlySalaryExpense.month == body.target_month,
+                )
+            )
+            tgt = existing.scalar_one_or_none()
+            if tgt is None:
+                tgt = MonthlySalaryExpense(
+                    user_id=user.id,
+                    staff_member_id=src.staff_member_id,
+                    year=body.target_year,
+                    month=body.target_month,
+                )
+                db.add(tgt)
+            # Копіюємо лише зарплатні налаштування (не суму, якщо 0)
+            tgt.brutto = src.brutto
+            tgt.has_supplement = src.has_supplement
+            tgt.target_net = src.target_net
+            tgt.individual_bonus = src.individual_bonus
+            tgt.paid_services_from_module = src.paid_services_from_module
+            copied_salary += 1
+
+    await db.commit()
+    return {"copied_fixed": copied_fixed, "copied_salary": copied_salary}
+
+
+@router.post("/ai-parse", response_model=AiParsedExpense)
+async def ai_parse_expense(
+    text: str = Form(""),
+    file: Optional[UploadFile] = File(None),
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Аналізує текст або зображення і повертає розпізнану витрату."""
+    provider, api_key = await get_provider(db, user.id)
+    if not provider:
+        raise HTTPException(status_code=400, detail="AI провайдер не налаштований")
+
+    category_keys = ", ".join(FIXED_CATEGORY_KEYS)
+    system_prompt = (
+        "Ти бухгалтерський асистент медичної клініки ФОП. "
+        "Проаналізуй зображення або текст витрати і поверни JSON з полями: "
+        f"category (fixed|other), category_key (один з: {category_keys}; або empty для other), "
+        "name (назва витрати укр), amount (число), is_recurring (true/false), "
+        "confidence (0.0-1.0), note (коментар якщо є неясності). "
+        "Тільки JSON без markdown."
+    )
+    user_prompt = text or "Розпізнай витрату на зображенні."
+
+    raw = ""
+    if file:
+        content = await file.read()
+        media_type = file.content_type or "image/jpeg"
+        raw = await analyze_image(provider, api_key, content, media_type, system_prompt, user_prompt)
+    else:
+        # Text-only: call without image
+        if provider == "anthropic":
+            import anthropic as sdk
+            import asyncio
+            client = sdk.Anthropic(api_key=api_key)
+            def _sync():
+                msg = client.messages.create(
+                    model="claude-haiku-4-5-20251001",
+                    max_tokens=512,
+                    system=system_prompt,
+                    messages=[{"role": "user", "content": user_prompt}],
+                )
+                return msg.content[0].text
+            raw = await asyncio.to_thread(_sync)
+        else:
+            from openai import OpenAI
+            import asyncio
+            client = OpenAI(api_key=api_key)
+            def _sync():
+                r = client.chat.completions.create(
+                    model="gpt-4o-mini", max_tokens=512,
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt},
+                    ],
+                )
+                return r.choices[0].message.content
+            raw = await asyncio.to_thread(_sync)
+
+    parsed = parse_ai_json(raw)
+    return AiParsedExpense(
+        category=parsed.get("category", "other"),
+        category_key=parsed.get("category_key", "other"),
+        name=parsed.get("name", "Витрата"),
+        amount=float(parsed.get("amount", 0)),
+        is_recurring=bool(parsed.get("is_recurring", False)),
+        confidence=float(parsed.get("confidence", 0.5)),
+        note=parsed.get("note", ""),
     )

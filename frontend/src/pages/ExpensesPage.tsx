@@ -1,10 +1,11 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import {
   ChevronLeft,
   ChevronRight,
   Save,
   RefreshCw,
   Lock,
+  LockOpen,
   TrendingDown,
   Users,
   Receipt,
@@ -19,7 +20,13 @@ import {
   Check,
   UserPlus,
   Stethoscope,
+  Copy,
+  Sparkles,
+  Download,
+  CalendarDays,
+  ImagePlus,
 } from "lucide-react";
+import * as XLSX from "xlsx";
 import {
   BarChart,
   Bar,
@@ -40,6 +47,8 @@ import type {
   StaffMember,
   HiredDoctorInfo,
   Doctor,
+  PeriodSummary,
+  AiParsedExpense,
 } from "../types";
 
 // ── Constants ──────────────────────────────────────────────────────
@@ -364,6 +373,33 @@ export default function ExpensesPage() {
     name: string; desc: string; amount: string; category: string; saving: boolean;
   }>({ open: false, isEdit: false, id: null, name: "", desc: "", amount: "", category: "general", saving: false });
 
+  // ── View mode: "all" = overview year, "month" = specific month ──
+  const [viewMode, setViewMode] = useState<"all" | "month">("all");
+
+  // ── Periods summary (for "all" mode) ──
+  const [periods, setPeriods] = useState<PeriodSummary[]>([]);
+  const [periodsLoading, setPeriodsLoading] = useState(false);
+
+  // ── Lock state ──
+  const [lockLoading, setLockLoading] = useState(false);
+
+  // ── Copy-from modal ──
+  const [copyModal, setCopyModal] = useState<{
+    open: boolean;
+    srcYear: number; srcMonth: number;
+    copyFixed: boolean; copySalary: boolean; saving: boolean;
+  }>({ open: false, srcYear: 0, srcMonth: 0, copyFixed: true, copySalary: true, saving: false });
+
+  // ── AI parse modal ──
+  const [aiModal, setAiModal] = useState<{
+    open: boolean;
+    text: string;
+    file: File | null;
+    loading: boolean;
+    result: AiParsedExpense | null;
+  }>({ open: false, text: "", file: null, loading: false, result: null });
+  const aiFileRef = useRef<HTMLInputElement>(null);
+
   // ── Change tab with persistence
   function changeTab(tab: TabId) {
     setActiveTab(tab);
@@ -435,6 +471,21 @@ export default function ExpensesPage() {
     }
   }, []);
 
+  // ── Load periods summary for the year ────────────────────────
+  const loadPeriods = useCallback(async () => {
+    setPeriodsLoading(true);
+    try {
+      const { data: resp } = await api.get<PeriodSummary[]>("/monthly-expenses/periods", {
+        params: { year },
+      });
+      setPeriods(resp);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setPeriodsLoading(false);
+    }
+  }, [year]);
+
   // ── Load 6-month trend ─────────────────────────────────────────
   const loadTrend = useCallback(async () => {
     const months = getMonthsBack(year, month, 6);
@@ -459,7 +510,7 @@ export default function ExpensesPage() {
     setTrendData(points);
   }, [year, month]);
 
-  useEffect(() => { load(); loadOther(); loadStaff(); loadDoctors(); loadTrend(); }, [load, loadOther, loadStaff, loadDoctors, loadTrend]);
+  useEffect(() => { load(); loadOther(); loadStaff(); loadDoctors(); loadTrend(); loadPeriods(); }, [load, loadOther, loadStaff, loadDoctors, loadTrend, loadPeriods]);
 
   // ── Month navigation ──────────────────────────────────────────
   function prevMonth() {
@@ -667,6 +718,116 @@ export default function ExpensesPage() {
     }
   }
 
+  // ── Lock / Unlock period ──────────────────────────────────────
+  async function lockPeriod() {
+    setLockLoading(true);
+    try {
+      await api.post("/monthly-expenses/lock", { year, month });
+      await Promise.all([load(), loadPeriods()]);
+    } catch (e) { console.error(e); }
+    finally { setLockLoading(false); }
+  }
+
+  async function unlockPeriod() {
+    if (!confirm("Розблокувати місяць для редагування?")) return;
+    setLockLoading(true);
+    try {
+      await api.delete("/monthly-expenses/lock", { params: { year, month } });
+      await Promise.all([load(), loadPeriods()]);
+    } catch (e) { console.error(e); }
+    finally { setLockLoading(false); }
+  }
+
+  // ── Copy from period ──────────────────────────────────────────
+  async function copyFromPeriod() {
+    if (!copyModal.srcYear || !copyModal.srcMonth) return;
+    setCopyModal(s => ({ ...s, saving: true }));
+    try {
+      await api.post("/monthly-expenses/copy-from", {
+        source_year:  copyModal.srcYear,
+        source_month: copyModal.srcMonth,
+        target_year:  year,
+        target_month: month,
+        copy_fixed:   copyModal.copyFixed,
+        copy_salary:  copyModal.copySalary,
+      });
+      setCopyModal(s => ({ ...s, open: false, saving: false }));
+      await Promise.all([load(), loadPeriods()]);
+    } catch (e) {
+      console.error(e);
+      setCopyModal(s => ({ ...s, saving: false }));
+    }
+  }
+
+  // ── Open copy modal with previous month as default source ─────
+  function openCopyModal() {
+    let srcYear = year;
+    let srcMonth = month - 1;
+    if (srcMonth < 1) { srcMonth = 12; srcYear--; }
+    setCopyModal({ open: true, srcYear, srcMonth, copyFixed: true, copySalary: true, saving: false });
+  }
+
+  // ── AI parse expense ──────────────────────────────────────────
+  async function submitAiParse() {
+    setAiModal(s => ({ ...s, loading: true }));
+    try {
+      const formData = new FormData();
+      if (aiModal.text) formData.append("text", aiModal.text);
+      if (aiModal.file) formData.append("file", aiModal.file);
+      const { data: result } = await api.post<AiParsedExpense>("/monthly-expenses/ai-parse", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      setAiModal(s => ({ ...s, loading: false, result }));
+    } catch (e) {
+      console.error(e);
+      setAiModal(s => ({ ...s, loading: false }));
+    }
+  }
+
+  async function applyAiResult() {
+    if (!aiModal.result) return;
+    const r = aiModal.result;
+    if (r.category === "fixed" && r.category_key) {
+      const key = r.category_key;
+      setFixedPending(p => ({
+        ...p,
+        [key]: { amount: String(r.amount), is_recurring: r.is_recurring, saving: false },
+      }));
+      try {
+        await api.put("/monthly-expenses/fixed", {
+          year, month, category_key: key, amount: r.amount, is_recurring: r.is_recurring,
+        });
+        await load();
+      } catch (e) { console.error(e); }
+    }
+    setAiModal({ open: false, text: "", file: null, loading: false, result: null });
+    changeTab("fixed");
+  }
+
+  // ── Excel export ──────────────────────────────────────────────
+  function exportExcel() {
+    if (!data) return;
+    const wb = XLSX.utils.book_new();
+    const rows: (string | number)[][] = [
+      [`Витрати за ${MONTH_NAMES[month - 1]} ${year}`],
+      [],
+      ["Категорія", "Назва", "Сума (₴)"],
+      ...data.fixed.filter(r => r.amount > 0).map(r => ["Постійні", r.category_name, r.amount]),
+      ...data.salary.map(r => ["Зарплатні", r.full_name, r.total_employer_cost]),
+      ...otherExpenses.map(r => ["Інші", r.name, r.amount]),
+      ["Податки", `ЄП (${data.taxes.ep_rate}%)`, data.taxes.ep],
+      ["Податки", `ВЗ (${data.taxes.vz_rate}%)`, data.taxes.vz],
+      [],
+      ["", "ВСЬОГО", grandWithOther],
+      ["", "Дохід", data.totals.income],
+      ["", "Залишок", (data.totals.income) - grandWithOther],
+    ];
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws["!cols"] = [{ wch: 14 }, { wch: 35 }, { wch: 16 }];
+    XLSX.utils.book_append_sheet(wb, ws, MONTH_NAMES[month - 1]);
+    XLSX.writeFile(wb, `витрати_${year}_${String(month).padStart(2, "0")}.xlsx`);
+  }
+
   // ── Derived data ──────────────────────────────────────────────
   const otherTotal = otherExpenses.reduce((sum, e) => sum + e.amount, 0);
 
@@ -719,7 +880,7 @@ export default function ExpensesPage() {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h2 className="text-2xl font-bold text-white">Витрати</h2>
-          {data && (
+          {viewMode === "month" && data && (
             <p className="text-gray-500 text-sm mt-1">
               Всього:{" "}
               <span className="text-red-400 font-semibold">{fmt(grandWithOther)} ₴</span>
@@ -728,37 +889,230 @@ export default function ExpensesPage() {
               <span className={remaining >= 0 ? "text-emerald-400 font-semibold" : "text-red-400 font-semibold"}>
                 {remaining >= 0 ? "+" : ""}{fmt(remaining)} ₴
               </span>
+              {data.is_locked && (
+                <span className="ml-2 inline-flex items-center gap-1 text-amber-400">
+                  <Lock size={12} /> Зафіксовано
+                </span>
+              )}
             </p>
+          )}
+          {viewMode === "all" && (
+            <p className="text-gray-500 text-sm mt-1">Огляд усіх місяців — {year}</p>
           )}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <button
-            onClick={() => { load(); loadOther(); loadTrend(); }}
+            onClick={() => { load(); loadOther(); loadTrend(); loadPeriods(); }}
             className="p-2 rounded-xl text-gray-400 hover:text-white hover:bg-dark-300 transition-all"
             title="Оновити"
           >
             <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
           </button>
 
-          {/* Month nav */}
-          <div className="flex items-center gap-1 bg-dark-500/50 border border-dark-50/15 rounded-2xl px-2 py-1.5">
-            <button onClick={prevMonth}
-              className="p-1.5 rounded-xl text-gray-400 hover:text-white hover:bg-dark-300 transition-all">
-              <ChevronLeft size={18} />
+          {/* View mode switcher */}
+          <div className="flex items-center gap-1 bg-dark-500/50 border border-dark-50/15 rounded-2xl p-1">
+            <button
+              onClick={() => setViewMode("all")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                viewMode === "all"
+                  ? "bg-accent-500/20 text-accent-300 border border-accent-500/40"
+                  : "text-gray-500 hover:text-gray-300"
+              }`}
+            >
+              <CalendarDays size={13} /> Всього
             </button>
-            <span className="px-3 text-sm font-semibold text-white min-w-[140px] text-center">
-              {MONTH_NAMES[month - 1]} {year}
-            </span>
-            <button onClick={nextMonth}
-              className="p-1.5 rounded-xl text-gray-400 hover:text-white hover:bg-dark-300 transition-all">
-              <ChevronRight size={18} />
+            <button
+              onClick={() => setViewMode("month")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                viewMode === "month"
+                  ? "bg-accent-500/20 text-accent-300 border border-accent-500/40"
+                  : "text-gray-500 hover:text-gray-300"
+              }`}
+            >
+              {MONTH_NAMES[month - 1]}
             </button>
           </div>
+
+          {/* Year/Month nav */}
+          {viewMode === "all" ? (
+            <div className="flex items-center gap-1 bg-dark-500/50 border border-dark-50/15 rounded-2xl px-2 py-1.5">
+              <button onClick={() => setYear(y => y - 1)}
+                className="p-1.5 rounded-xl text-gray-400 hover:text-white hover:bg-dark-300 transition-all">
+                <ChevronLeft size={18} />
+              </button>
+              <span className="px-3 text-sm font-semibold text-white min-w-[60px] text-center">{year}</span>
+              <button onClick={() => setYear(y => y + 1)}
+                className="p-1.5 rounded-xl text-gray-400 hover:text-white hover:bg-dark-300 transition-all">
+                <ChevronRight size={18} />
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1 bg-dark-500/50 border border-dark-50/15 rounded-2xl px-2 py-1.5">
+              <button onClick={prevMonth}
+                className="p-1.5 rounded-xl text-gray-400 hover:text-white hover:bg-dark-300 transition-all">
+                <ChevronLeft size={18} />
+              </button>
+              <span className="px-3 text-sm font-semibold text-white min-w-[140px] text-center">
+                {MONTH_NAMES[month - 1]} {year}
+              </span>
+              <button onClick={nextMonth}
+                className="p-1.5 rounded-xl text-gray-400 hover:text-white hover:bg-dark-300 transition-all">
+                <ChevronRight size={18} />
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
-      {data && (
+      {/* ═══ "ALL" MODE — periods overview ═══ */}
+      {viewMode === "all" && (
+        <div className="space-y-4">
+          {/* Annual stacked bar chart */}
+          <div className="card-neo p-4">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
+              Витрати по місяцях — {year}
+            </p>
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart
+                data={periods.map(p => ({
+                  label: MONTH_SHORT[p.month - 1],
+                  fixed: p.fixed_total,
+                  salary: p.salary_brutto_total,
+                }))}
+                barSize={14}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" />
+                <XAxis dataKey="label" tick={{ fill: "#6b7280", fontSize: 11 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fill: "#6b7280", fontSize: 10 }} axisLine={false} tickLine={false}
+                  tickFormatter={v => `${Math.round(v / 1000)}k`} />
+                <Tooltip
+                  contentStyle={TT_STYLE}
+                  formatter={(v: number, name: string) => [fmt(v) + " ₴", name]}
+                />
+                <Bar dataKey="fixed"  stackId="a" fill="#6366f1" name="Постійні"  radius={[0,0,0,0]} />
+                <Bar dataKey="salary" stackId="a" fill="#a855f7" name="Зарплатні" radius={[4,4,0,0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Periods grid */}
+          {periodsLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <RefreshCw size={18} className="animate-spin text-gray-500" />
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+              {periods.map(p => (
+                <button
+                  key={p.month}
+                  onClick={() => { setMonth(p.month); setViewMode("month"); }}
+                  className={`card-neo p-4 text-left hover:border-accent-500/40 transition-all ${
+                    p.month === month && viewMode === "month" ? "border-accent-500/40" : ""
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-semibold text-white">{MONTH_NAMES[p.month - 1]}</span>
+                    {p.is_locked ? (
+                      <Lock size={12} className="text-amber-400" />
+                    ) : p.has_data ? (
+                      <Check size={12} className="text-emerald-400" />
+                    ) : null}
+                  </div>
+                  {p.has_data ? (
+                    <div className="space-y-0.5">
+                      <p className="text-xs text-gray-500">Постійні: <span className="text-blue-400 font-mono">{fmt(p.fixed_total)}</span> ₴</p>
+                      <p className="text-xs text-gray-500">Зарплата: <span className="text-purple-400 font-mono">{fmt(p.salary_brutto_total)}</span> ₴</p>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-gray-600">Немає даних</p>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ═══ MONTH MODE: action bar + banners ═══ */}
+      {viewMode === "month" && (
+        <>
+          {/* Action bar */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {data?.is_locked ? (
+              <button
+                onClick={unlockPeriod}
+                disabled={lockLoading}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-300 text-xs font-semibold hover:bg-amber-500/20 transition-all disabled:opacity-50"
+              >
+                {lockLoading ? <RefreshCw size={13} className="animate-spin" /> : <LockOpen size={13} />}
+                Розблокувати
+              </button>
+            ) : (
+              <button
+                onClick={lockPeriod}
+                disabled={lockLoading || !data}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-dark-400/60 border border-dark-50/15 text-gray-300 text-xs font-semibold hover:border-amber-500/30 hover:text-amber-300 transition-all disabled:opacity-50"
+              >
+                {lockLoading ? <RefreshCw size={13} className="animate-spin" /> : <Lock size={13} />}
+                Зафіксувати
+              </button>
+            )}
+            <button
+              onClick={openCopyModal}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-dark-400/60 border border-dark-50/15 text-gray-300 text-xs font-semibold hover:border-accent-500/30 hover:text-accent-300 transition-all"
+            >
+              <Copy size={13} /> Копіювати з...
+            </button>
+            <button
+              onClick={() => setAiModal(s => ({ ...s, open: true }))}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-dark-400/60 border border-dark-50/15 text-gray-300 text-xs font-semibold hover:border-purple-500/30 hover:text-purple-300 transition-all"
+            >
+              <Sparkles size={13} /> AI-аналіз
+            </button>
+            <button
+              onClick={exportExcel}
+              disabled={!data}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-dark-400/60 border border-dark-50/15 text-gray-300 text-xs font-semibold hover:border-emerald-500/30 hover:text-emerald-300 transition-all disabled:opacity-50"
+            >
+              <Download size={13} /> Excel
+            </button>
+          </div>
+
+          {/* Lock banner */}
+          {data?.is_locked && (
+            <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-center gap-3">
+              <Lock size={14} className="text-amber-400 shrink-0" />
+              <p className="text-sm text-amber-300 flex-1">
+                Місяць <strong>{MONTH_NAMES[month - 1]} {year}</strong> зафіксовано. Для редагування розблокуйте.
+              </p>
+              <button
+                onClick={unlockPeriod}
+                className="text-xs text-amber-400 hover:text-amber-300 underline shrink-0"
+              >
+                Розблокувати
+              </button>
+            </div>
+          )}
+
+          {/* Missing salary warning */}
+          {data?.missing_salary_staff && data.missing_salary_staff.length > 0 && (
+            <div className="p-4 rounded-xl bg-orange-500/10 border border-orange-500/25 flex items-start gap-3">
+              <AlertCircle size={16} className="text-orange-400 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold text-orange-300">
+                  Є співробітники без зарплати за {MONTH_NAMES[month - 1]}
+                </p>
+                <p className="text-xs text-orange-400/80 mt-1">
+                  {data.missing_salary_staff.join(", ")} — вкажіть дані для дотримання трудового законодавства.
+                </p>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {data && viewMode === "month" && (
         <>
           {/* ═══ DASHBOARD: KPI CARDS ═══ */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
@@ -1854,6 +2208,200 @@ export default function ExpensesPage() {
             </button>
           </div>
         </Modal>
+      )}
+
+      {/* ── Copy-from modal ── */}
+      {copyModal.open && (
+        <Modal
+          title="Копіювати дані з попереднього місяця"
+          onClose={() => setCopyModal(s => ({ ...s, open: false }))}
+        >
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="label-dark">Рік</label>
+                <select
+                  value={copyModal.srcYear}
+                  onChange={e => setCopyModal(s => ({ ...s, srcYear: parseInt(e.target.value) }))}
+                  className="input-dark w-full"
+                >
+                  {[year - 1, year].map(y => (
+                    <option key={y} value={y}>{y}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="label-dark">Місяць</label>
+                <select
+                  value={copyModal.srcMonth}
+                  onChange={e => setCopyModal(s => ({ ...s, srcMonth: parseInt(e.target.value) }))}
+                  className="input-dark w-full"
+                >
+                  {MONTH_NAMES.map((name, idx) => (
+                    <option key={idx + 1} value={idx + 1}>{name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="space-y-2 p-3 rounded-xl bg-dark-400/30 border border-dark-50/10">
+              <p className="text-xs text-gray-500 mb-2">Що копіювати:</p>
+              <CheckboxToggle
+                checked={copyModal.copyFixed}
+                label="Постійні витрати"
+                onToggle={() => setCopyModal(s => ({ ...s, copyFixed: !s.copyFixed }))}
+              />
+              <CheckboxToggle
+                checked={copyModal.copySalary}
+                label="Зарплатні налаштування"
+                onToggle={() => setCopyModal(s => ({ ...s, copySalary: !s.copySalary }))}
+              />
+            </div>
+            <p className="text-xs text-gray-600">
+              Дані буде скопійовано в <span className="text-white">{MONTH_NAMES[month - 1]} {year}</span>.
+              Існуючі записи цільового місяця будуть перезаписані.
+            </p>
+          </div>
+          <div className="flex gap-3 pt-2">
+            <button
+              onClick={() => setCopyModal(s => ({ ...s, open: false }))}
+              className="flex-1 py-2.5 rounded-xl border border-dark-50/20 text-gray-400 hover:text-white text-sm transition-all"
+            >
+              Скасувати
+            </button>
+            <button
+              onClick={copyFromPeriod}
+              disabled={copyModal.saving || (!copyModal.copyFixed && !copyModal.copySalary)}
+              className="flex-1 py-2.5 rounded-xl bg-accent-500 hover:bg-accent-400 text-white text-sm font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-60"
+            >
+              {copyModal.saving ? <RefreshCw size={14} className="animate-spin" /> : <Copy size={14} />}
+              Копіювати
+            </button>
+          </div>
+        </Modal>
+      )}
+
+      {/* ── AI parse modal ── */}
+      {aiModal.open && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div
+            className="bg-dark-600 rounded-2xl shadow-2xl w-full max-w-lg"
+            style={{ border: "1px solid #ffffff15" }}
+          >
+            <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
+              <div className="flex items-center gap-2">
+                <Sparkles size={16} className="text-purple-400" />
+                <h4 className="font-semibold text-white text-sm">AI-аналіз витрати</h4>
+              </div>
+              <button
+                onClick={() => setAiModal({ open: false, text: "", file: null, loading: false, result: null })}
+                className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="px-5 py-4 space-y-4">
+              {!aiModal.result ? (
+                <>
+                  <div>
+                    <label className="label-dark">Опис витрати (текст)</label>
+                    <textarea
+                      value={aiModal.text}
+                      onChange={e => setAiModal(s => ({ ...s, text: e.target.value }))}
+                      placeholder="Наприклад: оплатив оренду 15000 грн за лютий, щомісячно..."
+                      className="input-dark w-full h-24 resize-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="label-dark">або зображення / чек</label>
+                    <div
+                      onClick={() => aiFileRef.current?.click()}
+                      className="border border-dashed border-dark-50/20 rounded-xl p-6 text-center cursor-pointer hover:border-purple-500/40 hover:bg-purple-500/5 transition-all"
+                    >
+                      <ImagePlus size={24} className="text-gray-600 mx-auto mb-2" />
+                      {aiModal.file ? (
+                        <p className="text-sm text-purple-300">{aiModal.file.name}</p>
+                      ) : (
+                        <p className="text-xs text-gray-600">Натисніть щоб обрати зображення (JPG, PNG, PDF)</p>
+                      )}
+                    </div>
+                    <input
+                      ref={aiFileRef}
+                      type="file"
+                      accept="image/*,application/pdf"
+                      className="hidden"
+                      onChange={e => setAiModal(s => ({ ...s, file: e.target.files?.[0] ?? null }))}
+                    />
+                  </div>
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      onClick={() => setAiModal({ open: false, text: "", file: null, loading: false, result: null })}
+                      className="flex-1 py-2.5 rounded-xl border border-dark-50/20 text-gray-400 hover:text-white text-sm transition-all"
+                    >
+                      Скасувати
+                    </button>
+                    <button
+                      onClick={submitAiParse}
+                      disabled={aiModal.loading || (!aiModal.text.trim() && !aiModal.file)}
+                      className="flex-1 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-sm font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-60"
+                    >
+                      {aiModal.loading ? <RefreshCw size={14} className="animate-spin" /> : <Sparkles size={14} />}
+                      Аналізувати
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="p-4 rounded-xl bg-purple-500/10 border border-purple-500/20 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-semibold text-purple-400 uppercase tracking-wider">Результат AI</p>
+                      <span className="text-xs text-gray-500">
+                        Впевненість: {Math.round(aiModal.result.confidence * 100)}%
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <p className="text-xs text-gray-500">Категорія</p>
+                        <p className="text-white font-medium">{aiModal.result.category_key || aiModal.result.category}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500">Сума</p>
+                        <p className="text-emerald-400 font-bold font-mono">{fmt(aiModal.result.amount)} ₴</p>
+                      </div>
+                      <div className="col-span-2">
+                        <p className="text-xs text-gray-500">Назва</p>
+                        <p className="text-white">{aiModal.result.name}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500">Постійна</p>
+                        <p className="text-white">{aiModal.result.is_recurring ? "Так" : "Ні"}</p>
+                      </div>
+                    </div>
+                    {aiModal.result.note && (
+                      <p className="text-xs text-gray-500 italic border-t border-purple-500/20 pt-2">
+                        {aiModal.result.note}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setAiModal(s => ({ ...s, result: null }))}
+                      className="flex-1 py-2.5 rounded-xl border border-dark-50/20 text-gray-400 hover:text-white text-sm transition-all"
+                    >
+                      Назад
+                    </button>
+                    <button
+                      onClick={applyAiResult}
+                      className="flex-1 py-2.5 rounded-xl bg-accent-500 hover:bg-accent-400 text-white text-sm font-semibold transition-all flex items-center justify-center gap-2"
+                    >
+                      <Check size={14} /> Застосувати
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
       )}
 
       {/* ── Other expense modal ── */}

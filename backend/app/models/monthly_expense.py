@@ -75,3 +75,20 @@ class MonthlySalaryExpense(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )
+
+
+class MonthlyExpenseLock(Base):
+    """Фіксація місяця — після блокування дані вимагають розблокування для редагування."""
+
+    __tablename__ = "monthly_expense_locks"
+    __table_args__ = (
+        UniqueConstraint("user_id", "year", "month", name="uq_mel"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    year: Mapped[int] = mapped_column(Integer)
+    month: Mapped[int] = mapped_column(Integer)   # 1–12
+    locked_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )

@@ -462,3 +462,24 @@ export interface ShareResponse {
   url: string;
   expires_at: string;
 }
+
+// ── Monthly expense periods & AI ─────────────────────────────────────
+
+export interface PeriodSummary {
+  year: number;
+  month: number;
+  fixed_total: number;
+  salary_brutto_total: number;
+  is_locked: boolean;
+  has_data: boolean;
+}
+
+export interface AiParsedExpense {
+  category: string;       // "fixed" | "other"
+  category_key: string;   // один з FIXED_CATEGORY_KEYS або ""
+  name: string;
+  amount: number;
+  is_recurring: boolean;
+  confidence: number;     // 0–1
+  note: string;
+}
