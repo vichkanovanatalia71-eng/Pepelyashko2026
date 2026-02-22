@@ -6,17 +6,19 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
+  Legend,
   ResponsiveContainer,
 } from "recharts";
 import type { DashboardReport } from "../../types";
 import { fmtUAH } from "../../lib/utils";
 
 const TT_STYLE = {
-  background: "#1a1a2e",
+  backgroundColor: "transparent",
   border: "1px solid #ffffff15",
   borderRadius: 8,
   fontSize: 12,
   color: "#e2e8f0",
+  padding: "8px",
 };
 
 interface StaffBlockProps {
@@ -116,7 +118,28 @@ export function StaffBlock({ data }: StaffBlockProps) {
         </div>
       </div>
 
-      {/* Stacked bar chart */}
+      {/* Stacked bar chart with legend */}
+      <div className="mb-4">
+        <div className="grid grid-cols-4 gap-2 text-xs mb-3 p-2 bg-dark-400/20 rounded-lg">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-sm bg-emerald-400"></div>
+            <span className="text-gray-300">Нетто</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-sm bg-amber-400"></div>
+            <span className="text-gray-300">ПДФО 18%</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-sm bg-red-400"></div>
+            <span className="text-gray-300">ВЗ 5%</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-sm bg-blue-400"></div>
+            <span className="text-gray-300">ЄСВ роб. 22%</span>
+          </div>
+        </div>
+      </div>
+
       <ResponsiveContainer width="100%" height={200}>
         <BarChart
           data={chartData}
@@ -133,6 +156,7 @@ export function StaffBlock({ data }: StaffBlockProps) {
           <Tooltip
             contentStyle={TT_STYLE}
             formatter={(v: number) => [`${fmtUAH(v)} ₴`]}
+            labelStyle={{ color: "#e2e8f0" }}
           />
           <Bar dataKey="Нетто" stackId="a" fill="#34d399" />
           <Bar dataKey="ПДФО" stackId="a" fill="#fbbf24" />
@@ -146,17 +170,33 @@ export function StaffBlock({ data }: StaffBlockProps) {
         <h4 className="text-xs font-semibold text-gray-400 mb-3">Розбивка по ролях</h4>
         <div className="space-y-2">
           {data.staff_by_role.map((role) => (
-            <div key={role.role} className="flex items-center justify-between p-2 bg-dark-400/20 rounded-lg">
-              <div className="flex-1">
-                <p className="text-sm text-white">{role.role_label}</p>
-                <p className="text-xs text-gray-500">{role.count} осіб</p>
-              </div>
-              <div className="text-right">
-                <p className="text-sm font-semibold text-emerald-400">
-                  {fmtUAH(role.salary_brutto_total)}
-                  {" "}грн
+            <div key={role.role} className="p-3 bg-dark-400/20 rounded-lg">
+              <div className="flex items-center justify-between mb-2">
+                <div>
+                  <p className="text-sm font-semibold text-white">{role.role_label}</p>
+                  <p className="text-xs text-gray-500">{role.count} осіб</p>
+                </div>
+                <p className="text-sm font-bold text-emerald-400">
+                  {fmtUAH(role.salary_brutto_total)} ₴
                 </p>
-                <p className="text-xs text-gray-500">{role.pct}%</p>
+              </div>
+              <div className="grid grid-cols-4 gap-2 text-xs">
+                <div>
+                  <p className="text-gray-500">Нетто</p>
+                  <p className="text-gray-300">{fmtUAH(role.salary_netto_total)} ₴</p>
+                </div>
+                <div>
+                  <p className="text-gray-500">ПДФО</p>
+                  <p className="text-amber-300">{fmtUAH(role.pdfo_total)} ₴</p>
+                </div>
+                <div>
+                  <p className="text-gray-500">ВЗ</p>
+                  <p className="text-red-300">{fmtUAH(role.vz_total)} ₴</p>
+                </div>
+                <div>
+                  <p className="text-gray-500">ЄСВ роб.</p>
+                  <p className="text-blue-300">{fmtUAH(role.esv_employer_total)} ₴</p>
+                </div>
               </div>
             </div>
           ))}
