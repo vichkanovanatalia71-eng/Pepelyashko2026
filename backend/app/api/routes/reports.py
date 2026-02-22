@@ -474,11 +474,19 @@ async def _month_totals(
 
     profit = round(income - expenses, 2)
 
+    # Calculate individual tax components for dashboard display
+    tax_single = round(income * tax_rate, 2)  # PDFO-like single tax
+    tax_esv = round(esv_monthly, 2)
+
     return {
         "income": income,
         "expenses": expenses,
         "profit": profit,
+        "tax_single": tax_single,
+        "tax_esv": tax_esv,
+        "tax_vz": vz,
         "total_taxes": tax_total,
+        "income_after_taxes": round(profit - tax_total, 2),
     }
 
 
