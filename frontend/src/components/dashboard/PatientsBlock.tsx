@@ -1,8 +1,5 @@
 import { Users, TrendingUp, TrendingDown, AlertCircle } from "lucide-react";
 import {
-  PieChart,
-  Pie,
-  Cell,
   BarChart,
   Bar,
   XAxis,
@@ -49,7 +46,7 @@ export function PatientsBlock({ data }: PatientsBlockProps) {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 stagger-enter">
-      {/* Left: Pie chart */}
+      {/* Left: Age distribution bar chart */}
       <div className="lg:col-span-1 card-neo p-5">
         <div className="flex items-center gap-2 mb-4">
           <div className="p-2 rounded-xl bg-blue-500/10">
@@ -63,23 +60,20 @@ export function PatientsBlock({ data }: PatientsBlockProps) {
 
         {data.patients_by_age.length > 0 ? (
           <ResponsiveContainer width="100%" height={240}>
-            <PieChart>
-              <Pie
-                data={data.patients_by_age}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={({ age_label, pct }) => `${age_label}: ${pct}%`}
-                outerRadius={60}
-                fill="#8884d8"
-                dataKey="patient_count"
-              >
-                {data.patients_by_age.map((_, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip contentStyle={TT_STYLE} formatter={(v: number) => `${v} пац.`} />
-            </PieChart>
+            <BarChart
+              data={data.patients_by_age}
+              layout="vertical"
+              margin={{ left: 70, right: 20 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" horizontal={false} />
+              <XAxis type="number" tick={{ fill: "#6b7280", fontSize: 10 }} />
+              <YAxis type="category" dataKey="age_label" tick={{ fill: "#9ca3af", fontSize: 11 }} />
+              <Tooltip
+                contentStyle={TT_STYLE}
+                formatter={(v: number) => `${v} пац.`}
+              />
+              <Bar dataKey="patient_count" fill="#34d399" radius={[0, 8, 8, 0]} />
+            </BarChart>
           </ResponsiveContainer>
         ) : (
           <div className="h-[240px] flex items-center justify-center text-gray-600 text-sm">
@@ -144,7 +138,16 @@ export function PatientsBlock({ data }: PatientsBlockProps) {
             height={Math.max(200, data.patients_by_doctor.length * 40)}
           >
             <BarChart
-              data={data.patients_by_doctor.slice(0, 10)}
+              data={data.patients_by_doctor.slice(0, 10).map((doc) => ({
+                ...doc,
+                // Include paid services in services_count
+                total_services: (doc.services_count || 0) + (
+                  data.top_paid_services
+                    ?.flatMap(s => s.by_doctor)
+                    ?.filter(d => d.doctor_id === doc.doctor_id)
+                    ?.reduce((sum, d) => sum + d.quantity, 0) || 0
+                ),
+              }))}
               layout="vertical"
               margin={{ left: 100, right: 20 }}
             >
@@ -155,13 +158,13 @@ export function PatientsBlock({ data }: PatientsBlockProps) {
                 contentStyle={TT_STYLE}
                 formatter={(v: number, name: string) => {
                   if (name === "patient_count") return [`${v} пац.`, "Пацієнти"];
-                  if (name === "services_count") return [`${v} послуг`, "Послуги"];
+                  if (name === "total_services") return [`${v} послуг`, "Послуги (НСЗУ + платні)"];
                   return [v, name];
                 }}
               />
               <Legend wrapperStyle={{ fontSize: 11 }} />
               <Bar dataKey="patient_count" fill="#34d399" name="Пацієнти" />
-              <Bar dataKey="services_count" fill="#60a5fa" name="Послуги" />
+              <Bar dataKey="total_services" fill="#60a5fa" name="Послуги (НСЗУ + платні)" />
             </BarChart>
           </ResponsiveContainer>
         ) : (
@@ -182,17 +185,29 @@ export function PatientsBlock({ data }: PatientsBlockProps) {
             <div>
               <p className="text-xs text-gray-500 mb-1">Середній дохід/пац.</p>
               <p className="text-sm font-semibold text-emerald-400">
-                {data.patients_by_doctor[0]?.revenue_per_patient.toLocaleString("uk-UA", {
-                  minimumFractionDigits: 0,
-                  maximumFractionDigits: 0,
-                })}
+                {(() => {
+                  // Calculate total revenue from all doctors
+                  const totalRevenue = data.patients_by_doctor.reduce(
+                    (sum, doc) => sum + (doc.revenue_per_patient * doc.patient_count),
+                    0
+                  );
+                  const avgPerPatient = data.total_patients > 0
+                    ? Math.round(totalRevenue / data.total_patients)
+                    : 0;
+                  return avgPerPatient.toLocaleString("uk-UA", {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0,
+                  });
+                })()}
                 {" "}грн
               </p>
             </div>
             <div>
               <p className="text-xs text-gray-500 mb-1">Макс. завантаженість</p>
               <p className="text-sm font-semibold text-blue-400">
-                {data.patients_by_doctor[0]?.doctor_name || "—"}
+                {data.patients_by_doctor.reduce((max, doc) =>
+                  doc.patient_count > max.patient_count ? doc : max
+                )?.doctor_name || "—"}
               </p>
             </div>
           </div>
