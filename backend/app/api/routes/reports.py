@@ -651,15 +651,18 @@ async def _get_patients_by_doctor(db: AsyncSession, user_id: int, year: int, mon
             "revenue": 0,
         }
 
-    # Послуги по лікарям
+    # Послуги та дохід по лікарям
     services_q = await db.execute(
         select(
             Doctor.id,
             func.count(MonthlyPaidServiceEntry.id).label("services_count"),
+            func.sum(Service.price).label("revenue"),
         ).join(
             MonthlyPaidServicesReport, Doctor.id == MonthlyPaidServicesReport.doctor_id
         ).join(
             MonthlyPaidServiceEntry, MonthlyPaidServiceEntry.report_id == MonthlyPaidServicesReport.id
+        ).join(
+            Service, MonthlyPaidServiceEntry.service_id == Service.id
         ).where(
             MonthlyPaidServicesReport.user_id == user_id,
             MonthlyPaidServicesReport.year == year,
@@ -670,6 +673,7 @@ async def _get_patients_by_doctor(db: AsyncSession, user_id: int, year: int, mon
         doctor_id = row[0]
         if doctor_id in current_data:
             current_data[doctor_id]["services"] = int(row[1] or 0)
+            current_data[doctor_id]["revenue"] = float(row[2] or 0)
 
     # Попередній місяць
     prev_month = month - 1 if month > 1 else 12
@@ -688,6 +692,8 @@ async def _get_patients_by_doctor(db: AsyncSession, user_id: int, year: int, mon
     for doctor_id, data in current_data.items():
         patient_count = data["patients"]
         prev_count = prev_data.get(doctor_id, 0)
+        revenue = data["revenue"]
+        revenue_per_patient = round(revenue / patient_count, 2) if patient_count > 0 else 0
         result.append(DoctorPatientLoad(
             doctor_id=doctor_id,
             doctor_name=data["name"],
@@ -695,7 +701,7 @@ async def _get_patients_by_doctor(db: AsyncSession, user_id: int, year: int, mon
             patient_count_prev=prev_count,
             patient_count_change_pct=round((patient_count - prev_count) / prev_count * 100, 1) if prev_count > 0 else 0,
             services_count=data["services"],
-            revenue_per_patient=0,  # TODO: calculate from income data
+            revenue_per_patient=revenue_per_patient,
         ))
 
     return sorted(result, key=lambda x: x.patient_count, reverse=True)
@@ -736,11 +742,17 @@ async def _get_staff_breakdown(db: AsyncSession, user_id: int, year: int, month:
     for row in salary_q.all():
         role = row[0]
         brutto = float(row[1] or 0)
+        # Calculate tax components
+        pdfo = round(brutto * 0.18, 2)  # PDFO 18%
+        vz = round(brutto * 0.05, 2)    # VZ 5%
+        esv_emp = round(brutto * 0.22, 2)  # ESV employer 22%
+        netto = round(brutto - pdfo - vz, 2)
+
         salary_data[role] = {
-            "netto": 0,  # TODO: calculate from brutto
-            "pdfo": 0,   # TODO: calculate from brutto
-            "vz": 0,     # TODO: calculate from brutto
-            "esv_emp": 0,  # TODO: calculate from brutto
+            "netto": netto,
+            "pdfo": pdfo,
+            "vz": vz,
+            "esv_emp": esv_emp,
             "brutto": brutto,
         }
         total_salary_brutto += brutto
@@ -770,7 +782,7 @@ async def _get_top_paid_services_detailed(db: AsyncSession, user_id: int, year: 
     """Отримати ТОП платних послуг з розрахунком маржі та розподілом по лікарям.
     Повертає: (список послуг з деталями, загальна маржа, % маржі)
     """
-    # Отримуємо всі послуги за місяць
+    # Отримуємо всі послуги за місяць (per service + doctor combination)
     services_q = await db.execute(
         select(
             Service.id,
@@ -778,8 +790,9 @@ async def _get_top_paid_services_detailed(db: AsyncSession, user_id: int, year: 
             Service.name,
             Service.price,
             Service.materials,
-            func.count(MonthlyPaidServiceEntry.id).label("qty"),
+            Doctor.id.label("doctor_id"),
             Doctor.full_name,
+            func.count(MonthlyPaidServiceEntry.id).label("qty"),
         ).join(
             MonthlyPaidServiceEntry, MonthlyPaidServiceEntry.service_id == Service.id
         ).join(
@@ -790,10 +803,10 @@ async def _get_top_paid_services_detailed(db: AsyncSession, user_id: int, year: 
             MonthlyPaidServicesReport.user_id == user_id,
             MonthlyPaidServicesReport.year == year,
             MonthlyPaidServicesReport.month == month,
-        ).group_by(Service.id, Service.code, Service.name, Service.price, Service.materials, Doctor.full_name)
+        ).group_by(Service.id, Service.code, Service.name, Service.price, Service.materials, Doctor.id, Doctor.full_name)
     )
 
-    # Агрегуємо дані
+    # Агрегуємо дані по послугам
     service_data = {}
     for row in services_q.all():
         service_id = row[0]
@@ -807,20 +820,20 @@ async def _get_top_paid_services_detailed(db: AsyncSession, user_id: int, year: 
                 "revenue": 0,
                 "by_doctor": {},
             }
-        service_data[service_id]["quantity"] += int(row[6] or 0)
-        service_data[service_id]["revenue"] += float(row[3] or 0) * int(row[6] or 0)
+
+        doctor_id = row[5]
+        doctor_name = row[6]
+        qty = int(row[7] or 0)
+
+        # Сумуємо загальну кількість та дохід
+        service_data[service_id]["quantity"] += qty
+        service_data[service_id]["revenue"] += float(row[3] or 0) * qty
 
         # Розподіл по лікарям
-        doctor_name = row[7]
-        qty = int(row[6] or 0)
         if doctor_name not in service_data[service_id]["by_doctor"]:
-            service_data[service_id]["by_doctor"][doctor_name] = {"qty": 0, "revenue": 0, "doctor_id": 0}
+            service_data[service_id]["by_doctor"][doctor_name] = {"qty": 0, "revenue": 0, "doctor_id": doctor_id}
         service_data[service_id]["by_doctor"][doctor_name]["qty"] += qty
         service_data[service_id]["by_doctor"][doctor_name]["revenue"] += float(row[3] or 0) * qty
-
-    # Отримуємо ID лікарів для by_doctor
-    doctors_q = await db.execute(select(Doctor.id, Doctor.full_name).where(Doctor.user_id == user_id))
-    doctor_map = {row[1]: row[0] for row in doctors_q.all()}
 
     # Формуємо результат
     total_revenue = 0
@@ -846,7 +859,7 @@ async def _get_top_paid_services_detailed(db: AsyncSession, user_id: int, year: 
         by_doctor = []
         for doctor_name, doc_data in data["by_doctor"].items():
             by_doctor.append(DoctorServiceBreakdown(
-                doctor_id=doctor_map.get(doctor_name, 0),
+                doctor_id=doc_data["doctor_id"],
                 doctor_name=doctor_name,
                 quantity=doc_data["qty"],
                 revenue=round(doc_data["revenue"], 2),

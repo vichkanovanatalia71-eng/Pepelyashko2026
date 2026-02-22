@@ -163,30 +163,6 @@ export function StaffBlock({ data }: StaffBlockProps) {
         </div>
       </div>
 
-      {/* Owner info (if available) */}
-      {data.owner_info && (
-        <div className="mt-4 p-3 bg-blue-500/5 border border-blue-500/20 rounded-lg">
-          <p className="text-xs font-semibold text-blue-400 mb-2">Власник ФОП</p>
-          <div className="space-y-1">
-            <div className="flex justify-between text-xs">
-              <span className="text-gray-500">ім'я:</span>
-              <span className="text-white">{data.owner_info.doctor_name}</span>
-            </div>
-            <div className="flex justify-between text-xs">
-              <span className="text-gray-500">НСЗУ дохід:</span>
-              <span className="text-emerald-400">{fmtUAH(data.owner_info.nhsu_income)} ₴</span>
-            </div>
-            <div className="flex justify-between text-xs">
-              <span className="text-gray-500">Платні послуги:</span>
-              <span className="text-blue-400">{fmtUAH(data.owner_info.paid_services_income)} ₴</span>
-            </div>
-            <div className="flex justify-between text-xs border-t border-blue-500/20 pt-1 mt-1">
-              <span className="text-gray-500">Податки:</span>
-              <span className="text-amber-400">{fmtUAH(data.owner_info.total_taxes)} ₴</span>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
