@@ -99,6 +99,80 @@ class DataIntegrityWarning(BaseModel):
     message: str
 
 
+# ── ПРІОРИТЕТ 1: Пацієнти ────────────────────────────────────────────
+
+class AgeGroupBreakdown(BaseModel):
+    age_group: str  # "0_5", "6_17", ...
+    age_label: str  # "від 0 до 5 років"
+    patient_count: int
+    non_verified: int
+    pct: float
+
+
+class DoctorPatientLoad(BaseModel):
+    doctor_id: int
+    doctor_name: str
+    patient_count: int
+    patient_count_prev: int
+    patient_count_change_pct: float
+    services_count: int
+    revenue_per_patient: float
+
+
+# ── ПРІОРИТЕТ 1: Персонал & ФОП ───────────────────────────────────────
+
+class StaffRoleBreakdown(BaseModel):
+    role: str  # "doctor", "nurse", "other"
+    role_label: str
+    count: int
+    salary_total: float
+    salary_netto_total: float
+    pdfo_total: float
+    vz_total: float
+    esv_employer_total: float
+    salary_brutto_total: float
+    pct: float
+
+
+class OwnerFinancialInfo(BaseModel):
+    doctor_id: int
+    doctor_name: str
+    is_owner: bool
+    nhsu_income: float
+    paid_services_income: float
+    total_income: float
+    ep_amount: float
+    vz_amount: float
+    esv_owner_amount: float
+    total_taxes: float
+    income_after_taxes: float
+
+
+# ── ПРІОРИТЕТ 1: Платні послуги ───────────────────────────────────────
+
+class ServiceBreakdownDetail(BaseModel):
+    service_id: int
+    code: str
+    name: str
+    quantity: int
+    revenue: float
+    materials_cost: float
+    margin: float
+    margin_pct: float
+    by_doctor: list["DoctorServiceBreakdown"]
+
+
+class DoctorServiceBreakdown(BaseModel):
+    doctor_id: int
+    doctor_name: str
+    quantity: int
+    revenue: float
+
+
+# Forward ref for ServiceBreakdownDetail
+ServiceBreakdownDetail.model_rebuild()
+
+
 class DashboardData(BaseModel):
     year: int
     month: int
@@ -175,6 +249,27 @@ class DashboardData(BaseModel):
 
     # Doctor load
     active_doctors_count: int
+
+    # ── ПРІОРИТЕТ 1: ПАЦІЄНТИ ──
+    patients_by_age: list[AgeGroupBreakdown] = []
+    patients_by_doctor: list[DoctorPatientLoad] = []
+    total_patients: int = 0
+    total_patients_prev: int = 0
+    total_patients_change_pct: float = 0.0
+    total_non_verified: int = 0
+    total_non_verified_pct: float = 0.0
+
+    # ── ПРІОРИТЕТ 1: ПЕРСОНАЛ & ФОП ──
+    staff_by_role: list[StaffRoleBreakdown] = []
+    owner_info: OwnerFinancialInfo | None = None
+    total_staff_count: int = 0
+    fop_total: float = 0.0
+    fop_pct: float = 0.0
+
+    # ── ПРІОРИТЕТ 1: ПЛАТНІ ПОСЛУГИ ──
+    top_paid_services: list[ServiceBreakdownDetail] = []
+    services_total_margin: float = 0.0
+    services_margin_pct: float = 0.0
 
     # ── ЦІЛІСНІСТЬ ДАНИХ ──
     data_integrity_warnings: list[DataIntegrityWarning]

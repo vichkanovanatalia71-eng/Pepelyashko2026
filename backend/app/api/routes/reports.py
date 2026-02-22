@@ -19,16 +19,22 @@ from app.models.service import Service
 from app.models.staff import StaffMember
 from app.models.user import User
 from app.schemas.report import (
+    AgeGroupBreakdown,
     AiInsight,
     AnnualReport,
     CategoryBreakdown,
     DashboardData,
     DashboardInsight,
     DataIntegrityWarning,
+    DoctorPatientLoad,
     DoctorRevenue,
+    DoctorServiceBreakdown,
     MonthlyPL,
+    OwnerFinancialInfo,
     PeriodReport,
+    ServiceBreakdownDetail,
     ServiceRevenue,
+    StaffRoleBreakdown,
     TrendPoint,
 )
 
@@ -569,6 +575,298 @@ def _generate_insights(
     return items[:7]
 
 
+# ─── ПРІОРИТЕТ 1: Функції для дополнительных даних ──────────────────────
+
+async def _get_patients_by_age(db: AsyncSession, user_id: int, year: int, month: int) -> tuple[list[AgeGroupBreakdown], int, int, int]:
+    """Отримати пацієнтів по вікових групах для поточного місяця.
+    Повертає: (список по групам, всього пацієнтів, неверифікованих, всього попереднього місяця)
+    """
+    from app.models.nhsu import AGE_GROUPS
+
+    # Поточний місяць
+    current_q = await db.execute(
+        select(NhsuRecord.age_group, func.sum(NhsuRecord.patient_count), func.sum(NhsuRecord.non_verified)).where(
+            NhsuRecord.user_id == user_id,
+            NhsuRecord.year == year,
+            NhsuRecord.month == month,
+        ).group_by(NhsuRecord.age_group)
+    )
+    current_data = {row[0]: (int(row[1] or 0), float(row[2] or 0)) for row in current_q.all()}
+
+    # Попередній місяць
+    prev_month = month - 1 if month > 1 else 12
+    prev_year = year if month > 1 else year - 1
+    prev_q = await db.execute(
+        select(func.sum(NhsuRecord.patient_count)).where(
+            NhsuRecord.user_id == user_id,
+            NhsuRecord.year == prev_year,
+            NhsuRecord.month == prev_month,
+        )
+    )
+    prev_total = int(prev_q.scalar() or 0)
+
+    # Розраховуємо загальні числа
+    total_patients = sum(p[0] for p in current_data.values())
+    total_non_verified = sum(int(p[1]) for p in current_data.values())
+
+    # Формуємо результат
+    result = []
+    for age_group_def in AGE_GROUPS:
+        key = age_group_def["key"]
+        patient_count, non_verified = current_data.get(key, (0, 0))
+        result.append(AgeGroupBreakdown(
+            age_group=key,
+            age_label=age_group_def["label"],
+            patient_count=patient_count,
+            non_verified=int(non_verified),
+            pct=round(patient_count / total_patients * 100, 1) if total_patients > 0 else 0,
+        ))
+
+    return result, total_patients, total_non_verified, prev_total
+
+
+async def _get_patients_by_doctor(db: AsyncSession, user_id: int, year: int, month: int) -> list[DoctorPatientLoad]:
+    """Отримати кількість пацієнтів на кожного лікаря з порівнянням до попереднього місяця."""
+
+    # Поточний місяць
+    current_q = await db.execute(
+        select(
+            NhsuRecord.doctor_id,
+            Doctor.full_name,
+            func.sum(NhsuRecord.patient_count),
+            func.count(MonthlyPaidServiceEntry.id).label("services_count"),
+            func.sum(Income.amount).label("revenue"),
+        ).join(
+            Doctor, NhsuRecord.doctor_id == Doctor.id
+        ).outerjoin(
+            MonthlyPaidServicesReport, (MonthlyPaidServicesReport.doctor_id == Doctor.id) &
+            (MonthlyPaidServicesReport.year == year) & (MonthlyPaidServicesReport.month == month)
+        ).outerjoin(
+            MonthlyPaidServiceEntry, MonthlyPaidServiceEntry.report_id == MonthlyPaidServicesReport.id
+        ).outerjoin(
+            Income, (Income.source == Doctor.full_name) & (Income.date >= date(year, month, 1))
+        ).where(
+            NhsuRecord.user_id == user_id,
+            NhsuRecord.year == year,
+            NhsuRecord.month == month,
+        ).group_by(NhsuRecord.doctor_id, Doctor.full_name)
+    )
+    current_data = {row[0]: (row[1], int(row[2] or 0), int(row[3] or 0), float(row[4] or 0))
+                   for row in current_q.all()}
+
+    # Попередній місяць
+    prev_month = month - 1 if month > 1 else 12
+    prev_year = year if month > 1 else year - 1
+    prev_q = await db.execute(
+        select(NhsuRecord.doctor_id, func.sum(NhsuRecord.patient_count)).where(
+            NhsuRecord.user_id == user_id,
+            NhsuRecord.year == prev_year,
+            NhsuRecord.month == prev_month,
+        ).group_by(NhsuRecord.doctor_id)
+    )
+    prev_data = {row[0]: int(row[1] or 0) for row in prev_q.all()}
+
+    # Формуємо результат
+    result = []
+    for doctor_id, (doctor_name, patient_count, services_count, revenue) in current_data.items():
+        prev_count = prev_data.get(doctor_id, 0)
+        result.append(DoctorPatientLoad(
+            doctor_id=doctor_id,
+            doctor_name=doctor_name,
+            patient_count=patient_count,
+            patient_count_prev=prev_count,
+            patient_count_change_pct=round((patient_count - prev_count) / prev_count * 100, 1) if prev_count > 0 else 0,
+            services_count=services_count,
+            revenue_per_patient=round(revenue / patient_count, 2) if patient_count > 0 else 0,
+        ))
+
+    return sorted(result, key=lambda x: x.patient_count, reverse=True)
+
+
+async def _get_staff_breakdown(db: AsyncSession, user_id: int, year: int, month: int) -> tuple[list[StaffRoleBreakdown], float, float]:
+    """Отримати розбивку персоналу по ролях з розрахунком зарплат.
+    Повертає: (список по ролях, загальна зарплата, ФОП)
+    """
+
+    # Отримуємо персонал та зарплати
+    staff_q = await db.execute(
+        select(
+            StaffMember.role,
+            func.count(StaffMember.id),
+        ).where(
+            StaffMember.user_id == user_id,
+            StaffMember.is_active,
+        ).group_by(StaffMember.role)
+    )
+    staff_count = {row[0]: int(row[1]) for row in staff_q.all()}
+
+    # Зарплати за місяць
+    salary_q = await db.execute(
+        select(
+            StaffMember.role,
+            func.sum(MonthlySalaryExpense.salary_netto),
+            func.sum(MonthlySalaryExpense.pdfo),
+            func.sum(MonthlySalaryExpense.vz),
+            func.sum(MonthlySalaryExpense.esv_employer),
+        ).join(
+            MonthlySalaryExpense, StaffMember.id == MonthlySalaryExpense.staff_id
+        ).where(
+            StaffMember.user_id == user_id,
+            MonthlySalaryExpense.year == year,
+            MonthlySalaryExpense.month == month,
+        ).group_by(StaffMember.role)
+    )
+    salary_data = {}
+    total_salary_brutto = 0
+    for row in salary_q.all():
+        role = row[0]
+        salary_netto = float(row[1] or 0)
+        pdfo = float(row[2] or 0)
+        vz = float(row[3] or 0)
+        esv_emp = float(row[4] or 0)
+        salary_brutto = salary_netto + pdfo + vz + esv_emp
+        salary_data[role] = {
+            "netto": salary_netto,
+            "pdfo": pdfo,
+            "vz": vz,
+            "esv_emp": esv_emp,
+            "brutto": salary_brutto,
+        }
+        total_salary_brutto += salary_brutto
+
+    # Формуємо результат
+    result = []
+    for role in staff_count.keys():
+        count = staff_count.get(role, 0)
+        sal = salary_data.get(role, {"netto": 0, "pdfo": 0, "vz": 0, "esv_emp": 0, "brutto": 0})
+        result.append(StaffRoleBreakdown(
+            role=role,
+            role_label="Лікар" if role == "doctor" else "Медсестра" if role == "nurse" else "Інший персонал",
+            count=count,
+            salary_total=round(sal["netto"], 2),
+            salary_netto_total=round(sal["netto"], 2),
+            pdfo_total=round(sal["pdfo"], 2),
+            vz_total=round(sal["vz"], 2),
+            esv_employer_total=round(sal["esv_emp"], 2),
+            salary_brutto_total=round(sal["brutto"], 2),
+            pct=round(sal["brutto"] / total_salary_brutto * 100, 1) if total_salary_brutto > 0 else 0,
+        ))
+
+    return result, total_salary_brutto, total_salary_brutto
+
+
+async def _get_top_paid_services_detailed(db: AsyncSession, user_id: int, year: int, month: int) -> tuple[list[ServiceBreakdownDetail], float, float]:
+    """Отримати ТОП платних послуг з розрахунком маржі та розподілом по лікарям.
+    Повертає: (список послуг з деталями, загальна маржа, % маржі)
+    """
+    import json
+
+    # Отримуємо всі послуги за місяць
+    services_q = await db.execute(
+        select(
+            Service.id,
+            Service.code,
+            Service.name,
+            Service.price,
+            Service.materials,
+            func.count(MonthlyPaidServiceEntry.id).label("qty"),
+            Doctor.full_name,
+        ).join(
+            MonthlyPaidServiceEntry, MonthlyPaidServiceEntry.service_id == Service.id
+        ).join(
+            MonthlyPaidServicesReport, MonthlyPaidServiceEntry.report_id == MonthlyPaidServicesReport.id
+        ).join(
+            Doctor, MonthlyPaidServicesReport.doctor_id == Doctor.id
+        ).where(
+            MonthlyPaidServicesReport.user_id == user_id,
+            MonthlyPaidServicesReport.year == year,
+            MonthlyPaidServicesReport.month == month,
+        ).group_by(Service.id, Service.code, Service.name, Service.price, Service.materials, Doctor.full_name)
+    )
+
+    # Агрегуємо дані
+    service_data = {}
+    for row in services_q.all():
+        service_id = row[0]
+        if service_id not in service_data:
+            service_data[service_id] = {
+                "code": row[1],
+                "name": row[2],
+                "price": float(row[3] or 0),
+                "materials": row[4],  # JSON string
+                "quantity": 0,
+                "revenue": 0,
+                "by_doctor": {},
+            }
+        service_data[service_id]["quantity"] += int(row[6] or 0)
+        service_data[service_id]["revenue"] += float(row[3] or 0) * int(row[6] or 0)
+
+        # Розподіл по лікарям
+        doctor_name = row[7]
+        qty = int(row[6] or 0)
+        if doctor_name not in service_data[service_id]["by_doctor"]:
+            service_data[service_id]["by_doctor"][doctor_name] = {"qty": 0, "revenue": 0, "doctor_id": 0}
+        service_data[service_id]["by_doctor"][doctor_name]["qty"] += qty
+        service_data[service_id]["by_doctor"][doctor_name]["revenue"] += float(row[3] or 0) * qty
+
+    # Отримуємо ID лікарів для by_doctor
+    doctors_q = await db.execute(select(Doctor.id, Doctor.full_name).where(Doctor.user_id == user_id))
+    doctor_map = {row[1]: row[0] for row in doctors_q.all()}
+
+    # Формуємо результат
+    total_revenue = 0
+    total_materials_cost = 0
+    result = []
+
+    for service_id, data in service_data.items():
+        # Розраховуємо матеріали
+        materials_cost = 0
+        try:
+            if data["materials"]:
+                materials = json.loads(data["materials"]) if isinstance(data["materials"], str) else data["materials"]
+                if isinstance(materials, list):
+                    materials_cost = sum(float(m.get("cost", 0)) for m in materials) * data["quantity"]
+        except:
+            pass
+
+        revenue = data["revenue"]
+        margin = revenue - materials_cost
+        margin_pct = round(margin / revenue * 100, 1) if revenue > 0 else 0
+
+        # Розбивка по лікарям
+        by_doctor = []
+        for doctor_name, doc_data in data["by_doctor"].items():
+            by_doctor.append(DoctorServiceBreakdown(
+                doctor_id=doctor_map.get(doctor_name, 0),
+                doctor_name=doctor_name,
+                quantity=doc_data["qty"],
+                revenue=round(doc_data["revenue"], 2),
+            ))
+
+        result.append(ServiceBreakdownDetail(
+            service_id=service_id,
+            code=data["code"],
+            name=data["name"],
+            quantity=data["quantity"],
+            revenue=round(revenue, 2),
+            materials_cost=round(materials_cost, 2),
+            margin=round(margin, 2),
+            margin_pct=margin_pct,
+            by_doctor=by_doctor,
+        ))
+
+        total_revenue += revenue
+        total_materials_cost += materials_cost
+
+    # Сортуємо по виручці
+    result = sorted(result, key=lambda x: x.revenue, reverse=True)[:5]
+
+    total_margin = total_revenue - total_materials_cost
+    total_margin_pct = round(total_margin / total_revenue * 100, 1) if total_revenue > 0 else 0
+
+    return result, total_margin, total_margin_pct
+
+
 @router.get("/dashboard", response_model=DashboardData)
 async def dashboard_report(
     year: int = Query(...),
@@ -863,6 +1161,41 @@ async def dashboard_report(
                 data_basis=f"Доходи: {cur['income']:,.0f} грн, Витрати: {cur['expenses']:,.0f} грн",
             ))
 
+    # ── ПРІОРИТЕТ 1: Отримання додаткових даних ──
+    # Пацієнти
+    patients_by_age, total_patients, total_non_verified, prev_patients = await _get_patients_by_age(db, user.id, year, month)
+    patients_by_doctor = await _get_patients_by_doctor(db, user.id, year, month)
+    total_patients_change_pct = round((total_patients - prev_patients) / prev_patients * 100, 1) if prev_patients > 0 else 0
+    total_non_verified_pct = round(total_non_verified / total_patients * 100, 1) if total_patients > 0 else 0
+
+    # Персонал & ФОП
+    staff_by_role, fop_total, _ = await _get_staff_breakdown(db, user.id, year, month)
+    fop_pct = round(fop_total / cur["income"] * 100, 1) if cur["income"] > 0 else 0
+
+    # Отримуємо дані про власника (якщо є)
+    owner = None
+    owner_q = await db.execute(
+        select(Doctor).where(Doctor.user_id == user.id, Doctor.is_owner == True).limit(1)
+    )
+    owner_doctor = owner_q.scalar_one_or_none()
+    if owner_doctor and nhsu_income > 0:
+        owner = OwnerFinancialInfo(
+            doctor_id=owner_doctor.id,
+            doctor_name=owner_doctor.full_name,
+            is_owner=True,
+            nhsu_income=nhsu_income,
+            paid_services_income=paid_income,
+            total_income=nhsu_income + paid_income,
+            ep_amount=cur["tax_single"],
+            vz_amount=cur["tax_vz"],
+            esv_owner_amount=cur["tax_esv"],
+            total_taxes=cur["tax_single"] + cur["tax_vz"] + cur["tax_esv"],
+            income_after_taxes=cur["income_after_taxes"],
+        )
+
+    # Платні послуги
+    top_paid_services, services_margin, services_margin_pct = await _get_top_paid_services_detailed(db, user.id, year, month)
+
     return DashboardData(
         year=year,
         month=month,
@@ -910,4 +1243,20 @@ async def dashboard_report(
         trend=trend,
         insights=insights,
         ai_insights=ai_insights,
+        # ── ПРІОРИТЕТ 1: Нові поля ──
+        patients_by_age=patients_by_age,
+        patients_by_doctor=patients_by_doctor,
+        total_patients=total_patients,
+        total_patients_prev=prev_patients,
+        total_patients_change_pct=total_patients_change_pct,
+        total_non_verified=total_non_verified,
+        total_non_verified_pct=total_non_verified_pct,
+        staff_by_role=staff_by_role,
+        owner_info=owner,
+        total_staff_count=sum(s.count for s in staff_by_role),
+        fop_total=round(fop_total, 2),
+        fop_pct=fop_pct,
+        top_paid_services=top_paid_services,
+        services_total_margin=round(services_margin, 2),
+        services_margin_pct=services_margin_pct,
     )

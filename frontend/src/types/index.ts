@@ -517,6 +517,76 @@ export interface DataIntegrityWarning {
   message: string;
 }
 
+// ── ПРІОРИТЕТ 1: Пацієнти ────────────────────────────────────────────
+
+export interface AgeGroupBreakdown {
+  age_group: string;
+  age_label: string;
+  patient_count: number;
+  non_verified: number;
+  pct: number;
+}
+
+export interface DoctorPatientLoad {
+  doctor_id: number;
+  doctor_name: string;
+  patient_count: number;
+  patient_count_prev: number;
+  patient_count_change_pct: number;
+  services_count: number;
+  revenue_per_patient: number;
+}
+
+// ── ПРІОРИТЕТ 1: Персонал & ФОП ───────────────────────────────────────
+
+export interface StaffRoleBreakdown {
+  role: string;
+  role_label: string;
+  count: number;
+  salary_total: number;
+  salary_netto_total: number;
+  pdfo_total: number;
+  vz_total: number;
+  esv_employer_total: number;
+  salary_brutto_total: number;
+  pct: number;
+}
+
+export interface OwnerFinancialInfo {
+  doctor_id: number;
+  doctor_name: string;
+  is_owner: boolean;
+  nhsu_income: number;
+  paid_services_income: number;
+  total_income: number;
+  ep_amount: number;
+  vz_amount: number;
+  esv_owner_amount: number;
+  total_taxes: number;
+  income_after_taxes: number;
+}
+
+// ── ПРІОРИТЕТ 1: Платні послуги ───────────────────────────────────────
+
+export interface DoctorServiceBreakdown {
+  doctor_id: number;
+  doctor_name: string;
+  quantity: number;
+  revenue: number;
+}
+
+export interface ServiceBreakdownDetail {
+  service_id: number;
+  code: string;
+  name: string;
+  quantity: number;
+  revenue: number;
+  materials_cost: number;
+  margin: number;
+  margin_pct: number;
+  by_doctor: DoctorServiceBreakdown[];
+}
+
 export interface DashboardReport {
   year: number;
   month: number;
@@ -571,6 +641,27 @@ export interface DashboardReport {
   total_services_count: number;
   services_by_doctor: Record<string, number>;
   active_doctors_count: number;
+
+  // ── ПРІОРИТЕТ 1: ПАЦІЄНТИ ──
+  patients_by_age: AgeGroupBreakdown[];
+  patients_by_doctor: DoctorPatientLoad[];
+  total_patients: number;
+  total_patients_prev: number;
+  total_patients_change_pct: number;
+  total_non_verified: number;
+  total_non_verified_pct: number;
+
+  // ── ПРІОРИТЕТ 1: ПЕРСОНАЛ & ФОП ──
+  staff_by_role: StaffRoleBreakdown[];
+  owner_info: OwnerFinancialInfo | null;
+  total_staff_count: number;
+  fop_total: number;
+  fop_pct: number;
+
+  // ── ПРІОРИТЕТ 1: ПЛАТНІ ПОСЛУГИ ──
+  top_paid_services: ServiceBreakdownDetail[];
+  services_total_margin: number;
+  services_margin_pct: number;
 
   // ── Цілісність даних
   data_integrity_warnings: DataIntegrityWarning[];
