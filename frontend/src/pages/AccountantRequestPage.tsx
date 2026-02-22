@@ -135,7 +135,7 @@ export default function AccountantRequestPage() {
   function addExpense() {
     setExpenses((prev) => [
       ...prev,
-      { id: nextExpId, name: "", amount: 0, is_recurring: false },
+      { id: nextExpId, name: "", amount: "", is_recurring: false },
     ]);
     setNextExpId((p) => p + 1);
   }
@@ -393,7 +393,7 @@ export default function AccountantRequestPage() {
                           step="0.01"
                           min="0"
                           value={exp.amount || ""}
-                          onChange={(e) => updateExpense(exp.id, "amount", parseFloat(e.target.value) || 0)}
+                          onChange={(e) => updateExpense(exp.id, "amount", e.target.value === "" ? "" : (parseFloat(e.target.value) || 0))}
                           placeholder="0.00"
                           className="w-32 px-3 py-2 rounded-lg bg-dark-500/60 border border-dark-50/20 text-white text-sm text-right tabular-nums outline-none focus:border-orange-500/50 transition-all"
                         />

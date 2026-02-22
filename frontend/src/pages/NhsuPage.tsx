@@ -322,8 +322,8 @@ export default function NhsuPage() {
     for (const doc of doctors) for (const ag of ageGroups) {
       const ex = report?.doctors.find(d=>d.doctor_id===doc.id)?.rows.find(r=>r.age_group===ag.key);
       recs.push({ doctor_id:doc.id, age_group:ag.key,
-        patient_count: ex ? String(ex.patient_count) : "0",
-        non_verified:  ex ? String(ex.non_verified)  : "0" });
+        patient_count: ex ? String(ex.patient_count) : "",
+        non_verified:  ex ? String(ex.non_verified)  : "" });
     }
     setRecords(recs); setImages([]); setSaveMsg(""); setShowModal(true);
   };
@@ -967,12 +967,14 @@ export default function NhsuPage() {
                                 <td className="px-4 py-2.5 text-center">
                                   <input type="number" min={0} value={rec.patient_count}
                                     onChange={e=>updateRecord(doc.id,ag.key,"patient_count",e.target.value)}
-                                    className="bg-dark-300 border border-dark-50/20 rounded-lg px-3 py-1.5 text-sm text-white text-center w-24 focus:outline-none focus:border-accent-500/50"/>
+                                    placeholder="0"
+                                    className="bg-dark-300 border border-dark-50/20 rounded-lg px-3 py-1.5 text-sm text-white text-center w-24 placeholder-gray-600 focus:outline-none focus:border-accent-500/50"/>
                                 </td>
                                 <td className="px-4 py-2.5 text-center">
                                   <input type="number" min={0} step={0.5} value={rec.non_verified}
                                     onChange={e=>updateRecord(doc.id,ag.key,"non_verified",e.target.value)}
-                                    className="bg-dark-300 border border-dark-50/20 rounded-lg px-3 py-1.5 text-sm text-white text-center w-24 focus:outline-none focus:border-accent-500/50"/>
+                                    placeholder="0"
+                                    className="bg-dark-300 border border-dark-50/20 rounded-lg px-3 py-1.5 text-sm text-white text-center w-24 placeholder-gray-600 focus:outline-none focus:border-accent-500/50"/>
                                 </td>
                                 <td className="px-4 py-2.5 text-right text-emerald-400 font-mono text-xs">{fmt(preview)} грн</td>
                               </tr>

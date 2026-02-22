@@ -780,7 +780,7 @@ export default function ExpensesPage() {
   // ── Delete fixed (zero out) ───────────────────────────────────
   async function deleteFixed(key: string) {
     if (!confirm("Скинути суму до нуля для цієї категорії?")) return;
-    setFixedPending(p => ({ ...p, [key]: { ...p[key], amount: "0", saving: true } }));
+    setFixedPending(p => ({ ...p, [key]: { ...p[key], amount: "", saving: true } }));
     try {
       await api.put("/monthly-expenses/fixed", {
         year, month, category_key: key, amount: 0, is_recurring: false,

@@ -31,7 +31,7 @@ const fmt = (v: number) =>
 
 
 function emptyMaterial(): MaterialItem {
-  return { name: "", unit: "", quantity: 1, cost: 0 };
+  return { name: "", unit: "", quantity: "", cost: "" };
 }
 
 // ── Фінансовий розрахунок на frontend ────────────────────────────────
@@ -41,7 +41,7 @@ function calcFinancials(
   ep_rate: number,
   vz_rate: number
 ) {
-  const total_materials_cost = materials.reduce((s, m) => s + (m.cost || 0), 0);
+  const total_materials_cost = materials.reduce((s, m) => s + (parseFloat(String(m.cost)) || 0), 0);
   const ep_amount = price * ep_rate / 100;
   const vz_amount = price * vz_rate / 100;
   const total_costs = total_materials_cost + ep_amount + vz_amount;
@@ -267,7 +267,11 @@ export default function ServicesPage() {
         code: formCode.trim(),
         name: formName.trim(),
         price,
-        materials: formMaterials,
+        materials: formMaterials.map(m => ({
+          ...m,
+          quantity: parseFloat(String(m.quantity)) || 0,
+          cost: parseFloat(String(m.cost)) || 0,
+        })),
       };
       if (editingService) {
         await axios.put(`${API}/api/services/${editingService.id}`, payload, { headers });
@@ -883,9 +887,10 @@ export default function ServicesPage() {
                                 step="0.1"
                                 value={m.quantity}
                                 onChange={(e) =>
-                                  updateMaterial(idx, "quantity", parseFloat(e.target.value) || 0)
+                                  updateMaterial(idx, "quantity", e.target.value === "" ? "" : (parseFloat(e.target.value) || 0))
                                 }
-                                className="w-full bg-dark-300 border border-dark-50/10 rounded-lg px-2 py-1.5 text-white focus:outline-none focus:border-accent-500/40"
+                                placeholder="1"
+                                className="w-full bg-dark-300 border border-dark-50/10 rounded-lg px-2 py-1.5 text-white placeholder-gray-600 focus:outline-none focus:border-accent-500/40"
                               />
                             </td>
                             <td className="px-3 py-1.5">
@@ -895,9 +900,10 @@ export default function ServicesPage() {
                                 step="0.01"
                                 value={m.cost}
                                 onChange={(e) =>
-                                  updateMaterial(idx, "cost", parseFloat(e.target.value) || 0)
+                                  updateMaterial(idx, "cost", e.target.value === "" ? "" : (parseFloat(e.target.value) || 0))
                                 }
-                                className="w-full bg-dark-300 border border-dark-50/10 rounded-lg px-2 py-1.5 text-white focus:outline-none focus:border-accent-500/40"
+                                placeholder="0.00"
+                                className="w-full bg-dark-300 border border-dark-50/10 rounded-lg px-2 py-1.5 text-white placeholder-gray-600 focus:outline-none focus:border-accent-500/40"
                               />
                             </td>
                             <td className="px-1 py-1.5">

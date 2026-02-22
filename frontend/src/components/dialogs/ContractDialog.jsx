@@ -93,7 +93,7 @@ const ContractDialog = ({
       setEditForm({
         date: contract.date?.split('T')[0] || '',
         subject: contract.subject || '',
-        amount: contract.amount || 0,
+        amount: contract.amount || "",
         contract_type: contract.contract_type || 'goods',
         execution_form: contract.execution_form || '',
         delivery_address: contract.delivery_address || '',
@@ -264,7 +264,7 @@ const ContractDialog = ({
                     <div className="p-2 bg-rose-100 rounded text-center border border-rose-200">
                       <p className="text-[10px] text-gray-500 uppercase">Сума</p>
                       {isEditing ? (
-                        <Input type="number" step="0.01" value={editForm.amount} onChange={(e) => setEditForm({...editForm, amount: parseFloat(e.target.value) || 0})} className="h-6 text-xs p-1" />
+                        <Input type="number" step="0.01" value={editForm.amount} onChange={(e) => setEditForm({...editForm, amount: e.target.value === "" ? "" : (parseFloat(e.target.value) || 0)})} placeholder="0.00" className="h-6 text-xs p-1" />
                       ) : (
                         <p className="text-sm font-bold text-rose-700">{contract.amount?.toFixed(2)} грн</p>
                       )}

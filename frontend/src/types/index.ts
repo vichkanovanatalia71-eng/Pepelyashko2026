@@ -325,8 +325,8 @@ export interface AgeGroupSummary {
 export interface MaterialItem {
   name: string;
   unit: string;
-  quantity: number;
-  cost: number;
+  quantity: number | string;
+  cost: number | string;
 }
 
 export interface Service {
