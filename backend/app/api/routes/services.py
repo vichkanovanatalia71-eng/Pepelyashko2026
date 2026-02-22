@@ -6,6 +6,7 @@ from decimal import Decimal
 from typing import List
 
 import openpyxl
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
 from sqlalchemy import delete, select
@@ -428,7 +429,7 @@ async def export_services(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    """Експорт вибраних послуг у файл Excel (.xlsx)."""
+    """Експорт вибраних послуг у файл Excel (.xlsx) з усіма розрахунками та розхідниками."""
     ep_rate, vz_rate = await get_tax_rates(db, user.id)
 
     query = select(Service).where(Service.user_id == user.id)
@@ -438,19 +439,40 @@ async def export_services(
     services = result.scalars().all()
 
     wb = openpyxl.Workbook()
-    ws = wb.active
-    ws.title = "Послуги"
+    header_font = Font(bold=True, color="FFFFFF")
+    header_fill = PatternFill(start_color="2D3748", end_color="2D3748", fill_type="solid")
+    thin_border = Border(
+        bottom=Side(style="thin", color="E2E8F0"),
+    )
 
-    headers = [
-        "Код", "Назва", "Ціна (грн)", "Витрати (грн)",
-        "Єдиний податок (грн)", "Військовий збір (грн)",
-        "Сумарні витрати (грн)", "Дохід лікаря (грн)", "Дохід організації (грн)",
+    def style_header(ws, col_count):
+        for cell in ws[1]:
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+
+    def auto_width(ws):
+        for col in ws.columns:
+            max_len = max(len(str(cell.value or "")) for cell in col)
+            ws.column_dimensions[col[0].column_letter].width = max(max_len + 3, 12)
+
+    # ── Аркуш 1: Послуги ──
+    ws1 = wb.active
+    ws1.title = "Послуги"
+
+    headers_main = [
+        "№", "Код", "Назва послуги", "Ціна (грн)",
+        "Витрати на матеріали (грн)", f"Єдиний податок {ep_rate}% (грн)",
+        f"Військовий збір {vz_rate}% (грн)", "Сумарні витрати (грн)",
+        "Чистий дохід (грн)", "Дохід лікаря (грн)", "Дохід організації (грн)",
     ]
-    ws.append(headers)
+    ws1.append(headers_main)
+    style_header(ws1, len(headers_main))
 
-    for svc in services:
+    for idx, svc in enumerate(services, 1):
         c = _calc(svc, ep_rate, vz_rate)
-        ws.append([
+        ws1.append([
+            idx,
             svc.code,
             svc.name,
             float(svc.price),
@@ -458,14 +480,45 @@ async def export_services(
             c["ep_amount"],
             c["vz_amount"],
             c["total_costs"],
+            c["net_income"],
             c["doctor_income"],
             c["org_income"],
         ])
 
-    # Автоширина стовпців
-    for col in ws.columns:
-        max_len = max(len(str(cell.value or "")) for cell in col)
-        ws.column_dimensions[col[0].column_letter].width = max(max_len + 2, 12)
+    # Числовий формат для грошових стовпців (D-K)
+    for row in ws1.iter_rows(min_row=2, min_col=4, max_col=11):
+        for cell in row:
+            cell.number_format = '#,##0.00'
+
+    auto_width(ws1)
+
+    # ── Аркуш 2: Розхідники ──
+    ws2 = wb.create_sheet("Розхідники")
+    headers_mat = [
+        "Код послуги", "Назва послуги", "Назва матеріалу",
+        "Одиниця виміру", "Кількість", "Вартість (грн)",
+    ]
+    ws2.append(headers_mat)
+    style_header(ws2, len(headers_mat))
+
+    for svc in services:
+        materials = svc.materials or []
+        for m in materials:
+            ws2.append([
+                svc.code,
+                svc.name,
+                m.get("name", ""),
+                m.get("unit", ""),
+                m.get("quantity", 0),
+                float(m.get("cost", 0)),
+            ])
+
+    # Числовий формат для вартості (F)
+    for row in ws2.iter_rows(min_row=2, min_col=6, max_col=6):
+        for cell in row:
+            cell.number_format = '#,##0.00'
+
+    auto_width(ws2)
 
     buf = io.BytesIO()
     wb.save(buf)
