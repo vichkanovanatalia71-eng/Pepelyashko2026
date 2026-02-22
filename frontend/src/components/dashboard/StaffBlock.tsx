@@ -11,13 +11,20 @@ import {
 import type { DashboardReport } from "../../types";
 import { fmtUAH } from "../../lib/utils";
 
-const TT_STYLE = {
-  backgroundColor: "transparent",
-  border: "1px solid #ffffff15",
-  borderRadius: 8,
-  fontSize: 12,
-  color: "#e2e8f0",
-  padding: "8px",
+// Custom tooltip component without white background
+const CustomTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="p-2 rounded border border-gray-600 bg-slate-900/90 backdrop-blur">
+        {payload.map((entry: any, index: number) => (
+          <div key={index} style={{ color: entry.color }} className="text-xs font-medium">
+            {entry.name}: {fmtUAH(entry.value)} ₴
+          </div>
+        ))}
+      </div>
+    );
+  }
+  return null;
 };
 
 interface StaffBlockProps {
@@ -119,22 +126,22 @@ export function StaffBlock({ data }: StaffBlockProps) {
 
       {/* Stacked bar chart with legend */}
       <div className="mb-4">
-        <div className="grid grid-cols-4 gap-2 text-xs mb-3 p-2 bg-dark-400/20 rounded-lg">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-sm bg-emerald-400"></div>
-            <span className="text-gray-300">Нетто</span>
+        <div className="grid grid-cols-4 gap-3 text-xs mb-3 p-3 bg-dark-400/30 border border-dark-50/20 rounded-lg">
+          <div className="flex items-center gap-2.5">
+            <div className="w-3 h-3 rounded-sm bg-emerald-400 flex-shrink-0"></div>
+            <span className="text-white font-medium">Нетто</span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-sm bg-amber-400"></div>
-            <span className="text-gray-300">ПДФО 18%</span>
+          <div className="flex items-center gap-2.5">
+            <div className="w-3 h-3 rounded-sm bg-amber-400 flex-shrink-0"></div>
+            <span className="text-white font-medium">ПДФО 18%</span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-sm bg-red-400"></div>
-            <span className="text-gray-300">ВЗ 5%</span>
+          <div className="flex items-center gap-2.5">
+            <div className="w-3 h-3 rounded-sm bg-red-400 flex-shrink-0"></div>
+            <span className="text-white font-medium">ВЗ 5%</span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-sm bg-blue-400"></div>
-            <span className="text-gray-300">ЄСВ роб. 22%</span>
+          <div className="flex items-center gap-2.5">
+            <div className="w-3 h-3 rounded-sm bg-blue-400 flex-shrink-0"></div>
+            <span className="text-white font-medium">ЄСВ роб. 22%</span>
           </div>
         </div>
       </div>
@@ -152,11 +159,7 @@ export function StaffBlock({ data }: StaffBlockProps) {
             dataKey="name"
             tick={{ fill: "#9ca3af", fontSize: 11 }}
           />
-          <Tooltip
-            contentStyle={TT_STYLE}
-            formatter={(v: number) => [`${fmtUAH(v)} ₴`]}
-            labelStyle={{ color: "#e2e8f0" }}
-          />
+          <Tooltip content={<CustomTooltip />} />
           <Bar dataKey="Нетто" stackId="a" fill="#34d399" />
           <Bar dataKey="ПДФО" stackId="a" fill="#fbbf24" />
           <Bar dataKey="ВЗ" stackId="a" fill="#f87171" />
