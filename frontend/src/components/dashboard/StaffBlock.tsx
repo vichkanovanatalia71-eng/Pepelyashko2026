@@ -7,7 +7,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Cell,
 } from "recharts";
 import type { DashboardReport } from "../../types";
 import { fmtUAH } from "../../lib/utils";

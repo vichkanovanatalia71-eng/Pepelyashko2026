@@ -12,7 +12,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
-import type { DashboardReport, AgeGroupBreakdown, DoctorPatientLoad } from "../../types";
+import type { DashboardReport } from "../../types";
 
 const COLORS = ["#34d399", "#fbbf24", "#f87171", "#60a5fa", "#a78bfa"];
 
