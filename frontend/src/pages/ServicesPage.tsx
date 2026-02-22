@@ -146,13 +146,14 @@ export default function ServicesPage() {
   const displayedServices = useMemo(() => {
     let result = [...services];
 
-    // Глобальний пошук
+    // Глобальний пошук (код, назва, матеріали)
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter(
         (s) =>
           s.code.toLowerCase().includes(q) ||
-          s.name.toLowerCase().includes(q)
+          s.name.toLowerCase().includes(q) ||
+          s.materials.some((m) => m.name.toLowerCase().includes(q))
       );
     }
     // Фільтри
@@ -534,7 +535,7 @@ export default function ServicesPage() {
             />
             <input
               type="text"
-              placeholder="Пошук за кодом або назвою..."
+              placeholder="Пошук за кодом, назвою або матеріалами..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full bg-dark-300 border border-dark-50/20 rounded-xl pl-9 pr-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-accent-500/50"
@@ -661,24 +662,22 @@ export default function ServicesPage() {
                       ["name", "Назва"],
                       ["price", "Ціна (грн)"],
                       ["total_materials_cost", "Витрати (грн)"],
-                      [null, "ЄП (грн)"],
-                      [null, "ВЗ (грн)"],
-                      [null, "Заг. витрати (грн)"],
+                      ["ep_amount", "ЄП (грн)"],
+                      ["vz_amount", "ВЗ (грн)"],
+                      ["total_costs", "Заг. витрати (грн)"],
                       ["doctor_income", "Дохід лікаря (грн)"],
                       ["org_income", "Дохід орг. (грн)"],
-                    ] as [SortField | null, string][]
+                    ] as [SortField, string][]
                   ).map(([field, label]) => (
                     <th
                       key={label}
                       scope="col"
-                      className={`text-left px-4 py-3 text-gray-400 font-medium whitespace-nowrap ${
-                        field ? "cursor-pointer hover:text-gray-200 transition-colors" : ""
-                      }`}
-                      onClick={() => field && handleSort(field)}
+                      className="text-left px-4 py-3 text-gray-400 font-medium whitespace-nowrap cursor-pointer hover:text-gray-200 transition-colors"
+                      onClick={() => handleSort(field)}
                     >
                       <span className="inline-flex items-center">
                         {label}
-                        {field && <SortIcon field={field} />}
+                        <SortIcon field={field} />
                       </span>
                     </th>
                   ))}

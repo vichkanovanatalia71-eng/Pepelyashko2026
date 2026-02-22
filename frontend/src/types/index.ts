@@ -350,6 +350,10 @@ export type SortField =
   | "name"
   | "price"
   | "total_materials_cost"
+  | "ep_amount"
+  | "vz_amount"
+  | "total_costs"
+  | "net_income"
   | "doctor_income"
   | "org_income";
 
