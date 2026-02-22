@@ -4,7 +4,6 @@ import Dashboard from "./pages/Dashboard";
 import ExpensesPage from "./pages/ExpensesPage";
 import NhsuPage from "./pages/NhsuPage";
 import SettingsPage from "./pages/SettingsPage";
-import ProfilePage from "./pages/ProfilePage";
 import ServicesPage from "./pages/ServicesPage";
 import RevenuePage from "./pages/RevenuePage";
 import MonthlyServicesPage from "./pages/MonthlyServicesPage";
@@ -44,7 +43,6 @@ export default function App() {
           <Route path="nhsu" element={<NhsuPage />} />
           <Route path="ai-consultant" element={<AiConsultantPage />} />
           <Route path="settings" element={<SettingsPage />} />
-          <Route path="profile" element={<ProfilePage />} />
           <Route path="services" element={<ServicesPage />} />
           <Route path="monthly-services" element={<MonthlyServicesPage />} />
           <Route path="revenue" element={<RevenuePage />} />

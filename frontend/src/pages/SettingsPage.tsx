@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, FormEvent } from "react";
 import axios from "axios";
 import { useAuth } from "../hooks/useAuth";
+import api from "../api/client";
 import {
   Settings,
   UserPlus,
@@ -18,6 +19,9 @@ import {
   ChevronDown,
   HeartHandshake,
   UserCog,
+  User,
+  Lock,
+  Check,
 } from "lucide-react";
 import { Doctor, NhsuSettings, StaffMember } from "../types";
 
@@ -31,13 +35,21 @@ const AGE_LABELS: Record<string, string> = {
   coeff_65_plus: "65+ років",
 };
 
+const FOP_LABELS: Record<number, string> = {
+  1: "1 група",
+  2: "2 група",
+  3: "3 група",
+};
+
 export default function SettingsPage() {
-  const { token } = useAuth();
+  const { token, user, refreshUser } = useAuth();
   const headers = { Authorization: `Bearer ${token}` };
 
   // ── Колапс-стан блоків ──
   const [open, setOpen] = useState<Record<string, boolean>>({
-    doctors: true,
+    profile: true,
+    password: false,
+    doctors: false,
     nurses: false,
     otherStaff: false,
     apiKeys: false,
@@ -45,6 +57,20 @@ export default function SettingsPage() {
     nhsu: false,
   });
   const toggle = (key: string) => setOpen((p) => ({ ...p, [key]: !p[key] }));
+
+  // ── Профіль ──
+  const [fullName, setFullName] = useState(user?.full_name ?? "");
+  const [fopGroup, setFopGroup] = useState(user?.fop_group ?? 3);
+  const [taxRate, setTaxRate] = useState(String((user?.tax_rate ?? 0.05) * 100));
+  const [profileMsg, setProfileMsg] = useState("");
+  const [profileErr, setProfileErr] = useState("");
+
+  // ── Зміна пароля ──
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [pwdMsg, setPwdMsg] = useState("");
+  const [pwdErr, setPwdErr] = useState("");
 
   // ── Лікарі ──
   const [doctors, setDoctors] = useState<Doctor[]>([]);
@@ -234,6 +260,51 @@ export default function SettingsPage() {
     } catch {}
   }
 
+  async function handleProfileSubmit(e: FormEvent) {
+    e.preventDefault();
+    setProfileMsg("");
+    setProfileErr("");
+    try {
+      await api.put("/auth/profile", {
+        full_name: fullName,
+        fop_group: fopGroup,
+        tax_rate: parseFloat(taxRate) / 100,
+      });
+      await refreshUser();
+      setProfileMsg("Профіль оновлено");
+      setTimeout(() => setProfileMsg(""), 3000);
+    } catch (err: any) {
+      setProfileErr(err?.response?.data?.detail || "Помилка збереження");
+    }
+  }
+
+  async function handlePasswordSubmit(e: FormEvent) {
+    e.preventDefault();
+    setPwdMsg("");
+    setPwdErr("");
+    if (newPassword.length < 6) {
+      setPwdErr("Мінімум 6 символів");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPwdErr("Паролі не збігаються");
+      return;
+    }
+    try {
+      await api.put("/auth/change-password", {
+        old_password: oldPassword,
+        new_password: newPassword,
+      });
+      setPwdMsg("Пароль змінено");
+      setOldPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setTimeout(() => setPwdMsg(""), 3000);
+    } catch (err: any) {
+      setPwdErr(err?.response?.data?.detail || "Помилка зміни пароля");
+    }
+  }
+
   async function handleSaveApiKeys() {
     setApiKeysLoading(true);
     setApiKeysMsg("");
@@ -308,9 +379,113 @@ export default function SettingsPage() {
         <div>
           <h1 className="text-2xl font-bold text-white">Налаштування сервісу</h1>
           <p className="text-sm text-gray-500">
-            Лікарі та коефіцієнти розрахунку НСЗУ
+            Профіль, персонал та коефіцієнти розрахунку
           </p>
         </div>
+      </div>
+
+      {/* ── Профіль ── */}
+      <div className="card-neo card-3d-hover p-6 space-y-5">
+        <SectionHeader sectionKey="profile" icon={User} title="Профіль" />
+
+        {open.profile && (
+          <>
+            <div className="flex items-center gap-4 mb-1">
+              <div className="w-14 h-14 rounded-2xl bg-accent-500/10 flex items-center justify-center" aria-hidden="true">
+                <User size={28} className="text-accent-400" />
+              </div>
+              <div>
+                <p className="text-lg font-semibold text-white">{user?.full_name}</p>
+                <p className="text-sm text-gray-500">{user?.email}</p>
+                <p className="text-xs text-gray-600 mt-0.5">
+                  {FOP_LABELS[user?.fop_group ?? 3]} &bull; Ставка {((user?.tax_rate ?? 0.05) * 100).toFixed(0)}%
+                </p>
+              </div>
+            </div>
+
+            <form onSubmit={handleProfileSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs text-gray-400 mb-1">ПІБ</label>
+                <input type="text" value={fullName}
+                  onChange={e => setFullName(e.target.value)}
+                  className="w-full bg-dark-300 border border-dark-50/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-accent-500/50" required />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">Група ФОП</label>
+                  <select value={fopGroup}
+                    onChange={e => setFopGroup(Number(e.target.value))}
+                    className="w-full bg-dark-300 border border-dark-50/20 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-accent-500/50">
+                    <option value={1}>1 група</option>
+                    <option value={2}>2 група</option>
+                    <option value={3}>3 група</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">Ставка податку (%)</label>
+                  <input type="number" step="0.1" min="0" max="100"
+                    value={taxRate}
+                    onChange={e => setTaxRate(e.target.value)}
+                    className="w-full bg-dark-300 border border-dark-50/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-accent-500/50" />
+                </div>
+              </div>
+
+              {profileMsg && (
+                <div className="flex items-center gap-2 text-sm text-emerald-400" role="status">
+                  <Check size={16} aria-hidden="true" /> {profileMsg}
+                </div>
+              )}
+              {profileErr && (
+                <p className="text-sm text-red-400" role="alert">{profileErr}</p>
+              )}
+
+              <button type="submit" className="flex items-center gap-2 px-5 py-2.5 bg-accent-500/10 hover:bg-accent-500/20 text-accent-400 rounded-xl text-sm font-medium transition-all border border-accent-500/20">
+                <Save size={16} aria-hidden="true" /> Зберегти
+              </button>
+            </form>
+          </>
+        )}
+      </div>
+
+      {/* ── Зміна пароля ── */}
+      <div className="card-neo card-3d-hover p-6 space-y-5">
+        <SectionHeader sectionKey="password" icon={Lock} title="Зміна пароля" />
+
+        {open.password && (
+          <form onSubmit={handlePasswordSubmit} className="space-y-4">
+            <div>
+              <label className="block text-xs text-gray-400 mb-1">Поточний пароль</label>
+              <input type="password" value={oldPassword}
+                onChange={e => setOldPassword(e.target.value)}
+                className="w-full bg-dark-300 border border-dark-50/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-accent-500/50" required autoComplete="current-password" />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 mb-1">Новий пароль</label>
+              <input type="password" value={newPassword}
+                onChange={e => setNewPassword(e.target.value)}
+                className="w-full bg-dark-300 border border-dark-50/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-accent-500/50" required minLength={6} autoComplete="new-password" />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 mb-1">Підтвердження нового пароля</label>
+              <input type="password" value={confirmPassword}
+                onChange={e => setConfirmPassword(e.target.value)}
+                className="w-full bg-dark-300 border border-dark-50/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-accent-500/50" required autoComplete="new-password" />
+            </div>
+
+            {pwdMsg && (
+              <div className="flex items-center gap-2 text-sm text-emerald-400" role="status">
+                <Check size={16} aria-hidden="true" /> {pwdMsg}
+              </div>
+            )}
+            {pwdErr && (
+              <p className="text-sm text-red-400" role="alert">{pwdErr}</p>
+            )}
+
+            <button type="submit" className="flex items-center gap-2 px-5 py-2.5 bg-accent-500/10 hover:bg-accent-500/20 text-accent-400 rounded-xl text-sm font-medium transition-all border border-accent-500/20">
+              <Lock size={16} aria-hidden="true" /> Змінити пароль
+            </button>
+          </form>
+        )}
       </div>
 
       {/* ── Лікарі ── */}

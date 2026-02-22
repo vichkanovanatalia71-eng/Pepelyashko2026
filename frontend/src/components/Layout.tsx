@@ -30,7 +30,6 @@ const navItems = [
   { to: "/ai-consultant",      icon: MessageCircle,    label: "AI-Консультант", short: "AI"       },
   { to: "/services",           icon: ClipboardList,    label: "Прайс послуг",   short: "Прайс"    },
   { to: "/settings",           icon: Settings,         label: "Налаштування",   short: "Налашт."  },
-  { to: "/profile",            icon: User,             label: "Профіль",        short: "Профіль"  },
 ];
 
 export default function Layout() {
