@@ -10,6 +10,7 @@ import {
   Info,
   X,
   ChevronRight,
+  ChevronDown,
 } from "lucide-react";
 import {
   AreaChart,
@@ -152,6 +153,26 @@ export default function Dashboard() {
 
   // Drill-down state
   const [drillModal, setDrillModal] = useState<null | "income" | "expenses" | "taxes">(null);
+
+  // Track expanded insights (by index)
+  const [expandedAi, setExpandedAi] = useState<Set<number>>(new Set());
+  const [expandedInsights, setExpandedInsights] = useState<Set<number>>(new Set());
+
+  function toggleAiInsight(i: number) {
+    setExpandedAi(prev => {
+      const next = new Set(prev);
+      if (next.has(i)) next.delete(i); else next.add(i);
+      return next;
+    });
+  }
+
+  function toggleInsight(i: number) {
+    setExpandedInsights(prev => {
+      const next = new Set(prev);
+      if (next.has(i)) next.delete(i); else next.add(i);
+      return next;
+    });
+  }
 
   function prevMonth() {
     if (month === 0) { setMonth(11); setYear(y => y - 1); }
@@ -406,7 +427,7 @@ export default function Dashboard() {
                   <p className="text-xs text-gray-600 mt-0.5">Аналіз фінансової ситуації та рекомендації</p>
                 </div>
               </div>
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {data.ai_insights.map((insight, i) => {
                   const typeConfig: Record<string, { icon: typeof AlertCircle; color: string; label: string }> = {
                     risk: { icon: ShieldAlert, color: "text-red-400", label: "РИЗИК" },
@@ -416,24 +437,33 @@ export default function Dashboard() {
                   };
                   const cfg = typeConfig[insight.type] || typeConfig.insight;
                   const Icon = cfg.icon;
+                  const isOpen = expandedAi.has(i);
                   return (
-                    <div key={i} className="rounded-lg border border-dark-50/10 bg-dark-300/20 p-4">
-                      <div className="flex items-start gap-3">
-                        <Icon size={16} className={`${cfg.color} shrink-0 mt-0.5`} />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1 flex-wrap">
-                            <span className={`text-[10px] font-bold uppercase tracking-wide ${cfg.color}`}>
-                              {cfg.label}
-                            </span>
-                            <span className="text-sm font-semibold text-white">{insight.title}</span>
-                          </div>
-                          <p className="text-xs text-gray-300 leading-relaxed mb-2">{insight.description}</p>
+                    <button
+                      key={i}
+                      onClick={() => toggleAiInsight(i)}
+                      className="w-full rounded-lg border border-dark-50/10 bg-dark-300/20 text-left transition-all duration-150 hover:bg-dark-300/40 active:scale-[0.99]"
+                    >
+                      <div className="flex items-center gap-3 p-3">
+                        <Icon size={16} className={`${cfg.color} shrink-0`} />
+                        <span className={`text-[10px] font-bold uppercase tracking-wide ${cfg.color} shrink-0`}>
+                          {cfg.label}
+                        </span>
+                        <span className="text-sm font-semibold text-white flex-1 min-w-0 truncate">{insight.title}</span>
+                        <ChevronDown
+                          size={14}
+                          className={`text-gray-500 shrink-0 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+                        />
+                      </div>
+                      {isOpen && (
+                        <div className="px-3 pb-3 pt-0">
+                          <p className="text-xs text-gray-300 leading-relaxed mb-1">{insight.description}</p>
                           {insight.data_basis && (
                             <p className="text-[10px] text-gray-600 italic">Основа: {insight.data_basis}</p>
                           )}
                         </div>
-                      </div>
-                    </div>
+                      )}
+                    </button>
                   );
                 })}
               </div>
@@ -586,25 +616,34 @@ export default function Dashboard() {
               icon={<Lightbulb size={16} className="text-amber-400" />}
               iconBg="bg-amber-500/10"
             >
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {data.insights.map((insight, i) => {
                   const cfg = INSIGHT_CONFIG[insight.type] ?? INSIGHT_CONFIG.insight;
                   const Icon = cfg.icon;
+                  const isOpen = expandedInsights.has(i);
                   return (
-                    <div key={i} className={`rounded-xl border p-4 ${cfg.bg} ${cfg.border}`}>
-                      <div className="flex items-start gap-3">
-                        <Icon size={16} className={`${cfg.color} shrink-0 mt-0.5`} />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap mb-1">
-                            <span className={`text-[10px] font-bold uppercase tracking-wide ${cfg.color}`}>
-                              {cfg.label}
-                            </span>
-                            <span className="text-sm font-semibold text-white">{insight.title}</span>
-                          </div>
+                    <button
+                      key={i}
+                      onClick={() => toggleInsight(i)}
+                      className={`w-full rounded-xl border text-left transition-all duration-150 hover:brightness-125 active:scale-[0.99] ${cfg.bg} ${cfg.border}`}
+                    >
+                      <div className="flex items-center gap-3 p-3">
+                        <Icon size={16} className={`${cfg.color} shrink-0`} />
+                        <span className={`text-[10px] font-bold uppercase tracking-wide ${cfg.color} shrink-0`}>
+                          {cfg.label}
+                        </span>
+                        <span className="text-sm font-semibold text-white flex-1 min-w-0 truncate">{insight.title}</span>
+                        <ChevronDown
+                          size={14}
+                          className={`text-gray-500 shrink-0 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+                        />
+                      </div>
+                      {isOpen && (
+                        <div className="px-3 pb-3 pt-0">
                           <p className="text-xs text-gray-300 leading-relaxed">{insight.description}</p>
                         </div>
-                      </div>
-                    </div>
+                      )}
+                    </button>
                   );
                 })}
               </div>
