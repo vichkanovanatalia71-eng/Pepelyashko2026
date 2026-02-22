@@ -4,7 +4,7 @@ from collections import defaultdict
 from datetime import date
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import func, select
+from sqlalchemy import func, select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -200,8 +200,11 @@ async def _get_income_by_doctors(
 
     result = defaultdict(lambda: {"nhsu": 0.0, "paid": 0.0})
 
-    # NHSU income from monthly paid services reports
-    nhsu_q = await db.execute(
+    total_nhsu = 0.0
+    total_paid = 0.0
+
+    # Paid services income from monthly paid services reports
+    paid_services_q = await db.execute(
         select(MonthlyPaidServicesReport.doctor_id, func.coalesce(func.sum(MonthlyPaidServicesReport.cash_in_register), 0)).where(
             MonthlyPaidServicesReport.user_id == user_id,
             MonthlyPaidServicesReport.year == year,
@@ -209,12 +212,26 @@ async def _get_income_by_doctors(
         ).group_by(MonthlyPaidServicesReport.doctor_id)
     )
 
-    total_nhsu = 0.0
-    total_paid = 0.0
-
-    for doc_id, amount in nhsu_q.all():
+    for doc_id, amount in paid_services_q.all():
         result[doc_id]["paid"] += float(amount)
         total_paid += float(amount)
+
+    # NHSU income from Income table (from descriptions containing NHSU/НСЗУ)
+    nhsu_q = await db.execute(
+        select(func.coalesce(func.sum(Income.amount), 0)).where(
+            Income.user_id == user_id,
+            Income.date >= d_start,
+            Income.date <= d_end,
+            or_(
+                Income.source.ilike("%NHSU%"),
+                Income.source.ilike("%НСЗУ%"),
+                Income.description.ilike("%NHSU%"),
+                Income.description.ilike("%НСЗУ%")
+            )
+        )
+    )
+    nhsu_total = float(nhsu_q.scalar() or 0.0)
+    total_nhsu += nhsu_total
 
     # Convert to DoctorRevenue list
     doctor_revenues: list[DoctorRevenue] = []
