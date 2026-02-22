@@ -13,6 +13,7 @@ from app.models.doctor import Doctor
 from app.models.expense import Expense, ExpenseCategory
 from app.models.income import Income, IncomeCategory
 from app.models.monthly_service import MonthlyPaidServiceEntry, MonthlyPaidServicesReport
+from app.models.monthly_expense import MonthlyFixedExpense, MonthlySalaryExpense
 from app.models.nhsu import NhsuRecord, NhsuSettings
 from app.models.service import Service
 from app.models.staff import StaffMember
@@ -332,6 +333,12 @@ async def _check_data_integrity(
     return warnings
 
 
+async def _get_nhsu_settings(db: AsyncSession, user_id: int) -> NhsuSettings | None:
+    """Get NHSU settings to extract tax rates."""
+    res = await db.execute(select(NhsuSettings).where(NhsuSettings.user_id == user_id))
+    return res.scalar_one_or_none()
+
+
 async def _month_range(year: int, month: int) -> tuple[date, date]:
     d_start = date(year, month, 1)
     if month == 12:
@@ -396,7 +403,55 @@ async def _month_totals(
     # Total income = manual + NHSU + paid services
     income = round(manual_income + nhsu_income + paid_income, 2)
 
-    # Expenses
+    # 4. Fixed expenses from MonthlyFixedExpense
+    fixed_r = await db.execute(
+        select(func.coalesce(func.sum(MonthlyFixedExpense.amount), 0)).where(
+            MonthlyFixedExpense.user_id == user_id,
+            MonthlyFixedExpense.year == year,
+            MonthlyFixedExpense.month == month,
+        )
+    )
+    fixed_total = float(fixed_r.scalar())
+
+    # 5. Salary expenses (brutto + PDFO + VZ + ESV + supplement + bonus)
+    salary_records = (await db.execute(
+        select(MonthlySalaryExpense).where(
+            MonthlySalaryExpense.user_id == user_id,
+            MonthlySalaryExpense.year == year,
+            MonthlySalaryExpense.month == month,
+        )
+    )).scalars().all()
+
+    salary_total = 0.0
+    esv_employer = 0.0
+    for rec in salary_records:
+        brutto = float(rec.brutto) if rec.brutto else 0.0
+        pdfo = round(brutto * 0.18, 2)  # PDFO 18%
+        vz_zp = round(brutto * 0.05, 2)  # VZ 5%
+        esv = round(brutto * 0.22, 2)    # ESV employer 22%
+        supplement = float(rec.supplement) if hasattr(rec, 'supplement') else 0.0
+        bonus = float(rec.individual_bonus) if rec.individual_bonus else 0.0
+
+        employer_cost = brutto + esv + supplement + bonus
+        salary_total += employer_cost
+        esv_employer += esv
+
+    # 6. Tax expenses (ЄП, ВЗ, ЄСВ власника)
+    ep_rate_pct = 5.0  # default
+    vz_rate_pct = 1.5  # default
+    # Try to get from settings
+    nhsu = await _get_nhsu_settings(db, user_id)
+    if nhsu:
+        ep_rate_pct = float(nhsu.ep_rate)
+        vz_rate_pct = float(nhsu.vz_rate)
+
+    ep = round(income * ep_rate_pct / 100, 2)
+    vz = round(income * vz_rate_pct / 100, 2)
+    esv_owner = round(esv_monthly, 2)
+
+    tax_total = round(ep + vz + esv_owner + esv_employer, 2)
+
+    # 7. Ad-hoc expenses from Expense table
     exp_r = await db.execute(
         select(func.coalesce(func.sum(Expense.amount), 0)).where(
             Expense.user_id == user_id,
@@ -404,23 +459,18 @@ async def _month_totals(
             Expense.date <= d_end if is_dec else Expense.date < d_end,
         )
     )
-    expenses = float(exp_r.scalar())
+    adhoc_expenses = float(exp_r.scalar())
 
-    tax_single = round(income * tax_rate, 2)
-    tax_esv = round(esv_monthly, 2)
-    tax_vz = round(income * vz_rate, 2)
-    total_taxes = round(tax_single + tax_esv + tax_vz, 2)
+    # Total expenses = fixed + salary + tax + ad-hoc
+    expenses = round(fixed_total + salary_total + tax_total + adhoc_expenses, 2)
+
     profit = round(income - expenses, 2)
 
     return {
         "income": income,
         "expenses": expenses,
         "profit": profit,
-        "tax_single": tax_single,
-        "tax_esv": tax_esv,
-        "tax_vz": tax_vz,
-        "total_taxes": total_taxes,
-        "income_after_taxes": round(profit - total_taxes, 2),
+        "total_taxes": tax_total,
     }
 
 
