@@ -140,8 +140,8 @@ export default function Layout() {
       ══════════════════════════════════════════════ */}
       <main
         className="flex-1 min-w-0 overflow-auto
-                   p-4 pb-[calc(5rem+env(safe-area-inset-bottom))]
-                   lg:p-8 lg:pb-8"
+                   p-4 pt-[calc(1rem+env(safe-area-inset-top))] pb-[calc(5rem+env(safe-area-inset-bottom))]
+                   lg:p-8 lg:pb-8 lg:pt-8"
         id="main-content"
       >
         <Outlet />
