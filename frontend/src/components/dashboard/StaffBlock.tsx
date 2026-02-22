@@ -48,14 +48,12 @@ export function StaffBlock({ data }: StaffBlockProps) {
     );
   }
 
-  // Prepare data for stacked bar chart
+  // Prepare data for stacked bar chart - employer cost breakdown
   const chartData = data.staff_by_role.map((role) => ({
     name: role.role_label,
-    "Нетто": role.salary_netto_total,
-    "ПДФО": role.pdfo_total,
-    "ВЗ": role.vz_total,
-    "ЄСВ роб.": role.esv_employer_total,
-    total: role.salary_brutto_total,
+    "Брутто": role.salary_brutto_total,
+    "ЄСВ 22%": role.esv_employer_total,
+    "Доплати": role.individual_bonus_total + role.supplement_total,
   }));
 
   // Determine FOP status color
@@ -126,22 +124,18 @@ export function StaffBlock({ data }: StaffBlockProps) {
 
       {/* Stacked bar chart with legend */}
       <div className="mb-4">
-        <div className="grid grid-cols-4 gap-3 text-xs mb-3 p-3 bg-dark-400/30 border border-dark-50/20 rounded-lg">
+        <div className="grid grid-cols-3 gap-3 text-xs mb-3 p-3 bg-dark-400/30 border border-dark-50/20 rounded-lg">
           <div className="flex items-center gap-2.5">
             <div className="w-3 h-3 rounded-sm bg-emerald-400 flex-shrink-0"></div>
-            <span className="text-white font-medium">Нетто</span>
-          </div>
-          <div className="flex items-center gap-2.5">
-            <div className="w-3 h-3 rounded-sm bg-amber-400 flex-shrink-0"></div>
-            <span className="text-white font-medium">ПДФО 18%</span>
-          </div>
-          <div className="flex items-center gap-2.5">
-            <div className="w-3 h-3 rounded-sm bg-red-400 flex-shrink-0"></div>
-            <span className="text-white font-medium">ВЗ 5%</span>
+            <span className="text-white font-medium">Брутто</span>
           </div>
           <div className="flex items-center gap-2.5">
             <div className="w-3 h-3 rounded-sm bg-blue-400 flex-shrink-0"></div>
-            <span className="text-white font-medium">ЄСВ роб. 22%</span>
+            <span className="text-white font-medium">ЄСВ 22%</span>
+          </div>
+          <div className="flex items-center gap-2.5">
+            <div className="w-3 h-3 rounded-sm bg-orange-400 flex-shrink-0"></div>
+            <span className="text-white font-medium">Доплати</span>
           </div>
         </div>
       </div>
@@ -174,60 +168,52 @@ export function StaffBlock({ data }: StaffBlockProps) {
             }}
             cursor={{ fill: "transparent" }}
           />
-          <Bar dataKey="Нетто" stackId="a" fill="#34d399" animationDuration={300} animationEasing="ease-in-out" />
-          <Bar dataKey="ПДФО" stackId="a" fill="#fbbf24" animationDuration={300} animationEasing="ease-in-out" />
-          <Bar dataKey="ВЗ" stackId="a" fill="#f87171" animationDuration={300} animationEasing="ease-in-out" />
-          <Bar dataKey="ЄСВ роб." stackId="a" fill="#60a5fa" animationDuration={300} animationEasing="ease-in-out" />
+          <Bar dataKey="Брутто" stackId="a" fill="#34d399" animationDuration={300} animationEasing="ease-in-out" />
+          <Bar dataKey="ЄСВ 22%" stackId="a" fill="#60a5fa" animationDuration={300} animationEasing="ease-in-out" />
+          <Bar dataKey="Доплати" stackId="a" fill="#f97316" animationDuration={300} animationEasing="ease-in-out" />
         </BarChart>
       </ResponsiveContainer>
 
       {/* Staff breakdown table */}
       <div className="mt-6 border-t border-dark-50/10 pt-4">
         <h4 className="text-xs font-semibold text-gray-400 mb-3">Розбивка по ролях</h4>
-        <div className="space-y-3">
-          {data.staff_by_role.map((role) => (
-            <div key={role.role} className="p-3 bg-dark-400/20 rounded-lg border border-dark-50/10">
-              <div className="flex items-center justify-between mb-3">
-                <div>
-                  <p className="text-sm font-semibold text-white">{role.role_label}</p>
-                  <p className="text-xs text-gray-500">{role.count} осіб</p>
-                </div>
-              </div>
-
-              {/* Main metrics grid - 2 columns */}
-              <div className="space-y-2.5">
-                {/* Row 1: Official salary + ESV */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-dark-300/50 p-2.5 rounded">
-                    <p className="text-xs text-gray-600 mb-0.5">Офіційна зарплата (брутто)</p>
-                    <p className="text-sm font-bold text-emerald-400">{fmtUAH(role.salary_brutto_total)} ₴</p>
-                  </div>
-                  <div className="bg-dark-300/50 p-2.5 rounded">
-                    <p className="text-xs text-gray-600 mb-0.5">ЄСВ роботодавця 22%</p>
-                    <p className="text-sm font-bold text-blue-400">{fmtUAH(role.esv_employer_total)} ₴</p>
-                  </div>
-                </div>
-
-                {/* Row 2: Individual bonuses + Supplement */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-dark-300/50 p-2.5 rounded">
-                    <p className="text-xs text-gray-600 mb-0.5">Індивідуальні доплати</p>
-                    <p className="text-sm font-bold text-purple-400">{fmtUAH(role.individual_bonus_total)} ₴</p>
-                  </div>
-                  <div className="bg-dark-300/50 p-2.5 rounded">
-                    <p className="text-xs text-gray-600 mb-0.5">Доплата до цільової суми</p>
-                    <p className="text-sm font-bold text-cyan-400">{fmtUAH(role.supplement_total)} ₴</p>
-                  </div>
-                </div>
-
-                {/* Row 3: Total employer cost */}
-                <div className="bg-orange-500/10 border border-orange-500/30 p-2.5 rounded">
-                  <p className="text-xs text-gray-600 mb-0.5">Витрати роботодавця</p>
-                  <p className="text-base font-bold text-orange-400">{fmtUAH(role.total_employer_cost)} ₴</p>
-                </div>
-              </div>
-            </div>
-          ))}
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="border-b border-dark-50/20">
+                <th className="text-left py-2 px-3 text-gray-500 font-medium">Роль</th>
+                <th className="text-right py-2 px-3 text-gray-500 font-medium">Кількість</th>
+                <th className="text-right py-2 px-3 text-gray-500 font-medium">Брутто</th>
+                <th className="text-right py-2 px-3 text-gray-500 font-medium">ЄСВ 22%</th>
+                <th className="text-right py-2 px-3 text-gray-500 font-medium">Доплати</th>
+                <th className="text-right py-2 px-3 text-gray-500 font-medium">Доп. до суми</th>
+                <th className="text-right py-2 px-3 text-gray-500 font-medium bg-orange-500/10">Витрати</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.staff_by_role.map((role) => (
+                <tr key={role.role} className="border-b border-dark-50/10 hover:bg-dark-400/20 transition-colors">
+                  <td className="py-2.5 px-3 text-white font-medium">{role.role_label}</td>
+                  <td className="py-2.5 px-3 text-right text-gray-300">{role.count}</td>
+                  <td className="py-2.5 px-3 text-right text-emerald-400 font-medium">
+                    {fmtUAH(role.salary_brutto_total)} ₴
+                  </td>
+                  <td className="py-2.5 px-3 text-right text-blue-400 font-medium">
+                    {fmtUAH(role.esv_employer_total)} ₴
+                  </td>
+                  <td className="py-2.5 px-3 text-right text-purple-400 font-medium">
+                    {fmtUAH(role.individual_bonus_total)} ₴
+                  </td>
+                  <td className="py-2.5 px-3 text-right text-cyan-400 font-medium">
+                    {fmtUAH(role.supplement_total)} ₴
+                  </td>
+                  <td className="py-2.5 px-3 text-right text-orange-400 font-bold bg-orange-500/10 rounded">
+                    {fmtUAH(role.total_employer_cost)} ₴
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
 
