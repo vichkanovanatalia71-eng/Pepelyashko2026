@@ -594,6 +594,15 @@
     min-width: 44px;
   }
 
+  /* Hide scrollbar but keep scrolling */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
   /* ═══════════════════════════════════════════════════════════
      ANIMATIONS — Entrance
      ═══════════════════════════════════════════════════════════ */

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Outlet, NavLink, useNavigate, useLocation } from "react-router-dom";
+import { Outlet, NavLink, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
   TrendingDown,
@@ -11,7 +11,6 @@ import {
   ClipboardList,
   MoreHorizontal,
   X,
-  ChevronRight,
   User,
   BadgeDollarSign,
   Sun,
@@ -34,18 +33,11 @@ const navItems = [
   { to: "/profile",            icon: User,             label: "Профіль",        short: "Профіль"  },
 ];
 
-// Bottom bar: перші 4 + кнопка «Ще»
-const bottomMain  = navItems.slice(0, 4);
-const bottomExtra = navItems.slice(4);
-
 export default function Layout() {
   const { logout, user } = useAuth();
-  const navigate = useNavigate();
   const location = useLocation();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const { toggle, isLight } = useTheme();
-
-  const extraActive = bottomExtra.some(({ to }) => location.pathname.startsWith(to));
 
   // Close drawer on ESC key
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
@@ -61,11 +53,6 @@ export default function Layout() {
   useEffect(() => {
     setDrawerOpen(false);
   }, [location.pathname]);
-
-  function handleExtraNav(to: string) {
-    setDrawerOpen(false);
-    navigate(to);
-  }
 
   return (
     <div className="min-h-screen flex bg-dark-700">
@@ -157,13 +144,13 @@ export default function Layout() {
                    mobile-bottom-nav"
         aria-label="Мобільна навігація"
       >
-        <div className="flex items-stretch h-16">
-          {bottomMain.map(({ to, icon: Icon, short }) => (
+        <div className="flex items-stretch h-16 overflow-x-auto scrollbar-hide">
+          {navItems.map(({ to, icon: Icon, short }) => (
             <NavLink
               key={to}
               to={to}
               end={to === "/"}
-              className="flex-1 flex flex-col items-center justify-center gap-0.5 relative tap-target"
+              className="min-w-[4.5rem] flex-shrink-0 flex flex-col items-center justify-center gap-0.5 relative tap-target"
               aria-label={short}
             >
               {({ isActive }) => (
@@ -188,22 +175,18 @@ export default function Layout() {
             </NavLink>
           ))}
 
-          {/* Кнопка «Ще» */}
+          {/* Кнопка «Ще» — відкриває drawer з виходом і темою */}
           <button
             onClick={() => setDrawerOpen(true)}
             aria-label="Показати додаткове меню"
             aria-expanded={drawerOpen}
-            className="flex-1 flex flex-col items-center justify-center gap-0.5 tap-target relative"
+            className="min-w-[4.5rem] flex-shrink-0 flex flex-col items-center justify-center gap-0.5 tap-target relative"
           >
-            {extraActive && (
-              <span className="nav-active-pill" aria-hidden="true" />
-            )}
-            <div className={`w-9 h-9 rounded-2xl flex items-center justify-center
-                            transition-all duration-200 ease-spring
-                            ${extraActive ? "bg-accent-500/15 scale-110" : "active:scale-90"}`}>
-              <MoreHorizontal size={20} aria-hidden="true" className={`transition-colors duration-200 ${extraActive ? "text-accent-400" : "text-gray-500"}`} />
+            <div className="w-9 h-9 rounded-2xl flex items-center justify-center
+                            transition-all duration-200 ease-spring active:scale-90">
+              <MoreHorizontal size={20} aria-hidden="true" className="transition-colors duration-200 text-gray-500" />
             </div>
-            <span className={`text-[10px] font-medium leading-none transition-colors duration-200 ${extraActive ? "text-accent-400" : "text-gray-600"}`}>
+            <span className="text-[10px] font-medium leading-none transition-colors duration-200 text-gray-600">
               Ще
             </span>
           </button>
@@ -262,36 +245,6 @@ export default function Layout() {
                 </button>
               </div>
             </div>
-
-            {/* Пункти меню */}
-            <div className="px-4 space-y-1 pb-2">
-              {bottomExtra.map(({ to, icon: Icon, label }) => {
-                const isActive = location.pathname.startsWith(to);
-                return (
-                  <button
-                    key={to}
-                    onClick={() => handleExtraNav(to)}
-                    className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl
-                               text-sm font-medium transition-all duration-150 tap-target
-                               active:scale-[0.98]
-                               ${isActive
-                                 ? "bg-accent-500/10 text-accent-400 border border-accent-500/20 shadow-sm"
-                                 : "text-gray-300 hover:bg-dark-400 active:bg-dark-300 border border-transparent"
-                               }`}
-                  >
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0
-                                    ${isActive ? "bg-accent-500/15 shadow-sm shadow-accent-500/10" : "bg-dark-400"}`}>
-                      <Icon size={20} aria-hidden="true" className={isActive ? "text-accent-400" : "text-gray-400"} />
-                    </div>
-                    <span className="flex-1 text-left">{label}</span>
-                    <ChevronRight size={16} aria-hidden="true" className={`transition-transform duration-200 ${isActive ? "text-accent-400/60" : "text-gray-600"}`} />
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Роздільник */}
-            <div className="h-px bg-dark-50/10 mx-4 my-2" aria-hidden="true" />
 
             {/* Інфо та вихід */}
             <div className="px-4 pb-4 space-y-1">
