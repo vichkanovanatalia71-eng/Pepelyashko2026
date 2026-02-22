@@ -718,16 +718,13 @@ async def _get_staff_breakdown(db: AsyncSession, user_id: int, year: int, month:
     )
     staff_count = {row[0]: int(row[1]) for row in staff_q.all()}
 
-    # Зарплати за місяць
+    # Зарплати за місяць (brutto)
     salary_q = await db.execute(
         select(
             StaffMember.role,
-            func.sum(MonthlySalaryExpense.salary_netto),
-            func.sum(MonthlySalaryExpense.pdfo),
-            func.sum(MonthlySalaryExpense.vz),
-            func.sum(MonthlySalaryExpense.esv_employer),
+            func.sum(MonthlySalaryExpense.brutto),
         ).join(
-            MonthlySalaryExpense, StaffMember.id == MonthlySalaryExpense.staff_id
+            MonthlySalaryExpense, StaffMember.id == MonthlySalaryExpense.staff_member_id
         ).where(
             StaffMember.user_id == user_id,
             MonthlySalaryExpense.year == year,
@@ -738,19 +735,15 @@ async def _get_staff_breakdown(db: AsyncSession, user_id: int, year: int, month:
     total_salary_brutto = 0
     for row in salary_q.all():
         role = row[0]
-        salary_netto = float(row[1] or 0)
-        pdfo = float(row[2] or 0)
-        vz = float(row[3] or 0)
-        esv_emp = float(row[4] or 0)
-        salary_brutto = salary_netto + pdfo + vz + esv_emp
+        brutto = float(row[1] or 0)
         salary_data[role] = {
-            "netto": salary_netto,
-            "pdfo": pdfo,
-            "vz": vz,
-            "esv_emp": esv_emp,
-            "brutto": salary_brutto,
+            "netto": 0,  # TODO: calculate from brutto
+            "pdfo": 0,   # TODO: calculate from brutto
+            "vz": 0,     # TODO: calculate from brutto
+            "esv_emp": 0,  # TODO: calculate from brutto
+            "brutto": brutto,
         }
-        total_salary_brutto += salary_brutto
+        total_salary_brutto += brutto
 
     # Формуємо результат
     result = []
@@ -761,7 +754,7 @@ async def _get_staff_breakdown(db: AsyncSession, user_id: int, year: int, month:
             role=role,
             role_label="Лікар" if role == "doctor" else "Медсестра" if role == "nurse" else "Інший персонал",
             count=count,
-            salary_total=round(sal["netto"], 2),
+            salary_total=round(sal["brutto"], 2),
             salary_netto_total=round(sal["netto"], 2),
             pdfo_total=round(sal["pdfo"], 2),
             vz_total=round(sal["vz"], 2),
