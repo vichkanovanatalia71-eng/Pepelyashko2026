@@ -170,13 +170,13 @@ export default function ServicesPage() {
     if (filterMaxPrice !== "")
       result = result.filter((s) => s.price <= parseFloat(filterMaxPrice));
 
-    // Сортування
+    // Сортування (numeric: true — щоб "2" < "10" < "100")
     result.sort((a, b) => {
       const av = a[sortField as keyof Service] as number | string;
       const bv = b[sortField as keyof Service] as number | string;
       const cmp =
         typeof av === "string"
-          ? av.localeCompare(bv as string)
+          ? av.localeCompare(bv as string, undefined, { numeric: true, sensitivity: "base" })
           : (av as number) - (bv as number);
       return sortDir === "asc" ? cmp : -cmp;
     });
