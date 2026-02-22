@@ -162,8 +162,10 @@ export default function Dashboard() {
   useEffect(() => {
     setLoading(true);
     setError(null);
+    const monthNum = Number(month) + 1;
+    console.log("Dashboard API call:", { year: Number(year), month: monthNum, monthType: typeof month, monthValue: month });
     api
-      .get("/reports/dashboard", { params: { year: Number(year), month: Number(month) + 1 } })
+      .get("/reports/dashboard", { params: { year: Number(year), month: monthNum } })
       .then((res) => setData(res.data))
       .catch((err) => {
         setData(null);
