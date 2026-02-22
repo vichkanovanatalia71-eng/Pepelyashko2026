@@ -11,8 +11,6 @@ import {
 } from "recharts";
 import type { DashboardReport } from "../../types";
 
-const COLORS = ["#34d399", "#fbbf24", "#f87171", "#60a5fa", "#a78bfa"];
-
 const TT_STYLE = {
   background: "#1a1a2e",
   border: "1px solid #ffffff15",
