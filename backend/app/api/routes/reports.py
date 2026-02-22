@@ -4,7 +4,7 @@ from collections import defaultdict
 from datetime import date
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import func, select, or_
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -13,7 +13,7 @@ from app.models.doctor import Doctor
 from app.models.expense import Expense, ExpenseCategory
 from app.models.income import Income, IncomeCategory
 from app.models.monthly_service import MonthlyPaidServiceEntry, MonthlyPaidServicesReport
-from app.models.nhsu import NhsuSettings
+from app.models.nhsu import NhsuRecord, NhsuSettings
 from app.models.service import Service
 from app.models.staff import StaffMember
 from app.models.user import User
@@ -203,35 +203,42 @@ async def _get_income_by_doctors(
     total_nhsu = 0.0
     total_paid = 0.0
 
-    # Paid services income from monthly paid services reports
-    paid_services_q = await db.execute(
-        select(MonthlyPaidServicesReport.doctor_id, func.coalesce(func.sum(MonthlyPaidServicesReport.cash_in_register), 0)).where(
+    # NHSU income from nhsu_records (Python property: capitation * coeff * patients / 12)
+    nhsu_q = await db.execute(
+        select(NhsuRecord).where(
+            NhsuRecord.user_id == user_id,
+            NhsuRecord.year == year,
+            NhsuRecord.month == month,
+        )
+    )
+    for rec in nhsu_q.scalars().all():
+        amt = rec.amount
+        result[rec.doctor_id]["nhsu"] += amt
+        total_nhsu += amt
+
+    # Paid services income (service.price * quantity per doctor)
+    paid_q = await db.execute(
+        select(
+            MonthlyPaidServicesReport.doctor_id,
+            MonthlyPaidServiceEntry.service_id,
+            MonthlyPaidServiceEntry.quantity,
+            Service.price,
+        ).join(
+            MonthlyPaidServiceEntry,
+            MonthlyPaidServiceEntry.report_id == MonthlyPaidServicesReport.id,
+        ).join(
+            Service,
+            MonthlyPaidServiceEntry.service_id == Service.id,
+        ).where(
             MonthlyPaidServicesReport.user_id == user_id,
             MonthlyPaidServicesReport.year == year,
             MonthlyPaidServicesReport.month == month,
-        ).group_by(MonthlyPaidServicesReport.doctor_id)
-    )
-
-    for doc_id, amount in paid_services_q.all():
-        result[doc_id]["paid"] += float(amount)
-        total_paid += float(amount)
-
-    # NHSU income from Income table (from descriptions containing NHSU/НСЗУ)
-    nhsu_q = await db.execute(
-        select(func.coalesce(func.sum(Income.amount), 0)).where(
-            Income.user_id == user_id,
-            Income.date >= d_start,
-            Income.date <= d_end,
-            or_(
-                Income.source.ilike("%NHSU%"),
-                Income.source.ilike("%НСЗУ%"),
-                Income.description.ilike("%NHSU%"),
-                Income.description.ilike("%НСЗУ%")
-            )
         )
     )
-    nhsu_total = float(nhsu_q.scalar() or 0.0)
-    total_nhsu += nhsu_total
+    for doc_id, _svc_id, qty, price in paid_q.all():
+        rev = float(price) * int(qty)
+        result[doc_id]["paid"] += rev
+        total_paid += rev
 
     # Convert to DoctorRevenue list
     doctor_revenues: list[DoctorRevenue] = []
@@ -245,7 +252,7 @@ async def _get_income_by_doctors(
             total=round(rev["nhsu"] + rev["paid"], 2),
         ))
 
-    return sorted(doctor_revenues, key=lambda x: x.total, reverse=True), total_nhsu, total_paid
+    return sorted(doctor_revenues, key=lambda x: x.total, reverse=True), round(total_nhsu, 2), round(total_paid, 2)
 
 
 async def _get_top_services(
@@ -346,6 +353,7 @@ async def _month_totals(
     d_start, d_end = await _month_range(year, month)
     is_dec = month == 12
 
+    # 1. Income from incomes table (manual entries)
     inc_r = await db.execute(
         select(func.coalesce(func.sum(Income.amount), 0)).where(
             Income.user_id == user_id,
@@ -353,8 +361,42 @@ async def _month_totals(
             Income.date <= d_end if is_dec else Income.date < d_end,
         )
     )
-    income = float(inc_r.scalar())
+    manual_income = float(inc_r.scalar())
 
+    # 2. NHSU income from nhsu_records (capitation_rate * age_coefficient * patients / 12)
+    nhsu_q = await db.execute(
+        select(NhsuRecord).where(
+            NhsuRecord.user_id == user_id,
+            NhsuRecord.year == year,
+            NhsuRecord.month == month,
+        )
+    )
+    nhsu_records = nhsu_q.scalars().all()
+    nhsu_income = sum(r.amount for r in nhsu_records)
+
+    # 3. Paid services income (service.price * quantity)
+    paid_entries_q = await db.execute(
+        select(MonthlyPaidServiceEntry, Service.price).join(
+            MonthlyPaidServicesReport,
+            MonthlyPaidServiceEntry.report_id == MonthlyPaidServicesReport.id,
+        ).join(
+            Service,
+            MonthlyPaidServiceEntry.service_id == Service.id,
+        ).where(
+            MonthlyPaidServicesReport.user_id == user_id,
+            MonthlyPaidServicesReport.year == year,
+            MonthlyPaidServicesReport.month == month,
+        )
+    )
+    paid_income = sum(
+        float(price) * int(entry.quantity)
+        for entry, price in paid_entries_q.all()
+    )
+
+    # Total income = manual + NHSU + paid services
+    income = round(manual_income + nhsu_income + paid_income, 2)
+
+    # Expenses
     exp_r = await db.execute(
         select(func.coalesce(func.sum(Expense.amount), 0)).where(
             Expense.user_id == user_id,
