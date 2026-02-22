@@ -9,7 +9,8 @@ import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
-from sqlalchemy import delete, select
+from sqlalchemy import Integer, delete, func, select
+from sqlalchemy.sql.expression import cast
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import get_current_user, get_db
@@ -435,8 +436,11 @@ async def export_services(
     query = select(Service).where(Service.user_id == user.id)
     if body.ids:
         query = query.where(Service.id.in_(body.ids))
-    result = await db.execute(query.order_by(Service.code))
-    services = result.scalars().all()
+    result = await db.execute(query)
+    services = sorted(
+        result.scalars().all(),
+        key=lambda s: (int(s.code) if s.code.isdigit() else float("inf"), s.code),
+    )
 
     wb = openpyxl.Workbook()
     header_font = Font(bold=True, color="FFFFFF")
