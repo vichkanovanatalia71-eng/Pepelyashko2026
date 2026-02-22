@@ -167,7 +167,7 @@ def _generate_mock_response(query: str, consultant: FinancialConsultant) -> str:
 Якщо платні послуги зростуть на 10%, дохід збільшиться на {consultant.data.total_income * 0.10 * (consultant.data.paid_pct / 100):,.0f} грн/місяць"""
 
     elif "витрати" in query_lower or "расходы" in query_lower or "видатки" in query_lower:
-        expense_ratio = (consultant.data.total_expenses / consultant.data.total_income * 100)
+        expense_ratio = (consultant.data.total_expenses / consultant.data.total_income * 100) if consultant.data.total_income else 0
         return f"""АНАЛІЗ ВИТРАТ ДЛЯ {consultant.data.period_label}:
 
 СТРУКТУРА:

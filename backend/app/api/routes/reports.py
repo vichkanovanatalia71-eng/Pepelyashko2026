@@ -1185,6 +1185,7 @@ async def dashboard_report(
     total_non_verified = 0
     total_patients_change_pct = 0.0
     total_non_verified_pct = 0.0
+    prev_patients = 0
     try:
         patients_by_age, total_patients, total_non_verified, prev_patients = await _get_patients_by_age(db, user.id, year, month)
         patients_by_doctor = await _get_patients_by_doctor(db, user.id, year, month)
@@ -1324,6 +1325,8 @@ async def dashboard_report(
         total_staff_count=sum(s.count for s in staff_by_role),
         fop_total=round(fop_total, 2),
         fop_pct=fop_pct,
+        opening_balance=cur.get("cash_balance", 0.0),
+        bank_balance=cur.get("bank_balance", 0.0),
         top_paid_services=top_paid_services,
         paid_services_total_revenue=round(paid_services_total_revenue, 2),
         paid_services_total_qty=paid_services_total_qty,

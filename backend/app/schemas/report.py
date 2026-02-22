@@ -276,6 +276,10 @@ class DashboardData(BaseModel):
     services_total_margin: float = 0.0
     services_margin_pct: float = 0.0
 
+    # ── КАСОВЕ СТАНОВИЩЕ ──
+    opening_balance: float = 0.0
+    bank_balance: float = 0.0
+
     # ── ЦІЛІСНІСТЬ ДАНИХ ──
     data_integrity_warnings: list[DataIntegrityWarning]
     missing_salary_staff: list[str]

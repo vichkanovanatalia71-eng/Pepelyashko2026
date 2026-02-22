@@ -28,17 +28,17 @@ class FinancialConsultant:
         ДОХОДИ:
         - Всього: {self.data.total_income:,.0f} грн
         - НСЗУ: {self.data.nhsu_income:,.0f} грн ({self.data.nhsu_pct:.0f}%)
-        - Платні послуги: {self.data.paid_income:,.0f} грн ({self.data.paid_pct:.0f}%)
+        - Платні послуги: {self.data.paid_services_income:,.0f} грн ({self.data.paid_pct:.0f}%)
 
         ВИТРАТИ:
         - Всього: {self.data.total_expenses:,.0f} грн
         - Постійні: {self.data.fixed_expenses:,.0f} грн
         - Зарплата: {self.data.salary_expenses:,.0f} грн
-        - Коефіцієнт витрат: {(self.data.total_expenses / self.data.total_income * 100):.0f}%
+        - Коефіцієнт витрат: {(self.data.total_expenses / self.data.total_income * 100) if self.data.total_income else 0:.0f}%
 
         РЕЗУЛЬТАТ:
         - Чистий прибуток: {self.data.net_profit:,.0f} грн
-        - Маржа: {(self.data.net_profit / self.data.total_income * 100):.0f}%
+        - Маржа: {(self.data.net_profit / self.data.total_income * 100) if self.data.total_income else 0:.0f}%
 
         КАСОВЕ СТАНОВИЩЕ:
         - Готівка: {self.data.opening_balance:,.0f} грн
