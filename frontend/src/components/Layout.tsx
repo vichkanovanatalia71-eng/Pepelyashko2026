@@ -16,6 +16,7 @@ import {
   BadgeDollarSign,
   Sun,
   Moon,
+  MessageCircle,
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { useTheme } from "../hooks/useTheme";
@@ -27,6 +28,7 @@ const navItems = [
   { to: "/monthly-services",   icon: BarChart3,        label: "Платні послуги", short: "Послуги"  },
   { to: "/nhsu",               icon: HeartPulse,       label: "НСЗУ",           short: "НСЗУ"     },
   { to: "/expenses",           icon: TrendingDown,     label: "Витрати",        short: "Витрати"  },
+  { to: "/ai-consultant",      icon: MessageCircle,    label: "AI-Консультант", short: "AI"       },
   { to: "/services",           icon: ClipboardList,    label: "Прайс послуг",   short: "Прайс"    },
   { to: "/settings",           icon: Settings,         label: "Налаштування",   short: "Налашт."  },
   { to: "/profile",            icon: User,             label: "Профіль",        short: "Профіль"  },

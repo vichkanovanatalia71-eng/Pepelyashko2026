@@ -8,6 +8,7 @@ import ProfilePage from "./pages/ProfilePage";
 import ServicesPage from "./pages/ServicesPage";
 import RevenuePage from "./pages/RevenuePage";
 import MonthlyServicesPage from "./pages/MonthlyServicesPage";
+import AiConsultantPage from "./pages/AiConsultantPage";
 import SharePage from "./pages/SharePage";
 import OwnerSharePage from "./pages/OwnerSharePage";
 import AccountantRequestPage from "./pages/AccountantRequestPage";
@@ -41,6 +42,7 @@ export default function App() {
           <Route index element={<Dashboard />} />
           <Route path="expenses" element={<ExpensesPage />} />
           <Route path="nhsu" element={<NhsuPage />} />
+          <Route path="ai-consultant" element={<AiConsultantPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="services" element={<ServicesPage />} />
