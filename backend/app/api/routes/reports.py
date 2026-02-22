@@ -815,7 +815,7 @@ async def _get_top_paid_services_detailed(db: AsyncSession, user_id: int, year: 
             Service.materials,
             Doctor.id.label("doctor_id"),
             Doctor.full_name,
-            func.count(MonthlyPaidServiceEntry.id).label("qty"),
+            func.sum(MonthlyPaidServiceEntry.quantity).label("qty"),
         ).join(
             MonthlyPaidServiceEntry, MonthlyPaidServiceEntry.service_id == Service.id
         ).join(
