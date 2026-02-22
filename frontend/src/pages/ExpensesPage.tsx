@@ -1721,7 +1721,7 @@ export default function ExpensesPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
             {/* Bar chart: 6-month trend */}
-            <div className="card-neo p-4" style={TT_STYLE}>
+            <div className="card-neo p-4">
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
                 Тенденція за 6 місяців
               </p>
@@ -1744,7 +1744,7 @@ export default function ExpensesPage() {
             </div>
 
             {/* Pie chart: current month structure */}
-            <div className="card-neo p-4" style={TT_STYLE}>
+            <div className="card-neo p-4">
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
                 Структура витрат — {MONTH_NAMES[month - 1]}
               </p>
