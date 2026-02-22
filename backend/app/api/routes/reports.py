@@ -5,7 +5,7 @@ from collections import defaultdict
 from datetime import date
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import func, select
+from sqlalchemy import case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -724,11 +724,19 @@ async def _get_staff_breakdown(db: AsyncSession, user_id: int, year: int, month:
     )
     staff_count = {row[0]: int(row[1]) for row in staff_q.all()}
 
-    # Зарплати за місяць (brutto)
+    # Зарплати за місяць (brutto + bonuses + supplements)
     salary_q = await db.execute(
         select(
             StaffMember.role,
             func.sum(MonthlySalaryExpense.brutto),
+            func.sum(MonthlySalaryExpense.individual_bonus),
+            func.coalesce(func.sum(
+                case(
+                    (MonthlySalaryExpense.has_supplement == True,
+                     MonthlySalaryExpense.target_net - (MonthlySalaryExpense.brutto * 0.77)),
+                    else_=0.0
+                )
+            ), 0),
         ).join(
             MonthlySalaryExpense, StaffMember.id == MonthlySalaryExpense.staff_member_id
         ).where(
@@ -742,11 +750,17 @@ async def _get_staff_breakdown(db: AsyncSession, user_id: int, year: int, month:
     for row in salary_q.all():
         role = row[0]
         brutto = float(row[1] or 0)
+        individual_bonus = float(row[2] or 0)
+        supplement = float(row[3] or 0)
+
         # Calculate tax components
         pdfo = round(brutto * 0.18, 2)  # PDFO 18%
         vz = round(brutto * 0.05, 2)    # VZ 5%
         esv_emp = round(brutto * 0.22, 2)  # ESV employer 22%
         netto = round(brutto - pdfo - vz, 2)
+
+        # Витрати роботодавця = brutto + esv_emp + individual_bonus + supplement
+        total_employer_cost = round(brutto + esv_emp + individual_bonus + supplement, 2)
 
         salary_data[role] = {
             "netto": netto,
@@ -754,6 +768,9 @@ async def _get_staff_breakdown(db: AsyncSession, user_id: int, year: int, month:
             "vz": vz,
             "esv_emp": esv_emp,
             "brutto": brutto,
+            "individual_bonus": individual_bonus,
+            "supplement": supplement,
+            "total_employer_cost": total_employer_cost,
         }
         total_salary_brutto += brutto
 
@@ -761,7 +778,10 @@ async def _get_staff_breakdown(db: AsyncSession, user_id: int, year: int, month:
     result = []
     for role in staff_count.keys():
         count = staff_count.get(role, 0)
-        sal = salary_data.get(role, {"netto": 0, "pdfo": 0, "vz": 0, "esv_emp": 0, "brutto": 0})
+        sal = salary_data.get(role, {
+            "netto": 0, "pdfo": 0, "vz": 0, "esv_emp": 0, "brutto": 0,
+            "individual_bonus": 0, "supplement": 0, "total_employer_cost": 0
+        })
         result.append(StaffRoleBreakdown(
             role=role,
             role_label="Лікар" if role == "doctor" else "Медсестра" if role == "nurse" else "Інший персонал",
@@ -772,6 +792,9 @@ async def _get_staff_breakdown(db: AsyncSession, user_id: int, year: int, month:
             vz_total=round(sal["vz"], 2),
             esv_employer_total=round(sal["esv_emp"], 2),
             salary_brutto_total=round(sal["brutto"], 2),
+            individual_bonus_total=round(sal["individual_bonus"], 2),
+            supplement_total=round(sal["supplement"], 2),
+            total_employer_cost=round(sal["total_employer_cost"], 2),
             pct=round(sal["brutto"] / total_salary_brutto * 100, 1) if total_salary_brutto > 0 else 0,
         ))
 

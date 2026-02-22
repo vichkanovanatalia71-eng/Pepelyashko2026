@@ -549,6 +549,9 @@ export interface StaffRoleBreakdown {
   vz_total: number;
   esv_employer_total: number;
   salary_brutto_total: number;
+  individual_bonus_total: number;
+  supplement_total: number;
+  total_employer_cost: number;
   pct: number;
 }
 

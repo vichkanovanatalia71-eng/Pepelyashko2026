@@ -131,6 +131,9 @@ class StaffRoleBreakdown(BaseModel):
     vz_total: float
     esv_employer_total: float
     salary_brutto_total: float
+    individual_bonus_total: float  # Індивідуальні доплати
+    supplement_total: float  # Доплата до цільової суми
+    total_employer_cost: float  # Витрати роботодавця (brutto + esv + bonuses + supplements)
     pct: float
 
 
