@@ -28,9 +28,11 @@ export default function SectionCard({
   return (
     <section className={`card-neo overflow-hidden ${className}`}>
       {title && (
-        <div className="flex items-center gap-3 px-5 py-4 border-b border-dark-50/10 bg-dark-400/20">
+        <div className="flex items-center gap-3 px-5 py-4 border-b border-dark-50/10
+                        bg-dark-400/20 backdrop-blur-sm">
           {icon && (
-            <div className={`w-8 h-8 rounded-xl ${iconBg} flex items-center justify-center shrink-0`}>
+            <div className={`w-8 h-8 rounded-xl ${iconBg} flex items-center justify-center shrink-0
+                            shadow-sm`}>
               {icon}
             </div>
           )}

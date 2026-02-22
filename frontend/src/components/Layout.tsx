@@ -156,8 +156,6 @@ export default function Layout() {
       ══════════════════════════════════════════════ */}
       <nav
         className="lg:hidden fixed bottom-0 inset-x-0 z-40
-                   bg-dark-600/96 backdrop-blur-2xl
-                   border-t border-dark-50/15
                    mobile-bottom-nav"
         aria-label="Мобільна навігація"
       >
@@ -173,10 +171,11 @@ export default function Layout() {
               {({ isActive }) => (
                 <>
                   {isActive && (
-                    <span className="absolute top-0 left-1/2 -translate-x-1/2 w-6 h-0.5 bg-accent-400 rounded-full" aria-hidden="true" />
+                    <span className="nav-active-pill" aria-hidden="true" />
                   )}
-                  <div className={`w-9 h-9 rounded-2xl flex items-center justify-center transition-all duration-200
-                                  ${isActive ? "bg-accent-500/15 scale-110" : ""}`}>
+                  <div className={`w-9 h-9 rounded-2xl flex items-center justify-center
+                                  transition-all duration-200 ease-spring
+                                  ${isActive ? "bg-accent-500/15 scale-110" : "active:scale-90"}`}>
                     <Icon
                       size={20}
                       aria-hidden="true"
@@ -199,10 +198,11 @@ export default function Layout() {
             className="flex-1 flex flex-col items-center justify-center gap-0.5 tap-target relative"
           >
             {extraActive && (
-              <span className="absolute top-0 left-1/2 -translate-x-1/2 w-6 h-0.5 bg-accent-400 rounded-full" aria-hidden="true" />
+              <span className="nav-active-pill" aria-hidden="true" />
             )}
-            <div className={`w-9 h-9 rounded-2xl flex items-center justify-center transition-all duration-200
-                            ${extraActive ? "bg-accent-500/15 scale-110" : ""}`}>
+            <div className={`w-9 h-9 rounded-2xl flex items-center justify-center
+                            transition-all duration-200 ease-spring
+                            ${extraActive ? "bg-accent-500/15 scale-110" : "active:scale-90"}`}>
               <MoreHorizontal size={20} aria-hidden="true" className={`transition-colors duration-200 ${extraActive ? "text-accent-400" : "text-gray-500"}`} />
             </div>
             <span className={`text-[10px] font-medium leading-none transition-colors duration-200 ${extraActive ? "text-accent-400" : "text-gray-600"}`}>
@@ -219,7 +219,7 @@ export default function Layout() {
         <>
           {/* Backdrop */}
           <div
-            className="lg:hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm animate-fade-in"
+            className="lg:hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-md animate-fade-in"
             onClick={() => setDrawerOpen(false)}
             aria-hidden="true"
           />
@@ -228,7 +228,7 @@ export default function Layout() {
           <div
             className="lg:hidden fixed inset-x-0 bottom-0 z-50
                        bg-dark-600 rounded-t-3xl border-t border-dark-50/15
-                       shadow-neo-lg animate-slide-up
+                       shadow-elevation-3 animate-slide-up
                        pb-[env(safe-area-inset-bottom)]"
             role="dialog"
             aria-modal="true"
@@ -248,14 +248,17 @@ export default function Layout() {
                   onClick={toggle}
                   aria-label={isLight ? "Увімкнути темну тему" : "Увімкнути світлу тему"}
                   className="w-8 h-8 rounded-xl bg-dark-400 flex items-center justify-center
-                             text-gray-400 hover:text-accent-400 transition-colors"
+                             text-gray-400 hover:text-accent-400 active:scale-90
+                             transition-all duration-150"
                 >
                   {isLight ? <Moon size={15} /> : <Sun size={15} />}
                 </button>
                 <button
                   onClick={() => setDrawerOpen(false)}
                   aria-label="Закрити меню"
-                  className="w-8 h-8 rounded-xl bg-dark-400 flex items-center justify-center text-gray-500 hover:text-white transition-colors"
+                  className="w-8 h-8 rounded-xl bg-dark-400 flex items-center justify-center
+                             text-gray-500 hover:text-white active:scale-90
+                             transition-all duration-150"
                 >
                   <X size={16} />
                 </button>
@@ -271,18 +274,19 @@ export default function Layout() {
                     key={to}
                     onClick={() => handleExtraNav(to)}
                     className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl
-                               text-sm font-medium transition-all tap-target
+                               text-sm font-medium transition-all duration-150 tap-target
+                               active:scale-[0.98]
                                ${isActive
-                                 ? "bg-accent-500/10 text-accent-400 border border-accent-500/20"
+                                 ? "bg-accent-500/10 text-accent-400 border border-accent-500/20 shadow-sm"
                                  : "text-gray-300 hover:bg-dark-400 active:bg-dark-300 border border-transparent"
                                }`}
                   >
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0
-                                    ${isActive ? "bg-accent-500/15" : "bg-dark-400"}`}>
+                                    ${isActive ? "bg-accent-500/15 shadow-sm shadow-accent-500/10" : "bg-dark-400"}`}>
                       <Icon size={20} aria-hidden="true" className={isActive ? "text-accent-400" : "text-gray-400"} />
                     </div>
                     <span className="flex-1 text-left">{label}</span>
-                    <ChevronRight size={16} aria-hidden="true" className={isActive ? "text-accent-400/60" : "text-gray-600"} />
+                    <ChevronRight size={16} aria-hidden="true" className={`transition-transform duration-200 ${isActive ? "text-accent-400/60" : "text-gray-600"}`} />
                   </button>
                 );
               })}
@@ -294,8 +298,9 @@ export default function Layout() {
             {/* Інфо та вихід */}
             <div className="px-4 pb-4 space-y-1">
               {user && (
-                <div className="flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-dark-400/50">
-                  <div className="w-10 h-10 rounded-xl bg-accent-500/10 flex items-center justify-center shrink-0">
+                <div className="flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-dark-400/50 border border-dark-50/5">
+                  <div className="w-10 h-10 rounded-xl bg-accent-500/10 flex items-center justify-center shrink-0
+                                  shadow-sm shadow-accent-500/10">
                     <User size={18} aria-hidden="true" className="text-accent-400" />
                   </div>
                   <div className="min-w-0">
@@ -308,7 +313,8 @@ export default function Layout() {
                 onClick={() => { setDrawerOpen(false); logout(); }}
                 className="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl
                            text-sm font-medium text-red-400
-                           hover:bg-red-500/10 active:bg-red-500/15 transition-all tap-target"
+                           hover:bg-red-500/10 active:bg-red-500/15 active:scale-[0.98]
+                           transition-all duration-150 tap-target"
               >
                 <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center shrink-0">
                   <LogOut size={20} aria-hidden="true" className="text-red-400" />

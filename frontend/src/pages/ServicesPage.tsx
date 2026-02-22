@@ -701,7 +701,7 @@ export default function ServicesPage() {
                 {displayedServices.map((svc) => (
                   <tr
                     key={svc.id}
-                    className={`border-b border-dark-50/5 transition-colors ${
+                    className={`card-tap border-b border-dark-50/5 transition-colors ${
                       selectedIds.has(svc.id)
                         ? "bg-accent-500/5"
                         : "hover:bg-dark-300/30"

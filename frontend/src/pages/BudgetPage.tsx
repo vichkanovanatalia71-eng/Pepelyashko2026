@@ -567,7 +567,7 @@ export default function BudgetPage() {
             {recsOpen ? <ChevronUp size={16} className="text-gray-500" /> : <ChevronDown size={16} className="text-gray-500" />}
           </button>
           {recsOpen && (
-            <div className="px-4 pb-4 grid grid-cols-1 md:grid-cols-2 gap-2">
+            <div className="px-4 pb-4 grid grid-cols-1 md:grid-cols-2 gap-2 stagger-enter">
               {recs.map((r, i) => <RecCard key={i} rec={r} />)}
             </div>
           )}

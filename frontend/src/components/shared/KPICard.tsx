@@ -60,7 +60,7 @@ export default function KPICard({
   return (
     <Tag
       onClick={onClick}
-      className={`card-neo kpi-3d-hover p-4 lg:p-5 border ${borderColor} text-left w-full relative
+      className={`card-neo kpi-3d-hover card-tap p-4 lg:p-5 border ${borderColor} text-left w-full relative group
                   ${onClick ? "cursor-pointer" : ""}
                   focus-visible:outline-2 focus-visible:outline-accent-400`}
     >
@@ -68,7 +68,15 @@ export default function KPICard({
       <div className="flex items-center justify-between mb-3">
         {icon}
         {changePct !== undefined && (
-          <span className={`flex items-center gap-0.5 text-xs font-bold ${changeColor}`}>
+          <span
+            className={`flex items-center gap-0.5 text-xs font-bold px-2 py-0.5 rounded-lg
+                        ${hasChange
+                          ? changePositive
+                            ? "bg-emerald-500/10"
+                            : "bg-red-500/10"
+                          : "bg-dark-300/50"
+                        } ${changeColor}`}
+          >
             <ChangeIcon size={12} />
             {changePct > 0 ? "+" : ""}
             {changePct.toFixed(1)}%
@@ -115,7 +123,9 @@ export default function KPICard({
 
       {/* Tooltip popup */}
       {showTooltip && tooltip && (
-        <div className="absolute left-2 right-2 bottom-full mb-2 z-20 p-3 rounded-xl bg-dark-500 border border-dark-50/20 shadow-xl">
+        <div className="absolute left-2 right-2 bottom-full mb-2 z-20 p-3 rounded-2xl
+                        bg-dark-500 border border-dark-50/20 shadow-elevation-3
+                        backdrop-blur-xl animate-enter-scale">
           <p className="text-xs text-gray-300 leading-relaxed">{tooltip}</p>
           <button
             type="button"

@@ -556,9 +556,9 @@ export default function MonthlyServicesPage() {
       ) : d ? (
         <>
           {/* ══ Дашборд (6 блоків) ══ */}
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 stagger-enter">
             {/* Блок 1: Наданих послуг */}
-            <button onClick={() => setShowServicesModal(true)} className="card-neo p-5 text-left hover:border-accent-500/20 transition-all group">
+            <button onClick={() => setShowServicesModal(true)} className="card-neo card-tap p-5 text-left hover:border-accent-500/20 transition-all group">
               <div className="flex items-center gap-2 mb-3">
                 <TrendingUp size={16} className="text-accent-400" />
                 <span className="text-xs text-gray-500 group-hover:text-gray-300 transition-colors">Наданих послуг</span>
@@ -574,7 +574,7 @@ export default function MonthlyServicesPage() {
             </button>
 
             {/* Блок 2: Дохід лікаря */}
-            <button onClick={() => setShowDoctorModal(true)} className="card-neo p-5 text-left hover:border-accent-500/20 transition-all group">
+            <button onClick={() => setShowDoctorModal(true)} className="card-neo card-tap p-5 text-left hover:border-accent-500/20 transition-all group">
               <div className="flex items-center gap-2 mb-3">
                 <Stethoscope size={16} className="text-green-400" />
                 <span className="text-xs text-gray-500 group-hover:text-gray-300 transition-colors">{selectedDoctor ? "Дохід лікаря" : "Дохід лікарів"}</span>
@@ -583,7 +583,7 @@ export default function MonthlyServicesPage() {
             </button>
 
             {/* Блок 3: Витрати */}
-            <button onClick={() => setShowExpensesModal(true)} className="card-neo p-5 text-left hover:border-accent-500/20 transition-all group">
+            <button onClick={() => setShowExpensesModal(true)} className="card-neo card-tap p-5 text-left hover:border-accent-500/20 transition-all group">
               <div className="flex items-center gap-2 mb-3">
                 <Package size={16} className="text-orange-400" />
                 <span className="text-xs text-gray-500 group-hover:text-gray-300 transition-colors">Витрати</span>
@@ -628,11 +628,11 @@ export default function MonthlyServicesPage() {
           {analytics && analytics.reports.length > 0 && (
             <div className="card-neo p-5 space-y-3">
               <h3 className="text-sm font-medium text-gray-400">Звіти за {MONTHS_UA[selectedMonth]} {selectedYear}</h3>
-              <div className="space-y-2">
+              <div className="space-y-2 stagger-enter">
                 {analytics.reports.map((rep) => {
                   const isFinal = rep.status === "final";
                   return (
-                  <div key={rep.id} className={`flex items-center justify-between rounded-xl px-4 py-3 border-l-4 transition-all ${
+                  <div key={rep.id} className={`card-tap flex items-center justify-between rounded-xl px-4 py-3 border-l-4 transition-all ${
                     isFinal
                       ? "bg-green-500/5 border-l-green-500/60"
                       : "bg-dark-300/30 border-l-amber-500/40"

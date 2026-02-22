@@ -259,7 +259,7 @@ function KpiCard({
 }) {
   return (
     <div
-      className={`card-neo kpi-3d-hover p-4 flex flex-col gap-2 ${onClick ? "cursor-pointer hover:border-accent-500/40 transition-all" : ""}`}
+      className={`card-neo kpi-3d-hover p-4 flex flex-col gap-2 ${onClick ? "card-tap cursor-pointer hover:border-accent-500/40 transition-all" : ""}`}
       onClick={onClick}
       role={onClick ? "button" : undefined}
       tabIndex={onClick ? 0 : undefined}
@@ -1239,12 +1239,12 @@ export default function ExpensesPage() {
           {periodsLoading ? (
             <LoadingSpinner height="h-24" />
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 stagger-enter">
               {periods.map(p => (
                 <button
                   key={p.month}
                   onClick={() => { setMonth(p.month); setViewMode("month"); }}
-                  className={`card-neo p-4 text-left hover:border-accent-500/40 transition-all ${
+                  className={`card-neo card-tap p-4 text-left hover:border-accent-500/40 transition-all ${
                     p.month === month ? "border-accent-500/40" : ""
                   }`}
                 >
@@ -1327,7 +1327,7 @@ export default function ExpensesPage() {
                 </p>
 
                 {/* Annual KPI Summary */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 stagger-enter">
                   <div className="card-neo p-3 space-y-1">
                     <p className="text-xs text-gray-500">Всього витрат</p>
                     <p className="font-bold text-white font-mono tabular-nums">{fmt(annualTotal)} ₴</p>
@@ -1614,7 +1614,7 @@ export default function ExpensesPage() {
       {data && viewMode === "month" && (
         <>
           {/* ═══ DASHBOARD: KPI CARDS ═══ */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 stagger-enter">
             <KpiCard
               label="Постійні"
               value={data.totals.fixed_total}
@@ -1651,7 +1651,7 @@ export default function ExpensesPage() {
               onClick={() => setKpiModal({ open: true, type: "total", title: "Всі витрати — деталізація" })}
             />
             <div
-              className="card-neo kpi-3d-hover p-4 flex flex-col gap-2 cursor-pointer hover:border-accent-500/40 transition-all"
+              className="card-neo kpi-3d-hover card-tap p-4 flex flex-col gap-2 cursor-pointer hover:border-accent-500/40 transition-all"
               onClick={() => setKpiModal({ open: true, type: "remaining", title: "Фінансовий результат" })}
               role="button"
               tabIndex={0}

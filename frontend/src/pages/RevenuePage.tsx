@@ -175,11 +175,11 @@ export default function RevenuePage() {
       {!loading && data && (<>
 
         {/* ── KPI Cards ── */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 stagger-enter">
 
           {/* Total */}
           <button onClick={() => setDrillModal("total")}
-            className="card-neo kpi-3d-hover p-4 lg:p-5 border border-emerald-500/15 text-left">
+            className="card-neo kpi-3d-hover card-tap p-4 lg:p-5 border border-emerald-500/15 text-left">
             <div className="flex items-center justify-between mb-3">
               <div className="p-2 rounded-xl bg-emerald-500/10"><BadgeDollarSign size={18} className="text-emerald-400" /></div>
               <span className={`text-xs font-bold ${pctColor(data.mom_pct)}`}>{pctLabel(data.mom_pct)}</span>
@@ -191,7 +191,7 @@ export default function RevenuePage() {
 
           {/* NHSU */}
           <button onClick={() => setDrillModal("nhsu")}
-            className="card-neo kpi-3d-hover p-4 lg:p-5 border border-indigo-500/15 text-left">
+            className="card-neo kpi-3d-hover card-tap p-4 lg:p-5 border border-indigo-500/15 text-left">
             <div className="flex items-center justify-between mb-3">
               <div className="p-2 rounded-xl bg-indigo-500/10"><HeartPulse size={18} className="text-indigo-400" /></div>
               <span className="text-xs font-medium text-gray-500">{data.nhsu_pct}%</span>
@@ -203,7 +203,7 @@ export default function RevenuePage() {
 
           {/* Paid services */}
           <button onClick={() => setDrillModal("paid")}
-            className="card-neo kpi-3d-hover p-4 lg:p-5 border border-teal-500/15 text-left">
+            className="card-neo kpi-3d-hover card-tap p-4 lg:p-5 border border-teal-500/15 text-left">
             <div className="flex items-center justify-between mb-3">
               <div className="p-2 rounded-xl bg-teal-500/10"><Stethoscope size={18} className="text-teal-400" /></div>
               <span className="text-xs font-medium text-gray-500">{data.paid_pct}%</span>
@@ -215,7 +215,7 @@ export default function RevenuePage() {
 
           {/* Avg per doctor */}
           <button onClick={() => setDrillModal("doctors")}
-            className="card-neo kpi-3d-hover p-4 lg:p-5 border border-violet-500/15 text-left">
+            className="card-neo kpi-3d-hover card-tap p-4 lg:p-5 border border-violet-500/15 text-left">
             <div className="flex items-center justify-between mb-3">
               <div className="p-2 rounded-xl bg-violet-500/10"><Users size={18} className="text-violet-400" /></div>
               <TrendingUp size={14} className="text-violet-400" />
@@ -352,7 +352,7 @@ export default function RevenuePage() {
               <Lightbulb size={16} className="text-amber-400" />
               Рекомендації системи
             </h3>
-            <div className="space-y-3">
+            <div className="space-y-3 stagger-enter">
               {data.recommendations.map((rec, i) => {
                 const cfg = REC_CONFIG[rec.type] ?? REC_CONFIG.insight;
                 const Icon = cfg.icon;

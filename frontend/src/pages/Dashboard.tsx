@@ -57,44 +57,44 @@ const INSIGHT_CONFIG: Record<string, { icon: typeof AlertCircle; color: string; 
 // ─── Skeleton loader ─────────────────────────────────────────────────
 function DashboardSkeleton() {
   return (
-    <div className="space-y-6 animate-pulse" aria-hidden="true">
+    <div className="space-y-6" aria-hidden="true">
       {/* KPI skeleton */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 stagger-enter">
         {[1, 2, 3, 4].map(i => (
           <div key={i} className="card-neo p-4 lg:p-5 border border-dark-50/10">
             <div className="flex items-center justify-between mb-3">
-              <div className="w-9 h-9 rounded-xl bg-dark-300" />
-              <div className="w-12 h-4 rounded bg-dark-300" />
+              <div className="w-9 h-9 rounded-xl skeleton-shimmer" />
+              <div className="w-12 h-4 rounded-lg skeleton-shimmer" />
             </div>
-            <div className="w-20 h-3 rounded bg-dark-300 mb-2" />
-            <div className="w-28 h-7 rounded bg-dark-300" />
-            <div className="w-24 h-3 rounded bg-dark-300 mt-2" />
+            <div className="w-20 h-3 rounded-lg skeleton-shimmer mb-2" />
+            <div className="w-28 h-7 rounded-lg skeleton-shimmer" />
+            <div className="w-24 h-3 rounded-lg skeleton-shimmer mt-2" />
           </div>
         ))}
       </div>
       {/* Chart skeletons */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 stagger-enter">
         <div className="lg:col-span-2 card-neo p-5">
-          <div className="w-40 h-4 rounded bg-dark-300 mb-4" />
-          <div className="w-full h-[200px] rounded bg-dark-300/50" />
+          <div className="w-40 h-4 rounded-lg skeleton-shimmer mb-4" />
+          <div className="w-full h-[200px] rounded-xl skeleton-shimmer" />
         </div>
         <div className="card-neo p-5">
-          <div className="w-32 h-4 rounded bg-dark-300 mb-4" />
-          <div className="w-full h-[200px] rounded bg-dark-300/50" />
+          <div className="w-32 h-4 rounded-lg skeleton-shimmer mb-4" />
+          <div className="w-full h-[200px] rounded-xl skeleton-shimmer" />
         </div>
       </div>
       {/* Tax & insights skeleton */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 stagger-enter">
         <div className="card-neo p-5">
-          <div className="w-36 h-4 rounded bg-dark-300 mb-4" />
+          <div className="w-36 h-4 rounded-lg skeleton-shimmer mb-4" />
           <div className="space-y-3">
-            {[1, 2, 3, 4].map(i => <div key={i} className="flex justify-between"><div className="w-28 h-3 rounded bg-dark-300" /><div className="w-20 h-3 rounded bg-dark-300" /></div>)}
+            {[1, 2, 3, 4].map(i => <div key={i} className="flex justify-between"><div className="w-28 h-3 rounded-lg skeleton-shimmer" /><div className="w-20 h-3 rounded-lg skeleton-shimmer" /></div>)}
           </div>
         </div>
         <div className="card-neo p-5">
-          <div className="w-36 h-4 rounded bg-dark-300 mb-4" />
+          <div className="w-36 h-4 rounded-lg skeleton-shimmer mb-4" />
           <div className="space-y-3">
-            {[1, 2, 3].map(i => <div key={i} className="w-full h-16 rounded-xl bg-dark-300/50" />)}
+            {[1, 2, 3].map(i => <div key={i} className="w-full h-16 rounded-xl skeleton-shimmer" />)}
           </div>
         </div>
       </div>
@@ -108,12 +108,25 @@ function DrillModal({ title, onClose, children }: { title: string; onClose: () =
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 sm:items-center overflow-y-auto"
+      className="fixed inset-0 z-50 flex items-start justify-center p-0 sm:p-4 sm:items-center overflow-y-auto"
     >
-      <div className="bg-dark-600 border border-dark-50/10 rounded-none sm:rounded-2xl w-full max-w-2xl min-h-full sm:min-h-0 shadow-2xl animate-modal-in pb-20 sm:pb-0">
-        <div className="flex items-center justify-between p-5 border-b border-dark-50/10">
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/60 backdrop-blur-md animate-fade-in"
+        onClick={onClose}
+      />
+      {/* Panel */}
+      <div className="relative bg-dark-600 border border-dark-50/10
+                      rounded-none sm:rounded-2xl w-full max-w-2xl min-h-full sm:min-h-0
+                      shadow-elevation-3 animate-modal-in pb-20 sm:pb-0">
+        <div className="flex items-center justify-between p-5 border-b border-dark-50/10 bg-dark-400/20 backdrop-blur-sm">
           <h3 className="text-base font-semibold text-white">{title}</h3>
-          <button onClick={onClose} aria-label="Закрити" className="p-1.5 text-gray-500 hover:text-gray-300 rounded-lg hover:bg-dark-300 transition-all">
+          <button
+            onClick={onClose}
+            aria-label="Закрити"
+            className="p-2 text-gray-500 hover:text-gray-300 rounded-xl hover:bg-dark-300
+                       active:scale-90 transition-all duration-150"
+          >
             <X size={18} />
           </button>
         </div>
@@ -279,7 +292,7 @@ export default function Dashboard() {
       {!loading && !error && data && (data.total_income > 0 || data.total_expenses > 0) && (
         <>
           {/* ── 1. KPI Cards ── */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 stagger-enter">
             <KPICard
               label="Доходи"
               value={data.total_income}
@@ -511,7 +524,7 @@ export default function Dashboard() {
           )}
 
           {/* ── 5. Quick navigation ── */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 stagger-enter">
             {[
               { label: "Доходи", path: "/incomes", color: "text-emerald-400", border: "border-emerald-500/15" },
               { label: "Витрати", path: "/expenses", color: "text-red-400", border: "border-red-500/15" },
@@ -521,11 +534,12 @@ export default function Dashboard() {
               <button
                 key={nav.path}
                 onClick={() => navigate(nav.path)}
-                className={`card-neo p-3 lg:p-4 border ${nav.border} text-left hover:bg-dark-300/30 transition-all group`}
+                className={`card-neo card-tap p-3 lg:p-4 border ${nav.border} text-left
+                           hover:bg-dark-300/30 transition-all duration-200 group`}
               >
                 <div className="flex items-center justify-between">
                   <span className={`text-sm font-medium ${nav.color}`}>{nav.label}</span>
-                  <ChevronRight size={14} className="text-gray-600 group-hover:text-gray-400 transition-colors" />
+                  <ChevronRight size={14} className="text-gray-600 group-hover:text-gray-400 group-hover:translate-x-0.5 transition-all duration-200" />
                 </div>
               </button>
             ))}

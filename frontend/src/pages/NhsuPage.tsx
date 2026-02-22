@@ -557,7 +557,7 @@ export default function NhsuPage() {
           {rangeLoading && <LoadingSpinner height="h-32" />}
           {!rangeLoading && rangeData && (<>
             {/* Range KPI cards — без пацієнтів та не верифікованих */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 stagger-enter">
               {([
                 { label:"Сума (брутто)",          val:fmt2(rangeData.totalAmount),  color:"text-emerald-400", Icon:BadgeDollarSign },
                 { label:`ЄП ${settings?.ep_rate ?? rangeData.ep_rate}%`, val:fmt2(rangeData.totalEp),    color:"text-red-400",     Icon:TrendingDown },
@@ -622,7 +622,7 @@ export default function NhsuPage() {
       {!loading && report && !rangeMode && (<>
 
         {/* KPI cards */}
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 stagger-enter">
           {([
             { label:"Пацієнти",       val:totals.patients,                color:"text-white",       Icon:Users },
             { label:"Не верифіковані",val:fmt(totals.nonVer),             color:"text-yellow-400",  Icon:AlertCircle },
@@ -651,7 +651,7 @@ export default function NhsuPage() {
               </h3>
               <span className="ml-auto text-xs text-gray-600">{year-1} → {year}</span>
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-3 stagger-enter">
               {[
                 {
                   label: "Пацієнти",
