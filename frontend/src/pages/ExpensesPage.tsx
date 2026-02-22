@@ -34,6 +34,7 @@ import {
   Share2,
   Link,
   ExternalLink,
+  ClipboardList,
 } from "lucide-react";
 import {
   LoadingSpinner,
@@ -460,6 +461,12 @@ export default function ExpensesPage() {
     open: boolean; url: string; expiresAt: string;
   }>({ open: false, url: "", expiresAt: "" });
 
+  // ── Accountant request state ──
+  const [accReqLoading, setAccReqLoading] = useState(false);
+  const [accReqModal, setAccReqModal] = useState<{
+    open: boolean; url: string; expiresAt: string;
+  }>({ open: false, url: "", expiresAt: "" });
+
   // ── Change tab with persistence
   function changeTab(tab: TabId) {
     setActiveTab(tab);
@@ -687,6 +694,27 @@ export default function ExpensesPage() {
       alert("Помилка створення посилання");
     }
     setShareLoading(false);
+  }
+
+  // ── Accountant request ────────────────────────────────────────
+  async function handleAccountantRequest() {
+    setAccReqLoading(true);
+    try {
+      const res = await api.post("/monthly-expenses/accountant-request", {
+        year,
+        month,
+      });
+      const accUrl = `${window.location.origin}${res.data.url}`;
+      setAccReqModal({
+        open: true,
+        url: accUrl,
+        expiresAt: new Date(res.data.expires_at).toLocaleDateString("uk-UA"),
+      });
+    } catch (e) {
+      console.error(e);
+      alert("Помилка створення запиту до бухгалтера");
+    }
+    setAccReqLoading(false);
   }
 
   // ── Dirty checks ──────────────────────────────────────────────
@@ -1574,6 +1602,15 @@ export default function ExpensesPage() {
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-dark-400/60 border border-dark-50/15 text-gray-300 text-xs font-semibold hover:border-purple-500/30 hover:text-purple-300 transition-all"
             >
               <Sparkles size={13} aria-hidden="true" /> AI-аналіз
+            </button>
+            <button
+              onClick={handleAccountantRequest}
+              disabled={accReqLoading}
+              aria-label="Запит до бухгалтера"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-dark-400/60 border border-dark-50/15 text-gray-300 text-xs font-semibold hover:border-orange-500/30 hover:text-orange-300 transition-all disabled:opacity-50"
+            >
+              {accReqLoading ? <RefreshCw size={13} className="animate-spin" /> : <ClipboardList size={13} aria-hidden="true" />}
+              Бухгалтеру
             </button>
             <button
               onClick={exportExcel}
@@ -3129,6 +3166,81 @@ export default function ExpensesPage() {
             </button>
           </div>
         </Modal>
+      )}
+
+      {/* ── Accountant request modal ── */}
+      {accReqModal.open && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Запит до бухгалтера">
+          <div className="absolute inset-0" onClick={() => setAccReqModal({ open: false, url: "", expiresAt: "" })} />
+          <div className="relative bg-dark-600 rounded-2xl shadow-2xl w-full max-w-md p-6" style={{ border: "1px solid #ffffff15" }}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <ClipboardList size={18} className="text-orange-400" />
+                <h4 className="font-semibold text-white text-base">Запит до бухгалтера створено</h4>
+              </div>
+              <button
+                onClick={() => setAccReqModal({ open: false, url: "", expiresAt: "" })}
+                aria-label="Закрити"
+                className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <p className="text-xs text-gray-500 mb-3">
+              Надішліть це посилання бухгалтеру. Сторінка доступна 15 днів (до {accReqModal.expiresAt}).
+            </p>
+            <div className="flex items-center gap-2 bg-dark-400/40 rounded-xl p-3 mb-4">
+              <Link size={14} className="text-gray-500 shrink-0" />
+              <input
+                type="text"
+                readOnly
+                value={accReqModal.url}
+                className="flex-1 bg-transparent text-sm text-gray-200 font-mono outline-none"
+                onFocus={e => e.target.select()}
+              />
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(accReqModal.url);
+                }}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-400 text-sm font-medium hover:bg-orange-500/20 transition-all"
+              >
+                <Copy size={14} /> Копіювати
+              </button>
+              <a
+                href={accReqModal.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-orange-500 text-white text-sm font-semibold hover:bg-orange-400 transition-all"
+              >
+                <ExternalLink size={14} /> Відкрити
+              </a>
+            </div>
+            <div className="flex gap-2 mt-2">
+              <a
+                href={`mailto:?subject=${encodeURIComponent("Запит на заповнення даних")}&body=${encodeURIComponent(accReqModal.url)}`}
+                className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl border border-dark-50/20 text-gray-400 text-xs hover:text-white hover:border-dark-50/40 transition-all"
+              >
+                Email
+              </a>
+              <a
+                href={`viber://forward?text=${encodeURIComponent(accReqModal.url)}`}
+                className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl border border-dark-50/20 text-gray-400 text-xs hover:text-white hover:border-dark-50/40 transition-all"
+              >
+                Viber
+              </a>
+              <a
+                href={`https://t.me/share/url?url=${encodeURIComponent(accReqModal.url)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl border border-dark-50/20 text-gray-400 text-xs hover:text-white hover:border-dark-50/40 transition-all"
+              >
+                Telegram
+              </a>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* ── Share modal ── */}

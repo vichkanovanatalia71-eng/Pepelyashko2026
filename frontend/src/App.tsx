@@ -12,6 +12,7 @@ import RevenuePage from "./pages/RevenuePage";
 import MonthlyServicesPage from "./pages/MonthlyServicesPage";
 import SharePage from "./pages/SharePage";
 import OwnerSharePage from "./pages/OwnerSharePage";
+import AccountantRequestPage from "./pages/AccountantRequestPage";
 import LoginPage from "./pages/LoginPage";
 import VerifyEmailPage from "./pages/VerifyEmailPage";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
@@ -30,6 +31,7 @@ export default function App() {
         <Route path="/verify-email" element={<VerifyEmailPage />} />
         <Route path="/share/:token" element={<SharePage />} />
         <Route path="/owner-share/:token" element={<OwnerSharePage />} />
+        <Route path="/accountant/:token" element={<AccountantRequestPage />} />
         <Route
           path="/"
           element={
