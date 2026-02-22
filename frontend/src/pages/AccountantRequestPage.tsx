@@ -64,7 +64,7 @@ interface SalaryRow {
 interface ExpenseRow {
   id: number;
   name: string;
-  amount: number;
+  amount: number | string;
   is_recurring: boolean;
 }
 
@@ -160,7 +160,7 @@ export default function AccountantRequestPage() {
           brutto: s.brutto,
         })),
         expenses: expenses
-          .filter((e) => e.name.trim() && e.amount > 0)
+          .filter((e) => e.name.trim() && (parseFloat(String(e.amount)) || 0) > 0)
           .map((e) => ({
             name: e.name,
             amount: e.amount,
