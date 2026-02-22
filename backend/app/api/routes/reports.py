@@ -739,6 +739,7 @@ async def dashboard_report(
         avg_expenses_6m=avg_expenses_6m,
         avg_profit_6m=avg_profit_6m,
         income_by_category=income_by_category,
+        top_income_sources=top_income_sources,
         expense_by_category=expense_by_category,
         # New fields
         nhsu_income=nhsu_income,
