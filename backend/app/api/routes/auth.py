@@ -47,16 +47,8 @@ async def register(user_in: UserCreate, db: AsyncSession = Depends(get_db)):
     try:
         email_sent = await send_verification_email(user_in.email, token)
     except Exception:
-        # Якщо відправлення не вдалось — видаляємо щойно створеного користувача
-        await db.delete(user)
-        await db.commit()
-        raise HTTPException(
-            status_code=503,
-            detail=(
-                "Не вдалося надіслати лист підтвердження. "
-                "Перевірте налаштування SMTP або зверніться до адміністратора."
-            ),
-        )
+        # Якщо відправлення не вдалось — автоверифікуємо користувача
+        email_sent = False
 
     # Якщо SMTP не налаштовано — автоматично верифікуємо (режим розробки)
     if not email_sent:
