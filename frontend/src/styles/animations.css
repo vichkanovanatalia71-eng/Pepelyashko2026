@@ -57,6 +57,15 @@
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
+/* ── Bar overlimit pulse (SVG-safe red glow) ─────────────── */
+@keyframes barOverlimitPulse {
+  0%, 100% { opacity: 1; filter: brightness(1); }
+  50%      { opacity: 0.6; filter: brightness(1.3); }
+}
+.bar-overlimit-pulse {
+  animation: barOverlimitPulse 1.6s ease-in-out infinite;
+}
+
 /* ── Shimmer (skeleton) ──────────────────────────────────── */
 .shimmer {
   background: linear-gradient(
