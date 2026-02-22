@@ -641,6 +641,14 @@ async def dashboard_report(
         name = income_cats.get(cat_id, "Без категорії") if cat_id else "Без категорії"
         income_by_cat_raw[name] += float(amt)
 
+    # Add NHSU as a category
+    if nhsu_income > 0:
+        income_by_cat_raw["НСЗУ"] += nhsu_income
+
+    # Add Paid services as a category
+    if paid_income > 0:
+        income_by_cat_raw["Платні послуги"] += paid_income
+
     income_by_category = sorted(
         [
             CategoryBreakdown(
@@ -670,6 +678,18 @@ async def dashboard_report(
     for cat_id, amt in exp_cat_q.all():
         name = expense_cats.get(cat_id, "Без категорії") if cat_id else "Без категорії"
         expense_by_cat_raw[name] += float(amt)
+
+    # Add Fixed expenses as a category
+    if fixed_total > 0:
+        expense_by_cat_raw["Фіксовані видатки"] += fixed_total
+
+    # Add Salary expenses as a category
+    if salary_total > 0:
+        expense_by_cat_raw["Зарплата"] += salary_total
+
+    # Add Tax expenses as a category
+    if tax_total > 0:
+        expense_by_cat_raw["Податки"] += tax_total
 
     expense_by_category = sorted(
         [
