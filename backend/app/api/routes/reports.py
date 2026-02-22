@@ -446,16 +446,15 @@ async def _month_totals(
         esv_employer += esv
 
     # 6. Tax expenses (ЄП, ВЗ, ЄСВ власника)
-    ep_rate_pct = 5.0  # default
-    vz_rate_pct = 1.5  # default
-    # Try to get from settings
+    # vz_rate is already in decimal form (0.015 = 1.5%), passed from endpoint
+    # Get EP rate from settings
     nhsu = await _get_nhsu_settings(db, user_id)
+    ep_rate_pct = 5.0  # default
     if nhsu:
         ep_rate_pct = float(nhsu.ep_rate)
-        vz_rate_pct = float(nhsu.vz_rate)
 
     ep = round(income * ep_rate_pct / 100, 2)
-    vz = round(income * vz_rate_pct / 100, 2)
+    vz = round(income * vz_rate, 2)  # vz_rate is already in decimal form
     esv_owner = round(esv_monthly, 2)
 
     tax_total = round(ep + vz + esv_owner + esv_employer, 2)
