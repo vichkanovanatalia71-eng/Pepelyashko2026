@@ -861,6 +861,7 @@ async def _get_top_paid_services_detailed(db: AsyncSession, user_id: int, year: 
     # Формуємо результат
     total_revenue = 0
     total_materials_cost = 0
+    all_total_qty = 0  # Initialize here
     result = []
 
     for service_id, data in service_data.items():
@@ -902,9 +903,10 @@ async def _get_top_paid_services_detailed(db: AsyncSession, user_id: int, year: 
 
         total_revenue += revenue
         total_materials_cost += materials_cost
+        all_total_qty += data["quantity"]  # Accumulate total quantity
 
-    # Загальна кількість послуг (усіх, до обрізки)
-    all_total_qty = sum(r.quantity for r in result)
+
+    # Save total revenue before truncating to top 5
     all_total_revenue = total_revenue
 
     # Сортуємо по виручці
