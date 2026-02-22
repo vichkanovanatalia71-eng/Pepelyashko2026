@@ -1,10 +1,8 @@
 import { useState, FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Stethoscope, Mail, CheckCircle } from "lucide-react";
-import axios from "axios";
 import { useAuth } from "../hooks/useAuth";
-
-const API = "";
+import api from "../api/client";
 
 type Tab = "login" | "register";
 
@@ -65,7 +63,7 @@ export default function LoginPage() {
 
     setRegLoading(true);
     try {
-      const res = await axios.post(`${API}/api/auth/register`, {
+      const res = await api.post("/auth/register", {
         email: regEmail,
         password: regPassword,
         full_name: regFullName,
