@@ -35,8 +35,12 @@ class NhsuSettingsInput(BaseModel):
     coeff_18_39: float = 0.616
     coeff_40_64: float = 0.86
     coeff_65_plus: float = 1.3
-    ep_rate: float = 5.0   # %
-    vz_rate: float = 5.0   # %
+    ep_rate: float = 5.0         # % ЄП від доходу
+    vz_rate: float = 1.5         # % ВЗ від доходу
+    esv_monthly: float = 1760.00 # грн/міс ЄСВ власника
+    pdfo_rate: float = 18.0      # % ПДФО із ЗП
+    vz_zp_rate: float = 5.0      # % ВЗ із ЗП
+    esv_employer_rate: float = 22.0  # % ЄСВ роботодавця
 
 
 class NhsuSettingsResponse(BaseModel):
@@ -49,6 +53,10 @@ class NhsuSettingsResponse(BaseModel):
     coeff_65_plus: float
     ep_rate: float
     vz_rate: float
+    esv_monthly: float
+    pdfo_rate: float
+    vz_zp_rate: float
+    esv_employer_rate: float
 
     model_config = {"from_attributes": True}
 

@@ -40,8 +40,14 @@ class NhsuSettings(Base):
     coeff_65_plus: Mapped[float] = mapped_column(Numeric(6, 3), default=1.3)
 
     # Податки (у відсотках, наприклад 5.0 = 5%)
-    ep_rate: Mapped[float] = mapped_column(Numeric(5, 2), default=5.0)  # Єдиний податок
-    vz_rate: Mapped[float] = mapped_column(Numeric(5, 2), default=5.0)  # Військовий збір
+    ep_rate: Mapped[float] = mapped_column(Numeric(5, 2), default=5.0)   # ЄП — від доходу
+    vz_rate: Mapped[float] = mapped_column(Numeric(5, 2), default=1.5)   # ВЗ — від доходу (ФОП)
+    esv_monthly: Mapped[float] = mapped_column(Numeric(10, 2), default=1760.00)  # ЄСВ власника (грн/міс)
+
+    # Зарплатні ставки
+    pdfo_rate: Mapped[float] = mapped_column(Numeric(5, 2), default=18.0)        # ПДФО із ЗП
+    vz_zp_rate: Mapped[float] = mapped_column(Numeric(5, 2), default=5.0)        # ВЗ із ЗП
+    esv_employer_rate: Mapped[float] = mapped_column(Numeric(5, 2), default=22.0)  # ЄСВ роботодавця
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)

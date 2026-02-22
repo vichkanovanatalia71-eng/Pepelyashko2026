@@ -9,24 +9,48 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d pepelyashko"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   backend:
     build: ./backend
+    command: ["bash", "-c", "sed -i 's/\\r$//' ./entrypoint.sh && UVICORN_RELOAD=1 bash ./entrypoint.sh"]
     ports:
       - "8000:8000"
     environment:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/pepelyashko
       SECRET_KEY: dev-secret-key
       DEBUG: "true"
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      # SMTP для підтвердження email (необов'язково — без нього авто-верифікація)
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     volumes:
       - ./backend:/app
+      # Persist generated documents between container restarts
+      - backend_generated_acts:/app/generated_acts
+      - backend_generated_contracts:/app/generated_contracts
+      - backend_generated_documents:/app/generated_documents
+      - backend_generated_invoices:/app/generated_invoices
+      - backend_generated_orders:/app/generated_orders
+      - backend_uploads:/app/uploads
 
   frontend:
     build: ./frontend
     ports:
       - "5173:5173"
+    environment:
+      VITE_API_URL: http://backend:8000
     depends_on:
       - backend
     volumes:
@@ -35,3 +59,9 @@ services:
 
 volumes:
   postgres_data:
+  backend_generated_acts:
+  backend_generated_contracts:
+  backend_generated_documents:
+  backend_generated_invoices:
+  backend_generated_orders:
+  backend_uploads:

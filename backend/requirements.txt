@@ -9,7 +9,7 @@ alembic==1.14.1
 
 # Auth
 python-jose[cryptography]==3.3.0
-passlib[bcrypt]==1.7.4
+bcrypt>=4.0.0
 python-multipart==0.0.20
 
 # Validation & Settings
@@ -26,3 +26,13 @@ httpx==0.28.1
 
 # Dev
 python-dotenv==1.0.1
+
+# AI (multi-provider: Claude, OpenAI, xAI/Grok)
+anthropic>=0.40.0
+openai>=1.0.0
+
+# Email
+aiosmtplib>=3.0.0
+
+# Excel export
+openpyxl>=3.1.0

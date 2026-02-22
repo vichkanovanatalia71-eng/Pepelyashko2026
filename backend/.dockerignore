@@ -1,0 +1,25 @@
+venv/
+.venv/
+__pycache__/
+*.pyc
+.env
+.git
+
+# Generated documents (зберігаються окремо через Docker volumes)
+generated_acts/
+generated_contracts/
+generated_documents/
+generated_invoices/
+generated_orders/
+uploads/
+
+# Old standalone server files (не потрібні для Docker)
+server.py
+server_old.py
+
+# Backups
+*_backup.py
+*_v2.py
+
+# Tests (не потрібні в prod image)
+tests/

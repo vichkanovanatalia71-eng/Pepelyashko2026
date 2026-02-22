@@ -32,3 +32,13 @@ build/
 
 # Docker
 postgres_data/
+
+# Generated documents (PDF)
+backend/generated_acts/
+backend/generated_contracts/
+backend/generated_documents/
+backend/generated_invoices/
+backend/generated_orders/
+
+# Uploads
+backend/uploads/

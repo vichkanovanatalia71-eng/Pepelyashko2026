@@ -123,7 +123,7 @@ async def search_company(request: dict):
         api_url = f"https://api.youscore.com.ua/v1/usr/{edrpou}"
         params = {
             "showCurrentData": "true",
-            "apiKey": "4a5a000047a6e89800a306e01306c62c21b2c773"
+            "apiKey": os.environ.get("YOUSCORE_API_KEY", ""),
         }
         
         headers = {
