@@ -31,29 +31,45 @@
   /* Borders */
   --border:            rgba(42, 42, 42, 0.22);
   --border-strong:     rgba(60, 60, 60, 0.35);
-  --border-focus:      rgba(249, 115, 22, 0.50);
+  --border-focus:      rgba(249, 115, 22, 0.60);
   --border-glass:      rgba(255, 255, 255, 0.06);
 
-  /* Orange accent border for cards (dark premium look) */
-  --card-border-top:   rgba(249, 115, 22, 0.13);
-  --card-border-side:  rgba(249, 115, 22, 0.06);
+  /* Orange accent border for cards — DOUBLED glow intensity */
+  --card-border-top:   rgba(249, 115, 22, 0.26);
+  --card-border-side:  rgba(249, 115, 22, 0.12);
 
-  /* Shadows */
+  /* Shadows — enhanced depth & DOUBLED glow */
   --shadow-card:
     0 4px 16px rgba(0, 0, 0, 0.4),
     0 1px 4px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(249, 115, 22, 0.06),
     inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  --shadow-card-hover:
+    0 20px 50px rgba(0, 0, 0, 0.5),
+    0 8px 20px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(249, 115, 22, 0.20),
+    0 0 40px rgba(249, 115, 22, 0.08);
   --shadow-sm:
     0 2px 8px rgba(0, 0, 0, 0.35),
     0 1px 2px rgba(0, 0, 0, 0.25);
   --shadow-inset:
     inset 4px 4px 8px rgba(0, 0, 0, 0.40),
     inset -2px -2px 6px rgba(255, 255, 255, 0.03);
-  --shadow-glow-accent: 0 0 20px rgba(249, 115, 22, 0.18);
+  --shadow-glow-accent: 0 0 30px rgba(249, 115, 22, 0.35);
   --shadow-elevated:
     0 12px 40px rgba(0, 0, 0, 0.5),
     0 4px 12px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(249, 115, 22, 0.10),
     inset 0 1px 0 rgba(255, 255, 255, 0.05);
+
+  /* Tile (sub-card) shadows */
+  --shadow-tile:
+    0 2px 6px rgba(0, 0, 0, 0.25),
+    0 0 0 1px rgba(249, 115, 22, 0.04);
+  --shadow-tile-hover:
+    0 8px 24px rgba(0, 0, 0, 0.35),
+    0 0 0 1px rgba(249, 115, 22, 0.15),
+    0 0 20px rgba(249, 115, 22, 0.06);
 
   /* Scrollbar */
   --scrollbar-track:   #111111;
@@ -66,12 +82,17 @@
   /* Focus ring */
   --focus-ring:        rgba(249, 115, 22, 0.6);
 
-  /* Timing */
+  /* Timing — unified across all interactions */
   --ease-spring:       cubic-bezier(0.16, 1, 0.3, 1);
   --ease-bounce:       cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-smooth:       cubic-bezier(0.4, 0, 0.2, 1);
   --duration-fast:     150ms;
   --duration-normal:   250ms;
   --duration-slow:     400ms;
+
+  /* Row hover */
+  --row-hover-bg:      rgba(249, 115, 22, 0.03);
+  --row-hover-border:  rgba(249, 115, 22, 0.08);
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -97,26 +118,40 @@
 
   --border:            rgba(0, 0, 0, 0.08);
   --border-strong:     rgba(0, 0, 0, 0.14);
-  --border-focus:      rgba(249, 115, 22, 0.50);
+  --border-focus:      rgba(249, 115, 22, 0.60);
   --border-glass:      rgba(0, 0, 0, 0.06);
 
-  /* Orange accent (softer on light) */
-  --card-border-top:   rgba(249, 115, 22, 0.18);
-  --card-border-side:  rgba(0, 0, 0, 0.06);
+  /* Orange accent — DOUBLED for light */
+  --card-border-top:   rgba(249, 115, 22, 0.30);
+  --card-border-side:  rgba(0, 0, 0, 0.08);
 
   --shadow-card:
     0 2px 8px rgba(0, 0, 0, 0.07),
-    0 1px 2px rgba(0, 0, 0, 0.05);
+    0 1px 2px rgba(0, 0, 0, 0.05),
+    0 0 0 1px rgba(249, 115, 22, 0.06);
+  --shadow-card-hover:
+    0 12px 36px rgba(0, 0, 0, 0.12),
+    0 4px 12px rgba(0, 0, 0, 0.08),
+    0 0 0 1px rgba(249, 115, 22, 0.15),
+    0 0 30px rgba(249, 115, 22, 0.06);
   --shadow-sm:
     0 1px 4px rgba(0, 0, 0, 0.06),
     0 1px 2px rgba(0, 0, 0, 0.04);
   --shadow-inset:
     inset 0 2px 4px rgba(0, 0, 0, 0.06),
     inset 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-glow-accent: 0 0 18px rgba(249, 115, 22, 0.15);
+  --shadow-glow-accent: 0 0 24px rgba(249, 115, 22, 0.25);
   --shadow-elevated:
     0 8px 24px rgba(0, 0, 0, 0.1),
     0 4px 8px rgba(0, 0, 0, 0.06);
+
+  --shadow-tile:
+    0 1px 4px rgba(0, 0, 0, 0.05),
+    0 0 0 1px rgba(249, 115, 22, 0.04);
+  --shadow-tile-hover:
+    0 6px 16px rgba(0, 0, 0, 0.08),
+    0 0 0 1px rgba(249, 115, 22, 0.12),
+    0 0 16px rgba(249, 115, 22, 0.04);
 
   --scrollbar-track:   #e2e8f0;
   --scrollbar-thumb:   #cbd5e1;
@@ -125,6 +160,9 @@
   --bg-nav:            rgba(255, 255, 255, 0.82);
 
   --focus-ring:        rgba(249, 115, 22, 0.6);
+
+  --row-hover-bg:      rgba(249, 115, 22, 0.04);
+  --row-hover-border:  rgba(249, 115, 22, 0.08);
 }
 
 @layer base {
@@ -250,7 +288,7 @@
 
 @layer components {
   /* ═══════════════════════════════════════════════════════════
-     CARDS — Depth-based hierarchy
+     CARDS — Depth-based hierarchy with auto 3D hover
      ═══════════════════════════════════════════════════════════ */
   .card-neo {
     background-color: var(--bg-card);
@@ -258,15 +296,26 @@
     border: 1px solid var(--border-glass);
     border-top-color: var(--card-border-top);
     box-shadow: var(--shadow-card);
-    transition: transform var(--duration-normal) var(--ease-spring),
-                box-shadow var(--duration-normal) ease,
-                background-color var(--duration-normal) ease,
-                border-color var(--duration-normal) ease;
     position: relative;
     overflow: hidden;
+    will-change: transform, box-shadow;
+    transform: perspective(800px) translateZ(0);
+    transition: transform 0.3s var(--ease-spring),
+                box-shadow 0.3s var(--ease-smooth),
+                border-color 0.3s ease,
+                background-color var(--duration-normal) ease;
   }
 
-  /* Subtle inner highlight for glass/depth feel */
+  /* Auto 3D hover on desktop for ALL card-neo elements */
+  @media (hover: hover) and (pointer: fine) {
+    .card-neo:hover {
+      transform: perspective(800px) translateZ(8px) rotateX(-0.5deg) scale(1.005);
+      box-shadow: var(--shadow-card-hover);
+      border-top-color: rgba(249, 115, 22, 0.35);
+    }
+  }
+
+  /* Subtle inner highlight for glass/depth feel — ENHANCED */
   .card-neo::before {
     content: "";
     position: absolute;
@@ -277,13 +326,31 @@
     background: linear-gradient(
       90deg,
       transparent 0%,
-      rgba(255, 255, 255, 0.06) 30%,
-      rgba(255, 255, 255, 0.08) 50%,
-      rgba(255, 255, 255, 0.06) 70%,
+      rgba(249, 115, 22, 0.08) 20%,
+      rgba(255, 255, 255, 0.10) 35%,
+      rgba(249, 115, 22, 0.12) 50%,
+      rgba(255, 255, 255, 0.10) 65%,
+      rgba(249, 115, 22, 0.08) 80%,
       transparent 100%
     );
     pointer-events: none;
     z-index: 1;
+    transition: opacity 0.3s ease;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .card-neo:hover::before {
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(249, 115, 22, 0.15) 20%,
+        rgba(255, 255, 255, 0.14) 35%,
+        rgba(249, 115, 22, 0.20) 50%,
+        rgba(255, 255, 255, 0.14) 65%,
+        rgba(249, 115, 22, 0.15) 80%,
+        transparent 100%
+      );
+    }
   }
 
   .card-neo-sm {
@@ -292,9 +359,17 @@
     border: 1px solid var(--border-glass);
     border-top-color: var(--card-border-top);
     box-shadow: var(--shadow-sm);
-    transition: transform var(--duration-normal) var(--ease-spring),
-                box-shadow var(--duration-normal) ease,
+    will-change: transform;
+    transition: transform 0.25s var(--ease-spring),
+                box-shadow 0.25s var(--ease-smooth),
                 background-color var(--duration-normal) ease;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .card-neo-sm:hover {
+      transform: translateY(-2px) scale(1.01);
+      box-shadow: var(--shadow-tile-hover);
+    }
   }
 
   .card-neo-inset {
@@ -302,7 +377,35 @@
     border-radius: 1rem;
     border: 1px solid var(--border);
     box-shadow: var(--shadow-inset);
-    transition: background-color var(--duration-normal) ease;
+    transition: background-color var(--duration-normal) ease,
+                border-color 0.2s ease;
+  }
+
+  /* ── Tile: sub-card / inner block with hover ────────────── */
+  .tile-neo {
+    background-color: var(--bg-card-alt);
+    border: 1px solid var(--border-glass);
+    border-radius: 0.875rem;
+    box-shadow: var(--shadow-tile);
+    will-change: transform;
+    transition: transform 0.22s var(--ease-spring),
+                box-shadow 0.22s var(--ease-smooth),
+                border-color 0.22s ease;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .tile-neo:hover {
+      transform: translateY(-2px) scale(1.01);
+      box-shadow: var(--shadow-tile-hover);
+      border-color: rgba(249, 115, 22, 0.15);
+    }
+  }
+
+  @media (pointer: coarse) {
+    .tile-neo:active {
+      transform: scale(0.98);
+      transition: transform 80ms ease-out;
+    }
   }
 
   /* ── Glass surface (for overlays, navs, floating panels) ── */
@@ -321,7 +424,7 @@
   }
 
   /* ═══════════════════════════════════════════════════════════
-     BUTTONS — Tactile press feedback
+     BUTTONS — Unified tactile press feedback
      ═══════════════════════════════════════════════════════════ */
   .btn-accent {
     padding: 0.625rem 1.25rem;
@@ -329,7 +432,7 @@
     color: #ffffff;
     font-weight: 600;
     border-radius: 0.875rem;
-    transition: all var(--duration-fast) ease;
+    transition: all var(--duration-fast) var(--ease-smooth);
     box-shadow:
       var(--shadow-glow-accent),
       0 2px 8px rgba(249, 115, 22, 0.25);
@@ -338,14 +441,14 @@
   .btn-accent:hover {
     background-color: #ea6a0a;
     box-shadow:
-      0 0 24px rgba(249, 115, 22, 0.25),
-      0 4px 12px rgba(249, 115, 22, 0.3);
-    transform: translateY(-1px);
+      0 0 36px rgba(249, 115, 22, 0.40),
+      0 4px 16px rgba(249, 115, 22, 0.35);
+    transform: translateY(-2px) scale(1.02);
   }
   .btn-accent:active {
     background-color: #c2560a;
     transform: scale(0.97) translateY(0);
-    box-shadow: 0 0 12px rgba(249, 115, 22, 0.15);
+    box-shadow: 0 0 16px rgba(249, 115, 22, 0.20);
     transition-duration: 80ms;
   }
   .btn-accent:disabled {
@@ -359,12 +462,13 @@
     padding: 0.5rem 1rem;
     color: var(--text-secondary);
     border-radius: 0.875rem;
-    transition: all var(--duration-fast) ease;
+    transition: all var(--duration-fast) var(--ease-smooth);
     transform: translateZ(0);
   }
   .btn-ghost:hover {
     background-color: var(--bg-active);
     color: var(--text-primary);
+    transform: translateY(-1px);
   }
   .btn-ghost:active {
     transform: scale(0.97);
@@ -383,14 +487,14 @@
     font-weight: 500;
     border-radius: 0.875rem;
     border: 1px solid var(--border);
-    transition: all var(--duration-fast) ease;
+    transition: all var(--duration-fast) var(--ease-smooth);
     transform: translateZ(0);
   }
   .btn-secondary:hover {
     background-color: var(--bg-active);
     color: var(--text-primary);
     border-color: var(--border-strong);
-    transform: translateY(-1px);
+    transform: translateY(-2px);
     box-shadow: var(--shadow-sm);
   }
   .btn-secondary:active {
@@ -410,13 +514,14 @@
     font-weight: 600;
     border-radius: 0.875rem;
     border: 1px solid rgba(239, 68, 68, 0.2);
-    transition: all var(--duration-fast) ease;
+    transition: all var(--duration-fast) var(--ease-smooth);
     transform: translateZ(0);
   }
   .btn-danger:hover {
     background-color: rgba(239, 68, 68, 0.2);
-    border-color: rgba(239, 68, 68, 0.3);
-    transform: translateY(-1px);
+    border-color: rgba(239, 68, 68, 0.35);
+    transform: translateY(-2px);
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.12);
   }
   .btn-danger:active {
     transform: scale(0.97);
@@ -424,7 +529,7 @@
   }
 
   /* ═══════════════════════════════════════════════════════════
-     INPUTS
+     INPUTS — Enhanced focus glow (2x)
      ═══════════════════════════════════════════════════════════ */
   .input-dark {
     width: 100%;
@@ -441,8 +546,8 @@
   .input-dark::placeholder { color: var(--text-muted); }
   .input-dark:focus {
     border-color: var(--border-focus);
-    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.12),
-                0 0 16px rgba(249, 115, 22, 0.06);
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.18),
+                0 0 24px rgba(249, 115, 22, 0.10);
   }
   .input-dark:disabled {
     opacity: 0.5;
@@ -468,8 +573,8 @@
   }
   .select-dark:focus {
     border-color: var(--border-focus);
-    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.12),
-                0 0 16px rgba(249, 115, 22, 0.06);
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.18),
+                0 0 24px rgba(249, 115, 22, 0.10);
   }
   .select-dark:disabled {
     opacity: 0.5;
@@ -497,62 +602,114 @@
   }
 
   /* ═══════════════════════════════════════════════════════════
-     3D HOVER EFFECTS (desktop only — pointer: fine)
+     3D HOVER EFFECTS — Enhanced (desktop only — pointer: fine)
      ═══════════════════════════════════════════════════════════ */
   .card-3d-hover {
-    transition: transform 0.28s var(--ease-spring),
-                box-shadow 0.28s ease;
     will-change: transform;
+    transition: transform 0.3s var(--ease-spring),
+                box-shadow 0.3s var(--ease-smooth);
   }
   @media (hover: hover) and (pointer: fine) {
     .card-3d-hover:hover {
-      transform: perspective(900px) translateZ(16px) rotateX(-1.5deg);
+      transform: perspective(800px) translateZ(18px) rotateX(-1.5deg) scale(1.008);
       box-shadow:
-        0 28px 64px rgba(0, 0, 0, 0.45),
-        0 8px 24px rgba(249, 115, 22, 0.12),
-        0 0 0 1px rgba(249, 115, 22, 0.10);
+        0 30px 70px rgba(0, 0, 0, 0.45),
+        0 10px 28px rgba(249, 115, 22, 0.15),
+        0 0 0 1px rgba(249, 115, 22, 0.18),
+        0 0 40px rgba(249, 115, 22, 0.06);
     }
   }
 
   .kpi-3d-hover {
-    transition: transform 0.22s var(--ease-spring),
-                box-shadow 0.22s ease;
     will-change: transform;
+    transition: transform 0.25s var(--ease-spring),
+                box-shadow 0.25s var(--ease-smooth);
   }
   @media (hover: hover) and (pointer: fine) {
     .kpi-3d-hover:hover {
-      transform: perspective(500px) translateZ(14px) scale(1.03);
+      transform: perspective(500px) translateZ(16px) scale(1.035);
       box-shadow:
-        0 18px 48px rgba(0, 0, 0, 0.40),
-        0 4px 18px rgba(249, 115, 22, 0.18),
-        0 0 0 1px rgba(249, 115, 22, 0.12);
+        0 22px 54px rgba(0, 0, 0, 0.42),
+        0 6px 22px rgba(249, 115, 22, 0.22),
+        0 0 0 1px rgba(249, 115, 22, 0.18),
+        0 0 30px rgba(249, 115, 22, 0.08);
     }
   }
 
   /* ═══════════════════════════════════════════════════════════
-     MOBILE — Tactile press states (touch devices)
+     TABLE — Unified styling with row hover glow
+     ═══════════════════════════════════════════════════════════ */
+  .table-neo {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  .table-neo thead tr {
+    border-bottom: 1px solid var(--border-glass);
+  }
+
+  .table-neo tbody tr {
+    transition: background-color var(--duration-fast) ease,
+                box-shadow var(--duration-fast) ease;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .table-neo tbody tr:hover {
+      background-color: var(--row-hover-bg);
+      box-shadow: inset 3px 0 0 rgba(249, 115, 22, 0.4);
+    }
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     MOBILE — Enhanced tactile press states (touch devices)
      ═══════════════════════════════════════════════════════════ */
   @media (pointer: coarse) {
     *:focus:not(:focus-visible) { outline: none; }
 
     /* Card press — scale down for tactile feel */
-    .card-tap:active {
-      transform: scale(0.975);
-      transition: transform 80ms ease-out;
-    }
-    .card-tap {
-      transition: transform var(--duration-fast) var(--ease-spring);
+    .card-tap:active,
+    .card-neo:active {
+      transform: scale(0.975) !important;
+      transition: transform 80ms ease-out !important;
     }
 
     /* KPI cards — subtle press on mobile */
     .kpi-3d-hover:active {
-      transform: scale(0.97);
-      transition: transform 80ms ease-out;
+      transform: scale(0.97) !important;
+      transition: transform 80ms ease-out !important;
     }
 
-    /* Generic button press */
-    button:active, a:active, [role="button"]:active {
+    /* Tile press */
+    .tile-neo:active {
+      transform: scale(0.98) !important;
+      transition: transform 80ms ease-out !important;
+    }
+
+    /* Generic button press — unified */
+    button:active,
+    a:active,
+    [role="button"]:active {
       transition: transform 80ms ease-out, opacity 80ms ease-out;
+    }
+
+    /* Remove perspective transforms on mobile for performance */
+    .card-neo,
+    .card-3d-hover,
+    .kpi-3d-hover {
+      transform: none;
+    }
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     REDUCED MOTION — Respect user preferences
+     ═══════════════════════════════════════════════════════════ */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
     }
   }
 
@@ -569,17 +726,18 @@
     box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.2);
   }
 
-  /* Active nav indicator pill */
+  /* Active nav indicator pill — ENHANCED glow */
   .nav-active-pill {
     position: absolute;
     top: 0;
     left: 50%;
     transform: translateX(-50%);
-    width: 20px;
+    width: 24px;
     height: 3px;
     border-radius: 0 0 4px 4px;
-    background: linear-gradient(90deg, rgba(249, 115, 22, 0.6), #f97316, rgba(249, 115, 22, 0.6));
-    box-shadow: 0 2px 8px rgba(249, 115, 22, 0.3);
+    background: linear-gradient(90deg, rgba(249, 115, 22, 0.7), #f97316, rgba(249, 115, 22, 0.7));
+    box-shadow: 0 2px 12px rgba(249, 115, 22, 0.5),
+                0 0 20px rgba(249, 115, 22, 0.3);
   }
 
   /* ═══════════════════════════════════════════════════════════
@@ -604,7 +762,7 @@
   }
 
   /* ═══════════════════════════════════════════════════════════
-     ANIMATIONS — Entrance
+     ANIMATIONS — Entrance (smooth & unified)
      ═══════════════════════════════════════════════════════════ */
   @keyframes slideUp {
     from { transform: translateY(100%); }
@@ -653,6 +811,24 @@
   .stagger-enter > *:nth-child(6) { animation-delay: 0.16s; }
   .stagger-enter > *:nth-child(7) { animation-delay: 0.20s; }
   .stagger-enter > *:nth-child(8) { animation-delay: 0.24s; }
+
+  /* ── Page entrance animation ─────────────────────────────── */
+  @keyframes pageEnter {
+    0%   { opacity: 0; transform: translateY(10px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  .page-enter {
+    animation: pageEnter 0.35s var(--ease-spring) forwards;
+  }
+
+  /* ── Glow pulse for accent elements ──────────────────────── */
+  @keyframes glowPulse {
+    0%, 100% { box-shadow: 0 0 20px rgba(249, 115, 22, 0.20); }
+    50%      { box-shadow: 0 0 30px rgba(249, 115, 22, 0.35); }
+  }
+  .glow-pulse {
+    animation: glowPulse 2.5s ease-in-out infinite;
+  }
 
   /* ═══════════════════════════════════════════════════════════
      SKELETON / LOADING — Shimmer
@@ -717,5 +893,25 @@
   .depth-elevated {
     box-shadow: var(--shadow-elevated);
     transform: translateZ(0);
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     UTILITY — Interactive icon badges (rounded icon containers)
+     ═══════════════════════════════════════════════════════════ */
+  .icon-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.75rem;
+    transition: transform 0.2s var(--ease-spring),
+                box-shadow 0.2s ease;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .group:hover .icon-badge,
+    .icon-badge:hover {
+      transform: scale(1.1) rotate(-3deg);
+      box-shadow: 0 0 16px rgba(249, 115, 22, 0.15);
+    }
   }
 }

@@ -9,7 +9,7 @@ interface PaidServicesBlockProps {
 export function PaidServicesBlock({ data }: PaidServicesBlockProps) {
   if (data.top_paid_services.length === 0) {
     return (
-      <div className="card-neo p-5">
+      <div className="card-neo card-3d-hover p-5">
         <div className="flex items-center gap-3 mb-4">
           <div className="p-2 rounded-xl bg-cyan-500/10">
             <Pill size={16} className="text-cyan-400" />
@@ -28,7 +28,7 @@ export function PaidServicesBlock({ data }: PaidServicesBlockProps) {
   const avgCheck = totalQty > 0 ? totalRevenue / totalQty : 0;
 
   return (
-    <div className="card-neo p-5 stagger-enter">
+    <div className="card-neo card-3d-hover p-5 stagger-enter">
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-3">

@@ -58,7 +58,7 @@ export default function ConfirmDialog({
 
         <div className="flex flex-col items-center text-center">
           <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-4
-                          shadow-lg
+                          shadow-lg glow-pulse
                           ${variant === "danger" ? "bg-red-500/15 shadow-red-500/10" : "bg-accent-500/15 shadow-accent-500/10"}`}>
             {icon || <AlertTriangle size={26} className={variant === "danger" ? "text-red-400" : "text-accent-400"} />}
           </div>

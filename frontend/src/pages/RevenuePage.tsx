@@ -107,7 +107,7 @@ export default function RevenuePage() {
     <div className="space-y-5 max-w-full">
 
       {/* ── Header & filters ── */}
-      <div className="card-neo p-4 sm:p-5">
+      <div className="card-neo card-3d-hover p-4 sm:p-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-white">Аналітика доходів</h1>
@@ -230,7 +230,7 @@ export default function RevenuePage() {
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
 
           {/* Line chart — monthly trend */}
-          <div className="xl:col-span-2 card-neo p-5">
+          <div className="xl:col-span-2 card-neo card-3d-hover p-5">
             <h3 className="text-sm font-semibold text-white mb-4">Динаміка доходів по місяцях</h3>
             <ResponsiveContainer width="100%" height={220}>
               <LineChart data={data.monthly_trend}>
@@ -247,7 +247,7 @@ export default function RevenuePage() {
           </div>
 
           {/* Pie chart — structure */}
-          <div className="card-neo p-5">
+          <div className="card-neo card-3d-hover p-5">
             <h3 className="text-sm font-semibold text-white mb-4">Структура доходу</h3>
             {pieData.length > 0 ? (
               <ResponsiveContainer width="100%" height={220}>
@@ -268,7 +268,7 @@ export default function RevenuePage() {
 
         {/* ── By doctor bar chart ── */}
         {data.by_doctor.length > 0 && (
-          <div className="card-neo p-5">
+          <div className="card-neo card-3d-hover p-5">
             <h3 className="text-sm font-semibold text-white mb-4">Доходи по лікарях</h3>
             <ResponsiveContainer width="100%" height={Math.max(160, data.by_doctor.length * 44)}>
               <BarChart
@@ -297,7 +297,7 @@ export default function RevenuePage() {
 
           {/* Top services */}
           {data.top_services.length > 0 && (
-            <button onClick={() => setDrillModal("services")} className="card-neo p-5 text-left hover:border-dark-50/20 transition-all">
+            <button onClick={() => setDrillModal("services")} className="card-neo card-3d-hover p-5 text-left">
               <h3 className="text-sm font-semibold text-white mb-3">ТОП послуг за доходом</h3>
               <div className="space-y-2">
                 {data.top_services.slice(0, 5).map((s, i) => (
@@ -317,7 +317,7 @@ export default function RevenuePage() {
 
           {/* Doctor table */}
           {data.by_doctor.length > 0 && (
-            <div className="card-neo p-5">
+            <div className="card-neo card-3d-hover p-5">
               <h3 className="text-sm font-semibold text-white mb-3">Деталізація по лікарях</h3>
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
@@ -347,7 +347,7 @@ export default function RevenuePage() {
 
         {/* ── AI Recommendations ── */}
         {data.recommendations.length > 0 && (
-          <div className="card-neo p-5">
+          <div className="card-neo card-3d-hover p-5">
             <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
               <Lightbulb size={16} className="text-amber-400" />
               Рекомендації системи
@@ -393,7 +393,7 @@ export default function RevenuePage() {
                 { label: "НСЗУ", value: data.nhsu, color: "text-indigo-400" },
                 { label: "Платні", value: data.paid_services, color: "text-teal-400" },
               ].map(k => (
-                <div key={k.label} className="rounded-xl bg-dark-300/50 border border-dark-50/10 p-3">
+                <div key={k.label} className="tile-neo p-3">
                   <p className="text-xs text-gray-500 mb-1">{k.label}</p>
                   <p className={`text-base font-bold font-mono ${k.color}`}>{fmt2(k.value)} ₴</p>
                 </div>
@@ -413,11 +413,11 @@ export default function RevenuePage() {
           <div className="space-y-4">
             <p className="text-xs text-gray-500">Джерело: модуль НСЗУ → капітаційні надходження per-лікар</p>
             <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-xl bg-dark-300/50 border border-dark-50/10 p-3">
+              <div className="tile-neo p-3">
                 <p className="text-xs text-gray-500 mb-1">Поточний місяць</p>
                 <p className="text-xl font-bold text-indigo-400 font-mono">{fmt2(data.nhsu)} ₴</p>
               </div>
-              <div className="rounded-xl bg-dark-300/50 border border-dark-50/10 p-3">
+              <div className="tile-neo p-3">
                 <p className="text-xs text-gray-500 mb-1">MoM зміна</p>
                 <p className={`text-xl font-bold font-mono ${pctColor(data.nhsu - data.prev_nhsu)}`}>
                   {data.prev_nhsu > 0 ? pctLabel((data.nhsu - data.prev_nhsu) / data.prev_nhsu * 100) : "—"}
@@ -438,11 +438,11 @@ export default function RevenuePage() {
           <div className="space-y-4">
             <p className="text-xs text-gray-500">Джерело: модуль «Платні послуги» → сума (кількість × ціна) по всіх звітах місяця</p>
             <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-xl bg-dark-300/50 border border-dark-50/10 p-3">
+              <div className="tile-neo p-3">
                 <p className="text-xs text-gray-500 mb-1">Поточний місяць</p>
                 <p className="text-xl font-bold text-teal-400 font-mono">{fmt2(data.paid_services)} ₴</p>
               </div>
-              <div className="rounded-xl bg-dark-300/50 border border-dark-50/10 p-3">
+              <div className="tile-neo p-3">
                 <p className="text-xs text-gray-500 mb-1">Частка загального доходу</p>
                 <p className="text-xl font-bold text-teal-400 font-mono">{data.paid_pct}%</p>
               </div>

@@ -320,7 +320,7 @@ export default function Dashboard() {
 
       {/* Error state */}
       {!loading && error && (
-        <div className="card-neo p-8 text-center">
+        <div className="card-neo card-3d-hover p-8 text-center">
           <AlertCircle size={40} className="text-red-400 mx-auto mb-4" />
           <p className="text-gray-300 text-lg font-medium mb-2">Помилка завантаження</p>
           <p className="text-gray-500 text-sm">{error}</p>
@@ -417,7 +417,7 @@ export default function Dashboard() {
 
           {/* ── AI Analytics Block ── */}
           {data.ai_insights && data.ai_insights.length > 0 && (
-            <div className="card-neo p-5 border border-blue-500/15 bg-blue-500/5 stagger-enter">
+            <div className="card-neo card-3d-hover p-5 border border-blue-500/15 bg-blue-500/5 stagger-enter">
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h3 className="text-sm font-semibold text-white flex items-center gap-2">
@@ -483,7 +483,7 @@ export default function Dashboard() {
           {/* ── 2. Trend chart + Income after taxes ── */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {/* Area trend chart — 6 months */}
-            <div className="lg:col-span-2 card-neo p-5">
+            <div className="lg:col-span-2 card-neo card-3d-hover p-5">
               <h3 className="text-sm font-semibold text-white mb-1">Динаміка за 6 місяців</h3>
               <p className="text-xs text-gray-600 mb-4">Доходи, витрати та прибуток — тренд</p>
               {data.trend.length > 1 ? (
@@ -535,7 +535,7 @@ export default function Dashboard() {
           {/* ── 3. Structure breakdown ── */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Income by category */}
-            <div className="card-neo p-5">
+            <div className="card-neo card-3d-hover p-5">
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h3 className="text-sm font-semibold text-white">Структура доходів</h3>
@@ -572,7 +572,7 @@ export default function Dashboard() {
             </div>
 
             {/* Expenses by category */}
-            <div className="card-neo p-5">
+            <div className="card-neo card-3d-hover p-5">
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h3 className="text-sm font-semibold text-white">Структура витрат</h3>
@@ -660,7 +660,7 @@ export default function Dashboard() {
               <button
                 key={nav.path}
                 onClick={() => navigate(nav.path)}
-                className={`card-neo card-tap p-3 lg:p-4 border ${nav.border} text-left
+                className={`card-neo card-3d-hover card-tap p-3 lg:p-4 border ${nav.border} text-left
                            hover:bg-dark-300/30 transition-all duration-200 group`}
               >
                 <div className="flex items-center justify-between">
@@ -680,15 +680,15 @@ export default function Dashboard() {
         <DrillModal title={`Доходи — ${data.period_label}`} onClose={() => setDrillModal(null)}>
           <div className="space-y-4">
             <div className="grid grid-cols-3 gap-3">
-              <div className="rounded-xl bg-dark-300/50 border border-dark-50/10 p-3">
+              <div className="tile-neo p-3">
                 <p className="text-xs text-gray-500 mb-1">Поточний</p>
                 <p className="text-base font-bold text-emerald-400 font-mono tabular-nums">{fmtUAH(data.total_income)} ₴</p>
               </div>
-              <div className="rounded-xl bg-dark-300/50 border border-dark-50/10 p-3">
+              <div className="tile-neo p-3">
                 <p className="text-xs text-gray-500 mb-1">Попередній</p>
                 <p className="text-base font-bold text-gray-300 font-mono tabular-nums">{fmtUAH(data.prev_income)} ₴</p>
               </div>
-              <div className="rounded-xl bg-dark-300/50 border border-dark-50/10 p-3">
+              <div className="tile-neo p-3">
                 <p className="text-xs text-gray-500 mb-1">Середній (6м)</p>
                 <p className="text-base font-bold text-gray-300 font-mono tabular-nums">{fmtUAH(data.avg_income_6m)} ₴</p>
               </div>
@@ -752,15 +752,15 @@ export default function Dashboard() {
         <DrillModal title={`Витрати — ${data.period_label}`} onClose={() => setDrillModal(null)}>
           <div className="space-y-4">
             <div className="grid grid-cols-3 gap-3">
-              <div className="rounded-xl bg-dark-300/50 border border-dark-50/10 p-3">
+              <div className="tile-neo p-3">
                 <p className="text-xs text-gray-500 mb-1">Поточний</p>
                 <p className="text-base font-bold text-red-400 font-mono tabular-nums">{fmtUAH(data.total_expenses)} ₴</p>
               </div>
-              <div className="rounded-xl bg-dark-300/50 border border-dark-50/10 p-3">
+              <div className="tile-neo p-3">
                 <p className="text-xs text-gray-500 mb-1">Попередній</p>
                 <p className="text-base font-bold text-gray-300 font-mono tabular-nums">{fmtUAH(data.prev_expenses)} ₴</p>
               </div>
-              <div className="rounded-xl bg-dark-300/50 border border-dark-50/10 p-3">
+              <div className="tile-neo p-3">
                 <p className="text-xs text-gray-500 mb-1">Середній (6м)</p>
                 <p className="text-base font-bold text-gray-300 font-mono tabular-nums">{fmtUAH(data.avg_expenses_6m)} ₴</p>
               </div>
@@ -825,11 +825,11 @@ export default function Dashboard() {
           <div className="space-y-4">
             <p className="text-xs text-gray-500">Розрахунок для ФОП 3 групи, єдиний податок</p>
             <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-xl bg-dark-300/50 border border-dark-50/10 p-3">
+              <div className="tile-neo p-3">
                 <p className="text-xs text-gray-500 mb-1">Дохід (база)</p>
                 <p className="text-base font-bold text-emerald-400 font-mono tabular-nums">{fmtUAH(data.total_income)} ₴</p>
               </div>
-              <div className="rounded-xl bg-dark-300/50 border border-dark-50/10 p-3">
+              <div className="tile-neo p-3">
                 <p className="text-xs text-gray-500 mb-1">Всього податків</p>
                 <p className="text-base font-bold text-red-400 font-mono tabular-nums">{fmtUAH(data.total_taxes)} ₴</p>
               </div>

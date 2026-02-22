@@ -28,7 +28,7 @@ interface StaffBlockProps {
 export function StaffBlock({ data }: StaffBlockProps) {
   if (data.staff_by_role.length === 0) {
     return (
-      <div className="card-neo p-5">
+      <div className="card-neo card-3d-hover p-5">
         <div className="flex items-center gap-3 mb-4">
           <div className="p-2 rounded-xl bg-purple-500/10">
             <Users size={16} className="text-purple-400" />
@@ -61,7 +61,7 @@ export function StaffBlock({ data }: StaffBlockProps) {
   const totalStaff = data.staff_by_role.reduce((s, r) => s + r.count, 0);
 
   return (
-    <div className="card-neo p-5 stagger-enter">
+    <div className="card-neo card-3d-hover p-5 stagger-enter">
       {/* ── Header ──────────────────────────────────────────── */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-3">

@@ -373,7 +373,7 @@ export default function SettingsPage() {
     <div className="space-y-8 max-w-full">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-accent-500/10 flex items-center justify-center">
+        <div className="w-10 h-10 rounded-xl bg-accent-500/10 flex items-center justify-center icon-badge">
           <Settings size={22} className="text-accent-500" />
         </div>
         <div>
@@ -391,7 +391,7 @@ export default function SettingsPage() {
         {open.profile && (
           <>
             <div className="flex items-center gap-4 mb-1">
-              <div className="w-14 h-14 rounded-2xl bg-accent-500/10 flex items-center justify-center" aria-hidden="true">
+              <div className="w-14 h-14 rounded-2xl bg-accent-500/10 flex items-center justify-center icon-badge" aria-hidden="true">
                 <User size={28} className="text-accent-400" />
               </div>
               <div>

@@ -64,7 +64,7 @@ export default function Layout() {
         <div className="p-6 border-b border-dark-50/10">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-accent-500/10 flex items-center justify-center shadow-glow-accent">
+              <div className="w-10 h-10 rounded-xl bg-accent-500/10 flex items-center justify-center shadow-glow-accent glow-pulse">
                 <Stethoscope size={22} className="text-accent-500" aria-hidden="true" />
               </div>
               <div>
@@ -132,7 +132,9 @@ export default function Layout() {
                    lg:p-8 lg:pb-8 lg:pt-8"
         id="main-content"
       >
-        <Outlet />
+        <div key={location.pathname} className="page-enter">
+          <Outlet />
+        </div>
       </main>
 
       {/* ══════════════════════════════════════════════

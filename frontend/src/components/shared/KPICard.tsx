@@ -62,7 +62,8 @@ export default function KPICard({
       onClick={onClick}
       className={`card-neo kpi-3d-hover card-tap p-4 lg:p-5 border ${borderColor} text-left w-full relative group
                   ${onClick ? "cursor-pointer" : ""}
-                  focus-visible:outline-2 focus-visible:outline-accent-400`}
+                  focus-visible:outline-2 focus-visible:outline-accent-400
+                  hover:border-opacity-60`}
     >
       {/* Header row: icon + change badge */}
       <div className="flex items-center justify-between mb-3">

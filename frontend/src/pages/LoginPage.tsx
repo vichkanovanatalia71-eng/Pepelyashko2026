@@ -91,7 +91,7 @@ export default function LoginPage() {
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
           <div className="w-16 h-16 rounded-2xl bg-accent-500/10 flex items-center justify-center
-                          shadow-glow-accent shadow-lg mb-4">
+                          shadow-glow-accent shadow-lg mb-4 glow-pulse">
             <Stethoscope size={32} className="text-accent-500" />
           </div>
           <h1 className="text-2xl font-bold text-white tracking-tight">MedFlow</h1>
@@ -171,7 +171,7 @@ export default function LoginPage() {
             {regSuccess ? (
               /* Успішна реєстрація */
               <div className="flex flex-col items-center text-center gap-5 py-4">
-                <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center border border-green-500/20">
+                <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center border border-green-500/20 glow-pulse">
                   {regSuccess.emailSent ? (
                     <Mail size={28} className="text-green-400" />
                   ) : (

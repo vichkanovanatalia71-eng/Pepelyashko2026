@@ -162,7 +162,7 @@ export default function AiConsultantPage() {
               className={`flex ${msg.type === "user" ? "justify-end" : "justify-start"}`}
             >
               <div
-                className={`max-w-xs lg:max-w-md px-4 py-3 rounded-lg ${
+                className={`max-w-xs lg:max-w-md px-4 py-3 rounded-lg tile-neo ${
                   msg.type === "user"
                     ? "bg-blue-600/20 border border-blue-500/30"
                     : "bg-gray-800/50 border border-gray-700/30"
@@ -227,7 +227,7 @@ export default function AiConsultantPage() {
                   key={idx}
                   onClick={() => handleSendMessage(suggestion.query)}
                   disabled={isLoading}
-                  className="card-neo p-4 hover:bg-dark-700/50 border border-dark-500/20 hover:border-blue-500/30 transition-all text-left disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="card-neo card-3d-hover p-4 hover:bg-dark-700/50 border border-dark-500/20 hover:border-blue-500/30 transition-all text-left disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <div className="flex items-start gap-3 justify-between">
                     <div className="flex-1 min-w-0">
