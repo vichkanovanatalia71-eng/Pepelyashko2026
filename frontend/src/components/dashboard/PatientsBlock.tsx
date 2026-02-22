@@ -43,9 +43,9 @@ export function PatientsBlock({ data }: PatientsBlockProps) {
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 stagger-enter">
+    <div className="grid grid-cols-1 lg:grid-cols-10 gap-4 stagger-enter">
       {/* Left: Age distribution bar chart */}
-      <div className="lg:col-span-1 card-neo p-5">
+      <div className="lg:col-span-7 card-neo p-5">
         <div className="flex items-center gap-2 mb-4">
           <div className="p-2 rounded-xl bg-blue-500/10">
             <Users size={16} className="text-blue-400" />
@@ -121,7 +121,7 @@ export function PatientsBlock({ data }: PatientsBlockProps) {
       </div>
 
       {/* Right: Doctor bars */}
-      <div className="lg:col-span-2 card-neo p-5">
+      <div className="lg:col-span-3 card-neo p-5">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-sm font-semibold text-white">Завантаженість лікарів</h3>
@@ -130,10 +130,10 @@ export function PatientsBlock({ data }: PatientsBlockProps) {
         </div>
 
         {data.patients_by_doctor.length > 0 ? (
-          <ResponsiveContainer width="100%" height={400}>
+          <ResponsiveContainer width="100%" height={Math.max(250, data.patients_by_doctor.length * 25)}>
             <BarChart
               data={data.patients_by_doctor.slice(0, 10)}
-              margin={{ bottom: 80, right: 20, left: 20, top: 10 }}
+              margin={{ bottom: 70, right: 15, left: 15, top: 10 }}
             >
               <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" />
               <XAxis
