@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from collections import defaultdict
 from datetime import date
 
@@ -14,7 +15,7 @@ from app.models.expense import Expense, ExpenseCategory
 from app.models.income import Income, IncomeCategory
 from app.models.monthly_service import MonthlyPaidServiceEntry, MonthlyPaidServicesReport
 from app.models.monthly_expense import MonthlyFixedExpense, MonthlySalaryExpense
-from app.models.nhsu import NhsuRecord, NhsuSettings
+from app.models.nhsu import AGE_GROUPS, NhsuRecord, NhsuSettings
 from app.models.service import Service
 from app.models.staff import StaffMember
 from app.models.user import User
@@ -581,8 +582,6 @@ async def _get_patients_by_age(db: AsyncSession, user_id: int, year: int, month:
     """Отримати пацієнтів по вікових групах для поточного місяця.
     Повертає: (список по групам, всього пацієнтів, неверифікованих, всього попереднього місяця)
     """
-    from app.models.nhsu import AGE_GROUPS
-
     # Поточний місяць
     current_q = await db.execute(
         select(NhsuRecord.age_group, func.sum(NhsuRecord.patient_count), func.sum(NhsuRecord.non_verified)).where(
@@ -628,31 +627,49 @@ async def _get_patients_by_age(db: AsyncSession, user_id: int, year: int, month:
 async def _get_patients_by_doctor(db: AsyncSession, user_id: int, year: int, month: int) -> list[DoctorPatientLoad]:
     """Отримати кількість пацієнтів на кожного лікаря з порівнянням до попереднього місяця."""
 
-    # Поточний місяць
-    current_q = await db.execute(
+    # Поточний місяць - пацієнти з NHSU
+    nhsu_q = await db.execute(
         select(
             NhsuRecord.doctor_id,
             Doctor.full_name,
             func.sum(NhsuRecord.patient_count),
-            func.count(MonthlyPaidServiceEntry.id).label("services_count"),
-            func.sum(Income.amount).label("revenue"),
         ).join(
             Doctor, NhsuRecord.doctor_id == Doctor.id
-        ).outerjoin(
-            MonthlyPaidServicesReport, (MonthlyPaidServicesReport.doctor_id == Doctor.id) &
-            (MonthlyPaidServicesReport.year == year) & (MonthlyPaidServicesReport.month == month)
-        ).outerjoin(
-            MonthlyPaidServiceEntry, MonthlyPaidServiceEntry.report_id == MonthlyPaidServicesReport.id
-        ).outerjoin(
-            Income, (Income.source == Doctor.full_name) & (Income.date >= date(year, month, 1))
         ).where(
             NhsuRecord.user_id == user_id,
             NhsuRecord.year == year,
             NhsuRecord.month == month,
         ).group_by(NhsuRecord.doctor_id, Doctor.full_name)
     )
-    current_data = {row[0]: (row[1], int(row[2] or 0), int(row[3] or 0), float(row[4] or 0))
-                   for row in current_q.all()}
+    current_data = {}
+    for row in nhsu_q.all():
+        doctor_id = row[0]
+        current_data[doctor_id] = {
+            "name": row[1],
+            "patients": int(row[2] or 0),
+            "services": 0,
+            "revenue": 0,
+        }
+
+    # Послуги по лікарям
+    services_q = await db.execute(
+        select(
+            Doctor.id,
+            func.count(MonthlyPaidServiceEntry.id).label("services_count"),
+        ).join(
+            MonthlyPaidServicesReport, Doctor.id == MonthlyPaidServicesReport.doctor_id
+        ).join(
+            MonthlyPaidServiceEntry, MonthlyPaidServiceEntry.report_id == MonthlyPaidServicesReport.id
+        ).where(
+            MonthlyPaidServicesReport.user_id == user_id,
+            MonthlyPaidServicesReport.year == year,
+            MonthlyPaidServicesReport.month == month,
+        ).group_by(Doctor.id)
+    )
+    for row in services_q.all():
+        doctor_id = row[0]
+        if doctor_id in current_data:
+            current_data[doctor_id]["services"] = int(row[1] or 0)
 
     # Попередній місяць
     prev_month = month - 1 if month > 1 else 12
@@ -668,16 +685,17 @@ async def _get_patients_by_doctor(db: AsyncSession, user_id: int, year: int, mon
 
     # Формуємо результат
     result = []
-    for doctor_id, (doctor_name, patient_count, services_count, revenue) in current_data.items():
+    for doctor_id, data in current_data.items():
+        patient_count = data["patients"]
         prev_count = prev_data.get(doctor_id, 0)
         result.append(DoctorPatientLoad(
             doctor_id=doctor_id,
-            doctor_name=doctor_name,
+            doctor_name=data["name"],
             patient_count=patient_count,
             patient_count_prev=prev_count,
             patient_count_change_pct=round((patient_count - prev_count) / prev_count * 100, 1) if prev_count > 0 else 0,
-            services_count=services_count,
-            revenue_per_patient=round(revenue / patient_count, 2) if patient_count > 0 else 0,
+            services_count=data["services"],
+            revenue_per_patient=0,  # TODO: calculate from income data
         ))
 
     return sorted(result, key=lambda x: x.patient_count, reverse=True)
@@ -759,8 +777,6 @@ async def _get_top_paid_services_detailed(db: AsyncSession, user_id: int, year: 
     """Отримати ТОП платних послуг з розрахунком маржі та розподілом по лікарям.
     Повертає: (список послуг з деталями, загальна маржа, % маржі)
     """
-    import json
-
     # Отримуємо всі послуги за місяць
     services_q = await db.execute(
         select(
