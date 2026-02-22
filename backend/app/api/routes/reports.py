@@ -383,7 +383,7 @@ async def _month_totals(
 
     # 3. Paid services income (service.price * quantity)
     paid_entries_q = await db.execute(
-        select(MonthlyPaidServiceEntry, Service.price).join(
+        select(MonthlyPaidServiceEntry.quantity, Service.price).join(
             MonthlyPaidServicesReport,
             MonthlyPaidServiceEntry.report_id == MonthlyPaidServicesReport.id,
         ).join(
@@ -396,8 +396,8 @@ async def _month_totals(
         )
     )
     paid_income = sum(
-        float(price) * int(entry.quantity)
-        for entry, price in paid_entries_q.all()
+        float(price) * int(qty)
+        for qty, price in paid_entries_q.all()
     )
 
     # Total income = manual + NHSU + paid services
