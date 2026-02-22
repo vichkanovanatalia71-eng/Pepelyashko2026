@@ -23,13 +23,14 @@ export function PaidServicesBlock({ data }: PaidServicesBlockProps) {
     );
   }
 
-  // Calculate total revenue for the top 5
-  const totalRevenue = data.top_paid_services.reduce((sum, s) => sum + s.revenue, 0);
+  const totalRevenue = data.paid_services_total_revenue;
+  const totalQty = data.paid_services_total_qty;
+  const avgCheck = totalQty > 0 ? totalRevenue / totalQty : 0;
 
   return (
     <div className="card-neo p-5 stagger-enter">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-xl bg-cyan-500/10">
             <Pill size={16} className="text-cyan-400" />
@@ -41,66 +42,69 @@ export function PaidServicesBlock({ data }: PaidServicesBlockProps) {
         </div>
       </div>
 
-      {/* Summary KPIs */}
-      <div className="grid grid-cols-2 gap-2 mb-4 p-3 bg-dark-400/20 rounded-lg">
-        <div>
-          <p className="text-xs text-gray-500">Загальна виручка</p>
-          <p className="text-sm font-bold text-emerald-400">
+      {/* KPI row */}
+      <div className="grid grid-cols-4 gap-3 mb-5">
+        <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 text-center">
+          <p className="text-[11px] text-gray-500 mb-1">Загальна виручка</p>
+          <p className="text-lg font-bold text-emerald-400">
             {fmtUAH(totalRevenue)}
-            {" "}грн
           </p>
+          <p className="text-[10px] text-gray-600">грн</p>
         </div>
-        <div>
-          <p className="text-xs text-gray-500">Загальна маржа</p>
-          <p className="text-sm font-bold text-blue-400">
+        <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 text-center">
+          <p className="text-[11px] text-gray-500 mb-1">Послуг наданих</p>
+          <p className="text-lg font-bold text-cyan-400">{totalQty}</p>
+        </div>
+        <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 text-center">
+          <p className="text-[11px] text-gray-500 mb-1">Загальна маржа</p>
+          <p className="text-lg font-bold text-blue-400">
             {data.services_margin_pct}%
-            {" "}
-            <span className="text-xs text-gray-500">
-              ({fmtUAH(data.services_total_margin)} ₴)
-            </span>
+          </p>
+          <p className="text-[10px] text-gray-600">
+            {fmtUAH(data.services_total_margin)} ₴
           </p>
         </div>
-        <div>
-          <p className="text-xs text-gray-500">Послуг наданих</p>
-          <p className="text-sm font-bold text-cyan-400">
-            {data.top_paid_services.reduce((sum, s) => sum + s.quantity, 0)}
+        <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 text-center">
+          <p className="text-[11px] text-gray-500 mb-1">Середній чек</p>
+          <p className="text-lg font-bold text-purple-400">
+            {fmtUAH(avgCheck)}
           </p>
-        </div>
-        <div>
-          <p className="text-xs text-gray-500">Середній чек</p>
-          <p className="text-sm font-bold text-purple-400">
-            {fmtUAH(totalRevenue / data.top_paid_services.reduce((sum, s) => sum + s.quantity, 1))}
-            {" "}грн
-          </p>
+          <p className="text-[10px] text-gray-600">грн</p>
         </div>
       </div>
 
       {/* Services table */}
       <div className="overflow-x-auto">
         <table className="w-full text-xs">
-          <thead className="border-b border-dark-50/20">
-            <tr>
-              <th className="text-left py-2 px-2 text-gray-500 font-medium">Послуга</th>
-              <th className="text-right py-2 px-2 text-gray-500 font-medium">Код</th>
-              <th className="text-right py-2 px-2 text-gray-500 font-medium">Кільк.</th>
-              <th className="text-right py-2 px-2 text-gray-500 font-medium">Виручка</th>
-              <th className="text-right py-2 px-2 text-gray-500 font-medium">Матер.</th>
-              <th className="text-right py-2 px-2 text-gray-500 font-medium">Маржа</th>
+          <thead>
+            <tr className="border-b border-white/10">
+              <th className="text-left py-2.5 px-2 text-gray-500 font-medium">Послуга</th>
+              <th className="text-right py-2.5 px-2 text-gray-500 font-medium">Код</th>
+              <th className="text-right py-2.5 px-2 text-gray-500 font-medium">К-сть</th>
+              <th className="text-right py-2.5 px-2 text-gray-500 font-medium">Виручка</th>
+              <th className="text-right py-2.5 px-2 text-gray-500 font-medium">Матер.</th>
+              <th className="text-right py-2.5 px-2 text-gray-500 font-medium">Маржа</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-dark-50/10">
+          <tbody>
             {data.top_paid_services.map((service, idx) => (
-              <tr key={idx} className="hover:bg-dark-400/20 transition-colors">
+              <tr
+                key={idx}
+                className={`border-b border-white/5 transition-colors hover:bg-white/[0.02] ${
+                  idx % 2 === 0 ? "bg-white/[0.01]" : ""
+                }`}
+              >
                 <td className="py-2.5 px-2">
-                  <p className="text-white font-medium truncate">{service.name}</p>
-                  {service.by_doctor.length > 0 && (
-                    <p className="text-gray-500 text-xs mt-0.5">
-                      {service.by_doctor.map((d) => d.doctor_name).join(", ")}
-                    </p>
-                  )}
+                  <p className="text-white font-medium truncate max-w-[200px]">
+                    {service.name}
+                  </p>
                 </td>
-                <td className="text-right py-2.5 px-2 text-gray-500">{service.code}</td>
-                <td className="text-right py-2.5 px-2 text-gray-300">{service.quantity}</td>
+                <td className="text-right py-2.5 px-2 text-gray-500">
+                  {service.code}
+                </td>
+                <td className="text-right py-2.5 px-2 text-gray-300">
+                  {service.quantity}
+                </td>
                 <td className="text-right py-2.5 px-2 text-emerald-400 font-semibold">
                   {fmtUAH(service.revenue)} ₴
                 </td>
@@ -112,7 +116,13 @@ export function PaidServicesBlock({ data }: PaidServicesBlockProps) {
                     {service.margin_pct > 0 && (
                       <TrendingUp size={12} className="text-emerald-400" />
                     )}
-                    <span className={service.margin_pct > 50 ? "text-emerald-400 font-semibold" : "text-yellow-400"}>
+                    <span
+                      className={
+                        service.margin_pct > 50
+                          ? "text-emerald-400 font-semibold"
+                          : "text-yellow-400"
+                      }
+                    >
                       {service.margin_pct}%
                     </span>
                   </div>
@@ -123,29 +133,27 @@ export function PaidServicesBlock({ data }: PaidServicesBlockProps) {
         </table>
       </div>
 
-      {/* Doctor breakdown (if needed) */}
+      {/* Doctor breakdown */}
       {data.top_paid_services[0]?.by_doctor.length > 0 && (
-        <div className="mt-4 pt-4 border-t border-dark-50/10">
-          <h4 className="text-xs font-semibold text-gray-400 mb-2">
-            Розподіл послуг по лікарям
+        <div className="mt-5 pt-4 border-t border-white/5">
+          <h4 className="text-xs font-semibold text-gray-400 mb-3">
+            Розподіл по лікарям
           </h4>
-          <div className="space-y-1">
+          <div className="space-y-1.5">
             {Array.from(
               new Map(
                 data.top_paid_services
                   .flatMap((s) => s.by_doctor)
-                  .map((d) => [d.doctor_id, d])
-              ).values()
+                  .map((d) => [d.doctor_id, d]),
+              ).values(),
             ).map((doctor) => (
               <div
                 key={doctor.doctor_id}
-                className="flex items-center justify-between p-2 bg-dark-400/20 rounded-lg"
+                className="flex items-center justify-between p-2.5 rounded-lg bg-white/[0.02] border border-white/5"
               >
                 <p className="text-sm text-white">{doctor.doctor_name}</p>
                 <div className="flex gap-3 text-xs">
-                  <span className="text-gray-500">
-                    {doctor.quantity} послуг
-                  </span>
+                  <span className="text-gray-500">{doctor.quantity} послуг</span>
                   <span className="text-emerald-400 font-semibold">
                     {fmtUAH(doctor.revenue)} ₴
                   </span>

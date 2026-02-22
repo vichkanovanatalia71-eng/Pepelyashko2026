@@ -271,6 +271,8 @@ class DashboardData(BaseModel):
 
     # ── ПРІОРИТЕТ 1: ПЛАТНІ ПОСЛУГИ ──
     top_paid_services: list[ServiceBreakdownDetail] = []
+    paid_services_total_revenue: float = 0.0
+    paid_services_total_qty: int = 0
     services_total_margin: float = 0.0
     services_margin_pct: float = 0.0
 

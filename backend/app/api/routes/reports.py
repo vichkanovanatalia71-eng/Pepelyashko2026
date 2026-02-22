@@ -801,7 +801,7 @@ async def _get_staff_breakdown(db: AsyncSession, user_id: int, year: int, month:
     return result, total_salary_brutto, total_salary_brutto
 
 
-async def _get_top_paid_services_detailed(db: AsyncSession, user_id: int, year: int, month: int) -> tuple[list[ServiceBreakdownDetail], float, float]:
+async def _get_top_paid_services_detailed(db: AsyncSession, user_id: int, year: int, month: int) -> tuple[list[ServiceBreakdownDetail], float, float, float, int]:
     """Отримати ТОП платних послуг з розрахунком маржі та розподілом по лікарям.
     Повертає: (список послуг з деталями, загальна маржа, % маржі)
     """
@@ -903,13 +903,17 @@ async def _get_top_paid_services_detailed(db: AsyncSession, user_id: int, year: 
         total_revenue += revenue
         total_materials_cost += materials_cost
 
+    # Загальна кількість послуг (усіх, до обрізки)
+    all_total_qty = sum(r.quantity for r in result)
+    all_total_revenue = total_revenue
+
     # Сортуємо по виручці
     result = sorted(result, key=lambda x: x.revenue, reverse=True)[:5]
 
     total_margin = total_revenue - total_materials_cost
     total_margin_pct = round(total_margin / total_revenue * 100, 1) if total_revenue > 0 else 0
 
-    return result, total_margin, total_margin_pct
+    return result, total_margin, total_margin_pct, all_total_revenue, all_total_qty
 
 
 @router.get("/dashboard", response_model=DashboardData)
@@ -1260,8 +1264,10 @@ async def dashboard_report(
     top_paid_services = []
     services_margin = 0.0
     services_margin_pct = 0.0
+    paid_services_total_revenue = 0.0
+    paid_services_total_qty = 0
     try:
-        top_paid_services, services_margin, services_margin_pct = await _get_top_paid_services_detailed(db, user.id, year, month)
+        top_paid_services, services_margin, services_margin_pct, paid_services_total_revenue, paid_services_total_qty = await _get_top_paid_services_detailed(db, user.id, year, month)
     except Exception as e:
         print(f"ERROR in _get_top_paid_services_detailed: {e}")
 
@@ -1326,6 +1332,8 @@ async def dashboard_report(
         fop_total=round(fop_total, 2),
         fop_pct=fop_pct,
         top_paid_services=top_paid_services,
+        paid_services_total_revenue=round(paid_services_total_revenue, 2),
+        paid_services_total_qty=paid_services_total_qty,
         services_total_margin=round(services_margin, 2),
         services_margin_pct=services_margin_pct,
     )

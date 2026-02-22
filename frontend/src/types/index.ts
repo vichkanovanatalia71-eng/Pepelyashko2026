@@ -663,6 +663,8 @@ export interface DashboardReport {
 
   // ── ПРІОРИТЕТ 1: ПЛАТНІ ПОСЛУГИ ──
   top_paid_services: ServiceBreakdownDetail[];
+  paid_services_total_revenue: number;
+  paid_services_total_qty: number;
   services_total_margin: number;
   services_margin_pct: number;
 
