@@ -100,7 +100,7 @@ export default function MonthlyServicesPage() {
 
   // ── Форма звіту ──
   const [formDoctor, setFormDoctor] = useState<number>(0);
-  const [formCash, setFormCash] = useState("0");
+  const [formCash, setFormCash] = useState("");
   const [formEntries, setFormEntries] = useState<Record<number, number>>({});
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState("");
@@ -852,7 +852,8 @@ export default function MonthlyServicesPage() {
                             <td className="px-3 py-2 text-right text-gray-400 tabular-nums">{fmt(svc.price)}</td>
                             <td className="px-3 py-1.5">
                               <input type="number" min="0" step="1"
-                                value={formEntries[svc.id] ?? 0}
+                                placeholder="0"
+                                value={formEntries[svc.id] || ""}
                                 onChange={(e) => {
                                   const val = Math.max(0, parseInt(e.target.value) || 0);
                                   setFormEntries((p) => ({ ...p, [svc.id]: val }));
