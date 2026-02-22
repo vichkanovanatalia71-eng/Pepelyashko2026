@@ -7,7 +7,7 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend,
+  Cell,
 } from "recharts";
 import type { DashboardReport } from "../../types";
 
@@ -60,17 +60,16 @@ export function PatientsBlock({ data }: PatientsBlockProps) {
           <ResponsiveContainer width="100%" height={240}>
             <BarChart
               data={data.patients_by_age}
-              layout="vertical"
-              margin={{ left: 70, right: 20 }}
+              margin={{ bottom: 50, right: 20, left: 20, top: 10 }}
             >
-              <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" horizontal={false} />
-              <XAxis type="number" tick={{ fill: "#6b7280", fontSize: 10 }} />
-              <YAxis type="category" dataKey="age_label" tick={{ fill: "#9ca3af", fontSize: 11 }} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" />
+              <XAxis dataKey="age_label" angle={-45} textAnchor="end" height={80} tick={{ fill: "#6b7280", fontSize: 10 }} />
+              <YAxis type="number" tick={{ fill: "#6b7280", fontSize: 10 }} />
               <Tooltip
                 contentStyle={TT_STYLE}
                 formatter={(v: number) => `${v} пац.`}
               />
-              <Bar dataKey="patient_count" fill="#34d399" radius={[0, 8, 8, 0]} />
+              <Bar dataKey="patient_count" fill="#34d399" radius={[8, 8, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         ) : (
@@ -126,43 +125,41 @@ export function PatientsBlock({ data }: PatientsBlockProps) {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-sm font-semibold text-white">Завантаженість лікарів</h3>
-            <p className="text-xs text-gray-600 mt-0.5">Пацієнти та послуги</p>
+            <p className="text-xs text-gray-600 mt-0.5">Розподіл пацієнтів</p>
           </div>
         </div>
 
         {data.patients_by_doctor.length > 0 ? (
-          <ResponsiveContainer
-            width="100%"
-            height={Math.max(200, data.patients_by_doctor.length * 40)}
-          >
+          <ResponsiveContainer width="100%" height={400}>
             <BarChart
-              data={data.patients_by_doctor.slice(0, 10).map((doc) => ({
-                ...doc,
-                // Include paid services in services_count
-                total_services: (doc.services_count || 0) + (
-                  data.top_paid_services
-                    ?.flatMap(s => s.by_doctor)
-                    ?.filter(d => d.doctor_id === doc.doctor_id)
-                    ?.reduce((sum, d) => sum + d.quantity, 0) || 0
-                ),
-              }))}
-              layout="vertical"
-              margin={{ left: 100, right: 20 }}
+              data={data.patients_by_doctor.slice(0, 10)}
+              margin={{ bottom: 80, right: 20, left: 20, top: 10 }}
             >
-              <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" horizontal={false} />
-              <XAxis type="number" tick={{ fill: "#6b7280", fontSize: 10 }} />
-              <YAxis type="category" dataKey="doctor_name" tick={{ fill: "#9ca3af", fontSize: 11 }} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" />
+              <XAxis
+                dataKey="doctor_name"
+                angle={-45}
+                textAnchor="end"
+                height={120}
+                tick={{ fill: "#6b7280", fontSize: 10 }}
+              />
+              <YAxis type="number" tick={{ fill: "#6b7280", fontSize: 10 }} />
               <Tooltip
                 contentStyle={TT_STYLE}
                 formatter={(v: number, name: string) => {
                   if (name === "patient_count") return [`${v} пац.`, "Пацієнти"];
-                  if (name === "total_services") return [`${v} послуг`, "Послуги (НСЗУ + платні)"];
                   return [v, name];
                 }}
               />
-              <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Bar dataKey="patient_count" fill="#34d399" name="Пацієнти" />
-              <Bar dataKey="total_services" fill="#60a5fa" name="Послуги (НСЗУ + платні)" />
+              <Bar dataKey="patient_count" name="Пацієнти" radius={[8, 8, 0, 0]}>
+                {data.patients_by_doctor.slice(0, 10).map((doc, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={doc.patient_count > 1800 ? "#ef4444" : "#34d399"}
+                    className={doc.patient_count > 1800 ? "animate-pulse" : ""}
+                  />
+                ))}
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         ) : (
