@@ -495,42 +495,29 @@ async def export_services(
     # ── Аркуш 2: Розхідники ──
     ws2 = wb.create_sheet("Розхідники")
 
-    # Визначаємо макс. кількість матеріалів серед усіх послуг
-    max_materials = max((len(svc.materials or []) for svc in services), default=0)
-
-    # Заголовок: Код | Назва | К-ть розхідників | Матеріал 1 (назва) | Од. | К-ть | Вартість | Матеріал 2 ...
-    headers_mat = ["Код", "Назва послуги", "К-ть розхідників"]
-    for i in range(1, max_materials + 1):
-        headers_mat.extend([
-            f"Матеріал {i} — назва",
-            f"Матеріал {i} — одиниця",
-            f"Матеріал {i} — кількість",
-            f"Матеріал {i} — вартість (грн)",
-        ])
+    headers_mat = ["Код", "Назва послуги", "К-ть розхідників", "Розхідники (перелік)"]
     ws2.append(headers_mat)
     style_header(ws2, len(headers_mat))
 
+    wrap_align = Alignment(wrap_text=True, vertical="top")
+
     for svc in services:
         materials = svc.materials or []
-        row_data = [svc.code, svc.name, len(materials)]
-        for m in materials:
-            row_data.extend([
-                m.get("name", ""),
-                m.get("unit", ""),
-                m.get("quantity", 0),
-                float(m.get("cost", 0)),
-            ])
-        ws2.append(row_data)
+        # Збираємо всі матеріали в одну комірку, кожен з нового рядка
+        materials_text = "\n".join(
+            f"{m.get('name', '')} — {m.get('quantity', 0)} {m.get('unit', '')} — {float(m.get('cost', 0)):.2f} грн"
+            for m in materials
+        )
+        ws2.append([svc.code, svc.name, len(materials), materials_text])
 
-    # Числовий формат для стовпців вартості (кожен 4-й починаючи з 7-го: G, K, O, ...)
-    for mat_idx in range(max_materials):
-        cost_col = 4 + mat_idx * 4 + 3  # колонка вартості (1-indexed: 7, 11, 15, ...)
-        for row in ws2.iter_rows(min_row=2, min_col=cost_col, max_col=cost_col):
-            for cell in row:
-                if cell.value is not None:
-                    cell.number_format = '#,##0.00'
+    # Перенос тексту для колонки з матеріалами
+    for row in ws2.iter_rows(min_row=2, min_col=4, max_col=4):
+        for cell in row:
+            cell.alignment = wrap_align
 
     auto_width(ws2)
+    # Ширша колонка для переліку матеріалів
+    ws2.column_dimensions["D"].width = 60
 
     buf = io.BytesIO()
     wb.save(buf)
