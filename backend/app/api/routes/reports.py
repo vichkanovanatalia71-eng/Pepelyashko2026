@@ -641,14 +641,6 @@ async def dashboard_report(
         name = income_cats.get(cat_id, "Без категорії") if cat_id else "Без категорії"
         income_by_cat_raw[name] += float(amt)
 
-    # Add NHSU as a category
-    if nhsu_income > 0:
-        income_by_cat_raw["НСЗУ"] += nhsu_income
-
-    # Add Paid services as a category
-    if paid_income > 0:
-        income_by_cat_raw["Платні послуги"] += paid_income
-
     income_by_category = sorted(
         [
             CategoryBreakdown(
@@ -678,18 +670,6 @@ async def dashboard_report(
     for cat_id, amt in exp_cat_q.all():
         name = expense_cats.get(cat_id, "Без категорії") if cat_id else "Без категорії"
         expense_by_cat_raw[name] += float(amt)
-
-    # Add Fixed expenses as a category
-    if fixed_total > 0:
-        expense_by_cat_raw["Фіксовані видатки"] += fixed_total
-
-    # Add Salary expenses as a category
-    if salary_total > 0:
-        expense_by_cat_raw["Зарплата"] += salary_total
-
-    # Add Tax expenses as a category
-    if tax_total > 0:
-        expense_by_cat_raw["Податки"] += tax_total
 
     expense_by_category = sorted(
         [
@@ -749,6 +729,46 @@ async def dashboard_report(
 
     # Income by doctor
     income_by_doctor, nhsu_income, paid_income = await _get_income_by_doctors(db, user.id, year, month)
+
+    # Add NHSU and paid services to income categories
+    if nhsu_income > 0:
+        income_by_cat_raw["НСЗУ"] = nhsu_income
+    if paid_income > 0:
+        income_by_cat_raw["Платні послуги"] = paid_income
+
+    # Recalculate income_by_category with added NHSU and paid services
+    if nhsu_income > 0 or paid_income > 0:
+        income_by_category = sorted(
+            [
+                CategoryBreakdown(
+                    name=name,
+                    amount=round(amt, 2),
+                    pct=round(amt / cur["income"] * 100, 1) if cur["income"] > 0 else 0,
+                )
+                for name, amt in income_by_cat_raw.items()
+            ],
+            key=lambda x: x.amount,
+            reverse=True,
+        )
+
+    # Add tax expenses to expense categories
+    if cur["total_taxes"] > 0:
+        expense_by_cat_raw["Податки"] = cur["total_taxes"]
+
+    # Recalculate expense_by_category with tax data
+    if cur["total_taxes"] > 0:
+        expense_by_category = sorted(
+            [
+                CategoryBreakdown(
+                    name=name,
+                    amount=round(amt, 2),
+                    pct=round(amt / cur["expenses"] * 100, 1) if cur["expenses"] > 0 else 0,
+                )
+                for name, amt in expense_by_cat_raw.items()
+            ],
+            key=lambda x: x.amount,
+            reverse=True,
+        )
 
     # Top services
     top_services = await _get_top_services(db, user.id, year, month)
