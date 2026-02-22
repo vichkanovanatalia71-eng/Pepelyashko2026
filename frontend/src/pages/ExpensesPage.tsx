@@ -312,11 +312,11 @@ function Modal({ title, onClose, children }: {
   title: string; onClose: () => void; children: React.ReactNode;
 }) {
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label={title}>
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-label={title}>
       {/* Backdrop */}
       <div className="absolute inset-0" onClick={onClose} />
       <div
-        className="relative bg-dark-600 rounded-2xl shadow-2xl w-full max-w-md"
+        className="relative bg-dark-600 rounded-2xl shadow-2xl w-full max-w-md my-auto"
         style={{ border: "1px solid #ffffff15" }}
       >
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
@@ -2833,10 +2833,10 @@ export default function ExpensesPage() {
 
       {/* ── AI parse modal ── */}
       {aiModal.open && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="AI-аналіз витрати">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-label="AI-аналіз витрати">
           <div className="absolute inset-0" onClick={() => setAiModal({ open: false, text: "", file: null, loading: false, result: null })} />
           <div
-            className="relative bg-dark-600 rounded-2xl shadow-2xl w-full max-w-lg"
+            className="relative bg-dark-600 rounded-2xl shadow-2xl w-full max-w-lg my-auto"
             style={{ border: "1px solid #ffffff15" }}
           >
             <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
@@ -3049,10 +3049,10 @@ export default function ExpensesPage() {
         }
 
         return (
-          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label={kpiModal.title}>
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-label={kpiModal.title}>
             <div className="absolute inset-0" onClick={() => setKpiModal({ open: false, type: "", title: "" })} />
             <div
-              className="relative bg-dark-600 rounded-2xl shadow-2xl w-full flex flex-col"
+              className="relative bg-dark-600 rounded-2xl shadow-2xl w-full flex flex-col my-auto"
               style={{ border: "1px solid #ffffff15", maxHeight: "85vh", maxWidth: "900px" }}
             >
               {/* Header */}
@@ -3170,9 +3170,9 @@ export default function ExpensesPage() {
 
       {/* ── Accountant request modal ── */}
       {accReqModal.open && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Запит до бухгалтера">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-label="Запит до бухгалтера">
           <div className="absolute inset-0" onClick={() => setAccReqModal({ open: false, url: "", expiresAt: "" })} />
-          <div className="relative bg-dark-600 rounded-2xl shadow-2xl w-full max-w-md p-6" style={{ border: "1px solid #ffffff15" }}>
+          <div className="relative bg-dark-600 rounded-2xl shadow-2xl w-full max-w-md my-auto p-6" style={{ border: "1px solid #ffffff15" }}>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <ClipboardList size={18} className="text-orange-400" />
@@ -3245,9 +3245,9 @@ export default function ExpensesPage() {
 
       {/* ── Share modal ── */}
       {shareModal.open && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Поділитись звітом">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-label="Поділитись звітом">
           <div className="absolute inset-0" onClick={() => setShareModal({ open: false, url: "", expiresAt: "" })} />
-          <div className="relative bg-dark-600 rounded-2xl shadow-2xl w-full max-w-md p-6" style={{ border: "1px solid #ffffff15" }}>
+          <div className="relative bg-dark-600 rounded-2xl shadow-2xl w-full max-w-md my-auto p-6" style={{ border: "1px solid #ffffff15" }}>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <Share2 size={18} className="text-accent-400" />

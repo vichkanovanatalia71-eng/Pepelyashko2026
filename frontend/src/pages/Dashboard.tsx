@@ -112,7 +112,7 @@ function DrillModal({ title, onClose, children }: { title: string; onClose: () =
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-start justify-center p-0 sm:p-4 sm:items-center overflow-y-auto"
+      className="fixed inset-0 z-50 flex items-start justify-center p-0 sm:p-4 overflow-y-auto"
     >
       {/* Backdrop */}
       <div
@@ -121,7 +121,7 @@ function DrillModal({ title, onClose, children }: { title: string; onClose: () =
       />
       {/* Panel */}
       <div className="relative bg-dark-600 border border-dark-50/10
-                      rounded-none sm:rounded-2xl w-full max-w-2xl min-h-full sm:min-h-0
+                      rounded-none sm:rounded-2xl w-full max-w-2xl min-h-full sm:min-h-0 sm:my-auto sm:max-h-[90vh] sm:overflow-y-auto
                       shadow-elevation-3 animate-modal-in pb-20 sm:pb-0">
         <div className="flex items-center justify-between p-5 border-b border-dark-50/10 bg-dark-400/20 backdrop-blur-sm">
           <h3 className="text-base font-semibold text-white">{title}</h3>

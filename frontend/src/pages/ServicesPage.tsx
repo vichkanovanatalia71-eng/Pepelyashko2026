@@ -769,8 +769,8 @@ export default function ServicesPage() {
 
       {/* ── Модальне вікно форми послуги ── */}
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" role="dialog" aria-modal="true" onClick={(e) => { if (e.target === e.currentTarget) setShowForm(false); }}>
-          <div className="bg-dark-600 border border-dark-50/10 rounded-2xl w-full max-w-3xl max-h-[calc(100vh-6rem)] sm:max-h-[90vh] overflow-y-auto shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto" role="dialog" aria-modal="true" onClick={(e) => { if (e.target === e.currentTarget) setShowForm(false); }}>
+          <div className="bg-dark-600 border border-dark-50/10 rounded-2xl w-full max-w-3xl my-auto max-h-[calc(100vh-6rem)] sm:max-h-[90vh] overflow-y-auto shadow-2xl">
             <div className="flex items-center justify-between p-6 border-b border-dark-50/10">
               <h2 className="text-lg font-semibold text-white">
                 {editingService ? "Редагування послуги" : "Нова послуга"}
@@ -1017,8 +1017,8 @@ export default function ServicesPage() {
 
       {/* ── Масова зміна вартості ── */}
       {showBulkPriceChange && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" role="dialog" aria-modal="true" onClick={(e) => { if (e.target === e.currentTarget) { setShowBulkPriceChange(false); setBulkPricePercent(""); } }}>
-          <div className="bg-dark-600 border border-dark-50/10 rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto" role="dialog" aria-modal="true" onClick={(e) => { if (e.target === e.currentTarget) { setShowBulkPriceChange(false); setBulkPricePercent(""); } }}>
+          <div className="bg-dark-600 border border-dark-50/10 rounded-2xl p-6 w-full max-w-sm my-auto shadow-2xl">
             <h3 className="text-lg font-semibold text-white mb-2">
               Змінити вартість ({selectedIds.size} послуг)
             </h3>
@@ -1063,8 +1063,8 @@ export default function ServicesPage() {
 
       {/* ── Модальне вікно AI-імпорту з зображення ── */}
       {showImportModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" role="dialog" aria-modal="true" onClick={(e) => { if (e.target === e.currentTarget) closeImportModal(); }}>
-          <div className="bg-dark-600 border border-dark-50/10 rounded-2xl w-full max-w-4xl max-h-[calc(100vh-6rem)] sm:max-h-[90vh] overflow-y-auto shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto" role="dialog" aria-modal="true" onClick={(e) => { if (e.target === e.currentTarget) closeImportModal(); }}>
+          <div className="bg-dark-600 border border-dark-50/10 rounded-2xl w-full max-w-4xl my-auto max-h-[calc(100vh-6rem)] sm:max-h-[90vh] overflow-y-auto shadow-2xl">
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-dark-50/10">
               <div className="flex items-center gap-3">

@@ -140,8 +140,8 @@ function CopyMonthModal({
   }
 
   return (
-    <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-dark-600 border border-dark-50/10 rounded-2xl w-full max-w-md shadow-2xl">
+    <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
+      <div className="bg-dark-600 border border-dark-50/10 rounded-2xl w-full max-w-md my-auto shadow-2xl">
         <div className="flex items-center justify-between p-5 border-b border-dark-50/10">
           <h3 className="text-sm font-semibold text-white">Скопіювати значення по місяцях</h3>
           <button onClick={onClose} aria-label="Закрити" className="p-1.5 text-gray-500 hover:text-gray-300 rounded-lg hover:bg-dark-300 transition-all">

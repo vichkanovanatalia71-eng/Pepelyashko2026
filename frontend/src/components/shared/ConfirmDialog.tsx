@@ -35,7 +35,7 @@ export default function ConfirmDialog({
     : "btn-accent";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+    <div className="fixed inset-0 z-50 flex items-start justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
       {/* Backdrop with blur */}
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-md animate-fade-in"
@@ -43,7 +43,7 @@ export default function ConfirmDialog({
       />
 
       {/* Dialog */}
-      <div className="relative card-neo border border-dark-50/10 p-6 max-w-sm w-full animate-modal-in
+      <div className="relative card-neo border border-dark-50/10 p-6 max-w-sm w-full my-auto animate-modal-in
                       shadow-elevation-3">
         <button
           onClick={onCancel}
