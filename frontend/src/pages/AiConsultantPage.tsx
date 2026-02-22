@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
-import { Send, Lightbulb, MessageCircle, ArrowRight, AlertCircle } from "lucide-react";
+import { Send, Lightbulb, ArrowRight, AlertCircle } from "lucide-react";
 import api from "../api/client";
-import { PageHeader, MonthNavigator, MONTH_NAMES } from "../components/shared";
-import { useNavigate } from "react-router-dom";
+import { PageHeader, MonthNavigator } from "../components/shared";
 
 interface Message {
   id: string;
@@ -40,7 +39,19 @@ export default function AiConsultantPage() {
   const [querySuggestions, setQuerySuggestions] = useState<Suggestion[]>([]);
   const [selectedMonth, setSelectedMonth] = useState(month);
   const [selectedYear, setSelectedYear] = useState(year);
-  const navigate = useNavigate();
+
+  const today2 = new Date();
+  const isCurrentMonth = selectedYear === today2.getFullYear() && selectedMonth === today2.getMonth() + 1;
+
+  function prevMonth() {
+    if (selectedMonth === 1) { setSelectedMonth(12); setSelectedYear(y => y - 1); }
+    else setSelectedMonth(m => m - 1);
+  }
+
+  function nextMonth() {
+    if (selectedMonth === 12) { setSelectedMonth(1); setSelectedYear(y => y + 1); }
+    else setSelectedMonth(m => m + 1);
+  }
 
   // Load suggestions on mount
   useEffect(() => {
@@ -132,14 +143,14 @@ export default function AiConsultantPage() {
       <PageHeader
         title="AI-Консультант"
         subtitle="Детальна фінансова аналітика вашої медпрактики"
-        icon={MessageCircle}
       />
 
       <MonthNavigator
         year={selectedYear}
-        month={selectedMonth}
-        onMonthChange={(m) => setSelectedMonth(m)}
-        onYearChange={(y) => setSelectedYear(y)}
+        month={selectedMonth - 1}
+        onPrev={prevMonth}
+        onNext={nextMonth}
+        disableNext={isCurrentMonth}
       />
 
       <div className="container mx-auto px-4 py-6 max-w-4xl">
