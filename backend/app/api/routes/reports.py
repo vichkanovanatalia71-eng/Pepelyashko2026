@@ -429,10 +429,19 @@ async def _month_totals(
         pdfo = round(brutto * 0.18, 2)  # PDFO 18%
         vz_zp = round(brutto * 0.05, 2)  # VZ 5%
         esv = round(brutto * 0.22, 2)    # ESV employer 22%
-        supplement = float(rec.supplement) if hasattr(rec, 'supplement') else 0.0
+
+        # Calculate netto
+        netto = round(brutto - pdfo - vz_zp, 2)
+
+        # Calculate supplement to reach target_net if needed
+        supplement = 0.0
+        if rec.has_supplement and rec.target_net:
+            target = float(rec.target_net)
+            supplement = max(0, target - netto)
+
         bonus = float(rec.individual_bonus) if rec.individual_bonus else 0.0
 
-        employer_cost = brutto + esv + supplement + bonus
+        employer_cost = round(brutto + esv + supplement + bonus, 2)
         salary_total += employer_cost
         esv_employer += esv
 
