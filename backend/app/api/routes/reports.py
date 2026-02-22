@@ -9,17 +9,25 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.deps import get_current_user, get_db
+from app.models.doctor import Doctor
 from app.models.expense import Expense, ExpenseCategory
 from app.models.income import Income, IncomeCategory
+from app.models.monthly_service import MonthlyPaidServiceEntry, MonthlyPaidServicesReport
 from app.models.nhsu import NhsuSettings
+from app.models.service import Service
+from app.models.staff import StaffMember
 from app.models.user import User
 from app.schemas.report import (
+    AiInsight,
     AnnualReport,
     CategoryBreakdown,
     DashboardData,
     DashboardInsight,
+    DataIntegrityWarning,
+    DoctorRevenue,
     MonthlyPL,
     PeriodReport,
+    ServiceRevenue,
     TrendPoint,
 )
 
@@ -173,6 +181,131 @@ async def annual_report(
 
 
 # ── Dashboard (enriched) ─────────────────────────────────────────────
+
+
+async def _get_income_by_doctors(
+    db: AsyncSession,
+    user_id: int,
+    year: int,
+    month: int,
+) -> tuple[list[DoctorRevenue], float, float]:
+    """Get income breakdown by doctor (NHSU + paid services)."""
+    d_start, d_end = await _month_range(year, month)
+
+    # Get doctors
+    doc_result = await db.execute(
+        select(Doctor).where(Doctor.user_id == user_id, Doctor.is_active)
+    )
+    doctors = {d.id: d.full_name for d in doc_result.scalars().all()}
+
+    result = defaultdict(lambda: {"nhsu": 0.0, "paid": 0.0})
+
+    # NHSU income from monthly paid services reports
+    nhsu_q = await db.execute(
+        select(MonthlyPaidServicesReport.doctor_id, func.coalesce(func.sum(MonthlyPaidServicesReport.cash_in_register), 0)).where(
+            MonthlyPaidServicesReport.user_id == user_id,
+            MonthlyPaidServicesReport.year == year,
+            MonthlyPaidServicesReport.month == month,
+        ).group_by(MonthlyPaidServicesReport.doctor_id)
+    )
+
+    total_nhsu = 0.0
+    total_paid = 0.0
+
+    for doc_id, amount in nhsu_q.all():
+        result[doc_id]["paid"] += float(amount)
+        total_paid += float(amount)
+
+    # Convert to DoctorRevenue list
+    doctor_revenues: list[DoctorRevenue] = []
+    for doc_id, name in doctors.items():
+        rev = result[doc_id]
+        doctor_revenues.append(DoctorRevenue(
+            doctor_id=doc_id,
+            doctor_name=name,
+            nhsu=round(rev["nhsu"], 2),
+            paid_services=round(rev["paid"], 2),
+            total=round(rev["nhsu"] + rev["paid"], 2),
+        ))
+
+    return sorted(doctor_revenues, key=lambda x: x.total, reverse=True), total_nhsu, total_paid
+
+
+async def _get_top_services(
+    db: AsyncSession,
+    user_id: int,
+    year: int,
+    month: int,
+    limit: int = 10,
+) -> list[ServiceRevenue]:
+    """Get top services by quantity in this month."""
+    # Query monthly service entries
+    services_q = await db.execute(
+        select(
+            MonthlyPaidServiceEntry.service_id,
+            func.sum(MonthlyPaidServiceEntry.quantity).label("qty"),
+        ).join(
+            MonthlyPaidServicesReport,
+            MonthlyPaidServiceEntry.report_id == MonthlyPaidServicesReport.id,
+        ).where(
+            MonthlyPaidServicesReport.user_id == user_id,
+            MonthlyPaidServicesReport.year == year,
+            MonthlyPaidServicesReport.month == month,
+        ).group_by(MonthlyPaidServiceEntry.service_id)
+        .order_by(func.sum(MonthlyPaidServiceEntry.quantity).desc())
+        .limit(limit)
+    )
+
+    result: list[ServiceRevenue] = []
+    for service_id, qty in services_q.all():
+        # Get service info
+        svc_result = await db.execute(select(Service).where(Service.id == service_id))
+        svc = svc_result.scalar_one_or_none()
+        if svc:
+            result.append(ServiceRevenue(
+                service_id=service_id,
+                code=svc.code,
+                name=svc.name,
+                quantity=int(qty) if qty else 0,
+                revenue=round(float(svc.price) * (int(qty) if qty else 0), 2),
+            ))
+
+    return result
+
+
+async def _check_data_integrity(
+    db: AsyncSession,
+    user_id: int,
+    year: int,
+    month: int,
+) -> list[DataIntegrityWarning]:
+    """Check for data quality issues."""
+    warnings: list[DataIntegrityWarning] = []
+
+    # Check for missing salary data
+    staff_result = await db.execute(
+        select(StaffMember).where(StaffMember.user_id == user_id, StaffMember.is_active)
+    )
+    staff_count = len(staff_result.scalars().all())
+
+    # Check if expenses are zero for whole month
+    d_start, d_end = await _month_range(year, month)
+    exp_result = await db.execute(
+        select(func.coalesce(func.sum(Expense.amount), 0)).where(
+            Expense.user_id == user_id,
+            Expense.date >= d_start,
+            Expense.date <= d_end if month != 12 else Expense.date < d_end,
+        )
+    )
+    total_expenses = float(exp_result.scalar())
+
+    if staff_count > 0 and total_expenses == 0:
+        warnings.append(DataIntegrityWarning(
+            type="missing_data",
+            message="Немає даних про витрати за період. Можливо, дані не введені.",
+        ))
+
+    return warnings
 
 
 async def _month_range(year: int, month: int) -> tuple[date, date]:
@@ -467,6 +600,104 @@ async def dashboard_report(
     # Generate insights
     insights = _generate_insights(cur, prev, avg_income_6m, avg_expenses_6m)
 
+    # ── Collect additional data for enriched dashboard ──
+
+    # Income by doctor
+    income_by_doctor, nhsu_income, paid_income = await _get_income_by_doctors(db, user.id, year, month)
+
+    # Top services
+    top_services = await _get_top_services(db, user.id, year, month)
+
+    # Data integrity warnings
+    data_warnings = await _check_data_integrity(db, user.id, year, month)
+
+    # Calculate services breakdown
+    services_q = await db.execute(
+        select(func.count(MonthlyPaidServiceEntry.id)).join(
+            MonthlyPaidServicesReport,
+            MonthlyPaidServiceEntry.report_id == MonthlyPaidServicesReport.id,
+        ).where(
+            MonthlyPaidServicesReport.user_id == user.id,
+            MonthlyPaidServicesReport.year == year,
+            MonthlyPaidServicesReport.month == month,
+        )
+    )
+    total_services_count = services_q.scalar() or 0
+
+    # Services by doctor
+    services_by_doctor_q = await db.execute(
+        select(
+            Doctor.full_name,
+            func.count(MonthlyPaidServiceEntry.id).label("cnt")
+        ).join(
+            MonthlyPaidServicesReport,
+            Doctor.id == MonthlyPaidServicesReport.doctor_id,
+        ).join(
+            MonthlyPaidServiceEntry,
+            MonthlyPaidServiceEntry.report_id == MonthlyPaidServicesReport.id,
+        ).where(
+            MonthlyPaidServicesReport.user_id == user.id,
+            MonthlyPaidServicesReport.year == year,
+            MonthlyPaidServicesReport.month == month,
+        ).group_by(Doctor.full_name)
+    )
+    services_by_doctor = {name: int(cnt) for name, cnt in services_by_doctor_q.all()}
+
+    # Active doctors count
+    active_docs_q = await db.execute(
+        select(func.count(Doctor.id)).where(
+            Doctor.user_id == user.id,
+            Doctor.is_active
+        )
+    )
+    active_doctors_count = active_docs_q.scalar() or 0
+
+    # Fixed and salary expenses (approximate from categories)
+    fixed_expenses = sum(
+        cb.amount for cb in expense_by_category
+        if "матеріали" not in cb.name.lower() and "зарплата" not in cb.name.lower()
+    )
+    salary_expenses = sum(
+        cb.amount for cb in expense_by_category
+        if "зарплата" in cb.name.lower()
+    )
+
+    # AI insights (basic recommendations)
+    ai_insights: list[AiInsight] = []
+
+    # Revenue concentration insight
+    if nhsu_income > 0 or paid_income > 0:
+        nhsu_pct = (nhsu_income / (nhsu_income + paid_income) * 100) if (nhsu_income + paid_income) > 0 else 0
+        if nhsu_pct > 70:
+            ai_insights.append(AiInsight(
+                type="insight",
+                title="Висока залежність від НСЗУ",
+                description=f"НСЗУ становить {nhsu_pct:.0f}% доходу. Розгляньте розвиток платних послуг для диверсифікації.",
+                data_basis=f"НСЗУ: {nhsu_income:,.0f} грн, Платні послуги: {paid_income:,.0f} грн",
+            ))
+
+    # Doctor load insight
+    if active_doctors_count > 0 and total_services_count > 0:
+        avg_services_per_doctor = total_services_count / active_doctors_count
+        if avg_services_per_doctor < 10:
+            ai_insights.append(AiInsight(
+                type="warning",
+                title="Низька завантаженість лікарів",
+                description=f"Середня кількість послуг: {avg_services_per_doctor:.0f} на лікаря. Можливість збільшити обсяги.",
+                data_basis=f"Послуг: {total_services_count}, Лікарів: {active_doctors_count}",
+            ))
+
+    # Expense ratio insight
+    if cur["income"] > 0:
+        expense_ratio = (cur["expenses"] / cur["income"]) * 100
+        if expense_ratio > 70:
+            ai_insights.append(AiInsight(
+                type="risk",
+                title="Високі витрати відносно доходів",
+                description=f"Витрати становлять {expense_ratio:.0f}% доходу. Перевірте обґрунтованість основних статей витрат.",
+                data_basis=f"Доходи: {cur['income']:,.0f} грн, Витрати: {cur['expenses']:,.0f} грн",
+            ))
+
     return DashboardData(
         year=year,
         month=month,
@@ -492,8 +723,25 @@ async def dashboard_report(
         avg_profit_6m=avg_profit_6m,
         income_by_category=income_by_category,
         expense_by_category=expense_by_category,
+        # New fields
+        nhsu_income=nhsu_income,
+        paid_services_income=paid_income,
+        nhsu_pct=round((nhsu_income / (nhsu_income + paid_income) * 100) if (nhsu_income + paid_income) > 0 else 0, 1),
+        paid_pct=round((paid_income / (nhsu_income + paid_income) * 100) if (nhsu_income + paid_income) > 0 else 0, 1),
+        income_by_doctor=income_by_doctor,
+        top_services=top_services,
+        top_expense_items=top_expense_items,
+        fixed_expenses=round(fixed_expenses, 2),
+        salary_expenses=round(salary_expenses, 2),
+        tax_single_rate=float(user.tax_rate) * 100,
+        tax_esv_monthly=esv_monthly,
+        tax_vz_rate=vz_rate * 100,
+        total_services_count=int(total_services_count),
+        services_by_doctor=services_by_doctor,
+        active_doctors_count=int(active_doctors_count),
+        data_integrity_warnings=data_warnings,
+        missing_salary_staff=[],
         trend=trend,
         insights=insights,
-        top_income_sources=top_income_sources,
-        top_expense_items=top_expense_items,
+        ai_insights=ai_insights,
     )

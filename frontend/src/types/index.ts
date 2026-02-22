@@ -489,11 +489,40 @@ export interface DashboardInsight {
   description: string;
 }
 
+export interface DoctorRevenue {
+  doctor_id: number;
+  doctor_name: string;
+  nhsu: number;
+  paid_services: number;
+  total: number;
+}
+
+export interface ServiceRevenue {
+  service_id: number;
+  code: string;
+  name: string;
+  quantity: number;
+  revenue: number;
+}
+
+export interface AiInsight {
+  type: string;
+  title: string;
+  description: string;
+  data_basis?: string;
+}
+
+export interface DataIntegrityWarning {
+  type: string;
+  message: string;
+}
+
 export interface DashboardReport {
   year: number;
   month: number;
   period_label: string;
 
+  // ── Основні фінансові показники
   total_income: number;
   total_expenses: number;
   net_profit: number;
@@ -517,15 +546,42 @@ export interface DashboardReport {
   avg_expenses_6m: number;
   avg_profit_6m: number;
 
+  // ── Доходи
   income_by_category: CategoryBreakdown[];
-  expense_by_category: CategoryBreakdown[];
+  top_income_sources: CategoryBreakdown[];
+  nhsu_income: number;
+  paid_services_income: number;
+  nhsu_pct: number;
+  paid_pct: number;
+  income_by_doctor: DoctorRevenue[];
+  top_services: ServiceRevenue[];
 
+  // ── Витрати
+  expense_by_category: CategoryBreakdown[];
+  top_expense_items: CategoryBreakdown[];
+  fixed_expenses: number;
+  salary_expenses: number;
+
+  // ── Податки
+  tax_single_rate: number;
+  tax_esv_monthly: number;
+  tax_vz_rate: number;
+
+  // ── Операційні показники
+  total_services_count: number;
+  services_by_doctor: Record<string, number>;
+  active_doctors_count: number;
+
+  // ── Цілісність даних
+  data_integrity_warnings: DataIntegrityWarning[];
+  missing_salary_staff: string[];
+
+  // ── Тренди
   trend: TrendPoint[];
 
+  // ── AI Аналітика
   insights: DashboardInsight[];
-
-  top_income_sources: CategoryBreakdown[];
-  top_expense_items: CategoryBreakdown[];
+  ai_insights: AiInsight[];
 }
 
 // ── Monthly expense periods & AI ─────────────────────────────────────

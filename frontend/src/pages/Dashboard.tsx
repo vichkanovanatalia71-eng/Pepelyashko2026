@@ -357,6 +357,52 @@ export default function Dashboard() {
             />
           </div>
 
+          {/* ── AI Analytics Block ── */}
+          {data.ai_insights && data.ai_insights.length > 0 && (
+            <div className="card-neo p-5 border border-blue-500/15 bg-blue-500/5 stagger-enter">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
+                    AI-Асистент / Аналітика системи
+                  </h3>
+                  <p className="text-xs text-gray-600 mt-0.5">Аналіз фінансової ситуації та рекомендації</p>
+                </div>
+              </div>
+              <div className="space-y-3">
+                {data.ai_insights.map((insight, i) => {
+                  const typeConfig: Record<string, { icon: typeof AlertCircle; color: string; label: string }> = {
+                    risk: { icon: ShieldAlert, color: "text-red-400", label: "РИЗИК" },
+                    warning: { icon: AlertCircle, color: "text-amber-400", label: "УВАГА" },
+                    opportunity: { icon: Lightbulb, color: "text-emerald-400", label: "МОЖЛИВІСТЬ" },
+                    insight: { icon: Info, color: "text-blue-400", label: "ІНСАЙТ" },
+                  };
+                  const cfg = typeConfig[insight.type] || typeConfig.insight;
+                  const Icon = cfg.icon;
+                  return (
+                    <div key={i} className="rounded-lg border border-dark-50/10 bg-dark-300/20 p-4">
+                      <div className="flex items-start gap-3">
+                        <Icon size={16} className={`${cfg.color} shrink-0 mt-0.5`} />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
+                            <span className={`text-[10px] font-bold uppercase tracking-wide ${cfg.color}`}>
+                              {cfg.label}
+                            </span>
+                            <span className="text-sm font-semibold text-white">{insight.title}</span>
+                          </div>
+                          <p className="text-xs text-gray-300 leading-relaxed mb-2">{insight.description}</p>
+                          {insight.data_basis && (
+                            <p className="text-[10px] text-gray-600 italic">Основа: {insight.data_basis}</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* ── 2. Trend chart + Income after taxes ── */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {/* Area trend chart — 6 months */}

@@ -71,12 +71,41 @@ class DashboardInsight(BaseModel):
     description: str
 
 
+class DoctorRevenue(BaseModel):
+    doctor_id: int
+    doctor_name: str
+    nhsu: float
+    paid_services: float
+    total: float
+
+
+class ServiceRevenue(BaseModel):
+    service_id: int
+    code: str
+    name: str
+    quantity: int
+    revenue: float
+
+
+class AiInsight(BaseModel):
+    type: str  # "risk" | "warning" | "opportunity" | "insight"
+    title: str
+    description: str
+    data_basis: str | None = None
+
+
+class DataIntegrityWarning(BaseModel):
+    type: str  # "missing_data" | "conflict" | "anomaly"
+    message: str
+
+
 class DashboardData(BaseModel):
     year: int
     month: int
     period_label: str
 
-    # Current
+    # ── ОСНОВНІ ФІНАНСОВІ ПОКАЗНИКИ ──
+    # Current month
     total_income: float
     total_expenses: float
     net_profit: float
@@ -103,16 +132,61 @@ class DashboardData(BaseModel):
     avg_expenses_6m: float
     avg_profit_6m: float
 
-    # Breakdowns
+    # ── ДОХОДИ ──
+    # By category
     income_by_category: list[CategoryBreakdown]
+
+    # Top income sources
+    top_income_sources: list[CategoryBreakdown]
+
+    # Revenue breakdown
+    nhsu_income: float
+    paid_services_income: float
+    nhsu_pct: float
+    paid_pct: float
+
+    # By doctor
+    income_by_doctor: list[DoctorRevenue]
+
+    # By service
+    top_services: list[ServiceRevenue]
+
+    # ── ВИТРАТИ ──
+    # By category
     expense_by_category: list[CategoryBreakdown]
 
+    # Top expense items
+    top_expense_items: list[CategoryBreakdown]
+
+    # Fixed vs salary
+    fixed_expenses: float
+    salary_expenses: float
+
+    # ── ПОДАТКОВА МОДЕЛЬ ──
+    # Current tax details
+    tax_single_rate: float
+    tax_esv_monthly: float
+    tax_vz_rate: float
+
+    # ── ОПЕРАЦІЙНІ ПОКАЗНИКИ ──
+    # Services
+    total_services_count: int
+    services_by_doctor: dict[str, int]  # doctor_name -> count
+
+    # Doctor load
+    active_doctors_count: int
+
+    # ── ЦІЛІСНІСТЬ ДАНИХ ──
+    data_integrity_warnings: list[DataIntegrityWarning]
+    missing_salary_staff: list[str]
+
+    # ── ТРЕНДИ ──
     # Trend (last 6 months)
     trend: list[TrendPoint]
 
+    # ── AI АНАЛІТИКА ──
     # Insights
     insights: list[DashboardInsight]
 
-    # Top items
-    top_income_sources: list[CategoryBreakdown]
-    top_expense_items: list[CategoryBreakdown]
+    # AI-recommendations
+    ai_insights: list[AiInsight]
