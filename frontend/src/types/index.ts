@@ -467,6 +467,67 @@ export interface ShareResponse {
   expires_at: string;
 }
 
+// ── Dashboard (enriched) ─────────────────────────────────────────────
+
+export interface CategoryBreakdown {
+  name: string;
+  amount: number;
+  pct: number;
+}
+
+export interface TrendPoint {
+  month_name: string;
+  income: number;
+  expenses: number;
+  profit: number;
+  taxes: number;
+}
+
+export interface DashboardInsight {
+  type: string;
+  title: string;
+  description: string;
+}
+
+export interface DashboardReport {
+  year: number;
+  month: number;
+  period_label: string;
+
+  total_income: number;
+  total_expenses: number;
+  net_profit: number;
+  tax_single: number;
+  tax_esv: number;
+  tax_vz: number;
+  total_taxes: number;
+  income_after_taxes: number;
+
+  prev_income: number;
+  prev_expenses: number;
+  prev_profit: number;
+  prev_taxes: number;
+
+  income_change_pct: number;
+  expenses_change_pct: number;
+  profit_change_pct: number;
+  taxes_change_pct: number;
+
+  avg_income_6m: number;
+  avg_expenses_6m: number;
+  avg_profit_6m: number;
+
+  income_by_category: CategoryBreakdown[];
+  expense_by_category: CategoryBreakdown[];
+
+  trend: TrendPoint[];
+
+  insights: DashboardInsight[];
+
+  top_income_sources: CategoryBreakdown[];
+  top_expense_items: CategoryBreakdown[];
+}
+
 // ── Monthly expense periods & AI ─────────────────────────────────────
 
 export interface PeriodSummary {
