@@ -1085,7 +1085,7 @@ async def _build_owner_share_payload(
 
     # ── 2. Платні послуги (paid services analytics) ──
     paid_analytics = await build_paid_analytics(db, user_id, year, month, None)
-    paid_data = paid_analytics.model_dump()
+    paid_data = paid_analytics.model_dump(mode="json")
 
     # ── 3. Дані для розрахунку сформованого доходу власника ──
     nhsu_doctors = await _nhsu_doctors_data(db, user_id, year, month)
