@@ -1171,39 +1171,63 @@ async def dashboard_report(
             ))
 
     # ── ПРІОРИТЕТ 1: Отримання додаткових даних ──
-    # Пацієнти
-    patients_by_age, total_patients, total_non_verified, prev_patients = await _get_patients_by_age(db, user.id, year, month)
-    patients_by_doctor = await _get_patients_by_doctor(db, user.id, year, month)
-    total_patients_change_pct = round((total_patients - prev_patients) / prev_patients * 100, 1) if prev_patients > 0 else 0
-    total_non_verified_pct = round(total_non_verified / total_patients * 100, 1) if total_patients > 0 else 0
+    # Пацієнти (з безпекою)
+    patients_by_age = []
+    patients_by_doctor = []
+    total_patients = 0
+    total_non_verified = 0
+    total_patients_change_pct = 0.0
+    total_non_verified_pct = 0.0
+    try:
+        patients_by_age, total_patients, total_non_verified, prev_patients = await _get_patients_by_age(db, user.id, year, month)
+        patients_by_doctor = await _get_patients_by_doctor(db, user.id, year, month)
+        total_patients_change_pct = round((total_patients - prev_patients) / prev_patients * 100, 1) if prev_patients > 0 else 0
+        total_non_verified_pct = round(total_non_verified / total_patients * 100, 1) if total_patients > 0 else 0
+    except Exception as e:
+        print(f"ERROR in _get_patients: {e}")
 
-    # Персонал & ФОП
-    staff_by_role, fop_total, _ = await _get_staff_breakdown(db, user.id, year, month)
-    fop_pct = round(fop_total / cur["income"] * 100, 1) if cur["income"] > 0 else 0
+    # Персонал & ФОП (з безпекою)
+    staff_by_role = []
+    fop_total = 0.0
+    fop_pct = 0.0
+    try:
+        staff_by_role, fop_total, _ = await _get_staff_breakdown(db, user.id, year, month)
+        fop_pct = round(fop_total / cur["income"] * 100, 1) if cur["income"] > 0 else 0
+    except Exception as e:
+        print(f"ERROR in _get_staff_breakdown: {e}")
 
     # Отримуємо дані про власника (якщо є)
     owner = None
-    owner_q = await db.execute(
-        select(Doctor).where(Doctor.user_id == user.id, Doctor.is_owner == True).limit(1)
-    )
-    owner_doctor = owner_q.scalar_one_or_none()
-    if owner_doctor and nhsu_income > 0:
-        owner = OwnerFinancialInfo(
-            doctor_id=owner_doctor.id,
-            doctor_name=owner_doctor.full_name,
-            is_owner=True,
-            nhsu_income=nhsu_income,
-            paid_services_income=paid_income,
-            total_income=nhsu_income + paid_income,
-            ep_amount=cur["tax_single"],
-            vz_amount=cur["tax_vz"],
-            esv_owner_amount=cur["tax_esv"],
-            total_taxes=cur["tax_single"] + cur["tax_vz"] + cur["tax_esv"],
-            income_after_taxes=cur["income_after_taxes"],
+    try:
+        owner_q = await db.execute(
+            select(Doctor).where(Doctor.user_id == user.id, Doctor.is_owner == True).limit(1)
         )
+        owner_doctor = owner_q.scalar_one_or_none()
+        if owner_doctor and nhsu_income > 0:
+            owner = OwnerFinancialInfo(
+                doctor_id=owner_doctor.id,
+                doctor_name=owner_doctor.full_name,
+                is_owner=True,
+                nhsu_income=nhsu_income,
+                paid_services_income=paid_income,
+                total_income=nhsu_income + paid_income,
+                ep_amount=cur["tax_single"],
+                vz_amount=cur["tax_vz"],
+                esv_owner_amount=cur["tax_esv"],
+                total_taxes=cur["tax_single"] + cur["tax_vz"] + cur["tax_esv"],
+                income_after_taxes=cur["income_after_taxes"],
+            )
+    except Exception as e:
+        print(f"ERROR in owner_info: {e}")
 
-    # Платні послуги
-    top_paid_services, services_margin, services_margin_pct = await _get_top_paid_services_detailed(db, user.id, year, month)
+    # Платні послуги (з безпекою)
+    top_paid_services = []
+    services_margin = 0.0
+    services_margin_pct = 0.0
+    try:
+        top_paid_services, services_margin, services_margin_pct = await _get_top_paid_services_detailed(db, user.id, year, month)
+    except Exception as e:
+        print(f"ERROR in _get_top_paid_services_detailed: {e}")
 
     return DashboardData(
         year=year,
