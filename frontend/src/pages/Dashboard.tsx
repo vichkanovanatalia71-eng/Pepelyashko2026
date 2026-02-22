@@ -145,6 +145,7 @@ export default function Dashboard() {
   const [data, setData] = useState<DashboardReport | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [period, setPeriod] = useState<"current" | "3m" | "6m" | "1y" | "all">("current"); // Period filter
 
   // Drill-down state
   const [drillModal, setDrillModal] = useState<null | "income" | "expenses" | "taxes">(null);
@@ -157,6 +158,14 @@ export default function Dashboard() {
   function nextMonth() {
     if (month === 11) { setMonth(0); setYear(y => y + 1); }
     else setMonth(m => m + 1);
+  }
+
+  function getPeriodLabel(): string {
+    if (period === "current") return `${MONTH_NAMES[month].toLowerCase()} ${year}`;
+    if (period === "3m") return "Останні 3 місяці";
+    if (period === "6m") return "Останні 6 місяців";
+    if (period === "1y") return "Останній рік";
+    return "Всього";
   }
 
   useEffect(() => {
@@ -231,16 +240,41 @@ export default function Dashboard() {
     <div className="space-y-5 lg:space-y-6">
       <PageHeader
         title="Дашборд"
-        subtitle={`Фінансовий огляд за ${MONTH_NAMES[month].toLowerCase()} ${year}`}
+        subtitle={`Фінансовий огляд ${getPeriodLabel()}`}
       >
-        <MonthNavigator
-          year={year}
-          month={month}
-          onPrev={prevMonth}
-          onNext={nextMonth}
-          disableNext={isCurrentMonth}
-        />
+        {period === "current" && (
+          <MonthNavigator
+            year={year}
+            month={month}
+            onPrev={prevMonth}
+            onNext={nextMonth}
+            disableNext={isCurrentMonth}
+          />
+        )}
       </PageHeader>
+
+      {/* Period filter */}
+      <div className="flex flex-wrap gap-2">
+        {[
+          { label: "Текущий місяць", value: "current" },
+          { label: "Останні 3 місяці", value: "3m" },
+          { label: "Останні 6 місяців", value: "6m" },
+          { label: "Останній рік", value: "1y" },
+          { label: "Всього", value: "all" },
+        ].map(opt => (
+          <button
+            key={opt.value}
+            onClick={() => setPeriod(opt.value as typeof period)}
+            className={`px-3 py-1.5 text-sm rounded-lg transition-all duration-200 ${
+              period === opt.value
+                ? "bg-accent-500/30 border border-accent-500/50 text-accent-300 font-medium"
+                : "bg-dark-400/30 border border-dark-50/20 text-gray-400 hover:text-gray-200 hover:border-dark-50/40"
+            }`}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
 
       {/* Tax deadline reminders */}
       {reminders.length > 0 && (
@@ -347,7 +381,7 @@ export default function Dashboard() {
               borderColor="border-yellow-500/20"
               changePct={data.taxes_change_pct}
               prevValue={data.prev_taxes}
-              tooltip="Єдиний податок (5%) + ЄСВ + Військовий збір (1.5%). Розраховується від доходу."
+              tooltip={`Єдиний податок (5%) + ЄСВ + Військовий збір (${data.tax_vz_rate?.toFixed(1) || '1'}%). Розраховується від доходу.`}
               onClick={() => setDrillModal("taxes")}
               icon={
                 <div className="p-2 rounded-xl bg-yellow-500/10">
@@ -444,16 +478,11 @@ export default function Dashboard() {
               title="Податки за місяць"
               icon={<Receipt size={16} className="text-yellow-400" />}
               iconBg="bg-yellow-500/10"
-              trailing={
-                <button onClick={() => navigate("/taxes")} className="text-xs text-accent-400 hover:text-accent-300 flex items-center gap-0.5">
-                  Детальніше <ChevronRight size={12} />
-                </button>
-              }
             >
               <div className="space-y-1">
                 <StatRow label="Єдиний податок (5%)" value={data.tax_single} dot="bg-accent-400" />
                 <StatRow label="ЄСВ" value={data.tax_esv} dot="bg-yellow-400" />
-                <StatRow label="Військовий збір (1.5%)" value={data.tax_vz} dot="bg-orange-400" />
+                <StatRow label={`Військовий збір (${data.tax_vz_rate?.toFixed(1) || '1'}%)`} value={data.tax_vz} dot="bg-orange-400" />
                 <StatRow label="Всього податків" value={data.total_taxes} dot="bg-red-400" color="text-red-400" borderTop />
                 <StatRow label="Дохід після податків" value={data.income_after_taxes} dot="bg-emerald-400" color="text-emerald-400" bold borderTop />
               </div>
@@ -570,12 +599,11 @@ export default function Dashboard() {
           )}
 
           {/* ── 5. Quick navigation ── */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 stagger-enter">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 stagger-enter">
             {[
               { label: "Доходи", path: "/incomes", color: "text-emerald-400", border: "border-emerald-500/15" },
               { label: "Витрати", path: "/expenses", color: "text-red-400", border: "border-red-500/15" },
               { label: "Аналітика доходів", path: "/revenue", color: "text-accent-400", border: "border-accent-500/15" },
-              { label: "Податки", path: "/taxes", color: "text-yellow-400", border: "border-yellow-500/15" },
             ].map(nav => (
               <button
                 key={nav.path}
@@ -757,7 +785,7 @@ export default function Dashboard() {
             <div className="space-y-1">
               <StatRow label="Єдиний податок (5% від доходу)" value={data.tax_single} dot="bg-accent-400" />
               <StatRow label="ЄСВ (фіксована сума)" value={data.tax_esv} dot="bg-yellow-400" />
-              <StatRow label="Військовий збір (1.5% від доходу)" value={data.tax_vz} dot="bg-orange-400" />
+              <StatRow label={`Військовий збір (${data.tax_vz_rate?.toFixed(1) || '1'}% від доходу)`} value={data.tax_vz} dot="bg-orange-400" />
               <StatRow label="Всього податків" value={data.total_taxes} dot="bg-red-400" color="text-red-400" bold borderTop />
               <StatRow label="Дохід після податків" value={data.income_after_taxes} dot="bg-emerald-400" color="text-emerald-400" bold borderTop />
             </div>
