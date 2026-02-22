@@ -272,15 +272,9 @@ export function PatientsBlock({ data }: PatientsBlockProps) {
             <div>
               <p className="text-[11px] text-gray-500 mb-1">Сер. дохід/пац.</p>
               <p className="text-sm font-semibold text-emerald-400">
-                {(() => {
-                  const totalRevenue = data.patients_by_doctor.reduce(
-                    (s, d) => s + d.revenue_per_patient * d.patient_count,
-                    0,
-                  );
-                  return data.total_patients > 0
-                    ? Math.round(totalRevenue / data.total_patients).toLocaleString("uk-UA")
-                    : "0";
-                })()}{" "}
+                {data.total_patients > 0
+                  ? Math.round(data.nhsu_income / data.total_patients).toLocaleString("uk-UA")
+                  : "0"}{" "}
                 грн
               </p>
             </div>
