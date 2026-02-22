@@ -2,8 +2,6 @@ import { useState, useEffect, useCallback } from "react";
 import { Outlet, NavLink, useNavigate, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
-  TrendingUp,
-  TrendingDown,
   Receipt,
   HeartPulse,
   LogOut,
@@ -29,8 +27,6 @@ const navItems = [
   { to: "/monthly-services",   icon: BarChart3,        label: "Платні послуги", short: "Послуги"  },
   { to: "/nhsu",               icon: HeartPulse,       label: "НСЗУ",           short: "НСЗУ"     },
   { to: "/taxes",              icon: Receipt,          label: "Податки",        short: "Податки"  },
-  { to: "/incomes",            icon: TrendingUp,       label: "Надходження",    short: "Дохід"    },
-  { to: "/expenses",           icon: TrendingDown,     label: "Витрати",        short: "Витрати"  },
   { to: "/services",           icon: ClipboardList,    label: "Прайс послуг",   short: "Прайс"    },
   { to: "/settings",           icon: Settings,         label: "Налаштування",   short: "Налашт."  },
   { to: "/profile",            icon: User,             label: "Профіль",        short: "Профіль"  },
