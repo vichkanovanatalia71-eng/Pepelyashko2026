@@ -163,7 +163,7 @@ export default function Dashboard() {
     setLoading(true);
     setError(null);
     api
-      .get("/reports/dashboard", { params: { year, month: month + 1 } })
+      .get("/reports/dashboard", { params: { year: Number(year), month: Number(month) + 1 } })
       .then((res) => setData(res.data))
       .catch((err) => {
         setData(null);
@@ -267,7 +267,7 @@ export default function Dashboard() {
           <p className="text-gray-300 text-lg font-medium mb-2">Помилка завантаження</p>
           <p className="text-gray-500 text-sm">{error}</p>
           <button
-            onClick={() => { setLoading(true); setError(null); api.get("/reports/dashboard", { params: { year, month: month + 1 } }).then(r => setData(r.data)).catch(() => setError("Повторна помилка")).finally(() => setLoading(false)); }}
+            onClick={() => { setLoading(true); setError(null); api.get("/reports/dashboard", { params: { year: Number(year), month: Number(month) + 1 } }).then(r => setData(r.data)).catch(() => setError("Повторна помилка")).finally(() => setLoading(false)); }}
             className="btn-accent mt-4"
           >
             Спробувати ще раз
