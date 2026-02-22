@@ -37,6 +37,9 @@ import {
   KPICard,
   SectionCard,
 } from "../components/shared";
+import { PatientsBlock } from "../components/dashboard/PatientsBlock";
+import { StaffBlock } from "../components/dashboard/StaffBlock";
+import { PaidServicesBlock } from "../components/dashboard/PaidServicesBlock";
 
 const TT_STYLE = {
   background: "#1a1a2e",
@@ -436,6 +439,16 @@ export default function Dashboard() {
               </div>
             </div>
           )}
+
+          {/* ── ПРІОРИТЕТ 1: Блоки для пацієнтів, персоналу, послуг ── */}
+          {/* Patients block */}
+          <PatientsBlock data={data} />
+
+          {/* Staff block */}
+          <StaffBlock data={data} />
+
+          {/* Paid services block */}
+          <PaidServicesBlock data={data} />
 
           {/* ── 2. Trend chart + Income after taxes ── */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
