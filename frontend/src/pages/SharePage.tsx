@@ -121,7 +121,7 @@ export default function SharePage() {
               <Stethoscope size={22} className="text-accent-500" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-white">Pepelyashko · Платні послуги</h1>
+              <h1 className="text-xl font-bold text-white">MedFlow · Платні послуги</h1>
               <p className="text-sm text-gray-400">{data.filter_label}</p>
             </div>
           </div>
@@ -264,7 +264,7 @@ export default function SharePage() {
 
         {/* Footer */}
         <div className="text-center text-xs text-gray-600 py-4">
-          Pepelyashko · Фінансовий менеджер ФОП
+          MedFlow · Фінансовий менеджер ФОП
         </div>
       </div>
     </div>

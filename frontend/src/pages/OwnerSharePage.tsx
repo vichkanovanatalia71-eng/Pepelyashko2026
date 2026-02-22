@@ -133,7 +133,7 @@ export default function OwnerSharePage() {
               <Building2 size={22} className="text-amber-400" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-white">Pepelyashko · Зведений звіт ФОП</h1>
+              <h1 className="text-xl font-bold text-white">MedFlow · Зведений звіт ФОП</h1>
               <p className="text-sm text-gray-400">{data.filter_label}</p>
             </div>
           </div>
@@ -489,7 +489,7 @@ export default function OwnerSharePage() {
 
         {/* Footer */}
         <div className="text-center text-xs text-gray-600 py-4">
-          Pepelyashko · Фінансовий менеджер ФОП
+          MedFlow · Фінансовий менеджер ФОП
         </div>
       </div>
     </div>

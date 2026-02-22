@@ -69,7 +69,7 @@ export default function Layout() {
                 <Stethoscope size={22} className="text-accent-500" aria-hidden="true" />
               </div>
               <div>
-                <h1 className="text-lg font-bold text-white tracking-tight">Pepelyashko</h1>
+                <h1 className="text-lg font-bold text-white tracking-tight">MedFlow</h1>
                 <p className="text-xs text-gray-500">Фінанси ФОП</p>
               </div>
             </div>

@@ -313,7 +313,7 @@ export default function AccountantRequestPage() {
               <ClipboardList size={22} className="text-orange-400" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-white">Pepelyashko · Запит до бухгалтера</h1>
+              <h1 className="text-xl font-bold text-white">MedFlow · Запит до бухгалтера</h1>
               <p className="text-sm text-gray-400">{data.filter_label}</p>
             </div>
           </div>

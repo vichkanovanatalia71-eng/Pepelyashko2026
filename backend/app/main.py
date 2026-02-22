@@ -5,7 +5,7 @@ from app.api.routes import auth, incomes, expenses, taxes, reports, nhsu, user_s
 from app.core.config import settings
 
 app = FastAPI(
-    title="Pepelyashko API",
+    title="MedFlow API",
     description="Фінансовий менеджер для медичної практики ФОП",
     version="0.1.0",
 )
@@ -37,7 +37,7 @@ app.include_router(ai_consultant.router, prefix="/api", tags=["ai-consultant"])
 @app.get("/")
 async def root():
     return {
-        "message": "Pepelyashko API v0.1.0",
+        "message": "MedFlow API v0.1.0",
         "status": "running",
         "docs": "/docs",
     }

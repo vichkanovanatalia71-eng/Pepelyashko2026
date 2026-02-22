@@ -94,7 +94,7 @@ export default function LoginPage() {
                           shadow-glow-accent shadow-lg mb-4">
             <Stethoscope size={32} className="text-accent-500" />
           </div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Pepelyashko</h1>
+          <h1 className="text-2xl font-bold text-white tracking-tight">MedFlow</h1>
           <p className="text-sm text-gray-500 mt-1">
             Фінансовий менеджер для медичної практики
           </p>

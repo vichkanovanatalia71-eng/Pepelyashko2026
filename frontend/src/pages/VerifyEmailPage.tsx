@@ -48,7 +48,7 @@ export default function VerifyEmailPage() {
         {/* Logo */}
         <div className="flex items-center gap-2 text-gray-500 text-sm mb-2">
           <Stethoscope size={16} className="text-accent-500" />
-          <span className="text-white font-semibold">Pepelyashko</span>
+          <span className="text-white font-semibold">MedFlow</span>
         </div>
 
         {status === "loading" && (
