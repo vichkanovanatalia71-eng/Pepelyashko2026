@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.deps import get_current_user, get_db
+from app.ai.analytics_engine import generate_dashboard_insights
 from app.models.doctor import Doctor
 from app.models.expense import Expense, ExpenseCategory
 from app.models.income import Income, IncomeCategory
@@ -1176,41 +1177,31 @@ async def dashboard_report(
         if "зарплата" in cb.name.lower()
     )
 
-    # AI insights (basic recommendations)
-    ai_insights: list[AiInsight] = []
+    # AI insights (using analytics engine for comprehensive analysis)
+    # Get previous period data for comparison
+    prev_month = month - 1 if month > 1 else 12
+    prev_year = year if month > 1 else year - 1
+    prev_cur = await _month_totals(db, user.id, prev_year, prev_month, esv_monthly, vz_rate, user.tax_rate)
 
-    # Revenue concentration insight
-    if nhsu_income > 0 or paid_income > 0:
-        nhsu_pct = (nhsu_income / (nhsu_income + paid_income) * 100) if (nhsu_income + paid_income) > 0 else 0
-        if nhsu_pct > 70:
-            ai_insights.append(AiInsight(
-                type="insight",
-                title="Висока залежність від НСЗУ",
-                description=f"НСЗУ становить {nhsu_pct:.0f}% доходу. Розгляньте розвиток платних послуг для диверсифікації.",
-                data_basis=f"НСЗУ: {nhsu_income:,.0f} грн, Платні послуги: {paid_income:,.0f} грн",
-            ))
-
-    # Doctor load insight
-    if active_doctors_count > 0 and total_services_count > 0:
-        avg_services_per_doctor = total_services_count / active_doctors_count
-        if avg_services_per_doctor < 10:
-            ai_insights.append(AiInsight(
-                type="warning",
-                title="Низька завантаженість лікарів",
-                description=f"Середня кількість послуг: {avg_services_per_doctor:.0f} на лікаря. Можливість збільшити обсяги.",
-                data_basis=f"Послуг: {total_services_count}, Лікарів: {active_doctors_count}",
-            ))
-
-    # Expense ratio insight
-    if cur["income"] > 0:
-        expense_ratio = (cur["expenses"] / cur["income"]) * 100
-        if expense_ratio > 70:
-            ai_insights.append(AiInsight(
-                type="risk",
-                title="Високі витрати відносно доходів",
-                description=f"Витрати становлять {expense_ratio:.0f}% доходу. Перевірте обґрунтованість основних статей витрат.",
-                data_basis=f"Доходи: {cur['income']:,.0f} грн, Витрати: {cur['expenses']:,.0f} грн",
-            ))
+    ai_insights: list[AiInsight] = await generate_dashboard_insights(
+        income=cur["income"],
+        nhsu_income=nhsu_income,
+        paid_income=paid_income,
+        expenses=cur["expenses"],
+        fixed_expenses=fixed_expenses,
+        payroll_expenses=salary_expenses,
+        materials_cost=sum(s.materials_cost for s in top_paid_services) if top_paid_services else 0.0,
+        cash_balance=cur.get("cash_balance", 0.0),
+        bank_balance=cur.get("bank_balance", 0.0),
+        patients_total=total_patients,
+        patients_unverified=total_non_verified,
+        doctors_count=active_doctors_count,
+        services_count=total_services_count,
+        paid_services_count=len(top_paid_services),
+        top_service_revenue=max((s.revenue for s in top_paid_services), default=0),
+        prev_period_income=prev_cur.get("income", 0.0),
+        prev_period_expenses=prev_cur.get("expenses", 0.0),
+    )
 
     # ── ПРІОРИТЕТ 1: Отримання додаткових даних ──
     # Пацієнти (з безпекою)
