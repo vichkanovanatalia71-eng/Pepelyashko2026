@@ -159,7 +159,21 @@ export function StaffBlock({ data }: StaffBlockProps) {
             dataKey="name"
             tick={{ fill: "#9ca3af", fontSize: 11 }}
           />
-          <Tooltip content={<CustomTooltip />} />
+          <Tooltip
+            content={<CustomTooltip />}
+            contentStyle={{
+              backgroundColor: "transparent",
+              border: "none",
+              boxShadow: "none",
+              outline: "none",
+              padding: "0",
+            }}
+            wrapperStyle={{
+              backgroundColor: "transparent",
+              outline: "none",
+            }}
+            cursor={{ fill: "transparent" }}
+          />
           <Bar dataKey="Нетто" stackId="a" fill="#34d399" />
           <Bar dataKey="ПДФО" stackId="a" fill="#fbbf24" />
           <Bar dataKey="ВЗ" stackId="a" fill="#f87171" />
@@ -170,38 +184,62 @@ export function StaffBlock({ data }: StaffBlockProps) {
       {/* Staff breakdown table */}
       <div className="mt-6 border-t border-dark-50/10 pt-4">
         <h4 className="text-xs font-semibold text-gray-400 mb-3">Розбивка по ролях</h4>
-        <div className="space-y-2">
-          {data.staff_by_role.map((role) => (
-            <div key={role.role} className="p-3 bg-dark-400/20 rounded-lg">
-              <div className="flex items-center justify-between mb-2">
-                <div>
-                  <p className="text-sm font-semibold text-white">{role.role_label}</p>
-                  <p className="text-xs text-gray-500">{role.count} осіб</p>
+        <div className="space-y-3">
+          {data.staff_by_role.map((role) => {
+            const employerCosts = role.pdfo_total + role.vz_total + role.esv_employer_total;
+            return (
+              <div key={role.role} className="p-3 bg-dark-400/20 rounded-lg border border-dark-50/10">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <p className="text-sm font-semibold text-white">{role.role_label}</p>
+                    <p className="text-xs text-gray-500">{role.count} осіб</p>
+                  </div>
                 </div>
-                <p className="text-sm font-bold text-emerald-400">
-                  {fmtUAH(role.salary_brutto_total)} ₴
-                </p>
+
+                {/* Main metrics */}
+                <div className="grid grid-cols-3 gap-2 mb-3 pb-3 border-b border-dark-50/10">
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1">Загальна сума</p>
+                    <p className="text-base font-bold text-emerald-400">
+                      {fmtUAH(role.salary_brutto_total)} ₴
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1">Витрати роботодавця</p>
+                    <p className="text-base font-bold text-orange-400">
+                      {fmtUAH(employerCosts)} ₴
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1">На руки</p>
+                    <p className="text-base font-bold text-blue-400">
+                      {fmtUAH(role.salary_netto_total)} ₴
+                    </p>
+                  </div>
+                </div>
+
+                {/* Breakdown */}
+                <div className="grid grid-cols-4 gap-2 text-xs">
+                  <div>
+                    <p className="text-gray-600 text-xs">Нетто</p>
+                    <p className="text-gray-300 font-medium">{fmtUAH(role.salary_netto_total)} ₴</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600 text-xs">ПДФО 18%</p>
+                    <p className="text-amber-300 font-medium">{fmtUAH(role.pdfo_total)} ₴</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600 text-xs">ВЗ 5%</p>
+                    <p className="text-red-300 font-medium">{fmtUAH(role.vz_total)} ₴</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600 text-xs">ЄСВ роб. 22%</p>
+                    <p className="text-blue-300 font-medium">{fmtUAH(role.esv_employer_total)} ₴</p>
+                  </div>
+                </div>
               </div>
-              <div className="grid grid-cols-4 gap-2 text-xs">
-                <div>
-                  <p className="text-gray-500">Нетто</p>
-                  <p className="text-gray-300">{fmtUAH(role.salary_netto_total)} ₴</p>
-                </div>
-                <div>
-                  <p className="text-gray-500">ПДФО</p>
-                  <p className="text-amber-300">{fmtUAH(role.pdfo_total)} ₴</p>
-                </div>
-                <div>
-                  <p className="text-gray-500">ВЗ</p>
-                  <p className="text-red-300">{fmtUAH(role.vz_total)} ₴</p>
-                </div>
-                <div>
-                  <p className="text-gray-500">ЄСВ роб.</p>
-                  <p className="text-blue-300">{fmtUAH(role.esv_employer_total)} ₴</p>
-                </div>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
