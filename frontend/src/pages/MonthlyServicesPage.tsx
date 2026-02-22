@@ -142,7 +142,10 @@ export default function MonthlyServicesPage() {
   async function loadCatalogServices() {
     try {
       const r = await axios.get(`${API}/api/services/`, { headers });
-      setCatalogServices(r.data);
+      const sorted = (r.data as Service[]).sort((a, b) =>
+        a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: "base" })
+      );
+      setCatalogServices(sorted);
     } catch {}
   }
 
@@ -719,7 +722,7 @@ export default function MonthlyServicesPage() {
       {/* ── Форма звіту ── */}
       {showReportForm && (
         <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 sm:items-center overflow-y-auto" role="dialog" aria-modal="true" onClick={() => setShowReportForm(false)}>
-          <div className="bg-dark-600 border border-dark-50/10 rounded-none sm:rounded-2xl w-full max-w-3xl min-h-full sm:min-h-0 shadow-2xl animate-modal-in pb-20 sm:pb-0" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-dark-600 border border-dark-50/10 rounded-none sm:rounded-2xl w-full max-w-3xl min-h-full sm:min-h-0 sm:max-h-[90vh] sm:overflow-y-auto shadow-2xl animate-modal-in pb-20 sm:pb-0" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-6 border-b border-dark-50/10">
               <h2 className="text-lg font-semibold text-white">
                 {editingReport ? "Редагування звіту" : "Новий звіт"} · {MONTHS_UA[selectedMonth]} {selectedYear}
