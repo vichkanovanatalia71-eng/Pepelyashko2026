@@ -1177,32 +1177,6 @@ async def dashboard_report(
         if "зарплата" in cb.name.lower()
     )
 
-    # AI insights (using analytics engine for comprehensive analysis)
-    # Get previous period data for comparison
-    prev_month = month - 1 if month > 1 else 12
-    prev_year = year if month > 1 else year - 1
-    prev_cur = await _month_totals(db, user.id, prev_year, prev_month, esv_monthly, vz_rate, user.tax_rate)
-
-    ai_insights: list[AiInsight] = await generate_dashboard_insights(
-        income=cur["income"],
-        nhsu_income=nhsu_income,
-        paid_income=paid_income,
-        expenses=cur["expenses"],
-        fixed_expenses=fixed_expenses,
-        payroll_expenses=salary_expenses,
-        materials_cost=sum(s.materials_cost for s in top_paid_services) if top_paid_services else 0.0,
-        cash_balance=cur.get("cash_balance", 0.0),
-        bank_balance=cur.get("bank_balance", 0.0),
-        patients_total=total_patients,
-        patients_unverified=total_non_verified,
-        doctors_count=active_doctors_count,
-        services_count=total_services_count,
-        paid_services_count=len(top_paid_services),
-        top_service_revenue=max((s.revenue for s in top_paid_services), default=0),
-        prev_period_income=prev_cur.get("income", 0.0),
-        prev_period_expenses=prev_cur.get("expenses", 0.0),
-    )
-
     # ── ПРІОРИТЕТ 1: Отримання додаткових даних ──
     # Пацієнти (з безпекою)
     patients_by_age = []
@@ -1263,6 +1237,32 @@ async def dashboard_report(
         top_paid_services, services_margin, services_margin_pct, paid_services_total_revenue, paid_services_total_qty = await _get_top_paid_services_detailed(db, user.id, year, month)
     except Exception as e:
         print(f"ERROR in _get_top_paid_services_detailed: {e}")
+
+    # AI insights (using analytics engine for comprehensive analysis)
+    # Get previous period data for comparison
+    prev_month = month - 1 if month > 1 else 12
+    prev_year = year if month > 1 else year - 1
+    prev_cur = await _month_totals(db, user.id, prev_year, prev_month, esv_monthly, vz_rate, user.tax_rate)
+
+    ai_insights: list[AiInsight] = await generate_dashboard_insights(
+        income=cur["income"],
+        nhsu_income=nhsu_income,
+        paid_income=paid_income,
+        expenses=cur["expenses"],
+        fixed_expenses=fixed_expenses,
+        payroll_expenses=salary_expenses,
+        materials_cost=sum(s.materials_cost for s in top_paid_services) if top_paid_services else 0.0,
+        cash_balance=cur.get("cash_balance", 0.0),
+        bank_balance=cur.get("bank_balance", 0.0),
+        patients_total=total_patients,
+        patients_unverified=total_non_verified,
+        doctors_count=active_doctors_count,
+        services_count=total_services_count,
+        paid_services_count=len(top_paid_services),
+        top_service_revenue=max((s.revenue for s in top_paid_services), default=0),
+        prev_period_income=prev_cur.get("income", 0.0),
+        prev_period_expenses=prev_cur.get("expenses", 0.0),
+    )
 
     return DashboardData(
         year=year,
