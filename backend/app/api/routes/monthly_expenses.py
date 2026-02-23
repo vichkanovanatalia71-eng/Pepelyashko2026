@@ -22,6 +22,7 @@ from app.models.monthly_expense import (
     FIXED_CATEGORY_KEYS,
     MonthlyExpenseLock,
     MonthlyFixedExpense,
+    MonthlyOtherExpense,
     MonthlySalaryExpense,
 )
 from app.models.monthly_service import MonthlyPaidServiceEntry, MonthlyPaidServicesReport
@@ -731,6 +732,118 @@ async def update_salary_expense(
         paid_services_income=paid_services_income,
         total_employer_cost=total_employer_cost,
     )
+
+
+# ────────────────────────────── Other expenses CRUD ──────────────────────────────
+
+
+class OtherExpenseCreate(BaseModel):
+    name: str
+    description: str = ""
+    amount: float
+    category: str = "general"
+    year: int
+    month: int
+
+
+class OtherExpenseResponse(BaseModel):
+    id: int
+    name: str
+    description: str
+    amount: float
+    category: str
+    year: int
+    month: int
+
+    model_config = {"from_attributes": True}
+
+
+@router.get("/other", response_model=list[OtherExpenseResponse])
+async def list_other_expenses(
+    year: int = Query(...),
+    month: int = Query(...),
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Повертає список інших витрат за місяць."""
+    res = await db.execute(
+        select(MonthlyOtherExpense).where(
+            MonthlyOtherExpense.user_id == user.id,
+            MonthlyOtherExpense.year == year,
+            MonthlyOtherExpense.month == month,
+        )
+    )
+    return res.scalars().all()
+
+
+@router.post("/other", response_model=OtherExpenseResponse, status_code=201)
+async def create_other_expense(
+    body: OtherExpenseCreate,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Створює нову іншу витрату."""
+    rec = MonthlyOtherExpense(
+        user_id=user.id,
+        year=body.year,
+        month=body.month,
+        name=body.name,
+        description=body.description,
+        amount=body.amount,
+        category=body.category,
+    )
+    db.add(rec)
+    await db.commit()
+    await db.refresh(rec)
+    return rec
+
+
+@router.put("/other/{expense_id}", response_model=OtherExpenseResponse)
+async def update_other_expense(
+    expense_id: int,
+    body: OtherExpenseCreate,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Оновлює іншу витрату."""
+    res = await db.execute(
+        select(MonthlyOtherExpense).where(
+            MonthlyOtherExpense.id == expense_id,
+            MonthlyOtherExpense.user_id == user.id,
+        )
+    )
+    rec = res.scalar_one_or_none()
+    if not rec:
+        raise HTTPException(status_code=404, detail="Витрату не знайдено")
+    rec.name = body.name
+    rec.description = body.description
+    rec.amount = body.amount
+    rec.category = body.category
+    rec.year = body.year
+    rec.month = body.month
+    await db.commit()
+    await db.refresh(rec)
+    return rec
+
+
+@router.delete("/other/{expense_id}", status_code=204)
+async def delete_other_expense(
+    expense_id: int,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Видаляє іншу витрату."""
+    res = await db.execute(
+        select(MonthlyOtherExpense).where(
+            MonthlyOtherExpense.id == expense_id,
+            MonthlyOtherExpense.user_id == user.id,
+        )
+    )
+    rec = res.scalar_one_or_none()
+    if not rec:
+        raise HTTPException(status_code=404, detail="Витрату не знайдено")
+    await db.delete(rec)
+    await db.commit()
 
 
 # ══════════════════════════════════════════════════════════════════

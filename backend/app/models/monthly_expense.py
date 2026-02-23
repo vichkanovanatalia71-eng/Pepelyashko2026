@@ -2,12 +2,13 @@
 
 Блок 1 — постійні витрати (7 категорій, з можливістю позначити як recurring).
 Блок 2 — зарплатні витрати (по одному запису на (staff_member, рік, місяць)).
+Блок 3 — інші витрати (довільні записи з назвою, сумою, категорією).
 """
 from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, Numeric, String, UniqueConstraint
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, Numeric, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
@@ -72,6 +73,24 @@ class MonthlySalaryExpense(Base):
     individual_bonus: Mapped[float] = mapped_column(Numeric(12, 2), default=0.0)
     paid_services_from_module: Mapped[bool] = mapped_column(Boolean, default=False)
 
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
+
+
+class MonthlyOtherExpense(Base):
+    """Довільна «інша витрата» за місяць (назва, опис, сума, категорія)."""
+
+    __tablename__ = "monthly_other_expenses"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    year: Mapped[int] = mapped_column(Integer)
+    month: Mapped[int] = mapped_column(Integer)        # 1–12
+    name: Mapped[str] = mapped_column(String(255))
+    description: Mapped[str] = mapped_column(Text, default="")
+    amount: Mapped[float] = mapped_column(Numeric(12, 2), default=0.0)
+    category: Mapped[str] = mapped_column(String(50), default="general")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )

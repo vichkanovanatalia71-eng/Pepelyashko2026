@@ -81,6 +81,16 @@ const MONTH_SHORT = [
   "Лип","Сер","Вер","Жов","Лис","Гру",
 ];
 
+const FIXED_CATEGORIES: { key: string; name: string }[] = [
+  { key: "rent",      name: "Оренда" },
+  { key: "utilities", name: "Комунальні" },
+  { key: "internet",  name: "Інтернет" },
+  { key: "phone",     name: "Телефон" },
+  { key: "bank",      name: "Банківські послуги" },
+  { key: "admin",     name: "Адміністративні витрати" },
+  { key: "other",     name: "Інші витрати" },
+];
+
 const ROLE_LABELS: Record<string, string> = {
   doctor: "Лікар",
   nurse:  "Медична сестра",
@@ -2632,6 +2642,28 @@ export default function ExpensesPage() {
           title={fixedModal.isEdit ? "Редагувати постійну витрату" : "Додати постійну витрату"}
           onClose={() => setFixedModal(s => ({ ...s, open: false }))}
         >
+          {!fixedModal.isEdit && (
+            <div className="space-y-1">
+              <label className="text-xs text-gray-400 font-medium">Категорія</label>
+              <select
+                value={fixedModal.categoryKey}
+                onChange={e => {
+                  const cat = FIXED_CATEGORIES.find(c => c.key === e.target.value);
+                  setFixedModal(s => ({
+                    ...s,
+                    categoryKey: e.target.value,
+                    name: cat?.name ?? s.name,
+                  }));
+                }}
+                className="input-dark w-full py-2.5 text-sm"
+              >
+                <option value="">Оберіть категорію...</option>
+                {FIXED_CATEGORIES.map(c => (
+                  <option key={c.key} value={c.key}>{c.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
           <ModalField
             label="Назва"
             value={fixedModal.name}
@@ -2681,7 +2713,7 @@ export default function ExpensesPage() {
                   setFixedModal(s => ({ ...s, saving: false }));
                 }
               }}
-              disabled={fixedModal.saving}
+              disabled={fixedModal.saving || !fixedModal.categoryKey}
               className="flex-1 py-2.5 rounded-xl bg-accent-500 hover:bg-accent-400 text-white text-sm font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-60"
             >
               {fixedModal.saving ? <RefreshCw size={14} className="animate-spin" /> : <Save size={14} />}
