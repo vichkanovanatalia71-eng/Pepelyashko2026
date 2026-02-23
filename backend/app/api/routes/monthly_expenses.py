@@ -297,6 +297,7 @@ class UpdateFixedRequest(BaseModel):
     year: int
     month: int
     category_key: str
+    category_name: str | None = None
     amount: float
     is_recurring: bool
 
@@ -340,8 +341,9 @@ async def get_monthly_expenses(
             MonthlyFixedExpense.month == month,
         )
     )
+    all_fixed_records = list(fixed_res.scalars().all())
     saved_fixed: dict[str, MonthlyFixedExpense] = {
-        r.category_key: r for r in fixed_res.scalars().all()
+        r.category_key: r for r in all_fixed_records
     }
     fixed_rows: list[FixedExpenseRow] = []
     for key in FIXED_CATEGORY_KEYS:
@@ -352,6 +354,16 @@ async def get_monthly_expenses(
             amount=float(rec.amount) if rec else 0.0,
             is_recurring=rec.is_recurring if rec else False,
         ))
+    # Додаємо користувацькі категорії (ті, що не входять до стандартних)
+    for rec in all_fixed_records:
+        if rec.category_key not in FIXED_CATEGORY_KEYS:
+            display_name = rec.category_name or rec.category_key
+            fixed_rows.append(FixedExpenseRow(
+                category_key=rec.category_key,
+                category_name=display_name,
+                amount=float(rec.amount),
+                is_recurring=rec.is_recurring,
+            ))
 
     # 3. Зарплатні витрати — всі активні співробітники
     staff_res = await db.execute(
@@ -568,10 +580,9 @@ async def update_fixed_expense(
 ):
     """Оновлює або створює запис постійної витрати.
     Якщо is_recurring=True — автоматично копіює на всі наступні місяці поточного року.
+    Підтримує як стандартні категорії (rent, utilities, ...) так і користувацькі.
     """
-    if body.category_key not in FIXED_CATEGORY_KEYS:
-        from fastapi import HTTPException
-        raise HTTPException(status_code=400, detail=f"Unknown category_key: {body.category_key}")
+    is_custom = body.category_key not in FIXED_CATEGORY_KEYS
 
     # Upsert поточного місяця
     res = await db.execute(
@@ -593,6 +604,8 @@ async def update_fixed_expense(
         db.add(rec)
     rec.amount = body.amount
     rec.is_recurring = body.is_recurring
+    if is_custom and body.category_name:
+        rec.category_name = body.category_name
     await db.flush()
 
     # Якщо постійна — копіюємо на наступні місяці (лише якщо ще немає запису)
@@ -613,6 +626,7 @@ async def update_fixed_expense(
                     year=body.year,
                     month=future_month,
                     category_key=body.category_key,
+                    category_name=body.category_name if is_custom else None,
                     amount=body.amount,
                     is_recurring=True,
                 )
@@ -625,12 +639,49 @@ async def update_fixed_expense(
     await db.commit()
     await db.refresh(rec)
 
+    display_name = rec.category_name or FIXED_CATEGORY_NAMES.get(rec.category_key, rec.category_key)
     return FixedExpenseRow(
         category_key=rec.category_key,
-        category_name=FIXED_CATEGORY_NAMES[rec.category_key],
+        category_name=display_name,
         amount=float(rec.amount),
         is_recurring=rec.is_recurring,
     )
+
+
+# ────────────────────────────── Endpoint: DELETE fixed ─────────────────────────────
+
+
+@router.delete("/fixed/{category_key}")
+async def delete_fixed_expense(
+    category_key: str,
+    year: int,
+    month: int,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Видаляє користувацьку категорію постійної витрати (лише для custom категорій)."""
+    if category_key in FIXED_CATEGORY_KEYS:
+        from fastapi import HTTPException
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot delete standard categories. Use PUT with amount=0 instead.",
+        )
+
+    res = await db.execute(
+        select(MonthlyFixedExpense).where(
+            MonthlyFixedExpense.user_id == user.id,
+            MonthlyFixedExpense.year == year,
+            MonthlyFixedExpense.month == month,
+            MonthlyFixedExpense.category_key == category_key,
+        )
+    )
+    rec = res.scalar_one_or_none()
+    if rec is None:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Expense not found")
+    await db.delete(rec)
+    await db.commit()
+    return {"ok": True}
 
 
 # ────────────────────────────── Endpoint: PUT salary ──────────────────────────────
@@ -875,10 +926,13 @@ async def copy_from_period(
                     year=body.target_year,
                     month=body.target_month,
                     category_key=src.category_key,
+                    category_name=src.category_name,
                 )
                 db.add(tgt)
             tgt.amount = src.amount
             tgt.is_recurring = src.is_recurring
+            if src.category_name:
+                tgt.category_name = src.category_name
             copied_fixed += 1
 
     if body.copy_salary:
@@ -1396,7 +1450,7 @@ async def create_accountant_request(
     for fe in prev_fixed_res.scalars().all():
         recurring_expenses.append({
             "category_key": fe.category_key,
-            "category_name": FIXED_CATEGORY_NAMES.get(fe.category_key, fe.category_key),
+            "category_name": fe.category_name or FIXED_CATEGORY_NAMES.get(fe.category_key, fe.category_key),
             "amount": float(fe.amount),
         })
 

@@ -109,6 +109,8 @@ const TT_STYLE = {
 
 const PIE_COLORS = ["#6366f1", "#a855f7", "#f59e0b", "#f43f5e", "#10b981"];
 
+const STANDARD_FIXED_KEYS = ["rent", "utilities", "internet", "phone", "bank", "admin", "other"];
+
 const CATEGORY_BADGE: Record<string, { label: string; cls: string }> = {
   fixed:  { label: "Постійні",   cls: "bg-blue-500/20 text-blue-300 border-blue-500/30" },
   salary: { label: "Зарплатні",  cls: "bg-purple-500/20 text-purple-300 border-purple-500/30" },
@@ -777,18 +779,37 @@ export default function ExpensesPage() {
     }
   }
 
-  // ── Delete fixed (zero out) ───────────────────────────────────
+  // ── Delete fixed (zero out or remove custom) ─────────────────
+
   async function deleteFixed(key: string) {
-    if (!confirm("Скинути суму до нуля для цієї категорії?")) return;
-    setFixedPending(p => ({ ...p, [key]: { ...p[key], amount: "0", saving: true } }));
-    try {
-      await api.put("/monthly-expenses/fixed", {
-        year, month, category_key: key, amount: 0, is_recurring: false,
-      });
-      await load();
-    } catch (e) {
-      console.error(e);
-      setFixedPending(p => ({ ...p, [key]: { ...p[key], saving: false } }));
+    const isCustom = !STANDARD_FIXED_KEYS.includes(key);
+    const msg = isCustom
+      ? "Видалити цю користувацьку категорію витрат?"
+      : "Скинути суму до нуля для цієї категорії?";
+    if (!confirm(msg)) return;
+
+    if (isCustom) {
+      setFixedPending(p => ({ ...p, [key]: { ...p[key], saving: true } }));
+      try {
+        await api.delete(`/monthly-expenses/fixed/${encodeURIComponent(key)}`, {
+          params: { year, month },
+        });
+        await load();
+      } catch (e) {
+        console.error(e);
+        setFixedPending(p => ({ ...p, [key]: { ...p[key], saving: false } }));
+      }
+    } else {
+      setFixedPending(p => ({ ...p, [key]: { ...p[key], amount: "0", saving: true } }));
+      try {
+        await api.put("/monthly-expenses/fixed", {
+          year, month, category_key: key, amount: 0, is_recurring: false,
+        });
+        await load();
+      } catch (e) {
+        console.error(e);
+        setFixedPending(p => ({ ...p, [key]: { ...p[key], saving: false } }));
+      }
     }
   }
 
@@ -2665,12 +2686,15 @@ export default function ExpensesPage() {
             </button>
             <button
               onClick={async () => {
-                if (!fixedModal.name.trim() || !fixedModal.categoryKey) return;
+                if (!fixedModal.name.trim()) return;
+                const catKey = fixedModal.categoryKey || `custom_${Date.now()}`;
+                const isCustom = !STANDARD_FIXED_KEYS.includes(catKey);
                 setFixedModal(s => ({ ...s, saving: true }));
                 try {
                   await api.put("/monthly-expenses/fixed", {
                     year, month,
-                    category_key: fixedModal.categoryKey,
+                    category_key: catKey,
+                    ...(isCustom ? { category_name: fixedModal.name.trim() } : {}),
                     amount: parseFloat(fixedModal.amount) || 0,
                     is_recurring: fixedModal.recurring,
                   });

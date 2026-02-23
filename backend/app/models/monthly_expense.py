@@ -40,6 +40,7 @@ class MonthlyFixedExpense(Base):
     year: Mapped[int] = mapped_column(Integer)
     month: Mapped[int] = mapped_column(Integer)        # 1–12
     category_key: Mapped[str] = mapped_column(String(50))
+    category_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
     amount: Mapped[float] = mapped_column(Numeric(12, 2), default=0.0)
     is_recurring: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(
