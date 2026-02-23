@@ -87,6 +87,16 @@ const ROLE_LABELS: Record<string, string> = {
   other:  "Інший персонал",
 };
 
+const FIXED_CATEGORIES: { key: string; name: string }[] = [
+  { key: "rent",      name: "Оренда" },
+  { key: "utilities", name: "Комунальні" },
+  { key: "internet",  name: "Інтернет" },
+  { key: "phone",     name: "Телефон" },
+  { key: "bank",      name: "Банківські послуги" },
+  { key: "admin",     name: "Адміністративні витрати" },
+  { key: "other",     name: "Інші витрати" },
+];
+
 const TAB_KEY = "expenses_tab";
 
 const TABS = [
@@ -2632,6 +2642,29 @@ export default function ExpensesPage() {
           title={fixedModal.isEdit ? "Редагувати постійну витрату" : "Додати постійну витрату"}
           onClose={() => setFixedModal(s => ({ ...s, open: false }))}
         >
+          {!fixedModal.isEdit && (
+            <div>
+              <label className="label-dark">Категорія</label>
+              <select
+                value={fixedModal.categoryKey}
+                onChange={e => {
+                  const key = e.target.value;
+                  const cat = FIXED_CATEGORIES.find(c => c.key === key);
+                  setFixedModal(s => ({
+                    ...s,
+                    categoryKey: key,
+                    name: cat?.name || s.name,
+                  }));
+                }}
+                className="input-dark w-full"
+              >
+                <option value="">— Оберіть категорію —</option>
+                {FIXED_CATEGORIES.map(c => (
+                  <option key={c.key} value={c.key}>{c.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
           <ModalField
             label="Назва"
             value={fixedModal.name}
@@ -2681,7 +2714,7 @@ export default function ExpensesPage() {
                   setFixedModal(s => ({ ...s, saving: false }));
                 }
               }}
-              disabled={fixedModal.saving}
+              disabled={fixedModal.saving || !fixedModal.categoryKey || !fixedModal.name.trim()}
               className="flex-1 py-2.5 rounded-xl bg-accent-500 hover:bg-accent-400 text-white text-sm font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-60"
             >
               {fixedModal.saving ? <RefreshCw size={14} className="animate-spin" /> : <Save size={14} />}
