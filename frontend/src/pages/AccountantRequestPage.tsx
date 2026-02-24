@@ -13,6 +13,8 @@ import {
   Plus,
   Trash2,
   RefreshCw,
+  Info,
+  History,
 } from "lucide-react";
 import { ConfirmDialog } from "../components/shared";
 
@@ -30,6 +32,8 @@ interface StaffItem {
 interface RecurringExpense {
   name: string;
   amount: number;
+  category_key?: string;
+  is_recurring?: boolean;
 }
 
 interface ShareData {
@@ -57,6 +61,7 @@ interface SalaryRow {
   role: string;
   position: string;
   brutto: number;
+  prev_brutto: number;
 }
 
 interface ExpenseRow {
@@ -64,6 +69,20 @@ interface ExpenseRow {
   name: string;
   amount: number | string;
   is_recurring: boolean;
+  fromPrev: boolean;
+  prevAmount: number;
+}
+
+const MONTHS_UA = [
+  "", "Січень", "Лютий", "Березень", "Квітень",
+  "Травень", "Червень", "Липень", "Серпень",
+  "Вересень", "Жовтень", "Листопад", "Грудень",
+];
+
+function prevPeriodLabel(year: number, month: number): string {
+  const py = month > 1 ? year : year - 1;
+  const pm = month > 1 ? month - 1 : 12;
+  return `${MONTHS_UA[pm]} ${py}`;
 }
 
 export default function AccountantRequestPage() {
@@ -122,6 +141,7 @@ export default function AccountantRequestPage() {
       role: s.role,
       position: s.position,
       brutto: s.prev_brutto,
+      prev_brutto: s.prev_brutto,
     }));
     setSalaries(rows);
 
@@ -131,6 +151,8 @@ export default function AccountantRequestPage() {
       name: re.name,
       amount: re.amount,
       is_recurring: true,
+      fromPrev: true,
+      prevAmount: re.amount,
     }));
     setExpenses(recExp);
     setNextExpId(recExp.length + 1);
@@ -147,7 +169,7 @@ export default function AccountantRequestPage() {
   function addExpense() {
     setExpenses((prev) => [
       ...prev,
-      { id: nextExpId, name: "", amount: "", is_recurring: false },
+      { id: nextExpId, name: "", amount: "", is_recurring: false, fromPrev: false, prevAmount: 0 },
     ]);
     setNextExpId((p) => p + 1);
   }
@@ -226,6 +248,9 @@ export default function AccountantRequestPage() {
   }
 
   const expiresDate = new Date(data.expires_at).toLocaleDateString("uk-UA");
+  const prevLabel = prevPeriodLabel(data.year, data.month);
+  const salaryTotal = salaries.reduce((sum, s) => sum + s.brutto, 0);
+  const expenseTotal = expenses.reduce((sum, e) => sum + (parseFloat(String(e.amount)) || 0), 0);
 
   // ── Submitted confirmation view ──
   if (submitted && savedResult) {
@@ -243,6 +268,9 @@ export default function AccountantRequestPage() {
                 <p className="text-sm text-gray-400">{data.filter_label}</p>
               </div>
             </div>
+            <p className="text-xs text-gray-500 mt-2">
+              Дані збережено у системі. Власник побачить ваші зміни на сторінці Витрат з позначкою «Бухгалтер».
+            </p>
             <div className="flex items-center gap-1.5 text-xs text-gray-500 mt-3">
               <Clock size={12} />
               <span>Доступно до {expiresDate}</span>
@@ -254,7 +282,7 @@ export default function AccountantRequestPage() {
             <div className="card-neo p-6">
               <h2 className="text-base font-bold text-white flex items-center gap-2 mb-4">
                 <Users size={16} className="text-blue-400" />
-                Записані зарплати
+                Записані зарплати (брутто)
               </h2>
               <div className="space-y-2">
                 {savedResult.salaries.map((s, i) => (
@@ -264,7 +292,6 @@ export default function AccountantRequestPage() {
                   </div>
                 ))}
               </div>
-              <p className="text-xs text-gray-500 mt-3">Розділ: Зарплатні витрати</p>
             </div>
           )}
 
@@ -283,7 +310,6 @@ export default function AccountantRequestPage() {
                   </div>
                 ))}
               </div>
-              <p className="text-xs text-gray-500 mt-3">Розділ: Постійні витрати (Інші витрати)</p>
             </div>
           )}
 
@@ -292,7 +318,7 @@ export default function AccountantRequestPage() {
             <div className="card-neo p-6">
               <h2 className="text-base font-bold text-white flex items-center gap-2 mb-4">
                 <Receipt size={16} className="text-purple-400" />
-                Записані інші витрати
+                Записані разові витрати
               </h2>
               <div className="space-y-2">
                 {savedResult.other_expenses.map((e, i) => (
@@ -302,7 +328,6 @@ export default function AccountantRequestPage() {
                   </div>
                 ))}
               </div>
-              <p className="text-xs text-gray-500 mt-3">Розділ: Інші витрати</p>
             </div>
           )}
 
@@ -327,7 +352,7 @@ export default function AccountantRequestPage() {
       <div className="max-w-3xl mx-auto space-y-6">
         {/* Header */}
         <div className="card-neo p-6">
-          <div className="flex items-center gap-3 mb-2">
+          <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center">
               <ClipboardList size={22} className="text-orange-400" />
             </div>
@@ -336,9 +361,23 @@ export default function AccountantRequestPage() {
               <p className="text-sm text-gray-400">{data.filter_label}</p>
             </div>
           </div>
-          <p className="text-xs text-gray-500 mt-2">
-            Заповніть дані по зарплатах та витратах за вказаний місяць і натисніть «Надіслати звіт».
-          </p>
+
+          {/* Instructions banner */}
+          <div className="p-3.5 rounded-xl bg-blue-500/8 border border-blue-500/15 space-y-2">
+            <div className="flex items-start gap-2">
+              <Info size={15} className="text-blue-400 shrink-0 mt-0.5" />
+              <div className="text-xs text-gray-300 space-y-1.5">
+                <p className="font-medium text-blue-300">Що потрібно зробити:</p>
+                <ol className="list-decimal list-inside space-y-1 text-gray-400">
+                  <li>Перевірте та оновіть <strong className="text-white">зарплати (брутто)</strong> кожного працівника за поточний місяць</li>
+                  <li>Перевірте <strong className="text-white">постійні витрати</strong> — змініть суми якщо вони відрізняються від попереднього місяця</li>
+                  <li>Додайте нові витрати, якщо є</li>
+                  <li>Натисніть <strong className="text-orange-300">«Надіслати звіт»</strong></li>
+                </ol>
+              </div>
+            </div>
+          </div>
+
           <div className="flex items-center gap-1.5 text-xs text-gray-500 mt-3">
             <Clock size={12} />
             <span>Доступно до {expiresDate}</span>
@@ -347,97 +386,154 @@ export default function AccountantRequestPage() {
 
         {/* ── Section 1: Salaries ── */}
         <div className="card-neo p-6">
-          <h2 className="text-base font-bold text-white flex items-center gap-2 mb-4">
+          <h2 className="text-base font-bold text-white flex items-center gap-2 mb-1">
             <Users size={16} className="text-blue-400" />
-            Зарплати
+            Зарплати (брутто)
           </h2>
-          <p className="text-xs text-gray-500 mb-4">
-            Вкажіть офіційну зарплату (брутто) кожного працівника. Дані з попереднього місяця підставлені автоматично.
-          </p>
+          <div className="flex items-center gap-1.5 mb-4">
+            <History size={11} className="text-gray-600" />
+            <p className="text-xs text-gray-500">
+              Суми підставлені з попереднього періоду ({prevLabel}). Відредагуйте якщо зарплата змінилась.
+            </p>
+          </div>
 
           {salaries.length === 0 ? (
             <p className="text-sm text-gray-500 text-center py-4">Немає працівників для відображення</p>
           ) : (
             <div className="space-y-3">
-              {salaries.map((s, idx) => (
-                <div key={s.staff_member_id} className="flex items-center gap-3 py-3 px-4 bg-dark-400/30 rounded-xl">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-white truncate">{s.full_name}</p>
-                    <p className="text-xs text-gray-500">{s.position || s.role}</p>
+              {salaries.map((s, idx) => {
+                const changed = s.brutto !== s.prev_brutto;
+                return (
+                  <div key={s.staff_member_id} className="py-3 px-4 bg-dark-400/30 rounded-xl">
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-white truncate">{s.full_name}</p>
+                        <p className="text-xs text-gray-500">{s.position || s.role}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={s.brutto || ""}
+                          onChange={(e) => handleSalaryChange(idx, e.target.value)}
+                          placeholder="0.00"
+                          className={`w-36 px-3 py-2 rounded-lg bg-dark-500/60 border text-white text-sm text-right tabular-nums outline-none transition-all ${
+                            changed ? "border-blue-500/50" : "border-dark-50/20"
+                          } focus:border-blue-500/50`}
+                        />
+                        <span className="text-xs text-gray-500">грн</span>
+                      </div>
+                    </div>
+                    {/* Show previous period reference */}
+                    {s.prev_brutto > 0 && (
+                      <div className="flex items-center justify-end gap-1.5 mt-1.5">
+                        <span className="text-[10px] text-gray-600">
+                          {prevLabel}: {fmt(s.prev_brutto)} грн
+                        </span>
+                        {changed && (
+                          <span className={`text-[10px] font-medium ${s.brutto > s.prev_brutto ? "text-emerald-500" : "text-red-400"}`}>
+                            ({s.brutto > s.prev_brutto ? "+" : ""}{fmt(s.brutto - s.prev_brutto)})
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={s.brutto || ""}
-                      onChange={(e) => handleSalaryChange(idx, e.target.value)}
-                      placeholder="0.00"
-                      className="w-36 px-3 py-2 rounded-lg bg-dark-500/60 border border-dark-50/20 text-white text-sm text-right tabular-nums outline-none focus:border-blue-500/50 transition-all"
-                    />
-                    <span className="text-xs text-gray-500">грн</span>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
+              {/* Salary total */}
+              <div className="flex items-center justify-between pt-2 px-1">
+                <span className="text-xs text-gray-500 font-medium">Разом брутто</span>
+                <span className="text-sm font-bold text-blue-400 tabular-nums">{fmt(salaryTotal)} грн</span>
+              </div>
             </div>
           )}
         </div>
 
         {/* ── Section 2: Expenses ── */}
         <div className="card-neo p-6">
-          <h2 className="text-base font-bold text-white flex items-center gap-2 mb-4">
+          <h2 className="text-base font-bold text-white flex items-center gap-2 mb-1">
             <Receipt size={16} className="text-orange-400" />
-            Витрати за рахунком
+            Постійні та інші витрати
           </h2>
-          <p className="text-xs text-gray-500 mb-4">
-            Вкажіть назву, суму та позначте прапорцем постійні витрати. Постійні витрати зберігаються для наступних місяців.
-          </p>
+          <div className="flex items-center gap-1.5 mb-4">
+            <History size={11} className="text-gray-600" />
+            <p className="text-xs text-gray-500">
+              Постійні витрати перенесені з попереднього періоду ({prevLabel}). Перевірте суми та додайте нові витрати.
+            </p>
+          </div>
 
           {expenses.length > 0 && (
             <div className="space-y-3 mb-4">
-              {expenses.map((exp) => (
-                <div key={exp.id} className="flex items-start gap-3 py-3 px-4 bg-dark-400/30 rounded-xl">
-                  <div className="flex-1 space-y-2">
-                    <input
-                      type="text"
-                      value={exp.name}
-                      onChange={(e) => updateExpense(exp.id, "name", e.target.value)}
-                      placeholder="Назва витрати"
-                      className="w-full px-3 py-2 rounded-lg bg-dark-500/60 border border-dark-50/20 text-white text-sm outline-none focus:border-orange-500/50 transition-all"
-                    />
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          value={exp.amount || ""}
-                          onChange={(e) => updateExpense(exp.id, "amount", e.target.value === "" ? "" : (parseFloat(e.target.value) || 0))}
-                          placeholder="0.00"
-                          className="w-32 px-3 py-2 rounded-lg bg-dark-500/60 border border-dark-50/20 text-white text-sm text-right tabular-nums outline-none focus:border-orange-500/50 transition-all"
-                        />
-                        <span className="text-xs text-gray-500">грн</span>
+              {expenses.map((exp) => {
+                const numAmount = parseFloat(String(exp.amount)) || 0;
+                const amountChanged = exp.fromPrev && numAmount !== exp.prevAmount;
+                return (
+                  <div key={exp.id} className="py-3 px-4 bg-dark-400/30 rounded-xl">
+                    {exp.fromPrev && (
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent-500/15 text-accent-400 border border-accent-500/20">
+                          з попереднього місяця
+                        </span>
                       </div>
-                      <label className="flex items-center gap-2 cursor-pointer select-none">
+                    )}
+                    <div className="flex items-start gap-3">
+                      <div className="flex-1 space-y-2">
                         <input
-                          type="checkbox"
-                          checked={exp.is_recurring}
-                          onChange={(e) => updateExpense(exp.id, "is_recurring", e.target.checked)}
-                          className="w-4 h-4 rounded border-dark-50/30 bg-dark-500 text-orange-500 focus:ring-orange-500/50"
+                          type="text"
+                          value={exp.name}
+                          onChange={(e) => updateExpense(exp.id, "name", e.target.value)}
+                          placeholder="Назва витрати"
+                          className="w-full px-3 py-2 rounded-lg bg-dark-500/60 border border-dark-50/20 text-white text-sm outline-none focus:border-orange-500/50 transition-all"
                         />
-                        <span className="text-xs text-gray-400">Постійна витрата</span>
-                      </label>
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={exp.amount === 0 ? "" : exp.amount}
+                              onChange={(e) => updateExpense(exp.id, "amount", e.target.value === "" ? "" : (parseFloat(e.target.value) || 0))}
+                              placeholder="0.00"
+                              className={`w-32 px-3 py-2 rounded-lg bg-dark-500/60 border text-white text-sm text-right tabular-nums outline-none transition-all ${
+                                amountChanged ? "border-orange-500/50" : "border-dark-50/20"
+                              } focus:border-orange-500/50`}
+                            />
+                            <span className="text-xs text-gray-500">грн</span>
+                          </div>
+                          <label className="flex items-center gap-2 cursor-pointer select-none">
+                            <input
+                              type="checkbox"
+                              checked={exp.is_recurring}
+                              onChange={(e) => updateExpense(exp.id, "is_recurring", e.target.checked)}
+                              className="w-4 h-4 rounded border-dark-50/30 bg-dark-500 text-orange-500 focus:ring-orange-500/50"
+                            />
+                            <span className="text-xs text-gray-400">Постійна</span>
+                          </label>
+                        </div>
+                        {/* Show previous amount reference */}
+                        {exp.fromPrev && exp.prevAmount > 0 && amountChanged && (
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] text-gray-600">
+                              Було: {fmt(exp.prevAmount)} грн
+                            </span>
+                            <span className={`text-[10px] font-medium ${numAmount > exp.prevAmount ? "text-red-400" : "text-emerald-500"}`}>
+                              ({numAmount > exp.prevAmount ? "+" : ""}{fmt(numAmount - exp.prevAmount)})
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => removeExpense(exp.id)}
+                        className="p-2 rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-500/10 transition-all mt-1"
+                        title="Видалити"
+                      >
+                        <Trash2 size={14} />
+                      </button>
                     </div>
                   </div>
-                  <button
-                    onClick={() => removeExpense(exp.id)}
-                    className="p-2 rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-500/10 transition-all mt-1"
-                    title="Видалити"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
 
@@ -448,6 +544,14 @@ export default function AccountantRequestPage() {
             <Plus size={14} />
             Додати витрату
           </button>
+
+          {/* Expense total */}
+          {expenses.length > 0 && (
+            <div className="flex items-center justify-between pt-3 px-1 mt-3 border-t border-dark-50/10">
+              <span className="text-xs text-gray-500 font-medium">Разом витрати</span>
+              <span className="text-sm font-bold text-orange-400 tabular-nums">{fmt(expenseTotal)} грн</span>
+            </div>
+          )}
         </div>
 
         {/* ── Submit button ── */}
@@ -464,6 +568,11 @@ export default function AccountantRequestPage() {
             )}
             Надіслати звіт
           </button>
+        </div>
+
+        {/* Info footer */}
+        <div className="text-center text-xs text-gray-600 pb-4">
+          Після надсилання дані будуть записані у систему MedFlow. Власник побачить ваші зміни на сторінці Витрат.
         </div>
       </div>
 

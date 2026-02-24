@@ -178,6 +178,8 @@ class FixedExpenseRow(BaseModel):
     description: str = ""
     amount: float
     is_recurring: bool
+    edited_by: Optional[str] = None
+    edited_at: Optional[str] = None
 
 
 class SalaryExpenseRow(BaseModel):
@@ -202,6 +204,8 @@ class SalaryExpenseRow(BaseModel):
     nhsu_ep: float = 0.0
     nhsu_vz: float = 0.0
     is_owner: bool = False
+    edited_by: Optional[str] = None
+    edited_at: Optional[str] = None
 
 
 class TaxBlock(BaseModel):
@@ -357,6 +361,8 @@ async def get_monthly_expenses(
             description=rec.description or "",
             amount=float(rec.amount),
             is_recurring=rec.is_recurring,
+            edited_by=rec.edited_by,
+            edited_at=rec.edited_at.isoformat() if rec.edited_at else None,
         ))
 
     # 3. Зарплатні витрати — всі активні співробітники
@@ -439,6 +445,8 @@ async def get_monthly_expenses(
             nhsu_ep=doctor_nhsu["nhsu_ep"] if doctor_nhsu else 0.0,
             nhsu_vz=doctor_nhsu["nhsu_vz"] if doctor_nhsu else 0.0,
             is_owner=doctor_nhsu.get("is_owner", False) if doctor_nhsu else False,
+            edited_by=rec.edited_by if rec else None,
+            edited_at=rec.edited_at.isoformat() if (rec and rec.edited_at) else None,
         ))
 
     # 4. Податковий блок
@@ -616,6 +624,8 @@ async def create_fixed_expense(
         description=body.description,
         amount=body.amount,
         is_recurring=body.is_recurring,
+        edited_by="user",
+        edited_at=datetime.now(timezone.utc),
     )
     db.add(rec)
     await db.flush()
@@ -635,6 +645,8 @@ async def create_fixed_expense(
         description=rec.description or "",
         amount=float(rec.amount),
         is_recurring=rec.is_recurring,
+        edited_by=rec.edited_by,
+        edited_at=rec.edited_at.isoformat() if rec.edited_at else None,
     )
 
 
@@ -660,6 +672,8 @@ async def update_fixed_expense(
     rec.description = body.description
     rec.amount = body.amount
     rec.is_recurring = body.is_recurring
+    rec.edited_by = "user"
+    rec.edited_at = datetime.now(timezone.utc)
     await db.flush()
 
     if body.is_recurring:
@@ -677,6 +691,8 @@ async def update_fixed_expense(
         description=rec.description or "",
         amount=float(rec.amount),
         is_recurring=rec.is_recurring,
+        edited_by=rec.edited_by,
+        edited_at=rec.edited_at.isoformat() if rec.edited_at else None,
     )
 
 
@@ -747,6 +763,8 @@ async def update_salary_expense(
     rec.target_net = body.target_net
     rec.individual_bonus = body.individual_bonus
     rec.paid_services_from_module = body.paid_services_from_module
+    rec.edited_by = "user"
+    rec.edited_at = datetime.now(timezone.utc)
     await db.commit()
     await db.refresh(rec)
 
@@ -1579,6 +1597,7 @@ async def create_accountant_request(
             "category_key": fe.category_key,
             "name": fe.name or FIXED_CATEGORY_NAMES.get(fe.category_key, fe.category_key),
             "amount": float(fe.amount),
+            "is_recurring": True,
         })
 
     payload = {
@@ -1706,6 +1725,8 @@ async def submit_accountant_request(
             )
             db.add(rec)
         rec.brutto = sal.brutto
+        rec.edited_by = "accountant"
+        rec.edited_at = datetime.now(timezone.utc)
         await db.flush()
 
         saved_salaries.append({
@@ -1714,26 +1735,59 @@ async def submit_accountant_request(
             "brutto": sal.brutto,
         })
 
-    # ── 2. Зберігаємо витрати бухгалтера як окремі записи ──
+    # ── 2. Зберігаємо витрати бухгалтера ──
+    # Для витрат із payload (recurring) — оновлюємо існуючі записи за category_key
+    payload_expenses = share.payload_snapshot.get("recurring_expenses", [])
+    payload_keys = {e.get("category_key") for e in payload_expenses if e.get("category_key")}
+
     for exp in body.expenses:
-        cat_key = str(uuid.uuid4())[:12]
-        fe = MonthlyFixedExpense(
-            user_id=user_id,
-            year=year,
-            month=month,
-            category_key=cat_key,
-            name=exp.name,
-            amount=exp.amount,
-            is_recurring=exp.is_recurring,
-        )
-        db.add(fe)
-        await db.flush()
+        now = datetime.now(timezone.utc)
+        # Спроба знайти існуючий запис за назвою (для recurring з попереднього місяця)
+        existing_fe = None
+        if exp.is_recurring:
+            for pe in payload_expenses:
+                if pe.get("name") == exp.name and pe.get("category_key"):
+                    fe_res = await db.execute(
+                        select(MonthlyFixedExpense).where(
+                            MonthlyFixedExpense.user_id == user_id,
+                            MonthlyFixedExpense.year == year,
+                            MonthlyFixedExpense.month == month,
+                            MonthlyFixedExpense.category_key == pe["category_key"],
+                        )
+                    )
+                    existing_fe = fe_res.scalar_one_or_none()
+                    break
+
+        if existing_fe:
+            existing_fe.amount = exp.amount
+            existing_fe.name = exp.name
+            existing_fe.is_recurring = exp.is_recurring
+            existing_fe.edited_by = "accountant"
+            existing_fe.edited_at = now
+            await db.flush()
+        else:
+            cat_key = str(uuid.uuid4())[:12]
+            fe = MonthlyFixedExpense(
+                user_id=user_id,
+                year=year,
+                month=month,
+                category_key=cat_key,
+                name=exp.name,
+                amount=exp.amount,
+                is_recurring=exp.is_recurring,
+                edited_by="accountant",
+                edited_at=now,
+            )
+            db.add(fe)
+            await db.flush()
+
+            if exp.is_recurring:
+                await _propagate_recurring(
+                    db, user_id, year, month,
+                    cat_key, exp.name, "", exp.amount,
+                )
 
         if exp.is_recurring:
-            await _propagate_recurring(
-                db, user_id, year, month,
-                cat_key, exp.name, "", exp.amount,
-            )
             saved_fixed.append({
                 "name": exp.name,
                 "amount": exp.amount,

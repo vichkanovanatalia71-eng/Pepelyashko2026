@@ -202,6 +202,8 @@ export interface FixedExpenseRow {
   description: string;
   amount: number;
   is_recurring: boolean;
+  edited_by?: string | null;
+  edited_at?: string | null;
 }
 
 export interface SalaryExpenseRow {
@@ -226,6 +228,8 @@ export interface SalaryExpenseRow {
   nhsu_ep: number;
   nhsu_vz: number;
   is_owner: boolean;
+  edited_by?: string | null;
+  edited_at?: string | null;
 }
 
 export interface TaxBlock {

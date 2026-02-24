@@ -1925,6 +1925,12 @@ export default function ExpensesPage() {
                       </span>
                     )}
 
+                    {row.edited_by === "accountant" && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-teal-500/15 text-teal-400 border border-teal-500/20 shrink-0" title={row.edited_at ? `Оновлено: ${new Date(row.edited_at).toLocaleDateString("uk-UA")}` : undefined}>
+                        Бухгалтер
+                      </span>
+                    )}
+
                     <span className="text-sm font-mono font-semibold text-white tabular-nums shrink-0 w-28 text-right">
                       {fmt(row.amount)} ₴
                     </span>
@@ -2201,9 +2207,16 @@ export default function ExpensesPage() {
                               <div className="flex items-start justify-between mb-4 gap-2">
                                 <div>
                                   <p className="font-semibold text-white text-sm">{row.full_name}</p>
-                                  <span className="inline-block mt-1 px-2 py-0.5 text-xs rounded-lg bg-teal-500/10 text-teal-400 border border-teal-500/20">
-                                    Лікар
-                                  </span>
+                                  <div className="flex items-center gap-1.5 mt-1">
+                                    <span className="inline-block px-2 py-0.5 text-xs rounded-lg bg-teal-500/10 text-teal-400 border border-teal-500/20">
+                                      Лікар
+                                    </span>
+                                    {row.edited_by === "accountant" && (
+                                      <span className="inline-block px-2 py-0.5 text-xs rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20" title={row.edited_at ? `Оновлено бухгалтером: ${new Date(row.edited_at).toLocaleDateString("uk-UA")}` : undefined}>
+                                        Бухгалтер
+                                      </span>
+                                    )}
+                                  </div>
                                 </div>
                                 <div className="flex items-center gap-2 shrink-0">
                                   <button
@@ -2359,9 +2372,16 @@ export default function ExpensesPage() {
                               <div className="flex items-start justify-between mb-4 gap-2">
                                 <div>
                                   <p className="font-semibold text-white text-sm">{row.full_name}</p>
-                                  <span className="inline-block mt-1 px-2 py-0.5 text-xs rounded-lg bg-dark-400 text-gray-400 border border-dark-50/10">
-                                    {ROLE_LABELS[row.role] ?? row.role}
-                                  </span>
+                                  <div className="flex items-center gap-1.5 mt-1">
+                                    <span className="inline-block px-2 py-0.5 text-xs rounded-lg bg-dark-400 text-gray-400 border border-dark-50/10">
+                                      {ROLE_LABELS[row.role] ?? row.role}
+                                    </span>
+                                    {row.edited_by === "accountant" && (
+                                      <span className="inline-block px-2 py-0.5 text-xs rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20" title={row.edited_at ? `Оновлено бухгалтером: ${new Date(row.edited_at).toLocaleDateString("uk-UA")}` : undefined}>
+                                        Бухгалтер
+                                      </span>
+                                    )}
+                                  </div>
                                 </div>
                                 <div className="flex items-center gap-2 shrink-0">
                                   <button

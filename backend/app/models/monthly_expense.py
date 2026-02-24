@@ -39,6 +39,9 @@ class MonthlyFixedExpense(Base):
     description: Mapped[str] = mapped_column(Text, default="")
     amount: Mapped[float] = mapped_column(Numeric(12, 2), default=0.0)
     is_recurring: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Хто останній редагував: "user" | "accountant" | None
+    edited_by: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    edited_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )
@@ -68,6 +71,10 @@ class MonthlySalaryExpense(Base):
     # Для лікарів: індивідуальні доплати + флаг підтягування з платних послуг
     individual_bonus: Mapped[float] = mapped_column(Numeric(12, 2), default=0.0)
     paid_services_from_module: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    # Хто останній редагував: "user" | "accountant" | None
+    edited_by: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    edited_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
