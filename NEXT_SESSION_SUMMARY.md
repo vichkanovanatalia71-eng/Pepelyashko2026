@@ -1,50 +1,50 @@
-# MedFlow (Pepelyashko) — Session Summary for Next Developer
+# MedFlow (Pepelyashko) — Підсумок сесії для наступного розробника
 
-## Project Overview
+## Огляд проекту
 
 **MedFlow** — веб-додаток для управління фінансами медичної практики ФОП (Фізична Особа-Підприємець).
 
-| Component | Stack | Port |
-|-----------|-------|------|
-| Backend | FastAPI + Uvicorn (Python 3.12) | 8000 |
-| Frontend | React 18 + Vite + TypeScript + Tailwind CSS | 5173 (dev) / 3000 (prod/nginx) |
-| Database | PostgreSQL 16 (Alpine) | 5432 |
-| Deployment | Railway (2 services: backend + frontend) | Railway-assigned |
+| Компонент | Стек | Порт |
+|-----------|------|------|
+| Бекенд | FastAPI + Uvicorn (Python 3.12) | 8000 |
+| Фронтенд | React 18 + Vite + TypeScript + Tailwind CSS | 5173 (dev) / 3000 (prod/nginx) |
+| База даних | PostgreSQL 16 (Alpine) | 5432 |
+| Деплоймент | Railway (2 сервіси: бекенд + фронтенд) | Призначається Railway |
 
 ---
 
-## What Was Completed (branch `claude/fix-railway-deployment-VhbPs`)
+## Що було зроблено (гілка `claude/fix-railway-deployment-VhbPs`)
 
-### Bug Fixes
-1. **TypeScript build errors** (`c7cc926`) — Fixed TS errors in AiConsultantPage that broke Railway build
-2. **AI consultant crash** (`444a5dd`) — Resolved AttributeError causing all AI queries to fail
-3. **Services sorting** (`188fce6`, `61a7516`) — Natural numeric sort (1,2,3 not 1,10,2)
-4. **Modal visibility on MacBook** (`444cc37`, `336bc38`) — Scrollable modals, proper z-index
-5. **Numeric input UX** (`f64a464`, `8e5fced`) — Placeholders instead of 0, clear on focus
-6. **TypeScript type error** (`daa0f5c`) — ExpenseRow.amount type allows string
-7. **Other expenses CRUD** (`2bdec24`) — Missing backend endpoints for "Інші витрати" tab + fixed fixedModal save bug
+### Виправлення багів
+1. **Помилки збірки TypeScript** (`c7cc926`) — Виправлено TS-помилки в AiConsultantPage, які ламали збірку на Railway
+2. **Падіння AI-консультанта** (`444a5dd`) — Виправлено AttributeError, через який всі AI-запити падали
+3. **Сортування послуг** (`188fce6`, `61a7516`) — Натуральне числове сортування (1,2,3 замість 1,10,2)
+4. **Видимість модальних вікон на MacBook** (`444cc37`, `336bc38`) — Прокручувані модалки, правильний z-index
+5. **UX числових полів** (`f64a464`, `8e5fced`) — Плейсхолдери замість 0, очищення при фокусі
+6. **Помилка типу TypeScript** (`daa0f5c`) — Тип ExpenseRow.amount дозволяє рядок
+7. **CRUD для інших витрат** (`2bdec24`) — Додано відсутні ендпоінти бекенду для вкладки "Інші витрати" + виправлено баг збереження fixedModal
 
-### Features Added
-1. **Excel export** (`ca54b0c`, `12a2589`, `98ec7ab`) — Full export for services with calculations + materials
-2. **Premium design system** (`71c04dd`, `2e7a4fd`) — 3D hover effects, glow animations, light theme
-3. **Settings page** (`975db36`) — Moved Profile into Settings as collapsible sections
-4. **Mobile UX** (`ec469d6`) — Horizontally scrollable bottom navigation
-5. **Dashboard** (`f92b9cc`) — Collapsible insights (show titles only, expand on click)
-6. **Rebranding** (`8ebbfae`) — Renamed from "Pepelyashko" to "MedFlow" across the app
-7. **Search & sort** (`b73297a`) — Services sort all columns + search by materials
+### Додані функції
+1. **Експорт в Excel** (`ca54b0c`, `12a2589`, `98ec7ab`) — Повний експорт послуг з розрахунками + матеріали
+2. **Преміальна дизайн-система** (`71c04dd`, `2e7a4fd`) — 3D hover-ефекти, glow-анімації, світла тема
+3. **Сторінка налаштувань** (`975db36`) — Профіль переміщено в Налаштування як секції, що згортаються
+4. **Мобільний UX** (`ec469d6`) — Горизонтально прокручувана нижня навігація
+5. **Дашборд** (`f92b9cc`) — Інсайти, що згортаються (показуються лише заголовки, розгортаються при натисканні)
+6. **Ребрендинг** (`8ebbfae`) — Перейменовано з "Pepelyashko" на "MedFlow" по всьому додатку
+7. **Пошук і сортування** (`b73297a`) — Сортування всіх стовпців послуг + пошук за матеріалами
 
-### Railway Deployment Fixes
-1. Backend `Dockerfile` now uses `entrypoint.sh` (proper PID 1 handling via `exec`, fallback if migrations fail)
-2. Frontend `Dockerfile.prod` uses `envsubst` for dynamic PORT and BACKEND_URL
-3. `nginx.conf` template uses `${PORT}` and `${BACKEND_URL}` variables
-4. Both `railway.toml` configs have restart policies and health checks
-5. Backend `config.py` auto-converts `postgres://` → `postgresql+asyncpg://` for Railway
+### Виправлення деплойменту на Railway
+1. Бекенд `Dockerfile` тепер використовує `entrypoint.sh` (правильна обробка PID 1 через `exec`, fallback якщо міграції не вдалися)
+2. Фронтенд `Dockerfile.prod` використовує `envsubst` для динамічних PORT та BACKEND_URL
+3. Шаблон `nginx.conf` використовує змінні `${PORT}` та `${BACKEND_URL}`
+4. Обидва конфіги `railway.toml` мають політики перезапуску та перевірки здоров'я
+5. Бекенд `config.py` автоматично конвертує `postgres://` → `postgresql+asyncpg://` для Railway
 
 ---
 
-## Current Railway Configuration
+## Поточна конфігурація Railway
 
-### Backend (`backend/railway.toml`)
+### Бекенд (`backend/railway.toml`)
 ```toml
 [build]
 builder = "dockerfile"
@@ -57,7 +57,7 @@ restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 5
 ```
 
-### Frontend (`frontend/railway.toml`)
+### Фронтенд (`frontend/railway.toml`)
 ```toml
 [build]
 builder = "dockerfile"
@@ -70,154 +70,154 @@ restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 5
 ```
 
-### Required Railway Environment Variables
+### Необхідні змінні середовища Railway
 
-| Variable | Service | Description |
-|----------|---------|-------------|
-| `DATABASE_URL` | Backend | Auto-injected by Railway PostgreSQL plugin |
-| `SECRET_KEY` | Backend | JWT signing key (generate a strong random string!) |
-| `PORT` | Both | Auto-injected by Railway |
-| `BACKEND_URL` | Frontend | Internal Railway URL of backend service (e.g., `http://backend.railway.internal:8000`) |
-| `ANTHROPIC_API_KEY` | Backend | For AI consultant feature (optional) |
-| `SMTP_HOST` | Backend | Email server (optional, auto-verify without it) |
-| `SMTP_PORT` | Backend | Email port (default: 587) |
-| `SMTP_USER` | Backend | Email username |
-| `SMTP_PASSWORD` | Backend | Email password |
-| `SMTP_FROM` | Backend | Sender email address |
-| `FRONTEND_URL` | Backend | Public URL of frontend (for email links) |
+| Змінна | Сервіс | Опис |
+|--------|--------|------|
+| `DATABASE_URL` | Бекенд | Автоматично підставляється плагіном Railway PostgreSQL |
+| `SECRET_KEY` | Бекенд | Ключ підпису JWT (згенеруйте надійний випадковий рядок!) |
+| `PORT` | Обидва | Автоматично підставляється Railway |
+| `BACKEND_URL` | Фронтенд | Внутрішня Railway URL бекенд-сервісу (напр., `http://backend.railway.internal:8000`) |
+| `ANTHROPIC_API_KEY` | Бекенд | Для функції AI-консультанта (необов'язково) |
+| `SMTP_HOST` | Бекенд | Поштовий сервер (необов'язково, без нього — автоверифікація) |
+| `SMTP_PORT` | Бекенд | Порт пошти (за замовчуванням: 587) |
+| `SMTP_USER` | Бекенд | Ім'я користувача пошти |
+| `SMTP_PASSWORD` | Бекенд | Пароль пошти |
+| `SMTP_FROM` | Бекенд | Адреса відправника |
+| `FRONTEND_URL` | Бекенд | Публічна URL фронтенду (для посилань у листах) |
 
 ---
 
-## Project Structure (Key Files)
+## Структура проекту (ключові файли)
 
 ```
 Pepelyashko2026/
-├── docker-compose.yml              # Local dev (3 services: db, backend, frontend)
-├── DEPLOY.md                       # 400+ lines deployment instructions (Windows/PowerShell)
-├── README.md                       # Project overview
-├── NEXT_SESSION_SUMMARY.md         # This file
+├── docker-compose.yml              # Локальна розробка (3 сервіси: db, backend, frontend)
+├── DEPLOY.md                       # 400+ рядків інструкцій з деплойменту (Windows/PowerShell)
+├── README.md                       # Огляд проекту
+├── NEXT_SESSION_SUMMARY.md         # Цей файл
 │
 ├── backend/
-│   ├── Dockerfile                  # Production image (Python 3.12-slim)
-│   ├── railway.toml                # Railway config
-│   ├── entrypoint.sh               # Startup: migrations → uvicorn (with exec for PID 1)
-│   ├── requirements.txt            # 35 Python deps (FastAPI, SQLAlchemy, Alembic, etc.)
-│   ├── alembic.ini                 # DB migration config
-│   ├── .env.example                # Template for environment vars
+│   ├── Dockerfile                  # Production-образ (Python 3.12-slim)
+│   ├── railway.toml                # Конфіг Railway
+│   ├── entrypoint.sh               # Запуск: міграції → uvicorn (з exec для PID 1)
+│   ├── requirements.txt            # 35 Python-залежностей (FastAPI, SQLAlchemy, Alembic тощо)
+│   ├── alembic.ini                 # Конфіг міграцій БД
+│   ├── .env.example                # Шаблон змінних середовища
 │   ├── app/
-│   │   ├── main.py                 # FastAPI app entry point
-│   │   ├── api/routes/             # 13 API route modules
-│   │   ├── core/config.py          # Pydantic Settings (auto-converts DATABASE_URL)
-│   │   ├── models/                 # SQLAlchemy models
-│   │   ├── schemas/                # Pydantic schemas
-│   │   └── services/               # Business logic
-│   └── alembic/versions/           # 6 DB migrations
+│   │   ├── main.py                 # Точка входу FastAPI-додатку
+│   │   ├── api/routes/             # 13 модулів API-маршрутів
+│   │   ├── core/config.py          # Pydantic Settings (автоконвертація DATABASE_URL)
+│   │   ├── models/                 # SQLAlchemy моделі
+│   │   ├── schemas/                # Pydantic схеми
+│   │   └── services/               # Бізнес-логіка
+│   └── alembic/versions/           # 6 міграцій БД
 │
 ├── frontend/
-│   ├── Dockerfile                  # Dev image (Node 20 Alpine + Vite HMR)
-│   ├── Dockerfile.prod             # Multi-stage: Node build → Nginx (envsubst for PORT)
-│   ├── railway.toml                # Railway config
-│   ├── nginx.conf                  # Template with ${PORT} and ${BACKEND_URL}
+│   ├── Dockerfile                  # Dev-образ (Node 20 Alpine + Vite HMR)
+│   ├── Dockerfile.prod             # Multi-stage: збірка Node → Nginx (envsubst для PORT)
+│   ├── railway.toml                # Конфіг Railway
+│   ├── nginx.conf                  # Шаблон з ${PORT} та ${BACKEND_URL}
 │   ├── package.json                # React 18, Vite 6, Tailwind 3, Radix UI, Recharts, XLSX
 │   └── src/
-│       ├── App.tsx                 # Main app with routing
-│       ├── pages/                  # 10+ page components
-│       ├── components/             # UI components (shadcn/ui based)
-│       └── api/client.ts           # Axios HTTP client
+│       ├── App.tsx                 # Головний додаток з маршрутизацією
+│       ├── pages/                  # 10+ компонентів сторінок
+│       ├── components/             # UI-компоненти (на базі shadcn/ui)
+│       └── api/client.ts           # HTTP-клієнт Axios
 ```
 
 ---
 
-## API Routes Overview
+## Огляд API-маршрутів
 
-| Route Module | Prefix | Description |
-|-------------|--------|-------------|
-| auth | `/api/auth/` | Registration, login, email verification |
-| incomes | `/api/incomes/` | Income CRUD |
-| expenses | `/api/expenses/` | Fixed/variable expense CRUD |
-| monthly_expenses | `/api/monthly-expenses/` | Monthly other expenses CRUD |
-| taxes | `/api/taxes/` | Tax calculation |
-| reports | `/api/reports/` | Financial reports & Excel export |
-| nhsu | `/api/nhsu/` | NHSU (National Health Service) capitation calculator |
-| services | `/api/services/` | Medical services catalog |
-| staff | `/api/staff/` | Staff management |
-| budget | `/api/budget/` | Budget planning |
-| revenue | `/api/revenue/` | Revenue tracking |
-| monthly_services | `/api/monthly-services/` | Monthly services data |
-| monthly_expenses_data | `/api/monthly-expenses-data/` | Monthly expenses aggregation |
-| ai_consultant | `/api/ai-consultant/` | AI-powered financial advisor |
-| health | `/api/health` | Health check → `{"status": "ok"}` |
-
----
-
-## Database
-
-- **Engine**: PostgreSQL 16 Alpine
-- **ORM**: SQLAlchemy 2.0.36 (async via asyncpg)
-- **Migrations**: Alembic (6 versions)
-- **Auto-run**: `entrypoint.sh` runs `alembic upgrade head` before starting server
-- **Key models**: User, Income, Expense, MonthlyService, MonthlyOtherExpense, Service, Staff, NhsuSettings
+| Модуль маршруту | Префікс | Опис |
+|----------------|---------|------|
+| auth | `/api/auth/` | Реєстрація, вхід, підтвердження email |
+| incomes | `/api/incomes/` | CRUD доходів |
+| expenses | `/api/expenses/` | CRUD постійних/змінних витрат |
+| monthly_expenses | `/api/monthly-expenses/` | CRUD щомісячних інших витрат |
+| taxes | `/api/taxes/` | Розрахунок податків |
+| reports | `/api/reports/` | Фінансові звіти та експорт в Excel |
+| nhsu | `/api/nhsu/` | Калькулятор капітації НСЗУ |
+| services | `/api/services/` | Каталог медичних послуг |
+| staff | `/api/staff/` | Управління персоналом |
+| budget | `/api/budget/` | Планування бюджету |
+| revenue | `/api/revenue/` | Відстеження доходів |
+| monthly_services | `/api/monthly-services/` | Дані щомісячних послуг |
+| monthly_expenses_data | `/api/monthly-expenses-data/` | Агрегація щомісячних витрат |
+| ai_consultant | `/api/ai-consultant/` | AI-фінансовий консультант |
+| health | `/api/health` | Перевірка здоров'я → `{"status": "ok"}` |
 
 ---
 
-## Priority TODOs for Next Session
+## База даних
 
-### High Priority
-1. **GitHub Actions CI/CD** — Currently no automated pipeline. Add workflow for:
-   - Lint + type check on PR
-   - Build verification
-   - Auto-deploy to Railway on merge to main/master
-2. **Production SECRET_KEY** — Currently uses `"change-me-in-production"` default
-3. **CORS tightening** — Currently `["*"]`, should restrict to Railway frontend URL in production
-
-### Medium Priority
-4. **Database backup strategy** — No backup mechanism for Railway PostgreSQL
-5. **Error monitoring** — No Sentry/logging service integration
-6. **Frontend error boundaries** — Missing React error boundaries for graceful failures
-7. **API rate limiting** — No rate limiting on auth endpoints
-
-### Low Priority
-8. **Legacy file cleanup** — `server.py`, `server_old.py`, old auth/ directory still in backend
-9. **Test coverage** — `tests/` directory exists but is empty (only `__init__.py`)
-10. **Documentation** — API documentation beyond Swagger auto-docs
+- **Движок**: PostgreSQL 16 Alpine
+- **ORM**: SQLAlchemy 2.0.36 (асинхронний через asyncpg)
+- **Міграції**: Alembic (6 версій)
+- **Автозапуск**: `entrypoint.sh` виконує `alembic upgrade head` перед запуском сервера
+- **Ключові моделі**: User, Income, Expense, MonthlyService, MonthlyOtherExpense, Service, Staff, NhsuSettings
 
 ---
 
-## Known Issues
+## Пріоритетні завдання для наступної сесії
 
-1. **CORS is `["*"]`** — Works for dev/Railway but should be restricted for production security
-2. **No test suite** — Zero automated tests
-3. **Legacy files in backend** — `server.py`, `server_old.py`, old MongoDB code not removed
-4. **Generated directories** — `generated_acts/`, `generated_contracts/`, etc. need persistent storage on Railway (volumes)
-5. **Docker-compose hardcoded DATABASE_URL** — Only affects local dev, Railway injects its own
+### Високий пріоритет
+1. **GitHub Actions CI/CD** — Наразі немає автоматизованого пайплайну. Додати workflow для:
+   - Лінтинг + перевірка типів на PR
+   - Верифікація збірки
+   - Автодеплой на Railway при мержі в main/master
+2. **Production SECRET_KEY** — Наразі використовується значення за замовчуванням `"change-me-in-production"`
+3. **Обмеження CORS** — Наразі `["*"]`, потрібно обмежити до URL фронтенду Railway у продакшені
+
+### Середній пріоритет
+4. **Стратегія резервного копіювання БД** — Немає механізму бекапів для Railway PostgreSQL
+5. **Моніторинг помилок** — Немає інтеграції з Sentry чи сервісом логування
+6. **Error boundaries фронтенду** — Відсутні React error boundaries для коректної обробки збоїв
+7. **Обмеження частоти запитів API** — Немає rate limiting на ендпоінтах авторизації
+
+### Низький пріоритет
+8. **Очищення застарілих файлів** — `server.py`, `server_old.py`, стара директорія auth/ досі в бекенді
+9. **Покриття тестами** — Директорія `tests/` існує, але порожня (лише `__init__.py`)
+10. **Документація** — API-документація окрім автогенерованої Swagger
 
 ---
 
-## Quick Start (Local Development)
+## Відомі проблеми
+
+1. **CORS встановлено `["*"]`** — Працює для dev/Railway, але потрібно обмежити для безпеки продакшену
+2. **Немає тестів** — Жодного автоматизованого тесту
+3. **Застарілі файли в бекенді** — `server.py`, `server_old.py`, старий код MongoDB не видалено
+4. **Директорії для генерованих файлів** — `generated_acts/`, `generated_contracts/` тощо потребують постійного сховища на Railway (volumes)
+5. **Жорстко заданий DATABASE_URL в docker-compose** — Впливає лише на локальну розробку, Railway підставляє свій
+
+---
+
+## Швидкий старт (локальна розробка)
 
 ```bash
-# Clone and start
+# Клонування та запуск
 git clone https://github.com/vichkanovanatalia71-eng/Pepelyashko2026.git
 cd Pepelyashko2026
 docker compose up --build
 
-# Access
-# Frontend: http://localhost:5173
-# Backend API: http://localhost:8000/docs
-# Health: http://localhost:8000/api/health
+# Доступ
+# Фронтенд: http://localhost:5173
+# API бекенду: http://localhost:8000/docs
+# Перевірка здоров'я: http://localhost:8000/api/health
 
-# Register a test user via Swagger UI at /docs → POST /api/auth/register
+# Зареєструвати тестового користувача через Swagger UI на /docs → POST /api/auth/register
 ```
 
 ---
 
-## Railway Deployment Checklist
+## Чек-лист деплойменту на Railway
 
-- [ ] Create Railway project with 2 services (backend + frontend) + PostgreSQL plugin
-- [ ] Set `BACKEND_URL` on frontend service to backend's internal Railway URL
-- [ ] Set `SECRET_KEY` on backend service (generate strong random key)
-- [ ] Set `ANTHROPIC_API_KEY` if AI consultant is needed
-- [ ] Configure SMTP vars if email verification is needed
-- [ ] Set `FRONTEND_URL` on backend to frontend's public Railway URL
-- [ ] Verify health checks pass: backend `/api/health`, frontend `/`
-- [ ] Test login/registration flow end-to-end
+- [ ] Створити проект Railway з 2 сервісами (бекенд + фронтенд) + плагін PostgreSQL
+- [ ] Встановити `BACKEND_URL` на фронтенд-сервісі = внутрішня Railway URL бекенду
+- [ ] Встановити `SECRET_KEY` на бекенд-сервісі (згенерувати надійний випадковий ключ)
+- [ ] Встановити `ANTHROPIC_API_KEY`, якщо потрібен AI-консультант
+- [ ] Налаштувати SMTP-змінні, якщо потрібна верифікація email
+- [ ] Встановити `FRONTEND_URL` на бекенді = публічна Railway URL фронтенду
+- [ ] Перевірити що health checks проходять: бекенд `/api/health`, фронтенд `/`
+- [ ] Протестувати потік входу/реєстрації від початку до кінця
