@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import axios from "axios";
+import api from "../api/client";
 import {
   ClipboardList,
   Clock,
@@ -87,7 +87,7 @@ export default function AccountantRequestPage() {
     setLoading(true);
     setError("");
     try {
-      const r = await axios.get(`/api/monthly-expenses/accountant-request/${token}/view`);
+      const r = await api.get(`/monthly-expenses/accountant-request/${token}/view`);
       setData(r.data);
       initForm(r.data);
     } catch (err: any) {
@@ -166,7 +166,7 @@ export default function AccountantRequestPage() {
     if (!token) return;
     setSubmitting(true);
     try {
-      const res = await axios.post(`/api/monthly-expenses/accountant-request/${token}/submit`, {
+      const res = await api.post(`/monthly-expenses/accountant-request/${token}/submit`, {
         salaries: salaries.map((s) => ({
           staff_member_id: s.staff_member_id,
           brutto: s.brutto,

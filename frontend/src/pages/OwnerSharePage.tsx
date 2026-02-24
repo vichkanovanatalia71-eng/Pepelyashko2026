@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import axios from "axios";
+import api from "../api/client";
 import {
   TrendingUp,
 
@@ -65,7 +65,7 @@ export default function OwnerSharePage() {
     if (!token) return;
     (async () => {
       try {
-        const r = await axios.get(`/api/monthly-expenses/owner-share/${token}/view`);
+        const r = await api.get(`/monthly-expenses/owner-share/${token}/view`);
         setData(r.data);
       } catch {
         setError("Посилання не знайдено або термін дії закінчився.");
