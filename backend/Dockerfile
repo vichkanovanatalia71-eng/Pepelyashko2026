@@ -6,14 +6,17 @@ ENV PYTHONPATH=/app
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
+# Install dependencies first for better layer caching
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Copy application code
 COPY . .
 
-# Ensure entrypoint has unix line endings and is executable
+# Fix Windows line endings in entrypoint and make executable
 RUN sed -i 's/\r$//' entrypoint.sh && chmod +x entrypoint.sh
 
 EXPOSE 8000
 
-ENTRYPOINT ["bash", "./entrypoint.sh"]
+# Use entrypoint.sh for proper PID 1 handling and graceful shutdown
+CMD ["./entrypoint.sh"]
