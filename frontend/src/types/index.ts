@@ -197,8 +197,9 @@ export interface MonthlyTaxRates {
 }
 
 export interface FixedExpenseRow {
-  category_key: string;
-  category_name: string;
+  id: number;
+  name: string;
+  description: string;
   amount: number;
   is_recurring: boolean;
 }
@@ -697,7 +698,6 @@ export interface PeriodSummary {
 
 export interface AiParsedExpense {
   category: string;       // "fixed" | "other"
-  category_key: string;   // один з FIXED_CATEGORY_KEYS або ""
   name: string;
   amount: number;
   is_recurring: boolean;

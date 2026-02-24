@@ -1,6 +1,6 @@
 """Моделі для структурованих місячних витрат.
 
-Блок 1 — постійні витрати (7 категорій, з можливістю позначити як recurring).
+Блок 1 — постійні витрати (довільні записи з назвою, описом, сумою та прапорцем recurring).
 Блок 2 — зарплатні витрати (по одному запису на (staff_member, рік, місяць)).
 Блок 3 — інші витрати (довільні записи з назвою, сумою, категорією).
 """
@@ -13,34 +13,30 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
 
-# Стандартні категорії постійних витрат (key → назва)
-FIXED_EXPENSE_CATEGORIES: list[tuple[str, str]] = [
-    ("rent",       "Оренда"),
-    ("utilities",  "Комунальні"),
-    ("internet",   "Інтернет"),
-    ("phone",      "Телефон"),
-    ("bank",       "Банківські послуги"),
-    ("admin",      "Адміністративні витрати"),
-    ("other",      "Інші витрати"),
-]
-
-FIXED_CATEGORY_KEYS = [k for k, _ in FIXED_EXPENSE_CATEGORIES]
-FIXED_CATEGORY_NAMES = {k: v for k, v in FIXED_EXPENSE_CATEGORIES}
+# Legacy mapping — used only for migrating old category_key data to name
+FIXED_CATEGORY_NAMES: dict[str, str] = {
+    "rent": "Оренда",
+    "utilities": "Комунальні",
+    "internet": "Інтернет",
+    "phone": "Телефон",
+    "bank": "Банківські послуги",
+    "admin": "Адміністративні витрати",
+    "other": "Інші витрати",
+}
 
 
 class MonthlyFixedExpense(Base):
-    """Запис постійної витрати за категорією за місяць."""
+    """Запис постійної витрати за місяць (довільна назва)."""
 
     __tablename__ = "monthly_fixed_expenses"
-    __table_args__ = (
-        UniqueConstraint("user_id", "year", "month", "category_key", name="uq_mfe"),
-    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
     year: Mapped[int] = mapped_column(Integer)
     month: Mapped[int] = mapped_column(Integer)        # 1–12
-    category_key: Mapped[str] = mapped_column(String(50))
+    category_key: Mapped[str] = mapped_column(String(50))  # legacy / stable id for recurring
+    name: Mapped[str] = mapped_column(String(255), default="")
+    description: Mapped[str] = mapped_column(Text, default="")
     amount: Mapped[float] = mapped_column(Numeric(12, 2), default=0.0)
     is_recurring: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(

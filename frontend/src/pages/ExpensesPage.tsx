@@ -81,16 +81,6 @@ const MONTH_SHORT = [
   "Лип","Сер","Вер","Жов","Лис","Гру",
 ];
 
-const FIXED_CATEGORIES: { key: string; name: string }[] = [
-  { key: "rent",      name: "Оренда" },
-  { key: "utilities", name: "Комунальні" },
-  { key: "internet",  name: "Інтернет" },
-  { key: "phone",     name: "Телефон" },
-  { key: "bank",      name: "Банківські послуги" },
-  { key: "admin",     name: "Адміністративні витрати" },
-  { key: "other",     name: "Інші витрати" },
-];
-
 const ROLE_LABELS: Record<string, string> = {
   doctor: "Лікар",
   nurse:  "Медична сестра",
@@ -137,12 +127,6 @@ interface SalaryFormState {
   target_net: string;
   individual_bonus: string;
   paid_services_from_module: boolean;
-  saving: boolean;
-}
-
-interface FixedPending {
-  amount: string;
-  is_recurring: boolean;
   saving: boolean;
 }
 
@@ -385,9 +369,6 @@ export default function ExpensesPage() {
   const [data, setData]       = useState<MonthlyExpenseData | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Fixed expenses
-  const [fixedPending, setFixedPending] = useState<Record<string, FixedPending>>({});
-
   // Salary forms
   const [salaryForms, setSalaryForms] = useState<Record<number, SalaryFormState>>({});
 
@@ -414,9 +395,9 @@ export default function ExpensesPage() {
 
   // ── Fixed modal state
   const [fixedModal, setFixedModal] = useState<{
-    open: boolean; isEdit: boolean; categoryKey: string;
+    open: boolean; isEdit: boolean; id: number | null;
     name: string; desc: string; amount: string; recurring: boolean; saving: boolean;
-  }>({ open: false, isEdit: false, categoryKey: "", name: "", desc: "", amount: "", recurring: true, saving: false });
+  }>({ open: false, isEdit: false, id: null, name: "", desc: "", amount: "", recurring: true, saving: false });
 
   // ── Staff modal state
   const [staffModal, setStaffModal] = useState<{
@@ -491,16 +472,6 @@ export default function ExpensesPage() {
         params: { year, month },
       });
       setData(resp);
-
-      const fp: Record<string, FixedPending> = {};
-      for (const row of resp.fixed) {
-        fp[row.category_key] = {
-          amount: row.amount > 0 ? String(row.amount) : "",
-          is_recurring: row.is_recurring,
-          saving: false,
-        };
-      }
-      setFixedPending(fp);
 
       const sf: Record<number, SalaryFormState> = {};
       for (const row of resp.salary) {
@@ -728,12 +699,6 @@ export default function ExpensesPage() {
   }
 
   // ── Dirty checks ──────────────────────────────────────────────
-  function isFixedDirty(key: string, row: FixedExpenseRow): boolean {
-    const p = fixedPending[key];
-    if (!p) return false;
-    return (parseFloat(p.amount) || 0) !== row.amount || p.is_recurring !== row.is_recurring;
-  }
-
   function isSalaryDirty(staffId: number, row: SalaryExpenseRow): boolean {
     const f = salaryForms[staffId];
     if (!f) return false;
@@ -746,24 +711,15 @@ export default function ExpensesPage() {
     );
   }
 
-  // ── Save fixed ────────────────────────────────────────────────
-  async function saveFixed(key: string) {
-    const pending = fixedPending[key];
-    if (!pending) return;
-    setFixedPending(p => ({ ...p, [key]: { ...p[key], saving: true } }));
+  // ── Delete fixed ────────────────────────────────────────────────
+  async function deleteFixed(id: number, name: string) {
+    if (!confirm(`Видалити витрату «${name}»?`)) return;
     try {
-      await api.put("/monthly-expenses/fixed", {
-        year, month,
-        category_key: key,
-        amount: parseFloat(pending.amount) || 0,
-        is_recurring: pending.is_recurring,
-      });
+      await api.delete(`/monthly-expenses/fixed/${id}`);
       await load();
     } catch (e: any) {
       console.error(e);
-      const msg = e?.response?.data?.detail || "Не вдалося зберегти витрату. Спробуйте ще раз.";
-      alert(msg);
-      setFixedPending(p => ({ ...p, [key]: { ...p[key], saving: false } }));
+      alert(e?.response?.data?.detail || "Не вдалося видалити витрату.");
     }
   }
 
@@ -786,22 +742,6 @@ export default function ExpensesPage() {
     } catch (e) {
       console.error(e);
       setSalaryForms(s => ({ ...s, [staffId]: { ...s[staffId], saving: false } }));
-    }
-  }
-
-  // ── Delete fixed (zero out) ───────────────────────────────────
-  async function deleteFixed(key: string) {
-    if (!confirm("Скинути суму до нуля для цієї категорії?")) return;
-    setFixedPending(p => ({ ...p, [key]: { ...p[key], amount: "", saving: true } }));
-    try {
-      await api.put("/monthly-expenses/fixed", {
-        year, month, category_key: key, amount: 0, is_recurring: false,
-      });
-      await load();
-    } catch (e: any) {
-      console.error(e);
-      alert(e?.response?.data?.detail || "Не вдалося скинути витрату.");
-      setFixedPending(p => ({ ...p, [key]: { ...p[key], saving: false } }));
     }
   }
 
@@ -950,15 +890,10 @@ export default function ExpensesPage() {
   async function applyAiResult() {
     if (!aiModal.result) return;
     const r = aiModal.result;
-    if (r.category === "fixed" && r.category_key) {
-      const key = r.category_key;
-      setFixedPending(p => ({
-        ...p,
-        [key]: { amount: String(r.amount), is_recurring: r.is_recurring, saving: false },
-      }));
+    if (r.category === "fixed") {
       try {
-        await api.put("/monthly-expenses/fixed", {
-          year, month, category_key: key, amount: r.amount, is_recurring: r.is_recurring,
+        await api.post("/monthly-expenses/fixed", {
+          year, month, name: r.name, amount: r.amount, is_recurring: r.is_recurring,
         });
         await load();
       } catch (e) { console.error(e); }
@@ -985,7 +920,7 @@ export default function ExpensesPage() {
       [],
       ["═══ ПОСТІЙНІ ВИТРАТИ ═══", "", ""],
       ...data.fixed.filter(r => r.amount > 0).map(r => [
-        "Постійні", `${r.category_name}${r.is_recurring ? " (постійна)" : ""}`, r.amount,
+        "Постійні", `${r.name}${r.is_recurring ? " (постійна)" : ""}`, r.amount,
       ] as (string | number)[]),
       ["", "Разом постійні", data.totals.fixed_total],
       [],
@@ -1119,7 +1054,7 @@ export default function ExpensesPage() {
   const detailRows: DetailRow[] = data
     ? [
         ...data.fixed.filter(r => r.amount > 0).map(r => ({
-          name: r.category_name, category: "fixed", amount: r.amount,
+          name: r.name, category: "fixed", amount: r.amount,
         })),
         ...data.salary.map(r => ({
           name: r.full_name, category: "salary", amount: r.total_employer_cost,
@@ -1885,104 +1820,66 @@ export default function ExpensesPage() {
               </div>
 
               <div className="divide-y divide-dark-50/5">
-                {data.fixed.map((row) => {
-                  const pending = fixedPending[row.category_key];
-                  if (!pending) return null;
-                  const dirty = isFixedDirty(row.category_key, row);
-                  return (
-                    <div key={row.category_key}
-                      className="flex items-center gap-3 px-5 py-3 hover:bg-dark-400/20 transition-colors">
+                {data.fixed.length === 0 ? (
+                  <div className="px-5 py-8 text-center text-gray-600 text-sm">
+                    Ще немає постійних витрат. Натисніть «Додати витрату» щоб створити.
+                  </div>
+                ) : data.fixed.map((row) => (
+                  <div key={row.id}
+                    className="flex items-center gap-3 px-5 py-3 hover:bg-dark-400/20 transition-colors">
 
-                      <span className="text-sm text-gray-300 flex-1 min-w-0 truncate">{row.category_name}</span>
-
-                      <div className="w-36 shrink-0">
-                        <div className="relative">
-                          <input
-                            type="number" step="0.01" min="0"
-                            value={pending.amount}
-                            onChange={e => setFixedPending(p => ({
-                              ...p, [row.category_key]: { ...p[row.category_key], amount: e.target.value }
-                            }))}
-                            onKeyDown={e => { if (e.key === "Enter") saveFixed(row.category_key); }}
-                            className="input-dark text-right pr-8 py-2 text-sm w-full"
-                            placeholder="0.00"
-                          />
-                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 text-xs">₴</span>
-                        </div>
-                      </div>
-
-                      {/* Recurring toggle */}
-                      <div
-                        onClick={() => setFixedPending(p => ({
-                          ...p,
-                          [row.category_key]: {
-                            ...p[row.category_key],
-                            is_recurring: !p[row.category_key].is_recurring,
-                          }
-                        }))}
-                        className={`w-4 h-4 rounded border flex items-center justify-center transition-all cursor-pointer shrink-0 ${
-                          pending.is_recurring
-                            ? "bg-accent-500 border-accent-500"
-                            : "border-dark-50/30 bg-dark-300"
-                        }`}
-                        title="Постійна"
-                      >
-                        {pending.is_recurring && (
-                          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                            <path d="M2 5l2.5 2.5L8 2.5" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
-                          </svg>
-                        )}
-                      </div>
-
-                      <button
-                        onClick={() => saveFixed(row.category_key)}
-                        disabled={!dirty || pending.saving}
-                        title="Зберегти"
-                        className={`p-1.5 rounded-lg transition-all shrink-0 ${
-                          dirty ? "text-accent-400 hover:bg-accent-500/10" : "text-gray-700 cursor-default"
-                        }`}
-                      >
-                        {pending.saving
-                          ? <RefreshCw size={13} className="animate-spin" />
-                          : <Save size={13} />
-                        }
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          setFixedModal({
-                            open: true, isEdit: true, categoryKey: row.category_key,
-                            name: row.category_name, desc: "", amount: String(pending.amount),
-                            recurring: pending.is_recurring, saving: false,
-                          });
-                        }}
-                        className="p-1.5 rounded-lg text-gray-600 hover:text-blue-400 hover:bg-blue-500/10 transition-all shrink-0"
-                        title="Редагувати"
-                      >
-                        <Edit2 size={13} />
-                      </button>
-
-                      <button
-                        onClick={() => deleteFixed(row.category_key)}
-                        className="p-1.5 rounded-lg text-gray-700 hover:text-red-400 hover:bg-red-500/10 transition-all shrink-0"
-                        title="Скинути"
-                      >
-                        <Trash2 size={13} />
-                      </button>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-sm text-gray-300 truncate block">{row.name}</span>
+                      {row.description && (
+                        <span className="text-xs text-gray-600 truncate block">{row.description}</span>
+                      )}
                     </div>
-                  );
-                })}
+
+                    {row.is_recurring && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent-500/15 text-accent-400 border border-accent-500/20 shrink-0">
+                        щомісячно
+                      </span>
+                    )}
+
+                    <span className="text-sm font-mono font-semibold text-white tabular-nums shrink-0 w-28 text-right">
+                      {fmt(row.amount)} ₴
+                    </span>
+
+                    <button
+                      onClick={() => {
+                        setFixedModal({
+                          open: true, isEdit: true, id: row.id,
+                          name: row.name, desc: row.description || "",
+                          amount: String(row.amount),
+                          recurring: row.is_recurring, saving: false,
+                        });
+                      }}
+                      className="p-1.5 rounded-lg text-gray-600 hover:text-blue-400 hover:bg-blue-500/10 transition-all shrink-0"
+                      title="Редагувати"
+                    >
+                      <Edit2 size={13} />
+                    </button>
+
+                    <button
+                      onClick={() => deleteFixed(row.id, row.name)}
+                      className="p-1.5 rounded-lg text-gray-700 hover:text-red-400 hover:bg-red-500/10 transition-all shrink-0"
+                      title="Видалити"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                ))}
               </div>
 
               <div className="flex items-center justify-between px-5 py-3 bg-dark-400/20 border-t border-dark-50/10">
                 <button
                   onClick={() => setFixedModal({
-                    open: true, isEdit: false, categoryKey: "",
+                    open: true, isEdit: false, id: null,
                     name: "", desc: "", amount: "", recurring: true, saving: false,
                   })}
                   className="flex items-center gap-1.5 text-xs text-accent-400 hover:text-accent-300 transition-colors"
                 >
-                  <Plus size={13} /> Додати категорію
+                  <Plus size={13} /> Додати витрату
                 </button>
                 <span className="font-bold text-blue-400 font-mono tabular-nums">{fmt(data.totals.fixed_total)} ₴</span>
               </div>
@@ -2647,28 +2544,6 @@ export default function ExpensesPage() {
           title={fixedModal.isEdit ? "Редагувати постійну витрату" : "Додати постійну витрату"}
           onClose={() => setFixedModal(s => ({ ...s, open: false }))}
         >
-          {!fixedModal.isEdit && (
-            <div className="space-y-1">
-              <label className="text-xs text-gray-400 font-medium">Категорія</label>
-              <select
-                value={fixedModal.categoryKey}
-                onChange={e => {
-                  const cat = FIXED_CATEGORIES.find(c => c.key === e.target.value);
-                  setFixedModal(s => ({
-                    ...s,
-                    categoryKey: e.target.value,
-                    name: cat?.name ?? s.name,
-                  }));
-                }}
-                className="input-dark w-full py-2.5 text-sm"
-              >
-                <option value="">Оберіть категорію...</option>
-                {FIXED_CATEGORIES.map(c => (
-                  <option key={c.key} value={c.key}>{c.name}</option>
-                ))}
-              </select>
-            </div>
-          )}
           <ModalField
             label="Назва"
             value={fixedModal.name}
@@ -2702,15 +2577,25 @@ export default function ExpensesPage() {
             </button>
             <button
               onClick={async () => {
-                if (!fixedModal.name.trim() || !fixedModal.categoryKey) return;
+                if (!fixedModal.name.trim()) return;
                 setFixedModal(s => ({ ...s, saving: true }));
                 try {
-                  await api.put("/monthly-expenses/fixed", {
-                    year, month,
-                    category_key: fixedModal.categoryKey,
-                    amount: parseFloat(fixedModal.amount) || 0,
-                    is_recurring: fixedModal.recurring,
-                  });
+                  if (fixedModal.isEdit && fixedModal.id != null) {
+                    await api.put(`/monthly-expenses/fixed/${fixedModal.id}`, {
+                      name: fixedModal.name,
+                      description: fixedModal.desc,
+                      amount: parseFloat(fixedModal.amount) || 0,
+                      is_recurring: fixedModal.recurring,
+                    });
+                  } else {
+                    await api.post("/monthly-expenses/fixed", {
+                      year, month,
+                      name: fixedModal.name,
+                      description: fixedModal.desc,
+                      amount: parseFloat(fixedModal.amount) || 0,
+                      is_recurring: fixedModal.recurring,
+                    });
+                  }
                   setFixedModal(s => ({ ...s, open: false, saving: false }));
                   await load();
                 } catch (e: any) {
@@ -2719,7 +2604,7 @@ export default function ExpensesPage() {
                   setFixedModal(s => ({ ...s, saving: false }));
                 }
               }}
-              disabled={fixedModal.saving || !fixedModal.categoryKey}
+              disabled={fixedModal.saving || !fixedModal.name.trim()}
               className="flex-1 py-2.5 rounded-xl bg-accent-500 hover:bg-accent-400 text-white text-sm font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-60"
             >
               {fixedModal.saving ? <RefreshCw size={14} className="animate-spin" /> : <Save size={14} />}
@@ -2954,7 +2839,7 @@ export default function ExpensesPage() {
                     <div className="grid grid-cols-2 gap-3 text-sm">
                       <div>
                         <p className="text-xs text-gray-500">Категорія</p>
-                        <p className="text-white font-medium">{aiModal.result.category_key || aiModal.result.category}</p>
+                        <p className="text-white font-medium">{aiModal.result.category === "fixed" ? "Постійна витрата" : "Інша витрата"}</p>
                       </div>
                       <div>
                         <p className="text-xs text-gray-500">Сума</p>
@@ -3006,7 +2891,7 @@ export default function ExpensesPage() {
         switch (kpiModal.type) {
           case "fixed":
             rows = data.fixed.filter(r => r.amount > 0).map(r => ({
-              name: r.category_name,
+              name: r.name,
               detail: r.is_recurring ? "Постійна" : "Разова",
               amount: r.amount,
             }));
@@ -3040,7 +2925,7 @@ export default function ExpensesPage() {
           case "total":
             rows = [
               ...data.fixed.filter(r => r.amount > 0).map(r => ({
-                name: r.category_name, detail: "Постійні", amount: r.amount,
+                name: r.name, detail: "Постійні", amount: r.amount,
               })),
               ...data.salary.map(r => ({
                 name: r.full_name, detail: `Зарплатні · ${ROLE_LABELS[r.role] ?? r.role}`, amount: r.total_employer_cost,

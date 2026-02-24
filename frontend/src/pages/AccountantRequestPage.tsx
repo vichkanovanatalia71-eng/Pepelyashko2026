@@ -29,8 +29,7 @@ interface StaffItem {
 }
 
 interface RecurringExpense {
-  category_key: string;
-  category_name: string;
+  name: string;
   amount: number;
 }
 
@@ -116,7 +115,7 @@ export default function AccountantRequestPage() {
     // Init recurring expenses from previous month
     const recExp: ExpenseRow[] = (d.data.recurring_expenses || []).map((re, idx) => ({
       id: idx + 1,
-      name: re.category_name,
+      name: re.name,
       amount: re.amount,
       is_recurring: true,
     }));
