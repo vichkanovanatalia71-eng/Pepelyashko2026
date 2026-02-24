@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import api from "../api/client";
 import {
-  ClipboardList,
   Clock,
   AlertCircle,
   Users,
@@ -14,7 +13,6 @@ import {
   Trash2,
   RefreshCw,
   Info,
-  History,
   ChevronDown,
   ChevronUp,
   FileText,
@@ -84,12 +82,6 @@ const MONTHS_UA = [
   "Травень", "Червень", "Липень", "Серпень",
   "Вересень", "Жовтень", "Листопад", "Грудень",
 ];
-
-function prevPeriodLabel(year: number, month: number): string {
-  const py = month > 1 ? year : year - 1;
-  const pm = month > 1 ? month - 1 : 12;
-  return `${MONTHS_UA[pm]} ${py}`;
-}
 
 export default function AccountantRequestPage() {
   const { token } = useParams<{ token: string }>();
@@ -314,7 +306,6 @@ export default function AccountantRequestPage() {
   }
 
   const expiresDate = new Date(data.expires_at).toLocaleDateString("uk-UA");
-  const prevLabel = prevPeriodLabel(data.year, data.month);
   const salaryTotal = salaries.reduce((sum, s) => sum + s.brutto, 0);
   const fixedExpenses = expenses.filter((e) => e.is_recurring);
   const otherExpenses = expenses.filter((e) => !e.is_recurring);
