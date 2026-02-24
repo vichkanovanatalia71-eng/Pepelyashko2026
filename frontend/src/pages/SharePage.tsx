@@ -28,7 +28,6 @@ import {
   Legend,
 } from "recharts";
 
-const API = "";
 const MONTHS_UA = [
   "", "Січень", "Лютий", "Березень", "Квітень",
   "Травень", "Червень", "Липень", "Серпень",
@@ -56,7 +55,7 @@ export default function SharePage() {
     if (!token) return;
     (async () => {
       try {
-        const r = await axios.get(`${API}/api/monthly-services/share/${token}/view`);
+        const r = await axios.get(`/api/monthly-services/share/${token}/view`);
         setData(r.data);
       } catch {
         setError("Посилання не знайдено або термін дії закінчився.");

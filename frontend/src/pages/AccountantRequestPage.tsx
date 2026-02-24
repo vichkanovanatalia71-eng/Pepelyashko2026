@@ -16,8 +16,6 @@ import {
 } from "lucide-react";
 import { ConfirmDialog } from "../components/shared";
 
-const API = "";
-
 const fmt = (v: number) =>
   v.toLocaleString("uk-UA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -84,18 +82,31 @@ export default function AccountantRequestPage() {
   const [savedResult, setSavedResult] = useState<ShareData["submitted_data"]>(null);
   const [editMode, setEditMode] = useState(false);
 
-  useEffect(() => {
+  async function loadData() {
     if (!token) return;
-    (async () => {
-      try {
-        const r = await axios.get(`${API}/api/monthly-expenses/accountant-request/${token}/view`);
-        setData(r.data);
-        initForm(r.data);
-      } catch {
-        setError("Посилання не знайдено або термін дії закінчився.");
+    setLoading(true);
+    setError("");
+    try {
+      const r = await axios.get(`/api/monthly-expenses/accountant-request/${token}/view`);
+      setData(r.data);
+      initForm(r.data);
+    } catch (err: any) {
+      const detail = err?.response?.data?.detail;
+      const status = err?.response?.status;
+      console.error("AccountantRequest load error:", status, detail, err);
+      if (status === 404) {
+        setError(detail || "Посилання не знайдено або термін дії закінчився.");
+      } else if (!err?.response) {
+        setError("Не вдалося з'єднатися з сервером. Спробуйте оновити сторінку.");
+      } else {
+        setError(detail || `Помилка завантаження (${status}).`);
       }
-      setLoading(false);
-    })();
+    }
+    setLoading(false);
+  }
+
+  useEffect(() => {
+    loadData();
   }, [token]);
 
   function initForm(d: ShareData) {
@@ -155,7 +166,7 @@ export default function AccountantRequestPage() {
     if (!token) return;
     setSubmitting(true);
     try {
-      const res = await axios.post(`${API}/api/monthly-expenses/accountant-request/${token}/submit`, {
+      const res = await axios.post(`/api/monthly-expenses/accountant-request/${token}/submit`, {
         salaries: salaries.map((s) => ({
           staff_member_id: s.staff_member_id,
           brutto: s.brutto,
@@ -201,7 +212,14 @@ export default function AccountantRequestPage() {
         <div className="card-neo p-8 text-center max-w-md">
           <AlertCircle size={40} className="text-red-400 mx-auto mb-4" aria-hidden="true" />
           <h1 className="text-xl font-bold text-white mb-2">Посилання недійсне</h1>
-          <p className="text-gray-400 text-sm">{error || "Термін дії закінчився."}</p>
+          <p className="text-gray-400 text-sm mb-4">{error || "Термін дії закінчився."}</p>
+          <button
+            onClick={loadData}
+            className="flex items-center gap-2 mx-auto px-5 py-2.5 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-400 text-sm font-medium hover:bg-orange-500/20 transition-all"
+          >
+            <RefreshCw size={14} />
+            Спробувати знову
+          </button>
         </div>
       </div>
     );
