@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import {
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Save,
   RefreshCw,
   Lock,
@@ -38,7 +39,6 @@ import {
 } from "lucide-react";
 import {
   LoadingSpinner,
-  TabBar,
   AlertBanner,
   EmptyState,
 } from "../components/shared";
@@ -86,17 +86,6 @@ const ROLE_LABELS: Record<string, string> = {
   other:  "Інший персонал",
 };
 
-const TAB_KEY = "expenses_tab";
-
-const TABS = [
-  { id: "fixed",   label: "Постійні витрати" },
-  { id: "salary",  label: "Зарплатні витрати" },
-  { id: "other",   label: "Інші витрати" },
-  { id: "taxes",   label: "Податки" },
-  { id: "summary", label: "Підсумки" },
-] as const;
-
-type TabId = typeof TABS[number]["id"];
 
 const TT_STYLE = {
   background: "#1a1a2e",
@@ -139,14 +128,6 @@ interface OtherExpense {
   month: number;
 }
 
-interface TrendPoint {
-  label: string;
-  fixed: number;
-  salary: number;
-  other: number;
-  taxes: number;
-}
-
 interface DetailRow {
   name: string;
   category: string;
@@ -181,18 +162,6 @@ function initSalaryForm(row: SalaryExpenseRow): SalaryFormState {
     paid_services_from_module: row.paid_services_from_module,
     saving: false,
   };
-}
-
-function getMonthsBack(year: number, month: number, count: number) {
-  const result: { year: number; month: number }[] = [];
-  let y = year;
-  let m = month;
-  for (let i = 0; i < count; i++) {
-    result.unshift({ year: y, month: m });
-    m--;
-    if (m < 1) { m = 12; y--; }
-  }
-  return result;
 }
 
 // ── Sub-components ─────────────────────────────────────────────────
@@ -358,12 +327,6 @@ export default function ExpensesPage() {
   const [year, setYear]   = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
 
-  // Tab state with sessionStorage persistence
-  const [activeTab, setActiveTab] = useState<TabId>(() => {
-    const stored = sessionStorage.getItem(TAB_KEY);
-    return (stored as TabId) || "fixed";
-  });
-
   // Core data
   const [data, setData]       = useState<MonthlyExpenseData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -389,8 +352,6 @@ export default function ExpensesPage() {
     return v ? parseInt(v) : null;
   });
 
-  // Charts
-  const [trendData, setTrendData] = useState<TrendPoint[]>([]);
 
   // ── Fixed modal state
   const [fixedModal, setFixedModal] = useState<{
@@ -457,11 +418,8 @@ export default function ExpensesPage() {
     open: boolean; url: string; expiresAt: string;
   }>({ open: false, url: "", expiresAt: "" });
 
-  // ── Change tab with persistence
-  function changeTab(tab: TabId) {
-    setActiveTab(tab);
-    sessionStorage.setItem(TAB_KEY, tab);
-  }
+  // ── Collapsible sections state (all collapsed by default) ──
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
 
   // ── Load main expense data ─────────────────────────────────────
   const load = useCallback(async () => {
@@ -533,29 +491,6 @@ export default function ExpensesPage() {
     }
   }, [year]);
 
-  // ── Load 6-month trend ─────────────────────────────────────────
-  const loadTrend = useCallback(async () => {
-    const months = getMonthsBack(year, month, 6);
-    const points: TrendPoint[] = [];
-    for (const m of months) {
-      try {
-        const { data: resp } = await api.get<MonthlyExpenseData>("/monthly-expenses/", {
-          params: { year: m.year, month: m.month },
-        });
-        const otherTotal = 0;
-        points.push({
-          label: MONTH_SHORT[m.month - 1],
-          fixed:  resp.totals.fixed_total,
-          salary: resp.totals.salary_total,
-          other:  otherTotal,
-          taxes:  resp.totals.tax_total,
-        });
-      } catch {
-        points.push({ label: MONTH_SHORT[m.month - 1], fixed: 0, salary: 0, other: 0, taxes: 0 });
-      }
-    }
-    setTrendData(points);
-  }, [year, month]);
 
   // ── Load annual data for analytics ────────────────────────────
   const loadAnnualData = useCallback(async () => {
@@ -593,15 +528,22 @@ export default function ExpensesPage() {
     }
   }, [year]);
 
-  useEffect(() => { load(); loadOther(); loadStaff(); loadDoctors(); loadTrend(); loadPeriods(); }, [load, loadOther, loadStaff, loadDoctors, loadTrend, loadPeriods]);
+  useEffect(() => { load(); loadOther(); loadStaff(); loadDoctors(); loadPeriods(); }, [load, loadOther, loadStaff, loadDoctors, loadPeriods]);
   useEffect(() => { if (viewMode === "all") loadAnnualData(); }, [viewMode, loadAnnualData]);
+
+  // ── Toggle collapsible section ──
+  function toggleSection(id: string) {
+    setExpandedSections(s => ({ ...s, [id]: !s[id] }));
+  }
 
   // ── Month navigation ──────────────────────────────────────────
   function prevMonth() {
+    setExpandedSections({});
     if (month === 1) { setYear(y => y - 1); setMonth(12); }
     else setMonth(m => m - 1);
   }
   function nextMonth() {
+    setExpandedSections({});
     if (month === 12) { setYear(y => y + 1); setMonth(1); }
     else setMonth(m => m + 1);
   }
@@ -898,7 +840,7 @@ export default function ExpensesPage() {
       } catch (e) { console.error(e); }
     }
     setAiModal({ open: false, text: "", file: null, loading: false, result: null });
-    changeTab("fixed");
+    setExpandedSections(s => ({ ...s, fixed: true }));
   }
 
   // ── Excel export (повний звіт, без ПДФО та ВЗ із ЗП) ─────────
@@ -1041,15 +983,6 @@ export default function ExpensesPage() {
   // ── Derived data ──────────────────────────────────────────────
   const otherTotal = otherExpenses.reduce((sum, e) => sum + e.amount, 0);
 
-  const pieData = data
-    ? [
-        { name: "Постійні",  value: data.totals.fixed_total },
-        { name: "Зарплатні", value: data.totals.salary_total },
-        { name: "Інші",      value: otherTotal },
-        { name: "Податки",   value: data.totals.tax_total },
-      ].filter(d => d.value > 0)
-    : [];
-
   const detailRows: DetailRow[] = data
     ? [
         ...data.fixed.filter(r => r.amount > 0).map(r => ({
@@ -1110,7 +1043,7 @@ export default function ExpensesPage() {
 
         <div className="flex items-center gap-2 flex-wrap">
           <button
-            onClick={() => { load(); loadOther(); loadTrend(); loadPeriods(); }}
+            onClick={() => { load(); loadOther(); loadPeriods(); }}
             className="p-2 rounded-xl text-gray-400 hover:text-white hover:bg-dark-300 transition-all"
             title="Оновити"
             aria-label="Оновити дані"
@@ -1121,7 +1054,7 @@ export default function ExpensesPage() {
           {/* View mode switcher */}
           <div className="flex items-center gap-1 bg-dark-500/50 border border-dark-50/15 rounded-2xl p-1">
             <button
-              onClick={() => setViewMode("all")}
+              onClick={() => { setViewMode("all"); setExpandedSections({}); }}
               aria-label="Показати всі місяці"
               aria-pressed={viewMode === "all"}
               className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${
@@ -1133,7 +1066,7 @@ export default function ExpensesPage() {
               <CalendarDays size={13} aria-hidden="true" /> Всього
             </button>
             <button
-              onClick={() => setViewMode("month")}
+              onClick={() => { setViewMode("month"); setExpandedSections({}); }}
               aria-label={`Показати ${MONTH_NAMES[month - 1]}`}
               aria-pressed={viewMode === "month"}
               className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
@@ -1666,83 +1599,6 @@ export default function ExpensesPage() {
             </div>
           </div>
 
-          {/* ═══ DASHBOARD: CHARTS ═══ */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-
-            {/* Bar chart: 6-month trend */}
-            <div className="card-neo p-4">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
-                Тенденція за 6 місяців
-              </p>
-              <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={trendData} barSize={12}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" />
-                  <XAxis dataKey="label" tick={{ fill: "#6b7280", fontSize: 11 }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fill: "#6b7280", fontSize: 10 }} axisLine={false} tickLine={false}
-                    tickFormatter={v => `${Math.round(v / 1000)}k`} />
-                  <Tooltip
-                    contentStyle={TT_STYLE}
-                    formatter={(v: number, name: string) => [fmt(v) + " ₴", name]}
-                  />
-                  <Bar dataKey="fixed"  stackId="a" fill="#6366f1" name="Постійні"  radius={[0,0,0,0]} />
-                  <Bar dataKey="salary" stackId="a" fill="#a855f7" name="Зарплатні" radius={[0,0,0,0]} />
-                  <Bar dataKey="other"  stackId="a" fill="#f59e0b" name="Інші"      radius={[0,0,0,0]} />
-                  <Bar dataKey="taxes"  stackId="a" fill="#f43f5e" name="Податки"   radius={[4,4,0,0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-
-            {/* Pie chart: current month structure */}
-            <div className="card-neo p-4">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
-                Структура витрат — {MONTH_NAMES[month - 1]}
-              </p>
-              {pieData.length > 0 ? (
-                <div className="flex items-center gap-4">
-                  <ResponsiveContainer width="55%" height={200}>
-                    <PieChart>
-                      <Pie
-                        data={pieData}
-                        cx="50%" cy="50%"
-                        innerRadius={55} outerRadius={85}
-                        paddingAngle={3}
-                        dataKey="value"
-                      >
-                        {pieData.map((_, idx) => (
-                          <Cell key={idx} fill={PIE_COLORS[idx % PIE_COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip
-                        contentStyle={TT_STYLE}
-                        formatter={(v: number) => [fmt(v) + " ₴"]}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div className="flex-1 space-y-2">
-                    {pieData.map((entry, idx) => {
-                      const total = pieData.reduce((s, d) => s + d.value, 0);
-                      const pct = total > 0 ? Math.round(entry.value / total * 100) : 0;
-                      return (
-                        <div key={idx} className="flex items-center gap-2">
-                          <span
-                            className="w-2.5 h-2.5 rounded-full shrink-0"
-                            style={{ background: PIE_COLORS[idx % PIE_COLORS.length] }}
-                          />
-                          <span className="text-xs text-gray-400 flex-1">{entry.name}</span>
-                          <span className="text-xs font-mono text-gray-300">{pct}%</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              ) : (
-                <div className="flex items-center justify-center h-48 text-gray-600 text-sm">
-                  Немає даних
-                </div>
-              )}
-            </div>
-          </div>
-
           {/* ═══ DETAIL TABLE ═══ */}
           {detailRows.length > 0 && (
             <div className="card-neo overflow-hidden">
@@ -1794,31 +1650,33 @@ export default function ExpensesPage() {
             </div>
           )}
 
-          {/* ═══ TAB NAVIGATION ═══ */}
-          <TabBar
-            tabs={TABS.map(t => ({ id: t.id, label: t.label }))}
-            activeTab={activeTab}
-            onChange={(id) => changeTab(id as TabId)}
-          />
-
-          {/* ═══ TAB PANELS ═══ */}
+          {/* ═══ COLLAPSIBLE SECTIONS ═══ */}
 
           {/* ────────────────────────────────────────
-              TAB: ПОСТІЙНІ ВИТРАТИ
+              SECTION: ПОСТІЙНІ ВИТРАТИ
           ──────────────────────────────────────── */}
-          {activeTab === "fixed" && (
+          {(
             <section className="card-neo overflow-hidden">
-              <div className="flex items-center gap-3 px-5 py-4 border-b border-dark-50/10 bg-dark-400/20">
+              <button
+                onClick={() => toggleSection("fixed")}
+                className="w-full flex items-center gap-3 px-5 py-4 bg-dark-400/20 hover:bg-dark-400/30 transition-all cursor-pointer"
+                aria-expanded={!!expandedSections.fixed}
+              >
                 <div className="w-8 h-8 rounded-xl bg-blue-500/15 flex items-center justify-center shrink-0">
                   <TrendingDown size={16} className="text-blue-400" />
                 </div>
-                <h3 className="font-semibold text-white text-sm">Постійні витрати</h3>
-                <span className="ml-auto text-sm font-mono font-semibold text-blue-400 tabular-nums">
-                  {fmt(data.totals.fixed_total)} ₴
-                </span>
-              </div>
+                <div className="flex-1 text-left">
+                  <h3 className="font-semibold text-white text-sm">Постійні витрати</h3>
+                  <p className={`text-xs mt-0.5 ${data.fixed.some(r => r.amount > 0) ? "text-emerald-400" : "text-gray-600"}`}>
+                    {data.fixed.some(r => r.amount > 0) ? "Заповнено" : "Не заповнено"} · {fmt(data.totals.fixed_total)} ₴
+                  </p>
+                </div>
+                <ChevronDown size={18} className={`text-gray-500 transition-transform duration-200 shrink-0 ${expandedSections.fixed ? "rotate-180" : ""}`} />
+              </button>
 
-              <div className="divide-y divide-dark-50/5">
+              {expandedSections.fixed && (
+              <>
+              <div className="divide-y divide-dark-50/5 border-t border-dark-50/10">
                 {data.fixed.length === 0 ? (
                   <div className="px-5 py-8 text-center text-gray-600 text-sm">
                     Ще немає постійних витрат. Натисніть «Додати витрату» щоб створити.
@@ -1882,24 +1740,35 @@ export default function ExpensesPage() {
                 </button>
                 <span className="font-bold text-blue-400 font-mono tabular-nums">{fmt(data.totals.fixed_total)} ₴</span>
               </div>
+              </>
+              )}
             </section>
           )}
 
           {/* ────────────────────────────────────────
-              TAB: ЗАРПЛАТНІ ВИТРАТИ
+              SECTION: ЗАРПЛАТНІ ВИТРАТИ
           ──────────────────────────────────────── */}
-          {activeTab === "salary" && (
+          {(
             <section className="card-neo overflow-hidden">
-              {/* ── Заголовок секції ── */}
-              <div className="flex items-center gap-3 px-5 py-4 border-b border-dark-50/10 bg-dark-400/20">
+              <button
+                onClick={() => toggleSection("salary")}
+                className="w-full flex items-center gap-3 px-5 py-4 bg-dark-400/20 hover:bg-dark-400/30 transition-all cursor-pointer"
+                aria-expanded={!!expandedSections.salary}
+              >
                 <div className="w-8 h-8 rounded-xl bg-purple-500/15 flex items-center justify-center shrink-0">
                   <Users size={16} className="text-purple-400" />
                 </div>
-                <h3 className="font-semibold text-white text-sm">Зарплатні витрати</h3>
-                <span className="ml-auto text-sm font-mono font-semibold text-purple-400 tabular-nums">
-                  {fmt(data.totals.salary_total)} ₴
-                </span>
-              </div>
+                <div className="flex-1 text-left">
+                  <h3 className="font-semibold text-white text-sm">Зарплатні витрати</h3>
+                  <p className={`text-xs mt-0.5 ${data.salary.some(r => r.brutto > 0) ? "text-emerald-400" : "text-gray-600"}`}>
+                    {data.salary.some(r => r.brutto > 0) ? "Заповнено" : "Не заповнено"} · {fmt(data.totals.salary_total)} ₴
+                  </p>
+                </div>
+                <ChevronDown size={18} className={`text-gray-500 transition-transform duration-200 shrink-0 ${expandedSections.salary ? "rotate-180" : ""}`} />
+              </button>
+
+              {expandedSections.salary && (
+              <div className="border-t border-dark-50/10">
 
               {data.salary.length === 0 && !data.owner ? (
                 <EmptyState
@@ -2331,24 +2200,35 @@ export default function ExpensesPage() {
                 <span className="text-xs text-gray-600">Персонал налаштовується в розділі Налаштування</span>
                 <span className="font-bold text-purple-400 font-mono tabular-nums">{fmt(data.totals.salary_total)} ₴</span>
               </div>
+              </div>
+              )}
             </section>
           )}
 
           {/* ────────────────────────────────────────
-              TAB: ІНШІ ВИТРАТИ
+              SECTION: ІНШІ ВИТРАТИ
           ──────────────────────────────────────── */}
-          {activeTab === "other" && (
+          {(
             <section className="card-neo overflow-hidden">
-              <div className="flex items-center gap-3 px-5 py-4 border-b border-dark-50/10 bg-dark-400/20">
+              <button
+                onClick={() => toggleSection("other")}
+                className="w-full flex items-center gap-3 px-5 py-4 bg-dark-400/20 hover:bg-dark-400/30 transition-all cursor-pointer"
+                aria-expanded={!!expandedSections.other}
+              >
                 <div className="w-8 h-8 rounded-xl bg-amber-500/15 flex items-center justify-center shrink-0">
                   <Wallet size={16} className="text-amber-400" />
                 </div>
-                <h3 className="font-semibold text-white text-sm">Інші витрати</h3>
-                <span className="ml-auto text-sm font-mono font-semibold text-amber-400 tabular-nums">
-                  {fmt(otherTotal)} ₴
-                </span>
-              </div>
+                <div className="flex-1 text-left">
+                  <h3 className="font-semibold text-white text-sm">Інші витрати</h3>
+                  <p className={`text-xs mt-0.5 ${otherExpenses.length > 0 ? "text-emerald-400" : "text-gray-600"}`}>
+                    {otherExpenses.length > 0 ? "Заповнено" : "Не заповнено"} · {fmt(otherTotal)} ₴
+                  </p>
+                </div>
+                <ChevronDown size={18} className={`text-gray-500 transition-transform duration-200 shrink-0 ${expandedSections.other ? "rotate-180" : ""}`} />
+              </button>
 
+              {expandedSections.other && (
+              <div className="border-t border-dark-50/10">
               {otherLoading ? (
                 <LoadingSpinner height="h-24" />
               ) : otherExpenses.length === 0 ? (
@@ -2407,25 +2287,35 @@ export default function ExpensesPage() {
                 </button>
                 <span className="font-bold text-amber-400 font-mono tabular-nums">{fmt(otherTotal)} ₴</span>
               </div>
+              </div>
+              )}
             </section>
           )}
 
           {/* ────────────────────────────────────────
-              TAB: ПОДАТКИ
+              SECTION: ПОДАТКИ
           ──────────────────────────────────────── */}
-          {activeTab === "taxes" && (
+          {(
             <section className="card-neo overflow-hidden">
-              <div className="flex items-center gap-3 px-5 py-4 border-b border-dark-50/10 bg-dark-400/20">
+              <button
+                onClick={() => toggleSection("taxes")}
+                className="w-full flex items-center gap-3 px-5 py-4 bg-dark-400/20 hover:bg-dark-400/30 transition-all cursor-pointer"
+                aria-expanded={!!expandedSections.taxes}
+              >
                 <div className="w-8 h-8 rounded-xl bg-red-500/15 flex items-center justify-center shrink-0">
                   <Receipt size={16} className="text-red-400" />
                 </div>
-                <h3 className="font-semibold text-white text-sm">Податки</h3>
-                <span className="ml-auto text-sm font-mono font-semibold text-red-400 tabular-nums">
-                  {fmt(data.totals.tax_total)} ₴
-                </span>
-              </div>
+                <div className="flex-1 text-left">
+                  <h3 className="font-semibold text-white text-sm">Податки</h3>
+                  <p className={`text-xs mt-0.5 ${data.totals.tax_total > 0 ? "text-emerald-400" : "text-gray-600"}`}>
+                    {data.totals.tax_total > 0 ? "Заповнено" : "Не заповнено"} · {fmt(data.totals.tax_total)} ₴
+                  </p>
+                </div>
+                <ChevronDown size={18} className={`text-gray-500 transition-transform duration-200 shrink-0 ${expandedSections.taxes ? "rotate-180" : ""}`} />
+              </button>
 
-              <div className="px-5 py-4 space-y-3">
+              {expandedSections.taxes && (
+              <div className="px-5 py-4 space-y-3 border-t border-dark-50/10">
                 <div className="bg-dark-400/20 rounded-xl p-4 space-y-2">
                   <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Джерела доходу</p>
                   <TaxRow label="Дохід НСЗУ"    value={data.taxes.nhsu_income} />
@@ -2465,24 +2355,36 @@ export default function ExpensesPage() {
                   </div>
                 </div>
               </div>
+              )}
             </section>
           )}
 
           {/* ────────────────────────────────────────
-              TAB: ПІДСУМКИ
+              SECTION: ПІДСУМКИ
           ──────────────────────────────────────── */}
-          {activeTab === "summary" && (
+          {(
             <section className="card-neo overflow-hidden">
-              <div className="flex items-center gap-3 px-5 py-4 border-b border-dark-50/10 bg-dark-400/20">
+              <button
+                onClick={() => toggleSection("summary")}
+                className="w-full flex items-center gap-3 px-5 py-4 bg-dark-400/20 hover:bg-dark-400/30 transition-all cursor-pointer"
+                aria-expanded={!!expandedSections.summary}
+              >
                 <div className="w-8 h-8 rounded-xl bg-emerald-500/15 flex items-center justify-center shrink-0">
                   <Building2 size={16} className="text-emerald-400" />
                 </div>
-                <h3 className="font-semibold text-white text-sm">
-                  Підсумки — {MONTH_NAMES[month - 1]} {year}
-                </h3>
-              </div>
+                <div className="flex-1 text-left">
+                  <h3 className="font-semibold text-white text-sm">
+                    Підсумки — {MONTH_NAMES[month - 1]} {year}
+                  </h3>
+                  <p className={`text-xs mt-0.5 ${grandWithOther > 0 ? "text-emerald-400" : "text-gray-600"}`}>
+                    {grandWithOther > 0 ? "Заповнено" : "Не заповнено"} · Залишок: {remaining >= 0 ? "+" : ""}{fmt(remaining)} ₴
+                  </p>
+                </div>
+                <ChevronDown size={18} className={`text-gray-500 transition-transform duration-200 shrink-0 ${expandedSections.summary ? "rotate-180" : ""}`} />
+              </button>
 
-              <div className="px-5 py-5 space-y-2.5">
+              {expandedSections.summary && (
+              <div className="px-5 py-5 space-y-2.5 border-t border-dark-50/10">
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
                   Структура витрат
                 </p>
@@ -2528,6 +2430,7 @@ export default function ExpensesPage() {
                   </div>
                 )}
               </div>
+              )}
             </section>
           )}
         </>
@@ -2579,24 +2482,43 @@ export default function ExpensesPage() {
                 if (!fixedModal.name.trim()) return;
                 setFixedModal(s => ({ ...s, saving: true }));
                 try {
-                  if (fixedModal.isEdit && fixedModal.id != null) {
-                    await api.put(`/monthly-expenses/fixed/${fixedModal.id}`, {
+                  if (!fixedModal.recurring) {
+                    // Migrate to "Other expenses" when permanence is unchecked
+                    if (fixedModal.isEdit && fixedModal.id != null) {
+                      // Delete from fixed first
+                      await api.delete(`/monthly-expenses/fixed/${fixedModal.id}`);
+                    }
+                    // Create as other expense
+                    await api.post("/monthly-expenses/other", {
                       name: fixedModal.name,
                       description: fixedModal.desc,
                       amount: parseFloat(fixedModal.amount) || 0,
-                      is_recurring: fixedModal.recurring,
+                      category: "general",
+                      year,
+                      month,
                     });
+                    setFixedModal(s => ({ ...s, open: false, saving: false }));
+                    await Promise.all([load(), loadOther()]);
                   } else {
-                    await api.post("/monthly-expenses/fixed", {
-                      year, month,
-                      name: fixedModal.name,
-                      description: fixedModal.desc,
-                      amount: parseFloat(fixedModal.amount) || 0,
-                      is_recurring: fixedModal.recurring,
-                    });
+                    if (fixedModal.isEdit && fixedModal.id != null) {
+                      await api.put(`/monthly-expenses/fixed/${fixedModal.id}`, {
+                        name: fixedModal.name,
+                        description: fixedModal.desc,
+                        amount: parseFloat(fixedModal.amount) || 0,
+                        is_recurring: fixedModal.recurring,
+                      });
+                    } else {
+                      await api.post("/monthly-expenses/fixed", {
+                        year, month,
+                        name: fixedModal.name,
+                        description: fixedModal.desc,
+                        amount: parseFloat(fixedModal.amount) || 0,
+                        is_recurring: fixedModal.recurring,
+                      });
+                    }
+                    setFixedModal(s => ({ ...s, open: false, saving: false }));
+                    await load();
                   }
-                  setFixedModal(s => ({ ...s, open: false, saving: false }));
-                  await load();
                 } catch (e: any) {
                   console.error(e);
                   alert(e?.response?.data?.detail || "Не вдалося зберегти витрату. Спробуйте ще раз.");
