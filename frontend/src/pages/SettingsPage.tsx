@@ -1,5 +1,4 @@
 import { useEffect, useState, FormEvent } from "react";
-import axios from "axios";
 import { useAuth } from "../hooks/useAuth";
 import api from "../api/client";
 import {
@@ -25,8 +24,6 @@ import {
 } from "lucide-react";
 import { Doctor, NhsuSettings, StaffMember } from "../types";
 
-const API = "";
-
 const AGE_LABELS: Record<string, string> = {
   coeff_0_5: "0–5 років",
   coeff_6_17: "6–17 років",
@@ -42,8 +39,7 @@ const FOP_LABELS: Record<number, string> = {
 };
 
 export default function SettingsPage() {
-  const { token, user, refreshUser } = useAuth();
-  const headers = { Authorization: `Bearer ${token}` };
+  const { user, refreshUser } = useAuth();
 
   // ── Колапс-стан блоків ──
   const [open, setOpen] = useState<Record<string, boolean>>({
@@ -128,14 +124,14 @@ export default function SettingsPage() {
 
   async function loadDoctors() {
     try {
-      const res = await axios.get(`${API}/api/nhsu/doctors`, { headers });
+      const res = await api.get("/nhsu/doctors");
       setDoctors(res.data);
     } catch {}
   }
 
   async function loadSettings() {
     try {
-      const res = await axios.get(`${API}/api/nhsu/settings`, { headers });
+      const res = await api.get("/nhsu/settings");
       setNhsuSettings(res.data);
       setSettingsForm(res.data);
     } catch {}
@@ -146,11 +142,10 @@ export default function SettingsPage() {
     setDoctorLoading(true);
     setDoctorMsg("");
     try {
-      await axios.post(
-        `${API}/api/nhsu/doctors`,
-        { full_name: newDoctorName.trim(), is_owner: newIsOwner },
-        { headers }
-      );
+      await api.post("/nhsu/doctors", {
+        full_name: newDoctorName.trim(),
+        is_owner: newIsOwner,
+      });
       setNewDoctorName("");
       setNewIsOwner(false);
       setDoctorMsg("Лікаря додано");
@@ -164,14 +159,14 @@ export default function SettingsPage() {
 
   async function handleDeleteDoctor(id: number) {
     try {
-      await axios.delete(`${API}/api/nhsu/doctors/${id}`, { headers });
+      await api.delete(`/nhsu/doctors/${id}`);
       await loadDoctors();
     } catch {}
   }
 
   async function loadNurses() {
     try {
-      const res = await axios.get(`${API}/api/staff/?role=nurse`, { headers });
+      const res = await api.get("/staff/", { params: { role: "nurse" } });
       setNurses(res.data);
     } catch {}
   }
@@ -181,11 +176,11 @@ export default function SettingsPage() {
     setNurseLoading(true);
     setNurseMsg("");
     try {
-      await axios.post(
-        `${API}/api/staff/`,
-        { full_name: newNurseName.trim(), role: "nurse", position: newNursePosition.trim() },
-        { headers }
-      );
+      await api.post("/staff/", {
+        full_name: newNurseName.trim(),
+        role: "nurse",
+        position: newNursePosition.trim(),
+      });
       setNewNurseName("");
       setNewNursePosition("");
       setNurseMsg("Додано");
@@ -199,14 +194,14 @@ export default function SettingsPage() {
 
   async function handleDeleteNurse(id: number) {
     try {
-      await axios.delete(`${API}/api/staff/${id}`, { headers });
+      await api.delete(`/staff/${id}`);
       await loadNurses();
     } catch {}
   }
 
   async function loadOtherStaff() {
     try {
-      const res = await axios.get(`${API}/api/staff/?role=other`, { headers });
+      const res = await api.get("/staff/", { params: { role: "other" } });
       setOtherStaff(res.data);
     } catch {}
   }
@@ -216,11 +211,11 @@ export default function SettingsPage() {
     setOtherLoading(true);
     setOtherMsg("");
     try {
-      await axios.post(
-        `${API}/api/staff/`,
-        { full_name: newOtherName.trim(), role: "other", position: newOtherPosition.trim() },
-        { headers }
-      );
+      await api.post("/staff/", {
+        full_name: newOtherName.trim(),
+        role: "other",
+        position: newOtherPosition.trim(),
+      });
       setNewOtherName("");
       setNewOtherPosition("");
       setOtherMsg("Додано");
@@ -234,7 +229,7 @@ export default function SettingsPage() {
 
   async function handleDeleteOtherStaff(id: number) {
     try {
-      await axios.delete(`${API}/api/staff/${id}`, { headers });
+      await api.delete(`/staff/${id}`);
       await loadOtherStaff();
     } catch {}
   }
@@ -243,7 +238,7 @@ export default function SettingsPage() {
     setSettingsLoading(true);
     setSettingsMsg("");
     try {
-      await axios.put(`${API}/api/nhsu/settings`, settingsForm, { headers });
+      await api.put("/nhsu/settings", settingsForm);
       setSettingsMsg("Збережено");
       await loadSettings();
     } catch (e: any) {
@@ -255,7 +250,7 @@ export default function SettingsPage() {
 
   async function loadApiKeys() {
     try {
-      const res = await axios.get(`${API}/api/settings/api-keys`, { headers });
+      const res = await api.get("/settings/api-keys");
       setApiKeysStatus(res.data);
     } catch {}
   }
@@ -313,7 +308,7 @@ export default function SettingsPage() {
       if (anthropicInput !== "") payload.anthropic_key = anthropicInput;
       if (openaiInput !== "") payload.openai_key = openaiInput;
       if (xaiInput !== "") payload.xai_key = xaiInput;
-      await axios.put(`${API}/api/settings/api-keys`, payload, { headers });
+      await api.put("/settings/api-keys", payload);
       setApiKeysMsg("Ключі збережено");
       setAnthropicInput("");
       setOpenaiInput("");
@@ -328,7 +323,7 @@ export default function SettingsPage() {
 
   async function handleClearApiKey(field: "anthropic_key" | "openai_key" | "xai_key") {
     try {
-      await axios.put(`${API}/api/settings/api-keys`, { [field]: "" }, { headers });
+      await api.put("/settings/api-keys", { [field]: "" });
       await loadApiKeys();
     } catch {}
   }
