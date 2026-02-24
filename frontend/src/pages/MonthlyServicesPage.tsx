@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import axios from "axios";
-import { useAuth } from "../hooks/useAuth";
+import api from "../api/client";
 import {
   BarChart3,
   Plus,
@@ -52,7 +51,6 @@ import type {
   ShareResponse,
 } from "../types";
 
-const API = "";
 const MONTHS_UA = [
   "", "Січень", "Лютий", "Березень", "Квітень",
   "Травень", "Червень", "Липень", "Серпень",
@@ -69,8 +67,6 @@ const pct = (cur: number, prev: number) => {
 };
 
 export default function MonthlyServicesPage() {
-  const { token } = useAuth();
-  const headers = { Authorization: `Bearer ${token}` };
   const now = new Date();
 
   // ── Фільтри ──
@@ -134,14 +130,14 @@ export default function MonthlyServicesPage() {
 
   async function loadDoctors() {
     try {
-      const r = await axios.get(`${API}/api/nhsu/doctors`, { headers });
+      const r = await api.get("/nhsu/doctors");
       setDoctors(r.data);
     } catch {}
   }
 
   async function loadCatalogServices() {
     try {
-      const r = await axios.get(`${API}/api/services/`, { headers });
+      const r = await api.get("/services/");
       const sorted = (r.data as Service[]).sort((a, b) =>
         a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: "base" })
       );
@@ -151,8 +147,7 @@ export default function MonthlyServicesPage() {
 
   async function loadPeriodInfo(): Promise<PeriodInfo | null> {
     try {
-      const r = await axios.get(`${API}/api/monthly-services/period-info`, {
-        headers,
+      const r = await api.get("/monthly-services/period-info", {
         params: { year: selectedYear, month: selectedMonth },
       });
       setPeriodInfo(r.data);
@@ -167,7 +162,7 @@ export default function MonthlyServicesPage() {
     try {
       const params: Record<string, any> = { year: selectedYear, month: selectedMonth };
       if (selectedDoctor) params.doctor_id = selectedDoctor;
-      const r = await axios.get(`${API}/api/monthly-services/analytics`, { headers, params });
+      const r = await api.get("/monthly-services/analytics", { params });
       setAnalytics(r.data);
     } catch {}
     setLoading(false);
@@ -223,8 +218,8 @@ export default function MonthlyServicesPage() {
     try {
       const fd = new FormData();
       aiImages.forEach(img => fd.append("images", img.file));
-      const { data } = await axios.post(`${API}/api/monthly-services/analyze-image`, fd, {
-        headers: { ...headers, "Content-Type": "multipart/form-data" },
+      const { data } = await api.post("/monthly-services/analyze-image", fd, {
+        headers: { "Content-Type": "multipart/form-data" },
       });
       const res = data.results?.[0];
       if (!res) throw new Error("Порожня відповідь");
@@ -330,18 +325,18 @@ export default function MonthlyServicesPage() {
       .map(([sid, q]) => ({ service_id: Number(sid), quantity: q }));
     try {
       if (editingReport) {
-        await axios.put(`${API}/api/monthly-services/reports/${editingReport.id}`, {
+        await api.put(`/monthly-services/reports/${editingReport.id}`, {
           cash_in_register: cashPayload,
           entries,
-        }, { headers });
+        });
       } else {
-        await axios.post(`${API}/api/monthly-services/reports`, {
+        await api.post("/monthly-services/reports", {
           doctor_id: formDoctor,
           year: selectedYear,
           month: selectedMonth,
           cash_in_register: cashPayload,
           entries,
-        }, { headers });
+        });
       }
       setShowReportForm(false);
       await Promise.all([loadAnalytics(), loadPeriodInfo()]);
@@ -362,7 +357,7 @@ export default function MonthlyServicesPage() {
 
   async function handleDeleteReport(id: number) {
     try {
-      await axios.delete(`${API}/api/monthly-services/reports/${id}`, { headers });
+      await api.delete(`/monthly-services/reports/${id}`);
       setDeleteReportId(null);
       await Promise.all([loadAnalytics(), loadPeriodInfo()]);
     } catch {}
@@ -374,10 +369,8 @@ export default function MonthlyServicesPage() {
       return;
     }
     try {
-      await axios.post(
-        `${API}/api/monthly-services/reports/copy-previous?doctor_id=${selectedDoctor}&year=${selectedYear}&month=${selectedMonth}`,
-        {},
-        { headers },
+      await api.post(
+        `/monthly-services/reports/copy-previous?doctor_id=${selectedDoctor}&year=${selectedYear}&month=${selectedMonth}`,
       );
       await Promise.all([loadAnalytics(), loadPeriodInfo()]);
     } catch (e: any) {
@@ -396,7 +389,7 @@ export default function MonthlyServicesPage() {
 
   async function _doFinalize(id: number) {
     try {
-      await axios.post(`${API}/api/monthly-services/reports/${id}/finalize`, {}, { headers });
+      await api.post(`/monthly-services/reports/${id}/finalize`);
       await loadAnalytics();
     } catch {}
     setFinalizeWarningId(null);
@@ -404,7 +397,7 @@ export default function MonthlyServicesPage() {
 
   async function handleUnfinalize(id: number) {
     try {
-      await axios.post(`${API}/api/monthly-services/reports/${id}/unfinalize`, {}, { headers });
+      await api.post(`/monthly-services/reports/${id}/unfinalize`);
       await loadAnalytics();
     } catch {}
   }
@@ -412,9 +405,9 @@ export default function MonthlyServicesPage() {
   // ── Експорт / Поширення ──
   async function handleExport() {
     try {
-      const r = await axios.post(`${API}/api/monthly-services/export`, {
+      const r = await api.post("/monthly-services/export", {
         doctor_id: selectedDoctor || null, year: selectedYear, month: selectedMonth,
-      }, { headers, responseType: "blob" });
+      }, { responseType: "blob" });
       const url = window.URL.createObjectURL(new Blob([r.data]));
       const link = document.createElement("a");
       link.href = url;
@@ -428,9 +421,9 @@ export default function MonthlyServicesPage() {
 
   async function handleShare() {
     try {
-      const r = await axios.post(`${API}/api/monthly-services/share`, {
+      const r = await api.post("/monthly-services/share", {
         doctor_id: selectedDoctor || null, year: selectedYear, month: selectedMonth,
-      }, { headers });
+      });
       setShareData(r.data);
     } catch {}
   }
