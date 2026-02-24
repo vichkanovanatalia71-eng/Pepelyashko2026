@@ -922,7 +922,6 @@
     font-size: 0.875rem;
     font-weight: 500;
     transition: all 0.2s var(--ease-smooth);
-    border: 1px solid transparent;
     text-decoration: none;
     width: 100%;
     cursor: pointer;
@@ -937,13 +936,10 @@
     background: var(--bg-active);
   }
 
-  /* ── Nav item — active state ─────────────────────────────── */
+  /* ── Nav item — active state (no border, only glow) ──────── */
   .sidebar-nav-active {
     color: #fb923c;
-    background: rgba(249, 115, 22, 0.08);
-    border-color: rgba(249, 115, 22, 0.2);
-    box-shadow: 0 0 16px rgba(249, 115, 22, 0.08),
-                inset 0 0 12px rgba(249, 115, 22, 0.04);
+    background: rgba(249, 115, 22, 0.06);
   }
 
   /* ── Nav icon wrapper ────────────────────────────────────── */
@@ -975,21 +971,23 @@
     }
   }
 
-  /* ── Icon active — larger + glow + pulse ─────────────────── */
+  /* ── Icon active — larger + intense glow only (no border/bg) */
   .sidebar-nav-icon-active {
     color: #fb923c;
-    background: rgba(249, 115, 22, 0.12);
-    transform: scale(1.12);
-    box-shadow: 0 0 16px rgba(249, 115, 22, 0.3),
-                0 0 32px rgba(249, 115, 22, 0.1);
+    background: transparent;
+    transform: scale(1.15);
+    box-shadow: 0 0 20px rgba(249, 115, 22, 0.5),
+                0 0 40px rgba(249, 115, 22, 0.25),
+                0 0 60px rgba(249, 115, 22, 0.1);
     animation: iconActivePulse 2.5s ease-in-out infinite;
   }
 
   @media (hover: hover) and (pointer: fine) {
     .sidebar-nav-item:hover .sidebar-nav-icon-active {
-      transform: scale(1.22);
-      box-shadow: 0 0 22px rgba(249, 115, 22, 0.4),
-                  0 0 44px rgba(249, 115, 22, 0.15);
+      transform: scale(1.25);
+      box-shadow: 0 0 28px rgba(249, 115, 22, 0.6),
+                  0 0 56px rgba(249, 115, 22, 0.3),
+                  0 0 80px rgba(249, 115, 22, 0.12);
     }
   }
 
@@ -1061,17 +1059,19 @@
     animation: glowPulse 2.5s ease-in-out infinite;
   }
 
-  /* ── Active nav icon pulse ─────────────────────────────── */
+  /* ── Active nav icon pulse — intense glow ────────────────── */
   @keyframes iconActivePulse {
     0%, 100% {
-      box-shadow: 0 0 16px rgba(249, 115, 22, 0.3),
-                  0 0 32px rgba(249, 115, 22, 0.1);
-      transform: scale(1.12);
+      box-shadow: 0 0 20px rgba(249, 115, 22, 0.5),
+                  0 0 40px rgba(249, 115, 22, 0.25),
+                  0 0 60px rgba(249, 115, 22, 0.1);
+      transform: scale(1.15);
     }
     50% {
-      box-shadow: 0 0 24px rgba(249, 115, 22, 0.45),
-                  0 0 48px rgba(249, 115, 22, 0.18);
-      transform: scale(1.16);
+      box-shadow: 0 0 28px rgba(249, 115, 22, 0.65),
+                  0 0 56px rgba(249, 115, 22, 0.35),
+                  0 0 80px rgba(249, 115, 22, 0.15);
+      transform: scale(1.2);
     }
   }
 

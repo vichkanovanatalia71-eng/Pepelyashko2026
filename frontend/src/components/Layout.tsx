@@ -83,34 +83,35 @@ export default function Layout() {
                     sidebar-transition
                     ${collapsed ? "sidebar-collapsed" : "sidebar-expanded"}`}
       >
-        {/* Логотип + кнопка згортання */}
+        {/* Логотип */}
         <div className="p-4 border-b border-dark-50/10">
-          <div className={`flex items-center ${collapsed ? "justify-center" : "justify-between"}`}>
-            {/* Logo area */}
-            <div className={`flex items-center ${collapsed ? "" : "gap-3"} min-w-0`}>
-              <div className="w-10 h-10 rounded-xl bg-accent-500/10 flex items-center justify-center shadow-glow-accent glow-pulse shrink-0">
-                <MedFlowLogo size={26} className="text-accent-500" />
-              </div>
-              {!collapsed && (
-                <div className="min-w-0 sidebar-label">
-                  <h1 className="text-lg font-bold text-white tracking-tight">MedFlow</h1>
-                  <p className="text-xs text-gray-500">Фінанси ФОП</p>
-                </div>
-              )}
+          <div className={`flex items-center ${collapsed ? "justify-center" : "gap-3"}`}>
+            <div className="w-10 h-10 rounded-xl bg-accent-500/10 flex items-center justify-center shadow-glow-accent glow-pulse shrink-0">
+              <MedFlowLogo size={26} className="text-accent-500" />
             </div>
-
-            {/* Collapse / Expand toggle — зверху */}
-            <button
-              onClick={toggleCollapsed}
-              title={collapsed ? "Розгорнути меню" : "Згорнути меню"}
-              className={`sidebar-toggle-btn shrink-0
-                         ${collapsed ? "mt-2" : ""}`}
-            >
-              {collapsed
-                ? <PanelLeftOpen size={18} aria-hidden="true" />
-                : <PanelLeftClose size={18} aria-hidden="true" />}
-            </button>
+            {!collapsed && (
+              <div className="min-w-0 sidebar-label">
+                <h1 className="text-lg font-bold text-white tracking-tight">MedFlow</h1>
+                <p className="text-xs text-gray-500">Фінанси ФОП</p>
+              </div>
+            )}
           </div>
+        </div>
+
+        {/* Кнопка згортання — окремий рядок під логотипом */}
+        <div className={`px-3 pt-2 pb-1 ${collapsed ? "flex justify-center" : ""}`}>
+          <button
+            onClick={toggleCollapsed}
+            title={collapsed ? "Розгорнути меню" : "Згорнути меню"}
+            className={`sidebar-toggle-btn ${collapsed ? "" : "w-full justify-between px-3"}`}
+          >
+            {collapsed
+              ? <PanelLeftOpen size={18} aria-hidden="true" />
+              : <>
+                  <span className="text-xs font-medium sidebar-label">Згорнути</span>
+                  <PanelLeftClose size={16} aria-hidden="true" />
+                </>}
+          </button>
         </div>
 
         {/* Навігація */}
