@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import axios from "axios";
-import { useAuth } from "../hooks/useAuth";
+import api from "../api/client";
 import {
   ClipboardList,
   Plus,
@@ -23,8 +22,6 @@ import {
 } from "lucide-react";
 import type { MaterialItem, NhsuSettings, Service, SortDirection, SortField } from "../types";
 import { LoadingSpinner, ConfirmDialog } from "../components/shared";
-
-const API = "";
 
 const fmt = (v: number) =>
   v.toLocaleString("uk-UA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -58,9 +55,6 @@ function calcFinancials(
 }
 
 export default function ServicesPage() {
-  const { token } = useAuth();
-  const headers = { Authorization: `Bearer ${token}` };
-
   // ── Дані ──
   const [services, setServices] = useState<Service[]>([]);
   const [nhsuSettings, setNhsuSettings] = useState<NhsuSettings | null>(null);
@@ -129,7 +123,7 @@ export default function ServicesPage() {
   async function loadServices() {
     setLoading(true);
     try {
-      const res = await axios.get(`${API}/api/services/`, { headers });
+      const res = await api.get("/services/");
       setServices(res.data);
     } catch {}
     setLoading(false);
@@ -137,7 +131,7 @@ export default function ServicesPage() {
 
   async function loadNhsuSettings() {
     try {
-      const res = await axios.get(`${API}/api/nhsu/settings`, { headers });
+      const res = await api.get("/nhsu/settings");
       setNhsuSettings(res.data);
     } catch {}
   }
@@ -274,9 +268,9 @@ export default function ServicesPage() {
         })),
       };
       if (editingService) {
-        await axios.put(`${API}/api/services/${editingService.id}`, payload, { headers });
+        await api.put(`/services/${editingService.id}`, payload);
       } else {
-        await axios.post(`${API}/api/services/`, payload, { headers });
+        await api.post("/services/", payload);
       }
       setShowForm(false);
       await loadServices();
@@ -289,7 +283,7 @@ export default function ServicesPage() {
 
   async function handleDelete(id: number) {
     try {
-      await axios.delete(`${API}/api/services/${id}`, { headers });
+      await api.delete(`/services/${id}`);
       setDeleteId(null);
       setSelectedIds((prev) => { const n = new Set(prev); n.delete(id); return n; });
       await loadServices();
@@ -299,11 +293,7 @@ export default function ServicesPage() {
   // ── Масові дії ──
   async function handleBulkDelete() {
     try {
-      await axios.post(
-        `${API}/api/services/bulk-delete`,
-        { ids: Array.from(selectedIds) },
-        { headers }
-      );
+      await api.post("/services/bulk-delete", { ids: Array.from(selectedIds) });
       setSelectedIds(new Set());
       setShowBulkDeleteConfirm(false);
       await loadServices();
@@ -312,10 +302,9 @@ export default function ServicesPage() {
 
   async function handleExport() {
     try {
-      const res = await axios.post(
-        `${API}/api/services/export`,
+      const res = await api.post("/services/export",
         { ids: Array.from(selectedIds) },
-        { headers, responseType: "blob" }
+        { responseType: "blob" }
       );
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const link = document.createElement("a");
@@ -333,10 +322,8 @@ export default function ServicesPage() {
     if (isNaN(pct)) return;
     setBulkPriceLoading(true);
     try {
-      await axios.post(
-        `${API}/api/services/bulk-price-change`,
-        { ids: Array.from(selectedIds), percent: pct },
-        { headers }
+      await api.post("/services/bulk-price-change",
+        { ids: Array.from(selectedIds), percent: pct }
       );
       setShowBulkPriceChange(false);
       setBulkPricePercent("");
@@ -380,8 +367,8 @@ export default function ServicesPage() {
         fd.append("images", files[i]);
       }
 
-      const res = await axios.post(`${API}/api/services/analyze-image`, fd, {
-        headers: { ...headers, "Content-Type": "multipart/form-data" },
+      const res = await api.post("/services/analyze-image", fd, {
+        headers: { "Content-Type": "multipart/form-data" },
         timeout: 120000, // 2 min for AI
       });
 
@@ -458,7 +445,7 @@ export default function ServicesPage() {
         materials: s.materials,
       }));
 
-      const res = await axios.post(`${API}/api/services/bulk-create`, payload, { headers });
+      const res = await api.post("/services/bulk-create", payload);
       const created = res.data.length;
       const skipped = selected.length - created;
       setImportResult({ created, skipped });
