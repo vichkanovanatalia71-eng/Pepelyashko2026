@@ -344,11 +344,6 @@
     border-right-color: rgba(0,0,0,0.08) !important;
   }
 
-  /* ── Sticky topbar (light) ───────────────────────────── */
-  .sticky-topbar {
-    background: rgba(255, 255, 255, 0.82) !important;
-    border-bottom-color: rgba(0,0,0,0.06) !important;
-  }
 
   /* ── Placeholder text ───────────────────────────────── */
   .placeholder-gray-600::placeholder { color: #94a3b8 !important; }
@@ -878,10 +873,10 @@
   }
 
   /* ═══════════════════════════════════════════════════════════
-     SIDEBAR — Collapsible transitions
+     SIDEBAR — Collapsible transitions + fixed position
      ═══════════════════════════════════════════════════════════ */
   .sidebar-transition {
-    transition: width 0.28s var(--ease-spring);
+    transition: width 0.3s var(--ease-spring);
     will-change: width;
     overflow: hidden;
   }
@@ -896,33 +891,106 @@
     overflow: hidden;
   }
 
-  /* ═══════════════════════════════════════════════════════════
-     STICKY TOPBAR — Scroll-aware navigation
-     ═══════════════════════════════════════════════════════════ */
-  .sticky-topbar {
-    position: sticky;
-    top: 0;
-    z-index: 30;
-    height: 48px;
-    background: var(--bg-nav);
-    backdrop-filter: blur(20px) saturate(1.6);
-    -webkit-backdrop-filter: blur(20px) saturate(1.6);
-    border-bottom: 1px solid var(--border-glass);
-    transition: opacity 0.22s ease, transform 0.22s var(--ease-spring);
-    will-change: opacity, transform;
+  /* ── Collapse/expand toggle button ───────────────────────── */
+  .sidebar-toggle-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 0.625rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    background: var(--bg-card-inset);
+    transition: all 0.2s var(--ease-smooth);
+    cursor: pointer;
   }
-  .sticky-topbar-visible {
-    opacity: 1;
-    transform: translateY(0);
-    pointer-events: auto;
+  .sidebar-toggle-btn:hover {
+    color: var(--text-primary);
+    background: var(--bg-active);
+    border-color: rgba(249, 115, 22, 0.3);
+    box-shadow: 0 0 12px rgba(249, 115, 22, 0.15);
+    transform: scale(1.08);
   }
-  .sticky-topbar-hidden {
-    opacity: 0;
-    transform: translateY(-100%);
-    pointer-events: none;
-    height: 0;
-    border: none;
-    overflow: hidden;
+
+  /* ── Nav item base ───────────────────────────────────────── */
+  .sidebar-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    border-radius: 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.2s var(--ease-smooth);
+    border: 1px solid transparent;
+    text-decoration: none;
+    width: 100%;
+    cursor: pointer;
+  }
+
+  /* ── Nav item — inactive state ───────────────────────────── */
+  .sidebar-nav-inactive {
+    color: var(--text-muted);
+  }
+  .sidebar-nav-inactive:hover {
+    color: var(--text-primary);
+    background: var(--bg-active);
+  }
+
+  /* ── Nav item — active state ─────────────────────────────── */
+  .sidebar-nav-active {
+    color: #fb923c;
+    background: rgba(249, 115, 22, 0.08);
+    border-color: rgba(249, 115, 22, 0.2);
+    box-shadow: 0 0 16px rgba(249, 115, 22, 0.08),
+                inset 0 0 12px rgba(249, 115, 22, 0.04);
+  }
+
+  /* ── Nav icon wrapper ────────────────────────────────────── */
+  .sidebar-nav-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 0.625rem;
+    transition: all 0.25s var(--ease-spring);
+    shrink: 0;
+    flex-shrink: 0;
+  }
+
+  /* ── Icon idle — hover grows + glow ──────────────────────── */
+  .sidebar-nav-icon-idle {
+    color: var(--text-muted);
+    background: transparent;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .sidebar-nav-item:hover .sidebar-nav-icon-idle {
+      transform: scale(1.18);
+      color: #fb923c;
+      background: rgba(249, 115, 22, 0.1);
+      box-shadow: 0 0 14px rgba(249, 115, 22, 0.2),
+                  0 0 28px rgba(249, 115, 22, 0.08);
+    }
+  }
+
+  /* ── Icon active — larger + glow + pulse ─────────────────── */
+  .sidebar-nav-icon-active {
+    color: #fb923c;
+    background: rgba(249, 115, 22, 0.12);
+    transform: scale(1.12);
+    box-shadow: 0 0 16px rgba(249, 115, 22, 0.3),
+                0 0 32px rgba(249, 115, 22, 0.1);
+    animation: iconActivePulse 2.5s ease-in-out infinite;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .sidebar-nav-item:hover .sidebar-nav-icon-active {
+      transform: scale(1.22);
+      box-shadow: 0 0 22px rgba(249, 115, 22, 0.4),
+                  0 0 44px rgba(249, 115, 22, 0.15);
+    }
   }
 
   /* ═══════════════════════════════════════════════════════════
@@ -991,6 +1059,20 @@
   }
   .glow-pulse {
     animation: glowPulse 2.5s ease-in-out infinite;
+  }
+
+  /* ── Active nav icon pulse ─────────────────────────────── */
+  @keyframes iconActivePulse {
+    0%, 100% {
+      box-shadow: 0 0 16px rgba(249, 115, 22, 0.3),
+                  0 0 32px rgba(249, 115, 22, 0.1);
+      transform: scale(1.12);
+    }
+    50% {
+      box-shadow: 0 0 24px rgba(249, 115, 22, 0.45),
+                  0 0 48px rgba(249, 115, 22, 0.18);
+      transform: scale(1.16);
+    }
   }
 
   /* ═══════════════════════════════════════════════════════════

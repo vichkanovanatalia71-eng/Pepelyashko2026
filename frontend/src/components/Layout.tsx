@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Outlet, NavLink, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -47,36 +47,12 @@ export default function Layout() {
     try { return localStorage.getItem(SIDEBAR_KEY) === "1"; } catch { return false; }
   });
 
-  // ── Scroll-aware sticky top bar ──
-  const sidebarRef = useRef<HTMLElement>(null);
-  const mainRef = useRef<HTMLElement>(null);
-  const [sticky, setSticky] = useState(false);
-
   const toggleCollapsed = useCallback(() => {
     setCollapsed(prev => {
       const next = !prev;
       try { localStorage.setItem(SIDEBAR_KEY, next ? "1" : "0"); } catch {}
       return next;
     });
-  }, []);
-
-  // Track scroll on <main> to decide if sidebar header is out of viewport
-  useEffect(() => {
-    const main = mainRef.current;
-    if (!main) return;
-
-    let ticking = false;
-    const onScroll = () => {
-      if (ticking) return;
-      ticking = true;
-      requestAnimationFrame(() => {
-        setSticky(main.scrollTop > 48);
-        ticking = false;
-      });
-    };
-
-    main.addEventListener("scroll", onScroll, { passive: true });
-    return () => main.removeEventListener("scroll", onScroll);
   }, []);
 
   // Close drawer on ESC key
@@ -89,33 +65,25 @@ export default function Layout() {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [handleKeyDown]);
 
-  // Close drawer on route change + reset sticky
+  // Close drawer on route change
   useEffect(() => {
     setDrawerOpen(false);
-    if (mainRef.current) mainRef.current.scrollTop = 0;
-    setSticky(false);
   }, [location.pathname]);
-
-  // ── Active page label (for sticky bar) ──
-  const activeItem = navItems.find(n => {
-    if (n.to === "/") return location.pathname === "/";
-    return location.pathname.startsWith(n.to);
-  });
 
   return (
     <div className="min-h-screen flex bg-dark-700">
 
       {/* ══════════════════════════════════════════════
-          DESKTOP: бокова панель (lg+)
+          DESKTOP: бокова панель — фіксована (lg+)
       ══════════════════════════════════════════════ */}
       <aside
-        ref={sidebarRef}
         className={`hidden lg:flex flex-col shrink-0
                     bg-dark-600 border-r border-dark-50/10
+                    sticky top-0 h-screen
                     sidebar-transition
                     ${collapsed ? "sidebar-collapsed" : "sidebar-expanded"}`}
       >
-        {/* Логотип + перемикач теми */}
+        {/* Логотип + кнопка згортання */}
         <div className="p-4 border-b border-dark-50/10">
           <div className={`flex items-center ${collapsed ? "justify-center" : "justify-between"}`}>
             {/* Logo area */}
@@ -131,23 +99,22 @@ export default function Layout() {
               )}
             </div>
 
-            {/* Theme toggle — only when expanded */}
-            {!collapsed && (
-              <button
-                onClick={toggle}
-                aria-label={isLight ? "Увімкнути темну тему" : "Увімкнути світлу тему"}
-                className="w-9 h-9 rounded-xl border border-dark-50/20 flex items-center justify-center
-                           text-gray-400 hover:text-accent-400 hover:bg-accent-500/10
-                           hover:border-accent-500/30 transition-all duration-200 shrink-0"
-              >
-                {isLight ? <Moon size={16} /> : <Sun size={16} />}
-              </button>
-            )}
+            {/* Collapse / Expand toggle — зверху */}
+            <button
+              onClick={toggleCollapsed}
+              title={collapsed ? "Розгорнути меню" : "Згорнути меню"}
+              className={`sidebar-toggle-btn shrink-0
+                         ${collapsed ? "mt-2" : ""}`}
+            >
+              {collapsed
+                ? <PanelLeftOpen size={18} aria-hidden="true" />
+                : <PanelLeftClose size={18} aria-hidden="true" />}
+            </button>
           </div>
         </div>
 
         {/* Навігація */}
-        <nav className="flex-1 p-3 space-y-1" aria-label="Основна навігація">
+        <nav className="flex-1 p-3 space-y-1 overflow-y-auto scrollbar-hide" aria-label="Основна навігація">
           {navItems.map(({ to, icon: Icon, label }) => (
             <NavLink
               key={to}
@@ -155,34 +122,38 @@ export default function Layout() {
               end={to === "/"}
               title={collapsed ? label : undefined}
               className={({ isActive }) =>
-                `flex items-center gap-3 rounded-xl text-sm font-medium transition-all duration-200
+                `sidebar-nav-item group
                  ${collapsed ? "justify-center px-0 py-3" : "px-4 py-3"}
                  ${isActive
-                    ? "bg-accent-500/10 text-accent-400 shadow-neo-sm border border-accent-500/20"
-                    : "text-gray-400 hover:bg-dark-300 hover:text-gray-200 border border-transparent"
+                    ? "sidebar-nav-active"
+                    : "sidebar-nav-inactive"
                 }`
               }
             >
-              <Icon size={20} aria-hidden="true" className="shrink-0" />
-              {!collapsed && <span className="sidebar-label truncate">{label}</span>}
+              {({ isActive }) => (
+                <>
+                  <span className={`sidebar-nav-icon ${isActive ? "sidebar-nav-icon-active" : "sidebar-nav-icon-idle"}`}>
+                    <Icon size={isActive ? 22 : 20} aria-hidden="true" />
+                  </span>
+                  {!collapsed && <span className="sidebar-label truncate">{label}</span>}
+                </>
+              )}
             </NavLink>
           ))}
         </nav>
 
-        {/* Collapse toggle */}
+        {/* Перемикач теми */}
         <div className="px-3 py-2 border-t border-dark-50/10">
           <button
-            onClick={toggleCollapsed}
-            title={collapsed ? "Розгорнути меню" : "Згорнути меню"}
-            className={`flex items-center gap-3 w-full rounded-xl text-sm font-medium
-                       text-gray-500 hover:text-gray-300 hover:bg-dark-300
-                       transition-all duration-200
+            onClick={toggle}
+            title={isLight ? "Увімкнути темну тему" : "Увімкнути світлу тему"}
+            className={`sidebar-nav-item sidebar-nav-inactive
                        ${collapsed ? "justify-center px-0 py-2.5" : "px-4 py-2.5"}`}
           >
-            {collapsed
-              ? <PanelLeftOpen size={18} aria-hidden="true" />
-              : <PanelLeftClose size={18} aria-hidden="true" />}
-            {!collapsed && <span className="sidebar-label">Згорнути</span>}
+            <span className="sidebar-nav-icon sidebar-nav-icon-idle">
+              {isLight ? <Moon size={20} aria-hidden="true" /> : <Sun size={20} aria-hidden="true" />}
+            </span>
+            {!collapsed && <span className="sidebar-label">{isLight ? "Темна тема" : "Світла тема"}</span>}
           </button>
         </div>
 
@@ -210,61 +181,7 @@ export default function Layout() {
           ОСНОВНИЙ КОНТЕНТ
       ══════════════════════════════════════════════ */}
       <div className="flex-1 min-w-0 flex flex-col relative">
-        {/* ── Desktop sticky top bar (appears on scroll) ── */}
-        <div
-          className={`hidden lg:flex items-center gap-3 px-6 sticky-topbar
-                      ${sticky ? "sticky-topbar-visible" : "sticky-topbar-hidden"}`}
-        >
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-7 h-7 rounded-lg bg-accent-500/10 flex items-center justify-center shrink-0">
-              <MedFlowLogo size={18} className="text-accent-500" />
-            </div>
-            {activeItem && (
-              <>
-                <div className="w-px h-4 bg-dark-50/15" />
-                <div className="flex items-center gap-2 min-w-0">
-                  <activeItem.icon size={15} className="text-accent-400 shrink-0" />
-                  <span className="text-sm font-semibold text-gray-300 truncate">{activeItem.label}</span>
-                </div>
-              </>
-            )}
-          </div>
-
-          <div className="flex-1" />
-
-          {/* Quick nav pills */}
-          <nav className="flex items-center gap-1" aria-label="Швидка навігація">
-            {navItems.map(({ to, icon: Icon, label }) => (
-              <NavLink
-                key={to}
-                to={to}
-                end={to === "/"}
-                title={label}
-                className={({ isActive }) =>
-                  `p-2 rounded-lg transition-all duration-150
-                   ${isActive
-                     ? "bg-accent-500/15 text-accent-400"
-                     : "text-gray-500 hover:text-gray-300 hover:bg-dark-50/8"}`
-                }
-              >
-                <Icon size={16} aria-hidden="true" />
-              </NavLink>
-            ))}
-          </nav>
-
-          <div className="w-px h-4 bg-dark-50/15" />
-
-          <button
-            onClick={toggle}
-            aria-label={isLight ? "Увімкнути темну тему" : "Увімкнути світлу тему"}
-            className="p-2 rounded-lg text-gray-500 hover:text-accent-400 hover:bg-accent-500/10 transition-all duration-150"
-          >
-            {isLight ? <Moon size={15} /> : <Sun size={15} />}
-          </button>
-        </div>
-
         <main
-          ref={mainRef}
           className="flex-1 min-w-0 overflow-auto
                      p-4 pt-[calc(1rem+env(safe-area-inset-top))] pb-[calc(5rem+env(safe-area-inset-bottom))]
                      lg:p-8 lg:pb-8 lg:pt-8"
