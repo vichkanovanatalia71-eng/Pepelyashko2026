@@ -52,6 +52,8 @@ interface ShareData {
   data: {
     salary_staff: StaffItem[];
     recurring_expenses: RecurringExpense[];
+    salary_from_previous?: boolean;
+    salary_source_period?: string | null;
   };
 }
 
@@ -465,12 +467,24 @@ export default function AccountantRequestPage() {
             </div>
             Зарплати (брутто)
           </h2>
-          <div className="flex items-center gap-1.5 mb-5 ml-10.5">
-            <History size={11} className="text-gray-600" />
-            <p className="text-xs text-gray-500">
-              Суми з попереднього періоду ({prevLabel}). Відредагуйте за потреби.
-            </p>
-          </div>
+          {data.data.salary_from_previous ? (
+            <div className="p-3 rounded-xl bg-amber-500/8 border border-amber-500/20 mb-5 ml-0.5">
+              <div className="flex items-start gap-2">
+                <AlertCircle size={14} className="text-amber-400 shrink-0 mt-0.5" />
+                <p className="text-xs text-amber-300">
+                  <strong>Увага:</strong> Зарплатні дані за поточний місяць відсутні. Підтягнуто дані з попереднього періоду
+                  {data.data.salary_source_period ? ` (${data.data.salary_source_period})` : ""}. Перевірте та відредагуйте за потреби.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 mb-5 ml-10.5">
+              <History size={11} className="text-gray-600" />
+              <p className="text-xs text-gray-500">
+                Суми за поточний місяць. Відредагуйте за потреби.
+              </p>
+            </div>
+          )}
 
           {salaries.length === 0 ? (
             <p className="text-sm text-gray-500 text-center py-6">Немає працівників для відображення</p>
@@ -537,7 +551,7 @@ export default function AccountantRequestPage() {
           <div className="flex items-center gap-1.5 mb-5 ml-10.5">
             <History size={11} className="text-gray-600" />
             <p className="text-xs text-gray-500">
-              Постійні витрати з попереднього періоду ({prevLabel}). Перевірте суми та додайте нові.
+              Постійні витрати за поточний місяць. Перевірте суми та додайте нові.
             </p>
           </div>
 

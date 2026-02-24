@@ -1561,49 +1561,64 @@ async def create_accountant_request(
         if not (s.doctor_id and s.doctor_id == owner_doctor_id)
     ]
 
-    # Дані зарплат з попереднього місяця
+    # Дані зарплат: спочатку поточний місяць, fallback — попередній
     prev_year, prev_month = (body.year, body.month - 1) if body.month > 1 else (body.year - 1, 12)
-    prev_sal_res = await db.execute(
+
+    cur_sal_res = await db.execute(
         select(MonthlySalaryExpense).where(
             MonthlySalaryExpense.user_id == user.id,
-            MonthlySalaryExpense.year == prev_year,
-            MonthlySalaryExpense.month == prev_month,
+            MonthlySalaryExpense.year == body.year,
+            MonthlySalaryExpense.month == body.month,
         )
     )
-    prev_salary_map = {r.staff_member_id: r for r in prev_sal_res.scalars().all()}
+    cur_salary_map = {r.staff_member_id: r for r in cur_sal_res.scalars().all()}
+
+    salary_from_previous = False
+    if not cur_salary_map:
+        # Поточний місяць порожній — підтягуємо з попереднього
+        prev_sal_res = await db.execute(
+            select(MonthlySalaryExpense).where(
+                MonthlySalaryExpense.user_id == user.id,
+                MonthlySalaryExpense.year == prev_year,
+                MonthlySalaryExpense.month == prev_month,
+            )
+        )
+        cur_salary_map = {r.staff_member_id: r for r in prev_sal_res.scalars().all()}
+        salary_from_previous = True
 
     salary_data = []
     for s in filtered_staff:
-        prev = prev_salary_map.get(s.id)
+        rec = cur_salary_map.get(s.id)
         salary_data.append({
             "staff_member_id": s.id,
             "full_name": s.full_name,
             "role": s.role,
             "position": s.position,
-            "prev_brutto": float(prev.brutto) if prev else 0.0,
+            "prev_brutto": float(rec.brutto) if rec else 0.0,
         })
 
-    # Постійні витрати з попереднього місяця (is_recurring=True)
-    prev_fixed_res = await db.execute(
+    # Постійні витрати поточного місяця (всі)
+    cur_fixed_res = await db.execute(
         select(MonthlyFixedExpense).where(
             MonthlyFixedExpense.user_id == user.id,
-            MonthlyFixedExpense.year == prev_year,
-            MonthlyFixedExpense.month == prev_month,
-            MonthlyFixedExpense.is_recurring == True,
+            MonthlyFixedExpense.year == body.year,
+            MonthlyFixedExpense.month == body.month,
         )
     )
     recurring_expenses = []
-    for fe in prev_fixed_res.scalars().all():
+    for fe in cur_fixed_res.scalars().all():
         recurring_expenses.append({
             "category_key": fe.category_key,
             "name": fe.name or FIXED_CATEGORY_NAMES.get(fe.category_key, fe.category_key),
             "amount": float(fe.amount),
-            "is_recurring": True,
+            "is_recurring": fe.is_recurring,
         })
 
     payload = {
         "salary_staff": salary_data,
         "recurring_expenses": recurring_expenses,
+        "salary_from_previous": salary_from_previous,
+        "salary_source_period": f"{MONTHS_UA[prev_month]} {prev_year}" if salary_from_previous else None,
     }
 
     token = secrets.token_urlsafe(32)
