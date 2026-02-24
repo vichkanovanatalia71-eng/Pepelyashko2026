@@ -283,13 +283,8 @@ function Modal({ title, onClose, children }: {
       {/* Backdrop */}
       <div className="absolute inset-0" onClick={onClose} />
       <div
-        className="relative bg-dark-600 rounded-2xl w-full max-w-md my-auto animate-modal-in
-                   border border-orange-500/15
-                   shadow-[0_0_30px_rgba(249,115,22,0.10),0_20px_60px_rgba(0,0,0,0.5)]"
+        className="relative bg-dark-600 rounded-2xl w-full max-w-md my-auto animate-modal-in modal-glow"
       >
-        {/* Top orange glow line */}
-        <div className="absolute top-0 left-0 right-0 h-[2px] rounded-t-2xl
-                        bg-gradient-to-r from-transparent via-orange-500/50 to-transparent" />
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
           <h4 className="font-semibold text-white text-sm">{title}</h4>
           <button

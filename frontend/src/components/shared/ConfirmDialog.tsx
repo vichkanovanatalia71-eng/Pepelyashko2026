@@ -48,12 +48,13 @@ export default function ConfirmDialog({
       <div className="relative p-6 max-w-sm w-full my-auto animate-modal-in
                       rounded-2xl
                       bg-dark-600
-                      border border-orange-500/20
-                      shadow-[0_0_40px_rgba(249,115,22,0.15),0_20px_60px_rgba(0,0,0,0.5),0_0_0_1px_rgba(249,115,22,0.10)]">
+                      border border-orange-500/25
+                      shadow-[0_0_60px_rgba(249,115,22,0.22),0_0_120px_rgba(249,115,22,0.08),0_24px_70px_rgba(0,0,0,0.55),0_0_0_1px_rgba(249,115,22,0.12)]">
 
         {/* Top orange glow line */}
         <div className="absolute top-0 left-0 right-0 h-[2px] rounded-t-2xl
-                        bg-gradient-to-r from-transparent via-orange-500/60 to-transparent" />
+                        bg-gradient-to-r from-transparent via-orange-500/90 to-transparent
+                        shadow-[0_0_20px_6px_rgba(249,115,22,0.20)]" />
 
         <button
           onClick={onCancel}
@@ -70,8 +71,8 @@ export default function ConfirmDialog({
           <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-4
                           glow-pulse
                           ${isDanger
-                            ? "bg-red-500/15 shadow-[0_0_24px_rgba(239,68,68,0.25),0_0_48px_rgba(239,68,68,0.10)]"
-                            : "bg-orange-500/15 shadow-[0_0_24px_rgba(249,115,22,0.30),0_0_48px_rgba(249,115,22,0.12)]"
+                            ? "bg-red-500/15 shadow-[0_0_30px_rgba(239,68,68,0.35),0_0_60px_rgba(239,68,68,0.15),0_0_100px_rgba(239,68,68,0.06)]"
+                            : "bg-orange-500/15 shadow-[0_0_30px_rgba(249,115,22,0.40),0_0_60px_rgba(249,115,22,0.18),0_0_100px_rgba(249,115,22,0.06)]"
                           }`}>
             {icon || <AlertTriangle size={26} className={isDanger ? "text-red-400" : "text-orange-400"} />}
           </div>
