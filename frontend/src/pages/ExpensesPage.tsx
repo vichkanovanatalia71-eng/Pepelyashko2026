@@ -100,6 +100,10 @@ const PIE_COLORS = ["#6366f1", "#a855f7", "#f59e0b", "#f43f5e", "#10b981"];
 const CATEGORY_BADGE: Record<string, { label: string; cls: string }> = {
   fixed:  { label: "Постійні",   cls: "bg-blue-500/20 text-blue-300 border-blue-500/30" },
   salary: { label: "Зарплатні",  cls: "bg-purple-500/20 text-purple-300 border-purple-500/30" },
+  salary_paid: { label: "Платні послуги (ЗП)", cls: "bg-indigo-500/20 text-indigo-300 border-indigo-500/30" },
+  owner_own:   { label: "Власник · Власні декл.", cls: "bg-amber-500/20 text-amber-300 border-amber-500/30" },
+  owner_hired: { label: "Власник · Найм. лікар",  cls: "bg-teal-500/20 text-teal-300 border-teal-500/30" },
+  owner_paid:  { label: "Власник · Платні послуги", cls: "bg-cyan-500/20 text-cyan-300 border-cyan-500/30" },
   other:  { label: "Інші",       cls: "bg-amber-500/20 text-amber-300 border-amber-500/30" },
   taxes:  { label: "Податки",    cls: "bg-red-500/20 text-red-300 border-red-500/30" },
 };
@@ -1078,21 +1082,72 @@ export default function ExpensesPage() {
   const otherTotal = otherExpenses.reduce((sum, e) => sum + e.amount, 0);
 
   const detailRows: DetailRow[] = data
-    ? [
-        ...data.fixed.filter(r => r.amount > 0).map(r => ({
-          name: r.name, category: "fixed", amount: r.amount,
-        })),
-        ...data.salary.map(r => ({
-          name: r.full_name, category: "salary", amount: r.total_employer_cost,
-        })),
-        ...otherExpenses.map(r => ({
-          name: r.name, category: "other", amount: r.amount,
-        })),
-        { name: `ЄП (${data.taxes.ep_rate}%)`,   category: "taxes", amount: data.taxes.ep },
-        { name: `ВЗ (${data.taxes.vz_rate}%)`,   category: "taxes", amount: data.taxes.vz },
-        { name: "ЄСВ власника",                   category: "taxes", amount: data.taxes.esv_owner },
-        { name: `ЄСВ роботодавця (${data.settings.esv_employer_rate}%)`, category: "taxes", amount: data.taxes.esv_employer },
-      ]
+    ? (() => {
+        const rows: DetailRow[] = [];
+
+        // ── Постійні витрати
+        for (const r of data.fixed.filter(r => r.amount > 0)) {
+          rows.push({ name: r.name, category: "fixed", amount: r.amount });
+        }
+
+        // ── Власник ФОП (3 напрямки)
+        if (data.owner) {
+          const ownerCalc = calcOwnerSalary();
+          if (ownerCalc.ownDeclarations > 0) {
+            rows.push({
+              name: `${data.owner.doctor_name} — Кошти за власні декларації`,
+              category: "owner_own",
+              amount: ownerCalc.ownDeclarations,
+            });
+          }
+          if (ownerCalc.hiredDeclarations > 0) {
+            rows.push({
+              name: `${data.owner.doctor_name} — Кошти за декларації найм. лікаря`,
+              category: "owner_hired",
+              amount: ownerCalc.hiredDeclarations,
+            });
+          }
+          if (ownerCalc.paidServices > 0) {
+            rows.push({
+              name: `${data.owner.doctor_name} — Платні послуги`,
+              category: "owner_paid",
+              amount: ownerCalc.paidServices,
+            });
+          }
+        }
+
+        // ── Зарплатні витрати (лікарі та персонал) з розбивкою на ЗП та Платні послуги
+        for (const r of data.salary.filter(s => !s.is_owner)) {
+          const salaryPart = r.total_employer_cost - (r.paid_services_income || 0);
+          if (salaryPart > 0) {
+            rows.push({
+              name: r.full_name,
+              category: "salary",
+              amount: salaryPart,
+            });
+          }
+          if (r.paid_services_income > 0) {
+            rows.push({
+              name: `${r.full_name} — Платні послуги`,
+              category: "salary_paid",
+              amount: r.paid_services_income,
+            });
+          }
+        }
+
+        // ── Інші витрати
+        for (const r of otherExpenses) {
+          rows.push({ name: r.name, category: "other", amount: r.amount });
+        }
+
+        // ── Податки
+        rows.push({ name: `ЄП (${data.taxes.ep_rate}%)`,   category: "taxes", amount: data.taxes.ep });
+        rows.push({ name: `ВЗ (${data.taxes.vz_rate}%)`,   category: "taxes", amount: data.taxes.vz });
+        rows.push({ name: "ЄСВ власника",                   category: "taxes", amount: data.taxes.esv_owner });
+        rows.push({ name: `ЄСВ роботодавця (${data.settings.esv_employer_rate}%)`, category: "taxes", amount: data.taxes.esv_employer });
+
+        return rows;
+      })()
     : [];
 
   const grandWithOther = (data?.totals.grand_total ?? 0) + otherTotal;
