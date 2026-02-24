@@ -1767,6 +1767,9 @@ async def submit_accountant_request(
     # ── 3. Зберігаємо витрати бухгалтера ──
     payload_expenses = share.payload_snapshot.get("recurring_expenses", [])
 
+    # Збираємо category_key надісланих витрат щоб потім видалити відсутні
+    submitted_cat_keys: set[str] = set()
+
     for exp in body.expenses:
         now = datetime.now(timezone.utc)
 
@@ -1833,6 +1836,8 @@ async def submit_accountant_request(
                 )
                 used_cat_key = cat_key
 
+            if used_cat_key:
+                submitted_cat_keys.add(used_cat_key)
             saved_fixed.append({
                 "name": exp.name,
                 "amount": exp.amount,
@@ -1850,6 +1855,7 @@ async def submit_accountant_request(
                         break
 
             if cat_key_to_delete:
+                submitted_cat_keys.add(cat_key_to_delete)
                 old_fe_res = await db.execute(
                     select(MonthlyFixedExpense).where(
                         MonthlyFixedExpense.user_id == user_id,
@@ -1881,7 +1887,24 @@ async def submit_accountant_request(
                 "id": oe.id,
             })
 
-    # ── 3. Оновлюємо share запис як підтверджений ──
+    # ── 4. Видаляємо постійні витрати, які бухгалтер прибрав з форми ──
+    for pe in payload_expenses:
+        ck = pe.get("category_key")
+        if ck and ck not in submitted_cat_keys:
+            del_res = await db.execute(
+                select(MonthlyFixedExpense).where(
+                    MonthlyFixedExpense.user_id == user_id,
+                    MonthlyFixedExpense.year == year,
+                    MonthlyFixedExpense.month == month,
+                    MonthlyFixedExpense.category_key == ck,
+                )
+            )
+            to_del = del_res.scalar_one_or_none()
+            if to_del:
+                await db.delete(to_del)
+    await db.flush()
+
+    # ── 5. Оновлюємо share запис як підтверджений ──
     now_utc = datetime.now(timezone.utc)
     new_fs = dict(fs)
     new_fs["submitted"] = True
