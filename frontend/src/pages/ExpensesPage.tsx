@@ -2,7 +2,6 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import {
   ChevronLeft,
   ChevronRight,
-  ChevronDown,
   Save,
   RefreshCw,
   Lock,
@@ -430,6 +429,13 @@ export default function ExpensesPage() {
   type DrawerSection = "fixed" | "salary" | "other" | "taxes" | "summary" | null;
   const [activeDrawer, setActiveDrawer] = useState<DrawerSection>(null);
 
+  // ── Left sidebar collapse state (inverse coupling: left expanded → right collapsed) ──
+  const [leftCollapsed, setLeftCollapsed] = useState(() => {
+    try { return localStorage.getItem("sidebar-collapsed") === "1"; } catch { return false; }
+  });
+  // Expense sidebar is expanded when left nav is collapsed, and vice versa
+  const expSidebarCollapsed = !leftCollapsed;
+
   // ── Previous month data for copy-from feature ──
   const [prevMonthData, setPrevMonthData] = useState<MonthlyExpenseData | null>(null);
   const [prevOtherExpenses, setPrevOtherExpenses] = useState<OtherExpense[]>([]);
@@ -586,6 +592,16 @@ export default function ExpensesPage() {
     document.addEventListener("keydown", handleKey);
     return () => document.removeEventListener("keydown", handleKey);
   }, [activeDrawer]);
+
+  // Sync with left sidebar collapse state
+  useEffect(() => {
+    function handleSidebarToggle(e: Event) {
+      const detail = (e as CustomEvent).detail;
+      setLeftCollapsed(detail.collapsed);
+    }
+    window.addEventListener("sidebar-toggle", handleSidebarToggle);
+    return () => window.removeEventListener("sidebar-toggle", handleSidebarToggle);
+  }, []);
 
   // ── Drawer section definitions ──
   const DRAWER_SECTIONS: { key: DrawerSection; label: string; icon: React.ReactNode; color: string; badgeColor: string; getValue: () => number; getStatus: () => boolean }[] = [
@@ -1218,7 +1234,9 @@ export default function ExpensesPage() {
   // ══════════════════════════════════════════════════════════════
 
   return (
-    <div className="space-y-5 max-w-7xl mx-auto">
+    <div className={`space-y-5 max-w-7xl mx-auto transition-[padding] duration-300 ${
+      viewMode === "month" && data ? (expSidebarCollapsed ? "lg:pr-[80px]" : "lg:pr-[208px]") : ""
+    }`}>
 
       {/* ═══ HEADER ═══ */}
       <div className="flex items-center justify-between flex-wrap gap-3">
@@ -1859,10 +1877,25 @@ export default function ExpensesPage() {
             </div>
           )}
 
-          {/* ═══ RIGHT SIDEBAR: Expense Section Tabs ═══ */}
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr,auto] gap-4">
-            {/* Sidebar tabs - right panel */}
-            <nav className="lg:order-2 flex lg:flex-col gap-2 lg:w-[220px]" aria-label="Розділи витрат">
+          {/* ═══ FIXED RIGHT SIDEBAR: Expense Section Menu ═══ */}
+          <aside
+            className={`hidden lg:flex flex-col shrink-0
+                        bg-dark-600 border-l border-dark-50/10
+                        fixed right-0 top-0 h-screen z-30
+                        expense-sidebar-transition
+                        ${expSidebarCollapsed ? "expense-sidebar-collapsed" : "expense-sidebar-expanded"}`}
+            aria-label="Розділи витрат"
+          >
+            {/* Sidebar header */}
+            <div className={`flex items-center gap-2.5 px-4 py-5 border-b border-dark-50/10 ${expSidebarCollapsed ? "justify-center" : ""}`}>
+              <div className="w-9 h-9 rounded-xl bg-orange-500/10 flex items-center justify-center shrink-0">
+                <BarChart3 size={18} className="text-orange-400" />
+              </div>
+              {!expSidebarCollapsed && <span className="sidebar-label text-sm font-semibold text-gray-300 truncate">Витрати</span>}
+            </div>
+
+            {/* Expense nav items */}
+            <nav className="flex-1 flex flex-col gap-1 py-3 px-2 overflow-y-auto">
               {DRAWER_SECTIONS.map(sec => {
                 const isActive = activeDrawer === sec.key;
                 const value = sec.getValue();
@@ -1871,78 +1904,72 @@ export default function ExpensesPage() {
                   <button
                     key={sec.key}
                     onClick={() => toggleDrawer(sec.key as DrawerSection)}
-                    className={`group relative flex items-center gap-3 px-4 py-3.5 rounded-2xl border transition-all duration-200 text-left w-full ${
-                      isActive
-                        ? `${sec.badgeColor} border shadow-lg shadow-black/20`
-                        : "bg-dark-500/40 border-dark-50/10 hover:border-dark-50/25 hover:bg-dark-500/60"
+                    title={expSidebarCollapsed ? `${sec.label} · ${fmt(value)} ₴` : undefined}
+                    className={`expense-nav-item group ${expSidebarCollapsed ? "justify-center px-0 py-3" : "px-3 py-2.5"} ${
+                      isActive ? "expense-nav-active" : "expense-nav-inactive"
                     }`}
-                    aria-expanded={isActive}
                   >
-                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-all ${
-                      isActive ? sec.badgeColor : "bg-dark-400/40"
+                    <span className={`expense-nav-icon ${isActive ? "expense-nav-icon-active" : "expense-nav-icon-idle"} ${
+                      isActive ? sec.badgeColor : ""
                     }`}>
-                      <span className={isActive ? sec.color : "text-gray-500 group-hover:text-gray-300"}>
-                        {sec.icon}
-                      </span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className={`text-sm font-semibold truncate ${isActive ? "text-white" : "text-gray-300"}`}>
-                        {sec.label}
-                      </p>
-                      <div className="flex items-center gap-1.5 mt-0.5">
-                        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${filled ? "bg-emerald-400" : "bg-gray-600"}`} />
-                        <span className={`text-xs font-mono tabular-nums truncate ${isActive ? sec.color : "text-gray-500"}`}>
-                          {sec.key === "summary" ? (
-                            <>{value >= 0 ? "+" : ""}{fmt(value)} ₴</>
-                          ) : (
-                            <>{fmt(value)} ₴</>
-                          )}
-                        </span>
+                      <span className={isActive ? sec.color : ""}>{sec.icon}</span>
+                    </span>
+                    {!expSidebarCollapsed && (
+                      <div className="sidebar-label flex-1 min-w-0">
+                        <p className={`text-xs font-semibold truncate ${isActive ? "text-white" : "text-gray-400"}`}>
+                          {sec.label}
+                        </p>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${filled ? "bg-emerald-400" : "bg-gray-600"}`} />
+                          <span className={`text-[10px] font-mono tabular-nums truncate ${isActive ? sec.color : "text-gray-600"}`}>
+                            {sec.key === "summary" ? (
+                              <>{value >= 0 ? "+" : ""}{fmt(value)} ₴</>
+                            ) : (
+                              <>{fmt(value)} ₴</>
+                            )}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                    <ChevronRight size={16} className={`shrink-0 transition-transform duration-200 ${
-                      isActive ? `${sec.color} rotate-90` : "text-gray-600 group-hover:text-gray-400"
-                    }`} />
+                    )}
                   </button>
                 );
               })}
             </nav>
 
-            {/* Main content area */}
-            <div className="lg:order-1 min-w-0">
-              {/* Show a hint when no drawer is open */}
-              {!activeDrawer && (
-                <div className="card-neo p-8 flex flex-col items-center justify-center text-center gap-3 min-h-[200px]">
-                  <div className="w-14 h-14 rounded-2xl bg-dark-400/40 flex items-center justify-center">
-                    <ChevronLeft size={24} className="text-gray-600 hidden lg:block" />
-                    <ChevronDown size={24} className="text-gray-600 lg:hidden" />
-                  </div>
-                  <p className="text-gray-500 text-sm font-medium">Оберіть розділ для перегляду або редагування</p>
-                  <p className="text-gray-600 text-xs max-w-sm">
-                    Натисніть на будь-який блок витрат праворуч для детального перегляду
-                  </p>
-                </div>
+            {/* Month indicator */}
+            <div className={`px-4 py-3 border-t border-dark-50/10 ${expSidebarCollapsed ? "text-center" : ""}`}>
+              {expSidebarCollapsed ? (
+                <p className="text-[10px] text-gray-600 font-mono">{String(month).padStart(2, "0")}</p>
+              ) : (
+                <p className="sidebar-label text-xs text-gray-600 truncate">{MONTH_NAMES[month - 1]} {year}</p>
               )}
+            </div>
+          </aside>
 
-              {/* ── DRAWER: ПОСТІЙНІ ВИТРАТИ ── */}
-              {activeDrawer === "fixed" && (
-              <section className="card-neo overflow-hidden animate-drawer-in">
-              <div className="flex items-center justify-between px-5 py-4 bg-dark-400/20 border-b border-dark-50/10">
+          {/* ═══ MODAL OVERLAYS for each expense section ═══ */}
+
+          {/* ── MODAL: ПОСТІЙНІ ВИТРАТИ ── */}
+          {activeDrawer === "fixed" && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-label="Постійні витрати">
+            <div className="absolute inset-0" onClick={() => setActiveDrawer(null)} />
+            <div className="relative bg-dark-600 rounded-2xl shadow-2xl w-full flex flex-col my-auto animate-modal-in" style={{ border: "1px solid #ffffff15", maxHeight: "85vh", maxWidth: "900px" }}>
+              <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-xl bg-blue-500/15 flex items-center justify-center shrink-0">
                     <TrendingDown size={16} className="text-blue-400" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-white text-sm">Постійні витрати</h3>
+                    <h3 className="font-semibold text-white text-base">Постійні витрати</h3>
                     <p className={`text-xs mt-0.5 ${data.fixed.some(r => r.amount > 0) ? "text-emerald-400" : "text-gray-600"}`}>
                       {data.fixed.some(r => r.amount > 0) ? "Заповнено" : "Не заповнено"} · {fmt(data.totals.fixed_total)} ₴
                     </p>
                   </div>
                 </div>
-                <button onClick={() => setActiveDrawer(null)} className="p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-dark-300 transition-all" aria-label="Закрити">
+                <button onClick={() => setActiveDrawer(null)} className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all" aria-label="Закрити">
                   <X size={16} />
                 </button>
               </div>
+              <div className="overflow-y-auto flex-1">
 
               {/* Copy from previous month prompt */}
               {data.fixed.length === 0 && !sectionCopied.fixed && prevMonthLoaded && (
@@ -2050,28 +2077,33 @@ export default function ExpensesPage() {
                 </button>
                 <span className="font-bold text-blue-400 font-mono tabular-nums">{fmt(data.totals.fixed_total)} ₴</span>
               </div>
-            </section>
-              )}
+              </div>
+            </div>
+          </div>
+          )}
 
-              {/* ── DRAWER: ЗАРПЛАТНІ ВИТРАТИ ── */}
-              {activeDrawer === "salary" && (
-              <section className="card-neo overflow-hidden animate-drawer-in">
-              <div className="flex items-center justify-between px-5 py-4 bg-dark-400/20 border-b border-dark-50/10">
+          {/* ── MODAL: ЗАРПЛАТНІ ВИТРАТИ ── */}
+          {activeDrawer === "salary" && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-label="Зарплатні витрати">
+            <div className="absolute inset-0" onClick={() => setActiveDrawer(null)} />
+            <div className="relative bg-dark-600 rounded-2xl shadow-2xl w-full flex flex-col my-auto animate-modal-in" style={{ border: "1px solid #ffffff15", maxHeight: "85vh", maxWidth: "900px" }}>
+              <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-xl bg-purple-500/15 flex items-center justify-center shrink-0">
                     <Users size={16} className="text-purple-400" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-white text-sm">Зарплатні витрати</h3>
+                    <h3 className="font-semibold text-white text-base">Зарплатні витрати</h3>
                     <p className={`text-xs mt-0.5 ${data.salary.some(r => r.brutto > 0) ? "text-emerald-400" : "text-gray-600"}`}>
                       {data.salary.some(r => r.brutto > 0) ? "Заповнено" : "Не заповнено"} · {fmt(data.totals.salary_total)} ₴
                     </p>
                   </div>
                 </div>
-                <button onClick={() => setActiveDrawer(null)} className="p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-dark-300 transition-all" aria-label="Закрити">
+                <button onClick={() => setActiveDrawer(null)} className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all" aria-label="Закрити">
                   <X size={16} />
                 </button>
               </div>
+              <div className="overflow-y-auto flex-1">
               <div className="border-t border-dark-50/10">
 
               {/* Copy from previous month prompt */}
@@ -2556,28 +2588,33 @@ export default function ExpensesPage() {
                 <span className="font-bold text-purple-400 font-mono tabular-nums">{fmt(data.totals.salary_total)} ₴</span>
               </div>
               </div>
-            </section>
-              )}
+              </div>
+            </div>
+          </div>
+          )}
 
-              {/* ── DRAWER: ІНШІ ВИТРАТИ ── */}
-              {activeDrawer === "other" && (
-              <section className="card-neo overflow-hidden animate-drawer-in">
-              <div className="flex items-center justify-between px-5 py-4 bg-dark-400/20 border-b border-dark-50/10">
+          {/* ── MODAL: ІНШІ ВИТРАТИ ── */}
+          {activeDrawer === "other" && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-label="Інші витрати">
+            <div className="absolute inset-0" onClick={() => setActiveDrawer(null)} />
+            <div className="relative bg-dark-600 rounded-2xl shadow-2xl w-full flex flex-col my-auto animate-modal-in" style={{ border: "1px solid #ffffff15", maxHeight: "85vh", maxWidth: "900px" }}>
+              <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-xl bg-amber-500/15 flex items-center justify-center shrink-0">
                     <Wallet size={16} className="text-amber-400" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-white text-sm">Інші витрати</h3>
+                    <h3 className="font-semibold text-white text-base">Інші витрати</h3>
                     <p className={`text-xs mt-0.5 ${otherExpenses.length > 0 ? "text-emerald-400" : "text-gray-600"}`}>
                       {otherExpenses.length > 0 ? "Заповнено" : "Не заповнено"} · {fmt(otherTotal)} ₴
                     </p>
                   </div>
                 </div>
-                <button onClick={() => setActiveDrawer(null)} className="p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-dark-300 transition-all" aria-label="Закрити">
+                <button onClick={() => setActiveDrawer(null)} className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all" aria-label="Закрити">
                   <X size={16} />
                 </button>
               </div>
+              <div className="overflow-y-auto flex-1">
               <div className="border-t border-dark-50/10">
 
               {/* Copy from previous month prompt */}
@@ -2676,28 +2713,33 @@ export default function ExpensesPage() {
                 <span className="font-bold text-amber-400 font-mono tabular-nums">{fmt(otherTotal)} ₴</span>
               </div>
               </div>
-            </section>
-              )}
+              </div>
+            </div>
+          </div>
+          )}
 
-              {/* ── DRAWER: ПОДАТКИ ── */}
-              {activeDrawer === "taxes" && (
-              <section className="card-neo overflow-hidden animate-drawer-in">
-              <div className="flex items-center justify-between px-5 py-4 bg-dark-400/20 border-b border-dark-50/10">
+          {/* ── MODAL: ПОДАТКИ ── */}
+          {activeDrawer === "taxes" && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-label="Податки">
+            <div className="absolute inset-0" onClick={() => setActiveDrawer(null)} />
+            <div className="relative bg-dark-600 rounded-2xl shadow-2xl w-full flex flex-col my-auto animate-modal-in" style={{ border: "1px solid #ffffff15", maxHeight: "85vh", maxWidth: "900px" }}>
+              <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-xl bg-red-500/15 flex items-center justify-center shrink-0">
                     <Receipt size={16} className="text-red-400" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-white text-sm">Податки</h3>
+                    <h3 className="font-semibold text-white text-base">Податки</h3>
                     <p className={`text-xs mt-0.5 ${data.totals.tax_total > 0 ? "text-emerald-400" : "text-gray-600"}`}>
                       {data.totals.tax_total > 0 ? "Заповнено" : "Не заповнено"} · {fmt(data.totals.tax_total)} ₴
                     </p>
                   </div>
                 </div>
-                <button onClick={() => setActiveDrawer(null)} className="p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-dark-300 transition-all" aria-label="Закрити">
+                <button onClick={() => setActiveDrawer(null)} className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all" aria-label="Закрити">
                   <X size={16} />
                 </button>
               </div>
+              <div className="overflow-y-auto flex-1">
               <div className="px-5 py-4 space-y-3 border-t border-dark-50/10">
                 <div className="bg-dark-400/20 rounded-xl p-4 space-y-2">
                   <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-1.5"><Banknote size={13} className="text-orange-400" />Джерела доходу</p>
@@ -2738,19 +2780,23 @@ export default function ExpensesPage() {
                   </div>
                 </div>
               </div>
-            </section>
-              )}
+              </div>
+            </div>
+          </div>
+          )}
 
-              {/* ── DRAWER: ПІДСУМКИ ── */}
-              {activeDrawer === "summary" && (
-              <section className="card-neo overflow-hidden animate-drawer-in">
-              <div className="flex items-center justify-between px-5 py-4 bg-dark-400/20 border-b border-dark-50/10">
+          {/* ── MODAL: ПІДСУМКИ ── */}
+          {activeDrawer === "summary" && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-label="Підсумки">
+            <div className="absolute inset-0" onClick={() => setActiveDrawer(null)} />
+            <div className="relative bg-dark-600 rounded-2xl shadow-2xl w-full flex flex-col my-auto animate-modal-in" style={{ border: "1px solid #ffffff15", maxHeight: "85vh", maxWidth: "900px" }}>
+              <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-xl bg-emerald-500/15 flex items-center justify-center shrink-0">
                     <Building2 size={16} className="text-emerald-400" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-white text-sm">
+                    <h3 className="font-semibold text-white text-base">
                       Підсумки — {MONTH_NAMES[month - 1]} {year}
                     </h3>
                     <p className={`text-xs mt-0.5 ${grandWithOther > 0 ? "text-emerald-400" : "text-gray-600"}`}>
@@ -2758,10 +2804,11 @@ export default function ExpensesPage() {
                     </p>
                   </div>
                 </div>
-                <button onClick={() => setActiveDrawer(null)} className="p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-dark-300 transition-all" aria-label="Закрити">
+                <button onClick={() => setActiveDrawer(null)} className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all" aria-label="Закрити">
                   <X size={16} />
                 </button>
               </div>
+              <div className="overflow-y-auto flex-1">
               <div className="px-5 py-5 space-y-2.5 border-t border-dark-50/10">
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-1.5">
                   <BarChart3 size={13} className="text-orange-400" />Структура витрат
@@ -2808,11 +2855,10 @@ export default function ExpensesPage() {
                   </div>
                 )}
               </div>
-            </section>
-              )}
-
+              </div>
             </div>
           </div>
+          )}
         </>
       )}
 

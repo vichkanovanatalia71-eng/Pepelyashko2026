@@ -83,6 +83,7 @@ export default function Layout() {
     setCollapsed(prev => {
       const next = !prev;
       try { localStorage.setItem(SIDEBAR_KEY, next ? "1" : "0"); } catch {}
+      window.dispatchEvent(new CustomEvent("sidebar-toggle", { detail: { collapsed: next } }));
       return next;
     });
   }, []);
