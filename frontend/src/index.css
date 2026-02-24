@@ -798,10 +798,39 @@
   }
 
   /* ═══════════════════════════════════════════════════════════
-     MODAL / DIALOG
+     MODAL / DIALOG — Orange glow
      ═══════════════════════════════════════════════════════════ */
   .modal-overlay {
     overscroll-behavior: contain;
+  }
+
+  .modal-glow {
+    border: 1px solid rgba(249, 115, 22, 0.15);
+    box-shadow:
+      0 0 40px rgba(249, 115, 22, 0.12),
+      0 0 80px rgba(249, 115, 22, 0.06),
+      0 20px 60px rgba(0, 0, 0, 0.5),
+      0 0 0 1px rgba(249, 115, 22, 0.08);
+  }
+
+  .modal-glow::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    border-radius: inherit;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(249, 115, 22, 0.50) 30%,
+      rgba(249, 115, 22, 0.70) 50%,
+      rgba(249, 115, 22, 0.50) 70%,
+      transparent 100%
+    );
+    pointer-events: none;
+    z-index: 1;
   }
 
   .tap-target {

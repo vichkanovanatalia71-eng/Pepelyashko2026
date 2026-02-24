@@ -30,9 +30,11 @@ export default function ConfirmDialog({
 }: ConfirmDialogProps) {
   if (!open) return null;
 
-  const confirmClass = variant === "danger"
+  const isDanger = variant === "danger";
+
+  const confirmClass = isDanger
     ? "bg-red-500 hover:bg-red-600 active:scale-97 text-white shadow-lg shadow-red-500/20"
-    : "btn-accent";
+    : "bg-orange-500 hover:bg-orange-600 active:scale-97 text-white shadow-lg shadow-orange-500/30";
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
@@ -43,8 +45,16 @@ export default function ConfirmDialog({
       />
 
       {/* Dialog */}
-      <div className="relative card-neo border border-dark-50/10 p-6 max-w-sm w-full my-auto animate-modal-in
-                      shadow-elevation-3">
+      <div className="relative p-6 max-w-sm w-full my-auto animate-modal-in
+                      rounded-2xl
+                      bg-dark-600
+                      border border-orange-500/20
+                      shadow-[0_0_40px_rgba(249,115,22,0.15),0_20px_60px_rgba(0,0,0,0.5),0_0_0_1px_rgba(249,115,22,0.10)]">
+
+        {/* Top orange glow line */}
+        <div className="absolute top-0 left-0 right-0 h-[2px] rounded-t-2xl
+                        bg-gradient-to-r from-transparent via-orange-500/60 to-transparent" />
+
         <button
           onClick={onCancel}
           aria-label="Закрити"
@@ -58,9 +68,12 @@ export default function ConfirmDialog({
 
         <div className="flex flex-col items-center text-center">
           <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-4
-                          shadow-lg glow-pulse
-                          ${variant === "danger" ? "bg-red-500/15 shadow-red-500/10" : "bg-accent-500/15 shadow-accent-500/10"}`}>
-            {icon || <AlertTriangle size={26} className={variant === "danger" ? "text-red-400" : "text-accent-400"} />}
+                          glow-pulse
+                          ${isDanger
+                            ? "bg-red-500/15 shadow-[0_0_24px_rgba(239,68,68,0.25),0_0_48px_rgba(239,68,68,0.10)]"
+                            : "bg-orange-500/15 shadow-[0_0_24px_rgba(249,115,22,0.30),0_0_48px_rgba(249,115,22,0.12)]"
+                          }`}>
+            {icon || <AlertTriangle size={26} className={isDanger ? "text-red-400" : "text-orange-400"} />}
           </div>
           <h3 id="confirm-title" className="text-lg font-semibold text-white mb-2">{title}</h3>
           {description && <p className="text-sm text-gray-400 mb-6 leading-relaxed">{description}</p>}
@@ -71,6 +84,7 @@ export default function ConfirmDialog({
             onClick={onCancel}
             className="flex-1 px-4 py-3 rounded-xl text-sm font-medium text-gray-400
                        bg-dark-400 border border-dark-50/10 hover:text-white hover:bg-dark-300
+                       hover:border-orange-500/20
                        active:scale-97 transition-all duration-150
                        focus-visible:outline-2 focus-visible:outline-accent-400"
           >
