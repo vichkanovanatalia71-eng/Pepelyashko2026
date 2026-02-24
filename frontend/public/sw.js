@@ -1,5 +1,5 @@
-/* Pepelyashko Finance — Service Worker v1 */
-const CACHE_NAME = "pepelyashko-v1";
+/* MedFlow Finance — Service Worker v2 */
+const CACHE_NAME = "medflow-v2";
 const OFFLINE_URL = "/offline.html";
 
 // Assets to pre-cache on install

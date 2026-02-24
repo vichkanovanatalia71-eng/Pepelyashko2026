@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { CheckCircle, XCircle, Loader, Stethoscope } from "lucide-react";
+import { CheckCircle, XCircle, Loader } from "lucide-react";
+import MedFlowLogo from "../components/shared/MedFlowLogo";
 import axios from "axios";
 
 const API = "";
@@ -47,8 +48,8 @@ export default function VerifyEmailPage() {
       <div className="relative w-full max-w-md card-neo p-10 flex flex-col items-center text-center gap-6">
         {/* Logo */}
         <div className="flex items-center gap-2 text-gray-500 text-sm mb-2">
-          <Stethoscope size={16} className="text-accent-500" />
-          <span className="text-white font-semibold">Pepelyashko</span>
+          <MedFlowLogo size={20} className="text-accent-500" />
+          <span className="text-white font-semibold">MedFlow</span>
         </div>
 
         {status === "loading" && (

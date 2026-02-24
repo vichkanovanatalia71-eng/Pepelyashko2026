@@ -1,0 +1,29 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle for favicon visibility -->
+  <rect width="512" height="512" rx="96" fill="#0d0d0d"/>
+
+  <!-- Centered logo at ~384x432 within 512x512 -->
+  <g transform="translate(64, 40)">
+    <!-- Top-left quadrant -->
+    <path d="M0 96C0 43 43 0 96 0H182V198H0V96Z" fill="#f97316"/>
+    <!-- Top-right quadrant -->
+    <path d="M202 0H288C341 0 384 43 384 96V198H202V0Z" fill="#f97316"/>
+    <!-- Bottom-left quadrant -->
+    <path d="M0 218H182V432H96C43 432 0 389 0 336V218Z" fill="#f97316"/>
+    <!-- Bottom-right quadrant -->
+    <path d="M202 218H384V336C384 389 341 432 288 432H202V218Z" fill="#f97316"/>
+
+    <!-- Corner arcs -->
+    <path d="M24 132C24 78 78 48 132 48" stroke="rgba(0,0,0,0.35)" stroke-width="16" stroke-linecap="round" fill="none"/>
+    <path d="M360 132C360 78 306 48 252 48" stroke="rgba(0,0,0,0.35)" stroke-width="16" stroke-linecap="round" fill="none"/>
+    <path d="M24 300C24 354 78 384 132 384" stroke="rgba(0,0,0,0.35)" stroke-width="16" stroke-linecap="round" fill="none"/>
+    <path d="M360 300C360 354 306 384 252 384" stroke="rgba(0,0,0,0.35)" stroke-width="16" stroke-linecap="round" fill="none"/>
+
+    <!-- Dollar sign ($) -->
+    <text x="91" y="140" text-anchor="middle" dominant-baseline="central" fill="rgba(0,0,0,0.7)" font-size="140" font-weight="800" font-family="system-ui, -apple-system, sans-serif">$</text>
+
+    <!-- Medical cross (+) -->
+    <rect x="263" y="54" width="38" height="120" rx="12" fill="rgba(0,0,0,0.7)"/>
+    <rect x="233" y="94" width="98" height="38" rx="12" fill="rgba(0,0,0,0.7)"/>
+  </g>
+</svg>

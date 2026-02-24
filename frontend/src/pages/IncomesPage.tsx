@@ -1,5 +1,5 @@
 import { useEffect, useState, FormEvent } from "react";
-import { Plus, Trash2, X, Pencil, Search, ArrowUpDown } from "lucide-react";
+import { Plus, Trash2, X, Pencil, Search, ArrowUpDown, Wallet } from "lucide-react";
 import api from "../api/client";
 import type { Income, IncomeCategory } from "../types";
 
@@ -160,18 +160,23 @@ export default function IncomesPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-5 lg:mb-8 flex-wrap gap-3">
-        <div>
-          <h2 className="text-2xl font-bold text-white">Доходи</h2>
-          <p className="text-gray-500 text-sm mt-1">
-            Всього: <span className="text-emerald-400 font-semibold tabular-nums">{fmt(total)} &#8372;</span>
-            {filtered.length !== incomes.length && (
-              <span className="text-gray-600 ml-1">({filtered.length} з {incomes.length})</span>
-            )}
-          </p>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center shrink-0">
+            <Wallet size={22} className="text-orange-400" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-white">Доходи</h2>
+            <p className="text-gray-500 text-sm mt-1">
+              Всього: <span className="text-emerald-400 font-semibold tabular-nums">{fmt(total)} &#8372;</span>
+              {filtered.length !== incomes.length && (
+                <span className="text-gray-600 ml-1">({filtered.length} з {incomes.length})</span>
+              )}
+            </p>
+          </div>
         </div>
         <button
           onClick={() => showForm ? closeForm() : openCreateForm()}
-          className="btn-accent flex items-center gap-2"
+          className="btn-accent flex items-center gap-2 active:scale-[0.98]"
         >
           {showForm ? <X size={18} /> : <Plus size={18} />}
           <span className="hidden sm:inline">{showForm ? "Закрити" : "Додати дохід"}</span>
@@ -282,7 +287,7 @@ export default function IncomesPage() {
               className="input-dark" placeholder="Додатковий опис..." />
           </div>
           <div className="md:col-span-2 flex gap-3">
-            <button type="submit" className="btn-accent">
+            <button type="submit" className="btn-accent active:scale-[0.98]">
               {editingId ? "Оновити" : "Зберегти"}
             </button>
             <button type="button" onClick={closeForm} className="btn-ghost">
@@ -293,14 +298,14 @@ export default function IncomesPage() {
       )}
 
       {/* Mobile card list */}
-      <div className="sm:hidden space-y-2.5">
+      <div className="sm:hidden space-y-2.5 stagger-enter">
         {filtered.length === 0 && (
           <div className="card-neo p-10 text-center text-gray-600 text-sm">
             {search ? "Нічого не знайдено" : "Доходів поки немає. Натисніть «Додати» щоб почати."}
           </div>
         )}
         {filtered.map((income) => (
-          <div key={income.id} className="card-neo p-4">
+          <div key={income.id} className="card-neo card-tap p-4">
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1 min-w-0" onClick={() => handleEdit(income)}>
                 <div className="flex items-center justify-between mb-1">

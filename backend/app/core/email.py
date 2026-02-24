@@ -43,7 +43,7 @@ async def send_verification_email(to_email: str, token: str) -> bool:
     <div style="background:linear-gradient(135deg,#6366f1 0%,#8b5cf6 100%);
                 padding:32px 40px;text-align:center;">
       <div style="font-size:32px;margin-bottom:8px;">🏥</div>
-      <h1 style="margin:0;color:#fff;font-size:22px;font-weight:700;">Pepelyashko</h1>
+      <h1 style="margin:0;color:#fff;font-size:22px;font-weight:700;">MedFlow</h1>
       <p style="margin:4px 0 0;color:rgba(255,255,255,0.7);font-size:13px;">
         Фінансовий менеджер для медичної практики
       </p>
@@ -53,7 +53,7 @@ async def send_verification_email(to_email: str, token: str) -> bool:
         Підтвердьте вашу email-адресу
       </h2>
       <p style="margin:0 0 24px;color:#94a3b8;font-size:14px;line-height:1.6;">
-        Ви зареєструвались у системі Pepelyashko. Натисніть кнопку нижче,
+        Ви зареєструвались у системі MedFlow. Натисніть кнопку нижче,
         щоб підтвердити вашу email-адресу та активувати обліковий запис.
       </p>
       <a href="{verify_url}"
@@ -77,13 +77,13 @@ async def send_verification_email(to_email: str, token: str) -> bool:
 """
 
     text_body = (
-        f"Підтвердьте вашу email-адресу у системі Pepelyashko.\n\n"
+        f"Підтвердьте вашу email-адресу у системі MedFlow.\n\n"
         f"Перейдіть за посиланням:\n{verify_url}\n\n"
         f"Якщо ви не реєструвались — ігноруйте цей лист."
     )
 
     msg = MIMEMultipart("alternative")
-    msg["Subject"] = "Підтвердьте вашу email-адресу — Pepelyashko"
+    msg["Subject"] = "Підтвердьте вашу email-адресу — MedFlow"
     msg["From"] = sender
     msg["To"] = to_email
     msg.attach(MIMEText(text_body, "plain", "utf-8"))

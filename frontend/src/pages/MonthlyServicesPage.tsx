@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import axios from "axios";
-import { useAuth } from "../hooks/useAuth";
+import api from "../api/client";
 import {
   BarChart3,
   Plus,
@@ -18,7 +17,7 @@ import {
   Banknote,
   Wallet,
   Landmark,
-  Stethoscope,
+
   TrendingUp,
   TrendingDown,
   Package,
@@ -28,8 +27,11 @@ import {
   Sparkles,
   CheckCircle2,
   FileImage,
+  ClipboardList,
+  Users,
 } from "lucide-react";
 import { LoadingSpinner, ConfirmDialog, AlertBanner } from "../components/shared";
+import MedFlowLogo from "../components/shared/MedFlowLogo";
 import {
   BarChart,
   Bar,
@@ -52,7 +54,6 @@ import type {
   ShareResponse,
 } from "../types";
 
-const API = "";
 const MONTHS_UA = [
   "", "Січень", "Лютий", "Березень", "Квітень",
   "Травень", "Червень", "Липень", "Серпень",
@@ -69,8 +70,6 @@ const pct = (cur: number, prev: number) => {
 };
 
 export default function MonthlyServicesPage() {
-  const { token } = useAuth();
-  const headers = { Authorization: `Bearer ${token}` };
   const now = new Date();
 
   // ── Фільтри ──
@@ -97,10 +96,11 @@ export default function MonthlyServicesPage() {
   const [shareData, setShareData] = useState<ShareResponse | null>(null);
   const [deleteReportId, setDeleteReportId] = useState<number | null>(null);
   const [finalizeWarningId, setFinalizeWarningId] = useState<number | null>(null);
+  const [alertDlg, setAlertDlg] = useState<{ title: string; description?: string } | null>(null);
 
   // ── Форма звіту ──
   const [formDoctor, setFormDoctor] = useState<number>(0);
-  const [formCash, setFormCash] = useState("0");
+  const [formCash, setFormCash] = useState("");
   const [formEntries, setFormEntries] = useState<Record<number, number>>({});
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState("");
@@ -134,22 +134,24 @@ export default function MonthlyServicesPage() {
 
   async function loadDoctors() {
     try {
-      const r = await axios.get(`${API}/api/nhsu/doctors`, { headers });
+      const r = await api.get("/nhsu/doctors");
       setDoctors(r.data);
     } catch {}
   }
 
   async function loadCatalogServices() {
     try {
-      const r = await axios.get(`${API}/api/services/`, { headers });
-      setCatalogServices(r.data);
+      const r = await api.get("/services/");
+      const sorted = (r.data as Service[]).sort((a, b) =>
+        a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: "base" })
+      );
+      setCatalogServices(sorted);
     } catch {}
   }
 
   async function loadPeriodInfo(): Promise<PeriodInfo | null> {
     try {
-      const r = await axios.get(`${API}/api/monthly-services/period-info`, {
-        headers,
+      const r = await api.get("/monthly-services/period-info", {
         params: { year: selectedYear, month: selectedMonth },
       });
       setPeriodInfo(r.data);
@@ -164,7 +166,7 @@ export default function MonthlyServicesPage() {
     try {
       const params: Record<string, any> = { year: selectedYear, month: selectedMonth };
       if (selectedDoctor) params.doctor_id = selectedDoctor;
-      const r = await axios.get(`${API}/api/monthly-services/analytics`, { headers, params });
+      const r = await api.get("/monthly-services/analytics", { params });
       setAnalytics(r.data);
     } catch {}
     setLoading(false);
@@ -220,8 +222,8 @@ export default function MonthlyServicesPage() {
     try {
       const fd = new FormData();
       aiImages.forEach(img => fd.append("images", img.file));
-      const { data } = await axios.post(`${API}/api/monthly-services/analyze-image`, fd, {
-        headers: { ...headers, "Content-Type": "multipart/form-data" },
+      const { data } = await api.post("/monthly-services/analyze-image", fd, {
+        headers: { "Content-Type": "multipart/form-data" },
       });
       const res = data.results?.[0];
       if (!res) throw new Error("Порожня відповідь");
@@ -327,18 +329,18 @@ export default function MonthlyServicesPage() {
       .map(([sid, q]) => ({ service_id: Number(sid), quantity: q }));
     try {
       if (editingReport) {
-        await axios.put(`${API}/api/monthly-services/reports/${editingReport.id}`, {
+        await api.put(`/monthly-services/reports/${editingReport.id}`, {
           cash_in_register: cashPayload,
           entries,
-        }, { headers });
+        });
       } else {
-        await axios.post(`${API}/api/monthly-services/reports`, {
+        await api.post("/monthly-services/reports", {
           doctor_id: formDoctor,
           year: selectedYear,
           month: selectedMonth,
           cash_in_register: cashPayload,
           entries,
-        }, { headers });
+        });
       }
       setShowReportForm(false);
       await Promise.all([loadAnalytics(), loadPeriodInfo()]);
@@ -359,7 +361,7 @@ export default function MonthlyServicesPage() {
 
   async function handleDeleteReport(id: number) {
     try {
-      await axios.delete(`${API}/api/monthly-services/reports/${id}`, { headers });
+      await api.delete(`/monthly-services/reports/${id}`);
       setDeleteReportId(null);
       await Promise.all([loadAnalytics(), loadPeriodInfo()]);
     } catch {}
@@ -367,18 +369,16 @@ export default function MonthlyServicesPage() {
 
   async function handleCopyPrevious() {
     if (!selectedDoctor) {
-      alert("Оберіть конкретного лікаря для копіювання звіту");
+      setAlertDlg({ title: "Увага", description: "Оберіть конкретного лікаря для копіювання звіту" });
       return;
     }
     try {
-      await axios.post(
-        `${API}/api/monthly-services/reports/copy-previous?doctor_id=${selectedDoctor}&year=${selectedYear}&month=${selectedMonth}`,
-        {},
-        { headers },
+      await api.post(
+        `/monthly-services/reports/copy-previous?doctor_id=${selectedDoctor}&year=${selectedYear}&month=${selectedMonth}`,
       );
       await Promise.all([loadAnalytics(), loadPeriodInfo()]);
     } catch (e: any) {
-      alert(e?.response?.data?.detail ?? "Не вдалося скопіювати звіт");
+      setAlertDlg({ title: "Помилка", description: e?.response?.data?.detail ?? "Не вдалося скопіювати звіт" });
     }
   }
 
@@ -393,7 +393,7 @@ export default function MonthlyServicesPage() {
 
   async function _doFinalize(id: number) {
     try {
-      await axios.post(`${API}/api/monthly-services/reports/${id}/finalize`, {}, { headers });
+      await api.post(`/monthly-services/reports/${id}/finalize`);
       await loadAnalytics();
     } catch {}
     setFinalizeWarningId(null);
@@ -401,7 +401,7 @@ export default function MonthlyServicesPage() {
 
   async function handleUnfinalize(id: number) {
     try {
-      await axios.post(`${API}/api/monthly-services/reports/${id}/unfinalize`, {}, { headers });
+      await api.post(`/monthly-services/reports/${id}/unfinalize`);
       await loadAnalytics();
     } catch {}
   }
@@ -409,9 +409,9 @@ export default function MonthlyServicesPage() {
   // ── Експорт / Поширення ──
   async function handleExport() {
     try {
-      const r = await axios.post(`${API}/api/monthly-services/export`, {
+      const r = await api.post("/monthly-services/export", {
         doctor_id: selectedDoctor || null, year: selectedYear, month: selectedMonth,
-      }, { headers, responseType: "blob" });
+      }, { responseType: "blob" });
       const url = window.URL.createObjectURL(new Blob([r.data]));
       const link = document.createElement("a");
       link.href = url;
@@ -425,9 +425,9 @@ export default function MonthlyServicesPage() {
 
   async function handleShare() {
     try {
-      const r = await axios.post(`${API}/api/monthly-services/share`, {
+      const r = await api.post("/monthly-services/share", {
         doctor_id: selectedDoctor || null, year: selectedYear, month: selectedMonth,
-      }, { headers });
+      });
       setShareData(r.data);
     } catch {}
   }
@@ -491,8 +491,8 @@ export default function MonthlyServicesPage() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <div className="hidden sm:flex w-10 h-10 rounded-xl bg-accent-500/10 items-center justify-center">
-            <BarChart3 size={22} className="text-accent-500" />
+          <div className="hidden sm:flex w-10 h-10 rounded-xl bg-orange-500/10 items-center justify-center">
+            <BarChart3 size={22} className="text-orange-400" />
           </div>
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-white">Платні послуги</h1>
@@ -556,9 +556,9 @@ export default function MonthlyServicesPage() {
       ) : d ? (
         <>
           {/* ══ Дашборд (6 блоків) ══ */}
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 stagger-enter">
             {/* Блок 1: Наданих послуг */}
-            <button onClick={() => setShowServicesModal(true)} className="card-neo p-5 text-left hover:border-accent-500/20 transition-all group">
+            <button onClick={() => setShowServicesModal(true)} className="card-neo card-tap p-5 text-left hover:border-accent-500/20 transition-all group">
               <div className="flex items-center gap-2 mb-3">
                 <TrendingUp size={16} className="text-accent-400" />
                 <span className="text-xs text-gray-500 group-hover:text-gray-300 transition-colors">Наданих послуг</span>
@@ -574,16 +574,16 @@ export default function MonthlyServicesPage() {
             </button>
 
             {/* Блок 2: Дохід лікаря */}
-            <button onClick={() => setShowDoctorModal(true)} className="card-neo p-5 text-left hover:border-accent-500/20 transition-all group">
+            <button onClick={() => setShowDoctorModal(true)} className="card-neo card-tap p-5 text-left hover:border-accent-500/20 transition-all group">
               <div className="flex items-center gap-2 mb-3">
-                <Stethoscope size={16} className="text-green-400" />
+                <MedFlowLogo size={16} className="text-green-400" />
                 <span className="text-xs text-gray-500 group-hover:text-gray-300 transition-colors">{selectedDoctor ? "Дохід лікаря" : "Дохід лікарів"}</span>
               </div>
               <p className="text-xl font-bold text-green-400 tabular-nums">{fmt(d.doctor_income)} <span className="text-xs text-gray-500">грн</span></p>
             </button>
 
             {/* Блок 3: Витрати */}
-            <button onClick={() => setShowExpensesModal(true)} className="card-neo p-5 text-left hover:border-accent-500/20 transition-all group">
+            <button onClick={() => setShowExpensesModal(true)} className="card-neo card-tap p-5 text-left hover:border-accent-500/20 transition-all group">
               <div className="flex items-center gap-2 mb-3">
                 <Package size={16} className="text-orange-400" />
                 <span className="text-xs text-gray-500 group-hover:text-gray-300 transition-colors">Витрати</span>
@@ -628,11 +628,11 @@ export default function MonthlyServicesPage() {
           {analytics && analytics.reports.length > 0 && (
             <div className="card-neo p-5 space-y-3">
               <h3 className="text-sm font-medium text-gray-400">Звіти за {MONTHS_UA[selectedMonth]} {selectedYear}</h3>
-              <div className="space-y-2">
+              <div className="space-y-2 stagger-enter">
                 {analytics.reports.map((rep) => {
                   const isFinal = rep.status === "final";
                   return (
-                  <div key={rep.id} className={`flex items-center justify-between rounded-xl px-4 py-3 border-l-4 transition-all ${
+                  <div key={rep.id} className={`card-tap flex items-center justify-between rounded-xl px-4 py-3 border-l-4 transition-all ${
                     isFinal
                       ? "bg-green-500/5 border-l-green-500/60"
                       : "bg-dark-300/30 border-l-amber-500/40"
@@ -718,10 +718,11 @@ export default function MonthlyServicesPage() {
 
       {/* ── Форма звіту ── */}
       {showReportForm && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 sm:items-center overflow-y-auto" role="dialog" aria-modal="true" onClick={() => setShowReportForm(false)}>
-          <div className="bg-dark-600 border border-dark-50/10 rounded-none sm:rounded-2xl w-full max-w-3xl min-h-full sm:min-h-0 shadow-2xl animate-modal-in pb-20 sm:pb-0" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 overflow-y-auto" role="dialog" aria-modal="true" onClick={() => setShowReportForm(false)}>
+          <div className="bg-dark-600 rounded-none sm:rounded-2xl w-full max-w-3xl min-h-full sm:min-h-0 sm:my-8 animate-modal-in pb-20 sm:pb-0 modal-glow" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-6 border-b border-dark-50/10">
-              <h2 className="text-lg font-semibold text-white">
+              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                <Pencil size={16} className="text-orange-400" />
                 {editingReport ? "Редагування звіту" : "Новий звіт"} · {MONTHS_UA[selectedMonth]} {selectedYear}
               </h2>
               <button onClick={() => setShowReportForm(false)} aria-label="Закрити форму звіту" className="p-2 text-gray-500 hover:text-gray-300 hover:bg-dark-300 rounded-lg transition-all"><X size={18} /></button>
@@ -849,7 +850,8 @@ export default function MonthlyServicesPage() {
                             <td className="px-3 py-2 text-right text-gray-400 tabular-nums">{fmt(svc.price)}</td>
                             <td className="px-3 py-1.5">
                               <input type="number" min="0" step="1"
-                                value={formEntries[svc.id] ?? 0}
+                                placeholder="0"
+                                value={formEntries[svc.id] || ""}
                                 onChange={(e) => {
                                   const val = Math.max(0, parseInt(e.target.value) || 0);
                                   setFormEntries((p) => ({ ...p, [svc.id]: val }));
@@ -890,10 +892,10 @@ export default function MonthlyServicesPage() {
 
       {/* ── Детальна статистика послуг (Блок 1) ── */}
       {showServicesModal && d && analytics && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 sm:items-center overflow-y-auto" role="dialog" aria-modal="true" onClick={() => setShowServicesModal(false)}>
-          <div className="bg-dark-600 border border-dark-50/10 rounded-none sm:rounded-2xl w-full max-w-4xl min-h-full sm:min-h-0 shadow-2xl animate-modal-in pb-20 sm:pb-0" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 overflow-y-auto" role="dialog" aria-modal="true" onClick={() => setShowServicesModal(false)}>
+          <div className="bg-dark-600 rounded-none sm:rounded-2xl w-full max-w-4xl min-h-full sm:min-h-0 sm:my-8 animate-modal-in pb-20 sm:pb-0 modal-glow" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-6 border-b border-dark-50/10">
-              <h2 className="text-lg font-semibold text-white">Детальна статистика наданих послуг</h2>
+              <h2 className="text-lg font-semibold text-white flex items-center gap-2"><ClipboardList size={16} className="text-orange-400" />Детальна статистика наданих послуг</h2>
               <div className="flex gap-2">
                 <button onClick={handleExport} className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-green-400 hover:bg-green-500/10 rounded-lg border border-green-500/20 transition-all"><Download size={13} aria-hidden="true" /> Excel</button>
                 <button onClick={() => setShowServicesModal(false)} aria-label="Закрити статистику послуг" className="p-2 text-gray-500 hover:text-gray-300 hover:bg-dark-300 rounded-lg transition-all"><X size={18} /></button>
@@ -976,10 +978,10 @@ export default function MonthlyServicesPage() {
 
       {/* ── Дохід лікарів (Блок 2) ── */}
       {showDoctorModal && d && analytics && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 sm:items-center overflow-y-auto" role="dialog" aria-modal="true" onClick={() => setShowDoctorModal(false)}>
-          <div className="bg-dark-600 border border-dark-50/10 rounded-none sm:rounded-2xl w-full max-w-4xl min-h-full sm:min-h-0 shadow-2xl animate-modal-in pb-20 sm:pb-0" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 overflow-y-auto" role="dialog" aria-modal="true" onClick={() => setShowDoctorModal(false)}>
+          <div className="bg-dark-600 rounded-none sm:rounded-2xl w-full max-w-4xl min-h-full sm:min-h-0 sm:my-8 animate-modal-in pb-20 sm:pb-0 modal-glow" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-6 border-b border-dark-50/10">
-              <h2 className="text-lg font-semibold text-white">{selectedDoctor ? "Дохід лікаря" : "Дохід лікарів"}</h2>
+              <h2 className="text-lg font-semibold text-white flex items-center gap-2"><Users size={16} className="text-orange-400" />{selectedDoctor ? "Дохід лікаря" : "Дохід лікарів"}</h2>
               <div className="flex gap-2">
                 <button onClick={handleShare} className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-purple-400 hover:bg-purple-500/10 rounded-lg border border-purple-500/20 transition-all"><Share2 size={13} aria-hidden="true" /> Поділитися</button>
                 <button onClick={() => setShowDoctorModal(false)} aria-label="Закрити дохід лікарів" className="p-2 text-gray-500 hover:text-gray-300 hover:bg-dark-300 rounded-lg transition-all"><X size={18} /></button>
@@ -1073,10 +1075,10 @@ export default function MonthlyServicesPage() {
 
       {/* ── Витрати (Блок 3) ── */}
       {showExpensesModal && d && analytics && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 sm:items-center overflow-y-auto" role="dialog" aria-modal="true" onClick={() => setShowExpensesModal(false)}>
-          <div className="bg-dark-600 border border-dark-50/10 rounded-none sm:rounded-2xl w-full max-w-3xl min-h-full sm:min-h-0 shadow-2xl animate-modal-in pb-20 sm:pb-0" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 overflow-y-auto" role="dialog" aria-modal="true" onClick={() => setShowExpensesModal(false)}>
+          <div className="bg-dark-600 rounded-none sm:rounded-2xl w-full max-w-3xl min-h-full sm:min-h-0 sm:my-8 animate-modal-in pb-20 sm:pb-0 modal-glow" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-6 border-b border-dark-50/10">
-              <h2 className="text-lg font-semibold text-white">Детальна статистика витрат</h2>
+              <h2 className="text-lg font-semibold text-white flex items-center gap-2"><TrendingDown size={16} className="text-orange-400" />Детальна статистика витрат</h2>
               <div className="flex gap-2">
                 <button onClick={handleExport} className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-green-400 hover:bg-green-500/10 rounded-lg border border-green-500/20 transition-all"><Download size={13} aria-hidden="true" /> Excel</button>
                 <button onClick={() => setShowExpensesModal(false)} aria-label="Закрити статистику витрат" className="p-2 text-gray-500 hover:text-gray-300 hover:bg-dark-300 rounded-lg transition-all"><X size={18} /></button>
@@ -1158,8 +1160,9 @@ export default function MonthlyServicesPage() {
 
       {/* ── Попередження: зафіксувати без каси ── */}
       {finalizeWarningId !== null && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" role="dialog" aria-modal="true" onClick={() => setFinalizeWarningId(null)}>
-          <div className="bg-dark-600 border border-amber-500/20 rounded-2xl p-6 w-full max-w-sm shadow-2xl animate-modal-in" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto" role="dialog" aria-modal="true" onClick={() => setFinalizeWarningId(null)}>
+          <div className="bg-dark-600 border border-amber-500/25 rounded-2xl p-6 w-full max-w-sm my-auto animate-modal-in
+                   shadow-[0_0_40px_rgba(245,158,11,0.12),0_20px_60px_rgba(0,0,0,0.5)]" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-start gap-3 mb-4">
               <AlertCircle size={20} className="text-amber-400 shrink-0 mt-0.5" />
               <div>
@@ -1185,8 +1188,8 @@ export default function MonthlyServicesPage() {
 
       {/* ── Share діалог ── */}
       {shareData && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" role="dialog" aria-modal="true" onClick={() => setShareData(null)}>
-          <div className="bg-dark-600 border border-dark-50/10 rounded-2xl p-6 w-full max-w-md shadow-2xl animate-modal-in" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto" role="dialog" aria-modal="true" onClick={() => setShareData(null)}>
+          <div className="bg-dark-600 rounded-2xl p-6 w-full max-w-md my-auto animate-modal-in modal-glow" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-semibold text-white mb-2">Посилання створено</h3>
             <p className="text-sm text-gray-400 mb-4">Діє 30 днів. Доступ тільки для читання.</p>
             <div className="flex gap-2 mb-4">
@@ -1199,6 +1202,17 @@ export default function MonthlyServicesPage() {
           </div>
         </div>
       )}
+
+      {/* ── Styled alert dialog (replaces native alert()) ── */}
+      <ConfirmDialog
+        open={!!alertDlg}
+        title={alertDlg?.title ?? ""}
+        description={alertDlg?.description}
+        confirmLabel="Зрозуміло"
+        cancelLabel="Закрити"
+        onConfirm={() => setAlertDlg(null)}
+        onCancel={() => setAlertDlg(null)}
+      />
     </div>
   );
 }

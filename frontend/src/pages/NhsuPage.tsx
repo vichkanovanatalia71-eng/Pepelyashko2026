@@ -7,7 +7,7 @@ import {
   ChevronLeft, ChevronRight, ChevronDown, Upload, X, Save,
   RefreshCw, Sparkles, Users, BadgeDollarSign, TrendingDown,
   ShieldAlert, FileImage, Plus, CheckCircle2, AlertCircle,
-  Download, History, TrendingUp, Trash2,
+  Download, History, TrendingUp, Trash2, HeartPulse,
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import api from "../api/client";
@@ -322,8 +322,8 @@ export default function NhsuPage() {
     for (const doc of doctors) for (const ag of ageGroups) {
       const ex = report?.doctors.find(d=>d.doctor_id===doc.id)?.rows.find(r=>r.age_group===ag.key);
       recs.push({ doctor_id:doc.id, age_group:ag.key,
-        patient_count: ex ? String(ex.patient_count) : "0",
-        non_verified:  ex ? String(ex.non_verified)  : "0" });
+        patient_count: ex ? String(ex.patient_count) : "",
+        non_verified:  ex ? String(ex.non_verified)  : "" });
     }
     setRecords(recs); setImages([]); setSaveMsg(""); setShowModal(true);
   };
@@ -427,9 +427,14 @@ export default function NhsuPage() {
       {/* ── FILTER BAR ── */}
       <div className="card-neo p-5">
         <div className="flex flex-wrap items-center gap-4">
-          <div className="flex-1 min-w-[160px]">
-            <h2 className="text-xl font-bold text-white">Розрахунок НСЗУ</h2>
-            <p className="text-xs text-gray-500 mt-0.5">Капітаційна ставка · ПМГ</p>
+          <div className="flex items-center gap-3 flex-1 min-w-[160px]">
+            <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center shrink-0">
+              <HeartPulse size={22} className="text-orange-400" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-white">Розрахунок НСЗУ</h2>
+              <p className="text-xs text-gray-500 mt-0.5">Капітаційна ставка · ПМГ</p>
+            </div>
           </div>
 
           {/* Multi-select doctor dropdown */}
@@ -557,7 +562,7 @@ export default function NhsuPage() {
           {rangeLoading && <LoadingSpinner height="h-32" />}
           {!rangeLoading && rangeData && (<>
             {/* Range KPI cards — без пацієнтів та не верифікованих */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 stagger-enter">
               {([
                 { label:"Сума (брутто)",          val:fmt2(rangeData.totalAmount),  color:"text-emerald-400", Icon:BadgeDollarSign },
                 { label:`ЄП ${settings?.ep_rate ?? rangeData.ep_rate}%`, val:fmt2(rangeData.totalEp),    color:"text-red-400",     Icon:TrendingDown },
@@ -622,7 +627,7 @@ export default function NhsuPage() {
       {!loading && report && !rangeMode && (<>
 
         {/* KPI cards */}
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 stagger-enter">
           {([
             { label:"Пацієнти",       val:totals.patients,                color:"text-white",       Icon:Users },
             { label:"Не верифіковані",val:fmt(totals.nonVer),             color:"text-yellow-400",  Icon:AlertCircle },
@@ -651,7 +656,7 @@ export default function NhsuPage() {
               </h3>
               <span className="ml-auto text-xs text-gray-600">{year-1} → {year}</span>
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-3 stagger-enter">
               {[
                 {
                   label: "Пацієнти",
@@ -697,7 +702,7 @@ export default function NhsuPage() {
         {/* Charts */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
           <div className="card-neo card-3d-hover p-5">
-            <p className="text-sm font-semibold text-white mb-4">Пацієнти по вікових групах</p>
+            <p className="text-sm font-semibold text-white mb-4 flex items-center gap-2"><Users size={15} className="text-orange-400" />Пацієнти по вікових групах</p>
             <ResponsiveContainer width="100%" height={210}>
               <BarChart data={ageBarData} margin={{top:0,right:0,left:-20,bottom:30}}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08"/>
@@ -709,7 +714,7 @@ export default function NhsuPage() {
             </ResponsiveContainer>
           </div>
           <div className="card-neo card-3d-hover p-5">
-            <p className="text-sm font-semibold text-white mb-4">Надходження по лікарях (грн)</p>
+            <p className="text-sm font-semibold text-white mb-4 flex items-center gap-2"><BadgeDollarSign size={15} className="text-orange-400" />Надходження по лікарях (грн)</p>
             <ResponsiveContainer width="100%" height={210}>
               <BarChart data={doctorBarData} margin={{top:0,right:0,left:-10,bottom:30}}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08"/>
@@ -721,7 +726,7 @@ export default function NhsuPage() {
             </ResponsiveContainer>
           </div>
           <div className="card-neo card-3d-hover p-5">
-            <p className="text-sm font-semibold text-white mb-4">Розподіл пацієнтів</p>
+            <p className="text-sm font-semibold text-white mb-4 flex items-center gap-2"><Users size={15} className="text-orange-400" />Розподіл пацієнтів</p>
             <ResponsiveContainer width="100%" height={210}>
               <PieChart>
                 <Pie data={pieData} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={3} dataKey="value">
@@ -967,12 +972,14 @@ export default function NhsuPage() {
                                 <td className="px-4 py-2.5 text-center">
                                   <input type="number" min={0} value={rec.patient_count}
                                     onChange={e=>updateRecord(doc.id,ag.key,"patient_count",e.target.value)}
-                                    className="bg-dark-300 border border-dark-50/20 rounded-lg px-3 py-1.5 text-sm text-white text-center w-24 focus:outline-none focus:border-accent-500/50"/>
+                                    placeholder="0"
+                                    className="bg-dark-300 border border-dark-50/20 rounded-lg px-3 py-1.5 text-sm text-white text-center w-24 placeholder-gray-600 focus:outline-none focus:border-accent-500/50"/>
                                 </td>
                                 <td className="px-4 py-2.5 text-center">
                                   <input type="number" min={0} step={0.5} value={rec.non_verified}
                                     onChange={e=>updateRecord(doc.id,ag.key,"non_verified",e.target.value)}
-                                    className="bg-dark-300 border border-dark-50/20 rounded-lg px-3 py-1.5 text-sm text-white text-center w-24 focus:outline-none focus:border-accent-500/50"/>
+                                    placeholder="0"
+                                    className="bg-dark-300 border border-dark-50/20 rounded-lg px-3 py-1.5 text-sm text-white text-center w-24 placeholder-gray-600 focus:outline-none focus:border-accent-500/50"/>
                                 </td>
                                 <td className="px-4 py-2.5 text-right text-emerald-400 font-mono text-xs">{fmt(preview)} грн</td>
                               </tr>

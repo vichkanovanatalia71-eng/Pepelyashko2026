@@ -28,10 +28,14 @@ export default function StatRow({
   return (
     <div
       className={`flex items-center justify-between py-3 gap-2
+                  transition-colors duration-150
                   ${borderTop ? "border-t border-dark-50/10 pt-3" : ""}`}
     >
       <div className="flex items-center gap-3 min-w-0">
-        {dot && <div className={`w-2 h-2 rounded-full ${dot} shrink-0`} />}
+        {dot && (
+          <div className={`w-2 h-2 rounded-full ${dot} shrink-0 shadow-[0_0_6px_currentColor]`}
+               style={{ opacity: 0.8 }} />
+        )}
         <span className={bold ? "text-white font-medium text-sm" : "text-gray-400 text-sm"}>
           {label}
         </span>

@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import {
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Save,
   RefreshCw,
   Lock,
@@ -18,7 +19,7 @@ import {
   BarChart3,
   Check,
   UserPlus,
-  Stethoscope,
+
   Copy,
   Sparkles,
   Download,
@@ -34,13 +35,18 @@ import {
   Share2,
   Link,
   ExternalLink,
+  ClipboardList,
+  TrendingUp,
+  Banknote,
+  HeartPulse,
 } from "lucide-react";
 import {
   LoadingSpinner,
-  TabBar,
   AlertBanner,
   EmptyState,
+  ConfirmDialog,
 } from "../components/shared";
+import MedFlowLogo from "../components/shared/MedFlowLogo";
 import * as XLSX from "xlsx";
 import {
   BarChart,
@@ -62,7 +68,6 @@ import {
 import api from "../api/client";
 import type {
   MonthlyExpenseData,
-  FixedExpenseRow,
   SalaryExpenseRow,
   StaffMember,
   HiredDoctorInfo,
@@ -86,17 +91,6 @@ const ROLE_LABELS: Record<string, string> = {
   other:  "Інший персонал",
 };
 
-const TAB_KEY = "expenses_tab";
-
-const TABS = [
-  { id: "fixed",   label: "Постійні витрати" },
-  { id: "salary",  label: "Зарплатні витрати" },
-  { id: "other",   label: "Інші витрати" },
-  { id: "taxes",   label: "Податки" },
-  { id: "summary", label: "Підсумки" },
-] as const;
-
-type TabId = typeof TABS[number]["id"];
 
 const TT_STYLE = {
   background: "#1a1a2e",
@@ -111,6 +105,10 @@ const PIE_COLORS = ["#6366f1", "#a855f7", "#f59e0b", "#f43f5e", "#10b981"];
 const CATEGORY_BADGE: Record<string, { label: string; cls: string }> = {
   fixed:  { label: "Постійні",   cls: "bg-blue-500/20 text-blue-300 border-blue-500/30" },
   salary: { label: "Зарплатні",  cls: "bg-purple-500/20 text-purple-300 border-purple-500/30" },
+  salary_paid: { label: "Платні послуги (ЗП)", cls: "bg-indigo-500/20 text-indigo-300 border-indigo-500/30" },
+  owner_own:   { label: "Власник · Власні декл.", cls: "bg-amber-500/20 text-amber-300 border-amber-500/30" },
+  owner_hired: { label: "Власник · Найм. лікар",  cls: "bg-teal-500/20 text-teal-300 border-teal-500/30" },
+  owner_paid:  { label: "Власник · Платні послуги", cls: "bg-cyan-500/20 text-cyan-300 border-cyan-500/30" },
   other:  { label: "Інші",       cls: "bg-amber-500/20 text-amber-300 border-amber-500/30" },
   taxes:  { label: "Податки",    cls: "bg-red-500/20 text-red-300 border-red-500/30" },
 };
@@ -129,12 +127,6 @@ interface SalaryFormState {
   saving: boolean;
 }
 
-interface FixedPending {
-  amount: string;
-  is_recurring: boolean;
-  saving: boolean;
-}
-
 interface OtherExpense {
   id: number;
   name: string;
@@ -143,14 +135,6 @@ interface OtherExpense {
   category: string;
   year: number;
   month: number;
-}
-
-interface TrendPoint {
-  label: string;
-  fixed: number;
-  salary: number;
-  other: number;
-  taxes: number;
 }
 
 interface DetailRow {
@@ -187,18 +171,6 @@ function initSalaryForm(row: SalaryExpenseRow): SalaryFormState {
     paid_services_from_module: row.paid_services_from_module,
     saving: false,
   };
-}
-
-function getMonthsBack(year: number, month: number, count: number) {
-  const result: { year: number; month: number }[] = [];
-  let y = year;
-  let m = month;
-  for (let i = 0; i < count; i++) {
-    result.unshift({ year: y, month: m });
-    m--;
-    if (m < 1) { m = 12; y--; }
-  }
-  return result;
 }
 
 // ── Sub-components ─────────────────────────────────────────────────
@@ -259,7 +231,7 @@ function KpiCard({
 }) {
   return (
     <div
-      className={`card-neo kpi-3d-hover p-4 flex flex-col gap-2 ${onClick ? "cursor-pointer hover:border-accent-500/40 transition-all" : ""}`}
+      className={`card-neo kpi-3d-hover p-4 flex flex-col gap-2 ${onClick ? "card-tap cursor-pointer hover:border-accent-500/40 transition-all" : ""}`}
       onClick={onClick}
       role={onClick ? "button" : undefined}
       tabIndex={onClick ? 0 : undefined}
@@ -311,12 +283,11 @@ function Modal({ title, onClose, children }: {
   title: string; onClose: () => void; children: React.ReactNode;
 }) {
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label={title}>
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-label={title}>
       {/* Backdrop */}
       <div className="absolute inset-0" onClick={onClose} />
       <div
-        className="relative bg-dark-600 rounded-2xl shadow-2xl w-full max-w-md"
-        style={{ border: "1px solid #ffffff15" }}
+        className="relative bg-dark-600 rounded-2xl w-full max-w-md my-auto animate-modal-in modal-glow"
       >
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
           <h4 className="font-semibold text-white text-sm">{title}</h4>
@@ -364,18 +335,9 @@ export default function ExpensesPage() {
   const [year, setYear]   = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
 
-  // Tab state with sessionStorage persistence
-  const [activeTab, setActiveTab] = useState<TabId>(() => {
-    const stored = sessionStorage.getItem(TAB_KEY);
-    return (stored as TabId) || "fixed";
-  });
-
   // Core data
   const [data, setData]       = useState<MonthlyExpenseData | null>(null);
   const [loading, setLoading] = useState(false);
-
-  // Fixed expenses
-  const [fixedPending, setFixedPending] = useState<Record<string, FixedPending>>({});
 
   // Salary forms
   const [salaryForms, setSalaryForms] = useState<Record<number, SalaryFormState>>({});
@@ -398,14 +360,12 @@ export default function ExpensesPage() {
     return v ? parseInt(v) : null;
   });
 
-  // Charts
-  const [trendData, setTrendData] = useState<TrendPoint[]>([]);
 
   // ── Fixed modal state
   const [fixedModal, setFixedModal] = useState<{
-    open: boolean; isEdit: boolean; categoryKey: string;
+    open: boolean; isEdit: boolean; id: number | null;
     name: string; desc: string; amount: string; recurring: boolean; saving: boolean;
-  }>({ open: false, isEdit: false, categoryKey: "", name: "", desc: "", amount: "", recurring: true, saving: false });
+  }>({ open: false, isEdit: false, id: null, name: "", desc: "", amount: "", recurring: true, saving: false });
 
   // ── Staff modal state
   const [staffModal, setStaffModal] = useState<{
@@ -460,11 +420,32 @@ export default function ExpensesPage() {
     open: boolean; url: string; expiresAt: string;
   }>({ open: false, url: "", expiresAt: "" });
 
-  // ── Change tab with persistence
-  function changeTab(tab: TabId) {
-    setActiveTab(tab);
-    sessionStorage.setItem(TAB_KEY, tab);
-  }
+  // ── Accountant request state ──
+  const [accReqLoading, setAccReqLoading] = useState(false);
+  const [accReqModal, setAccReqModal] = useState<{
+    open: boolean; url: string; expiresAt: string;
+  }>({ open: false, url: "", expiresAt: "" });
+
+  // ── Collapsible sections state (all collapsed by default) ──
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
+
+  // ── Previous month data for copy-from feature ──
+  const [prevMonthData, setPrevMonthData] = useState<MonthlyExpenseData | null>(null);
+  const [prevOtherExpenses, setPrevOtherExpenses] = useState<OtherExpense[]>([]);
+  const [prevMonthLoaded, setPrevMonthLoaded] = useState(false);
+  const [sectionCopyLoading, setSectionCopyLoading] = useState<Record<string, boolean>>({});
+  // Track which sections have already been copied (to hide the prompt after copy)
+  const [sectionCopied, setSectionCopied] = useState<Record<string, boolean>>({});
+
+  // ── Styled confirm / alert dialogs (replace native browser dialogs) ──
+  const [confirmDlg, setConfirmDlg] = useState<{
+    title: string; description?: string;
+    variant?: "danger" | "default"; confirmLabel?: string;
+    action: () => void;
+  } | null>(null);
+  const [alertDlg, setAlertDlg] = useState<{
+    title: string; description?: string;
+  } | null>(null);
 
   // ── Load main expense data ─────────────────────────────────────
   const load = useCallback(async () => {
@@ -474,16 +455,6 @@ export default function ExpensesPage() {
         params: { year, month },
       });
       setData(resp);
-
-      const fp: Record<string, FixedPending> = {};
-      for (const row of resp.fixed) {
-        fp[row.category_key] = {
-          amount: row.amount > 0 ? String(row.amount) : "",
-          is_recurring: row.is_recurring,
-          saving: false,
-        };
-      }
-      setFixedPending(fp);
 
       const sf: Record<number, SalaryFormState> = {};
       for (const row of resp.salary) {
@@ -546,28 +517,25 @@ export default function ExpensesPage() {
     }
   }, [year]);
 
-  // ── Load 6-month trend ─────────────────────────────────────────
-  const loadTrend = useCallback(async () => {
-    const months = getMonthsBack(year, month, 6);
-    const points: TrendPoint[] = [];
-    for (const m of months) {
-      try {
-        const { data: resp } = await api.get<MonthlyExpenseData>("/monthly-expenses/", {
-          params: { year: m.year, month: m.month },
-        });
-        const otherTotal = 0;
-        points.push({
-          label: MONTH_SHORT[m.month - 1],
-          fixed:  resp.totals.fixed_total,
-          salary: resp.totals.salary_total,
-          other:  otherTotal,
-          taxes:  resp.totals.tax_total,
-        });
-      } catch {
-        points.push({ label: MONTH_SHORT[m.month - 1], fixed: 0, salary: 0, other: 0, taxes: 0 });
-      }
+  // ── Load previous month data (for section copy feature) ────────
+  const loadPrevMonth = useCallback(async () => {
+    let pY = year;
+    let pM = month - 1;
+    if (pM < 1) { pM = 12; pY--; }
+    setPrevMonthLoaded(false);
+    try {
+      const [expResp, otherResp] = await Promise.all([
+        api.get<MonthlyExpenseData>("/monthly-expenses/", { params: { year: pY, month: pM } }).then(r => r.data).catch(() => null),
+        api.get<OtherExpense[]>("/monthly-expenses/other", { params: { year: pY, month: pM } }).then(r => r.data).catch(() => []),
+      ]);
+      setPrevMonthData(expResp);
+      setPrevOtherExpenses(otherResp);
+    } catch {
+      setPrevMonthData(null);
+      setPrevOtherExpenses([]);
+    } finally {
+      setPrevMonthLoaded(true);
     }
-    setTrendData(points);
   }, [year, month]);
 
   // ── Load annual data for analytics ────────────────────────────
@@ -606,15 +574,24 @@ export default function ExpensesPage() {
     }
   }, [year]);
 
-  useEffect(() => { load(); loadOther(); loadStaff(); loadDoctors(); loadTrend(); loadPeriods(); }, [load, loadOther, loadStaff, loadDoctors, loadTrend, loadPeriods]);
+  useEffect(() => { load(); loadOther(); loadStaff(); loadDoctors(); loadPeriods(); loadPrevMonth(); }, [load, loadOther, loadStaff, loadDoctors, loadPeriods, loadPrevMonth]);
   useEffect(() => { if (viewMode === "all") loadAnnualData(); }, [viewMode, loadAnnualData]);
+
+  // ── Toggle collapsible section ──
+  function toggleSection(id: string) {
+    setExpandedSections(s => ({ ...s, [id]: !s[id] }));
+  }
 
   // ── Month navigation ──────────────────────────────────────────
   function prevMonth() {
+    setExpandedSections({});
+    setSectionCopied({});
     if (month === 1) { setYear(y => y - 1); setMonth(12); }
     else setMonth(m => m - 1);
   }
   function nextMonth() {
+    setExpandedSections({});
+    setSectionCopied({});
     if (month === 12) { setYear(y => y + 1); setMonth(1); }
     else setMonth(m => m + 1);
   }
@@ -684,18 +661,33 @@ export default function ExpensesPage() {
       });
     } catch (e) {
       console.error(e);
-      alert("Помилка створення посилання");
+      setAlertDlg({ title: "Помилка", description: "Помилка створення посилання" });
     }
     setShareLoading(false);
   }
 
-  // ── Dirty checks ──────────────────────────────────────────────
-  function isFixedDirty(key: string, row: FixedExpenseRow): boolean {
-    const p = fixedPending[key];
-    if (!p) return false;
-    return (parseFloat(p.amount) || 0) !== row.amount || p.is_recurring !== row.is_recurring;
+  // ── Accountant request ────────────────────────────────────────
+  async function handleAccountantRequest() {
+    setAccReqLoading(true);
+    try {
+      const res = await api.post("/monthly-expenses/accountant-request", {
+        year,
+        month,
+      });
+      const accUrl = `${window.location.origin}${res.data.url}`;
+      setAccReqModal({
+        open: true,
+        url: accUrl,
+        expiresAt: new Date(res.data.expires_at).toLocaleDateString("uk-UA"),
+      });
+    } catch (e) {
+      console.error(e);
+      setAlertDlg({ title: "Помилка", description: "Помилка створення запиту до бухгалтера" });
+    }
+    setAccReqLoading(false);
   }
 
+  // ── Dirty checks ──────────────────────────────────────────────
   function isSalaryDirty(staffId: number, row: SalaryExpenseRow): boolean {
     const f = salaryForms[staffId];
     if (!f) return false;
@@ -708,23 +700,22 @@ export default function ExpensesPage() {
     );
   }
 
-  // ── Save fixed ────────────────────────────────────────────────
-  async function saveFixed(key: string) {
-    const pending = fixedPending[key];
-    if (!pending) return;
-    setFixedPending(p => ({ ...p, [key]: { ...p[key], saving: true } }));
-    try {
-      await api.put("/monthly-expenses/fixed", {
-        year, month,
-        category_key: key,
-        amount: parseFloat(pending.amount) || 0,
-        is_recurring: pending.is_recurring,
-      });
-      await load();
-    } catch (e) {
-      console.error(e);
-      setFixedPending(p => ({ ...p, [key]: { ...p[key], saving: false } }));
-    }
+  // ── Delete fixed ────────────────────────────────────────────────
+  function deleteFixed(id: number, name: string) {
+    setConfirmDlg({
+      title: `Видалити витрату «${name}»?`,
+      variant: "danger",
+      confirmLabel: "Видалити",
+      action: async () => {
+        try {
+          await api.delete(`/monthly-expenses/fixed/${id}`);
+          await load();
+        } catch (e: any) {
+          console.error(e);
+          setAlertDlg({ title: "Помилка", description: e?.response?.data?.detail || "Не вдалося видалити витрату." });
+        }
+      },
+    });
   }
 
   // ── Save salary ───────────────────────────────────────────────
@@ -746,21 +737,6 @@ export default function ExpensesPage() {
     } catch (e) {
       console.error(e);
       setSalaryForms(s => ({ ...s, [staffId]: { ...s[staffId], saving: false } }));
-    }
-  }
-
-  // ── Delete fixed (zero out) ───────────────────────────────────
-  async function deleteFixed(key: string) {
-    if (!confirm("Скинути суму до нуля для цієї категорії?")) return;
-    setFixedPending(p => ({ ...p, [key]: { ...p[key], amount: "0", saving: true } }));
-    try {
-      await api.put("/monthly-expenses/fixed", {
-        year, month, category_key: key, amount: 0, is_recurring: false,
-      });
-      await load();
-    } catch (e) {
-      console.error(e);
-      setFixedPending(p => ({ ...p, [key]: { ...p[key], saving: false } }));
     }
   }
 
@@ -792,14 +768,21 @@ export default function ExpensesPage() {
     }
   }
 
-  async function deleteStaff(id: number, name: string) {
-    if (!confirm(`Видалити співробітника «${name}»? Дані місяця залишаться.`)) return;
-    try {
-      await api.delete(`/staff/${id}`);
-      await Promise.all([loadStaff(), load()]);
-    } catch (e) {
-      console.error(e);
-    }
+  function deleteStaff(id: number, name: string) {
+    setConfirmDlg({
+      title: `Видалити співробітника «${name}»?`,
+      description: "Дані місяця залишаться.",
+      variant: "danger",
+      confirmLabel: "Видалити",
+      action: async () => {
+        try {
+          await api.delete(`/staff/${id}`);
+          await Promise.all([loadStaff(), load()]);
+        } catch (e) {
+          console.error(e);
+        }
+      },
+    });
   }
 
   // ── Other expenses CRUD ────────────────────────────────────────
@@ -822,20 +805,28 @@ export default function ExpensesPage() {
       }
       setOtherModal(s => ({ ...s, open: false, saving: false }));
       await loadOther();
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
+      setAlertDlg({ title: "Помилка", description: e?.response?.data?.detail || "Не вдалося зберегти витрату. Спробуйте ще раз." });
       setOtherModal(s => ({ ...s, saving: false }));
     }
   }
 
-  async function deleteOther(id: number, name: string) {
-    if (!confirm(`Видалити витрату «${name}»?`)) return;
-    try {
-      await api.delete(`/monthly-expenses/other/${id}`);
-      await loadOther();
-    } catch (e) {
-      console.error(e);
-    }
+  function deleteOther(id: number, name: string) {
+    setConfirmDlg({
+      title: `Видалити витрату «${name}»?`,
+      variant: "danger",
+      confirmLabel: "Видалити",
+      action: async () => {
+        try {
+          await api.delete(`/monthly-expenses/other/${id}`);
+          await loadOther();
+        } catch (e: any) {
+          console.error(e);
+          setAlertDlg({ title: "Помилка", description: e?.response?.data?.detail || "Не вдалося видалити витрату." });
+        }
+      },
+    });
   }
 
   // ── Lock / Unlock period ──────────────────────────────────────
@@ -848,14 +839,19 @@ export default function ExpensesPage() {
     finally { setLockLoading(false); }
   }
 
-  async function unlockPeriod() {
-    if (!confirm("Розблокувати місяць для редагування?")) return;
-    setLockLoading(true);
-    try {
-      await api.delete("/monthly-expenses/lock", { params: { year, month } });
-      await Promise.all([load(), loadPeriods()]);
-    } catch (e) { console.error(e); }
-    finally { setLockLoading(false); }
+  function unlockPeriod() {
+    setConfirmDlg({
+      title: "Розблокувати місяць для редагування?",
+      confirmLabel: "Розблокувати",
+      action: async () => {
+        setLockLoading(true);
+        try {
+          await api.delete("/monthly-expenses/lock", { params: { year, month } });
+          await Promise.all([load(), loadPeriods()]);
+        } catch (e) { console.error(e); }
+        finally { setLockLoading(false); }
+      },
+    });
   }
 
   // ── Copy from period ──────────────────────────────────────────
@@ -907,21 +903,80 @@ export default function ExpensesPage() {
   async function applyAiResult() {
     if (!aiModal.result) return;
     const r = aiModal.result;
-    if (r.category === "fixed" && r.category_key) {
-      const key = r.category_key;
-      setFixedPending(p => ({
-        ...p,
-        [key]: { amount: String(r.amount), is_recurring: r.is_recurring, saving: false },
-      }));
+    if (r.category === "fixed") {
       try {
-        await api.put("/monthly-expenses/fixed", {
-          year, month, category_key: key, amount: r.amount, is_recurring: r.is_recurring,
+        await api.post("/monthly-expenses/fixed", {
+          year, month, name: r.name, amount: r.amount, is_recurring: r.is_recurring,
         });
         await load();
       } catch (e) { console.error(e); }
     }
     setAiModal({ open: false, text: "", file: null, loading: false, result: null });
-    changeTab("fixed");
+    setExpandedSections(s => ({ ...s, fixed: true }));
+  }
+
+  // ── Per-section copy from previous month ────────────────────────
+  function getPrevMonthLabel(): string {
+    let pM = month - 1;
+    let pY = year;
+    if (pM < 1) { pM = 12; pY--; }
+    return `${MONTH_NAMES[pM - 1]} ${pY}`;
+  }
+
+  function isPrevMonthLocked(): boolean {
+    return prevMonthData?.is_locked === true;
+  }
+
+  function hasPrevFixed(): boolean {
+    return (prevMonthData?.fixed?.length ?? 0) > 0 && prevMonthData!.fixed.some(r => r.amount > 0);
+  }
+
+  function hasPrevSalary(): boolean {
+    return (prevMonthData?.salary?.length ?? 0) > 0 && prevMonthData!.salary.some(r => r.brutto > 0);
+  }
+
+  function hasPrevOther(): boolean {
+    return prevOtherExpenses.length > 0;
+  }
+
+  async function copySectionFromPrev(section: "fixed" | "salary" | "other") {
+    setSectionCopyLoading(s => ({ ...s, [section]: true }));
+    let pY = year;
+    let pM = month - 1;
+    if (pM < 1) { pM = 12; pY--; }
+
+    try {
+      if (section === "fixed" || section === "salary") {
+        await api.post("/monthly-expenses/copy-from", {
+          source_year: pY,
+          source_month: pM,
+          target_year: year,
+          target_month: month,
+          copy_fixed: section === "fixed",
+          copy_salary: section === "salary",
+        });
+        await load();
+      } else {
+        // Copy other expenses one by one (no backend bulk copy)
+        for (const exp of prevOtherExpenses) {
+          await api.post("/monthly-expenses/other", {
+            name: exp.name,
+            description: exp.description,
+            amount: exp.amount,
+            category: exp.category,
+            year,
+            month,
+          });
+        }
+        await loadOther();
+      }
+      setSectionCopied(s => ({ ...s, [section]: true }));
+    } catch (e) {
+      console.error(e);
+      setAlertDlg({ title: "Помилка", description: "Не вдалося перенести дані. Спробуйте ще раз." });
+    } finally {
+      setSectionCopyLoading(s => ({ ...s, [section]: false }));
+    }
   }
 
   // ── Excel export (повний звіт, без ПДФО та ВЗ із ЗП) ─────────
@@ -942,7 +997,7 @@ export default function ExpensesPage() {
       [],
       ["═══ ПОСТІЙНІ ВИТРАТИ ═══", "", ""],
       ...data.fixed.filter(r => r.amount > 0).map(r => [
-        "Постійні", `${r.category_name}${r.is_recurring ? " (постійна)" : ""}`, r.amount,
+        "Постійні", `${r.name}${r.is_recurring ? " (постійна)" : ""}`, r.amount,
       ] as (string | number)[]),
       ["", "Разом постійні", data.totals.fixed_total],
       [],
@@ -1064,31 +1119,72 @@ export default function ExpensesPage() {
   // ── Derived data ──────────────────────────────────────────────
   const otherTotal = otherExpenses.reduce((sum, e) => sum + e.amount, 0);
 
-  const pieData = data
-    ? [
-        { name: "Постійні",  value: data.totals.fixed_total },
-        { name: "Зарплатні", value: data.totals.salary_total },
-        { name: "Інші",      value: otherTotal },
-        { name: "Податки",   value: data.totals.tax_total },
-      ].filter(d => d.value > 0)
-    : [];
-
   const detailRows: DetailRow[] = data
-    ? [
-        ...data.fixed.filter(r => r.amount > 0).map(r => ({
-          name: r.category_name, category: "fixed", amount: r.amount,
-        })),
-        ...data.salary.map(r => ({
-          name: r.full_name, category: "salary", amount: r.total_employer_cost,
-        })),
-        ...otherExpenses.map(r => ({
-          name: r.name, category: "other", amount: r.amount,
-        })),
-        { name: `ЄП (${data.taxes.ep_rate}%)`,   category: "taxes", amount: data.taxes.ep },
-        { name: `ВЗ (${data.taxes.vz_rate}%)`,   category: "taxes", amount: data.taxes.vz },
-        { name: "ЄСВ власника",                   category: "taxes", amount: data.taxes.esv_owner },
-        { name: `ЄСВ роботодавця (${data.settings.esv_employer_rate}%)`, category: "taxes", amount: data.taxes.esv_employer },
-      ]
+    ? (() => {
+        const rows: DetailRow[] = [];
+
+        // ── Постійні витрати
+        for (const r of data.fixed.filter(r => r.amount > 0)) {
+          rows.push({ name: r.name, category: "fixed", amount: r.amount });
+        }
+
+        // ── Власник ФОП (3 напрямки)
+        if (data.owner) {
+          const ownerCalc = calcOwnerSalary();
+          if (ownerCalc.ownDeclarations > 0) {
+            rows.push({
+              name: `${data.owner.doctor_name} — Кошти за власні декларації`,
+              category: "owner_own",
+              amount: ownerCalc.ownDeclarations,
+            });
+          }
+          if (ownerCalc.hiredDeclarations > 0) {
+            rows.push({
+              name: `${data.owner.doctor_name} — Кошти за декларації найм. лікаря`,
+              category: "owner_hired",
+              amount: ownerCalc.hiredDeclarations,
+            });
+          }
+          if (ownerCalc.paidServices > 0) {
+            rows.push({
+              name: `${data.owner.doctor_name} — Платні послуги`,
+              category: "owner_paid",
+              amount: ownerCalc.paidServices,
+            });
+          }
+        }
+
+        // ── Зарплатні витрати (лікарі та персонал) з розбивкою на ЗП та Платні послуги
+        for (const r of data.salary.filter(s => !s.is_owner)) {
+          if (r.total_employer_cost > 0) {
+            rows.push({
+              name: `${r.full_name} — Заробітна плата (Витрати роботодавця)`,
+              category: "salary",
+              amount: r.total_employer_cost,
+            });
+          }
+          if (r.paid_services_income > 0) {
+            rows.push({
+              name: `${r.full_name} — Платні послуги`,
+              category: "salary_paid",
+              amount: r.paid_services_income,
+            });
+          }
+        }
+
+        // ── Інші витрати
+        for (const r of otherExpenses) {
+          rows.push({ name: r.name, category: "other", amount: r.amount });
+        }
+
+        // ── Податки
+        rows.push({ name: `ЄП (${data.taxes.ep_rate}%)`,   category: "taxes", amount: data.taxes.ep });
+        rows.push({ name: `ВЗ (${data.taxes.vz_rate}%)`,   category: "taxes", amount: data.taxes.vz });
+        rows.push({ name: "ЄСВ власника",                   category: "taxes", amount: data.taxes.esv_owner });
+        rows.push({ name: `ЄСВ роботодавця (${data.settings.esv_employer_rate}%)`, category: "taxes", amount: data.taxes.esv_employer });
+
+        return rows;
+      })()
     : [];
 
   const grandWithOther = (data?.totals.grand_total ?? 0) + otherTotal;
@@ -1108,7 +1204,11 @@ export default function ExpensesPage() {
 
       {/* ═══ HEADER ═══ */}
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center shrink-0">
+            <Wallet size={22} className="text-orange-400" />
+          </div>
+          <div>
           <h2 className="text-2xl font-bold text-white">Витрати</h2>
           {viewMode === "month" && data && (
             <p className="text-gray-500 text-sm mt-1">
@@ -1129,11 +1229,12 @@ export default function ExpensesPage() {
           {viewMode === "all" && (
             <p className="text-gray-500 text-sm mt-1">Огляд усіх місяців — {year}</p>
           )}
+          </div>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
           <button
-            onClick={() => { load(); loadOther(); loadTrend(); loadPeriods(); }}
+            onClick={() => { load(); loadOther(); loadPeriods(); }}
             className="p-2 rounded-xl text-gray-400 hover:text-white hover:bg-dark-300 transition-all"
             title="Оновити"
             aria-label="Оновити дані"
@@ -1144,7 +1245,7 @@ export default function ExpensesPage() {
           {/* View mode switcher */}
           <div className="flex items-center gap-1 bg-dark-500/50 border border-dark-50/15 rounded-2xl p-1">
             <button
-              onClick={() => setViewMode("all")}
+              onClick={() => { setViewMode("all"); setExpandedSections({}); }}
               aria-label="Показати всі місяці"
               aria-pressed={viewMode === "all"}
               className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${
@@ -1156,7 +1257,7 @@ export default function ExpensesPage() {
               <CalendarDays size={13} aria-hidden="true" /> Всього
             </button>
             <button
-              onClick={() => setViewMode("month")}
+              onClick={() => { setViewMode("month"); setExpandedSections({}); }}
               aria-label={`Показати ${MONTH_NAMES[month - 1]}`}
               aria-pressed={viewMode === "month"}
               className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
@@ -1209,8 +1310,8 @@ export default function ExpensesPage() {
         <div className="space-y-4">
           {/* Annual stacked bar chart */}
           <div className="card-neo p-4">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
-              Витрати по місяцях — {year}
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-1.5">
+              <BarChart3 size={13} className="text-orange-400" />Витрати по місяцях — {year}
             </p>
             <ResponsiveContainer width="100%" height={220}>
               <BarChart
@@ -1239,12 +1340,12 @@ export default function ExpensesPage() {
           {periodsLoading ? (
             <LoadingSpinner height="h-24" />
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 stagger-enter">
               {periods.map(p => (
                 <button
                   key={p.month}
                   onClick={() => { setMonth(p.month); setViewMode("month"); }}
-                  className={`card-neo p-4 text-left hover:border-accent-500/40 transition-all ${
+                  className={`card-neo card-tap p-4 text-left hover:border-accent-500/40 transition-all ${
                     p.month === month ? "border-accent-500/40" : ""
                   }`}
                 >
@@ -1327,7 +1428,7 @@ export default function ExpensesPage() {
                 </p>
 
                 {/* Annual KPI Summary */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 stagger-enter">
                   <div className="card-neo p-3 space-y-1">
                     <p className="text-xs text-gray-500">Всього витрат</p>
                     <p className="font-bold text-white font-mono tabular-nums">{fmt(annualTotal)} ₴</p>
@@ -1364,8 +1465,8 @@ export default function ExpensesPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   {/* Line chart: Income vs Expenses */}
                   <div className="card-neo p-4">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
-                      Дохід vs Витрати
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-1.5">
+                      <TrendingUp size={13} className="text-orange-400" />Дохід vs Витрати
                     </p>
                     <ResponsiveContainer width="100%" height={240}>
                       <ComposedChart data={chartData}>
@@ -1383,8 +1484,8 @@ export default function ExpensesPage() {
 
                   {/* Annual Pie */}
                   <div className="card-neo p-4">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
-                      Структура витрат за рік
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-1.5">
+                      <BarChart3 size={13} className="text-orange-400" />Структура витрат за рік
                     </p>
                     {annualPie.length > 0 ? (
                       <div className="flex items-center gap-4">
@@ -1422,8 +1523,8 @@ export default function ExpensesPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   {/* Stacked bar: categories */}
                   <div className="card-neo p-4">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
-                      Витрати за категоріями
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-1.5">
+                      <BarChart3 size={13} className="text-orange-400" />Витрати за категоріями
                     </p>
                     <ResponsiveContainer width="100%" height={240}>
                       <BarChart data={chartData} barSize={14}>
@@ -1443,8 +1544,8 @@ export default function ExpensesPage() {
 
                   {/* Cumulative area chart */}
                   <div className="card-neo p-4">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
-                      Накопичувальні витрати
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-1.5">
+                      <TrendingUp size={13} className="text-orange-400" />Накопичувальні витрати
                     </p>
                     <ResponsiveContainer width="100%" height={240}>
                       <AreaChart data={cumulativeData}>
@@ -1467,8 +1568,8 @@ export default function ExpensesPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   {/* Remaining (profit/loss) by month */}
                   <div className="card-neo p-4">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
-                      Залишок (дохід − витрати) по місяцях
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-1.5">
+                      <Wallet size={13} className="text-orange-400" />Залишок (дохід − витрати) по місяцях
                     </p>
                     <ResponsiveContainer width="100%" height={220}>
                       <BarChart data={chartData} barSize={18}>
@@ -1576,6 +1677,15 @@ export default function ExpensesPage() {
               <Sparkles size={13} aria-hidden="true" /> AI-аналіз
             </button>
             <button
+              onClick={handleAccountantRequest}
+              disabled={accReqLoading}
+              aria-label="Запит до бухгалтера"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-dark-400/60 border border-dark-50/15 text-gray-300 text-xs font-semibold hover:border-orange-500/30 hover:text-orange-300 transition-all disabled:opacity-50"
+            >
+              {accReqLoading ? <RefreshCw size={13} className="animate-spin" /> : <ClipboardList size={13} aria-hidden="true" />}
+              Бухгалтеру
+            </button>
+            <button
               onClick={exportExcel}
               disabled={!data}
               aria-label="Експортувати в Excel"
@@ -1614,7 +1724,7 @@ export default function ExpensesPage() {
       {data && viewMode === "month" && (
         <>
           {/* ═══ DASHBOARD: KPI CARDS ═══ */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 stagger-enter">
             <KpiCard
               label="Постійні"
               value={data.totals.fixed_total}
@@ -1651,7 +1761,7 @@ export default function ExpensesPage() {
               onClick={() => setKpiModal({ open: true, type: "total", title: "Всі витрати — деталізація" })}
             />
             <div
-              className="card-neo kpi-3d-hover p-4 flex flex-col gap-2 cursor-pointer hover:border-accent-500/40 transition-all"
+              className="card-neo kpi-3d-hover card-tap p-4 flex flex-col gap-2 cursor-pointer hover:border-accent-500/40 transition-all"
               onClick={() => setKpiModal({ open: true, type: "remaining", title: "Фінансовий результат" })}
               role="button"
               tabIndex={0}
@@ -1677,83 +1787,6 @@ export default function ExpensesPage() {
                 {remaining >= 0 ? "+" : ""}{fmt(remaining)}{" "}
                 <span className="text-sm font-normal text-gray-500">₴</span>
               </p>
-            </div>
-          </div>
-
-          {/* ═══ DASHBOARD: CHARTS ═══ */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-
-            {/* Bar chart: 6-month trend */}
-            <div className="card-neo p-4" style={TT_STYLE}>
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
-                Тенденція за 6 місяців
-              </p>
-              <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={trendData} barSize={12}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" />
-                  <XAxis dataKey="label" tick={{ fill: "#6b7280", fontSize: 11 }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fill: "#6b7280", fontSize: 10 }} axisLine={false} tickLine={false}
-                    tickFormatter={v => `${Math.round(v / 1000)}k`} />
-                  <Tooltip
-                    contentStyle={TT_STYLE}
-                    formatter={(v: number, name: string) => [fmt(v) + " ₴", name]}
-                  />
-                  <Bar dataKey="fixed"  stackId="a" fill="#6366f1" name="Постійні"  radius={[0,0,0,0]} />
-                  <Bar dataKey="salary" stackId="a" fill="#a855f7" name="Зарплатні" radius={[0,0,0,0]} />
-                  <Bar dataKey="other"  stackId="a" fill="#f59e0b" name="Інші"      radius={[0,0,0,0]} />
-                  <Bar dataKey="taxes"  stackId="a" fill="#f43f5e" name="Податки"   radius={[4,4,0,0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-
-            {/* Pie chart: current month structure */}
-            <div className="card-neo p-4" style={TT_STYLE}>
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
-                Структура витрат — {MONTH_NAMES[month - 1]}
-              </p>
-              {pieData.length > 0 ? (
-                <div className="flex items-center gap-4">
-                  <ResponsiveContainer width="55%" height={200}>
-                    <PieChart>
-                      <Pie
-                        data={pieData}
-                        cx="50%" cy="50%"
-                        innerRadius={55} outerRadius={85}
-                        paddingAngle={3}
-                        dataKey="value"
-                      >
-                        {pieData.map((_, idx) => (
-                          <Cell key={idx} fill={PIE_COLORS[idx % PIE_COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip
-                        contentStyle={TT_STYLE}
-                        formatter={(v: number) => [fmt(v) + " ₴"]}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div className="flex-1 space-y-2">
-                    {pieData.map((entry, idx) => {
-                      const total = pieData.reduce((s, d) => s + d.value, 0);
-                      const pct = total > 0 ? Math.round(entry.value / total * 100) : 0;
-                      return (
-                        <div key={idx} className="flex items-center gap-2">
-                          <span
-                            className="w-2.5 h-2.5 rounded-full shrink-0"
-                            style={{ background: PIE_COLORS[idx % PIE_COLORS.length] }}
-                          />
-                          <span className="text-xs text-gray-400 flex-1">{entry.name}</span>
-                          <span className="text-xs font-mono text-gray-300">{pct}%</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              ) : (
-                <div className="flex items-center justify-center h-48 text-gray-600 text-sm">
-                  Немає даних
-                </div>
-              )}
             </div>
           </div>
 
@@ -1808,150 +1841,204 @@ export default function ExpensesPage() {
             </div>
           )}
 
-          {/* ═══ TAB NAVIGATION ═══ */}
-          <TabBar
-            tabs={TABS.map(t => ({ id: t.id, label: t.label }))}
-            activeTab={activeTab}
-            onChange={(id) => changeTab(id as TabId)}
-          />
-
-          {/* ═══ TAB PANELS ═══ */}
+          {/* ═══ COLLAPSIBLE SECTIONS ═══ */}
 
           {/* ────────────────────────────────────────
-              TAB: ПОСТІЙНІ ВИТРАТИ
+              SECTION: ПОСТІЙНІ ВИТРАТИ
           ──────────────────────────────────────── */}
-          {activeTab === "fixed" && (
+          {(
             <section className="card-neo overflow-hidden">
-              <div className="flex items-center gap-3 px-5 py-4 border-b border-dark-50/10 bg-dark-400/20">
+              <button
+                onClick={() => toggleSection("fixed")}
+                className="w-full flex items-center gap-3 px-5 py-4 bg-dark-400/20 hover:bg-dark-400/30 transition-all cursor-pointer"
+                aria-expanded={!!expandedSections.fixed}
+              >
                 <div className="w-8 h-8 rounded-xl bg-blue-500/15 flex items-center justify-center shrink-0">
                   <TrendingDown size={16} className="text-blue-400" />
                 </div>
-                <h3 className="font-semibold text-white text-sm">Постійні витрати</h3>
-                <span className="ml-auto text-sm font-mono font-semibold text-blue-400 tabular-nums">
-                  {fmt(data.totals.fixed_total)} ₴
-                </span>
-              </div>
+                <div className="flex-1 text-left">
+                  <h3 className="font-semibold text-white text-sm">Постійні витрати</h3>
+                  <p className={`text-xs mt-0.5 ${data.fixed.some(r => r.amount > 0) ? "text-emerald-400" : "text-gray-600"}`}>
+                    {data.fixed.some(r => r.amount > 0) ? "Заповнено" : "Не заповнено"} · {fmt(data.totals.fixed_total)} ₴
+                  </p>
+                </div>
+                <ChevronDown size={18} className={`text-gray-500 transition-transform duration-200 shrink-0 ${expandedSections.fixed ? "rotate-180" : ""}`} />
+              </button>
 
-              <div className="divide-y divide-dark-50/5">
-                {data.fixed.map((row) => {
-                  const pending = fixedPending[row.category_key];
-                  if (!pending) return null;
-                  const dirty = isFixedDirty(row.category_key, row);
-                  return (
-                    <div key={row.category_key}
-                      className="flex items-center gap-3 px-5 py-3 hover:bg-dark-400/20 transition-colors">
-
-                      <span className="text-sm text-gray-300 flex-1 min-w-0 truncate">{row.category_name}</span>
-
-                      <div className="w-36 shrink-0">
-                        <div className="relative">
-                          <input
-                            type="number" step="0.01" min="0"
-                            value={pending.amount}
-                            onChange={e => setFixedPending(p => ({
-                              ...p, [row.category_key]: { ...p[row.category_key], amount: e.target.value }
-                            }))}
-                            onKeyDown={e => { if (e.key === "Enter") saveFixed(row.category_key); }}
-                            className="input-dark text-right pr-8 py-2 text-sm w-full"
-                            placeholder="0.00"
-                          />
-                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 text-xs">₴</span>
-                        </div>
+              {expandedSections.fixed && (
+              <>
+              {/* Copy from previous month prompt */}
+              {data.fixed.length === 0 && !sectionCopied.fixed && prevMonthLoaded && (
+                <div className="px-5 py-4 border-t border-dark-50/10 bg-dark-400/10">
+                  {!prevMonthData || !hasPrevFixed() ? (
+                    <p className="text-xs text-gray-600 text-center">Немає даних у попередньому місяці для перенесення.</p>
+                  ) : !isPrevMonthLocked() ? (
+                    <div className="flex items-start gap-2.5 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                      <AlertCircle size={15} className="text-amber-400 shrink-0 mt-0.5" />
+                      <p className="text-xs text-amber-300">
+                        Неможливо перенести дані з <strong>{getPrevMonthLabel()}</strong> — попередній місяць не зафіксовано.
+                        Спочатку зафіксуйте попередній період.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-accent-500/10 border border-accent-500/20">
+                      <Copy size={15} className="text-accent-400 shrink-0" />
+                      <div className="flex-1">
+                        <p className="text-sm text-gray-200">
+                          Перенести постійні витрати з <strong className="text-white">{getPrevMonthLabel()}</strong>?
+                        </p>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          {prevMonthData.fixed.filter(r => r.amount > 0).length} записів · {fmt(prevMonthData.totals.fixed_total)} ₴
+                        </p>
                       </div>
-
-                      {/* Recurring toggle */}
-                      <div
-                        onClick={() => setFixedPending(p => ({
-                          ...p,
-                          [row.category_key]: {
-                            ...p[row.category_key],
-                            is_recurring: !p[row.category_key].is_recurring,
-                          }
-                        }))}
-                        className={`w-4 h-4 rounded border flex items-center justify-center transition-all cursor-pointer shrink-0 ${
-                          pending.is_recurring
-                            ? "bg-accent-500 border-accent-500"
-                            : "border-dark-50/30 bg-dark-300"
-                        }`}
-                        title="Постійна"
-                      >
-                        {pending.is_recurring && (
-                          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                            <path d="M2 5l2.5 2.5L8 2.5" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
-                          </svg>
-                        )}
-                      </div>
-
                       <button
-                        onClick={() => saveFixed(row.category_key)}
-                        disabled={!dirty || pending.saving}
-                        title="Зберегти"
-                        className={`p-1.5 rounded-lg transition-all shrink-0 ${
-                          dirty ? "text-accent-400 hover:bg-accent-500/10" : "text-gray-700 cursor-default"
-                        }`}
+                        onClick={() => copySectionFromPrev("fixed")}
+                        disabled={sectionCopyLoading.fixed}
+                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-accent-500 hover:bg-accent-400 text-white text-xs font-semibold transition-all disabled:opacity-50"
                       >
-                        {pending.saving
-                          ? <RefreshCw size={13} className="animate-spin" />
-                          : <Save size={13} />
-                        }
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          setFixedModal({
-                            open: true, isEdit: true, categoryKey: row.category_key,
-                            name: row.category_name, desc: "", amount: String(pending.amount),
-                            recurring: pending.is_recurring, saving: false,
-                          });
-                        }}
-                        className="p-1.5 rounded-lg text-gray-600 hover:text-blue-400 hover:bg-blue-500/10 transition-all shrink-0"
-                        title="Редагувати"
-                      >
-                        <Edit2 size={13} />
-                      </button>
-
-                      <button
-                        onClick={() => deleteFixed(row.category_key)}
-                        className="p-1.5 rounded-lg text-gray-700 hover:text-red-400 hover:bg-red-500/10 transition-all shrink-0"
-                        title="Скинути"
-                      >
-                        <Trash2 size={13} />
+                        {sectionCopyLoading.fixed ? <RefreshCw size={13} className="animate-spin" /> : <Copy size={13} />}
+                        Перенести
                       </button>
                     </div>
-                  );
-                })}
+                  )}
+                </div>
+              )}
+              <div className="divide-y divide-dark-50/5 border-t border-dark-50/10">
+                {data.fixed.length === 0 ? (
+                  <div className="px-5 py-8 text-center text-gray-600 text-sm">
+                    Ще немає постійних витрат. Натисніть «Додати витрату» щоб створити.
+                  </div>
+                ) : data.fixed.map((row) => (
+                  <div key={row.id}
+                    className="flex items-center gap-3 px-5 py-3 hover:bg-dark-400/20 transition-colors">
+
+                    <div className="flex-1 min-w-0">
+                      <span className="text-sm text-gray-300 truncate block">{row.name}</span>
+                      {row.description && (
+                        <span className="text-xs text-gray-600 truncate block">{row.description}</span>
+                      )}
+                    </div>
+
+                    {row.is_recurring && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent-500/15 text-accent-400 border border-accent-500/20 shrink-0">
+                        щомісячно
+                      </span>
+                    )}
+
+                    {row.edited_by === "accountant" && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-teal-500/15 text-teal-400 border border-teal-500/20 shrink-0" title={row.edited_at ? `Оновлено: ${new Date(row.edited_at).toLocaleDateString("uk-UA")}` : undefined}>
+                        Бухгалтер
+                      </span>
+                    )}
+
+                    <span className="text-sm font-mono font-semibold text-white tabular-nums shrink-0 w-28 text-right">
+                      {fmt(row.amount)} ₴
+                    </span>
+
+                    <button
+                      onClick={() => {
+                        setFixedModal({
+                          open: true, isEdit: true, id: row.id,
+                          name: row.name, desc: row.description || "",
+                          amount: String(row.amount),
+                          recurring: row.is_recurring, saving: false,
+                        });
+                      }}
+                      className="p-1.5 rounded-lg text-gray-600 hover:text-blue-400 hover:bg-blue-500/10 transition-all shrink-0"
+                      title="Редагувати"
+                    >
+                      <Edit2 size={13} />
+                    </button>
+
+                    <button
+                      onClick={() => deleteFixed(row.id, row.name)}
+                      className="p-1.5 rounded-lg text-gray-700 hover:text-red-400 hover:bg-red-500/10 transition-all shrink-0"
+                      title="Видалити"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                ))}
               </div>
 
               <div className="flex items-center justify-between px-5 py-3 bg-dark-400/20 border-t border-dark-50/10">
                 <button
                   onClick={() => setFixedModal({
-                    open: true, isEdit: false, categoryKey: "",
+                    open: true, isEdit: false, id: null,
                     name: "", desc: "", amount: "", recurring: true, saving: false,
                   })}
                   className="flex items-center gap-1.5 text-xs text-accent-400 hover:text-accent-300 transition-colors"
                 >
-                  <Plus size={13} /> Додати категорію
+                  <Plus size={13} /> Додати витрату
                 </button>
                 <span className="font-bold text-blue-400 font-mono tabular-nums">{fmt(data.totals.fixed_total)} ₴</span>
               </div>
+              </>
+              )}
             </section>
           )}
 
           {/* ────────────────────────────────────────
-              TAB: ЗАРПЛАТНІ ВИТРАТИ
+              SECTION: ЗАРПЛАТНІ ВИТРАТИ
           ──────────────────────────────────────── */}
-          {activeTab === "salary" && (
+          {(
             <section className="card-neo overflow-hidden">
-              {/* ── Заголовок секції ── */}
-              <div className="flex items-center gap-3 px-5 py-4 border-b border-dark-50/10 bg-dark-400/20">
+              <button
+                onClick={() => toggleSection("salary")}
+                className="w-full flex items-center gap-3 px-5 py-4 bg-dark-400/20 hover:bg-dark-400/30 transition-all cursor-pointer"
+                aria-expanded={!!expandedSections.salary}
+              >
                 <div className="w-8 h-8 rounded-xl bg-purple-500/15 flex items-center justify-center shrink-0">
                   <Users size={16} className="text-purple-400" />
                 </div>
-                <h3 className="font-semibold text-white text-sm">Зарплатні витрати</h3>
-                <span className="ml-auto text-sm font-mono font-semibold text-purple-400 tabular-nums">
-                  {fmt(data.totals.salary_total)} ₴
-                </span>
-              </div>
+                <div className="flex-1 text-left">
+                  <h3 className="font-semibold text-white text-sm">Зарплатні витрати</h3>
+                  <p className={`text-xs mt-0.5 ${data.salary.some(r => r.brutto > 0) ? "text-emerald-400" : "text-gray-600"}`}>
+                    {data.salary.some(r => r.brutto > 0) ? "Заповнено" : "Не заповнено"} · {fmt(data.totals.salary_total)} ₴
+                  </p>
+                </div>
+                <ChevronDown size={18} className={`text-gray-500 transition-transform duration-200 shrink-0 ${expandedSections.salary ? "rotate-180" : ""}`} />
+              </button>
+
+              {expandedSections.salary && (
+              <div className="border-t border-dark-50/10">
+
+              {/* Copy from previous month prompt */}
+              {!data.salary.some(r => r.brutto > 0) && !sectionCopied.salary && prevMonthLoaded && (
+                <div className="px-5 py-4 bg-dark-400/10">
+                  {!prevMonthData || !hasPrevSalary() ? (
+                    <p className="text-xs text-gray-600 text-center">Немає зарплатних даних у попередньому місяці для перенесення.</p>
+                  ) : !isPrevMonthLocked() ? (
+                    <div className="flex items-start gap-2.5 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                      <AlertCircle size={15} className="text-amber-400 shrink-0 mt-0.5" />
+                      <p className="text-xs text-amber-300">
+                        Неможливо перенести дані з <strong>{getPrevMonthLabel()}</strong> — попередній місяць не зафіксовано.
+                        Спочатку зафіксуйте попередній період.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-accent-500/10 border border-accent-500/20">
+                      <Copy size={15} className="text-accent-400 shrink-0" />
+                      <div className="flex-1">
+                        <p className="text-sm text-gray-200">
+                          Перенести зарплатні дані з <strong className="text-white">{getPrevMonthLabel()}</strong>?
+                        </p>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          {prevMonthData.salary.filter(r => r.brutto > 0).length} співробітників · {fmt(prevMonthData.totals.salary_total)} ₴
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => copySectionFromPrev("salary")}
+                        disabled={sectionCopyLoading.salary}
+                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-accent-500 hover:bg-accent-400 text-white text-xs font-semibold transition-all disabled:opacity-50"
+                      >
+                        {sectionCopyLoading.salary ? <RefreshCw size={13} className="animate-spin" /> : <Copy size={13} />}
+                        Перенести
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {data.salary.length === 0 && !data.owner ? (
                 <EmptyState
@@ -1968,7 +2055,7 @@ export default function ExpensesPage() {
                     <div className="border-b border-dark-50/10">
                       {/* Заголовок підсекції */}
                       <div className="px-5 py-2.5 bg-dark-400/30 border-b border-dark-50/8 flex items-center gap-2">
-                        <Stethoscope size={13} className="text-teal-400" />
+                        <MedFlowLogo size={13} className="text-orange-400" />
                         <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Лікарі</span>
                       </div>
 
@@ -2120,9 +2207,16 @@ export default function ExpensesPage() {
                               <div className="flex items-start justify-between mb-4 gap-2">
                                 <div>
                                   <p className="font-semibold text-white text-sm">{row.full_name}</p>
-                                  <span className="inline-block mt-1 px-2 py-0.5 text-xs rounded-lg bg-teal-500/10 text-teal-400 border border-teal-500/20">
-                                    Лікар
-                                  </span>
+                                  <div className="flex items-center gap-1.5 mt-1">
+                                    <span className="inline-block px-2 py-0.5 text-xs rounded-lg bg-teal-500/10 text-teal-400 border border-teal-500/20">
+                                      Лікар
+                                    </span>
+                                    {row.edited_by === "accountant" && (
+                                      <span className="inline-block px-2 py-0.5 text-xs rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20" title={row.edited_at ? `Оновлено бухгалтером: ${new Date(row.edited_at).toLocaleDateString("uk-UA")}` : undefined}>
+                                        Бухгалтер
+                                      </span>
+                                    )}
+                                  </div>
                                 </div>
                                 <div className="flex items-center gap-2 shrink-0">
                                   <button
@@ -2264,7 +2358,7 @@ export default function ExpensesPage() {
                   {data.salary.some(r => r.role !== "doctor") && (
                     <div>
                       <div className="px-5 py-2.5 bg-dark-400/30 border-b border-dark-50/8 flex items-center gap-2">
-                        <Users size={13} className="text-purple-400" />
+                        <HeartPulse size={13} className="text-orange-400" />
                         <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Медичний персонал</span>
                       </div>
                       <div className="divide-y divide-dark-50/5">
@@ -2278,9 +2372,16 @@ export default function ExpensesPage() {
                               <div className="flex items-start justify-between mb-4 gap-2">
                                 <div>
                                   <p className="font-semibold text-white text-sm">{row.full_name}</p>
-                                  <span className="inline-block mt-1 px-2 py-0.5 text-xs rounded-lg bg-dark-400 text-gray-400 border border-dark-50/10">
-                                    {ROLE_LABELS[row.role] ?? row.role}
-                                  </span>
+                                  <div className="flex items-center gap-1.5 mt-1">
+                                    <span className="inline-block px-2 py-0.5 text-xs rounded-lg bg-dark-400 text-gray-400 border border-dark-50/10">
+                                      {ROLE_LABELS[row.role] ?? row.role}
+                                    </span>
+                                    {row.edited_by === "accountant" && (
+                                      <span className="inline-block px-2 py-0.5 text-xs rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20" title={row.edited_at ? `Оновлено бухгалтером: ${new Date(row.edited_at).toLocaleDateString("uk-UA")}` : undefined}>
+                                        Бухгалтер
+                                      </span>
+                                    )}
+                                  </div>
                                 </div>
                                 <div className="flex items-center gap-2 shrink-0">
                                   <button
@@ -2383,23 +2484,72 @@ export default function ExpensesPage() {
                 <span className="text-xs text-gray-600">Персонал налаштовується в розділі Налаштування</span>
                 <span className="font-bold text-purple-400 font-mono tabular-nums">{fmt(data.totals.salary_total)} ₴</span>
               </div>
+              </div>
+              )}
             </section>
           )}
 
           {/* ────────────────────────────────────────
-              TAB: ІНШІ ВИТРАТИ
+              SECTION: ІНШІ ВИТРАТИ
           ──────────────────────────────────────── */}
-          {activeTab === "other" && (
+          {(
             <section className="card-neo overflow-hidden">
-              <div className="flex items-center gap-3 px-5 py-4 border-b border-dark-50/10 bg-dark-400/20">
+              <button
+                onClick={() => toggleSection("other")}
+                className="w-full flex items-center gap-3 px-5 py-4 bg-dark-400/20 hover:bg-dark-400/30 transition-all cursor-pointer"
+                aria-expanded={!!expandedSections.other}
+              >
                 <div className="w-8 h-8 rounded-xl bg-amber-500/15 flex items-center justify-center shrink-0">
                   <Wallet size={16} className="text-amber-400" />
                 </div>
-                <h3 className="font-semibold text-white text-sm">Інші витрати</h3>
-                <span className="ml-auto text-sm font-mono font-semibold text-amber-400 tabular-nums">
-                  {fmt(otherTotal)} ₴
-                </span>
-              </div>
+                <div className="flex-1 text-left">
+                  <h3 className="font-semibold text-white text-sm">Інші витрати</h3>
+                  <p className={`text-xs mt-0.5 ${otherExpenses.length > 0 ? "text-emerald-400" : "text-gray-600"}`}>
+                    {otherExpenses.length > 0 ? "Заповнено" : "Не заповнено"} · {fmt(otherTotal)} ₴
+                  </p>
+                </div>
+                <ChevronDown size={18} className={`text-gray-500 transition-transform duration-200 shrink-0 ${expandedSections.other ? "rotate-180" : ""}`} />
+              </button>
+
+              {expandedSections.other && (
+              <div className="border-t border-dark-50/10">
+
+              {/* Copy from previous month prompt */}
+              {otherExpenses.length === 0 && !sectionCopied.other && prevMonthLoaded && !otherLoading && (
+                <div className="px-5 py-4 bg-dark-400/10">
+                  {!hasPrevOther() ? (
+                    <p className="text-xs text-gray-600 text-center">Немає інших витрат у попередньому місяці для перенесення.</p>
+                  ) : !isPrevMonthLocked() ? (
+                    <div className="flex items-start gap-2.5 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                      <AlertCircle size={15} className="text-amber-400 shrink-0 mt-0.5" />
+                      <p className="text-xs text-amber-300">
+                        Неможливо перенести дані з <strong>{getPrevMonthLabel()}</strong> — попередній місяць не зафіксовано.
+                        Спочатку зафіксуйте попередній період.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-accent-500/10 border border-accent-500/20">
+                      <Copy size={15} className="text-accent-400 shrink-0" />
+                      <div className="flex-1">
+                        <p className="text-sm text-gray-200">
+                          Перенести інші витрати з <strong className="text-white">{getPrevMonthLabel()}</strong>?
+                        </p>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          {prevOtherExpenses.length} записів · {fmt(prevOtherExpenses.reduce((s, e) => s + e.amount, 0))} ₴
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => copySectionFromPrev("other")}
+                        disabled={sectionCopyLoading.other}
+                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-accent-500 hover:bg-accent-400 text-white text-xs font-semibold transition-all disabled:opacity-50"
+                      >
+                        {sectionCopyLoading.other ? <RefreshCw size={13} className="animate-spin" /> : <Copy size={13} />}
+                        Перенести
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {otherLoading ? (
                 <LoadingSpinner height="h-24" />
@@ -2459,27 +2609,37 @@ export default function ExpensesPage() {
                 </button>
                 <span className="font-bold text-amber-400 font-mono tabular-nums">{fmt(otherTotal)} ₴</span>
               </div>
+              </div>
+              )}
             </section>
           )}
 
           {/* ────────────────────────────────────────
-              TAB: ПОДАТКИ
+              SECTION: ПОДАТКИ
           ──────────────────────────────────────── */}
-          {activeTab === "taxes" && (
+          {(
             <section className="card-neo overflow-hidden">
-              <div className="flex items-center gap-3 px-5 py-4 border-b border-dark-50/10 bg-dark-400/20">
+              <button
+                onClick={() => toggleSection("taxes")}
+                className="w-full flex items-center gap-3 px-5 py-4 bg-dark-400/20 hover:bg-dark-400/30 transition-all cursor-pointer"
+                aria-expanded={!!expandedSections.taxes}
+              >
                 <div className="w-8 h-8 rounded-xl bg-red-500/15 flex items-center justify-center shrink-0">
                   <Receipt size={16} className="text-red-400" />
                 </div>
-                <h3 className="font-semibold text-white text-sm">Податки</h3>
-                <span className="ml-auto text-sm font-mono font-semibold text-red-400 tabular-nums">
-                  {fmt(data.totals.tax_total)} ₴
-                </span>
-              </div>
+                <div className="flex-1 text-left">
+                  <h3 className="font-semibold text-white text-sm">Податки</h3>
+                  <p className={`text-xs mt-0.5 ${data.totals.tax_total > 0 ? "text-emerald-400" : "text-gray-600"}`}>
+                    {data.totals.tax_total > 0 ? "Заповнено" : "Не заповнено"} · {fmt(data.totals.tax_total)} ₴
+                  </p>
+                </div>
+                <ChevronDown size={18} className={`text-gray-500 transition-transform duration-200 shrink-0 ${expandedSections.taxes ? "rotate-180" : ""}`} />
+              </button>
 
-              <div className="px-5 py-4 space-y-3">
+              {expandedSections.taxes && (
+              <div className="px-5 py-4 space-y-3 border-t border-dark-50/10">
                 <div className="bg-dark-400/20 rounded-xl p-4 space-y-2">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Джерела доходу</p>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-1.5"><Banknote size={13} className="text-orange-400" />Джерела доходу</p>
                   <TaxRow label="Дохід НСЗУ"    value={data.taxes.nhsu_income} />
                   <TaxRow label="Платні послуги" value={data.taxes.paid_services_income} />
                   <div className="border-t border-dark-50/10 pt-2">
@@ -2488,7 +2648,7 @@ export default function ExpensesPage() {
                 </div>
 
                 <div className="bg-dark-400/20 rounded-xl p-4 space-y-2">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Нараховані податки</p>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-1.5"><Receipt size={13} className="text-orange-400" />Нараховані податки</p>
                   <TaxRow label={`ЄП (${data.taxes.ep_rate}%)`}          value={data.taxes.ep} />
                   <TaxRow label={`ВЗ від доходу (${data.taxes.vz_rate}%)`} value={data.taxes.vz} />
                   <TaxRow label="ЄСВ власника (щомісячно)"               value={data.taxes.esv_owner} />
@@ -2499,7 +2659,7 @@ export default function ExpensesPage() {
                 </div>
 
                 <div className="bg-dark-400/20 rounded-xl p-4 space-y-2">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Ставки</p>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-1.5"><Activity size={13} className="text-orange-400" />Ставки</p>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                     {[
                       { label: "ПДФО", value: `${data.settings.pdfo_rate}%` },
@@ -2517,26 +2677,38 @@ export default function ExpensesPage() {
                   </div>
                 </div>
               </div>
+              )}
             </section>
           )}
 
           {/* ────────────────────────────────────────
-              TAB: ПІДСУМКИ
+              SECTION: ПІДСУМКИ
           ──────────────────────────────────────── */}
-          {activeTab === "summary" && (
+          {(
             <section className="card-neo overflow-hidden">
-              <div className="flex items-center gap-3 px-5 py-4 border-b border-dark-50/10 bg-dark-400/20">
+              <button
+                onClick={() => toggleSection("summary")}
+                className="w-full flex items-center gap-3 px-5 py-4 bg-dark-400/20 hover:bg-dark-400/30 transition-all cursor-pointer"
+                aria-expanded={!!expandedSections.summary}
+              >
                 <div className="w-8 h-8 rounded-xl bg-emerald-500/15 flex items-center justify-center shrink-0">
                   <Building2 size={16} className="text-emerald-400" />
                 </div>
-                <h3 className="font-semibold text-white text-sm">
-                  Підсумки — {MONTH_NAMES[month - 1]} {year}
-                </h3>
-              </div>
+                <div className="flex-1 text-left">
+                  <h3 className="font-semibold text-white text-sm">
+                    Підсумки — {MONTH_NAMES[month - 1]} {year}
+                  </h3>
+                  <p className={`text-xs mt-0.5 ${grandWithOther > 0 ? "text-emerald-400" : "text-gray-600"}`}>
+                    {grandWithOther > 0 ? "Заповнено" : "Не заповнено"} · Залишок: {remaining >= 0 ? "+" : ""}{fmt(remaining)} ₴
+                  </p>
+                </div>
+                <ChevronDown size={18} className={`text-gray-500 transition-transform duration-200 shrink-0 ${expandedSections.summary ? "rotate-180" : ""}`} />
+              </button>
 
-              <div className="px-5 py-5 space-y-2.5">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
-                  Структура витрат
+              {expandedSections.summary && (
+              <div className="px-5 py-5 space-y-2.5 border-t border-dark-50/10">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-1.5">
+                  <BarChart3 size={13} className="text-orange-400" />Структура витрат
                 </p>
                 <SummaryRow label="Постійні витрати"  value={data.totals.fixed_total}  color="text-blue-400" />
                 <SummaryRow label="Зарплатні витрати" value={data.totals.salary_total} color="text-purple-400" />
@@ -2580,6 +2752,7 @@ export default function ExpensesPage() {
                   </div>
                 )}
               </div>
+              )}
             </section>
           )}
         </>
@@ -2628,23 +2801,53 @@ export default function ExpensesPage() {
             </button>
             <button
               onClick={async () => {
-                if (!fixedModal.name.trim() || !fixedModal.categoryKey) return;
+                if (!fixedModal.name.trim()) return;
                 setFixedModal(s => ({ ...s, saving: true }));
                 try {
-                  await api.put("/monthly-expenses/fixed", {
-                    year, month,
-                    category_key: fixedModal.categoryKey,
-                    amount: parseFloat(fixedModal.amount) || 0,
-                    is_recurring: fixedModal.recurring,
-                  });
-                  setFixedModal(s => ({ ...s, open: false, saving: false }));
-                  await load();
-                } catch (e) {
+                  if (!fixedModal.recurring) {
+                    // Migrate to "Other expenses" when permanence is unchecked
+                    if (fixedModal.isEdit && fixedModal.id != null) {
+                      // Delete from fixed first
+                      await api.delete(`/monthly-expenses/fixed/${fixedModal.id}`);
+                    }
+                    // Create as other expense
+                    await api.post("/monthly-expenses/other", {
+                      name: fixedModal.name,
+                      description: fixedModal.desc,
+                      amount: parseFloat(fixedModal.amount) || 0,
+                      category: "general",
+                      year,
+                      month,
+                    });
+                    setFixedModal(s => ({ ...s, open: false, saving: false }));
+                    await Promise.all([load(), loadOther()]);
+                  } else {
+                    if (fixedModal.isEdit && fixedModal.id != null) {
+                      await api.put(`/monthly-expenses/fixed/${fixedModal.id}`, {
+                        name: fixedModal.name,
+                        description: fixedModal.desc,
+                        amount: parseFloat(fixedModal.amount) || 0,
+                        is_recurring: fixedModal.recurring,
+                      });
+                    } else {
+                      await api.post("/monthly-expenses/fixed", {
+                        year, month,
+                        name: fixedModal.name,
+                        description: fixedModal.desc,
+                        amount: parseFloat(fixedModal.amount) || 0,
+                        is_recurring: fixedModal.recurring,
+                      });
+                    }
+                    setFixedModal(s => ({ ...s, open: false, saving: false }));
+                    await load();
+                  }
+                } catch (e: any) {
                   console.error(e);
+                  setAlertDlg({ title: "Помилка", description: e?.response?.data?.detail || "Не вдалося зберегти витрату. Спробуйте ще раз." });
                   setFixedModal(s => ({ ...s, saving: false }));
                 }
               }}
-              disabled={fixedModal.saving}
+              disabled={fixedModal.saving || !fixedModal.name.trim()}
               className="flex-1 py-2.5 rounded-xl bg-accent-500 hover:bg-accent-400 text-white text-sm font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-60"
             >
               {fixedModal.saving ? <RefreshCw size={14} className="animate-spin" /> : <Save size={14} />}
@@ -2796,11 +2999,10 @@ export default function ExpensesPage() {
 
       {/* ── AI parse modal ── */}
       {aiModal.open && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="AI-аналіз витрати">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-label="AI-аналіз витрати">
           <div className="absolute inset-0" onClick={() => setAiModal({ open: false, text: "", file: null, loading: false, result: null })} />
           <div
-            className="relative bg-dark-600 rounded-2xl shadow-2xl w-full max-w-lg"
-            style={{ border: "1px solid #ffffff15" }}
+            className="relative bg-dark-600 rounded-2xl w-full max-w-lg my-auto modal-glow"
           >
             <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
               <div className="flex items-center gap-2">
@@ -2879,7 +3081,7 @@ export default function ExpensesPage() {
                     <div className="grid grid-cols-2 gap-3 text-sm">
                       <div>
                         <p className="text-xs text-gray-500">Категорія</p>
-                        <p className="text-white font-medium">{aiModal.result.category_key || aiModal.result.category}</p>
+                        <p className="text-white font-medium">{aiModal.result.category === "fixed" ? "Постійна витрата" : "Інша витрата"}</p>
                       </div>
                       <div>
                         <p className="text-xs text-gray-500">Сума</p>
@@ -2931,7 +3133,7 @@ export default function ExpensesPage() {
         switch (kpiModal.type) {
           case "fixed":
             rows = data.fixed.filter(r => r.amount > 0).map(r => ({
-              name: r.category_name,
+              name: r.name,
               detail: r.is_recurring ? "Постійна" : "Разова",
               amount: r.amount,
             }));
@@ -2965,7 +3167,7 @@ export default function ExpensesPage() {
           case "total":
             rows = [
               ...data.fixed.filter(r => r.amount > 0).map(r => ({
-                name: r.category_name, detail: "Постійні", amount: r.amount,
+                name: r.name, detail: "Постійні", amount: r.amount,
               })),
               ...data.salary.map(r => ({
                 name: r.full_name, detail: `Зарплатні · ${ROLE_LABELS[r.role] ?? r.role}`, amount: r.total_employer_cost,
@@ -3012,10 +3214,10 @@ export default function ExpensesPage() {
         }
 
         return (
-          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label={kpiModal.title}>
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-label={kpiModal.title}>
             <div className="absolute inset-0" onClick={() => setKpiModal({ open: false, type: "", title: "" })} />
             <div
-              className="relative bg-dark-600 rounded-2xl shadow-2xl w-full flex flex-col"
+              className="relative bg-dark-600 rounded-2xl shadow-2xl w-full flex flex-col my-auto"
               style={{ border: "1px solid #ffffff15", maxHeight: "85vh", maxWidth: "900px" }}
             >
               {/* Header */}
@@ -3131,11 +3333,86 @@ export default function ExpensesPage() {
         </Modal>
       )}
 
+      {/* ── Accountant request modal ── */}
+      {accReqModal.open && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-label="Запит до бухгалтера">
+          <div className="absolute inset-0" onClick={() => setAccReqModal({ open: false, url: "", expiresAt: "" })} />
+          <div className="relative bg-dark-600 rounded-2xl w-full max-w-md my-auto p-6 modal-glow">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <ClipboardList size={18} className="text-orange-400" />
+                <h4 className="font-semibold text-white text-base">Запит до бухгалтера створено</h4>
+              </div>
+              <button
+                onClick={() => setAccReqModal({ open: false, url: "", expiresAt: "" })}
+                aria-label="Закрити"
+                className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <p className="text-xs text-gray-500 mb-3">
+              Надішліть це посилання бухгалтеру. Сторінка доступна 15 днів (до {accReqModal.expiresAt}).
+            </p>
+            <div className="flex items-center gap-2 bg-dark-400/40 rounded-xl p-3 mb-4">
+              <Link size={14} className="text-gray-500 shrink-0" />
+              <input
+                type="text"
+                readOnly
+                value={accReqModal.url}
+                className="flex-1 bg-transparent text-sm text-gray-200 font-mono outline-none"
+                onFocus={e => e.target.select()}
+              />
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(accReqModal.url);
+                }}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-400 text-sm font-medium hover:bg-orange-500/20 transition-all"
+              >
+                <Copy size={14} /> Копіювати
+              </button>
+              <a
+                href={accReqModal.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-orange-500 text-white text-sm font-semibold hover:bg-orange-400 transition-all"
+              >
+                <ExternalLink size={14} /> Відкрити
+              </a>
+            </div>
+            <div className="flex gap-2 mt-2">
+              <a
+                href={`mailto:?subject=${encodeURIComponent("Запит на заповнення даних")}&body=${encodeURIComponent(accReqModal.url)}`}
+                className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl border border-dark-50/20 text-gray-400 text-xs hover:text-white hover:border-dark-50/40 transition-all"
+              >
+                Email
+              </a>
+              <a
+                href={`viber://forward?text=${encodeURIComponent(accReqModal.url)}`}
+                className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl border border-dark-50/20 text-gray-400 text-xs hover:text-white hover:border-dark-50/40 transition-all"
+              >
+                Viber
+              </a>
+              <a
+                href={`https://t.me/share/url?url=${encodeURIComponent(accReqModal.url)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl border border-dark-50/20 text-gray-400 text-xs hover:text-white hover:border-dark-50/40 transition-all"
+              >
+                Telegram
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Share modal ── */}
       {shareModal.open && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Поділитись звітом">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-label="Поділитись звітом">
           <div className="absolute inset-0" onClick={() => setShareModal({ open: false, url: "", expiresAt: "" })} />
-          <div className="relative bg-dark-600 rounded-2xl shadow-2xl w-full max-w-md p-6" style={{ border: "1px solid #ffffff15" }}>
+          <div className="relative bg-dark-600 rounded-2xl w-full max-w-md my-auto p-6 modal-glow">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <Share2 size={18} className="text-accent-400" />
@@ -3205,6 +3482,28 @@ export default function ExpensesPage() {
           </div>
         </div>
       )}
+
+      {/* ── Styled confirm dialog (replaces native confirm()) ── */}
+      <ConfirmDialog
+        open={!!confirmDlg}
+        title={confirmDlg?.title ?? ""}
+        description={confirmDlg?.description}
+        variant={confirmDlg?.variant ?? "default"}
+        confirmLabel={confirmDlg?.confirmLabel ?? "Підтвердити"}
+        onConfirm={() => { confirmDlg?.action(); setConfirmDlg(null); }}
+        onCancel={() => setConfirmDlg(null)}
+      />
+
+      {/* ── Styled alert dialog (replaces native alert()) ── */}
+      <ConfirmDialog
+        open={!!alertDlg}
+        title={alertDlg?.title ?? ""}
+        description={alertDlg?.description}
+        confirmLabel="Зрозуміло"
+        cancelLabel="Закрити"
+        onConfirm={() => setAlertDlg(null)}
+        onCancel={() => setAlertDlg(null)}
+      />
     </div>
   );
 }

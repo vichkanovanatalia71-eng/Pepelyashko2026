@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import axios from "axios";
-import { useAuth } from "../hooks/useAuth";
+import api from "../api/client";
 import {
   ClipboardList,
   Plus,
@@ -24,14 +23,12 @@ import {
 import type { MaterialItem, NhsuSettings, Service, SortDirection, SortField } from "../types";
 import { LoadingSpinner, ConfirmDialog } from "../components/shared";
 
-const API = "";
-
 const fmt = (v: number) =>
   v.toLocaleString("uk-UA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 
 function emptyMaterial(): MaterialItem {
-  return { name: "", unit: "", quantity: 1, cost: 0 };
+  return { name: "", unit: "", quantity: "", cost: "" };
 }
 
 // ── Фінансовий розрахунок на frontend ────────────────────────────────
@@ -41,7 +38,7 @@ function calcFinancials(
   ep_rate: number,
   vz_rate: number
 ) {
-  const total_materials_cost = materials.reduce((s, m) => s + (m.cost || 0), 0);
+  const total_materials_cost = materials.reduce((s, m) => s + (parseFloat(String(m.cost)) || 0), 0);
   const ep_amount = price * ep_rate / 100;
   const vz_amount = price * vz_rate / 100;
   const total_costs = total_materials_cost + ep_amount + vz_amount;
@@ -58,9 +55,6 @@ function calcFinancials(
 }
 
 export default function ServicesPage() {
-  const { token } = useAuth();
-  const headers = { Authorization: `Bearer ${token}` };
-
   // ── Дані ──
   const [services, setServices] = useState<Service[]>([]);
   const [nhsuSettings, setNhsuSettings] = useState<NhsuSettings | null>(null);
@@ -129,7 +123,7 @@ export default function ServicesPage() {
   async function loadServices() {
     setLoading(true);
     try {
-      const res = await axios.get(`${API}/api/services/`, { headers });
+      const res = await api.get("/services/");
       setServices(res.data);
     } catch {}
     setLoading(false);
@@ -137,7 +131,7 @@ export default function ServicesPage() {
 
   async function loadNhsuSettings() {
     try {
-      const res = await axios.get(`${API}/api/nhsu/settings`, { headers });
+      const res = await api.get("/nhsu/settings");
       setNhsuSettings(res.data);
     } catch {}
   }
@@ -146,13 +140,14 @@ export default function ServicesPage() {
   const displayedServices = useMemo(() => {
     let result = [...services];
 
-    // Глобальний пошук
+    // Глобальний пошук (код, назва, матеріали)
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter(
         (s) =>
           s.code.toLowerCase().includes(q) ||
-          s.name.toLowerCase().includes(q)
+          s.name.toLowerCase().includes(q) ||
+          s.materials.some((m) => m.name.toLowerCase().includes(q))
       );
     }
     // Фільтри
@@ -169,13 +164,13 @@ export default function ServicesPage() {
     if (filterMaxPrice !== "")
       result = result.filter((s) => s.price <= parseFloat(filterMaxPrice));
 
-    // Сортування
+    // Сортування (numeric: true — щоб "2" < "10" < "100")
     result.sort((a, b) => {
       const av = a[sortField as keyof Service] as number | string;
       const bv = b[sortField as keyof Service] as number | string;
       const cmp =
         typeof av === "string"
-          ? av.localeCompare(bv as string)
+          ? av.localeCompare(bv as string, undefined, { numeric: true, sensitivity: "base" })
           : (av as number) - (bv as number);
       return sortDir === "asc" ? cmp : -cmp;
     });
@@ -266,12 +261,16 @@ export default function ServicesPage() {
         code: formCode.trim(),
         name: formName.trim(),
         price,
-        materials: formMaterials,
+        materials: formMaterials.map(m => ({
+          ...m,
+          quantity: parseFloat(String(m.quantity)) || 0,
+          cost: parseFloat(String(m.cost)) || 0,
+        })),
       };
       if (editingService) {
-        await axios.put(`${API}/api/services/${editingService.id}`, payload, { headers });
+        await api.put(`/services/${editingService.id}`, payload);
       } else {
-        await axios.post(`${API}/api/services/`, payload, { headers });
+        await api.post("/services/", payload);
       }
       setShowForm(false);
       await loadServices();
@@ -284,7 +283,7 @@ export default function ServicesPage() {
 
   async function handleDelete(id: number) {
     try {
-      await axios.delete(`${API}/api/services/${id}`, { headers });
+      await api.delete(`/services/${id}`);
       setDeleteId(null);
       setSelectedIds((prev) => { const n = new Set(prev); n.delete(id); return n; });
       await loadServices();
@@ -294,11 +293,7 @@ export default function ServicesPage() {
   // ── Масові дії ──
   async function handleBulkDelete() {
     try {
-      await axios.post(
-        `${API}/api/services/bulk-delete`,
-        { ids: Array.from(selectedIds) },
-        { headers }
-      );
+      await api.post("/services/bulk-delete", { ids: Array.from(selectedIds) });
       setSelectedIds(new Set());
       setShowBulkDeleteConfirm(false);
       await loadServices();
@@ -307,10 +302,9 @@ export default function ServicesPage() {
 
   async function handleExport() {
     try {
-      const res = await axios.post(
-        `${API}/api/services/export`,
+      const res = await api.post("/services/export",
         { ids: Array.from(selectedIds) },
-        { headers, responseType: "blob" }
+        { responseType: "blob" }
       );
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const link = document.createElement("a");
@@ -328,10 +322,8 @@ export default function ServicesPage() {
     if (isNaN(pct)) return;
     setBulkPriceLoading(true);
     try {
-      await axios.post(
-        `${API}/api/services/bulk-price-change`,
-        { ids: Array.from(selectedIds), percent: pct },
-        { headers }
+      await api.post("/services/bulk-price-change",
+        { ids: Array.from(selectedIds), percent: pct }
       );
       setShowBulkPriceChange(false);
       setBulkPricePercent("");
@@ -375,8 +367,8 @@ export default function ServicesPage() {
         fd.append("images", files[i]);
       }
 
-      const res = await axios.post(`${API}/api/services/analyze-image`, fd, {
-        headers: { ...headers, "Content-Type": "multipart/form-data" },
+      const res = await api.post("/services/analyze-image", fd, {
+        headers: { "Content-Type": "multipart/form-data" },
         timeout: 120000, // 2 min for AI
       });
 
@@ -453,7 +445,7 @@ export default function ServicesPage() {
         materials: s.materials,
       }));
 
-      const res = await axios.post(`${API}/api/services/bulk-create`, payload, { headers });
+      const res = await api.post("/services/bulk-create", payload);
       const created = res.data.length;
       const skipped = selected.length - created;
       setImportResult({ created, skipped });
@@ -495,8 +487,8 @@ export default function ServicesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-accent-500/10 flex items-center justify-center">
-            <ClipboardList size={22} className="text-accent-500" />
+          <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center">
+            <ClipboardList size={22} className="text-orange-400" />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-white">Платні послуги</h1>
@@ -534,7 +526,7 @@ export default function ServicesPage() {
             />
             <input
               type="text"
-              placeholder="Пошук за кодом або назвою..."
+              placeholder="Пошук за кодом, назвою або матеріалами..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full bg-dark-300 border border-dark-50/20 rounded-xl pl-9 pr-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-accent-500/50"
@@ -661,24 +653,22 @@ export default function ServicesPage() {
                       ["name", "Назва"],
                       ["price", "Ціна (грн)"],
                       ["total_materials_cost", "Витрати (грн)"],
-                      [null, "ЄП (грн)"],
-                      [null, "ВЗ (грн)"],
-                      [null, "Заг. витрати (грн)"],
+                      ["ep_amount", "ЄП (грн)"],
+                      ["vz_amount", "ВЗ (грн)"],
+                      ["total_costs", "Заг. витрати (грн)"],
                       ["doctor_income", "Дохід лікаря (грн)"],
                       ["org_income", "Дохід орг. (грн)"],
-                    ] as [SortField | null, string][]
+                    ] as [SortField, string][]
                   ).map(([field, label]) => (
                     <th
                       key={label}
                       scope="col"
-                      className={`text-left px-4 py-3 text-gray-400 font-medium whitespace-nowrap ${
-                        field ? "cursor-pointer hover:text-gray-200 transition-colors" : ""
-                      }`}
-                      onClick={() => field && handleSort(field)}
+                      className="text-left px-4 py-3 text-gray-400 font-medium whitespace-nowrap cursor-pointer hover:text-gray-200 transition-colors"
+                      onClick={() => handleSort(field)}
                     >
                       <span className="inline-flex items-center">
                         {label}
-                        {field && <SortIcon field={field} />}
+                        <SortIcon field={field} />
                       </span>
                     </th>
                   ))}
@@ -701,7 +691,7 @@ export default function ServicesPage() {
                 {displayedServices.map((svc) => (
                   <tr
                     key={svc.id}
-                    className={`border-b border-dark-50/5 transition-colors ${
+                    className={`card-tap border-b border-dark-50/5 transition-colors ${
                       selectedIds.has(svc.id)
                         ? "bg-accent-500/5"
                         : "hover:bg-dark-300/30"
@@ -770,10 +760,11 @@ export default function ServicesPage() {
 
       {/* ── Модальне вікно форми послуги ── */}
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" role="dialog" aria-modal="true" onClick={(e) => { if (e.target === e.currentTarget) setShowForm(false); }}>
-          <div className="bg-dark-600 border border-dark-50/10 rounded-2xl w-full max-w-3xl max-h-[calc(100vh-6rem)] sm:max-h-[90vh] overflow-y-auto shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 overflow-y-auto" role="dialog" aria-modal="true" onClick={(e) => { if (e.target === e.currentTarget) setShowForm(false); }}>
+          <div className="bg-dark-600 rounded-none sm:rounded-2xl w-full max-w-3xl min-h-full sm:min-h-0 sm:my-8 animate-modal-in pb-20 sm:pb-0 modal-glow">
             <div className="flex items-center justify-between p-6 border-b border-dark-50/10">
-              <h2 className="text-lg font-semibold text-white">
+              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                <Pencil size={16} className="text-orange-400" />
                 {editingService ? "Редагування послуги" : "Нова послуга"}
               </h2>
               <button
@@ -884,9 +875,10 @@ export default function ServicesPage() {
                                 step="0.1"
                                 value={m.quantity}
                                 onChange={(e) =>
-                                  updateMaterial(idx, "quantity", parseFloat(e.target.value) || 0)
+                                  updateMaterial(idx, "quantity", e.target.value === "" ? "" : (parseFloat(e.target.value) || 0))
                                 }
-                                className="w-full bg-dark-300 border border-dark-50/10 rounded-lg px-2 py-1.5 text-white focus:outline-none focus:border-accent-500/40"
+                                placeholder="1"
+                                className="w-full bg-dark-300 border border-dark-50/10 rounded-lg px-2 py-1.5 text-white placeholder-gray-600 focus:outline-none focus:border-accent-500/40"
                               />
                             </td>
                             <td className="px-3 py-1.5">
@@ -896,9 +888,10 @@ export default function ServicesPage() {
                                 step="0.01"
                                 value={m.cost}
                                 onChange={(e) =>
-                                  updateMaterial(idx, "cost", parseFloat(e.target.value) || 0)
+                                  updateMaterial(idx, "cost", e.target.value === "" ? "" : (parseFloat(e.target.value) || 0))
                                 }
-                                className="w-full bg-dark-300 border border-dark-50/10 rounded-lg px-2 py-1.5 text-white focus:outline-none focus:border-accent-500/40"
+                                placeholder="0.00"
+                                className="w-full bg-dark-300 border border-dark-50/10 rounded-lg px-2 py-1.5 text-white placeholder-gray-600 focus:outline-none focus:border-accent-500/40"
                               />
                             </td>
                             <td className="px-1 py-1.5">
@@ -1018,9 +1011,10 @@ export default function ServicesPage() {
 
       {/* ── Масова зміна вартості ── */}
       {showBulkPriceChange && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" role="dialog" aria-modal="true" onClick={(e) => { if (e.target === e.currentTarget) { setShowBulkPriceChange(false); setBulkPricePercent(""); } }}>
-          <div className="bg-dark-600 border border-dark-50/10 rounded-2xl p-6 w-full max-w-sm shadow-2xl">
-            <h3 className="text-lg font-semibold text-white mb-2">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto" role="dialog" aria-modal="true" onClick={(e) => { if (e.target === e.currentTarget) { setShowBulkPriceChange(false); setBulkPricePercent(""); } }}>
+          <div className="bg-dark-600 rounded-2xl p-6 w-full max-w-sm animate-modal-in modal-glow">
+            <h3 className="text-lg font-semibold text-white mb-2 flex items-center gap-2">
+              <Percent size={16} className="text-orange-400" />
               Змінити вартість ({selectedIds.size} послуг)
             </h3>
             <p className="text-sm text-gray-400 mb-4">
@@ -1064,8 +1058,8 @@ export default function ServicesPage() {
 
       {/* ── Модальне вікно AI-імпорту з зображення ── */}
       {showImportModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" role="dialog" aria-modal="true" onClick={(e) => { if (e.target === e.currentTarget) closeImportModal(); }}>
-          <div className="bg-dark-600 border border-dark-50/10 rounded-2xl w-full max-w-4xl max-h-[calc(100vh-6rem)] sm:max-h-[90vh] overflow-y-auto shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 overflow-y-auto" role="dialog" aria-modal="true" onClick={(e) => { if (e.target === e.currentTarget) closeImportModal(); }}>
+          <div className="bg-dark-600 rounded-none sm:rounded-2xl w-full max-w-4xl min-h-full sm:min-h-0 sm:my-8 animate-modal-in pb-20 sm:pb-0 modal-glow">
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-dark-50/10">
               <div className="flex items-center gap-3">

@@ -2,7 +2,7 @@ import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import get_current_user, get_db
@@ -23,15 +23,17 @@ router = APIRouter()
 
 @router.post("/register", response_model=RegisterResponse, status_code=201)
 async def register(user_in: UserCreate, db: AsyncSession = Depends(get_db)):
-    # Перевіряємо унікальність email
-    result = await db.execute(select(User).where(User.email == user_in.email))
+    email = user_in.email.strip().lower()
+
+    # Перевіряємо унікальність email (case-insensitive)
+    result = await db.execute(select(User).where(func.lower(User.email) == email))
     if result.scalar_one_or_none():
         raise HTTPException(status_code=400, detail="Email вже зареєстровано")
 
     token = str(uuid.uuid4())
 
     user = User(
-        email=user_in.email,
+        email=email,
         hashed_password=get_password_hash(user_in.password),
         full_name=user_in.full_name,
         fop_group=user_in.fop_group,
@@ -45,7 +47,7 @@ async def register(user_in: UserCreate, db: AsyncSession = Depends(get_db)):
 
     # Надсилаємо лист підтвердження
     try:
-        email_sent = await send_verification_email(user_in.email, token)
+        email_sent = await send_verification_email(email, token)
     except Exception:
         # Якщо відправлення не вдалось — автоверифікуємо користувача
         email_sent = False
@@ -90,7 +92,8 @@ async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: AsyncSession = Depends(get_db),
 ):
-    result = await db.execute(select(User).where(User.email == form_data.username))
+    email = form_data.username.strip().lower()
+    result = await db.execute(select(User).where(func.lower(User.email) == email))
     user = result.scalar_one_or_none()
 
     if not user or not verify_password(form_data.password, user.hashed_password):

@@ -5,7 +5,7 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    app_name: str = "Pepelyashko"
+    app_name: str = "MedFlow"
     debug: bool = False
 
     # Database

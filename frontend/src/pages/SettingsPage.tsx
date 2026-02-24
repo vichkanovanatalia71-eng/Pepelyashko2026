@@ -1,13 +1,13 @@
-import { useEffect, useState } from "react";
-import axios from "axios";
+import { useEffect, useState, FormEvent } from "react";
 import { useAuth } from "../hooks/useAuth";
+import api from "../api/client";
 import {
   Settings,
   UserPlus,
   Trash2,
   Save,
   RefreshCw,
-  Stethoscope,
+
   PercentCircle,
   KeyRound,
   Eye,
@@ -18,10 +18,12 @@ import {
   ChevronDown,
   HeartHandshake,
   UserCog,
+  User,
+  Lock,
+  Check,
 } from "lucide-react";
 import { Doctor, NhsuSettings, StaffMember } from "../types";
-
-const API = "";
+import MedFlowLogo from "../components/shared/MedFlowLogo";
 
 const AGE_LABELS: Record<string, string> = {
   coeff_0_5: "0–5 років",
@@ -31,13 +33,20 @@ const AGE_LABELS: Record<string, string> = {
   coeff_65_plus: "65+ років",
 };
 
+const FOP_LABELS: Record<number, string> = {
+  1: "1 група",
+  2: "2 група",
+  3: "3 група",
+};
+
 export default function SettingsPage() {
-  const { token } = useAuth();
-  const headers = { Authorization: `Bearer ${token}` };
+  const { user, refreshUser } = useAuth();
 
   // ── Колапс-стан блоків ──
   const [open, setOpen] = useState<Record<string, boolean>>({
-    doctors: true,
+    profile: true,
+    password: false,
+    doctors: false,
     nurses: false,
     otherStaff: false,
     apiKeys: false,
@@ -45,6 +54,20 @@ export default function SettingsPage() {
     nhsu: false,
   });
   const toggle = (key: string) => setOpen((p) => ({ ...p, [key]: !p[key] }));
+
+  // ── Профіль ──
+  const [fullName, setFullName] = useState(user?.full_name ?? "");
+  const [fopGroup, setFopGroup] = useState(user?.fop_group ?? 3);
+  const [taxRate, setTaxRate] = useState(String((user?.tax_rate ?? 0.05) * 100));
+  const [profileMsg, setProfileMsg] = useState("");
+  const [profileErr, setProfileErr] = useState("");
+
+  // ── Зміна пароля ──
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [pwdMsg, setPwdMsg] = useState("");
+  const [pwdErr, setPwdErr] = useState("");
 
   // ── Лікарі ──
   const [doctors, setDoctors] = useState<Doctor[]>([]);
@@ -102,14 +125,14 @@ export default function SettingsPage() {
 
   async function loadDoctors() {
     try {
-      const res = await axios.get(`${API}/api/nhsu/doctors`, { headers });
+      const res = await api.get("/nhsu/doctors");
       setDoctors(res.data);
     } catch {}
   }
 
   async function loadSettings() {
     try {
-      const res = await axios.get(`${API}/api/nhsu/settings`, { headers });
+      const res = await api.get("/nhsu/settings");
       setNhsuSettings(res.data);
       setSettingsForm(res.data);
     } catch {}
@@ -120,11 +143,10 @@ export default function SettingsPage() {
     setDoctorLoading(true);
     setDoctorMsg("");
     try {
-      await axios.post(
-        `${API}/api/nhsu/doctors`,
-        { full_name: newDoctorName.trim(), is_owner: newIsOwner },
-        { headers }
-      );
+      await api.post("/nhsu/doctors", {
+        full_name: newDoctorName.trim(),
+        is_owner: newIsOwner,
+      });
       setNewDoctorName("");
       setNewIsOwner(false);
       setDoctorMsg("Лікаря додано");
@@ -138,14 +160,14 @@ export default function SettingsPage() {
 
   async function handleDeleteDoctor(id: number) {
     try {
-      await axios.delete(`${API}/api/nhsu/doctors/${id}`, { headers });
+      await api.delete(`/nhsu/doctors/${id}`);
       await loadDoctors();
     } catch {}
   }
 
   async function loadNurses() {
     try {
-      const res = await axios.get(`${API}/api/staff/?role=nurse`, { headers });
+      const res = await api.get("/staff/", { params: { role: "nurse" } });
       setNurses(res.data);
     } catch {}
   }
@@ -155,11 +177,11 @@ export default function SettingsPage() {
     setNurseLoading(true);
     setNurseMsg("");
     try {
-      await axios.post(
-        `${API}/api/staff/`,
-        { full_name: newNurseName.trim(), role: "nurse", position: newNursePosition.trim() },
-        { headers }
-      );
+      await api.post("/staff/", {
+        full_name: newNurseName.trim(),
+        role: "nurse",
+        position: newNursePosition.trim(),
+      });
       setNewNurseName("");
       setNewNursePosition("");
       setNurseMsg("Додано");
@@ -173,14 +195,14 @@ export default function SettingsPage() {
 
   async function handleDeleteNurse(id: number) {
     try {
-      await axios.delete(`${API}/api/staff/${id}`, { headers });
+      await api.delete(`/staff/${id}`);
       await loadNurses();
     } catch {}
   }
 
   async function loadOtherStaff() {
     try {
-      const res = await axios.get(`${API}/api/staff/?role=other`, { headers });
+      const res = await api.get("/staff/", { params: { role: "other" } });
       setOtherStaff(res.data);
     } catch {}
   }
@@ -190,11 +212,11 @@ export default function SettingsPage() {
     setOtherLoading(true);
     setOtherMsg("");
     try {
-      await axios.post(
-        `${API}/api/staff/`,
-        { full_name: newOtherName.trim(), role: "other", position: newOtherPosition.trim() },
-        { headers }
-      );
+      await api.post("/staff/", {
+        full_name: newOtherName.trim(),
+        role: "other",
+        position: newOtherPosition.trim(),
+      });
       setNewOtherName("");
       setNewOtherPosition("");
       setOtherMsg("Додано");
@@ -208,7 +230,7 @@ export default function SettingsPage() {
 
   async function handleDeleteOtherStaff(id: number) {
     try {
-      await axios.delete(`${API}/api/staff/${id}`, { headers });
+      await api.delete(`/staff/${id}`);
       await loadOtherStaff();
     } catch {}
   }
@@ -217,7 +239,7 @@ export default function SettingsPage() {
     setSettingsLoading(true);
     setSettingsMsg("");
     try {
-      await axios.put(`${API}/api/nhsu/settings`, settingsForm, { headers });
+      await api.put("/nhsu/settings", settingsForm);
       setSettingsMsg("Збережено");
       await loadSettings();
     } catch (e: any) {
@@ -229,9 +251,54 @@ export default function SettingsPage() {
 
   async function loadApiKeys() {
     try {
-      const res = await axios.get(`${API}/api/settings/api-keys`, { headers });
+      const res = await api.get("/settings/api-keys");
       setApiKeysStatus(res.data);
     } catch {}
+  }
+
+  async function handleProfileSubmit(e: FormEvent) {
+    e.preventDefault();
+    setProfileMsg("");
+    setProfileErr("");
+    try {
+      await api.put("/auth/profile", {
+        full_name: fullName,
+        fop_group: fopGroup,
+        tax_rate: parseFloat(taxRate) / 100,
+      });
+      await refreshUser();
+      setProfileMsg("Профіль оновлено");
+      setTimeout(() => setProfileMsg(""), 3000);
+    } catch (err: any) {
+      setProfileErr(err?.response?.data?.detail || "Помилка збереження");
+    }
+  }
+
+  async function handlePasswordSubmit(e: FormEvent) {
+    e.preventDefault();
+    setPwdMsg("");
+    setPwdErr("");
+    if (newPassword.length < 6) {
+      setPwdErr("Мінімум 6 символів");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPwdErr("Паролі не збігаються");
+      return;
+    }
+    try {
+      await api.put("/auth/change-password", {
+        old_password: oldPassword,
+        new_password: newPassword,
+      });
+      setPwdMsg("Пароль змінено");
+      setOldPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setTimeout(() => setPwdMsg(""), 3000);
+    } catch (err: any) {
+      setPwdErr(err?.response?.data?.detail || "Помилка зміни пароля");
+    }
   }
 
   async function handleSaveApiKeys() {
@@ -242,7 +309,7 @@ export default function SettingsPage() {
       if (anthropicInput !== "") payload.anthropic_key = anthropicInput;
       if (openaiInput !== "") payload.openai_key = openaiInput;
       if (xaiInput !== "") payload.xai_key = xaiInput;
-      await axios.put(`${API}/api/settings/api-keys`, payload, { headers });
+      await api.put("/settings/api-keys", payload);
       setApiKeysMsg("Ключі збережено");
       setAnthropicInput("");
       setOpenaiInput("");
@@ -257,7 +324,7 @@ export default function SettingsPage() {
 
   async function handleClearApiKey(field: "anthropic_key" | "openai_key" | "xai_key") {
     try {
-      await axios.put(`${API}/api/settings/api-keys`, { [field]: "" }, { headers });
+      await api.put("/settings/api-keys", { [field]: "" });
       await loadApiKeys();
     } catch {}
   }
@@ -302,20 +369,124 @@ export default function SettingsPage() {
     <div className="space-y-8 max-w-full">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-accent-500/10 flex items-center justify-center">
-          <Settings size={22} className="text-accent-500" />
+        <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center icon-badge">
+          <Settings size={22} className="text-orange-400" />
         </div>
         <div>
           <h1 className="text-2xl font-bold text-white">Налаштування сервісу</h1>
           <p className="text-sm text-gray-500">
-            Лікарі та коефіцієнти розрахунку НСЗУ
+            Профіль, персонал та коефіцієнти розрахунку
           </p>
         </div>
       </div>
 
+      {/* ── Профіль ── */}
+      <div className="card-neo card-3d-hover p-6 space-y-5">
+        <SectionHeader sectionKey="profile" icon={User} title="Профіль" />
+
+        {open.profile && (
+          <>
+            <div className="flex items-center gap-4 mb-1">
+              <div className="w-14 h-14 rounded-2xl bg-accent-500/10 flex items-center justify-center icon-badge" aria-hidden="true">
+                <User size={28} className="text-accent-400" />
+              </div>
+              <div>
+                <p className="text-lg font-semibold text-white">{user?.full_name}</p>
+                <p className="text-sm text-gray-500">{user?.email}</p>
+                <p className="text-xs text-gray-600 mt-0.5">
+                  {FOP_LABELS[user?.fop_group ?? 3]} &bull; Ставка {((user?.tax_rate ?? 0.05) * 100).toFixed(0)}%
+                </p>
+              </div>
+            </div>
+
+            <form onSubmit={handleProfileSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs text-gray-400 mb-1">ПІБ</label>
+                <input type="text" value={fullName}
+                  onChange={e => setFullName(e.target.value)}
+                  className="w-full bg-dark-300 border border-dark-50/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-accent-500/50" required />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">Група ФОП</label>
+                  <select value={fopGroup}
+                    onChange={e => setFopGroup(Number(e.target.value))}
+                    className="w-full bg-dark-300 border border-dark-50/20 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-accent-500/50">
+                    <option value={1}>1 група</option>
+                    <option value={2}>2 група</option>
+                    <option value={3}>3 група</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">Ставка податку (%)</label>
+                  <input type="number" step="0.1" min="0" max="100"
+                    value={taxRate}
+                    onChange={e => setTaxRate(e.target.value)}
+                    className="w-full bg-dark-300 border border-dark-50/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-accent-500/50" />
+                </div>
+              </div>
+
+              {profileMsg && (
+                <div className="flex items-center gap-2 text-sm text-emerald-400" role="status">
+                  <Check size={16} aria-hidden="true" /> {profileMsg}
+                </div>
+              )}
+              {profileErr && (
+                <p className="text-sm text-red-400" role="alert">{profileErr}</p>
+              )}
+
+              <button type="submit" className="flex items-center gap-2 px-5 py-2.5 bg-accent-500/10 hover:bg-accent-500/20 text-accent-400 rounded-xl text-sm font-medium transition-all border border-accent-500/20">
+                <Save size={16} aria-hidden="true" /> Зберегти
+              </button>
+            </form>
+          </>
+        )}
+      </div>
+
+      {/* ── Зміна пароля ── */}
+      <div className="card-neo card-3d-hover p-6 space-y-5">
+        <SectionHeader sectionKey="password" icon={Lock} title="Зміна пароля" />
+
+        {open.password && (
+          <form onSubmit={handlePasswordSubmit} className="space-y-4">
+            <div>
+              <label className="block text-xs text-gray-400 mb-1">Поточний пароль</label>
+              <input type="password" value={oldPassword}
+                onChange={e => setOldPassword(e.target.value)}
+                className="w-full bg-dark-300 border border-dark-50/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-accent-500/50" required autoComplete="current-password" />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 mb-1">Новий пароль</label>
+              <input type="password" value={newPassword}
+                onChange={e => setNewPassword(e.target.value)}
+                className="w-full bg-dark-300 border border-dark-50/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-accent-500/50" required minLength={6} autoComplete="new-password" />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 mb-1">Підтвердження нового пароля</label>
+              <input type="password" value={confirmPassword}
+                onChange={e => setConfirmPassword(e.target.value)}
+                className="w-full bg-dark-300 border border-dark-50/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-accent-500/50" required autoComplete="new-password" />
+            </div>
+
+            {pwdMsg && (
+              <div className="flex items-center gap-2 text-sm text-emerald-400" role="status">
+                <Check size={16} aria-hidden="true" /> {pwdMsg}
+              </div>
+            )}
+            {pwdErr && (
+              <p className="text-sm text-red-400" role="alert">{pwdErr}</p>
+            )}
+
+            <button type="submit" className="flex items-center gap-2 px-5 py-2.5 bg-accent-500/10 hover:bg-accent-500/20 text-accent-400 rounded-xl text-sm font-medium transition-all border border-accent-500/20">
+              <Lock size={16} aria-hidden="true" /> Змінити пароль
+            </button>
+          </form>
+        )}
+      </div>
+
       {/* ── Лікарі ── */}
       <div className="card-neo card-3d-hover p-6 space-y-5">
-        <SectionHeader sectionKey="doctors" icon={Stethoscope} title="Список лікарів" />
+        <SectionHeader sectionKey="doctors" icon={MedFlowLogo} title="Список лікарів" />
 
         {open.doctors && (
           <>

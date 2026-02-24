@@ -1,5 +1,5 @@
 """Структуровані місячні витрати — три блоки:
-  1. Постійні витрати (7 категорій, підтримка is_recurring)
+  1. Постійні витрати (довільні записи з назвою, описом, is_recurring)
   2. Зарплатні витрати (по кожному співробітнику)
   3. Податки (автоматичний розрахунок від доходу)
 """
@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import base64
 import secrets
+import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
@@ -19,9 +20,9 @@ from app.core.deps import get_current_user, get_db
 from app.models.doctor import Doctor
 from app.models.monthly_expense import (
     FIXED_CATEGORY_NAMES,
-    FIXED_CATEGORY_KEYS,
     MonthlyExpenseLock,
     MonthlyFixedExpense,
+    MonthlyOtherExpense,
     MonthlySalaryExpense,
 )
 from app.models.monthly_service import MonthlyPaidServiceEntry, MonthlyPaidServicesReport
@@ -172,10 +173,13 @@ class TaxRates(BaseModel):
 
 
 class FixedExpenseRow(BaseModel):
-    category_key: str
-    category_name: str
+    id: int
+    name: str
+    description: str = ""
     amount: float
     is_recurring: bool
+    edited_by: Optional[str] = None
+    edited_at: Optional[str] = None
 
 
 class SalaryExpenseRow(BaseModel):
@@ -200,6 +204,8 @@ class SalaryExpenseRow(BaseModel):
     nhsu_ep: float = 0.0
     nhsu_vz: float = 0.0
     is_owner: bool = False
+    edited_by: Optional[str] = None
+    edited_at: Optional[str] = None
 
 
 class TaxBlock(BaseModel):
@@ -285,7 +291,6 @@ class CopyFromRequest(BaseModel):
 
 class AiParsedExpense(BaseModel):
     category: str           # "fixed" | "other"
-    category_key: str       # для fixed — один з FIXED_CATEGORY_KEYS
     name: str
     amount: float
     is_recurring: bool
@@ -293,10 +298,18 @@ class AiParsedExpense(BaseModel):
     note: str = ""
 
 
-class UpdateFixedRequest(BaseModel):
+class CreateFixedRequest(BaseModel):
     year: int
     month: int
-    category_key: str
+    name: str
+    description: str = ""
+    amount: float
+    is_recurring: bool
+
+
+class UpdateFixedRequest(BaseModel):
+    name: str
+    description: str = ""
     amount: float
     is_recurring: bool
 
@@ -332,25 +345,24 @@ async def get_monthly_expenses(
         vz_rate=float(nhsu.vz_rate) if nhsu else 1.5,
     )
 
-    # 2. Постійні витрати — підтягуємо збережені, решту = 0
+    # 2. Постійні витрати — всі збережені записи
     fixed_res = await db.execute(
         select(MonthlyFixedExpense).where(
             MonthlyFixedExpense.user_id == user.id,
             MonthlyFixedExpense.year == year,
             MonthlyFixedExpense.month == month,
-        )
+        ).order_by(MonthlyFixedExpense.id)
     )
-    saved_fixed: dict[str, MonthlyFixedExpense] = {
-        r.category_key: r for r in fixed_res.scalars().all()
-    }
     fixed_rows: list[FixedExpenseRow] = []
-    for key in FIXED_CATEGORY_KEYS:
-        rec = saved_fixed.get(key)
+    for rec in fixed_res.scalars().all():
         fixed_rows.append(FixedExpenseRow(
-            category_key=key,
-            category_name=FIXED_CATEGORY_NAMES[key],
-            amount=float(rec.amount) if rec else 0.0,
-            is_recurring=rec.is_recurring if rec else False,
+            id=rec.id,
+            name=rec.name or FIXED_CATEGORY_NAMES.get(rec.category_key, rec.category_key),
+            description=rec.description or "",
+            amount=float(rec.amount),
+            is_recurring=rec.is_recurring,
+            edited_by=rec.edited_by,
+            edited_at=rec.edited_at.isoformat() if rec.edited_at else None,
         ))
 
     # 3. Зарплатні витрати — всі активні співробітники
@@ -433,6 +445,8 @@ async def get_monthly_expenses(
             nhsu_ep=doctor_nhsu["nhsu_ep"] if doctor_nhsu else 0.0,
             nhsu_vz=doctor_nhsu["nhsu_vz"] if doctor_nhsu else 0.0,
             is_owner=doctor_nhsu.get("is_owner", False) if doctor_nhsu else False,
+            edited_by=rec.edited_by if rec else None,
+            edited_at=rec.edited_at.isoformat() if (rec and rec.edited_at) else None,
         ))
 
     # 4. Податковий блок
@@ -557,80 +571,149 @@ async def get_monthly_expenses(
     )
 
 
-# ────────────────────────────── Endpoint: PUT fixed ──────────────────────────────
+# ────────────────────────────── Endpoints: fixed expenses CRUD ──────────────────────────────
 
 
-@router.put("/fixed", response_model=FixedExpenseRow)
-async def update_fixed_expense(
-    body: UpdateFixedRequest,
+async def _propagate_recurring(
+    db: AsyncSession, user_id: int, year: int, month: int,
+    category_key: str, name: str, description: str, amount: float,
+):
+    """Якщо витрата постійна — копіюємо на всі наступні місяці поточного року."""
+    for future_month in range(month + 1, 13):
+        fut_res = await db.execute(
+            select(MonthlyFixedExpense).where(
+                MonthlyFixedExpense.user_id == user_id,
+                MonthlyFixedExpense.year == year,
+                MonthlyFixedExpense.month == future_month,
+                MonthlyFixedExpense.category_key == category_key,
+            )
+        )
+        fut_rec = fut_res.scalar_one_or_none()
+        if fut_rec is None:
+            fut_rec = MonthlyFixedExpense(
+                user_id=user_id,
+                year=year,
+                month=future_month,
+                category_key=category_key,
+                name=name,
+                description=description,
+                amount=amount,
+                is_recurring=True,
+            )
+            db.add(fut_rec)
+        else:
+            fut_rec.is_recurring = True
+            if not fut_rec.name:
+                fut_rec.name = name
+
+
+@router.post("/fixed", response_model=FixedExpenseRow, status_code=201)
+async def create_fixed_expense(
+    body: CreateFixedRequest,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    """Оновлює або створює запис постійної витрати.
-    Якщо is_recurring=True — автоматично копіює на всі наступні місяці поточного року.
-    """
-    if body.category_key not in FIXED_CATEGORY_KEYS:
-        from fastapi import HTTPException
-        raise HTTPException(status_code=400, detail=f"Unknown category_key: {body.category_key}")
-
-    # Upsert поточного місяця
-    res = await db.execute(
-        select(MonthlyFixedExpense).where(
-            MonthlyFixedExpense.user_id == user.id,
-            MonthlyFixedExpense.year == body.year,
-            MonthlyFixedExpense.month == body.month,
-            MonthlyFixedExpense.category_key == body.category_key,
-        )
+    """Створює нову постійну витрату."""
+    cat_key = str(uuid.uuid4())[:12]
+    rec = MonthlyFixedExpense(
+        user_id=user.id,
+        year=body.year,
+        month=body.month,
+        category_key=cat_key,
+        name=body.name,
+        description=body.description,
+        amount=body.amount,
+        is_recurring=body.is_recurring,
+        edited_by="user",
+        edited_at=datetime.now(timezone.utc),
     )
-    rec = res.scalar_one_or_none()
-    if rec is None:
-        rec = MonthlyFixedExpense(
-            user_id=user.id,
-            year=body.year,
-            month=body.month,
-            category_key=body.category_key,
-        )
-        db.add(rec)
-    rec.amount = body.amount
-    rec.is_recurring = body.is_recurring
+    db.add(rec)
     await db.flush()
 
-    # Якщо постійна — копіюємо на наступні місяці (лише якщо ще немає запису)
     if body.is_recurring:
-        for future_month in range(body.month + 1, 13):
-            fut_res = await db.execute(
-                select(MonthlyFixedExpense).where(
-                    MonthlyFixedExpense.user_id == user.id,
-                    MonthlyFixedExpense.year == body.year,
-                    MonthlyFixedExpense.month == future_month,
-                    MonthlyFixedExpense.category_key == body.category_key,
-                )
-            )
-            fut_rec = fut_res.scalar_one_or_none()
-            if fut_rec is None:
-                fut_rec = MonthlyFixedExpense(
-                    user_id=user.id,
-                    year=body.year,
-                    month=future_month,
-                    category_key=body.category_key,
-                    amount=body.amount,
-                    is_recurring=True,
-                )
-                db.add(fut_rec)
-            else:
-                # Зберігаємо is_recurring флаг на наступних місяцях,
-                # але НЕ перезаписуємо суму (користувач міг змінити її)
-                fut_rec.is_recurring = True
+        await _propagate_recurring(
+            db, user.id, body.year, body.month,
+            cat_key, body.name, body.description, body.amount,
+        )
 
     await db.commit()
     await db.refresh(rec)
 
     return FixedExpenseRow(
-        category_key=rec.category_key,
-        category_name=FIXED_CATEGORY_NAMES[rec.category_key],
+        id=rec.id,
+        name=rec.name,
+        description=rec.description or "",
         amount=float(rec.amount),
         is_recurring=rec.is_recurring,
+        edited_by=rec.edited_by,
+        edited_at=rec.edited_at.isoformat() if rec.edited_at else None,
     )
+
+
+@router.put("/fixed/{expense_id}", response_model=FixedExpenseRow)
+async def update_fixed_expense(
+    expense_id: int,
+    body: UpdateFixedRequest,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Оновлює постійну витрату за id."""
+    res = await db.execute(
+        select(MonthlyFixedExpense).where(
+            MonthlyFixedExpense.id == expense_id,
+            MonthlyFixedExpense.user_id == user.id,
+        )
+    )
+    rec = res.scalar_one_or_none()
+    if not rec:
+        raise HTTPException(status_code=404, detail="Витрату не знайдено")
+
+    rec.name = body.name
+    rec.description = body.description
+    rec.amount = body.amount
+    rec.is_recurring = body.is_recurring
+    rec.edited_by = "user"
+    rec.edited_at = datetime.now(timezone.utc)
+    await db.flush()
+
+    if body.is_recurring:
+        await _propagate_recurring(
+            db, user.id, rec.year, rec.month,
+            rec.category_key, body.name, body.description, body.amount,
+        )
+
+    await db.commit()
+    await db.refresh(rec)
+
+    return FixedExpenseRow(
+        id=rec.id,
+        name=rec.name,
+        description=rec.description or "",
+        amount=float(rec.amount),
+        is_recurring=rec.is_recurring,
+        edited_by=rec.edited_by,
+        edited_at=rec.edited_at.isoformat() if rec.edited_at else None,
+    )
+
+
+@router.delete("/fixed/{expense_id}", status_code=204)
+async def delete_fixed_expense(
+    expense_id: int,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Видаляє постійну витрату."""
+    res = await db.execute(
+        select(MonthlyFixedExpense).where(
+            MonthlyFixedExpense.id == expense_id,
+            MonthlyFixedExpense.user_id == user.id,
+        )
+    )
+    rec = res.scalar_one_or_none()
+    if not rec:
+        raise HTTPException(status_code=404, detail="Витрату не знайдено")
+    await db.delete(rec)
+    await db.commit()
 
 
 # ────────────────────────────── Endpoint: PUT salary ──────────────────────────────
@@ -680,6 +763,8 @@ async def update_salary_expense(
     rec.target_net = body.target_net
     rec.individual_bonus = body.individual_bonus
     rec.paid_services_from_module = body.paid_services_from_module
+    rec.edited_by = "user"
+    rec.edited_at = datetime.now(timezone.utc)
     await db.commit()
     await db.refresh(rec)
 
@@ -731,6 +816,118 @@ async def update_salary_expense(
         paid_services_income=paid_services_income,
         total_employer_cost=total_employer_cost,
     )
+
+
+# ────────────────────────────── Other expenses CRUD ──────────────────────────────
+
+
+class OtherExpenseCreate(BaseModel):
+    name: str
+    description: str = ""
+    amount: float
+    category: str = "general"
+    year: int
+    month: int
+
+
+class OtherExpenseResponse(BaseModel):
+    id: int
+    name: str
+    description: str
+    amount: float
+    category: str
+    year: int
+    month: int
+
+    model_config = {"from_attributes": True}
+
+
+@router.get("/other", response_model=list[OtherExpenseResponse])
+async def list_other_expenses(
+    year: int = Query(...),
+    month: int = Query(...),
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Повертає список інших витрат за місяць."""
+    res = await db.execute(
+        select(MonthlyOtherExpense).where(
+            MonthlyOtherExpense.user_id == user.id,
+            MonthlyOtherExpense.year == year,
+            MonthlyOtherExpense.month == month,
+        )
+    )
+    return res.scalars().all()
+
+
+@router.post("/other", response_model=OtherExpenseResponse, status_code=201)
+async def create_other_expense(
+    body: OtherExpenseCreate,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Створює нову іншу витрату."""
+    rec = MonthlyOtherExpense(
+        user_id=user.id,
+        year=body.year,
+        month=body.month,
+        name=body.name,
+        description=body.description,
+        amount=body.amount,
+        category=body.category,
+    )
+    db.add(rec)
+    await db.commit()
+    await db.refresh(rec)
+    return rec
+
+
+@router.put("/other/{expense_id}", response_model=OtherExpenseResponse)
+async def update_other_expense(
+    expense_id: int,
+    body: OtherExpenseCreate,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Оновлює іншу витрату."""
+    res = await db.execute(
+        select(MonthlyOtherExpense).where(
+            MonthlyOtherExpense.id == expense_id,
+            MonthlyOtherExpense.user_id == user.id,
+        )
+    )
+    rec = res.scalar_one_or_none()
+    if not rec:
+        raise HTTPException(status_code=404, detail="Витрату не знайдено")
+    rec.name = body.name
+    rec.description = body.description
+    rec.amount = body.amount
+    rec.category = body.category
+    rec.year = body.year
+    rec.month = body.month
+    await db.commit()
+    await db.refresh(rec)
+    return rec
+
+
+@router.delete("/other/{expense_id}", status_code=204)
+async def delete_other_expense(
+    expense_id: int,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Видаляє іншу витрату."""
+    res = await db.execute(
+        select(MonthlyOtherExpense).where(
+            MonthlyOtherExpense.id == expense_id,
+            MonthlyOtherExpense.user_id == user.id,
+        )
+    )
+    rec = res.scalar_one_or_none()
+    if not rec:
+        raise HTTPException(status_code=404, detail="Витрату не знайдено")
+    await db.delete(rec)
+    await db.commit()
 
 
 # ══════════════════════════════════════════════════════════════════
@@ -859,7 +1056,7 @@ async def copy_from_period(
             )
         )
         for src in src_fixed.scalars():
-            # Перевіряємо чи вже існує запис
+            # Перевіряємо чи вже існує запис з таким category_key
             existing = await db.execute(
                 select(MonthlyFixedExpense).where(
                     MonthlyFixedExpense.user_id == user.id,
@@ -875,10 +1072,14 @@ async def copy_from_period(
                     year=body.target_year,
                     month=body.target_month,
                     category_key=src.category_key,
+                    name=src.name or "",
+                    description=src.description or "",
                 )
                 db.add(tgt)
             tgt.amount = src.amount
             tgt.is_recurring = src.is_recurring
+            if not tgt.name:
+                tgt.name = src.name or ""
             copied_fixed += 1
 
     if body.copy_salary:
@@ -931,11 +1132,10 @@ async def ai_parse_expense(
     if not provider:
         raise HTTPException(status_code=400, detail="AI провайдер не налаштований")
 
-    category_keys = ", ".join(FIXED_CATEGORY_KEYS)
     system_prompt = (
         "Ти бухгалтерський асистент медичної клініки ФОП. "
         "Проаналізуй зображення або текст витрати і поверни JSON з полями: "
-        f"category (fixed|other), category_key (один з: {category_keys}; або empty для other), "
+        "category (fixed|other), "
         "name (назва витрати укр), amount (число), is_recurring (true/false), "
         "confidence (0.0-1.0), note (коментар якщо є неясності). "
         "Тільки JSON без markdown."
@@ -980,7 +1180,6 @@ async def ai_parse_expense(
     parsed = parse_ai_json(raw)
     return AiParsedExpense(
         category=parsed.get("category", "other"),
-        category_key=parsed.get("category_key", "other"),
         name=parsed.get("name", "Витрата"),
         amount=float(parsed.get("amount", 0)),
         is_recurring=bool(parsed.get("is_recurring", False)),
@@ -1085,7 +1284,7 @@ async def _build_owner_share_payload(
 
     # ── 2. Платні послуги (paid services analytics) ──
     paid_analytics = await build_paid_analytics(db, user_id, year, month, None)
-    paid_data = paid_analytics.model_dump()
+    paid_data = paid_analytics.model_dump(mode="json")
 
     # ── 3. Дані для розрахунку сформованого доходу власника ──
     nhsu_doctors = await _nhsu_doctors_data(db, user_id, year, month)
@@ -1292,4 +1491,334 @@ async def view_owner_share(token: str, db: AsyncSession = Depends(get_db)):
         "filter_label": f"{month_name} {year}",
         "expires_at": share.expires_at.isoformat(),
         "data": share.payload_snapshot,
+    }
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  Запит до бухгалтера (Accountant Request)
+# ══════════════════════════════════════════════════════════════════════
+
+
+class AccountantRequestCreate(BaseModel):
+    year: int
+    month: int
+
+
+class AccountantRequestResponse(BaseModel):
+    token: str
+    url: str
+    expires_at: datetime
+
+
+class AccSalaryItem(BaseModel):
+    staff_member_id: int
+    brutto: float
+
+
+class AccExpenseItem(BaseModel):
+    name: str
+    amount: float
+    is_recurring: bool = False
+
+
+class AccountantSubmitRequest(BaseModel):
+    salaries: list[AccSalaryItem]
+    expenses: list[AccExpenseItem]
+
+
+@router.post("/accountant-request", status_code=201)
+async def create_accountant_request(
+    body: AccountantRequestCreate,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Створює тимчасову сторінку для бухгалтера (TTL 15 днів)."""
+    # ── Збір даних для payload ──
+    # Активні співробітники (крім лікаря-власника)
+    staff_res = await db.execute(
+        select(StaffMember).where(
+            StaffMember.user_id == user.id,
+            StaffMember.is_active == True,
+        ).order_by(StaffMember.full_name)
+    )
+    staff_list = staff_res.scalars().all()
+
+    # Знайти ID лікаря-власника
+    owner_doc_res = await db.execute(
+        select(Doctor).where(
+            Doctor.user_id == user.id,
+            Doctor.is_owner == True,
+            Doctor.is_active == True,
+        )
+    )
+    owner_doctor = owner_doc_res.scalar_one_or_none()
+    owner_doctor_id = owner_doctor.id if owner_doctor else None
+
+    # Фільтруємо staff: виключаємо лікаря-власника
+    filtered_staff = [
+        s for s in staff_list
+        if not (s.doctor_id and s.doctor_id == owner_doctor_id)
+    ]
+
+    # Дані зарплат з попереднього місяця
+    prev_year, prev_month = (body.year, body.month - 1) if body.month > 1 else (body.year - 1, 12)
+    prev_sal_res = await db.execute(
+        select(MonthlySalaryExpense).where(
+            MonthlySalaryExpense.user_id == user.id,
+            MonthlySalaryExpense.year == prev_year,
+            MonthlySalaryExpense.month == prev_month,
+        )
+    )
+    prev_salary_map = {r.staff_member_id: r for r in prev_sal_res.scalars().all()}
+
+    salary_data = []
+    for s in filtered_staff:
+        prev = prev_salary_map.get(s.id)
+        salary_data.append({
+            "staff_member_id": s.id,
+            "full_name": s.full_name,
+            "role": s.role,
+            "position": s.position,
+            "prev_brutto": float(prev.brutto) if prev else 0.0,
+        })
+
+    # Постійні витрати з попереднього місяця (is_recurring=True)
+    prev_fixed_res = await db.execute(
+        select(MonthlyFixedExpense).where(
+            MonthlyFixedExpense.user_id == user.id,
+            MonthlyFixedExpense.year == prev_year,
+            MonthlyFixedExpense.month == prev_month,
+            MonthlyFixedExpense.is_recurring == True,
+        )
+    )
+    recurring_expenses = []
+    for fe in prev_fixed_res.scalars().all():
+        recurring_expenses.append({
+            "category_key": fe.category_key,
+            "name": fe.name or FIXED_CATEGORY_NAMES.get(fe.category_key, fe.category_key),
+            "amount": float(fe.amount),
+            "is_recurring": True,
+        })
+
+    payload = {
+        "salary_staff": salary_data,
+        "recurring_expenses": recurring_expenses,
+    }
+
+    token = secrets.token_urlsafe(32)
+    expires_at = datetime.now(timezone.utc) + timedelta(days=15)
+
+    share = ShareReport(
+        user_id=user.id,
+        token=token,
+        filter_snapshot={
+            "type": "accountant_request",
+            "year": body.year,
+            "month": body.month,
+        },
+        payload_snapshot=payload,
+        expires_at=expires_at,
+        is_deleted=False,
+    )
+    db.add(share)
+    await db.commit()
+
+    return AccountantRequestResponse(
+        token=token,
+        url=f"/accountant/{token}",
+        expires_at=expires_at,
+    )
+
+
+@router.get("/accountant-request/{token}/view")
+async def view_accountant_request(token: str, db: AsyncSession = Depends(get_db)):
+    """Публічний ендпоінт — перегляд форми бухгалтера."""
+    r = await db.execute(
+        select(ShareReport).where(
+            ShareReport.token == token,
+            ShareReport.is_deleted == False,
+            ShareReport.expires_at > datetime.now(timezone.utc),
+        )
+    )
+    share = r.scalar_one_or_none()
+    if not share:
+        raise HTTPException(404, detail="Посилання не знайдено або термін дії закінчився")
+
+    fs = share.filter_snapshot
+    if fs.get("type") != "accountant_request":
+        raise HTTPException(404, detail="Посилання не знайдено")
+
+    month_name = MONTHS_UA[fs.get("month", 1)]
+    year = fs.get("year", "")
+
+    return {
+        "token": token,
+        "filter_label": f"{month_name} {year}",
+        "year": fs.get("year"),
+        "month": fs.get("month"),
+        "expires_at": share.expires_at.isoformat(),
+        "submitted": fs.get("submitted", False),
+        "submitted_data": fs.get("submitted_data"),
+        "data": share.payload_snapshot,
+    }
+
+
+@router.post("/accountant-request/{token}/submit")
+async def submit_accountant_request(
+    token: str,
+    body: AccountantSubmitRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    """Публічний ендпоінт — бухгалтер надсилає звіт."""
+    r = await db.execute(
+        select(ShareReport).where(
+            ShareReport.token == token,
+            ShareReport.is_deleted == False,
+            ShareReport.expires_at > datetime.now(timezone.utc),
+        )
+    )
+    share = r.scalar_one_or_none()
+    if not share:
+        raise HTTPException(404, detail="Посилання не знайдено або термін дії закінчився")
+
+    fs = share.filter_snapshot
+    if fs.get("type") != "accountant_request":
+        raise HTTPException(404, detail="Посилання не знайдено")
+
+    year = fs["year"]
+    month = fs["month"]
+    user_id = share.user_id
+
+    saved_salaries = []
+    saved_fixed = []
+    saved_other = []
+
+    # ── 1. Зберігаємо зарплати ──
+    for sal in body.salaries:
+        # Перевірка що staff_member належить user
+        sm_res = await db.execute(
+            select(StaffMember).where(
+                StaffMember.id == sal.staff_member_id,
+                StaffMember.user_id == user_id,
+            )
+        )
+        sm = sm_res.scalar_one_or_none()
+        if not sm:
+            continue
+
+        # Upsert salary
+        existing_res = await db.execute(
+            select(MonthlySalaryExpense).where(
+                MonthlySalaryExpense.user_id == user_id,
+                MonthlySalaryExpense.staff_member_id == sal.staff_member_id,
+                MonthlySalaryExpense.year == year,
+                MonthlySalaryExpense.month == month,
+            )
+        )
+        rec = existing_res.scalar_one_or_none()
+        if rec is None:
+            rec = MonthlySalaryExpense(
+                user_id=user_id,
+                staff_member_id=sal.staff_member_id,
+                year=year,
+                month=month,
+            )
+            db.add(rec)
+        rec.brutto = sal.brutto
+        rec.edited_by = "accountant"
+        rec.edited_at = datetime.now(timezone.utc)
+        await db.flush()
+
+        saved_salaries.append({
+            "staff_member_id": sal.staff_member_id,
+            "full_name": sm.full_name,
+            "brutto": sal.brutto,
+        })
+
+    # ── 2. Зберігаємо витрати бухгалтера ──
+    # Для витрат із payload (recurring) — оновлюємо існуючі записи за category_key
+    payload_expenses = share.payload_snapshot.get("recurring_expenses", [])
+    payload_keys = {e.get("category_key") for e in payload_expenses if e.get("category_key")}
+
+    for exp in body.expenses:
+        now = datetime.now(timezone.utc)
+        # Спроба знайти існуючий запис за назвою (для recurring з попереднього місяця)
+        existing_fe = None
+        if exp.is_recurring:
+            for pe in payload_expenses:
+                if pe.get("name") == exp.name and pe.get("category_key"):
+                    fe_res = await db.execute(
+                        select(MonthlyFixedExpense).where(
+                            MonthlyFixedExpense.user_id == user_id,
+                            MonthlyFixedExpense.year == year,
+                            MonthlyFixedExpense.month == month,
+                            MonthlyFixedExpense.category_key == pe["category_key"],
+                        )
+                    )
+                    existing_fe = fe_res.scalar_one_or_none()
+                    break
+
+        if existing_fe:
+            existing_fe.amount = exp.amount
+            existing_fe.name = exp.name
+            existing_fe.is_recurring = exp.is_recurring
+            existing_fe.edited_by = "accountant"
+            existing_fe.edited_at = now
+            await db.flush()
+        else:
+            cat_key = str(uuid.uuid4())[:12]
+            fe = MonthlyFixedExpense(
+                user_id=user_id,
+                year=year,
+                month=month,
+                category_key=cat_key,
+                name=exp.name,
+                amount=exp.amount,
+                is_recurring=exp.is_recurring,
+                edited_by="accountant",
+                edited_at=now,
+            )
+            db.add(fe)
+            await db.flush()
+
+            if exp.is_recurring:
+                await _propagate_recurring(
+                    db, user_id, year, month,
+                    cat_key, exp.name, "", exp.amount,
+                )
+
+        if exp.is_recurring:
+            saved_fixed.append({
+                "name": exp.name,
+                "amount": exp.amount,
+                "category": "Постійні витрати",
+            })
+        else:
+            saved_other.append({
+                "name": exp.name,
+                "amount": exp.amount,
+                "category": "Постійні витрати",
+            })
+
+    # ── 3. Оновлюємо share запис як підтверджений ──
+    new_fs = dict(fs)
+    new_fs["submitted"] = True
+    new_fs["submitted_data"] = {
+        "salaries": saved_salaries,
+        "fixed_expenses": saved_fixed,
+        "other_expenses": saved_other,
+        "submitted_at": datetime.now(timezone.utc).isoformat(),
+    }
+    share.filter_snapshot = new_fs
+
+    await db.commit()
+
+    return {
+        "status": "ok",
+        "message": "Дані прийняті та записані",
+        "saved": {
+            "salaries": saved_salaries,
+            "fixed_expenses": saved_fixed,
+            "other_expenses": saved_other,
+        },
     }

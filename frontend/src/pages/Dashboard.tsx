@@ -10,6 +10,12 @@ import {
   Info,
   X,
   ChevronRight,
+  ChevronDown,
+  Sparkles,
+  BarChart3,
+  Trophy,
+  Layers,
+  LayoutDashboard,
 } from "lucide-react";
 import {
   AreaChart,
@@ -37,6 +43,9 @@ import {
   KPICard,
   SectionCard,
 } from "../components/shared";
+import { PatientsBlock } from "../components/dashboard/PatientsBlock";
+import { StaffBlock } from "../components/dashboard/StaffBlock";
+import { PaidServicesBlock } from "../components/dashboard/PaidServicesBlock";
 
 const TT_STYLE = {
   background: "#1a1a2e",
@@ -57,44 +66,44 @@ const INSIGHT_CONFIG: Record<string, { icon: typeof AlertCircle; color: string; 
 // ─── Skeleton loader ─────────────────────────────────────────────────
 function DashboardSkeleton() {
   return (
-    <div className="space-y-6 animate-pulse" aria-hidden="true">
+    <div className="space-y-6" aria-hidden="true">
       {/* KPI skeleton */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 stagger-enter">
         {[1, 2, 3, 4].map(i => (
           <div key={i} className="card-neo p-4 lg:p-5 border border-dark-50/10">
             <div className="flex items-center justify-between mb-3">
-              <div className="w-9 h-9 rounded-xl bg-dark-300" />
-              <div className="w-12 h-4 rounded bg-dark-300" />
+              <div className="w-9 h-9 rounded-xl skeleton-shimmer" />
+              <div className="w-12 h-4 rounded-lg skeleton-shimmer" />
             </div>
-            <div className="w-20 h-3 rounded bg-dark-300 mb-2" />
-            <div className="w-28 h-7 rounded bg-dark-300" />
-            <div className="w-24 h-3 rounded bg-dark-300 mt-2" />
+            <div className="w-20 h-3 rounded-lg skeleton-shimmer mb-2" />
+            <div className="w-28 h-7 rounded-lg skeleton-shimmer" />
+            <div className="w-24 h-3 rounded-lg skeleton-shimmer mt-2" />
           </div>
         ))}
       </div>
       {/* Chart skeletons */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 stagger-enter">
         <div className="lg:col-span-2 card-neo p-5">
-          <div className="w-40 h-4 rounded bg-dark-300 mb-4" />
-          <div className="w-full h-[200px] rounded bg-dark-300/50" />
+          <div className="w-40 h-4 rounded-lg skeleton-shimmer mb-4" />
+          <div className="w-full h-[200px] rounded-xl skeleton-shimmer" />
         </div>
         <div className="card-neo p-5">
-          <div className="w-32 h-4 rounded bg-dark-300 mb-4" />
-          <div className="w-full h-[200px] rounded bg-dark-300/50" />
+          <div className="w-32 h-4 rounded-lg skeleton-shimmer mb-4" />
+          <div className="w-full h-[200px] rounded-xl skeleton-shimmer" />
         </div>
       </div>
       {/* Tax & insights skeleton */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 stagger-enter">
         <div className="card-neo p-5">
-          <div className="w-36 h-4 rounded bg-dark-300 mb-4" />
+          <div className="w-36 h-4 rounded-lg skeleton-shimmer mb-4" />
           <div className="space-y-3">
-            {[1, 2, 3, 4].map(i => <div key={i} className="flex justify-between"><div className="w-28 h-3 rounded bg-dark-300" /><div className="w-20 h-3 rounded bg-dark-300" /></div>)}
+            {[1, 2, 3, 4].map(i => <div key={i} className="flex justify-between"><div className="w-28 h-3 rounded-lg skeleton-shimmer" /><div className="w-20 h-3 rounded-lg skeleton-shimmer" /></div>)}
           </div>
         </div>
         <div className="card-neo p-5">
-          <div className="w-36 h-4 rounded bg-dark-300 mb-4" />
+          <div className="w-36 h-4 rounded-lg skeleton-shimmer mb-4" />
           <div className="space-y-3">
-            {[1, 2, 3].map(i => <div key={i} className="w-full h-16 rounded-xl bg-dark-300/50" />)}
+            {[1, 2, 3].map(i => <div key={i} className="w-full h-16 rounded-xl skeleton-shimmer" />)}
           </div>
         </div>
       </div>
@@ -108,12 +117,25 @@ function DrillModal({ title, onClose, children }: { title: string; onClose: () =
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 sm:items-center overflow-y-auto"
+      className="fixed inset-0 z-50 flex items-start justify-center p-0 sm:p-4 overflow-y-auto"
     >
-      <div className="bg-dark-600 border border-dark-50/10 rounded-none sm:rounded-2xl w-full max-w-2xl min-h-full sm:min-h-0 shadow-2xl animate-modal-in pb-20 sm:pb-0">
-        <div className="flex items-center justify-between p-5 border-b border-dark-50/10">
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/60 backdrop-blur-md animate-fade-in"
+        onClick={onClose}
+      />
+      {/* Panel */}
+      <div className="relative bg-dark-600 border border-dark-50/10
+                      rounded-none sm:rounded-2xl w-full max-w-2xl min-h-full sm:min-h-0 sm:my-8
+                      shadow-elevation-3 animate-modal-in pb-20 sm:pb-0">
+        <div className="flex items-center justify-between p-5 border-b border-dark-50/10 bg-dark-400/20 backdrop-blur-sm">
           <h3 className="text-base font-semibold text-white">{title}</h3>
-          <button onClick={onClose} aria-label="Закрити" className="p-1.5 text-gray-500 hover:text-gray-300 rounded-lg hover:bg-dark-300 transition-all">
+          <button
+            onClick={onClose}
+            aria-label="Закрити"
+            className="p-2 text-gray-500 hover:text-gray-300 rounded-xl hover:bg-dark-300
+                       active:scale-90 transition-all duration-150"
+          >
             <X size={18} />
           </button>
         </div>
@@ -132,9 +154,30 @@ export default function Dashboard() {
   const [data, setData] = useState<DashboardReport | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [period, setPeriod] = useState<"current" | "3m" | "6m" | "1y" | "all">("current"); // Period filter
 
   // Drill-down state
   const [drillModal, setDrillModal] = useState<null | "income" | "expenses" | "taxes">(null);
+
+  // Track expanded insights (by index)
+  const [expandedAi, setExpandedAi] = useState<Set<number>>(new Set());
+  const [expandedInsights, setExpandedInsights] = useState<Set<number>>(new Set());
+
+  function toggleAiInsight(i: number) {
+    setExpandedAi(prev => {
+      const next = new Set(prev);
+      if (next.has(i)) next.delete(i); else next.add(i);
+      return next;
+    });
+  }
+
+  function toggleInsight(i: number) {
+    setExpandedInsights(prev => {
+      const next = new Set(prev);
+      if (next.has(i)) next.delete(i); else next.add(i);
+      return next;
+    });
+  }
 
   function prevMonth() {
     if (month === 0) { setMonth(11); setYear(y => y - 1); }
@@ -146,11 +189,19 @@ export default function Dashboard() {
     else setMonth(m => m + 1);
   }
 
+  function getPeriodLabel(): string {
+    if (period === "current") return `${MONTH_NAMES[month].toLowerCase()} ${year}`;
+    if (period === "3m") return "Останні 3 місяці";
+    if (period === "6m") return "Останні 6 місяців";
+    if (period === "1y") return "Останній рік";
+    return "Всього";
+  }
+
   useEffect(() => {
     setLoading(true);
     setError(null);
     api
-      .get("/reports/dashboard", { params: { year, month: month + 1 } })
+      .get(`/reports/dashboard?year=${year}&month=${month + 1}`)
       .then((res) => setData(res.data))
       .catch((err) => {
         setData(null);
@@ -218,16 +269,42 @@ export default function Dashboard() {
     <div className="space-y-5 lg:space-y-6">
       <PageHeader
         title="Дашборд"
-        subtitle={`Фінансовий огляд за ${MONTH_NAMES[month].toLowerCase()} ${year}`}
+        subtitle={`Фінансовий огляд ${getPeriodLabel()}`}
+        icon={<LayoutDashboard size={22} className="text-orange-400" />}
       >
-        <MonthNavigator
-          year={year}
-          month={month}
-          onPrev={prevMonth}
-          onNext={nextMonth}
-          disableNext={isCurrentMonth}
-        />
+        {period === "current" && (
+          <MonthNavigator
+            year={year}
+            month={month}
+            onPrev={prevMonth}
+            onNext={nextMonth}
+            disableNext={isCurrentMonth}
+          />
+        )}
       </PageHeader>
+
+      {/* Period filter */}
+      <div className="flex flex-wrap gap-2">
+        {[
+          { label: "Текущий місяць", value: "current" },
+          { label: "Останні 3 місяці", value: "3m" },
+          { label: "Останні 6 місяців", value: "6m" },
+          { label: "Останній рік", value: "1y" },
+          { label: "Всього", value: "all" },
+        ].map(opt => (
+          <button
+            key={opt.value}
+            onClick={() => setPeriod(opt.value as typeof period)}
+            className={`px-3 py-1.5 text-sm rounded-lg transition-all duration-200 ${
+              period === opt.value
+                ? "bg-accent-500/30 border border-accent-500/50 text-accent-300 font-medium"
+                : "bg-dark-400/30 border border-dark-50/20 text-gray-400 hover:text-gray-200 hover:border-dark-50/40"
+            }`}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
 
       {/* Tax deadline reminders */}
       {reminders.length > 0 && (
@@ -249,12 +326,12 @@ export default function Dashboard() {
 
       {/* Error state */}
       {!loading && error && (
-        <div className="card-neo p-8 text-center">
+        <div className="card-neo card-3d-hover p-8 text-center">
           <AlertCircle size={40} className="text-red-400 mx-auto mb-4" />
           <p className="text-gray-300 text-lg font-medium mb-2">Помилка завантаження</p>
           <p className="text-gray-500 text-sm">{error}</p>
           <button
-            onClick={() => { setLoading(true); setError(null); api.get("/reports/dashboard", { params: { year, month: month + 1 } }).then(r => setData(r.data)).catch(() => setError("Повторна помилка")).finally(() => setLoading(false)); }}
+            onClick={() => { const yearNum = Number(year); const monthNum = Number(month) + 1; setLoading(true); setError(null); api.get(`/reports/dashboard?year=${yearNum}&month=${monthNum}`).then(r => setData(r.data)).catch(() => setError("Повторна помилка")).finally(() => setLoading(false)); }}
             className="btn-accent mt-4"
           >
             Спробувати ще раз
@@ -279,7 +356,7 @@ export default function Dashboard() {
       {!loading && !error && data && (data.total_income > 0 || data.total_expenses > 0) && (
         <>
           {/* ── 1. KPI Cards ── */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 stagger-enter">
             <KPICard
               label="Доходи"
               value={data.total_income}
@@ -334,7 +411,7 @@ export default function Dashboard() {
               borderColor="border-yellow-500/20"
               changePct={data.taxes_change_pct}
               prevValue={data.prev_taxes}
-              tooltip="Єдиний податок (5%) + ЄСВ + Військовий збір (1.5%). Розраховується від доходу."
+              tooltip={`Єдиний податок (5%) + ЄСВ + Військовий збір (${data.tax_vz_rate?.toFixed(1) || '1'}%). Розраховується від доходу.`}
               onClick={() => setDrillModal("taxes")}
               icon={
                 <div className="p-2 rounded-xl bg-yellow-500/10">
@@ -344,11 +421,76 @@ export default function Dashboard() {
             />
           </div>
 
+          {/* ── AI Analytics Block ── */}
+          {data.ai_insights && data.ai_insights.length > 0 && (
+            <div className="card-neo card-3d-hover p-5 border border-blue-500/15 bg-blue-500/5 stagger-enter">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+                    <Sparkles size={15} className="text-orange-400" />
+                    AI-Асистент / Аналітика системи
+                  </h3>
+                  <p className="text-xs text-gray-600 mt-0.5">Аналіз фінансової ситуації та рекомендації</p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                {data.ai_insights.map((insight, i) => {
+                  const typeConfig: Record<string, { icon: typeof AlertCircle; color: string; label: string }> = {
+                    risk: { icon: ShieldAlert, color: "text-red-400", label: "РИЗИК" },
+                    warning: { icon: AlertCircle, color: "text-amber-400", label: "УВАГА" },
+                    opportunity: { icon: Lightbulb, color: "text-emerald-400", label: "МОЖЛИВІСТЬ" },
+                    insight: { icon: Info, color: "text-blue-400", label: "ІНСАЙТ" },
+                  };
+                  const cfg = typeConfig[insight.type] || typeConfig.insight;
+                  const Icon = cfg.icon;
+                  const isOpen = expandedAi.has(i);
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => toggleAiInsight(i)}
+                      className="w-full rounded-lg border border-dark-50/10 bg-dark-300/20 text-left transition-all duration-150 hover:bg-dark-300/40 active:scale-[0.99]"
+                    >
+                      <div className="flex items-center gap-3 p-3">
+                        <Icon size={16} className={`${cfg.color} shrink-0`} />
+                        <span className={`text-[10px] font-bold uppercase tracking-wide ${cfg.color} shrink-0`}>
+                          {cfg.label}
+                        </span>
+                        <span className="text-sm font-semibold text-white flex-1 min-w-0 truncate">{insight.title}</span>
+                        <ChevronDown
+                          size={14}
+                          className={`text-gray-500 shrink-0 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+                        />
+                      </div>
+                      {isOpen && (
+                        <div className="px-3 pb-3 pt-0">
+                          <p className="text-xs text-gray-300 leading-relaxed mb-1">{insight.description}</p>
+                          {insight.data_basis && (
+                            <p className="text-[10px] text-gray-600 italic">Основа: {insight.data_basis}</p>
+                          )}
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* ── ПРІОРИТЕТ 1: Блоки для пацієнтів, персоналу, послуг ── */}
+          {/* Patients block */}
+          <PatientsBlock data={data} />
+
+          {/* Staff block */}
+          <StaffBlock data={data} />
+
+          {/* Paid services block */}
+          <PaidServicesBlock data={data} />
+
           {/* ── 2. Trend chart + Income after taxes ── */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {/* Area trend chart — 6 months */}
-            <div className="lg:col-span-2 card-neo p-5">
-              <h3 className="text-sm font-semibold text-white mb-1">Динаміка за 6 місяців</h3>
+            <div className="lg:col-span-2 card-neo card-3d-hover p-5">
+              <h3 className="text-sm font-semibold text-white mb-1 flex items-center gap-2"><TrendingUp size={15} className="text-orange-400" />Динаміка за 6 місяців</h3>
               <p className="text-xs text-gray-600 mb-4">Доходи, витрати та прибуток — тренд</p>
               {data.trend.length > 1 ? (
                 <ResponsiveContainer width="100%" height={220}>
@@ -385,16 +527,11 @@ export default function Dashboard() {
               title="Податки за місяць"
               icon={<Receipt size={16} className="text-yellow-400" />}
               iconBg="bg-yellow-500/10"
-              trailing={
-                <button onClick={() => navigate("/taxes")} className="text-xs text-accent-400 hover:text-accent-300 flex items-center gap-0.5">
-                  Детальніше <ChevronRight size={12} />
-                </button>
-              }
             >
               <div className="space-y-1">
                 <StatRow label="Єдиний податок (5%)" value={data.tax_single} dot="bg-accent-400" />
                 <StatRow label="ЄСВ" value={data.tax_esv} dot="bg-yellow-400" />
-                <StatRow label="Військовий збір (1.5%)" value={data.tax_vz} dot="bg-orange-400" />
+                <StatRow label={`Військовий збір (${data.tax_vz_rate?.toFixed(1) || '1'}%)`} value={data.tax_vz} dot="bg-orange-400" />
                 <StatRow label="Всього податків" value={data.total_taxes} dot="bg-red-400" color="text-red-400" borderTop />
                 <StatRow label="Дохід після податків" value={data.income_after_taxes} dot="bg-emerald-400" color="text-emerald-400" bold borderTop />
               </div>
@@ -404,10 +541,10 @@ export default function Dashboard() {
           {/* ── 3. Structure breakdown ── */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Income by category */}
-            <div className="card-neo p-5">
+            <div className="card-neo card-3d-hover p-5">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h3 className="text-sm font-semibold text-white">Структура доходів</h3>
+                  <h3 className="text-sm font-semibold text-white flex items-center gap-2"><BarChart3 size={15} className="text-orange-400" />Структура доходів</h3>
                   <p className="text-xs text-gray-600 mt-0.5">По категоріях</p>
                 </div>
                 <button onClick={() => navigate("/incomes")} className="text-xs text-accent-400 hover:text-accent-300 flex items-center gap-0.5">
@@ -441,10 +578,10 @@ export default function Dashboard() {
             </div>
 
             {/* Expenses by category */}
-            <div className="card-neo p-5">
+            <div className="card-neo card-3d-hover p-5">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h3 className="text-sm font-semibold text-white">Структура витрат</h3>
+                  <h3 className="text-sm font-semibold text-white flex items-center gap-2"><BarChart3 size={15} className="text-orange-400" />Структура витрат</h3>
                   <p className="text-xs text-gray-600 mt-0.5">По категоріях</p>
                 </div>
                 <button onClick={() => navigate("/expenses")} className="text-xs text-accent-400 hover:text-accent-300 flex items-center gap-0.5">
@@ -485,25 +622,34 @@ export default function Dashboard() {
               icon={<Lightbulb size={16} className="text-amber-400" />}
               iconBg="bg-amber-500/10"
             >
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {data.insights.map((insight, i) => {
                   const cfg = INSIGHT_CONFIG[insight.type] ?? INSIGHT_CONFIG.insight;
                   const Icon = cfg.icon;
+                  const isOpen = expandedInsights.has(i);
                   return (
-                    <div key={i} className={`rounded-xl border p-4 ${cfg.bg} ${cfg.border}`}>
-                      <div className="flex items-start gap-3">
-                        <Icon size={16} className={`${cfg.color} shrink-0 mt-0.5`} />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap mb-1">
-                            <span className={`text-[10px] font-bold uppercase tracking-wide ${cfg.color}`}>
-                              {cfg.label}
-                            </span>
-                            <span className="text-sm font-semibold text-white">{insight.title}</span>
-                          </div>
+                    <button
+                      key={i}
+                      onClick={() => toggleInsight(i)}
+                      className={`w-full rounded-xl border text-left transition-all duration-150 hover:brightness-125 active:scale-[0.99] ${cfg.bg} ${cfg.border}`}
+                    >
+                      <div className="flex items-center gap-3 p-3">
+                        <Icon size={16} className={`${cfg.color} shrink-0`} />
+                        <span className={`text-[10px] font-bold uppercase tracking-wide ${cfg.color} shrink-0`}>
+                          {cfg.label}
+                        </span>
+                        <span className="text-sm font-semibold text-white flex-1 min-w-0 truncate">{insight.title}</span>
+                        <ChevronDown
+                          size={14}
+                          className={`text-gray-500 shrink-0 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+                        />
+                      </div>
+                      {isOpen && (
+                        <div className="px-3 pb-3 pt-0">
                           <p className="text-xs text-gray-300 leading-relaxed">{insight.description}</p>
                         </div>
-                      </div>
-                    </div>
+                      )}
+                    </button>
                   );
                 })}
               </div>
@@ -511,21 +657,21 @@ export default function Dashboard() {
           )}
 
           {/* ── 5. Quick navigation ── */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 stagger-enter">
             {[
               { label: "Доходи", path: "/incomes", color: "text-emerald-400", border: "border-emerald-500/15" },
               { label: "Витрати", path: "/expenses", color: "text-red-400", border: "border-red-500/15" },
               { label: "Аналітика доходів", path: "/revenue", color: "text-accent-400", border: "border-accent-500/15" },
-              { label: "Податки", path: "/taxes", color: "text-yellow-400", border: "border-yellow-500/15" },
             ].map(nav => (
               <button
                 key={nav.path}
                 onClick={() => navigate(nav.path)}
-                className={`card-neo p-3 lg:p-4 border ${nav.border} text-left hover:bg-dark-300/30 transition-all group`}
+                className={`card-neo card-3d-hover card-tap p-3 lg:p-4 border ${nav.border} text-left
+                           hover:bg-dark-300/30 transition-all duration-200 group`}
               >
                 <div className="flex items-center justify-between">
                   <span className={`text-sm font-medium ${nav.color}`}>{nav.label}</span>
-                  <ChevronRight size={14} className="text-gray-600 group-hover:text-gray-400 transition-colors" />
+                  <ChevronRight size={14} className="text-gray-600 group-hover:text-gray-400 group-hover:translate-x-0.5 transition-all duration-200" />
                 </div>
               </button>
             ))}
@@ -540,22 +686,22 @@ export default function Dashboard() {
         <DrillModal title={`Доходи — ${data.period_label}`} onClose={() => setDrillModal(null)}>
           <div className="space-y-4">
             <div className="grid grid-cols-3 gap-3">
-              <div className="rounded-xl bg-dark-300/50 border border-dark-50/10 p-3">
+              <div className="tile-neo p-3">
                 <p className="text-xs text-gray-500 mb-1">Поточний</p>
                 <p className="text-base font-bold text-emerald-400 font-mono tabular-nums">{fmtUAH(data.total_income)} ₴</p>
               </div>
-              <div className="rounded-xl bg-dark-300/50 border border-dark-50/10 p-3">
+              <div className="tile-neo p-3">
                 <p className="text-xs text-gray-500 mb-1">Попередній</p>
                 <p className="text-base font-bold text-gray-300 font-mono tabular-nums">{fmtUAH(data.prev_income)} ₴</p>
               </div>
-              <div className="rounded-xl bg-dark-300/50 border border-dark-50/10 p-3">
+              <div className="tile-neo p-3">
                 <p className="text-xs text-gray-500 mb-1">Середній (6м)</p>
                 <p className="text-base font-bold text-gray-300 font-mono tabular-nums">{fmtUAH(data.avg_income_6m)} ₴</p>
               </div>
             </div>
             {data.top_income_sources.length > 0 && (
               <>
-                <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Топ джерел доходу</h4>
+                <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1.5"><Trophy size={12} className="text-orange-400" />Топ джерел доходу</h4>
                 <div className="overflow-x-auto rounded-xl border border-dark-50/10">
                   <table className="w-full text-xs">
                     <thead>
@@ -580,7 +726,7 @@ export default function Dashboard() {
             )}
             {data.income_by_category.length > 0 && (
               <>
-                <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">По категоріях</h4>
+                <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1.5"><Layers size={12} className="text-orange-400" />По категоріях</h4>
                 <div className="overflow-x-auto rounded-xl border border-dark-50/10">
                   <table className="w-full text-xs">
                     <thead>
@@ -612,22 +758,22 @@ export default function Dashboard() {
         <DrillModal title={`Витрати — ${data.period_label}`} onClose={() => setDrillModal(null)}>
           <div className="space-y-4">
             <div className="grid grid-cols-3 gap-3">
-              <div className="rounded-xl bg-dark-300/50 border border-dark-50/10 p-3">
+              <div className="tile-neo p-3">
                 <p className="text-xs text-gray-500 mb-1">Поточний</p>
                 <p className="text-base font-bold text-red-400 font-mono tabular-nums">{fmtUAH(data.total_expenses)} ₴</p>
               </div>
-              <div className="rounded-xl bg-dark-300/50 border border-dark-50/10 p-3">
+              <div className="tile-neo p-3">
                 <p className="text-xs text-gray-500 mb-1">Попередній</p>
                 <p className="text-base font-bold text-gray-300 font-mono tabular-nums">{fmtUAH(data.prev_expenses)} ₴</p>
               </div>
-              <div className="rounded-xl bg-dark-300/50 border border-dark-50/10 p-3">
+              <div className="tile-neo p-3">
                 <p className="text-xs text-gray-500 mb-1">Середній (6м)</p>
                 <p className="text-base font-bold text-gray-300 font-mono tabular-nums">{fmtUAH(data.avg_expenses_6m)} ₴</p>
               </div>
             </div>
             {data.expense_by_category.length > 0 && (
               <>
-                <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">По категоріях</h4>
+                <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1.5"><Layers size={12} className="text-orange-400" />По категоріях</h4>
                 <div className="overflow-x-auto rounded-xl border border-dark-50/10">
                   <table className="w-full text-xs">
                     <thead>
@@ -652,7 +798,7 @@ export default function Dashboard() {
             )}
             {data.top_expense_items.length > 0 && (
               <>
-                <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Топ статей витрат</h4>
+                <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1.5"><TrendingDown size={12} className="text-orange-400" />Топ статей витрат</h4>
                 <div className="overflow-x-auto rounded-xl border border-dark-50/10">
                   <table className="w-full text-xs">
                     <thead>
@@ -685,11 +831,11 @@ export default function Dashboard() {
           <div className="space-y-4">
             <p className="text-xs text-gray-500">Розрахунок для ФОП 3 групи, єдиний податок</p>
             <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-xl bg-dark-300/50 border border-dark-50/10 p-3">
+              <div className="tile-neo p-3">
                 <p className="text-xs text-gray-500 mb-1">Дохід (база)</p>
                 <p className="text-base font-bold text-emerald-400 font-mono tabular-nums">{fmtUAH(data.total_income)} ₴</p>
               </div>
-              <div className="rounded-xl bg-dark-300/50 border border-dark-50/10 p-3">
+              <div className="tile-neo p-3">
                 <p className="text-xs text-gray-500 mb-1">Всього податків</p>
                 <p className="text-base font-bold text-red-400 font-mono tabular-nums">{fmtUAH(data.total_taxes)} ₴</p>
               </div>
@@ -697,7 +843,7 @@ export default function Dashboard() {
             <div className="space-y-1">
               <StatRow label="Єдиний податок (5% від доходу)" value={data.tax_single} dot="bg-accent-400" />
               <StatRow label="ЄСВ (фіксована сума)" value={data.tax_esv} dot="bg-yellow-400" />
-              <StatRow label="Військовий збір (1.5% від доходу)" value={data.tax_vz} dot="bg-orange-400" />
+              <StatRow label={`Військовий збір (${data.tax_vz_rate?.toFixed(1) || '1'}% від доходу)`} value={data.tax_vz} dot="bg-orange-400" />
               <StatRow label="Всього податків" value={data.total_taxes} dot="bg-red-400" color="text-red-400" bold borderTop />
               <StatRow label="Дохід після податків" value={data.income_after_taxes} dot="bg-emerald-400" color="text-emerald-400" bold borderTop />
             </div>

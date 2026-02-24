@@ -1,6 +1,7 @@
 import { useState, FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { Stethoscope, Mail, CheckCircle } from "lucide-react";
+import { Mail, CheckCircle } from "lucide-react";
+import MedFlowLogo from "../components/shared/MedFlowLogo";
 import { useAuth } from "../hooks/useAuth";
 import api from "../api/client";
 
@@ -87,13 +88,14 @@ export default function LoginPage() {
       {/* Мобільне фонове коло */}
       <div className="absolute top-0 right-0 w-64 h-64 bg-accent-500/4 rounded-full blur-3xl pointer-events-none" />
 
-      <div className="relative w-full max-w-md card-neo p-6 lg:p-10">
+      <div className="relative w-full max-w-md card-neo p-6 lg:p-10 animate-enter-up shadow-elevation-3">
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-accent-500/10 flex items-center justify-center shadow-glow-accent mb-4">
-            <Stethoscope size={32} className="text-accent-500" />
+          <div className="w-16 h-16 rounded-2xl bg-accent-500/10 flex items-center justify-center
+                          shadow-glow-accent shadow-lg mb-4 glow-pulse">
+            <MedFlowLogo size={38} className="text-accent-500" />
           </div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Pepelyashko</h1>
+          <h1 className="text-2xl font-bold text-white tracking-tight">MedFlow</h1>
           <p className="text-sm text-gray-500 mt-1">
             Фінансовий менеджер для медичної практики
           </p>
@@ -157,7 +159,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loginLoading}
-              className="w-full btn-accent py-3 text-base disabled:opacity-50"
+              className="w-full btn-accent py-3 text-base disabled:opacity-50 active:scale-[0.98]"
             >
               {loginLoading ? "Входимо…" : "Увійти"}
             </button>
@@ -170,7 +172,7 @@ export default function LoginPage() {
             {regSuccess ? (
               /* Успішна реєстрація */
               <div className="flex flex-col items-center text-center gap-5 py-4">
-                <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center border border-green-500/20">
+                <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center border border-green-500/20 glow-pulse">
                   {regSuccess.emailSent ? (
                     <Mail size={28} className="text-green-400" />
                   ) : (
@@ -205,7 +207,7 @@ export default function LoginPage() {
                     setTab("login");
                     setLoginEmail(email);
                   }}
-                  className="btn-accent px-8 py-2.5 text-sm"
+                  className="btn-accent px-8 py-2.5 text-sm active:scale-[0.98]"
                 >
                   Перейти до входу
                 </button>
@@ -296,7 +298,7 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   disabled={regLoading}
-                  className="w-full btn-accent py-3 text-base disabled:opacity-50 mt-2"
+                  className="w-full btn-accent py-3 text-base disabled:opacity-50 mt-2 active:scale-[0.98]"
                 >
                   {regLoading ? "Реєструємось…" : "Зареєструватись"}
                 </button>

@@ -73,7 +73,12 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <h2 className="text-2xl font-bold text-white mb-6">Профіль</h2>
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center shrink-0">
+          <User size={22} className="text-orange-400" />
+        </div>
+        <h2 className="text-2xl font-bold text-white">Профіль</h2>
+      </div>
 
       {/* User info card */}
       <div className="card-neo p-6 mb-6">

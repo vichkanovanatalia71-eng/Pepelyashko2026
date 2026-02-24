@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 import api from "../api/client";
 import { MONTH_NAMES } from "../components/shared/MonthNavigator";
-import { LoadingSpinner } from "../components/shared";
+import { LoadingSpinner, ConfirmDialog } from "../components/shared";
 
 // ─── Types ──────────────────────────────────────────────────────────
 interface CellValue {
@@ -140,10 +140,10 @@ function CopyMonthModal({
   }
 
   return (
-    <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-dark-600 border border-dark-50/10 rounded-2xl w-full max-w-md shadow-2xl">
+    <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
+      <div className="bg-dark-600 rounded-2xl w-full max-w-md my-auto animate-modal-in modal-glow">
         <div className="flex items-center justify-between p-5 border-b border-dark-50/10">
-          <h3 className="text-sm font-semibold text-white">Скопіювати значення по місяцях</h3>
+          <h3 className="text-sm font-semibold text-white flex items-center gap-2"><Copy size={14} className="text-orange-400" />Скопіювати значення по місяцях</h3>
           <button onClick={onClose} aria-label="Закрити" className="p-1.5 text-gray-500 hover:text-gray-300 rounded-lg hover:bg-dark-300 transition-all">
             <X size={16} />
           </button>
@@ -234,6 +234,11 @@ export default function BudgetPage() {
   const [addName, setAddName] = useState("");
   const [addSubType, setAddSubType] = useState("fixed");
   const [addBusy, setAddBusy] = useState(false);
+
+  // Styled confirm dialog
+  const [confirmDlg, setConfirmDlg] = useState<{
+    title: string; action: () => void;
+  } | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -328,12 +333,16 @@ export default function BudgetPage() {
   }
 
   // ── Delete row ──
-  async function handleDeleteRow(rowId: number) {
-    if (!confirm("Видалити цей рядок?")) return;
-    try {
-      await api.delete(`/budget/rows/${rowId}`);
-      load();
-    } catch { /* ignore */ }
+  function handleDeleteRow(rowId: number) {
+    setConfirmDlg({
+      title: "Видалити цей рядок?",
+      action: async () => {
+        try {
+          await api.delete(`/budget/rows/${rowId}`);
+          load();
+        } catch { /* ignore */ }
+      },
+    });
   }
 
   // ── Derived ──
@@ -513,7 +522,7 @@ export default function BudgetPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold text-white flex items-center gap-2">
-            <TrendingDown size={22} className="text-accent-400" />
+            <TrendingDown size={22} className="text-orange-400" />
             Витрати
           </h1>
           <p className="text-xs text-gray-500 mt-0.5">
@@ -567,7 +576,7 @@ export default function BudgetPage() {
             {recsOpen ? <ChevronUp size={16} className="text-gray-500" /> : <ChevronDown size={16} className="text-gray-500" />}
           </button>
           {recsOpen && (
-            <div className="px-4 pb-4 grid grid-cols-1 md:grid-cols-2 gap-2">
+            <div className="px-4 pb-4 grid grid-cols-1 md:grid-cols-2 gap-2 stagger-enter">
               {recs.map((r, i) => <RecCard key={i} rec={r} />)}
             </div>
           )}
@@ -858,6 +867,16 @@ export default function BudgetPage() {
           onApply={handleCopyApply}
         />
       )}
+
+      {/* ── Styled confirm dialog ── */}
+      <ConfirmDialog
+        open={!!confirmDlg}
+        title={confirmDlg?.title ?? ""}
+        variant="danger"
+        confirmLabel="Видалити"
+        onConfirm={() => { confirmDlg?.action(); setConfirmDlg(null); }}
+        onCancel={() => setConfirmDlg(null)}
+      />
     </div>
   );
 }

@@ -5,8 +5,9 @@ import {
 } from "recharts";
 import {
   ChevronLeft, ChevronRight, TrendingUp, BadgeDollarSign,
-  HeartPulse, Stethoscope, Users, AlertCircle, Info,
+  HeartPulse, Users, AlertCircle, Info,
   Lightbulb, ShieldAlert, X, ChevronDown,
+  BarChart3, Trophy, ClipboardList,
 } from "lucide-react";
 import api from "../api/client";
 import type {
@@ -15,6 +16,7 @@ import type {
 } from "../types";
 import { MONTH_NAMES } from "../components/shared/MonthNavigator";
 import { LoadingSpinner, EmptyState } from "../components/shared";
+import MedFlowLogo from "../components/shared/MedFlowLogo";
 
 const TT = { background: "#1a1a2e", border: "1px solid #ffffff15", borderRadius: 8, fontSize: 12 };
 const PIE_COLORS = ["#818cf8", "#34d399"];
@@ -43,8 +45,8 @@ interface DetailModalProps {
 }
 function DetailModal({ title, onClose, children }: DetailModalProps) {
   return (
-    <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 sm:items-center overflow-y-auto">
-      <div className="bg-dark-600 border border-dark-50/10 rounded-none sm:rounded-2xl w-full max-w-3xl min-h-full sm:min-h-0 shadow-2xl animate-modal-in pb-20 sm:pb-0">
+    <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 overflow-y-auto">
+      <div className="bg-dark-600 rounded-none sm:rounded-2xl w-full max-w-3xl min-h-full sm:min-h-0 sm:my-8 animate-modal-in pb-20 sm:pb-0 modal-glow">
         <div className="flex items-center justify-between p-5 border-b border-dark-50/10">
           <h3 className="text-base font-semibold text-white">{title}</h3>
           <button onClick={onClose} aria-label="Закрити" className="p-1.5 text-gray-500 hover:text-gray-300 rounded-lg hover:bg-dark-300 transition-all">
@@ -107,11 +109,16 @@ export default function RevenuePage() {
     <div className="space-y-5 max-w-full">
 
       {/* ── Header & filters ── */}
-      <div className="card-neo p-4 sm:p-5">
+      <div className="card-neo card-3d-hover p-4 sm:p-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-white">Аналітика доходів</h1>
-            <p className="text-xs sm:text-sm text-gray-500 mt-0.5">Агрегація НСЗУ + Платних послуг</p>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center shrink-0">
+              <BadgeDollarSign size={22} className="text-orange-400" />
+            </div>
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold text-white">Аналітика доходів</h1>
+              <p className="text-xs sm:text-sm text-gray-500 mt-0.5">Агрегація НСЗУ + Платних послуг</p>
+            </div>
           </div>
 
           <div className="flex flex-wrap items-end gap-3">
@@ -175,11 +182,11 @@ export default function RevenuePage() {
       {!loading && data && (<>
 
         {/* ── KPI Cards ── */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 stagger-enter">
 
           {/* Total */}
           <button onClick={() => setDrillModal("total")}
-            className="card-neo kpi-3d-hover p-4 lg:p-5 border border-emerald-500/15 text-left">
+            className="card-neo kpi-3d-hover card-tap p-4 lg:p-5 border border-emerald-500/15 text-left">
             <div className="flex items-center justify-between mb-3">
               <div className="p-2 rounded-xl bg-emerald-500/10"><BadgeDollarSign size={18} className="text-emerald-400" /></div>
               <span className={`text-xs font-bold ${pctColor(data.mom_pct)}`}>{pctLabel(data.mom_pct)}</span>
@@ -191,7 +198,7 @@ export default function RevenuePage() {
 
           {/* NHSU */}
           <button onClick={() => setDrillModal("nhsu")}
-            className="card-neo kpi-3d-hover p-4 lg:p-5 border border-indigo-500/15 text-left">
+            className="card-neo kpi-3d-hover card-tap p-4 lg:p-5 border border-indigo-500/15 text-left">
             <div className="flex items-center justify-between mb-3">
               <div className="p-2 rounded-xl bg-indigo-500/10"><HeartPulse size={18} className="text-indigo-400" /></div>
               <span className="text-xs font-medium text-gray-500">{data.nhsu_pct}%</span>
@@ -203,9 +210,9 @@ export default function RevenuePage() {
 
           {/* Paid services */}
           <button onClick={() => setDrillModal("paid")}
-            className="card-neo kpi-3d-hover p-4 lg:p-5 border border-teal-500/15 text-left">
+            className="card-neo kpi-3d-hover card-tap p-4 lg:p-5 border border-teal-500/15 text-left">
             <div className="flex items-center justify-between mb-3">
-              <div className="p-2 rounded-xl bg-teal-500/10"><Stethoscope size={18} className="text-teal-400" /></div>
+              <div className="p-2 rounded-xl bg-teal-500/10"><MedFlowLogo size={18} className="text-teal-400" /></div>
               <span className="text-xs font-medium text-gray-500">{data.paid_pct}%</span>
             </div>
             <p className="text-xs text-gray-500 mb-1">Платні послуги</p>
@@ -215,7 +222,7 @@ export default function RevenuePage() {
 
           {/* Avg per doctor */}
           <button onClick={() => setDrillModal("doctors")}
-            className="card-neo kpi-3d-hover p-4 lg:p-5 border border-violet-500/15 text-left">
+            className="card-neo kpi-3d-hover card-tap p-4 lg:p-5 border border-violet-500/15 text-left">
             <div className="flex items-center justify-between mb-3">
               <div className="p-2 rounded-xl bg-violet-500/10"><Users size={18} className="text-violet-400" /></div>
               <TrendingUp size={14} className="text-violet-400" />
@@ -230,8 +237,8 @@ export default function RevenuePage() {
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
 
           {/* Line chart — monthly trend */}
-          <div className="xl:col-span-2 card-neo p-5">
-            <h3 className="text-sm font-semibold text-white mb-4">Динаміка доходів по місяцях</h3>
+          <div className="xl:col-span-2 card-neo card-3d-hover p-5">
+            <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2"><TrendingUp size={15} className="text-orange-400" />Динаміка доходів по місяцях</h3>
             <ResponsiveContainer width="100%" height={220}>
               <LineChart data={data.monthly_trend}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" />
@@ -247,8 +254,8 @@ export default function RevenuePage() {
           </div>
 
           {/* Pie chart — structure */}
-          <div className="card-neo p-5">
-            <h3 className="text-sm font-semibold text-white mb-4">Структура доходу</h3>
+          <div className="card-neo card-3d-hover p-5">
+            <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2"><BarChart3 size={15} className="text-orange-400" />Структура доходу</h3>
             {pieData.length > 0 ? (
               <ResponsiveContainer width="100%" height={220}>
                 <PieChart>
@@ -268,8 +275,8 @@ export default function RevenuePage() {
 
         {/* ── By doctor bar chart ── */}
         {data.by_doctor.length > 0 && (
-          <div className="card-neo p-5">
-            <h3 className="text-sm font-semibold text-white mb-4">Доходи по лікарях</h3>
+          <div className="card-neo card-3d-hover p-5">
+            <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2"><Users size={15} className="text-orange-400" />Доходи по лікарях</h3>
             <ResponsiveContainer width="100%" height={Math.max(160, data.by_doctor.length * 44)}>
               <BarChart
                 data={data.by_doctor.map(d => ({
@@ -297,8 +304,8 @@ export default function RevenuePage() {
 
           {/* Top services */}
           {data.top_services.length > 0 && (
-            <button onClick={() => setDrillModal("services")} className="card-neo p-5 text-left hover:border-dark-50/20 transition-all">
-              <h3 className="text-sm font-semibold text-white mb-3">ТОП послуг за доходом</h3>
+            <button onClick={() => setDrillModal("services")} className="card-neo card-3d-hover p-5 text-left">
+              <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2"><Trophy size={15} className="text-orange-400" />ТОП послуг за доходом</h3>
               <div className="space-y-2">
                 {data.top_services.slice(0, 5).map((s, i) => (
                   <div key={s.service_id} className="flex items-center gap-3 text-xs">
@@ -317,8 +324,8 @@ export default function RevenuePage() {
 
           {/* Doctor table */}
           {data.by_doctor.length > 0 && (
-            <div className="card-neo p-5">
-              <h3 className="text-sm font-semibold text-white mb-3">Деталізація по лікарях</h3>
+            <div className="card-neo card-3d-hover p-5">
+              <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2"><ClipboardList size={15} className="text-orange-400" />Деталізація по лікарях</h3>
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
                   <thead>
@@ -347,12 +354,12 @@ export default function RevenuePage() {
 
         {/* ── AI Recommendations ── */}
         {data.recommendations.length > 0 && (
-          <div className="card-neo p-5">
+          <div className="card-neo card-3d-hover p-5">
             <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
               <Lightbulb size={16} className="text-amber-400" />
               Рекомендації системи
             </h3>
-            <div className="space-y-3">
+            <div className="space-y-3 stagger-enter">
               {data.recommendations.map((rec, i) => {
                 const cfg = REC_CONFIG[rec.type] ?? REC_CONFIG.insight;
                 const Icon = cfg.icon;
@@ -393,7 +400,7 @@ export default function RevenuePage() {
                 { label: "НСЗУ", value: data.nhsu, color: "text-indigo-400" },
                 { label: "Платні", value: data.paid_services, color: "text-teal-400" },
               ].map(k => (
-                <div key={k.label} className="rounded-xl bg-dark-300/50 border border-dark-50/10 p-3">
+                <div key={k.label} className="tile-neo p-3">
                   <p className="text-xs text-gray-500 mb-1">{k.label}</p>
                   <p className={`text-base font-bold font-mono ${k.color}`}>{fmt2(k.value)} ₴</p>
                 </div>
@@ -413,11 +420,11 @@ export default function RevenuePage() {
           <div className="space-y-4">
             <p className="text-xs text-gray-500">Джерело: модуль НСЗУ → капітаційні надходження per-лікар</p>
             <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-xl bg-dark-300/50 border border-dark-50/10 p-3">
+              <div className="tile-neo p-3">
                 <p className="text-xs text-gray-500 mb-1">Поточний місяць</p>
                 <p className="text-xl font-bold text-indigo-400 font-mono">{fmt2(data.nhsu)} ₴</p>
               </div>
-              <div className="rounded-xl bg-dark-300/50 border border-dark-50/10 p-3">
+              <div className="tile-neo p-3">
                 <p className="text-xs text-gray-500 mb-1">MoM зміна</p>
                 <p className={`text-xl font-bold font-mono ${pctColor(data.nhsu - data.prev_nhsu)}`}>
                   {data.prev_nhsu > 0 ? pctLabel((data.nhsu - data.prev_nhsu) / data.prev_nhsu * 100) : "—"}
@@ -438,11 +445,11 @@ export default function RevenuePage() {
           <div className="space-y-4">
             <p className="text-xs text-gray-500">Джерело: модуль «Платні послуги» → сума (кількість × ціна) по всіх звітах місяця</p>
             <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-xl bg-dark-300/50 border border-dark-50/10 p-3">
+              <div className="tile-neo p-3">
                 <p className="text-xs text-gray-500 mb-1">Поточний місяць</p>
                 <p className="text-xl font-bold text-teal-400 font-mono">{fmt2(data.paid_services)} ₴</p>
               </div>
-              <div className="rounded-xl bg-dark-300/50 border border-dark-50/10 p-3">
+              <div className="tile-neo p-3">
                 <p className="text-xs text-gray-500 mb-1">Частка загального доходу</p>
                 <p className="text-xl font-bold text-teal-400 font-mono">{data.paid_pct}%</p>
               </div>

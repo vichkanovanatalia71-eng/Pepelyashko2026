@@ -197,10 +197,13 @@ export interface MonthlyTaxRates {
 }
 
 export interface FixedExpenseRow {
-  category_key: string;
-  category_name: string;
+  id: number;
+  name: string;
+  description: string;
   amount: number;
   is_recurring: boolean;
+  edited_by?: string | null;
+  edited_at?: string | null;
 }
 
 export interface SalaryExpenseRow {
@@ -225,6 +228,8 @@ export interface SalaryExpenseRow {
   nhsu_ep: number;
   nhsu_vz: number;
   is_owner: boolean;
+  edited_by?: string | null;
+  edited_at?: string | null;
 }
 
 export interface TaxBlock {
@@ -325,8 +330,8 @@ export interface AgeGroupSummary {
 export interface MaterialItem {
   name: string;
   unit: string;
-  quantity: number;
-  cost: number;
+  quantity: number | string;
+  cost: number | string;
 }
 
 export interface Service {
@@ -350,6 +355,10 @@ export type SortField =
   | "name"
   | "price"
   | "total_materials_cost"
+  | "ep_amount"
+  | "vz_amount"
+  | "total_costs"
+  | "net_income"
   | "doctor_income"
   | "org_income";
 
@@ -489,11 +498,113 @@ export interface DashboardInsight {
   description: string;
 }
 
+export interface DoctorRevenue {
+  doctor_id: number;
+  doctor_name: string;
+  nhsu: number;
+  paid_services: number;
+  total: number;
+}
+
+export interface ServiceRevenue {
+  service_id: number;
+  code: string;
+  name: string;
+  quantity: number;
+  revenue: number;
+}
+
+export interface AiInsight {
+  type: string;
+  title: string;
+  description: string;
+  data_basis?: string;
+}
+
+export interface DataIntegrityWarning {
+  type: string;
+  message: string;
+}
+
+// ── ПРІОРИТЕТ 1: Пацієнти ────────────────────────────────────────────
+
+export interface AgeGroupBreakdown {
+  age_group: string;
+  age_label: string;
+  patient_count: number;
+  non_verified: number;
+  pct: number;
+}
+
+export interface DoctorPatientLoad {
+  doctor_id: number;
+  doctor_name: string;
+  patient_count: number;
+  patient_count_prev: number;
+  patient_count_change_pct: number;
+  services_count: number;
+  revenue_per_patient: number;
+}
+
+// ── ПРІОРИТЕТ 1: Персонал & ФОП ───────────────────────────────────────
+
+export interface StaffRoleBreakdown {
+  role: string;
+  role_label: string;
+  count: number;
+  salary_total: number;
+  salary_netto_total: number;
+  pdfo_total: number;
+  vz_total: number;
+  esv_employer_total: number;
+  salary_brutto_total: number;
+  individual_bonus_total: number;
+  supplement_total: number;
+  total_employer_cost: number;
+  pct: number;
+}
+
+export interface OwnerFinancialInfo {
+  doctor_id: number;
+  doctor_name: string;
+  is_owner: boolean;
+  nhsu_income: number;
+  paid_services_income: number;
+  total_income: number;
+  ep_amount: number;
+  vz_amount: number;
+  esv_owner_amount: number;
+  total_taxes: number;
+  income_after_taxes: number;
+}
+
+// ── ПРІОРИТЕТ 1: Платні послуги ───────────────────────────────────────
+
+export interface DoctorServiceBreakdown {
+  doctor_id: number;
+  doctor_name: string;
+  quantity: number;
+  revenue: number;
+}
+
+export interface ServiceBreakdownDetail {
+  service_id: number;
+  code: string;
+  name: string;
+  quantity: number;
+  revenue: number;
+  materials_cost: number;
+  margin: number;
+  margin_pct: number;
+  by_doctor: DoctorServiceBreakdown[];
+}
+
 export interface DashboardReport {
   year: number;
   month: number;
   period_label: string;
 
+  // ── Основні фінансові показники
   total_income: number;
   total_expenses: number;
   net_profit: number;
@@ -517,15 +628,65 @@ export interface DashboardReport {
   avg_expenses_6m: number;
   avg_profit_6m: number;
 
+  // ── Доходи
   income_by_category: CategoryBreakdown[];
-  expense_by_category: CategoryBreakdown[];
+  top_income_sources: CategoryBreakdown[];
+  nhsu_income: number;
+  paid_services_income: number;
+  nhsu_pct: number;
+  paid_pct: number;
+  income_by_doctor: DoctorRevenue[];
+  top_services: ServiceRevenue[];
 
+  // ── Витрати
+  expense_by_category: CategoryBreakdown[];
+  top_expense_items: CategoryBreakdown[];
+  fixed_expenses: number;
+  salary_expenses: number;
+
+  // ── Податки
+  tax_single_rate: number;
+  tax_esv_monthly: number;
+  tax_vz_rate: number;
+
+  // ── Операційні показники
+  total_services_count: number;
+  services_by_doctor: Record<string, number>;
+  active_doctors_count: number;
+
+  // ── ПРІОРИТЕТ 1: ПАЦІЄНТИ ──
+  patients_by_age: AgeGroupBreakdown[];
+  patients_by_doctor: DoctorPatientLoad[];
+  total_patients: number;
+  total_patients_prev: number;
+  total_patients_change_pct: number;
+  total_non_verified: number;
+  total_non_verified_pct: number;
+
+  // ── ПРІОРИТЕТ 1: ПЕРСОНАЛ & ФОП ──
+  staff_by_role: StaffRoleBreakdown[];
+  owner_info: OwnerFinancialInfo | null;
+  total_staff_count: number;
+  fop_total: number;
+  fop_pct: number;
+
+  // ── ПРІОРИТЕТ 1: ПЛАТНІ ПОСЛУГИ ──
+  top_paid_services: ServiceBreakdownDetail[];
+  paid_services_total_revenue: number;
+  paid_services_total_qty: number;
+  services_total_margin: number;
+  services_margin_pct: number;
+
+  // ── Цілісність даних
+  data_integrity_warnings: DataIntegrityWarning[];
+  missing_salary_staff: string[];
+
+  // ── Тренди
   trend: TrendPoint[];
 
+  // ── AI Аналітика
   insights: DashboardInsight[];
-
-  top_income_sources: CategoryBreakdown[];
-  top_expense_items: CategoryBreakdown[];
+  ai_insights: AiInsight[];
 }
 
 // ── Monthly expense periods & AI ─────────────────────────────────────
@@ -541,7 +702,6 @@ export interface PeriodSummary {
 
 export interface AiParsedExpense {
   category: string;       // "fixed" | "other"
-  category_key: string;   // один з FIXED_CATEGORY_KEYS або ""
   name: string;
   amount: number;
   is_recurring: boolean;

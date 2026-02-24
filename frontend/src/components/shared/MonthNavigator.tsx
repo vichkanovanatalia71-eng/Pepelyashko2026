@@ -36,7 +36,8 @@ export default function MonthNavigator({
         onClick={onPrev}
         aria-label="Попередній період"
         className="p-2 rounded-xl bg-dark-300 border border-dark-50/10 text-gray-400
-                   hover:text-white hover:bg-dark-200 transition-all
+                   hover:text-white hover:bg-dark-200 active:scale-95
+                   transition-all duration-150
                    focus-visible:outline-2 focus-visible:outline-accent-400"
       >
         <ChevronLeft size={18} />
@@ -51,11 +52,12 @@ export default function MonthNavigator({
         onClick={onNext}
         disabled={disableNext}
         aria-label="Наступний період"
-        className={`p-2 rounded-xl bg-dark-300 border border-dark-50/10 transition-all
+        className={`p-2 rounded-xl bg-dark-300 border border-dark-50/10
+                    transition-all duration-150
                     focus-visible:outline-2 focus-visible:outline-accent-400
                     ${disableNext
                       ? "text-gray-700 cursor-not-allowed"
-                      : "text-gray-400 hover:text-white hover:bg-dark-200"
+                      : "text-gray-400 hover:text-white hover:bg-dark-200 active:scale-95"
                     }`}
       >
         <ChevronRight size={18} />

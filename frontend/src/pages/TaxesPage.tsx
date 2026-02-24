@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Check } from "lucide-react";
+import { Check, Receipt } from "lucide-react";
 import api from "../api/client";
 import type { TaxSummary, AnnualReport } from "../types";
 import {
@@ -88,6 +88,7 @@ export default function TaxesPage() {
       <PageHeader
         title="Податки"
         subtitle="Поквартальний розрахунок для ФОП 3 групи"
+        icon={<Receipt size={22} className="text-orange-400" />}
       >
         <MonthNavigator
           year={year}
@@ -149,12 +150,12 @@ export default function TaxesPage() {
       ) : (
         <>
           {/* Quarter cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-5 mb-6 lg:mb-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-5 mb-6 lg:mb-8 stagger-enter">
             {taxes.map((t) => {
               const q = qNum(t.quarter);
               const allPaid = TAX_TYPES.every(tt => isPaid(q, tt.key));
               return (
-                <div key={t.quarter} className={`card-neo p-4 sm:p-6 border ${allPaid ? "border-emerald-500/30" : "border-dark-50/20"}`}>
+                <div key={t.quarter} className={`card-neo card-tap p-4 sm:p-6 border ${allPaid ? "border-emerald-500/30" : "border-dark-50/20"}`}>
                   <div className="flex items-center justify-between mb-3">
                     <p className="text-sm text-gray-500 font-medium">{t.quarter}</p>
                     {allPaid && (

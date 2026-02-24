@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import axios from "axios";
+import api from "../api/client";
 import {
   TrendingUp,
-  Stethoscope,
+
   Package,
   Landmark,
   Banknote,
@@ -13,7 +13,13 @@ import {
   Users,
   Building2,
   BadgeDollarSign,
+  Calculator,
+  FileText,
+  CreditCard,
+  ClipboardList,
+  Layers,
 } from "lucide-react";
+import MedFlowLogo from "../components/shared/MedFlowLogo";
 import {
   BarChart,
   Bar,
@@ -28,7 +34,6 @@ import {
   Legend,
 } from "recharts";
 
-const API = "";
 const MONTHS_UA = [
   "", "Січень", "Лютий", "Березень", "Квітень",
   "Травень", "Червень", "Липень", "Серпень",
@@ -60,7 +65,7 @@ export default function OwnerSharePage() {
     if (!token) return;
     (async () => {
       try {
-        const r = await axios.get(`${API}/api/monthly-expenses/owner-share/${token}/view`);
+        const r = await api.get(`/monthly-expenses/owner-share/${token}/view`);
         setData(r.data);
       } catch {
         setError("Посилання не знайдено або термін дії закінчився.");
@@ -133,7 +138,7 @@ export default function OwnerSharePage() {
               <Building2 size={22} className="text-amber-400" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-white">Pepelyashko · Зведений звіт ФОП</h1>
+              <h1 className="text-xl font-bold text-white">MedFlow · Зведений звіт ФОП</h1>
               <p className="text-sm text-gray-400">{data.filter_label}</p>
             </div>
           </div>
@@ -192,12 +197,12 @@ export default function OwnerSharePage() {
             {/* Таблиця розрахунку сформованого доходу */}
             <div className="card-neo overflow-hidden">
               <div className="px-5 py-3 border-b border-dark-50/10">
-                <h3 className="text-sm font-medium text-gray-400">Розрахунок сформованого доходу</h3>
+                <h3 className="text-sm font-medium text-gray-400 flex items-center gap-2"><Calculator size={14} className="text-orange-400" />Розрахунок сформованого доходу</h3>
               </div>
               <div className="divide-y divide-dark-50/5">
                 {/* Власні декларації */}
                 <div className="px-5 py-4">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Кошти за власні декларації</p>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-1.5"><FileText size={12} className="text-orange-400" />Кошти за власні декларації</p>
                   <div className="space-y-1.5 text-sm">
                     <div className="flex justify-between"><span className="text-gray-400">Брутто НСЗУ (власник)</span><span className="text-white font-mono tabular-nums">{fmt(fi.own_nhsu_brutto)} грн</span></div>
                     <div className="flex justify-between"><span className="text-gray-400">÷ 2</span><span className="text-amber-400 font-mono tabular-nums">{fmt(fi.own_nhsu_brutto / 2)} грн</span></div>
@@ -211,7 +216,7 @@ export default function OwnerSharePage() {
                 {/* Декларації найманого лікаря */}
                 {fi.hired_doctor && (
                   <div className="px-5 py-4">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Кошти за декларації найманого лікаря</p>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-1.5"><Users size={12} className="text-orange-400" />Кошти за декларації найманого лікаря</p>
                     <div className="space-y-1.5 text-sm">
                       <div className="flex justify-between"><span className="text-gray-400">Брутто НСЗУ ({fi.hired_doctor.doctor_name})</span><span className="text-white font-mono tabular-nums">{fmt(fi.hired_doctor.nhsu_brutto)} грн</span></div>
                       <div className="flex justify-between"><span className="text-gray-400">Витрати (ЄП, ВЗ, ЗП лікаря та сестри)</span><span className="text-red-400 font-mono tabular-nums">−{fmt(fi.hired_doctor.total_expenses)} грн</span></div>
@@ -222,7 +227,7 @@ export default function OwnerSharePage() {
 
                 {/* Платні послуги */}
                 <div className="px-5 py-4">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Дохід від платних послуг</p>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-1.5"><CreditCard size={12} className="text-orange-400" />Дохід від платних послуг</p>
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-400">Дохід лікаря (з модуля)</span>
                     <span className="text-blue-400 font-bold font-mono tabular-nums">{fmt(fi.paid_services_income)} грн</span>
@@ -295,7 +300,7 @@ export default function OwnerSharePage() {
             {nhsuDoctors.length > 0 && (
               <div className="card-neo overflow-hidden">
                 <div className="px-5 py-3 border-b border-dark-50/10">
-                  <h3 className="text-sm font-medium text-gray-400">Деталі по лікарях</h3>
+                  <h3 className="text-sm font-medium text-gray-400 flex items-center gap-2"><Users size={14} className="text-orange-400" />Деталі по лікарях</h3>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs min-w-[700px]">
@@ -343,7 +348,7 @@ export default function OwnerSharePage() {
             {nhsuAgeGroups.length > 0 && (
               <div className="card-neo overflow-hidden">
                 <div className="px-5 py-3 border-b border-dark-50/10">
-                  <h3 className="text-sm font-medium text-gray-400">По вікових групах</h3>
+                  <h3 className="text-sm font-medium text-gray-400 flex items-center gap-2"><Layers size={14} className="text-orange-400" />По вікових групах</h3>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs min-w-[700px]">
@@ -380,7 +385,7 @@ export default function OwnerSharePage() {
         {paidDash && (
           <section className="space-y-4">
             <h2 className="text-lg font-bold text-white flex items-center gap-2">
-              <Stethoscope size={20} className="text-green-400" />
+              <MedFlowLogo size={20} className="text-green-400" />
               Платні послуги
             </h2>
 
@@ -450,7 +455,7 @@ export default function OwnerSharePage() {
             {paidTable.length > 0 && (
               <div className="card-neo overflow-hidden">
                 <div className="px-5 py-3 border-b border-dark-50/10">
-                  <h3 className="text-sm font-medium text-gray-400">Деталі по послугах</h3>
+                  <h3 className="text-sm font-medium text-gray-400 flex items-center gap-2"><ClipboardList size={14} className="text-orange-400" />Деталі по послугах</h3>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs min-w-[900px]">
@@ -489,7 +494,7 @@ export default function OwnerSharePage() {
 
         {/* Footer */}
         <div className="text-center text-xs text-gray-600 py-4">
-          Pepelyashko · Фінансовий менеджер ФОП
+          MedFlow · Фінансовий менеджер ФОП
         </div>
       </div>
     </div>

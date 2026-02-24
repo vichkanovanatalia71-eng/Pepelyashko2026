@@ -1,16 +1,19 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import axios from "axios";
+import api from "../api/client";
 import {
   TrendingUp,
-  Stethoscope,
+
   Package,
   Landmark,
   Banknote,
   Wallet,
   Clock,
   AlertCircle,
+  Trophy,
+  BarChart3,
 } from "lucide-react";
+import MedFlowLogo from "../components/shared/MedFlowLogo";
 import {
   BarChart,
   Bar,
@@ -25,7 +28,6 @@ import {
   Legend,
 } from "recharts";
 
-const API = "";
 const MONTHS_UA = [
   "", "Січень", "Лютий", "Березень", "Квітень",
   "Травень", "Червень", "Липень", "Серпень",
@@ -53,7 +55,7 @@ export default function SharePage() {
     if (!token) return;
     (async () => {
       try {
-        const r = await axios.get(`${API}/api/monthly-services/share/${token}/view`);
+        const r = await api.get(`/monthly-services/share/${token}/view`);
         setData(r.data);
       } catch {
         setError("Посилання не знайдено або термін дії закінчився.");
@@ -118,10 +120,10 @@ export default function SharePage() {
         <div className="card-neo p-6">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 rounded-xl bg-accent-500/10 flex items-center justify-center">
-              <Stethoscope size={22} className="text-accent-500" />
+              <MedFlowLogo size={26} className="text-accent-500" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-white">Pepelyashko · Платні послуги</h1>
+              <h1 className="text-xl font-bold text-white">MedFlow · Платні послуги</h1>
               <p className="text-sm text-gray-400">{data.filter_label}</p>
             </div>
           </div>
@@ -141,7 +143,7 @@ export default function SharePage() {
                 <div className="flex gap-4 mt-2 text-xs text-gray-400"><span>К-ть: {d.total_quantity}</span><span>Сер.чек: {fmt(d.avg_check)}</span></div>
               </div>
               <div className="card-neo p-5">
-                <div className="flex items-center gap-2 mb-3"><Stethoscope size={16} className="text-green-400" /><span className="text-xs text-gray-500">Дохід лікарів</span></div>
+                <div className="flex items-center gap-2 mb-3"><MedFlowLogo size={16} className="text-green-400" /><span className="text-xs text-gray-500">Дохід лікарів</span></div>
                 <p className="text-xl font-bold text-green-400 tabular-nums">{fmt(d.doctor_income)} <span className="text-xs text-gray-500">грн</span></p>
               </div>
               <div className="card-neo p-5">
@@ -165,7 +167,7 @@ export default function SharePage() {
             {/* ТОП послуг */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="card-neo p-5">
-                <p className="text-sm font-medium text-gray-400 mb-3">ТОП-5 за оборотом</p>
+                <p className="text-sm font-medium text-gray-400 mb-3 flex items-center gap-2"><Trophy size={14} className="text-orange-400" />ТОП-5 за оборотом</p>
                 <div className="space-y-2">
                   {topByRevenue.map((s: any, i: number) => (
                     <div key={i} className="flex items-center gap-3 text-xs">
@@ -177,7 +179,7 @@ export default function SharePage() {
                 </div>
               </div>
               <div className="card-neo p-5">
-                <p className="text-sm font-medium text-gray-400 mb-3">ТОП-5 за кількістю</p>
+                <p className="text-sm font-medium text-gray-400 mb-3 flex items-center gap-2"><Trophy size={14} className="text-orange-400" />ТОП-5 за кількістю</p>
                 <div className="space-y-2">
                   {topByQty.map((s: any, i: number) => (
                     <div key={i} className="flex items-center gap-3 text-xs">
@@ -193,7 +195,7 @@ export default function SharePage() {
             {/* Витрати (Pie) */}
             {expensesPie.length > 0 && (
               <div className="card-neo p-5">
-                <p className="text-sm font-medium text-gray-400 mb-3">Структура витрат</p>
+                <p className="text-sm font-medium text-gray-400 mb-3 flex items-center gap-2"><BarChart3 size={14} className="text-orange-400" />Структура витрат</p>
                 <ResponsiveContainer width="100%" height={220}>
                   <PieChart>
                     <Pie data={expensesPie} cx="50%" cy="50%" outerRadius={75} dataKey="value" label={({ name, percent }: any) => `${name} ${(percent * 100).toFixed(0)}%`}>
@@ -264,7 +266,7 @@ export default function SharePage() {
 
         {/* Footer */}
         <div className="text-center text-xs text-gray-600 py-4">
-          Pepelyashko · Фінансовий менеджер ФОП
+          MedFlow · Фінансовий менеджер ФОП
         </div>
       </div>
     </div>

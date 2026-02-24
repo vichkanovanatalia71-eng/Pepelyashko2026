@@ -35,18 +35,23 @@ export default function AlertBanner({ variant, children, onDismiss }: AlertBanne
 
   return (
     <div
-      className={`flex items-center justify-between gap-3 px-4 py-3 rounded-xl border ${cls}`}
+      className={`flex items-center justify-between gap-3 px-4 py-3 rounded-2xl border
+                  backdrop-blur-sm shadow-sm
+                  animate-enter-up ${cls}`}
       role="alert"
     >
       <div className="flex items-center gap-2.5 min-w-0">
-        <Icon size={16} className="shrink-0" aria-hidden="true" />
+        <div className="w-7 h-7 rounded-lg bg-current/10 flex items-center justify-center shrink-0">
+          <Icon size={14} className="shrink-0" aria-hidden="true" />
+        </div>
         <span className="text-sm">{children}</span>
       </div>
       {onDismiss && (
         <button
           onClick={onDismiss}
           aria-label="Закрити сповіщення"
-          className="p-1 rounded-lg hover:bg-dark-300/50 transition-all shrink-0
+          className="p-1.5 rounded-lg hover:bg-dark-300/50 active:scale-90
+                     transition-all duration-150 shrink-0
                      focus-visible:outline-2 focus-visible:outline-accent-400"
         >
           <X size={14} />
