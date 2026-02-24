@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Send, Lightbulb, ArrowRight, AlertCircle } from "lucide-react";
+import { Send, Lightbulb, ArrowRight, AlertCircle, Sparkles } from "lucide-react";
 import api from "../api/client";
 import { PageHeader, MonthNavigator } from "../components/shared";
 
@@ -143,6 +143,7 @@ export default function AiConsultantPage() {
       <PageHeader
         title="AI-Консультант"
         subtitle="Детальна фінансова аналітика вашої медпрактики"
+        icon={<Sparkles size={22} className="text-orange-400" />}
       />
 
       <MonthNavigator

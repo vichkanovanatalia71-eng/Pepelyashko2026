@@ -1,5 +1,5 @@
 import { useEffect, useState, FormEvent } from "react";
-import { Plus, Trash2, X, Pencil, Search, ArrowUpDown } from "lucide-react";
+import { Plus, Trash2, X, Pencil, Search, ArrowUpDown, Wallet } from "lucide-react";
 import api from "../api/client";
 import type { Income, IncomeCategory } from "../types";
 
@@ -160,14 +160,19 @@ export default function IncomesPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-5 lg:mb-8 flex-wrap gap-3">
-        <div>
-          <h2 className="text-2xl font-bold text-white">Доходи</h2>
-          <p className="text-gray-500 text-sm mt-1">
-            Всього: <span className="text-emerald-400 font-semibold tabular-nums">{fmt(total)} &#8372;</span>
-            {filtered.length !== incomes.length && (
-              <span className="text-gray-600 ml-1">({filtered.length} з {incomes.length})</span>
-            )}
-          </p>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center shrink-0">
+            <Wallet size={22} className="text-orange-400" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-white">Доходи</h2>
+            <p className="text-gray-500 text-sm mt-1">
+              Всього: <span className="text-emerald-400 font-semibold tabular-nums">{fmt(total)} &#8372;</span>
+              {filtered.length !== incomes.length && (
+                <span className="text-gray-600 ml-1">({filtered.length} з {incomes.length})</span>
+              )}
+            </p>
+          </div>
         </div>
         <button
           onClick={() => showForm ? closeForm() : openCreateForm()}

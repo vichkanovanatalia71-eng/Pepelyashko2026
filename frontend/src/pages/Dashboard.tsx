@@ -15,6 +15,7 @@ import {
   BarChart3,
   Trophy,
   Layers,
+  LayoutDashboard,
 } from "lucide-react";
 import {
   AreaChart,
@@ -269,6 +270,7 @@ export default function Dashboard() {
       <PageHeader
         title="Дашборд"
         subtitle={`Фінансовий огляд ${getPeriodLabel()}`}
+        icon={<LayoutDashboard size={22} className="text-orange-400" />}
       >
         {period === "current" && (
           <MonthNavigator

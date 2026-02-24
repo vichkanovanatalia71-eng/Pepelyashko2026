@@ -111,9 +111,14 @@ export default function RevenuePage() {
       {/* ── Header & filters ── */}
       <div className="card-neo card-3d-hover p-4 sm:p-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-white">Аналітика доходів</h1>
-            <p className="text-xs sm:text-sm text-gray-500 mt-0.5">Агрегація НСЗУ + Платних послуг</p>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center shrink-0">
+              <BadgeDollarSign size={22} className="text-orange-400" />
+            </div>
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold text-white">Аналітика доходів</h1>
+              <p className="text-xs sm:text-sm text-gray-500 mt-0.5">Агрегація НСЗУ + Платних послуг</p>
+            </div>
           </div>
 
           <div className="flex flex-wrap items-end gap-3">

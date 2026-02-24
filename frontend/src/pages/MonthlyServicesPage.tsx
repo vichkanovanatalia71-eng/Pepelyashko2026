@@ -491,8 +491,8 @@ export default function MonthlyServicesPage() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <div className="hidden sm:flex w-10 h-10 rounded-xl bg-accent-500/10 items-center justify-center">
-            <BarChart3 size={22} className="text-accent-500" />
+          <div className="hidden sm:flex w-10 h-10 rounded-xl bg-orange-500/10 items-center justify-center">
+            <BarChart3 size={22} className="text-orange-400" />
           </div>
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-white">Платні послуги</h1>

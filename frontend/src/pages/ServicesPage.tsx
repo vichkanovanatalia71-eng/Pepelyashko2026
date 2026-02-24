@@ -487,8 +487,8 @@ export default function ServicesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-accent-500/10 flex items-center justify-center">
-            <ClipboardList size={22} className="text-accent-500" />
+          <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center">
+            <ClipboardList size={22} className="text-orange-400" />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-white">Платні послуги</h1>

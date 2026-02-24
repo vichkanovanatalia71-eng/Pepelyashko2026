@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Check } from "lucide-react";
+import { Check, Receipt } from "lucide-react";
 import api from "../api/client";
 import type { TaxSummary, AnnualReport } from "../types";
 import {
@@ -88,6 +88,7 @@ export default function TaxesPage() {
       <PageHeader
         title="Податки"
         subtitle="Поквартальний розрахунок для ФОП 3 групи"
+        icon={<Receipt size={22} className="text-orange-400" />}
       >
         <MonthNavigator
           year={year}

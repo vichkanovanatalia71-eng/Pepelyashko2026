@@ -7,7 +7,7 @@ import {
   ChevronLeft, ChevronRight, ChevronDown, Upload, X, Save,
   RefreshCw, Sparkles, Users, BadgeDollarSign, TrendingDown,
   ShieldAlert, FileImage, Plus, CheckCircle2, AlertCircle,
-  Download, History, TrendingUp, Trash2,
+  Download, History, TrendingUp, Trash2, HeartPulse,
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import api from "../api/client";
@@ -427,9 +427,14 @@ export default function NhsuPage() {
       {/* ── FILTER BAR ── */}
       <div className="card-neo p-5">
         <div className="flex flex-wrap items-center gap-4">
-          <div className="flex-1 min-w-[160px]">
-            <h2 className="text-xl font-bold text-white">Розрахунок НСЗУ</h2>
-            <p className="text-xs text-gray-500 mt-0.5">Капітаційна ставка · ПМГ</p>
+          <div className="flex items-center gap-3 flex-1 min-w-[160px]">
+            <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center shrink-0">
+              <HeartPulse size={22} className="text-orange-400" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-white">Розрахунок НСЗУ</h2>
+              <p className="text-xs text-gray-500 mt-0.5">Капітаційна ставка · ПМГ</p>
+            </div>
           </div>
 
           {/* Multi-select doctor dropdown */}

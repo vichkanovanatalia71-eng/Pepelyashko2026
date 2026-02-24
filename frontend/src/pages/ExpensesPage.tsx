@@ -1204,7 +1204,11 @@ export default function ExpensesPage() {
 
       {/* ═══ HEADER ═══ */}
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center shrink-0">
+            <Wallet size={22} className="text-orange-400" />
+          </div>
+          <div>
           <h2 className="text-2xl font-bold text-white">Витрати</h2>
           {viewMode === "month" && data && (
             <p className="text-gray-500 text-sm mt-1">
@@ -1225,6 +1229,7 @@ export default function ExpensesPage() {
           {viewMode === "all" && (
             <p className="text-gray-500 text-sm mt-1">Огляд усіх місяців — {year}</p>
           )}
+          </div>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
