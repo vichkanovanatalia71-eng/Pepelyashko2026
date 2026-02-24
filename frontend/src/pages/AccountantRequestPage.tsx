@@ -45,7 +45,7 @@ interface ShareData {
   submitted: boolean;
   submitted_data: {
     salaries: { staff_member_id: number; full_name: string; brutto: number }[];
-    fixed_expenses: { name: string; amount: number; category: string }[];
+    fixed_expenses: { name: string; amount: number; category: string; category_key?: string }[];
     other_expenses: { name: string; amount: number; category: string }[];
     submitted_at: string;
   } | null;
@@ -71,6 +71,7 @@ interface ExpenseRow {
   is_recurring: boolean;
   fromPrev: boolean;
   prevAmount: number;
+  category_key?: string;
 }
 
 const MONTHS_UA = [
@@ -101,7 +102,6 @@ export default function AccountantRequestPage() {
   const [savedResult, setSavedResult] = useState<ShareData["submitted_data"]>(null);
   const [editMode, setEditMode] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [successAnim, setSuccessAnim] = useState(false);
 
   async function loadData() {
     if (!token) return;
@@ -130,13 +130,59 @@ export default function AccountantRequestPage() {
     loadData();
   }, [token]);
 
-  function initForm(d: ShareData) {
-    if (d.submitted && d.submitted_data && !editMode) {
+  function initForm(d: ShareData, forceEditMode = false) {
+    const isEditing = editMode || forceEditMode;
+
+    if (d.submitted && d.submitted_data && !isEditing) {
       setSubmitted(true);
       setSavedResult(d.submitted_data);
     }
 
-    // Init salaries from payload
+    // ── При редагуванні після надсилання: завантажуємо надіслані дані ──
+    if (isEditing && d.submitted && d.submitted_data) {
+      const sd = d.submitted_data;
+
+      // Зарплати: дані працівників з payload + brutto з надісланих даних
+      const submittedBrutto = new Map(
+        sd.salaries.map((s) => [s.staff_member_id, s.brutto])
+      );
+      const rows: SalaryRow[] = (d.data.salary_staff || []).map((s) => ({
+        staff_member_id: s.staff_member_id,
+        full_name: s.full_name,
+        role: s.role,
+        position: s.position,
+        brutto: submittedBrutto.get(s.staff_member_id) ?? s.prev_brutto,
+        prev_brutto: s.prev_brutto,
+      }));
+      setSalaries(rows);
+
+      // Витрати: об'єднуємо постійні + інші з надісланих даних
+      let nextId = 1;
+      const allExp: ExpenseRow[] = [
+        ...(sd.fixed_expenses || []).map((fe) => ({
+          id: nextId++,
+          name: fe.name,
+          amount: fe.amount,
+          is_recurring: true,
+          fromPrev: true,
+          prevAmount: fe.amount,
+          category_key: fe.category_key,
+        })),
+        ...(sd.other_expenses || []).map((oe) => ({
+          id: nextId++,
+          name: oe.name,
+          amount: oe.amount,
+          is_recurring: false,
+          fromPrev: false,
+          prevAmount: 0,
+        })),
+      ];
+      setExpenses(allExp);
+      setNextExpId(nextId);
+      return;
+    }
+
+    // ── Перший візит: завантажуємо дані з payload ──
     const rows: SalaryRow[] = (d.data.salary_staff || []).map((s) => ({
       staff_member_id: s.staff_member_id,
       full_name: s.full_name,
@@ -147,7 +193,6 @@ export default function AccountantRequestPage() {
     }));
     setSalaries(rows);
 
-    // Init recurring expenses from previous month
     const recExp: ExpenseRow[] = (d.data.recurring_expenses || []).map((re, idx) => ({
       id: idx + 1,
       name: re.name,
@@ -155,6 +200,7 @@ export default function AccountantRequestPage() {
       is_recurring: true,
       fromPrev: true,
       prevAmount: re.amount,
+      category_key: re.category_key,
     }));
     setExpenses(recExp);
     setNextExpId(recExp.length + 1);
@@ -202,17 +248,12 @@ export default function AccountantRequestPage() {
             name: e.name,
             amount: e.amount,
             is_recurring: e.is_recurring,
+            category_key: e.category_key || undefined,
           })),
       });
       setSavedResult(res.data.saved);
       setEditMode(false);
-
-      // Show success animation for ~5s before revealing result
-      setSuccessAnim(true);
-      setTimeout(() => {
-        setSuccessAnim(false);
-        setSubmitted(true);
-      }, 5000);
+      setSubmitted(true);
     } catch (e) {
       console.error(e);
       setAlertDlg({ title: "Помилка", description: "Помилка надсилання даних" });
@@ -223,6 +264,7 @@ export default function AccountantRequestPage() {
   function handleEdit() {
     setSubmitted(false);
     setEditMode(true);
+    if (data) initForm(data, true);
   }
 
   // ── Loading / Error states ──
@@ -698,50 +740,6 @@ export default function AccountantRequestPage() {
             </div>
           </div>
         </>
-      )}
-
-      {/* ══════════════════════════════════════════════
-          Анімація успішного надсилання (~5с)
-      ══════════════════════════════════════════════ */}
-      {successAnim && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-dark-700/95 backdrop-blur-md"
-          style={{ animation: "fadeIn 0.3s ease forwards" }}
-        >
-          <div className="flex flex-col items-center gap-6 px-6"
-            style={{ animation: "modalScaleIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards" }}
-          >
-            {/* Animated check circle */}
-            <div className="relative">
-              <div className="w-24 h-24 rounded-full bg-emerald-500/15 border-2 border-emerald-500/40 flex items-center justify-center"
-                style={{
-                  animation: "successPulse 2s ease-in-out infinite",
-                  boxShadow: "0 0 50px rgba(16, 185, 129, 0.3), 0 0 100px rgba(16, 185, 129, 0.15)",
-                }}
-              >
-                <Check size={42} className="text-emerald-400" style={{ animation: "checkMark 0.6s ease 0.3s both" }} />
-              </div>
-            </div>
-
-            <div className="text-center space-y-2.5">
-              <h2 className="text-2xl font-bold text-white" style={{ animation: "fadeSlideUp 0.4s ease 0.4s both" }}>
-                Звіт надіслано!
-              </h2>
-              <p className="text-sm text-gray-400 max-w-sm" style={{ animation: "fadeSlideUp 0.4s ease 0.6s both" }}>
-                Дані за {MONTHS_UA[data.month]} {data.year} успішно записані у систему MedFlow
-              </p>
-              <p className="text-xs text-gray-500" style={{ animation: "fadeSlideUp 0.4s ease 0.8s both" }}>
-                Зачекайте, відбувається збереження…
-              </p>
-            </div>
-
-            {/* Progress bar */}
-            <div className="w-56 h-1.5 rounded-full bg-dark-400/50 overflow-hidden mt-2">
-              <div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400"
-                style={{ animation: "progressFill 4.6s ease-in-out forwards", animationDelay: "0.2s", width: "0%" }}
-              />
-            </div>
-          </div>
-        </div>
       )}
 
       <ConfirmDialog

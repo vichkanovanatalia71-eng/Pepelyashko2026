@@ -13,7 +13,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
 from pydantic import BaseModel
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import get_current_user, get_db
@@ -1519,6 +1519,7 @@ class AccExpenseItem(BaseModel):
     name: str
     amount: float
     is_recurring: bool = False
+    category_key: str | None = None
 
 
 class AccountantSubmitRequest(BaseModel):
@@ -1735,9 +1736,20 @@ async def submit_accountant_request(
             "brutto": sal.brutto,
         })
 
-    # ── 2. Зберігаємо витрати бухгалтера ──
-    # Recurring → MonthlyFixedExpense
-    # Non-recurring (нові або зняли прапорець) → MonthlyOtherExpense
+    # ── 2. Очищення попередніх «інших витрат» при повторному надсиланні ──
+    if fs.get("submitted") and fs.get("submitted_data"):
+        prev_sd = fs["submitted_data"]
+        prev_other_ids = prev_sd.get("other_expense_ids", [])
+        if prev_other_ids:
+            await db.execute(
+                delete(MonthlyOtherExpense).where(
+                    MonthlyOtherExpense.id.in_(prev_other_ids),
+                    MonthlyOtherExpense.user_id == user_id,
+                )
+            )
+            await db.flush()
+
+    # ── 3. Зберігаємо витрати бухгалтера ──
     payload_expenses = share.payload_snapshot.get("recurring_expenses", [])
 
     for exp in body.expenses:
@@ -1746,18 +1758,36 @@ async def submit_accountant_request(
         if exp.is_recurring:
             # ── Постійна витрата → MonthlyFixedExpense ──
             existing_fe = None
-            for pe in payload_expenses:
-                if pe.get("name") == exp.name and pe.get("category_key"):
-                    fe_res = await db.execute(
-                        select(MonthlyFixedExpense).where(
-                            MonthlyFixedExpense.user_id == user_id,
-                            MonthlyFixedExpense.year == year,
-                            MonthlyFixedExpense.month == month,
-                            MonthlyFixedExpense.category_key == pe["category_key"],
-                        )
+            used_cat_key = exp.category_key
+
+            # Прямий пошук за category_key (якщо є)
+            if exp.category_key:
+                fe_res = await db.execute(
+                    select(MonthlyFixedExpense).where(
+                        MonthlyFixedExpense.user_id == user_id,
+                        MonthlyFixedExpense.year == year,
+                        MonthlyFixedExpense.month == month,
+                        MonthlyFixedExpense.category_key == exp.category_key,
                     )
-                    existing_fe = fe_res.scalar_one_or_none()
-                    break
+                )
+                existing_fe = fe_res.scalar_one_or_none()
+
+            # Fallback: пошук в payload за назвою
+            if not existing_fe:
+                for pe in payload_expenses:
+                    if pe.get("name") == exp.name and pe.get("category_key"):
+                        fe_res = await db.execute(
+                            select(MonthlyFixedExpense).where(
+                                MonthlyFixedExpense.user_id == user_id,
+                                MonthlyFixedExpense.year == year,
+                                MonthlyFixedExpense.month == month,
+                                MonthlyFixedExpense.category_key == pe["category_key"],
+                            )
+                        )
+                        existing_fe = fe_res.scalar_one_or_none()
+                        if existing_fe:
+                            used_cat_key = pe["category_key"]
+                        break
 
             if existing_fe:
                 existing_fe.amount = exp.amount
@@ -1766,6 +1796,7 @@ async def submit_accountant_request(
                 existing_fe.edited_by = "accountant"
                 existing_fe.edited_at = now
                 await db.flush()
+                used_cat_key = existing_fe.category_key
             else:
                 cat_key = str(uuid.uuid4())[:12]
                 fe = MonthlyFixedExpense(
@@ -1785,33 +1816,38 @@ async def submit_accountant_request(
                     db, user_id, year, month,
                     cat_key, exp.name, "", exp.amount,
                 )
+                used_cat_key = cat_key
 
             saved_fixed.append({
                 "name": exp.name,
                 "amount": exp.amount,
                 "category": "Постійні витрати",
+                "category_key": used_cat_key,
             })
         else:
             # ── Не постійна витрата → MonthlyOtherExpense ──
-            # Якщо це була recurring витрата з payload і прапорець зняли —
-            # видаляємо з MonthlyFixedExpense
-            for pe in payload_expenses:
-                if pe.get("name") == exp.name and pe.get("category_key"):
-                    old_fe_res = await db.execute(
-                        select(MonthlyFixedExpense).where(
-                            MonthlyFixedExpense.user_id == user_id,
-                            MonthlyFixedExpense.year == year,
-                            MonthlyFixedExpense.month == month,
-                            MonthlyFixedExpense.category_key == pe["category_key"],
-                        )
-                    )
-                    old_fe = old_fe_res.scalar_one_or_none()
-                    if old_fe:
-                        await db.delete(old_fe)
-                        await db.flush()
-                    break
+            # Видаляємо з MonthlyFixedExpense якщо була recurring
+            cat_key_to_delete = exp.category_key
+            if not cat_key_to_delete:
+                for pe in payload_expenses:
+                    if pe.get("name") == exp.name and pe.get("category_key"):
+                        cat_key_to_delete = pe["category_key"]
+                        break
 
-            # Створюємо запис в MonthlyOtherExpense
+            if cat_key_to_delete:
+                old_fe_res = await db.execute(
+                    select(MonthlyFixedExpense).where(
+                        MonthlyFixedExpense.user_id == user_id,
+                        MonthlyFixedExpense.year == year,
+                        MonthlyFixedExpense.month == month,
+                        MonthlyFixedExpense.category_key == cat_key_to_delete,
+                    )
+                )
+                old_fe = old_fe_res.scalar_one_or_none()
+                if old_fe:
+                    await db.delete(old_fe)
+                    await db.flush()
+
             oe = MonthlyOtherExpense(
                 user_id=user_id,
                 year=year,
@@ -1827,6 +1863,7 @@ async def submit_accountant_request(
                 "name": exp.name,
                 "amount": exp.amount,
                 "category": "Інші витрати",
+                "id": oe.id,
             })
 
     # ── 3. Оновлюємо share запис як підтверджений ──
@@ -1838,6 +1875,7 @@ async def submit_accountant_request(
         "salaries": saved_salaries,
         "fixed_expenses": saved_fixed,
         "other_expenses": saved_other,
+        "other_expense_ids": [o["id"] for o in saved_other if o.get("id")],
         "submitted_at": now_utc.isoformat(),
     }
     share.filter_snapshot = new_fs
@@ -1851,6 +1889,7 @@ async def submit_accountant_request(
             "salaries": saved_salaries,
             "fixed_expenses": saved_fixed,
             "other_expenses": saved_other,
+            "submitted_at": now_utc.isoformat(),
         },
     }
 
