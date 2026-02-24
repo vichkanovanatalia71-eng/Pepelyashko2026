@@ -121,7 +121,7 @@ function DrillModal({ title, onClose, children }: { title: string; onClose: () =
       />
       {/* Panel */}
       <div className="relative bg-dark-600 border border-dark-50/10
-                      rounded-none sm:rounded-2xl w-full max-w-2xl min-h-full sm:min-h-0 sm:my-auto sm:max-h-[90vh] sm:overflow-y-auto
+                      rounded-none sm:rounded-2xl w-full max-w-2xl min-h-full sm:min-h-0 sm:my-8
                       shadow-elevation-3 animate-modal-in pb-20 sm:pb-0">
         <div className="flex items-center justify-between p-5 border-b border-dark-50/10 bg-dark-400/20 backdrop-blur-sm">
           <h3 className="text-base font-semibold text-white">{title}</h3>

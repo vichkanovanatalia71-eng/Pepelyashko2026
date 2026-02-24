@@ -715,7 +715,7 @@ export default function MonthlyServicesPage() {
       {/* ── Форма звіту ── */}
       {showReportForm && (
         <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 overflow-y-auto" role="dialog" aria-modal="true" onClick={() => setShowReportForm(false)}>
-          <div className="bg-dark-600 border border-dark-50/10 rounded-none sm:rounded-2xl w-full max-w-3xl min-h-full sm:min-h-0 sm:my-auto sm:max-h-[90vh] sm:overflow-y-auto shadow-2xl animate-modal-in pb-20 sm:pb-0" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-dark-600 border border-dark-50/10 rounded-none sm:rounded-2xl w-full max-w-3xl min-h-full sm:min-h-0 sm:my-8 shadow-2xl animate-modal-in pb-20 sm:pb-0" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-6 border-b border-dark-50/10">
               <h2 className="text-lg font-semibold text-white">
                 {editingReport ? "Редагування звіту" : "Новий звіт"} · {MONTHS_UA[selectedMonth]} {selectedYear}
@@ -888,7 +888,7 @@ export default function MonthlyServicesPage() {
       {/* ── Детальна статистика послуг (Блок 1) ── */}
       {showServicesModal && d && analytics && (
         <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 overflow-y-auto" role="dialog" aria-modal="true" onClick={() => setShowServicesModal(false)}>
-          <div className="bg-dark-600 border border-dark-50/10 rounded-none sm:rounded-2xl w-full max-w-4xl min-h-full sm:min-h-0 sm:my-auto sm:max-h-[90vh] sm:overflow-y-auto shadow-2xl animate-modal-in pb-20 sm:pb-0" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-dark-600 border border-dark-50/10 rounded-none sm:rounded-2xl w-full max-w-4xl min-h-full sm:min-h-0 sm:my-8 shadow-2xl animate-modal-in pb-20 sm:pb-0" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-6 border-b border-dark-50/10">
               <h2 className="text-lg font-semibold text-white">Детальна статистика наданих послуг</h2>
               <div className="flex gap-2">
@@ -974,7 +974,7 @@ export default function MonthlyServicesPage() {
       {/* ── Дохід лікарів (Блок 2) ── */}
       {showDoctorModal && d && analytics && (
         <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 overflow-y-auto" role="dialog" aria-modal="true" onClick={() => setShowDoctorModal(false)}>
-          <div className="bg-dark-600 border border-dark-50/10 rounded-none sm:rounded-2xl w-full max-w-4xl min-h-full sm:min-h-0 sm:my-auto sm:max-h-[90vh] sm:overflow-y-auto shadow-2xl animate-modal-in pb-20 sm:pb-0" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-dark-600 border border-dark-50/10 rounded-none sm:rounded-2xl w-full max-w-4xl min-h-full sm:min-h-0 sm:my-8 shadow-2xl animate-modal-in pb-20 sm:pb-0" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-6 border-b border-dark-50/10">
               <h2 className="text-lg font-semibold text-white">{selectedDoctor ? "Дохід лікаря" : "Дохід лікарів"}</h2>
               <div className="flex gap-2">
@@ -1071,7 +1071,7 @@ export default function MonthlyServicesPage() {
       {/* ── Витрати (Блок 3) ── */}
       {showExpensesModal && d && analytics && (
         <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 overflow-y-auto" role="dialog" aria-modal="true" onClick={() => setShowExpensesModal(false)}>
-          <div className="bg-dark-600 border border-dark-50/10 rounded-none sm:rounded-2xl w-full max-w-3xl min-h-full sm:min-h-0 sm:my-auto sm:max-h-[90vh] sm:overflow-y-auto shadow-2xl animate-modal-in pb-20 sm:pb-0" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-dark-600 border border-dark-50/10 rounded-none sm:rounded-2xl w-full max-w-3xl min-h-full sm:min-h-0 sm:my-8 shadow-2xl animate-modal-in pb-20 sm:pb-0" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-6 border-b border-dark-50/10">
               <h2 className="text-lg font-semibold text-white">Детальна статистика витрат</h2>
               <div className="flex gap-2">
