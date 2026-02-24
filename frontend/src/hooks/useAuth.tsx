@@ -20,7 +20,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (email: string, password: string) => {
     const form = new URLSearchParams();
-    form.append("username", email);
+    form.append("username", email.trim().toLowerCase());
     form.append("password", password);
     const { data } = await api.post("/auth/login", form);
     localStorage.setItem("token", data.access_token);
