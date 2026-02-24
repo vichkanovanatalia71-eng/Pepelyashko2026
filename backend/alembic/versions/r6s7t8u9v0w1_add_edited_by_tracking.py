@@ -1,15 +1,15 @@
 """add edited_by tracking to monthly expenses
 
-Revision ID: q5r6s7t8u9v0
-Revises: p4q5r6s7t8u9
+Revision ID: r6s7t8u9v0w1
+Revises: q5r6s7t8u9v0
 Create Date: 2026-02-24
 """
 
 from alembic import op
 import sqlalchemy as sa
 
-revision = "q5r6s7t8u9v0"
-down_revision = "p4q5r6s7t8u9"
+revision = "r6s7t8u9v0w1"
+down_revision = "q5r6s7t8u9v0"
 branch_labels = None
 depends_on = None
 
