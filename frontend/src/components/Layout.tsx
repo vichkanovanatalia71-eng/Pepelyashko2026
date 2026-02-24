@@ -53,15 +53,16 @@ export default function Layout() {
     async function fetchNotifications() {
       try {
         const { data } = await api.get("/monthly-expenses/accountant-notifications");
-        if (!cancelled && data.notifications?.length) {
-          setAccNotifications(data.notifications);
+        if (!cancelled) {
+          setAccNotifications(data.notifications?.length ? data.notifications : []);
         }
       } catch {
         // silent — не блокуємо UX
       }
     }
     fetchNotifications();
-    return () => { cancelled = true; };
+    const interval = setInterval(fetchNotifications, 30_000);
+    return () => { cancelled = true; clearInterval(interval); };
   }, []);
 
   const handleDismissNotification = useCallback(async (shareId: number) => {
