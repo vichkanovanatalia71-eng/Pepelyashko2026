@@ -1118,12 +1118,11 @@ export default function ExpensesPage() {
 
         // ── Зарплатні витрати (лікарі та персонал) з розбивкою на ЗП та Платні послуги
         for (const r of data.salary.filter(s => !s.is_owner)) {
-          const salaryPart = r.total_employer_cost - (r.paid_services_income || 0);
-          if (salaryPart > 0) {
+          if (r.total_employer_cost > 0) {
             rows.push({
-              name: r.full_name,
+              name: `${r.full_name} — Заробітна плата (Витрати роботодавця)`,
               category: "salary",
-              amount: salaryPart,
+              amount: r.total_employer_cost,
             });
           }
           if (r.paid_services_income > 0) {
