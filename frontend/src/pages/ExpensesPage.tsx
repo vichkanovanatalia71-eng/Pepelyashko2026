@@ -63,7 +63,6 @@ import {
 import api from "../api/client";
 import type {
   MonthlyExpenseData,
-  FixedExpenseRow,
   SalaryExpenseRow,
   StaffMember,
   HiredDoctorInfo,
