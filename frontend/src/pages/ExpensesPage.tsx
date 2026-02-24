@@ -421,6 +421,14 @@ export default function ExpensesPage() {
   // ── Collapsible sections state (all collapsed by default) ──
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
 
+  // ── Previous month data for copy-from feature ──
+  const [prevMonthData, setPrevMonthData] = useState<MonthlyExpenseData | null>(null);
+  const [prevOtherExpenses, setPrevOtherExpenses] = useState<OtherExpense[]>([]);
+  const [prevMonthLoaded, setPrevMonthLoaded] = useState(false);
+  const [sectionCopyLoading, setSectionCopyLoading] = useState<Record<string, boolean>>({});
+  // Track which sections have already been copied (to hide the prompt after copy)
+  const [sectionCopied, setSectionCopied] = useState<Record<string, boolean>>({});
+
   // ── Load main expense data ─────────────────────────────────────
   const load = useCallback(async () => {
     setLoading(true);
@@ -491,6 +499,26 @@ export default function ExpensesPage() {
     }
   }, [year]);
 
+  // ── Load previous month data (for section copy feature) ────────
+  const loadPrevMonth = useCallback(async () => {
+    let pY = year;
+    let pM = month - 1;
+    if (pM < 1) { pM = 12; pY--; }
+    setPrevMonthLoaded(false);
+    try {
+      const [expResp, otherResp] = await Promise.all([
+        api.get<MonthlyExpenseData>("/monthly-expenses/", { params: { year: pY, month: pM } }).then(r => r.data).catch(() => null),
+        api.get<OtherExpense[]>("/monthly-expenses/other", { params: { year: pY, month: pM } }).then(r => r.data).catch(() => []),
+      ]);
+      setPrevMonthData(expResp);
+      setPrevOtherExpenses(otherResp);
+    } catch {
+      setPrevMonthData(null);
+      setPrevOtherExpenses([]);
+    } finally {
+      setPrevMonthLoaded(true);
+    }
+  }, [year, month]);
 
   // ── Load annual data for analytics ────────────────────────────
   const loadAnnualData = useCallback(async () => {
@@ -528,7 +556,7 @@ export default function ExpensesPage() {
     }
   }, [year]);
 
-  useEffect(() => { load(); loadOther(); loadStaff(); loadDoctors(); loadPeriods(); }, [load, loadOther, loadStaff, loadDoctors, loadPeriods]);
+  useEffect(() => { load(); loadOther(); loadStaff(); loadDoctors(); loadPeriods(); loadPrevMonth(); }, [load, loadOther, loadStaff, loadDoctors, loadPeriods, loadPrevMonth]);
   useEffect(() => { if (viewMode === "all") loadAnnualData(); }, [viewMode, loadAnnualData]);
 
   // ── Toggle collapsible section ──
@@ -539,11 +567,13 @@ export default function ExpensesPage() {
   // ── Month navigation ──────────────────────────────────────────
   function prevMonth() {
     setExpandedSections({});
+    setSectionCopied({});
     if (month === 1) { setYear(y => y - 1); setMonth(12); }
     else setMonth(m => m - 1);
   }
   function nextMonth() {
     setExpandedSections({});
+    setSectionCopied({});
     if (month === 12) { setYear(y => y + 1); setMonth(1); }
     else setMonth(m => m + 1);
   }
@@ -841,6 +871,70 @@ export default function ExpensesPage() {
     }
     setAiModal({ open: false, text: "", file: null, loading: false, result: null });
     setExpandedSections(s => ({ ...s, fixed: true }));
+  }
+
+  // ── Per-section copy from previous month ────────────────────────
+  function getPrevMonthLabel(): string {
+    let pM = month - 1;
+    let pY = year;
+    if (pM < 1) { pM = 12; pY--; }
+    return `${MONTH_NAMES[pM - 1]} ${pY}`;
+  }
+
+  function isPrevMonthLocked(): boolean {
+    return prevMonthData?.is_locked === true;
+  }
+
+  function hasPrevFixed(): boolean {
+    return (prevMonthData?.fixed?.length ?? 0) > 0 && prevMonthData!.fixed.some(r => r.amount > 0);
+  }
+
+  function hasPrevSalary(): boolean {
+    return (prevMonthData?.salary?.length ?? 0) > 0 && prevMonthData!.salary.some(r => r.brutto > 0);
+  }
+
+  function hasPrevOther(): boolean {
+    return prevOtherExpenses.length > 0;
+  }
+
+  async function copySectionFromPrev(section: "fixed" | "salary" | "other") {
+    setSectionCopyLoading(s => ({ ...s, [section]: true }));
+    let pY = year;
+    let pM = month - 1;
+    if (pM < 1) { pM = 12; pY--; }
+
+    try {
+      if (section === "fixed" || section === "salary") {
+        await api.post("/monthly-expenses/copy-from", {
+          source_year: pY,
+          source_month: pM,
+          target_year: year,
+          target_month: month,
+          copy_fixed: section === "fixed",
+          copy_salary: section === "salary",
+        });
+        await load();
+      } else {
+        // Copy other expenses one by one (no backend bulk copy)
+        for (const exp of prevOtherExpenses) {
+          await api.post("/monthly-expenses/other", {
+            name: exp.name,
+            description: exp.description,
+            amount: exp.amount,
+            category: exp.category,
+            year,
+            month,
+          });
+        }
+        await loadOther();
+      }
+      setSectionCopied(s => ({ ...s, [section]: true }));
+    } catch (e) {
+      console.error(e);
+      alert("Не вдалося перенести дані. Спробуйте ще раз.");
+    } finally {
+      setSectionCopyLoading(s => ({ ...s, [section]: false }));
+    }
   }
 
   // ── Excel export (повний звіт, без ПДФО та ВЗ із ЗП) ─────────
@@ -1676,6 +1770,42 @@ export default function ExpensesPage() {
 
               {expandedSections.fixed && (
               <>
+              {/* Copy from previous month prompt */}
+              {data.fixed.length === 0 && !sectionCopied.fixed && prevMonthLoaded && (
+                <div className="px-5 py-4 border-t border-dark-50/10 bg-dark-400/10">
+                  {!prevMonthData || !hasPrevFixed() ? (
+                    <p className="text-xs text-gray-600 text-center">Немає даних у попередньому місяці для перенесення.</p>
+                  ) : !isPrevMonthLocked() ? (
+                    <div className="flex items-start gap-2.5 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                      <AlertCircle size={15} className="text-amber-400 shrink-0 mt-0.5" />
+                      <p className="text-xs text-amber-300">
+                        Неможливо перенести дані з <strong>{getPrevMonthLabel()}</strong> — попередній місяць не зафіксовано.
+                        Спочатку зафіксуйте попередній період.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-accent-500/10 border border-accent-500/20">
+                      <Copy size={15} className="text-accent-400 shrink-0" />
+                      <div className="flex-1">
+                        <p className="text-sm text-gray-200">
+                          Перенести постійні витрати з <strong className="text-white">{getPrevMonthLabel()}</strong>?
+                        </p>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          {prevMonthData.fixed.filter(r => r.amount > 0).length} записів · {fmt(prevMonthData.totals.fixed_total)} ₴
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => copySectionFromPrev("fixed")}
+                        disabled={sectionCopyLoading.fixed}
+                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-accent-500 hover:bg-accent-400 text-white text-xs font-semibold transition-all disabled:opacity-50"
+                      >
+                        {sectionCopyLoading.fixed ? <RefreshCw size={13} className="animate-spin" /> : <Copy size={13} />}
+                        Перенести
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
               <div className="divide-y divide-dark-50/5 border-t border-dark-50/10">
                 {data.fixed.length === 0 ? (
                   <div className="px-5 py-8 text-center text-gray-600 text-sm">
@@ -1769,6 +1899,43 @@ export default function ExpensesPage() {
 
               {expandedSections.salary && (
               <div className="border-t border-dark-50/10">
+
+              {/* Copy from previous month prompt */}
+              {!data.salary.some(r => r.brutto > 0) && !sectionCopied.salary && prevMonthLoaded && (
+                <div className="px-5 py-4 bg-dark-400/10">
+                  {!prevMonthData || !hasPrevSalary() ? (
+                    <p className="text-xs text-gray-600 text-center">Немає зарплатних даних у попередньому місяці для перенесення.</p>
+                  ) : !isPrevMonthLocked() ? (
+                    <div className="flex items-start gap-2.5 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                      <AlertCircle size={15} className="text-amber-400 shrink-0 mt-0.5" />
+                      <p className="text-xs text-amber-300">
+                        Неможливо перенести дані з <strong>{getPrevMonthLabel()}</strong> — попередній місяць не зафіксовано.
+                        Спочатку зафіксуйте попередній період.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-accent-500/10 border border-accent-500/20">
+                      <Copy size={15} className="text-accent-400 shrink-0" />
+                      <div className="flex-1">
+                        <p className="text-sm text-gray-200">
+                          Перенести зарплатні дані з <strong className="text-white">{getPrevMonthLabel()}</strong>?
+                        </p>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          {prevMonthData.salary.filter(r => r.brutto > 0).length} співробітників · {fmt(prevMonthData.totals.salary_total)} ₴
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => copySectionFromPrev("salary")}
+                        disabled={sectionCopyLoading.salary}
+                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-accent-500 hover:bg-accent-400 text-white text-xs font-semibold transition-all disabled:opacity-50"
+                      >
+                        {sectionCopyLoading.salary ? <RefreshCw size={13} className="animate-spin" /> : <Copy size={13} />}
+                        Перенести
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {data.salary.length === 0 && !data.owner ? (
                 <EmptyState
@@ -2229,6 +2396,44 @@ export default function ExpensesPage() {
 
               {expandedSections.other && (
               <div className="border-t border-dark-50/10">
+
+              {/* Copy from previous month prompt */}
+              {otherExpenses.length === 0 && !sectionCopied.other && prevMonthLoaded && !otherLoading && (
+                <div className="px-5 py-4 bg-dark-400/10">
+                  {!hasPrevOther() ? (
+                    <p className="text-xs text-gray-600 text-center">Немає інших витрат у попередньому місяці для перенесення.</p>
+                  ) : !isPrevMonthLocked() ? (
+                    <div className="flex items-start gap-2.5 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                      <AlertCircle size={15} className="text-amber-400 shrink-0 mt-0.5" />
+                      <p className="text-xs text-amber-300">
+                        Неможливо перенести дані з <strong>{getPrevMonthLabel()}</strong> — попередній місяць не зафіксовано.
+                        Спочатку зафіксуйте попередній період.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-accent-500/10 border border-accent-500/20">
+                      <Copy size={15} className="text-accent-400 shrink-0" />
+                      <div className="flex-1">
+                        <p className="text-sm text-gray-200">
+                          Перенести інші витрати з <strong className="text-white">{getPrevMonthLabel()}</strong>?
+                        </p>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          {prevOtherExpenses.length} записів · {fmt(prevOtherExpenses.reduce((s, e) => s + e.amount, 0))} ₴
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => copySectionFromPrev("other")}
+                        disabled={sectionCopyLoading.other}
+                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-accent-500 hover:bg-accent-400 text-white text-xs font-semibold transition-all disabled:opacity-50"
+                      >
+                        {sectionCopyLoading.other ? <RefreshCw size={13} className="animate-spin" /> : <Copy size={13} />}
+                        Перенести
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {otherLoading ? (
                 <LoadingSpinner height="h-24" />
               ) : otherExpenses.length === 0 ? (
