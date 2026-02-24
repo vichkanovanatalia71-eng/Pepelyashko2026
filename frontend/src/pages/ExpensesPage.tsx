@@ -36,6 +36,9 @@ import {
   Link,
   ExternalLink,
   ClipboardList,
+  TrendingUp,
+  Banknote,
+  HeartPulse,
 } from "lucide-react";
 import {
   LoadingSpinner,
@@ -1302,8 +1305,8 @@ export default function ExpensesPage() {
         <div className="space-y-4">
           {/* Annual stacked bar chart */}
           <div className="card-neo p-4">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
-              Витрати по місяцях — {year}
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-1.5">
+              <BarChart3 size={13} className="text-orange-400" />Витрати по місяцях — {year}
             </p>
             <ResponsiveContainer width="100%" height={220}>
               <BarChart
@@ -1457,8 +1460,8 @@ export default function ExpensesPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   {/* Line chart: Income vs Expenses */}
                   <div className="card-neo p-4">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
-                      Дохід vs Витрати
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-1.5">
+                      <TrendingUp size={13} className="text-orange-400" />Дохід vs Витрати
                     </p>
                     <ResponsiveContainer width="100%" height={240}>
                       <ComposedChart data={chartData}>
@@ -1476,8 +1479,8 @@ export default function ExpensesPage() {
 
                   {/* Annual Pie */}
                   <div className="card-neo p-4">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
-                      Структура витрат за рік
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-1.5">
+                      <BarChart3 size={13} className="text-orange-400" />Структура витрат за рік
                     </p>
                     {annualPie.length > 0 ? (
                       <div className="flex items-center gap-4">
@@ -1515,8 +1518,8 @@ export default function ExpensesPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   {/* Stacked bar: categories */}
                   <div className="card-neo p-4">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
-                      Витрати за категоріями
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-1.5">
+                      <BarChart3 size={13} className="text-orange-400" />Витрати за категоріями
                     </p>
                     <ResponsiveContainer width="100%" height={240}>
                       <BarChart data={chartData} barSize={14}>
@@ -1536,8 +1539,8 @@ export default function ExpensesPage() {
 
                   {/* Cumulative area chart */}
                   <div className="card-neo p-4">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
-                      Накопичувальні витрати
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-1.5">
+                      <TrendingUp size={13} className="text-orange-400" />Накопичувальні витрати
                     </p>
                     <ResponsiveContainer width="100%" height={240}>
                       <AreaChart data={cumulativeData}>
@@ -1560,8 +1563,8 @@ export default function ExpensesPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   {/* Remaining (profit/loss) by month */}
                   <div className="card-neo p-4">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
-                      Залишок (дохід − витрати) по місяцях
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-1.5">
+                      <Wallet size={13} className="text-orange-400" />Залишок (дохід − витрати) по місяцях
                     </p>
                     <ResponsiveContainer width="100%" height={220}>
                       <BarChart data={chartData} barSize={18}>
@@ -2041,7 +2044,7 @@ export default function ExpensesPage() {
                     <div className="border-b border-dark-50/10">
                       {/* Заголовок підсекції */}
                       <div className="px-5 py-2.5 bg-dark-400/30 border-b border-dark-50/8 flex items-center gap-2">
-                        <MedFlowLogo size={13} className="text-teal-400" />
+                        <MedFlowLogo size={13} className="text-orange-400" />
                         <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Лікарі</span>
                       </div>
 
@@ -2337,7 +2340,7 @@ export default function ExpensesPage() {
                   {data.salary.some(r => r.role !== "doctor") && (
                     <div>
                       <div className="px-5 py-2.5 bg-dark-400/30 border-b border-dark-50/8 flex items-center gap-2">
-                        <Users size={13} className="text-purple-400" />
+                        <HeartPulse size={13} className="text-orange-400" />
                         <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Медичний персонал</span>
                       </div>
                       <div className="divide-y divide-dark-50/5">
@@ -2611,7 +2614,7 @@ export default function ExpensesPage() {
               {expandedSections.taxes && (
               <div className="px-5 py-4 space-y-3 border-t border-dark-50/10">
                 <div className="bg-dark-400/20 rounded-xl p-4 space-y-2">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Джерела доходу</p>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-1.5"><Banknote size={13} className="text-orange-400" />Джерела доходу</p>
                   <TaxRow label="Дохід НСЗУ"    value={data.taxes.nhsu_income} />
                   <TaxRow label="Платні послуги" value={data.taxes.paid_services_income} />
                   <div className="border-t border-dark-50/10 pt-2">
@@ -2620,7 +2623,7 @@ export default function ExpensesPage() {
                 </div>
 
                 <div className="bg-dark-400/20 rounded-xl p-4 space-y-2">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Нараховані податки</p>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-1.5"><Receipt size={13} className="text-orange-400" />Нараховані податки</p>
                   <TaxRow label={`ЄП (${data.taxes.ep_rate}%)`}          value={data.taxes.ep} />
                   <TaxRow label={`ВЗ від доходу (${data.taxes.vz_rate}%)`} value={data.taxes.vz} />
                   <TaxRow label="ЄСВ власника (щомісячно)"               value={data.taxes.esv_owner} />
@@ -2631,7 +2634,7 @@ export default function ExpensesPage() {
                 </div>
 
                 <div className="bg-dark-400/20 rounded-xl p-4 space-y-2">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Ставки</p>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-1.5"><Activity size={13} className="text-orange-400" />Ставки</p>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                     {[
                       { label: "ПДФО", value: `${data.settings.pdfo_rate}%` },
@@ -2679,8 +2682,8 @@ export default function ExpensesPage() {
 
               {expandedSections.summary && (
               <div className="px-5 py-5 space-y-2.5 border-t border-dark-50/10">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
-                  Структура витрат
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-1.5">
+                  <BarChart3 size={13} className="text-orange-400" />Структура витрат
                 </p>
                 <SummaryRow label="Постійні витрати"  value={data.totals.fixed_total}  color="text-blue-400" />
                 <SummaryRow label="Зарплатні витрати" value={data.totals.salary_total} color="text-purple-400" />

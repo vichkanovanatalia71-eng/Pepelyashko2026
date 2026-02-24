@@ -27,6 +27,8 @@ import {
   Sparkles,
   CheckCircle2,
   FileImage,
+  ClipboardList,
+  Users,
 } from "lucide-react";
 import { LoadingSpinner, ConfirmDialog, AlertBanner } from "../components/shared";
 import MedFlowLogo from "../components/shared/MedFlowLogo";
@@ -719,7 +721,8 @@ export default function MonthlyServicesPage() {
         <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 overflow-y-auto" role="dialog" aria-modal="true" onClick={() => setShowReportForm(false)}>
           <div className="bg-dark-600 rounded-none sm:rounded-2xl w-full max-w-3xl min-h-full sm:min-h-0 sm:my-8 animate-modal-in pb-20 sm:pb-0 modal-glow" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-6 border-b border-dark-50/10">
-              <h2 className="text-lg font-semibold text-white">
+              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                <Pencil size={16} className="text-orange-400" />
                 {editingReport ? "Редагування звіту" : "Новий звіт"} · {MONTHS_UA[selectedMonth]} {selectedYear}
               </h2>
               <button onClick={() => setShowReportForm(false)} aria-label="Закрити форму звіту" className="p-2 text-gray-500 hover:text-gray-300 hover:bg-dark-300 rounded-lg transition-all"><X size={18} /></button>
@@ -892,7 +895,7 @@ export default function MonthlyServicesPage() {
         <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 overflow-y-auto" role="dialog" aria-modal="true" onClick={() => setShowServicesModal(false)}>
           <div className="bg-dark-600 rounded-none sm:rounded-2xl w-full max-w-4xl min-h-full sm:min-h-0 sm:my-8 animate-modal-in pb-20 sm:pb-0 modal-glow" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-6 border-b border-dark-50/10">
-              <h2 className="text-lg font-semibold text-white">Детальна статистика наданих послуг</h2>
+              <h2 className="text-lg font-semibold text-white flex items-center gap-2"><ClipboardList size={16} className="text-orange-400" />Детальна статистика наданих послуг</h2>
               <div className="flex gap-2">
                 <button onClick={handleExport} className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-green-400 hover:bg-green-500/10 rounded-lg border border-green-500/20 transition-all"><Download size={13} aria-hidden="true" /> Excel</button>
                 <button onClick={() => setShowServicesModal(false)} aria-label="Закрити статистику послуг" className="p-2 text-gray-500 hover:text-gray-300 hover:bg-dark-300 rounded-lg transition-all"><X size={18} /></button>
@@ -978,7 +981,7 @@ export default function MonthlyServicesPage() {
         <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 overflow-y-auto" role="dialog" aria-modal="true" onClick={() => setShowDoctorModal(false)}>
           <div className="bg-dark-600 rounded-none sm:rounded-2xl w-full max-w-4xl min-h-full sm:min-h-0 sm:my-8 animate-modal-in pb-20 sm:pb-0 modal-glow" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-6 border-b border-dark-50/10">
-              <h2 className="text-lg font-semibold text-white">{selectedDoctor ? "Дохід лікаря" : "Дохід лікарів"}</h2>
+              <h2 className="text-lg font-semibold text-white flex items-center gap-2"><Users size={16} className="text-orange-400" />{selectedDoctor ? "Дохід лікаря" : "Дохід лікарів"}</h2>
               <div className="flex gap-2">
                 <button onClick={handleShare} className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-purple-400 hover:bg-purple-500/10 rounded-lg border border-purple-500/20 transition-all"><Share2 size={13} aria-hidden="true" /> Поділитися</button>
                 <button onClick={() => setShowDoctorModal(false)} aria-label="Закрити дохід лікарів" className="p-2 text-gray-500 hover:text-gray-300 hover:bg-dark-300 rounded-lg transition-all"><X size={18} /></button>
@@ -1075,7 +1078,7 @@ export default function MonthlyServicesPage() {
         <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 overflow-y-auto" role="dialog" aria-modal="true" onClick={() => setShowExpensesModal(false)}>
           <div className="bg-dark-600 rounded-none sm:rounded-2xl w-full max-w-3xl min-h-full sm:min-h-0 sm:my-8 animate-modal-in pb-20 sm:pb-0 modal-glow" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-6 border-b border-dark-50/10">
-              <h2 className="text-lg font-semibold text-white">Детальна статистика витрат</h2>
+              <h2 className="text-lg font-semibold text-white flex items-center gap-2"><TrendingDown size={16} className="text-orange-400" />Детальна статистика витрат</h2>
               <div className="flex gap-2">
                 <button onClick={handleExport} className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-green-400 hover:bg-green-500/10 rounded-lg border border-green-500/20 transition-all"><Download size={13} aria-hidden="true" /> Excel</button>
                 <button onClick={() => setShowExpensesModal(false)} aria-label="Закрити статистику витрат" className="p-2 text-gray-500 hover:text-gray-300 hover:bg-dark-300 rounded-lg transition-all"><X size={18} /></button>

@@ -697,7 +697,7 @@ export default function NhsuPage() {
         {/* Charts */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
           <div className="card-neo card-3d-hover p-5">
-            <p className="text-sm font-semibold text-white mb-4">Пацієнти по вікових групах</p>
+            <p className="text-sm font-semibold text-white mb-4 flex items-center gap-2"><Users size={15} className="text-orange-400" />Пацієнти по вікових групах</p>
             <ResponsiveContainer width="100%" height={210}>
               <BarChart data={ageBarData} margin={{top:0,right:0,left:-20,bottom:30}}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08"/>
@@ -709,7 +709,7 @@ export default function NhsuPage() {
             </ResponsiveContainer>
           </div>
           <div className="card-neo card-3d-hover p-5">
-            <p className="text-sm font-semibold text-white mb-4">Надходження по лікарях (грн)</p>
+            <p className="text-sm font-semibold text-white mb-4 flex items-center gap-2"><BadgeDollarSign size={15} className="text-orange-400" />Надходження по лікарях (грн)</p>
             <ResponsiveContainer width="100%" height={210}>
               <BarChart data={doctorBarData} margin={{top:0,right:0,left:-10,bottom:30}}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08"/>
@@ -721,7 +721,7 @@ export default function NhsuPage() {
             </ResponsiveContainer>
           </div>
           <div className="card-neo card-3d-hover p-5">
-            <p className="text-sm font-semibold text-white mb-4">Розподіл пацієнтів</p>
+            <p className="text-sm font-semibold text-white mb-4 flex items-center gap-2"><Users size={15} className="text-orange-400" />Розподіл пацієнтів</p>
             <ResponsiveContainer width="100%" height={210}>
               <PieChart>
                 <Pie data={pieData} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={3} dataKey="value">

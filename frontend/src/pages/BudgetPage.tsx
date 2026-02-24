@@ -143,7 +143,7 @@ function CopyMonthModal({
     <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
       <div className="bg-dark-600 rounded-2xl w-full max-w-md my-auto animate-modal-in modal-glow">
         <div className="flex items-center justify-between p-5 border-b border-dark-50/10">
-          <h3 className="text-sm font-semibold text-white">Скопіювати значення по місяцях</h3>
+          <h3 className="text-sm font-semibold text-white flex items-center gap-2"><Copy size={14} className="text-orange-400" />Скопіювати значення по місяцях</h3>
           <button onClick={onClose} aria-label="Закрити" className="p-1.5 text-gray-500 hover:text-gray-300 rounded-lg hover:bg-dark-300 transition-all">
             <X size={16} />
           </button>

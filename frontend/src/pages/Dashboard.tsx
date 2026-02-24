@@ -11,6 +11,10 @@ import {
   X,
   ChevronRight,
   ChevronDown,
+  Sparkles,
+  BarChart3,
+  Trophy,
+  Layers,
 } from "lucide-react";
 import {
   AreaChart,
@@ -421,7 +425,7 @@ export default function Dashboard() {
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
+                    <Sparkles size={15} className="text-orange-400" />
                     AI-Асистент / Аналітика системи
                   </h3>
                   <p className="text-xs text-gray-600 mt-0.5">Аналіз фінансової ситуації та рекомендації</p>
@@ -484,7 +488,7 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {/* Area trend chart — 6 months */}
             <div className="lg:col-span-2 card-neo card-3d-hover p-5">
-              <h3 className="text-sm font-semibold text-white mb-1">Динаміка за 6 місяців</h3>
+              <h3 className="text-sm font-semibold text-white mb-1 flex items-center gap-2"><TrendingUp size={15} className="text-orange-400" />Динаміка за 6 місяців</h3>
               <p className="text-xs text-gray-600 mb-4">Доходи, витрати та прибуток — тренд</p>
               {data.trend.length > 1 ? (
                 <ResponsiveContainer width="100%" height={220}>
@@ -538,7 +542,7 @@ export default function Dashboard() {
             <div className="card-neo card-3d-hover p-5">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h3 className="text-sm font-semibold text-white">Структура доходів</h3>
+                  <h3 className="text-sm font-semibold text-white flex items-center gap-2"><BarChart3 size={15} className="text-orange-400" />Структура доходів</h3>
                   <p className="text-xs text-gray-600 mt-0.5">По категоріях</p>
                 </div>
                 <button onClick={() => navigate("/incomes")} className="text-xs text-accent-400 hover:text-accent-300 flex items-center gap-0.5">
@@ -575,7 +579,7 @@ export default function Dashboard() {
             <div className="card-neo card-3d-hover p-5">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h3 className="text-sm font-semibold text-white">Структура витрат</h3>
+                  <h3 className="text-sm font-semibold text-white flex items-center gap-2"><BarChart3 size={15} className="text-orange-400" />Структура витрат</h3>
                   <p className="text-xs text-gray-600 mt-0.5">По категоріях</p>
                 </div>
                 <button onClick={() => navigate("/expenses")} className="text-xs text-accent-400 hover:text-accent-300 flex items-center gap-0.5">
@@ -695,7 +699,7 @@ export default function Dashboard() {
             </div>
             {data.top_income_sources.length > 0 && (
               <>
-                <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Топ джерел доходу</h4>
+                <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1.5"><Trophy size={12} className="text-orange-400" />Топ джерел доходу</h4>
                 <div className="overflow-x-auto rounded-xl border border-dark-50/10">
                   <table className="w-full text-xs">
                     <thead>
@@ -720,7 +724,7 @@ export default function Dashboard() {
             )}
             {data.income_by_category.length > 0 && (
               <>
-                <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">По категоріях</h4>
+                <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1.5"><Layers size={12} className="text-orange-400" />По категоріях</h4>
                 <div className="overflow-x-auto rounded-xl border border-dark-50/10">
                   <table className="w-full text-xs">
                     <thead>
@@ -767,7 +771,7 @@ export default function Dashboard() {
             </div>
             {data.expense_by_category.length > 0 && (
               <>
-                <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">По категоріях</h4>
+                <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1.5"><Layers size={12} className="text-orange-400" />По категоріях</h4>
                 <div className="overflow-x-auto rounded-xl border border-dark-50/10">
                   <table className="w-full text-xs">
                     <thead>
@@ -792,7 +796,7 @@ export default function Dashboard() {
             )}
             {data.top_expense_items.length > 0 && (
               <>
-                <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Топ статей витрат</h4>
+                <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1.5"><TrendingDown size={12} className="text-orange-400" />Топ статей витрат</h4>
                 <div className="overflow-x-auto rounded-xl border border-dark-50/10">
                   <table className="w-full text-xs">
                     <thead>

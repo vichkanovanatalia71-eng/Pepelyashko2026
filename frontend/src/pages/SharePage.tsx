@@ -10,6 +10,8 @@ import {
   Wallet,
   Clock,
   AlertCircle,
+  Trophy,
+  BarChart3,
 } from "lucide-react";
 import MedFlowLogo from "../components/shared/MedFlowLogo";
 import {
@@ -166,7 +168,7 @@ export default function SharePage() {
             {/* ТОП послуг */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="card-neo p-5">
-                <p className="text-sm font-medium text-gray-400 mb-3">ТОП-5 за оборотом</p>
+                <p className="text-sm font-medium text-gray-400 mb-3 flex items-center gap-2"><Trophy size={14} className="text-orange-400" />ТОП-5 за оборотом</p>
                 <div className="space-y-2">
                   {topByRevenue.map((s: any, i: number) => (
                     <div key={i} className="flex items-center gap-3 text-xs">
@@ -178,7 +180,7 @@ export default function SharePage() {
                 </div>
               </div>
               <div className="card-neo p-5">
-                <p className="text-sm font-medium text-gray-400 mb-3">ТОП-5 за кількістю</p>
+                <p className="text-sm font-medium text-gray-400 mb-3 flex items-center gap-2"><Trophy size={14} className="text-orange-400" />ТОП-5 за кількістю</p>
                 <div className="space-y-2">
                   {topByQty.map((s: any, i: number) => (
                     <div key={i} className="flex items-center gap-3 text-xs">
@@ -194,7 +196,7 @@ export default function SharePage() {
             {/* Витрати (Pie) */}
             {expensesPie.length > 0 && (
               <div className="card-neo p-5">
-                <p className="text-sm font-medium text-gray-400 mb-3">Структура витрат</p>
+                <p className="text-sm font-medium text-gray-400 mb-3 flex items-center gap-2"><BarChart3 size={14} className="text-orange-400" />Структура витрат</p>
                 <ResponsiveContainer width="100%" height={220}>
                   <PieChart>
                     <Pie data={expensesPie} cx="50%" cy="50%" outerRadius={75} dataKey="value" label={({ name, percent }: any) => `${name} ${(percent * 100).toFixed(0)}%`}>

@@ -763,7 +763,8 @@ export default function ServicesPage() {
         <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 overflow-y-auto" role="dialog" aria-modal="true" onClick={(e) => { if (e.target === e.currentTarget) setShowForm(false); }}>
           <div className="bg-dark-600 rounded-none sm:rounded-2xl w-full max-w-3xl min-h-full sm:min-h-0 sm:my-8 animate-modal-in pb-20 sm:pb-0 modal-glow">
             <div className="flex items-center justify-between p-6 border-b border-dark-50/10">
-              <h2 className="text-lg font-semibold text-white">
+              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                <Pencil size={16} className="text-orange-400" />
                 {editingService ? "Редагування послуги" : "Нова послуга"}
               </h2>
               <button
@@ -1012,7 +1013,8 @@ export default function ServicesPage() {
       {showBulkPriceChange && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto" role="dialog" aria-modal="true" onClick={(e) => { if (e.target === e.currentTarget) { setShowBulkPriceChange(false); setBulkPricePercent(""); } }}>
           <div className="bg-dark-600 rounded-2xl p-6 w-full max-w-sm animate-modal-in modal-glow">
-            <h3 className="text-lg font-semibold text-white mb-2">
+            <h3 className="text-lg font-semibold text-white mb-2 flex items-center gap-2">
+              <Percent size={16} className="text-orange-400" />
               Змінити вартість ({selectedIds.size} послуг)
             </h3>
             <p className="text-sm text-gray-400 mb-4">
