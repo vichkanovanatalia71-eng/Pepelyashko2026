@@ -1221,6 +1221,22 @@
   }
 
   /* ═══════════════════════════════════════════════════════════
+     MOBILE BOTTOM-SHEET MODAL — Drag handle
+     ═══════════════════════════════════════════════════════════ */
+  @media (max-width: 639px) {
+    .expense-sheet-modal::before {
+      content: "";
+      display: block;
+      width: 36px;
+      height: 4px;
+      border-radius: 2px;
+      background: rgba(255, 255, 255, 0.2);
+      margin: 10px auto 4px;
+      flex-shrink: 0;
+    }
+  }
+
+  /* ═══════════════════════════════════════════════════════════
      THEME TRANSITION
      ═══════════════════════════════════════════════════════════ */
   .theme-transitioning * {

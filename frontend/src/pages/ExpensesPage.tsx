@@ -282,11 +282,11 @@ function Modal({ title, onClose, children }: {
   title: string; onClose: () => void; children: React.ReactNode;
 }) {
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-label={title}>
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-start justify-center sm:p-4 overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label={title}>
       {/* Backdrop */}
       <div className="absolute inset-0" onClick={onClose} />
       <div
-        className="relative bg-dark-600 rounded-2xl w-full max-w-md my-auto animate-modal-in modal-glow"
+        className="relative bg-dark-600 rounded-t-3xl sm:rounded-2xl w-full max-w-md sm:my-auto animate-modal-in modal-glow expense-sheet-modal pb-[env(safe-area-inset-bottom)]"
       >
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
           <h4 className="font-semibold text-white text-sm">{title}</h4>
@@ -1826,6 +1826,37 @@ export default function ExpensesPage() {
             </div>
           </div>
 
+          {/* ═══ MOBILE: Expense Section Tabs (horizontal scroll) ═══ */}
+          <div className="lg:hidden -mx-4 px-4 overflow-x-auto scrollbar-hide">
+            <div className="flex gap-2 pb-1 min-w-max">
+              {DRAWER_SECTIONS.map(sec => {
+                const isActive = activeDrawer === sec.key;
+                const value = sec.getValue();
+                const filled = sec.getStatus();
+                return (
+                  <button
+                    key={sec.key}
+                    onClick={() => toggleDrawer(sec.key as DrawerSection)}
+                    className={`flex items-center gap-2 px-3 py-2.5 rounded-2xl border text-xs font-semibold whitespace-nowrap transition-all active:scale-95 tap-target ${
+                      isActive
+                        ? `${sec.badgeColor} text-white`
+                        : "bg-dark-400/40 border-dark-50/15 text-gray-400 hover:text-gray-200"
+                    }`}
+                  >
+                    <span className={`shrink-0 ${isActive ? sec.color : "text-gray-500"}`}>{sec.icon}</span>
+                    <span className="truncate">{sec.label}</span>
+                    <span className={`flex items-center gap-1 ml-0.5 ${isActive ? sec.color : "text-gray-600"}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${filled ? "bg-emerald-400" : "bg-gray-600"}`} />
+                      <span className="font-mono tabular-nums text-[10px]">
+                        {sec.key === "summary" ? `${value >= 0 ? "+" : ""}${fmt(value)}` : fmt(value)} ₴
+                      </span>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {/* ═══ DETAIL TABLE ═══ */}
           {detailRows.length > 0 && (
             <div className="card-neo overflow-hidden">
@@ -1950,9 +1981,9 @@ export default function ExpensesPage() {
 
           {/* ── MODAL: ПОСТІЙНІ ВИТРАТИ ── */}
           {activeDrawer === "fixed" && (
-          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-label="Постійні витрати">
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-start justify-center sm:p-4 overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label="Постійні витрати">
             <div className="absolute inset-0" onClick={() => setActiveDrawer(null)} />
-            <div className="relative bg-dark-600 rounded-2xl shadow-2xl w-full flex flex-col my-auto animate-modal-in" style={{ border: "1px solid #ffffff15", maxHeight: "85vh", maxWidth: "900px" }}>
+            <div className="relative bg-dark-600 rounded-t-3xl sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto animate-modal-in expense-sheet-modal pb-[env(safe-area-inset-bottom)]" style={{ border: "1px solid #ffffff15", maxHeight: "92vh", maxWidth: "900px" }}>
               <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-xl bg-blue-500/15 flex items-center justify-center shrink-0">
@@ -2084,9 +2115,9 @@ export default function ExpensesPage() {
 
           {/* ── MODAL: ЗАРПЛАТНІ ВИТРАТИ ── */}
           {activeDrawer === "salary" && (
-          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-label="Зарплатні витрати">
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-start justify-center sm:p-4 overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label="Зарплатні витрати">
             <div className="absolute inset-0" onClick={() => setActiveDrawer(null)} />
-            <div className="relative bg-dark-600 rounded-2xl shadow-2xl w-full flex flex-col my-auto animate-modal-in" style={{ border: "1px solid #ffffff15", maxHeight: "85vh", maxWidth: "900px" }}>
+            <div className="relative bg-dark-600 rounded-t-3xl sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto animate-modal-in expense-sheet-modal pb-[env(safe-area-inset-bottom)]" style={{ border: "1px solid #ffffff15", maxHeight: "92vh", maxWidth: "900px" }}>
               <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-xl bg-purple-500/15 flex items-center justify-center shrink-0">
@@ -2595,9 +2626,9 @@ export default function ExpensesPage() {
 
           {/* ── MODAL: ІНШІ ВИТРАТИ ── */}
           {activeDrawer === "other" && (
-          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-label="Інші витрати">
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-start justify-center sm:p-4 overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label="Інші витрати">
             <div className="absolute inset-0" onClick={() => setActiveDrawer(null)} />
-            <div className="relative bg-dark-600 rounded-2xl shadow-2xl w-full flex flex-col my-auto animate-modal-in" style={{ border: "1px solid #ffffff15", maxHeight: "85vh", maxWidth: "900px" }}>
+            <div className="relative bg-dark-600 rounded-t-3xl sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto animate-modal-in expense-sheet-modal pb-[env(safe-area-inset-bottom)]" style={{ border: "1px solid #ffffff15", maxHeight: "92vh", maxWidth: "900px" }}>
               <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-xl bg-amber-500/15 flex items-center justify-center shrink-0">
@@ -2720,9 +2751,9 @@ export default function ExpensesPage() {
 
           {/* ── MODAL: ПОДАТКИ ── */}
           {activeDrawer === "taxes" && (
-          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-label="Податки">
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-start justify-center sm:p-4 overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label="Податки">
             <div className="absolute inset-0" onClick={() => setActiveDrawer(null)} />
-            <div className="relative bg-dark-600 rounded-2xl shadow-2xl w-full flex flex-col my-auto animate-modal-in" style={{ border: "1px solid #ffffff15", maxHeight: "85vh", maxWidth: "900px" }}>
+            <div className="relative bg-dark-600 rounded-t-3xl sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto animate-modal-in expense-sheet-modal pb-[env(safe-area-inset-bottom)]" style={{ border: "1px solid #ffffff15", maxHeight: "92vh", maxWidth: "900px" }}>
               <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-xl bg-red-500/15 flex items-center justify-center shrink-0">
@@ -2787,9 +2818,9 @@ export default function ExpensesPage() {
 
           {/* ── MODAL: ПІДСУМКИ ── */}
           {activeDrawer === "summary" && (
-          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-label="Підсумки">
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-start justify-center sm:p-4 overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label="Підсумки">
             <div className="absolute inset-0" onClick={() => setActiveDrawer(null)} />
-            <div className="relative bg-dark-600 rounded-2xl shadow-2xl w-full flex flex-col my-auto animate-modal-in" style={{ border: "1px solid #ffffff15", maxHeight: "85vh", maxWidth: "900px" }}>
+            <div className="relative bg-dark-600 rounded-t-3xl sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto animate-modal-in expense-sheet-modal pb-[env(safe-area-inset-bottom)]" style={{ border: "1px solid #ffffff15", maxHeight: "92vh", maxWidth: "900px" }}>
               <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-xl bg-emerald-500/15 flex items-center justify-center shrink-0">
@@ -3103,10 +3134,10 @@ export default function ExpensesPage() {
 
       {/* ── AI parse modal ── */}
       {aiModal.open && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-label="AI-аналіз витрати">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-start justify-center sm:p-4 overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label="AI-аналіз витрати">
           <div className="absolute inset-0" onClick={() => setAiModal({ open: false, text: "", file: null, loading: false, result: null })} />
           <div
-            className="relative bg-dark-600 rounded-2xl w-full max-w-lg my-auto modal-glow"
+            className="relative bg-dark-600 rounded-t-3xl sm:rounded-2xl w-full max-w-lg sm:my-auto modal-glow expense-sheet-modal pb-[env(safe-area-inset-bottom)]"
           >
             <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
               <div className="flex items-center gap-2">
@@ -3318,11 +3349,11 @@ export default function ExpensesPage() {
         }
 
         return (
-          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-label={kpiModal.title}>
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-start justify-center sm:p-4 overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label={kpiModal.title}>
             <div className="absolute inset-0" onClick={() => setKpiModal({ open: false, type: "", title: "" })} />
             <div
-              className="relative bg-dark-600 rounded-2xl shadow-2xl w-full flex flex-col my-auto"
-              style={{ border: "1px solid #ffffff15", maxHeight: "85vh", maxWidth: "900px" }}
+              className="relative bg-dark-600 rounded-t-3xl sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto expense-sheet-modal pb-[env(safe-area-inset-bottom)]"
+              style={{ border: "1px solid #ffffff15", maxHeight: "92vh", maxWidth: "900px" }}
             >
               {/* Header */}
               <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0">
@@ -3439,9 +3470,9 @@ export default function ExpensesPage() {
 
       {/* ── Accountant request modal ── */}
       {accReqModal.open && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-label="Запит до бухгалтера">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-start justify-center sm:p-4 overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label="Запит до бухгалтера">
           <div className="absolute inset-0" onClick={() => setAccReqModal({ open: false, url: "", expiresAt: "" })} />
-          <div className="relative bg-dark-600 rounded-2xl w-full max-w-md my-auto p-6 modal-glow">
+          <div className="relative bg-dark-600 rounded-t-3xl sm:rounded-2xl w-full max-w-md sm:my-auto p-6 modal-glow expense-sheet-modal pb-[env(safe-area-inset-bottom)]">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <ClipboardList size={18} className="text-orange-400" />
@@ -3514,9 +3545,9 @@ export default function ExpensesPage() {
 
       {/* ── Share modal ── */}
       {shareModal.open && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-label="Поділитись звітом">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-start justify-center sm:p-4 overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label="Поділитись звітом">
           <div className="absolute inset-0" onClick={() => setShareModal({ open: false, url: "", expiresAt: "" })} />
-          <div className="relative bg-dark-600 rounded-2xl w-full max-w-md my-auto p-6 modal-glow">
+          <div className="relative bg-dark-600 rounded-t-3xl sm:rounded-2xl w-full max-w-md sm:my-auto p-6 modal-glow expense-sheet-modal pb-[env(safe-area-inset-bottom)]">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <Share2 size={18} className="text-accent-400" />
