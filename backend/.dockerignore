@@ -2,10 +2,13 @@ venv/
 .venv/
 __pycache__/
 *.pyc
+*.pyo
 .env
+.env.*
 .git
+.gitignore
 
-# Generated documents (зберігаються окремо через Docker volumes)
+# Generated documents (stored separately via Docker volumes)
 generated_acts/
 generated_contracts/
 generated_documents/
@@ -13,7 +16,7 @@ generated_invoices/
 generated_orders/
 uploads/
 
-# Old standalone server files (не потрібні для Docker)
+# Old standalone server files
 server.py
 server_old.py
 
@@ -21,5 +24,17 @@ server_old.py
 *_backup.py
 *_v2.py
 
-# Tests (не потрібні в prod image)
+# Tests (not needed in production image)
 tests/
+pytest.ini
+.pytest_cache/
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Docker files themselves
+Dockerfile
+docker-compose.yml

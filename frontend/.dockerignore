@@ -1,3 +1,21 @@
 node_modules/
 dist/
 .git
+.gitignore
+.env
+.env.*
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Docker files themselves
+Dockerfile
+Dockerfile.prod
+docker-compose.yml
+
+# Test & lint config (not needed in build)
+.eslintrc*
+.prettierrc*

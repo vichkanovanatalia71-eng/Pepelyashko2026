@@ -17,13 +17,14 @@ services:
 
   backend:
     build: ./backend
-    command: ["bash", "-c", "sed -i 's/\\r$//' ./entrypoint.sh && UVICORN_RELOAD=1 bash ./entrypoint.sh"]
+    entrypoint: ["/bin/bash", "-c", "sed -i 's/\\r$//' ./entrypoint.sh && exec ./entrypoint.sh"]
     ports:
       - "8000:8000"
     environment:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/pepelyashko
       SECRET_KEY: dev-secret-key
       DEBUG: "true"
+      UVICORN_RELOAD: "1"
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       # SMTP для підтвердження email (необов'язково — без нього авто-верифікація)
       SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
