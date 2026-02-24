@@ -7,7 +7,7 @@ import {
   Trash2,
   Save,
   RefreshCw,
-  Stethoscope,
+
   PercentCircle,
   KeyRound,
   Eye,
@@ -23,6 +23,7 @@ import {
   Check,
 } from "lucide-react";
 import { Doctor, NhsuSettings, StaffMember } from "../types";
+import MedFlowLogo from "../components/shared/MedFlowLogo";
 
 const AGE_LABELS: Record<string, string> = {
   coeff_0_5: "0–5 років",
@@ -485,7 +486,7 @@ export default function SettingsPage() {
 
       {/* ── Лікарі ── */}
       <div className="card-neo card-3d-hover p-6 space-y-5">
-        <SectionHeader sectionKey="doctors" icon={Stethoscope} title="Список лікарів" />
+        <SectionHeader sectionKey="doctors" icon={MedFlowLogo} title="Список лікарів" />
 
         {open.doctors && (
           <>

@@ -5,7 +5,7 @@ import {
 } from "recharts";
 import {
   ChevronLeft, ChevronRight, TrendingUp, BadgeDollarSign,
-  HeartPulse, Stethoscope, Users, AlertCircle, Info,
+  HeartPulse, Users, AlertCircle, Info,
   Lightbulb, ShieldAlert, X, ChevronDown,
 } from "lucide-react";
 import api from "../api/client";
@@ -15,6 +15,7 @@ import type {
 } from "../types";
 import { MONTH_NAMES } from "../components/shared/MonthNavigator";
 import { LoadingSpinner, EmptyState } from "../components/shared";
+import MedFlowLogo from "../components/shared/MedFlowLogo";
 
 const TT = { background: "#1a1a2e", border: "1px solid #ffffff15", borderRadius: 8, fontSize: 12 };
 const PIE_COLORS = ["#818cf8", "#34d399"];
@@ -205,7 +206,7 @@ export default function RevenuePage() {
           <button onClick={() => setDrillModal("paid")}
             className="card-neo kpi-3d-hover card-tap p-4 lg:p-5 border border-teal-500/15 text-left">
             <div className="flex items-center justify-between mb-3">
-              <div className="p-2 rounded-xl bg-teal-500/10"><Stethoscope size={18} className="text-teal-400" /></div>
+              <div className="p-2 rounded-xl bg-teal-500/10"><MedFlowLogo size={18} className="text-teal-400" /></div>
               <span className="text-xs font-medium text-gray-500">{data.paid_pct}%</span>
             </div>
             <p className="text-xs text-gray-500 mb-1">Платні послуги</p>

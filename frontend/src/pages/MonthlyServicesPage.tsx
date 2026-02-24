@@ -17,7 +17,7 @@ import {
   Banknote,
   Wallet,
   Landmark,
-  Stethoscope,
+
   TrendingUp,
   TrendingDown,
   Package,
@@ -29,6 +29,7 @@ import {
   FileImage,
 } from "lucide-react";
 import { LoadingSpinner, ConfirmDialog, AlertBanner } from "../components/shared";
+import MedFlowLogo from "../components/shared/MedFlowLogo";
 import {
   BarChart,
   Bar,
@@ -573,7 +574,7 @@ export default function MonthlyServicesPage() {
             {/* Блок 2: Дохід лікаря */}
             <button onClick={() => setShowDoctorModal(true)} className="card-neo card-tap p-5 text-left hover:border-accent-500/20 transition-all group">
               <div className="flex items-center gap-2 mb-3">
-                <Stethoscope size={16} className="text-green-400" />
+                <MedFlowLogo size={16} className="text-green-400" />
                 <span className="text-xs text-gray-500 group-hover:text-gray-300 transition-colors">{selectedDoctor ? "Дохід лікаря" : "Дохід лікарів"}</span>
               </div>
               <p className="text-xl font-bold text-green-400 tabular-nums">{fmt(d.doctor_income)} <span className="text-xs text-gray-500">грн</span></p>

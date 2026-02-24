@@ -1,6 +1,7 @@
 import { useState, FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { Stethoscope, Mail, CheckCircle } from "lucide-react";
+import { Mail, CheckCircle } from "lucide-react";
+import MedFlowLogo from "../components/shared/MedFlowLogo";
 import { useAuth } from "../hooks/useAuth";
 import api from "../api/client";
 
@@ -92,7 +93,7 @@ export default function LoginPage() {
         <div className="flex flex-col items-center mb-8">
           <div className="w-16 h-16 rounded-2xl bg-accent-500/10 flex items-center justify-center
                           shadow-glow-accent shadow-lg mb-4 glow-pulse">
-            <Stethoscope size={32} className="text-accent-500" />
+            <MedFlowLogo size={38} className="text-accent-500" />
           </div>
           <h1 className="text-2xl font-bold text-white tracking-tight">MedFlow</h1>
           <p className="text-sm text-gray-500 mt-1">

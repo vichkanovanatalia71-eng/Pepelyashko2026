@@ -19,7 +19,7 @@ import {
   BarChart3,
   Check,
   UserPlus,
-  Stethoscope,
+
   Copy,
   Sparkles,
   Download,
@@ -43,6 +43,7 @@ import {
   EmptyState,
   ConfirmDialog,
 } from "../components/shared";
+import MedFlowLogo from "../components/shared/MedFlowLogo";
 import * as XLSX from "xlsx";
 import {
   BarChart,
@@ -2040,7 +2041,7 @@ export default function ExpensesPage() {
                     <div className="border-b border-dark-50/10">
                       {/* Заголовок підсекції */}
                       <div className="px-5 py-2.5 bg-dark-400/30 border-b border-dark-50/8 flex items-center gap-2">
-                        <Stethoscope size={13} className="text-teal-400" />
+                        <MedFlowLogo size={13} className="text-teal-400" />
                         <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Лікарі</span>
                       </div>
 

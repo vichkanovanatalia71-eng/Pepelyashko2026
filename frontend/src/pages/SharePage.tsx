@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import axios from "axios";
 import {
   TrendingUp,
-  Stethoscope,
+
   Package,
   Landmark,
   Banknote,
@@ -11,6 +11,7 @@ import {
   Clock,
   AlertCircle,
 } from "lucide-react";
+import MedFlowLogo from "../components/shared/MedFlowLogo";
 import {
   BarChart,
   Bar,
@@ -118,7 +119,7 @@ export default function SharePage() {
         <div className="card-neo p-6">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 rounded-xl bg-accent-500/10 flex items-center justify-center">
-              <Stethoscope size={22} className="text-accent-500" />
+              <MedFlowLogo size={26} className="text-accent-500" />
             </div>
             <div>
               <h1 className="text-xl font-bold text-white">MedFlow · Платні послуги</h1>
@@ -141,7 +142,7 @@ export default function SharePage() {
                 <div className="flex gap-4 mt-2 text-xs text-gray-400"><span>К-ть: {d.total_quantity}</span><span>Сер.чек: {fmt(d.avg_check)}</span></div>
               </div>
               <div className="card-neo p-5">
-                <div className="flex items-center gap-2 mb-3"><Stethoscope size={16} className="text-green-400" /><span className="text-xs text-gray-500">Дохід лікарів</span></div>
+                <div className="flex items-center gap-2 mb-3"><MedFlowLogo size={16} className="text-green-400" /><span className="text-xs text-gray-500">Дохід лікарів</span></div>
                 <p className="text-xl font-bold text-green-400 tabular-nums">{fmt(d.doctor_income)} <span className="text-xs text-gray-500">грн</span></p>
               </div>
               <div className="card-neo p-5">

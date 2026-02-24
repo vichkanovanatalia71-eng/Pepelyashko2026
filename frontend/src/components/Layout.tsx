@@ -5,7 +5,7 @@ import {
   TrendingDown,
   HeartPulse,
   LogOut,
-  Stethoscope,
+
   Settings,
   BarChart3,
   ClipboardList,
@@ -18,6 +18,7 @@ import {
   MessageCircle,
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
+import MedFlowLogo from "./shared/MedFlowLogo";
 import { useTheme } from "../hooks/useTheme";
 
 // ── Навігаційні пункти ────────────────────────────────────────────
@@ -65,7 +66,7 @@ export default function Layout() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-accent-500/10 flex items-center justify-center shadow-glow-accent glow-pulse">
-                <Stethoscope size={22} className="text-accent-500" aria-hidden="true" />
+                <MedFlowLogo size={26} className="text-accent-500" />
               </div>
               <div>
                 <h1 className="text-lg font-bold text-white tracking-tight">MedFlow</h1>

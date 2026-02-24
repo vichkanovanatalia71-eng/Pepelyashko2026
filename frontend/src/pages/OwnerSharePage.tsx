@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import axios from "axios";
 import {
   TrendingUp,
-  Stethoscope,
+
   Package,
   Landmark,
   Banknote,
@@ -14,6 +14,7 @@ import {
   Building2,
   BadgeDollarSign,
 } from "lucide-react";
+import MedFlowLogo from "../components/shared/MedFlowLogo";
 import {
   BarChart,
   Bar,
@@ -380,7 +381,7 @@ export default function OwnerSharePage() {
         {paidDash && (
           <section className="space-y-4">
             <h2 className="text-lg font-bold text-white flex items-center gap-2">
-              <Stethoscope size={20} className="text-green-400" />
+              <MedFlowLogo size={20} className="text-green-400" />
               Платні послуги
             </h2>
 
