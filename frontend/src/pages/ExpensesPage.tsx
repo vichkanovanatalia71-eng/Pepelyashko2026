@@ -381,7 +381,7 @@ export default function ExpensesPage() {
   }>({ open: false, isEdit: false, id: null, name: "", desc: "", amount: "", category: "general", saving: false });
 
   // ── View mode: "all" = overview year, "month" = specific month ──
-  const [viewMode, setViewMode] = useState<"all" | "month">("all");
+  const [viewMode, setViewMode] = useState<"all" | "month">("month");
 
   // ── Periods summary (for "all" mode) ──
   const [periods, setPeriods] = useState<PeriodSummary[]>([]);
@@ -426,8 +426,9 @@ export default function ExpensesPage() {
     open: boolean; url: string; expiresAt: string;
   }>({ open: false, url: "", expiresAt: "" });
 
-  // ── Collapsible sections state (all collapsed by default) ──
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
+  // ── Right sidebar drawer state ──
+  type DrawerSection = "fixed" | "salary" | "other" | "taxes" | "summary" | null;
+  const [activeDrawer, setActiveDrawer] = useState<DrawerSection>(null);
 
   // ── Previous month data for copy-from feature ──
   const [prevMonthData, setPrevMonthData] = useState<MonthlyExpenseData | null>(null);
@@ -577,20 +578,37 @@ export default function ExpensesPage() {
   useEffect(() => { load(); loadOther(); loadStaff(); loadDoctors(); loadPeriods(); loadPrevMonth(); }, [load, loadOther, loadStaff, loadDoctors, loadPeriods, loadPrevMonth]);
   useEffect(() => { if (viewMode === "all") loadAnnualData(); }, [viewMode, loadAnnualData]);
 
-  // ── Toggle collapsible section ──
-  function toggleSection(id: string) {
-    setExpandedSections(s => ({ ...s, [id]: !s[id] }));
+  // Close drawer on Escape key
+  useEffect(() => {
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === "Escape" && activeDrawer) setActiveDrawer(null);
+    }
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [activeDrawer]);
+
+  // ── Drawer section definitions ──
+  const DRAWER_SECTIONS: { key: DrawerSection; label: string; icon: React.ReactNode; color: string; badgeColor: string; getValue: () => number; getStatus: () => boolean }[] = [
+    { key: "fixed", label: "Постійні витрати", icon: <TrendingDown size={18} />, color: "text-blue-400", badgeColor: "bg-blue-500/15 border-blue-500/30", getValue: () => data?.totals.fixed_total ?? 0, getStatus: () => (data?.fixed.some(r => r.amount > 0) ?? false) },
+    { key: "salary", label: "Зарплатні витрати", icon: <Users size={18} />, color: "text-purple-400", badgeColor: "bg-purple-500/15 border-purple-500/30", getValue: () => data?.totals.salary_total ?? 0, getStatus: () => (data?.salary.some(r => r.brutto > 0) ?? false) },
+    { key: "other", label: "Інші витрати", icon: <Wallet size={18} />, color: "text-amber-400", badgeColor: "bg-amber-500/15 border-amber-500/30", getValue: () => otherTotal, getStatus: () => otherExpenses.length > 0 },
+    { key: "taxes", label: "Податки", icon: <Receipt size={18} />, color: "text-red-400", badgeColor: "bg-red-500/15 border-red-500/30", getValue: () => data?.totals.tax_total ?? 0, getStatus: () => (data?.totals.tax_total ?? 0) > 0 },
+    { key: "summary", label: "Підсумки", icon: <Building2 size={18} />, color: "text-emerald-400", badgeColor: "bg-emerald-500/15 border-emerald-500/30", getValue: () => remaining, getStatus: () => grandWithOther > 0 },
+  ];
+
+  function toggleDrawer(section: DrawerSection) {
+    setActiveDrawer(prev => prev === section ? null : section);
   }
 
   // ── Month navigation ──────────────────────────────────────────
   function prevMonth() {
-    setExpandedSections({});
+    setActiveDrawer(null);
     setSectionCopied({});
     if (month === 1) { setYear(y => y - 1); setMonth(12); }
     else setMonth(m => m - 1);
   }
   function nextMonth() {
-    setExpandedSections({});
+    setActiveDrawer(null);
     setSectionCopied({});
     if (month === 12) { setYear(y => y + 1); setMonth(1); }
     else setMonth(m => m + 1);
@@ -912,7 +930,7 @@ export default function ExpensesPage() {
       } catch (e) { console.error(e); }
     }
     setAiModal({ open: false, text: "", file: null, loading: false, result: null });
-    setExpandedSections(s => ({ ...s, fixed: true }));
+    setActiveDrawer("fixed");
   }
 
   // ── Per-section copy from previous month ────────────────────────
@@ -1200,7 +1218,7 @@ export default function ExpensesPage() {
   // ══════════════════════════════════════════════════════════════
 
   return (
-    <div className="space-y-5 max-w-6xl mx-auto">
+    <div className="space-y-5 max-w-7xl mx-auto">
 
       {/* ═══ HEADER ═══ */}
       <div className="flex items-center justify-between flex-wrap gap-3">
@@ -1245,7 +1263,7 @@ export default function ExpensesPage() {
           {/* View mode switcher */}
           <div className="flex items-center gap-1 bg-dark-500/50 border border-dark-50/15 rounded-2xl p-1">
             <button
-              onClick={() => { setViewMode("all"); setExpandedSections({}); }}
+              onClick={() => { setViewMode("all"); setActiveDrawer(null); }}
               aria-label="Показати всі місяці"
               aria-pressed={viewMode === "all"}
               className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${
@@ -1257,7 +1275,7 @@ export default function ExpensesPage() {
               <CalendarDays size={13} aria-hidden="true" /> Всього
             </button>
             <button
-              onClick={() => { setViewMode("month"); setExpandedSections({}); }}
+              onClick={() => { setViewMode("month"); setActiveDrawer(null); }}
               aria-label={`Показати ${MONTH_NAMES[month - 1]}`}
               aria-pressed={viewMode === "month"}
               className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
@@ -1841,32 +1859,91 @@ export default function ExpensesPage() {
             </div>
           )}
 
-          {/* ═══ COLLAPSIBLE SECTIONS ═══ */}
+          {/* ═══ RIGHT SIDEBAR: Expense Section Tabs ═══ */}
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr,auto] gap-4">
+            {/* Sidebar tabs - right panel */}
+            <nav className="lg:order-2 flex lg:flex-col gap-2 lg:w-[220px]" aria-label="Розділи витрат">
+              {DRAWER_SECTIONS.map(sec => {
+                const isActive = activeDrawer === sec.key;
+                const value = sec.getValue();
+                const filled = sec.getStatus();
+                return (
+                  <button
+                    key={sec.key}
+                    onClick={() => toggleDrawer(sec.key as DrawerSection)}
+                    className={`group relative flex items-center gap-3 px-4 py-3.5 rounded-2xl border transition-all duration-200 text-left w-full ${
+                      isActive
+                        ? `${sec.badgeColor} border shadow-lg shadow-black/20`
+                        : "bg-dark-500/40 border-dark-50/10 hover:border-dark-50/25 hover:bg-dark-500/60"
+                    }`}
+                    aria-expanded={isActive}
+                  >
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-all ${
+                      isActive ? sec.badgeColor : "bg-dark-400/40"
+                    }`}>
+                      <span className={isActive ? sec.color : "text-gray-500 group-hover:text-gray-300"}>
+                        {sec.icon}
+                      </span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-sm font-semibold truncate ${isActive ? "text-white" : "text-gray-300"}`}>
+                        {sec.label}
+                      </p>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${filled ? "bg-emerald-400" : "bg-gray-600"}`} />
+                        <span className={`text-xs font-mono tabular-nums truncate ${isActive ? sec.color : "text-gray-500"}`}>
+                          {sec.key === "summary" ? (
+                            <>{value >= 0 ? "+" : ""}{fmt(value)} ₴</>
+                          ) : (
+                            <>{fmt(value)} ₴</>
+                          )}
+                        </span>
+                      </div>
+                    </div>
+                    <ChevronRight size={16} className={`shrink-0 transition-transform duration-200 ${
+                      isActive ? `${sec.color} rotate-90` : "text-gray-600 group-hover:text-gray-400"
+                    }`} />
+                  </button>
+                );
+              })}
+            </nav>
 
-          {/* ────────────────────────────────────────
-              SECTION: ПОСТІЙНІ ВИТРАТИ
-          ──────────────────────────────────────── */}
-          {(
-            <section className="card-neo overflow-hidden">
-              <button
-                onClick={() => toggleSection("fixed")}
-                className="w-full flex items-center gap-3 px-5 py-4 bg-dark-400/20 hover:bg-dark-400/30 transition-all cursor-pointer"
-                aria-expanded={!!expandedSections.fixed}
-              >
-                <div className="w-8 h-8 rounded-xl bg-blue-500/15 flex items-center justify-center shrink-0">
-                  <TrendingDown size={16} className="text-blue-400" />
-                </div>
-                <div className="flex-1 text-left">
-                  <h3 className="font-semibold text-white text-sm">Постійні витрати</h3>
-                  <p className={`text-xs mt-0.5 ${data.fixed.some(r => r.amount > 0) ? "text-emerald-400" : "text-gray-600"}`}>
-                    {data.fixed.some(r => r.amount > 0) ? "Заповнено" : "Не заповнено"} · {fmt(data.totals.fixed_total)} ₴
+            {/* Main content area */}
+            <div className="lg:order-1 min-w-0">
+              {/* Show a hint when no drawer is open */}
+              {!activeDrawer && (
+                <div className="card-neo p-8 flex flex-col items-center justify-center text-center gap-3 min-h-[200px]">
+                  <div className="w-14 h-14 rounded-2xl bg-dark-400/40 flex items-center justify-center">
+                    <ChevronLeft size={24} className="text-gray-600 hidden lg:block" />
+                    <ChevronDown size={24} className="text-gray-600 lg:hidden" />
+                  </div>
+                  <p className="text-gray-500 text-sm font-medium">Оберіть розділ для перегляду або редагування</p>
+                  <p className="text-gray-600 text-xs max-w-sm">
+                    Натисніть на будь-який блок витрат праворуч для детального перегляду
                   </p>
                 </div>
-                <ChevronDown size={18} className={`text-gray-500 transition-transform duration-200 shrink-0 ${expandedSections.fixed ? "rotate-180" : ""}`} />
-              </button>
+              )}
 
-              {expandedSections.fixed && (
-              <>
+              {/* ── DRAWER: ПОСТІЙНІ ВИТРАТИ ── */}
+              {activeDrawer === "fixed" && (
+              <section className="card-neo overflow-hidden animate-drawer-in">
+              <div className="flex items-center justify-between px-5 py-4 bg-dark-400/20 border-b border-dark-50/10">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-blue-500/15 flex items-center justify-center shrink-0">
+                    <TrendingDown size={16} className="text-blue-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-white text-sm">Постійні витрати</h3>
+                    <p className={`text-xs mt-0.5 ${data.fixed.some(r => r.amount > 0) ? "text-emerald-400" : "text-gray-600"}`}>
+                      {data.fixed.some(r => r.amount > 0) ? "Заповнено" : "Не заповнено"} · {fmt(data.totals.fixed_total)} ₴
+                    </p>
+                  </div>
+                </div>
+                <button onClick={() => setActiveDrawer(null)} className="p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-dark-300 transition-all" aria-label="Закрити">
+                  <X size={16} />
+                </button>
+              </div>
+
               {/* Copy from previous month prompt */}
               {data.fixed.length === 0 && !sectionCopied.fixed && prevMonthLoaded && (
                 <div className="px-5 py-4 border-t border-dark-50/10 bg-dark-400/10">
@@ -1973,34 +2050,28 @@ export default function ExpensesPage() {
                 </button>
                 <span className="font-bold text-blue-400 font-mono tabular-nums">{fmt(data.totals.fixed_total)} ₴</span>
               </div>
-              </>
-              )}
             </section>
-          )}
+              )}
 
-          {/* ────────────────────────────────────────
-              SECTION: ЗАРПЛАТНІ ВИТРАТИ
-          ──────────────────────────────────────── */}
-          {(
-            <section className="card-neo overflow-hidden">
-              <button
-                onClick={() => toggleSection("salary")}
-                className="w-full flex items-center gap-3 px-5 py-4 bg-dark-400/20 hover:bg-dark-400/30 transition-all cursor-pointer"
-                aria-expanded={!!expandedSections.salary}
-              >
-                <div className="w-8 h-8 rounded-xl bg-purple-500/15 flex items-center justify-center shrink-0">
-                  <Users size={16} className="text-purple-400" />
+              {/* ── DRAWER: ЗАРПЛАТНІ ВИТРАТИ ── */}
+              {activeDrawer === "salary" && (
+              <section className="card-neo overflow-hidden animate-drawer-in">
+              <div className="flex items-center justify-between px-5 py-4 bg-dark-400/20 border-b border-dark-50/10">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-purple-500/15 flex items-center justify-center shrink-0">
+                    <Users size={16} className="text-purple-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-white text-sm">Зарплатні витрати</h3>
+                    <p className={`text-xs mt-0.5 ${data.salary.some(r => r.brutto > 0) ? "text-emerald-400" : "text-gray-600"}`}>
+                      {data.salary.some(r => r.brutto > 0) ? "Заповнено" : "Не заповнено"} · {fmt(data.totals.salary_total)} ₴
+                    </p>
+                  </div>
                 </div>
-                <div className="flex-1 text-left">
-                  <h3 className="font-semibold text-white text-sm">Зарплатні витрати</h3>
-                  <p className={`text-xs mt-0.5 ${data.salary.some(r => r.brutto > 0) ? "text-emerald-400" : "text-gray-600"}`}>
-                    {data.salary.some(r => r.brutto > 0) ? "Заповнено" : "Не заповнено"} · {fmt(data.totals.salary_total)} ₴
-                  </p>
-                </div>
-                <ChevronDown size={18} className={`text-gray-500 transition-transform duration-200 shrink-0 ${expandedSections.salary ? "rotate-180" : ""}`} />
-              </button>
-
-              {expandedSections.salary && (
+                <button onClick={() => setActiveDrawer(null)} className="p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-dark-300 transition-all" aria-label="Закрити">
+                  <X size={16} />
+                </button>
+              </div>
               <div className="border-t border-dark-50/10">
 
               {/* Copy from previous month prompt */}
@@ -2485,33 +2556,28 @@ export default function ExpensesPage() {
                 <span className="font-bold text-purple-400 font-mono tabular-nums">{fmt(data.totals.salary_total)} ₴</span>
               </div>
               </div>
-              )}
             </section>
-          )}
+              )}
 
-          {/* ────────────────────────────────────────
-              SECTION: ІНШІ ВИТРАТИ
-          ──────────────────────────────────────── */}
-          {(
-            <section className="card-neo overflow-hidden">
-              <button
-                onClick={() => toggleSection("other")}
-                className="w-full flex items-center gap-3 px-5 py-4 bg-dark-400/20 hover:bg-dark-400/30 transition-all cursor-pointer"
-                aria-expanded={!!expandedSections.other}
-              >
-                <div className="w-8 h-8 rounded-xl bg-amber-500/15 flex items-center justify-center shrink-0">
-                  <Wallet size={16} className="text-amber-400" />
+              {/* ── DRAWER: ІНШІ ВИТРАТИ ── */}
+              {activeDrawer === "other" && (
+              <section className="card-neo overflow-hidden animate-drawer-in">
+              <div className="flex items-center justify-between px-5 py-4 bg-dark-400/20 border-b border-dark-50/10">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-amber-500/15 flex items-center justify-center shrink-0">
+                    <Wallet size={16} className="text-amber-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-white text-sm">Інші витрати</h3>
+                    <p className={`text-xs mt-0.5 ${otherExpenses.length > 0 ? "text-emerald-400" : "text-gray-600"}`}>
+                      {otherExpenses.length > 0 ? "Заповнено" : "Не заповнено"} · {fmt(otherTotal)} ₴
+                    </p>
+                  </div>
                 </div>
-                <div className="flex-1 text-left">
-                  <h3 className="font-semibold text-white text-sm">Інші витрати</h3>
-                  <p className={`text-xs mt-0.5 ${otherExpenses.length > 0 ? "text-emerald-400" : "text-gray-600"}`}>
-                    {otherExpenses.length > 0 ? "Заповнено" : "Не заповнено"} · {fmt(otherTotal)} ₴
-                  </p>
-                </div>
-                <ChevronDown size={18} className={`text-gray-500 transition-transform duration-200 shrink-0 ${expandedSections.other ? "rotate-180" : ""}`} />
-              </button>
-
-              {expandedSections.other && (
+                <button onClick={() => setActiveDrawer(null)} className="p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-dark-300 transition-all" aria-label="Закрити">
+                  <X size={16} />
+                </button>
+              </div>
               <div className="border-t border-dark-50/10">
 
               {/* Copy from previous month prompt */}
@@ -2610,33 +2676,28 @@ export default function ExpensesPage() {
                 <span className="font-bold text-amber-400 font-mono tabular-nums">{fmt(otherTotal)} ₴</span>
               </div>
               </div>
-              )}
             </section>
-          )}
+              )}
 
-          {/* ────────────────────────────────────────
-              SECTION: ПОДАТКИ
-          ──────────────────────────────────────── */}
-          {(
-            <section className="card-neo overflow-hidden">
-              <button
-                onClick={() => toggleSection("taxes")}
-                className="w-full flex items-center gap-3 px-5 py-4 bg-dark-400/20 hover:bg-dark-400/30 transition-all cursor-pointer"
-                aria-expanded={!!expandedSections.taxes}
-              >
-                <div className="w-8 h-8 rounded-xl bg-red-500/15 flex items-center justify-center shrink-0">
-                  <Receipt size={16} className="text-red-400" />
+              {/* ── DRAWER: ПОДАТКИ ── */}
+              {activeDrawer === "taxes" && (
+              <section className="card-neo overflow-hidden animate-drawer-in">
+              <div className="flex items-center justify-between px-5 py-4 bg-dark-400/20 border-b border-dark-50/10">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-red-500/15 flex items-center justify-center shrink-0">
+                    <Receipt size={16} className="text-red-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-white text-sm">Податки</h3>
+                    <p className={`text-xs mt-0.5 ${data.totals.tax_total > 0 ? "text-emerald-400" : "text-gray-600"}`}>
+                      {data.totals.tax_total > 0 ? "Заповнено" : "Не заповнено"} · {fmt(data.totals.tax_total)} ₴
+                    </p>
+                  </div>
                 </div>
-                <div className="flex-1 text-left">
-                  <h3 className="font-semibold text-white text-sm">Податки</h3>
-                  <p className={`text-xs mt-0.5 ${data.totals.tax_total > 0 ? "text-emerald-400" : "text-gray-600"}`}>
-                    {data.totals.tax_total > 0 ? "Заповнено" : "Не заповнено"} · {fmt(data.totals.tax_total)} ₴
-                  </p>
-                </div>
-                <ChevronDown size={18} className={`text-gray-500 transition-transform duration-200 shrink-0 ${expandedSections.taxes ? "rotate-180" : ""}`} />
-              </button>
-
-              {expandedSections.taxes && (
+                <button onClick={() => setActiveDrawer(null)} className="p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-dark-300 transition-all" aria-label="Закрити">
+                  <X size={16} />
+                </button>
+              </div>
               <div className="px-5 py-4 space-y-3 border-t border-dark-50/10">
                 <div className="bg-dark-400/20 rounded-xl p-4 space-y-2">
                   <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-1.5"><Banknote size={13} className="text-orange-400" />Джерела доходу</p>
@@ -2677,35 +2738,30 @@ export default function ExpensesPage() {
                   </div>
                 </div>
               </div>
-              )}
             </section>
-          )}
+              )}
 
-          {/* ────────────────────────────────────────
-              SECTION: ПІДСУМКИ
-          ──────────────────────────────────────── */}
-          {(
-            <section className="card-neo overflow-hidden">
-              <button
-                onClick={() => toggleSection("summary")}
-                className="w-full flex items-center gap-3 px-5 py-4 bg-dark-400/20 hover:bg-dark-400/30 transition-all cursor-pointer"
-                aria-expanded={!!expandedSections.summary}
-              >
-                <div className="w-8 h-8 rounded-xl bg-emerald-500/15 flex items-center justify-center shrink-0">
-                  <Building2 size={16} className="text-emerald-400" />
+              {/* ── DRAWER: ПІДСУМКИ ── */}
+              {activeDrawer === "summary" && (
+              <section className="card-neo overflow-hidden animate-drawer-in">
+              <div className="flex items-center justify-between px-5 py-4 bg-dark-400/20 border-b border-dark-50/10">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-500/15 flex items-center justify-center shrink-0">
+                    <Building2 size={16} className="text-emerald-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-white text-sm">
+                      Підсумки — {MONTH_NAMES[month - 1]} {year}
+                    </h3>
+                    <p className={`text-xs mt-0.5 ${grandWithOther > 0 ? "text-emerald-400" : "text-gray-600"}`}>
+                      {grandWithOther > 0 ? "Заповнено" : "Не заповнено"} · Залишок: {remaining >= 0 ? "+" : ""}{fmt(remaining)} ₴
+                    </p>
+                  </div>
                 </div>
-                <div className="flex-1 text-left">
-                  <h3 className="font-semibold text-white text-sm">
-                    Підсумки — {MONTH_NAMES[month - 1]} {year}
-                  </h3>
-                  <p className={`text-xs mt-0.5 ${grandWithOther > 0 ? "text-emerald-400" : "text-gray-600"}`}>
-                    {grandWithOther > 0 ? "Заповнено" : "Не заповнено"} · Залишок: {remaining >= 0 ? "+" : ""}{fmt(remaining)} ₴
-                  </p>
-                </div>
-                <ChevronDown size={18} className={`text-gray-500 transition-transform duration-200 shrink-0 ${expandedSections.summary ? "rotate-180" : ""}`} />
-              </button>
-
-              {expandedSections.summary && (
+                <button onClick={() => setActiveDrawer(null)} className="p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-dark-300 transition-all" aria-label="Закрити">
+                  <X size={16} />
+                </button>
+              </div>
               <div className="px-5 py-5 space-y-2.5 border-t border-dark-50/10">
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-1.5">
                   <BarChart3 size={13} className="text-orange-400" />Структура витрат
@@ -2752,9 +2808,11 @@ export default function ExpensesPage() {
                   </div>
                 )}
               </div>
-              )}
             </section>
-          )}
+              )}
+
+            </div>
+          </div>
         </>
       )}
 
