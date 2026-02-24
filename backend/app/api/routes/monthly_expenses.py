@@ -1830,13 +1830,15 @@ async def submit_accountant_request(
             })
 
     # ── 3. Оновлюємо share запис як підтверджений ──
+    now_utc = datetime.now(timezone.utc)
     new_fs = dict(fs)
     new_fs["submitted"] = True
+    new_fs["owner_notified"] = False  # власник ще не бачив
     new_fs["submitted_data"] = {
         "salaries": saved_salaries,
         "fixed_expenses": saved_fixed,
         "other_expenses": saved_other,
-        "submitted_at": datetime.now(timezone.utc).isoformat(),
+        "submitted_at": now_utc.isoformat(),
     }
     share.filter_snapshot = new_fs
 
@@ -1851,3 +1853,77 @@ async def submit_accountant_request(
             "other_expenses": saved_other,
         },
     }
+
+
+# ────────────────────────────────────────────────────────────────────
+#  Сповіщення власника про звіт бухгалтера
+# ────────────────────────────────────────────────────────────────────
+
+@router.get("/accountant-notifications")
+async def get_accountant_notifications(
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Повертає список непрочитаних звітів бухгалтера для поточного користувача."""
+    result = await db.execute(
+        select(ShareReport).where(
+            ShareReport.user_id == user.id,
+            ShareReport.is_deleted == False,
+        )
+    )
+    reports = result.scalars().all()
+
+    notifications = []
+    for r in reports:
+        fs = r.filter_snapshot or {}
+        if (
+            fs.get("type") == "accountant_request"
+            and fs.get("submitted") is True
+            and fs.get("owner_notified") is not True
+        ):
+            sd = fs.get("submitted_data", {})
+            sal_total = sum(s.get("brutto", 0) for s in sd.get("salaries", []))
+            fixed_total = sum(e.get("amount", 0) for e in sd.get("fixed_expenses", []))
+            other_total = sum(e.get("amount", 0) for e in sd.get("other_expenses", []))
+
+            notifications.append({
+                "share_id": r.id,
+                "year": fs.get("year"),
+                "month": fs.get("month"),
+                "month_name": MONTHS_UA[fs.get("month", 1)],
+                "submitted_at": sd.get("submitted_at"),
+                "salary_count": len(sd.get("salaries", [])),
+                "salary_total": sal_total,
+                "fixed_count": len(sd.get("fixed_expenses", [])),
+                "fixed_total": fixed_total,
+                "other_count": len(sd.get("other_expenses", [])),
+                "other_total": other_total,
+                "grand_total": sal_total + fixed_total + other_total,
+            })
+
+    return {"notifications": notifications}
+
+
+@router.post("/accountant-notifications/{share_id}/dismiss")
+async def dismiss_accountant_notification(
+    share_id: int,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Позначає звіт бухгалтера як прочитаний власником."""
+    result = await db.execute(
+        select(ShareReport).where(
+            ShareReport.id == share_id,
+            ShareReport.user_id == user.id,
+        )
+    )
+    share = result.scalar_one_or_none()
+    if not share:
+        raise HTTPException(404, detail="Звіт не знайдено")
+
+    fs = dict(share.filter_snapshot or {})
+    fs["owner_notified"] = True
+    share.filter_snapshot = fs
+    await db.commit()
+
+    return {"status": "ok"}

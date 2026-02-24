@@ -21,6 +21,9 @@ import {
 import { useAuth } from "../hooks/useAuth";
 import MedFlowLogo from "./shared/MedFlowLogo";
 import { useTheme } from "../hooks/useTheme";
+import { AccountantNotificationModal } from "./shared";
+import type { AccountantNotification } from "./shared";
+import api from "../api/client";
 
 // ── Навігаційні пункти ────────────────────────────────────────────
 const navItems = [
@@ -41,6 +44,34 @@ export default function Layout() {
   const location = useLocation();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const { toggle, isLight } = useTheme();
+
+  // ── Accountant notification state ──
+  const [accNotifications, setAccNotifications] = useState<AccountantNotification[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchNotifications() {
+      try {
+        const { data } = await api.get("/monthly-expenses/accountant-notifications");
+        if (!cancelled && data.notifications?.length) {
+          setAccNotifications(data.notifications);
+        }
+      } catch {
+        // silent — не блокуємо UX
+      }
+    }
+    fetchNotifications();
+    return () => { cancelled = true; };
+  }, []);
+
+  const handleDismissNotification = useCallback(async (shareId: number) => {
+    try {
+      await api.post(`/monthly-expenses/accountant-notifications/${shareId}/dismiss`);
+    } catch {
+      // silent
+    }
+    setAccNotifications((prev) => prev.filter((n) => n.share_id !== shareId));
+  }, []);
 
   // ── Sidebar collapsed state (desktop) ──
   const [collapsed, setCollapsed] = useState(() => {
@@ -333,6 +364,16 @@ export default function Layout() {
             </div>
           </div>
         </>
+      )}
+
+      {/* ══════════════════════════════════════════════
+          Глобальне сповіщення: звіт бухгалтера
+      ══════════════════════════════════════════════ */}
+      {accNotifications.length > 0 && (
+        <AccountantNotificationModal
+          notification={accNotifications[0]}
+          onDismiss={handleDismissNotification}
+        />
       )}
     </div>
   );
