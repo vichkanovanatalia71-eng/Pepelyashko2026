@@ -102,6 +102,7 @@ export default function AccountantRequestPage() {
   const [savedResult, setSavedResult] = useState<ShareData["submitted_data"]>(null);
   const [editMode, setEditMode] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [successAnim, setSuccessAnim] = useState(false);
 
   async function loadData() {
     if (!token) return;
@@ -253,7 +254,13 @@ export default function AccountantRequestPage() {
       });
       setSavedResult(res.data.saved);
       setEditMode(false);
-      setSubmitted(true);
+
+      // Show success animation for ~5s before revealing result
+      setSuccessAnim(true);
+      setTimeout(() => {
+        setSuccessAnim(false);
+        setSubmitted(true);
+      }, 5000);
     } catch (e) {
       console.error(e);
       setAlertDlg({ title: "Помилка", description: "Помилка надсилання даних" });
@@ -740,6 +747,50 @@ export default function AccountantRequestPage() {
             </div>
           </div>
         </>
+      )}
+
+      {/* ══════════════════════════════════════════════
+          Анімація успішного надсилання (~5с)
+      ══════════════════════════════════════════════ */}
+      {successAnim && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-dark-700/95 backdrop-blur-md"
+          style={{ animation: "fadeIn 0.3s ease forwards" }}
+        >
+          <div className="flex flex-col items-center gap-6 px-6"
+            style={{ animation: "modalScaleIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards" }}
+          >
+            {/* Animated check circle */}
+            <div className="relative">
+              <div className="w-24 h-24 rounded-full bg-emerald-500/15 border-2 border-emerald-500/40 flex items-center justify-center"
+                style={{
+                  animation: "successPulse 2s ease-in-out infinite",
+                  boxShadow: "0 0 50px rgba(16, 185, 129, 0.3), 0 0 100px rgba(16, 185, 129, 0.15)",
+                }}
+              >
+                <Check size={42} className="text-emerald-400" style={{ animation: "checkMark 0.6s ease 0.3s both" }} />
+              </div>
+            </div>
+
+            <div className="text-center space-y-2.5">
+              <h2 className="text-2xl font-bold text-white" style={{ animation: "fadeSlideUp 0.4s ease 0.4s both" }}>
+                Звіт надіслано!
+              </h2>
+              <p className="text-sm text-gray-400 max-w-sm" style={{ animation: "fadeSlideUp 0.4s ease 0.6s both" }}>
+                Дані за {MONTHS_UA[data.month]} {data.year} успішно записані у систему MedFlow
+              </p>
+              <p className="text-xs text-gray-500" style={{ animation: "fadeSlideUp 0.4s ease 0.8s both" }}>
+                Зачекайте, відбувається збереження…
+              </p>
+            </div>
+
+            {/* Progress bar */}
+            <div className="w-56 h-1.5 rounded-full bg-dark-400/50 overflow-hidden mt-2">
+              <div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400"
+                style={{ animation: "progressFill 4.6s ease-in-out forwards", animationDelay: "0.2s", width: "0%" }}
+              />
+            </div>
+          </div>
+        </div>
       )}
 
       <ConfirmDialog
