@@ -759,8 +759,10 @@ export default function ExpensesPage() {
         is_recurring: pending.is_recurring,
       });
       await load();
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
+      const msg = e?.response?.data?.detail || "Не вдалося зберегти витрату. Спробуйте ще раз.";
+      alert(msg);
       setFixedPending(p => ({ ...p, [key]: { ...p[key], saving: false } }));
     }
   }
@@ -796,8 +798,9 @@ export default function ExpensesPage() {
         year, month, category_key: key, amount: 0, is_recurring: false,
       });
       await load();
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
+      alert(e?.response?.data?.detail || "Не вдалося скинути витрату.");
       setFixedPending(p => ({ ...p, [key]: { ...p[key], saving: false } }));
     }
   }
@@ -860,8 +863,9 @@ export default function ExpensesPage() {
       }
       setOtherModal(s => ({ ...s, open: false, saving: false }));
       await loadOther();
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
+      alert(e?.response?.data?.detail || "Не вдалося зберегти витрату. Спробуйте ще раз.");
       setOtherModal(s => ({ ...s, saving: false }));
     }
   }
@@ -871,8 +875,9 @@ export default function ExpensesPage() {
     try {
       await api.delete(`/monthly-expenses/other/${id}`);
       await loadOther();
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
+      alert(e?.response?.data?.detail || "Не вдалося видалити витрату.");
     }
   }
 
@@ -2708,8 +2713,9 @@ export default function ExpensesPage() {
                   });
                   setFixedModal(s => ({ ...s, open: false, saving: false }));
                   await load();
-                } catch (e) {
+                } catch (e: any) {
                   console.error(e);
+                  alert(e?.response?.data?.detail || "Не вдалося зберегти витрату. Спробуйте ще раз.");
                   setFixedModal(s => ({ ...s, saving: false }));
                 }
               }}
