@@ -93,6 +93,7 @@ export default function MonthlyServicesPage() {
   const [shareData, setShareData] = useState<ShareResponse | null>(null);
   const [deleteReportId, setDeleteReportId] = useState<number | null>(null);
   const [finalizeWarningId, setFinalizeWarningId] = useState<number | null>(null);
+  const [alertDlg, setAlertDlg] = useState<{ title: string; description?: string } | null>(null);
 
   // ── Форма звіту ──
   const [formDoctor, setFormDoctor] = useState<number>(0);
@@ -365,7 +366,7 @@ export default function MonthlyServicesPage() {
 
   async function handleCopyPrevious() {
     if (!selectedDoctor) {
-      alert("Оберіть конкретного лікаря для копіювання звіту");
+      setAlertDlg({ title: "Увага", description: "Оберіть конкретного лікаря для копіювання звіту" });
       return;
     }
     try {
@@ -374,7 +375,7 @@ export default function MonthlyServicesPage() {
       );
       await Promise.all([loadAnalytics(), loadPeriodInfo()]);
     } catch (e: any) {
-      alert(e?.response?.data?.detail ?? "Не вдалося скопіювати звіт");
+      setAlertDlg({ title: "Помилка", description: e?.response?.data?.detail ?? "Не вдалося скопіювати звіт" });
     }
   }
 
@@ -1196,6 +1197,17 @@ export default function MonthlyServicesPage() {
           </div>
         </div>
       )}
+
+      {/* ── Styled alert dialog (replaces native alert()) ── */}
+      <ConfirmDialog
+        open={!!alertDlg}
+        title={alertDlg?.title ?? ""}
+        description={alertDlg?.description}
+        confirmLabel="Зрозуміло"
+        cancelLabel="Закрити"
+        onConfirm={() => setAlertDlg(null)}
+        onCancel={() => setAlertDlg(null)}
+      />
     </div>
   );
 }

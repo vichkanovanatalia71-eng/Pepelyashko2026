@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 import api from "../api/client";
 import { MONTH_NAMES } from "../components/shared/MonthNavigator";
-import { LoadingSpinner } from "../components/shared";
+import { LoadingSpinner, ConfirmDialog } from "../components/shared";
 
 // ─── Types ──────────────────────────────────────────────────────────
 interface CellValue {
@@ -235,6 +235,11 @@ export default function BudgetPage() {
   const [addSubType, setAddSubType] = useState("fixed");
   const [addBusy, setAddBusy] = useState(false);
 
+  // Styled confirm dialog
+  const [confirmDlg, setConfirmDlg] = useState<{
+    title: string; action: () => void;
+  } | null>(null);
+
   const load = useCallback(async () => {
     setLoading(true);
     try {
@@ -328,12 +333,16 @@ export default function BudgetPage() {
   }
 
   // ── Delete row ──
-  async function handleDeleteRow(rowId: number) {
-    if (!confirm("Видалити цей рядок?")) return;
-    try {
-      await api.delete(`/budget/rows/${rowId}`);
-      load();
-    } catch { /* ignore */ }
+  function handleDeleteRow(rowId: number) {
+    setConfirmDlg({
+      title: "Видалити цей рядок?",
+      action: async () => {
+        try {
+          await api.delete(`/budget/rows/${rowId}`);
+          load();
+        } catch { /* ignore */ }
+      },
+    });
   }
 
   // ── Derived ──
@@ -858,6 +867,16 @@ export default function BudgetPage() {
           onApply={handleCopyApply}
         />
       )}
+
+      {/* ── Styled confirm dialog ── */}
+      <ConfirmDialog
+        open={!!confirmDlg}
+        title={confirmDlg?.title ?? ""}
+        variant="danger"
+        confirmLabel="Видалити"
+        onConfirm={() => { confirmDlg?.action(); setConfirmDlg(null); }}
+        onCancel={() => setConfirmDlg(null)}
+      />
     </div>
   );
 }

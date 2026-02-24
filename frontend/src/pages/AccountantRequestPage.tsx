@@ -14,6 +14,7 @@ import {
   Trash2,
   RefreshCw,
 } from "lucide-react";
+import { ConfirmDialog } from "../components/shared";
 
 const API = "";
 
@@ -72,6 +73,7 @@ export default function AccountantRequestPage() {
   const [data, setData] = useState<ShareData | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [alertDlg, setAlertDlg] = useState<{ title: string; description?: string } | null>(null);
 
   // Form state
   const [salaries, setSalaries] = useState<SalaryRow[]>([]);
@@ -171,7 +173,7 @@ export default function AccountantRequestPage() {
       setEditMode(false);
     } catch (e) {
       console.error(e);
-      alert("Помилка надсилання даних");
+      setAlertDlg({ title: "Помилка", description: "Помилка надсилання даних" });
     }
     setSubmitting(false);
   }
@@ -446,6 +448,16 @@ export default function AccountantRequestPage() {
           </button>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={!!alertDlg}
+        title={alertDlg?.title ?? ""}
+        description={alertDlg?.description}
+        confirmLabel="Зрозуміло"
+        cancelLabel="Закрити"
+        onConfirm={() => setAlertDlg(null)}
+        onCancel={() => setAlertDlg(null)}
+      />
     </div>
   );
 }

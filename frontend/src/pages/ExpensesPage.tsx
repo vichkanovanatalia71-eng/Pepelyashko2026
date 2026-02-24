@@ -41,6 +41,7 @@ import {
   LoadingSpinner,
   AlertBanner,
   EmptyState,
+  ConfirmDialog,
 } from "../components/shared";
 import * as XLSX from "xlsx";
 import {
@@ -433,6 +434,16 @@ export default function ExpensesPage() {
   // Track which sections have already been copied (to hide the prompt after copy)
   const [sectionCopied, setSectionCopied] = useState<Record<string, boolean>>({});
 
+  // ── Styled confirm / alert dialogs (replace native browser dialogs) ──
+  const [confirmDlg, setConfirmDlg] = useState<{
+    title: string; description?: string;
+    variant?: "danger" | "default"; confirmLabel?: string;
+    action: () => void;
+  } | null>(null);
+  const [alertDlg, setAlertDlg] = useState<{
+    title: string; description?: string;
+  } | null>(null);
+
   // ── Load main expense data ─────────────────────────────────────
   const load = useCallback(async () => {
     setLoading(true);
@@ -647,7 +658,7 @@ export default function ExpensesPage() {
       });
     } catch (e) {
       console.error(e);
-      alert("Помилка створення посилання");
+      setAlertDlg({ title: "Помилка", description: "Помилка створення посилання" });
     }
     setShareLoading(false);
   }
@@ -668,7 +679,7 @@ export default function ExpensesPage() {
       });
     } catch (e) {
       console.error(e);
-      alert("Помилка створення запиту до бухгалтера");
+      setAlertDlg({ title: "Помилка", description: "Помилка створення запиту до бухгалтера" });
     }
     setAccReqLoading(false);
   }
@@ -687,15 +698,21 @@ export default function ExpensesPage() {
   }
 
   // ── Delete fixed ────────────────────────────────────────────────
-  async function deleteFixed(id: number, name: string) {
-    if (!confirm(`Видалити витрату «${name}»?`)) return;
-    try {
-      await api.delete(`/monthly-expenses/fixed/${id}`);
-      await load();
-    } catch (e: any) {
-      console.error(e);
-      alert(e?.response?.data?.detail || "Не вдалося видалити витрату.");
-    }
+  function deleteFixed(id: number, name: string) {
+    setConfirmDlg({
+      title: `Видалити витрату «${name}»?`,
+      variant: "danger",
+      confirmLabel: "Видалити",
+      action: async () => {
+        try {
+          await api.delete(`/monthly-expenses/fixed/${id}`);
+          await load();
+        } catch (e: any) {
+          console.error(e);
+          setAlertDlg({ title: "Помилка", description: e?.response?.data?.detail || "Не вдалося видалити витрату." });
+        }
+      },
+    });
   }
 
   // ── Save salary ───────────────────────────────────────────────
@@ -748,14 +765,21 @@ export default function ExpensesPage() {
     }
   }
 
-  async function deleteStaff(id: number, name: string) {
-    if (!confirm(`Видалити співробітника «${name}»? Дані місяця залишаться.`)) return;
-    try {
-      await api.delete(`/staff/${id}`);
-      await Promise.all([loadStaff(), load()]);
-    } catch (e) {
-      console.error(e);
-    }
+  function deleteStaff(id: number, name: string) {
+    setConfirmDlg({
+      title: `Видалити співробітника «${name}»?`,
+      description: "Дані місяця залишаться.",
+      variant: "danger",
+      confirmLabel: "Видалити",
+      action: async () => {
+        try {
+          await api.delete(`/staff/${id}`);
+          await Promise.all([loadStaff(), load()]);
+        } catch (e) {
+          console.error(e);
+        }
+      },
+    });
   }
 
   // ── Other expenses CRUD ────────────────────────────────────────
@@ -780,20 +804,26 @@ export default function ExpensesPage() {
       await loadOther();
     } catch (e: any) {
       console.error(e);
-      alert(e?.response?.data?.detail || "Не вдалося зберегти витрату. Спробуйте ще раз.");
+      setAlertDlg({ title: "Помилка", description: e?.response?.data?.detail || "Не вдалося зберегти витрату. Спробуйте ще раз." });
       setOtherModal(s => ({ ...s, saving: false }));
     }
   }
 
-  async function deleteOther(id: number, name: string) {
-    if (!confirm(`Видалити витрату «${name}»?`)) return;
-    try {
-      await api.delete(`/monthly-expenses/other/${id}`);
-      await loadOther();
-    } catch (e: any) {
-      console.error(e);
-      alert(e?.response?.data?.detail || "Не вдалося видалити витрату.");
-    }
+  function deleteOther(id: number, name: string) {
+    setConfirmDlg({
+      title: `Видалити витрату «${name}»?`,
+      variant: "danger",
+      confirmLabel: "Видалити",
+      action: async () => {
+        try {
+          await api.delete(`/monthly-expenses/other/${id}`);
+          await loadOther();
+        } catch (e: any) {
+          console.error(e);
+          setAlertDlg({ title: "Помилка", description: e?.response?.data?.detail || "Не вдалося видалити витрату." });
+        }
+      },
+    });
   }
 
   // ── Lock / Unlock period ──────────────────────────────────────
@@ -806,14 +836,19 @@ export default function ExpensesPage() {
     finally { setLockLoading(false); }
   }
 
-  async function unlockPeriod() {
-    if (!confirm("Розблокувати місяць для редагування?")) return;
-    setLockLoading(true);
-    try {
-      await api.delete("/monthly-expenses/lock", { params: { year, month } });
-      await Promise.all([load(), loadPeriods()]);
-    } catch (e) { console.error(e); }
-    finally { setLockLoading(false); }
+  function unlockPeriod() {
+    setConfirmDlg({
+      title: "Розблокувати місяць для редагування?",
+      confirmLabel: "Розблокувати",
+      action: async () => {
+        setLockLoading(true);
+        try {
+          await api.delete("/monthly-expenses/lock", { params: { year, month } });
+          await Promise.all([load(), loadPeriods()]);
+        } catch (e) { console.error(e); }
+        finally { setLockLoading(false); }
+      },
+    });
   }
 
   // ── Copy from period ──────────────────────────────────────────
@@ -935,7 +970,7 @@ export default function ExpensesPage() {
       setSectionCopied(s => ({ ...s, [section]: true }));
     } catch (e) {
       console.error(e);
-      alert("Не вдалося перенести дані. Спробуйте ще раз.");
+      setAlertDlg({ title: "Помилка", description: "Не вдалося перенести дані. Спробуйте ще раз." });
     } finally {
       setSectionCopyLoading(s => ({ ...s, [section]: false }));
     }
@@ -2780,7 +2815,7 @@ export default function ExpensesPage() {
                   }
                 } catch (e: any) {
                   console.error(e);
-                  alert(e?.response?.data?.detail || "Не вдалося зберегти витрату. Спробуйте ще раз.");
+                  setAlertDlg({ title: "Помилка", description: e?.response?.data?.detail || "Не вдалося зберегти витрату. Спробуйте ще раз." });
                   setFixedModal(s => ({ ...s, saving: false }));
                 }
               }}
@@ -3420,6 +3455,28 @@ export default function ExpensesPage() {
           </div>
         </div>
       )}
+
+      {/* ── Styled confirm dialog (replaces native confirm()) ── */}
+      <ConfirmDialog
+        open={!!confirmDlg}
+        title={confirmDlg?.title ?? ""}
+        description={confirmDlg?.description}
+        variant={confirmDlg?.variant ?? "default"}
+        confirmLabel={confirmDlg?.confirmLabel ?? "Підтвердити"}
+        onConfirm={() => { confirmDlg?.action(); setConfirmDlg(null); }}
+        onCancel={() => setConfirmDlg(null)}
+      />
+
+      {/* ── Styled alert dialog (replaces native alert()) ── */}
+      <ConfirmDialog
+        open={!!alertDlg}
+        title={alertDlg?.title ?? ""}
+        description={alertDlg?.description}
+        confirmLabel="Зрозуміло"
+        cancelLabel="Закрити"
+        onConfirm={() => setAlertDlg(null)}
+        onCancel={() => setAlertDlg(null)}
+      />
     </div>
   );
 }
