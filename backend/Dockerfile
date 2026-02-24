@@ -11,7 +11,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
+# Ensure entrypoint has unix line endings and is executable
+RUN sed -i 's/\r$//' entrypoint.sh && chmod +x entrypoint.sh
+
 EXPOSE 8000
 
-# Run migrations then start the server
-CMD alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}
+ENTRYPOINT ["bash", "./entrypoint.sh"]
