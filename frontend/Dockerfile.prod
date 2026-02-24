@@ -26,4 +26,5 @@ EXPOSE 3000
 
 # Substitute PORT and BACKEND_URL, leave nginx vars ($uri etc.) intact
 # Default BACKEND_URL to localhost:8080 so nginx starts even if the variable is missing
-CMD /bin/sh -c "export PORT=\${PORT:-3000} BACKEND_URL=\${BACKEND_URL:-http://localhost:8080} && envsubst '\$PORT \$BACKEND_URL' < /etc/nginx/nginx.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"
+# Strip trailing slashes from BACKEND_URL to prevent double-slash paths (//api/)
+CMD /bin/sh -c "export PORT=\${PORT:-3000} && BACKEND_URL=\${BACKEND_URL:-http://localhost:8080} && BACKEND_URL=\${BACKEND_URL%/} && export BACKEND_URL && envsubst '\$PORT \$BACKEND_URL' < /etc/nginx/nginx.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"
