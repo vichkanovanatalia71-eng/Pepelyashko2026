@@ -1736,15 +1736,16 @@ async def submit_accountant_request(
         })
 
     # ── 2. Зберігаємо витрати бухгалтера ──
-    # Для витрат із payload (recurring) — оновлюємо існуючі записи за category_key
+    # Recurring → MonthlyFixedExpense
+    # Non-recurring (нові або зняли прапорець) → MonthlyOtherExpense
     payload_expenses = share.payload_snapshot.get("recurring_expenses", [])
-    payload_keys = {e.get("category_key") for e in payload_expenses if e.get("category_key")}
 
     for exp in body.expenses:
         now = datetime.now(timezone.utc)
-        # Спроба знайти існуючий запис за назвою (для recurring з попереднього місяця)
-        existing_fe = None
+
         if exp.is_recurring:
+            # ── Постійна витрата → MonthlyFixedExpense ──
+            existing_fe = None
             for pe in payload_expenses:
                 if pe.get("name") == exp.name and pe.get("category_key"):
                     fe_res = await db.execute(
@@ -1758,46 +1759,74 @@ async def submit_accountant_request(
                     existing_fe = fe_res.scalar_one_or_none()
                     break
 
-        if existing_fe:
-            existing_fe.amount = exp.amount
-            existing_fe.name = exp.name
-            existing_fe.is_recurring = exp.is_recurring
-            existing_fe.edited_by = "accountant"
-            existing_fe.edited_at = now
-            await db.flush()
-        else:
-            cat_key = str(uuid.uuid4())[:12]
-            fe = MonthlyFixedExpense(
-                user_id=user_id,
-                year=year,
-                month=month,
-                category_key=cat_key,
-                name=exp.name,
-                amount=exp.amount,
-                is_recurring=exp.is_recurring,
-                edited_by="accountant",
-                edited_at=now,
-            )
-            db.add(fe)
-            await db.flush()
-
-            if exp.is_recurring:
+            if existing_fe:
+                existing_fe.amount = exp.amount
+                existing_fe.name = exp.name
+                existing_fe.is_recurring = True
+                existing_fe.edited_by = "accountant"
+                existing_fe.edited_at = now
+                await db.flush()
+            else:
+                cat_key = str(uuid.uuid4())[:12]
+                fe = MonthlyFixedExpense(
+                    user_id=user_id,
+                    year=year,
+                    month=month,
+                    category_key=cat_key,
+                    name=exp.name,
+                    amount=exp.amount,
+                    is_recurring=True,
+                    edited_by="accountant",
+                    edited_at=now,
+                )
+                db.add(fe)
+                await db.flush()
                 await _propagate_recurring(
                     db, user_id, year, month,
                     cat_key, exp.name, "", exp.amount,
                 )
 
-        if exp.is_recurring:
             saved_fixed.append({
                 "name": exp.name,
                 "amount": exp.amount,
                 "category": "Постійні витрати",
             })
         else:
+            # ── Не постійна витрата → MonthlyOtherExpense ──
+            # Якщо це була recurring витрата з payload і прапорець зняли —
+            # видаляємо з MonthlyFixedExpense
+            for pe in payload_expenses:
+                if pe.get("name") == exp.name and pe.get("category_key"):
+                    old_fe_res = await db.execute(
+                        select(MonthlyFixedExpense).where(
+                            MonthlyFixedExpense.user_id == user_id,
+                            MonthlyFixedExpense.year == year,
+                            MonthlyFixedExpense.month == month,
+                            MonthlyFixedExpense.category_key == pe["category_key"],
+                        )
+                    )
+                    old_fe = old_fe_res.scalar_one_or_none()
+                    if old_fe:
+                        await db.delete(old_fe)
+                        await db.flush()
+                    break
+
+            # Створюємо запис в MonthlyOtherExpense
+            oe = MonthlyOtherExpense(
+                user_id=user_id,
+                year=year,
+                month=month,
+                name=exp.name,
+                amount=exp.amount,
+                category="general",
+            )
+            db.add(oe)
+            await db.flush()
+
             saved_other.append({
                 "name": exp.name,
                 "amount": exp.amount,
-                "category": "Постійні витрати",
+                "category": "Інші витрати",
             })
 
     # ── 3. Оновлюємо share запис як підтверджений ──

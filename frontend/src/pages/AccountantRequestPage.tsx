@@ -100,6 +100,8 @@ export default function AccountantRequestPage() {
   const [submitted, setSubmitted] = useState(false);
   const [savedResult, setSavedResult] = useState<ShareData["submitted_data"]>(null);
   const [editMode, setEditMode] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [successAnim, setSuccessAnim] = useState(false);
 
   async function loadData() {
     if (!token) return;
@@ -186,6 +188,7 @@ export default function AccountantRequestPage() {
 
   async function handleSubmit() {
     if (!token) return;
+    setConfirmOpen(false);
     setSubmitting(true);
     try {
       const res = await api.post(`/monthly-expenses/accountant-request/${token}/submit`, {
@@ -202,8 +205,14 @@ export default function AccountantRequestPage() {
           })),
       });
       setSavedResult(res.data.saved);
-      setSubmitted(true);
       setEditMode(false);
+
+      // Show success animation for ~2.5s before revealing result
+      setSuccessAnim(true);
+      setTimeout(() => {
+        setSuccessAnim(false);
+        setSubmitted(true);
+      }, 2500);
     } catch (e) {
       console.error(e);
       setAlertDlg({ title: "Помилка", description: "Помилка надсилання даних" });
@@ -557,9 +566,9 @@ export default function AccountantRequestPage() {
         {/* ── Submit button ── */}
         <div className="flex justify-center">
           <button
-            onClick={handleSubmit}
+            onClick={() => setConfirmOpen(true)}
             disabled={submitting}
-            className="flex items-center gap-2 px-8 py-3.5 rounded-xl bg-orange-500 hover:bg-orange-400 text-white text-sm font-semibold transition-all disabled:opacity-60 shadow-lg shadow-orange-500/20"
+            className="flex items-center gap-2 px-8 py-3.5 rounded-xl bg-orange-500 hover:bg-orange-400 text-white text-sm font-semibold transition-all disabled:opacity-60 shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30 hover:-translate-y-0.5 active:scale-[0.98]"
           >
             {submitting ? (
               <RefreshCw size={16} className="animate-spin" />
@@ -575,6 +584,131 @@ export default function AccountantRequestPage() {
           Після надсилання дані будуть записані у систему MedFlow. Власник побачить ваші зміни на сторінці Витрат.
         </div>
       </div>
+
+      {/* ══════════════════════════════════════════════
+          Модальне вікно підтвердження надсилання звіту
+      ══════════════════════════════════════════════ */}
+      {confirmOpen && (
+        <>
+          <div
+            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
+            style={{ animation: "fadeIn 0.2s ease forwards" }}
+            onClick={() => setConfirmOpen(false)}
+          />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div
+              className="relative w-full max-w-md bg-dark-600 rounded-2xl border border-dark-50/15 shadow-2xl overflow-hidden"
+              style={{ animation: "modalScaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards" }}
+            >
+              {/* Top glow line */}
+              <div className="h-[2px] bg-gradient-to-r from-transparent via-orange-500 to-transparent" />
+
+              <div className="p-6">
+                {/* Icon */}
+                <div className="flex justify-center mb-4">
+                  <div className="w-14 h-14 rounded-2xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center">
+                    <Send size={24} className="text-orange-400" />
+                  </div>
+                </div>
+
+                {/* Title */}
+                <h3 className="text-lg font-bold text-white text-center mb-2">
+                  Надіслати звіт?
+                </h3>
+
+                {/* Description */}
+                <div className="space-y-2 mb-6">
+                  <p className="text-sm text-gray-400 text-center">
+                    Ви збираєтесь надіслати фінансовий звіт за{" "}
+                    <strong className="text-white">{MONTHS_UA[data.month]} {data.year}</strong>
+                  </p>
+                  <div className="p-3 rounded-xl bg-dark-400/40 border border-dark-50/10 space-y-1.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-gray-500">Зарплати (брутто)</span>
+                      <span className="text-blue-400 font-semibold tabular-nums">{fmt(salaryTotal)} грн</span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-gray-500">Витрати</span>
+                      <span className="text-orange-400 font-semibold tabular-nums">{fmt(expenseTotal)} грн</span>
+                    </div>
+                    <div className="h-px bg-dark-50/10 my-1" />
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-gray-400 font-medium">Разом</span>
+                      <span className="text-white font-bold tabular-nums">{fmt(salaryTotal + expenseTotal)} грн</span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-500 text-center">
+                    Дані будуть записані в систему MedFlow. Ви зможете відредагувати та надіслати повторно.
+                  </p>
+                </div>
+
+                {/* Buttons */}
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setConfirmOpen(false)}
+                    className="flex-1 px-4 py-3 rounded-xl bg-dark-400/50 border border-dark-50/15 text-gray-400 text-sm font-medium hover:bg-dark-400/80 hover:text-gray-300 transition-all"
+                  >
+                    Скасувати
+                  </button>
+                  <button
+                    onClick={handleSubmit}
+                    disabled={submitting}
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-orange-500 text-white text-sm font-semibold hover:bg-orange-400 transition-all disabled:opacity-60 shadow-lg shadow-orange-500/20"
+                  >
+                    {submitting ? (
+                      <RefreshCw size={16} className="animate-spin" />
+                    ) : (
+                      <Send size={16} />
+                    )}
+                    Надіслати
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* ══════════════════════════════════════════════
+          Анімація успішного надсилання (~2.5с)
+      ══════════════════════════════════════════════ */}
+      {successAnim && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-dark-700/95 backdrop-blur-md"
+          style={{ animation: "fadeIn 0.3s ease forwards" }}
+        >
+          <div className="flex flex-col items-center gap-5"
+            style={{ animation: "modalScaleIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards" }}
+          >
+            {/* Animated check circle */}
+            <div className="relative">
+              <div className="w-20 h-20 rounded-full bg-emerald-500/15 border-2 border-emerald-500/40 flex items-center justify-center"
+                style={{
+                  animation: "successPulse 1.5s ease-in-out infinite",
+                  boxShadow: "0 0 40px rgba(16, 185, 129, 0.25), 0 0 80px rgba(16, 185, 129, 0.1)",
+                }}
+              >
+                <Check size={36} className="text-emerald-400" style={{ animation: "checkMark 0.5s ease 0.3s both" }} />
+              </div>
+            </div>
+
+            <div className="text-center space-y-2">
+              <h2 className="text-xl font-bold text-white" style={{ animation: "fadeSlideUp 0.4s ease 0.4s both" }}>
+                Звіт надіслано!
+              </h2>
+              <p className="text-sm text-gray-400 max-w-xs" style={{ animation: "fadeSlideUp 0.4s ease 0.6s both" }}>
+                Дані за {MONTHS_UA[data.month]} {data.year} записані у систему MedFlow
+              </p>
+            </div>
+
+            {/* Progress bar */}
+            <div className="w-48 h-1 rounded-full bg-dark-400/50 overflow-hidden mt-2">
+              <div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400"
+                style={{ animation: "progressFill 2.3s ease-in-out forwards", animationDelay: "0.2s", width: "0%" }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       <ConfirmDialog
         open={!!alertDlg}
