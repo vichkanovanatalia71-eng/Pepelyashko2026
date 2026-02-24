@@ -871,11 +871,10 @@
 
   /* ── Page entrance animation ─────────────────────────────── */
   @keyframes pageEnter {
-    0%   { opacity: 0; transform: translateY(10px); }
-    100% { opacity: 1; transform: translateY(0); }
+    from { opacity: 0; transform: translateY(10px); }
   }
   .page-enter {
-    animation: pageEnter 0.35s var(--ease-spring) forwards;
+    animation: pageEnter 0.35s var(--ease-spring);
   }
 
   /* ── Glow pulse for accent elements ──────────────────────── */
