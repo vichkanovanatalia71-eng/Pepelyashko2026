@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import time
 from collections import defaultdict
 from datetime import date
 
@@ -381,6 +382,7 @@ async def _month_totals(
     esv_monthly: float,
     vz_rate: float,
     tax_rate: float,
+    ep_rate_pct: float = 5.0,
 ) -> dict:
     d_start, d_end = await _month_range(year, month)
     is_dec = month == 12
@@ -471,15 +473,8 @@ async def _month_totals(
         esv_employer += esv
 
     # 6. Tax expenses (ЄП, ВЗ, ЄСВ власника)
-    # vz_rate is already in decimal form (0.015 = 1.5%), passed from endpoint
-    # Get EP rate from settings
-    nhsu = await _get_nhsu_settings(db, user_id)
-    ep_rate_pct = 5.0  # default
-    if nhsu:
-        ep_rate_pct = float(nhsu.ep_rate)
-
     ep = round(income * ep_rate_pct / 100, 2)
-    vz = round(income * vz_rate, 2)  # vz_rate is already in decimal form
+    vz = round(income * vz_rate, 2)
     esv_owner = round(esv_monthly, 2)
 
     tax_total = round(ep + vz + esv_owner + esv_employer, 2)
@@ -936,6 +931,11 @@ async def _get_top_paid_services_detailed(db: AsyncSession, user_id: int, year: 
     return result, total_margin, total_margin_pct, all_total_revenue, all_total_qty
 
 
+# Simple TTL cache for dashboard (30 seconds per user+period)
+_dashboard_cache: dict[str, tuple[float, object]] = {}
+_DASHBOARD_CACHE_TTL = 30
+
+
 @router.get("/dashboard", response_model=DashboardData)
 async def dashboard_report(
     year: int = Query(...),
@@ -943,35 +943,78 @@ async def dashboard_report(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    # Load settings
+    # Check cache first
+    cache_key = f"{user.id}:{year}:{month}"
+    now = time.time()
+    if cache_key in _dashboard_cache:
+        cached_ts, cached_data = _dashboard_cache[cache_key]
+        if now - cached_ts < _DASHBOARD_CACHE_TTL:
+            return cached_data
+
+    result = await _build_dashboard(db, user, year, month)
+
+    # Store in cache
+    _dashboard_cache[cache_key] = (now, result)
+
+    # Evict stale entries (keep cache small)
+    stale_keys = [k for k, (ts, _) in _dashboard_cache.items() if now - ts > _DASHBOARD_CACHE_TTL * 2]
+    for k in stale_keys:
+        _dashboard_cache.pop(k, None)
+
+    return result
+
+
+async def _build_dashboard(
+    db: AsyncSession,
+    user: User,
+    year: int,
+    month: int,
+) -> DashboardData:
+    # Load settings once (avoids 8+ redundant queries)
     nhsu_result = await db.execute(
         select(NhsuSettings).where(NhsuSettings.user_id == user.id)
     )
     nhsu = nhsu_result.scalar_one_or_none()
     esv_monthly = float(nhsu.esv_monthly) if nhsu else settings.esv_monthly
     vz_rate = float(nhsu.vz_rate) / 100 if nhsu else 0.015
+    ep_rate_pct = float(nhsu.ep_rate) if nhsu else 5.0
 
-    # Current month
-    cur = await _month_totals(db, user.id, year, month, esv_monthly, vz_rate, user.tax_rate)
-
-    # Previous month
-    prev_m, prev_y = (month - 1, year) if month > 1 else (12, year - 1)
-    prev = await _month_totals(db, user.id, prev_y, prev_m, esv_monthly, vz_rate, user.tax_rate)
-
-    # 6-month trend
-    trend: list[TrendPoint] = []
-    sum_income = 0.0
-    sum_expenses = 0.0
-    sum_profit = 0.0
+    # Compute all 6 unique months at once with memoization
+    # (current + prev are reused from trend, avoiding 2 duplicate _month_totals calls)
+    months_needed: list[tuple[int, int]] = []
     for i in range(5, -1, -1):
-        d = date(year, month, 1)
-        # Go back i months
         ty = year
         tm = month - i
         while tm <= 0:
             tm += 12
             ty -= 1
-        m_data = await _month_totals(db, user.id, ty, tm, esv_monthly, vz_rate, user.tax_rate)
+        months_needed.append((ty, tm))
+
+    month_cache: dict[tuple[int, int], dict] = {}
+    for ty, tm in months_needed:
+        if (ty, tm) not in month_cache:
+            month_cache[(ty, tm)] = await _month_totals(
+                db, user.id, ty, tm, esv_monthly, vz_rate, user.tax_rate,
+                ep_rate_pct=ep_rate_pct,
+            )
+
+    # Current and previous months (already in cache — zero extra queries)
+    cur = month_cache[months_needed[-1]]   # last = current month
+    prev_m, prev_y = (month - 1, year) if month > 1 else (12, year - 1)
+    if (prev_y, prev_m) not in month_cache:
+        month_cache[(prev_y, prev_m)] = await _month_totals(
+            db, user.id, prev_y, prev_m, esv_monthly, vz_rate, user.tax_rate,
+            ep_rate_pct=ep_rate_pct,
+        )
+    prev = month_cache[(prev_y, prev_m)]
+
+    # 6-month trend (from cached data — zero extra queries)
+    trend: list[TrendPoint] = []
+    sum_income = 0.0
+    sum_expenses = 0.0
+    sum_profit = 0.0
+    for ty, tm in months_needed:
+        m_data = month_cache[(ty, tm)]
         trend.append(TrendPoint(
             month_name=MONTH_NAMES_UA[tm][:3],
             income=m_data["income"],
@@ -1257,11 +1300,7 @@ async def dashboard_report(
         print(f"ERROR in _get_top_paid_services_detailed: {e}")
 
     # AI insights (using analytics engine for comprehensive analysis)
-    # Get previous period data for comparison
-    prev_month = month - 1 if month > 1 else 12
-    prev_year = year if month > 1 else year - 1
-    prev_cur = await _month_totals(db, user.id, prev_year, prev_month, esv_monthly, vz_rate, user.tax_rate)
-
+    # Reuse already-computed `prev` data instead of a duplicate _month_totals call
     ai_insights: list[AiInsight] = await generate_dashboard_insights(
         income=cur["income"],
         nhsu_income=nhsu_income,
@@ -1278,8 +1317,8 @@ async def dashboard_report(
         services_count=total_services_count,
         paid_services_count=len(top_paid_services),
         top_service_revenue=max((s.revenue for s in top_paid_services), default=0),
-        prev_period_income=prev_cur.get("income", 0.0),
-        prev_period_expenses=prev_cur.get("expenses", 0.0),
+        prev_period_income=prev.get("income", 0.0),
+        prev_period_expenses=prev.get("expenses", 0.0),
     )
 
     return DashboardData(
