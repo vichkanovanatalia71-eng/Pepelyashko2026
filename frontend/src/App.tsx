@@ -16,7 +16,8 @@ import VerifyEmailPage from "./pages/VerifyEmailPage";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { token } = useAuth();
+  const { token, isReady } = useAuth();
+  if (!isReady) return null;
   if (!token) return <Navigate to="/login" replace />;
   return <>{children}</>;
 }

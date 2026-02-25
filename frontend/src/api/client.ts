@@ -14,10 +14,14 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Prevent multiple simultaneous 401 redirects (e.g. when 8 parallel requests all fail)
+let isRedirectingToLogin = false;
+
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    if (error.response?.status === 401 && !isRedirectingToLogin) {
+      isRedirectingToLogin = true;
       localStorage.removeItem("token");
       window.location.href = "/login";
     }

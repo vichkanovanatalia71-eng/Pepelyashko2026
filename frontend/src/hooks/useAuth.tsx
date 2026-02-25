@@ -1,10 +1,11 @@
-import { createContext, useContext, useState, useCallback, ReactNode } from "react";
+import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from "react";
 import api from "../api/client";
 import type { User } from "../types";
 
 interface AuthContextType {
   token: string | null;
   user: User | null;
+  isReady: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
@@ -17,6 +18,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     () => localStorage.getItem("token")
   );
   const [user, setUser] = useState<User | null>(null);
+  const [isReady, setIsReady] = useState(false);
+
+  // Validate token on mount by calling /auth/me
+  useEffect(() => {
+    const t = localStorage.getItem("token");
+    if (!t) {
+      setIsReady(true);
+      return;
+    }
+    api.get("/auth/me", { headers: { Authorization: `Bearer ${t}` } })
+      .then((res) => {
+        setUser(res.data);
+        setToken(t);
+      })
+      .catch(() => {
+        // Token is invalid/expired — clear it silently
+        localStorage.removeItem("token");
+        setToken(null);
+      })
+      .finally(() => setIsReady(true));
+  }, []);
 
   const login = useCallback(async (email: string, password: string) => {
     const form = new URLSearchParams();
@@ -48,7 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ token, user, login, logout, refreshUser }}>
+    <AuthContext.Provider value={{ token, user, isReady, login, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );
