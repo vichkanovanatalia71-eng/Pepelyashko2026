@@ -109,14 +109,14 @@ export function CheckboxToggle({
 }
 
 // ── Modal Backdrop ────────────────────────────────────────────────
-export function Modal({ title, onClose, children }: {
-  title: string; onClose: () => void; children: React.ReactNode;
+export function Modal({ title, onClose, children, footer }: {
+  title: string; onClose: () => void; children: React.ReactNode; footer?: React.ReactNode;
 }) {
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-start justify-center sm:p-4 overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label={title}>
       <div className="absolute inset-0" onClick={onClose} />
-      <div className="relative bg-dark-600 rounded-t-3xl sm:rounded-2xl w-full max-w-md sm:my-auto animate-modal-in modal-glow expense-sheet-modal pb-[env(safe-area-inset-bottom)]">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
+      <div className="relative bg-dark-600 rounded-t-3xl sm:rounded-2xl w-full max-w-md sm:my-auto animate-modal-in modal-glow expense-sheet-modal pb-[env(safe-area-inset-bottom)] flex flex-col max-h-[calc(100vh-2rem)] sm:max-h-none">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-white/10 shrink-0">
           <h4 className="font-semibold text-white text-sm">{title}</h4>
           <button
             onClick={onClose}
@@ -126,7 +126,12 @@ export function Modal({ title, onClose, children }: {
             <X size={16} />
           </button>
         </div>
-        <div className="px-5 py-4 space-y-4">{children}</div>
+        <div className="px-5 py-4 space-y-4 overflow-y-auto flex-1">{children}</div>
+        {footer && (
+          <div className="px-5 py-4 border-t border-white/10 bg-dark-600/50 backdrop-blur-sm shrink-0">
+            {footer}
+          </div>
+        )}
       </div>
     </div>
   );
