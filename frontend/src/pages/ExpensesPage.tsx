@@ -1573,9 +1573,9 @@ export default function ExpensesPage() {
 
           {/* ── MODAL: ПОСТІЙНІ ВИТРАТИ ── */}
           {activeDrawer === "fixed" && (
-          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-start justify-center sm:p-4 overflow-hidden sm:overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label="Постійні витрати">
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex flex-col justify-end sm:flex-row sm:items-start sm:justify-center sm:p-4 overflow-hidden sm:overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label="Постійні витрати">
             <div className="absolute inset-0" onClick={() => setActiveDrawer(null)} />
-            <div ref={sheetPanelRef} className={`relative bg-dark-600 sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto animate-modal-in ${sheetHeight >= 100 ? "" : "rounded-t-3xl"}`} style={{ border: "1px solid #ffffff15", height: `${sheetHeight}%`, maxWidth: "900px", transition: sheetDragRef.current ? "none" : "height 0.3s ease, border-radius 0.2s ease" }}>
+            <div ref={sheetPanelRef} className={`relative bg-dark-600 sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto animate-modal-in ${sheetHeight >= 100 ? "" : "rounded-t-3xl"}`} style={{ border: "1px solid #ffffff15", height: `${sheetHeight}vh`, maxHeight: "100%", maxWidth: "900px", transition: sheetDragRef.current ? "none" : "height 0.3s ease, border-radius 0.2s ease" }}>
               {/* Drag handle (mobile) */}
               <div ref={dragHandleRef} className="sm:hidden flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing shrink-0 touch-none" onTouchStart={onDragStart} onTouchMove={onDragMove} onTouchEnd={onDragEnd}>
                 <div className="w-10 h-1.5 rounded-full bg-white/30" />
@@ -1711,9 +1711,9 @@ export default function ExpensesPage() {
 
           {/* ── MODAL: ЗАРПЛАТНІ ВИТРАТИ ── */}
           {activeDrawer === "salary" && (
-          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-start justify-center sm:p-4 overflow-hidden sm:overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label="Зарплатні витрати">
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex flex-col justify-end sm:flex-row sm:items-start sm:justify-center sm:p-4 overflow-hidden sm:overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label="Зарплатні витрати">
             <div className="absolute inset-0" onClick={() => setActiveDrawer(null)} />
-            <div ref={sheetPanelRef} className={`relative bg-dark-600 sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto animate-modal-in ${sheetHeight >= 100 ? "" : "rounded-t-3xl"}`} style={{ border: "1px solid #ffffff15", height: `${sheetHeight}%`, maxWidth: "900px", transition: sheetDragRef.current ? "none" : "height 0.3s ease, border-radius 0.2s ease" }}>
+            <div ref={sheetPanelRef} className={`relative bg-dark-600 sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto animate-modal-in ${sheetHeight >= 100 ? "" : "rounded-t-3xl"}`} style={{ border: "1px solid #ffffff15", height: `${sheetHeight}vh`, maxHeight: "100%", maxWidth: "900px", transition: sheetDragRef.current ? "none" : "height 0.3s ease, border-radius 0.2s ease" }}>
               {/* Drag handle (mobile) */}
               <div ref={dragHandleRef} className="sm:hidden flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing shrink-0 touch-none" onTouchStart={onDragStart} onTouchMove={onDragMove} onTouchEnd={onDragEnd}>
                 <div className="w-10 h-1.5 rounded-full bg-white/30" />
@@ -2237,9 +2237,9 @@ export default function ExpensesPage() {
 
           {/* ── MODAL: ІНШІ ВИТРАТИ ── */}
           {activeDrawer === "other" && (
-          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-start justify-center sm:p-4 overflow-hidden sm:overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label="Інші витрати">
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex flex-col justify-end sm:flex-row sm:items-start sm:justify-center sm:p-4 overflow-hidden sm:overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label="Інші витрати">
             <div className="absolute inset-0" onClick={() => setActiveDrawer(null)} />
-            <div ref={sheetPanelRef} className={`relative bg-dark-600 sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto animate-modal-in ${sheetHeight >= 100 ? "" : "rounded-t-3xl"}`} style={{ border: "1px solid #ffffff15", height: `${sheetHeight}%`, maxWidth: "900px", transition: sheetDragRef.current ? "none" : "height 0.3s ease, border-radius 0.2s ease" }}>
+            <div ref={sheetPanelRef} className={`relative bg-dark-600 sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto animate-modal-in ${sheetHeight >= 100 ? "" : "rounded-t-3xl"}`} style={{ border: "1px solid #ffffff15", height: `${sheetHeight}vh`, maxHeight: "100%", maxWidth: "900px", transition: sheetDragRef.current ? "none" : "height 0.3s ease, border-radius 0.2s ease" }}>
               {/* Drag handle (mobile) */}
               <div ref={dragHandleRef} className="sm:hidden flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing shrink-0 touch-none" onTouchStart={onDragStart} onTouchMove={onDragMove} onTouchEnd={onDragEnd}>
                 <div className="w-10 h-1.5 rounded-full bg-white/30" />
@@ -2367,9 +2367,9 @@ export default function ExpensesPage() {
 
           {/* ── MODAL: ПОДАТКИ ── */}
           {activeDrawer === "taxes" && (
-          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-start justify-center sm:p-4 overflow-hidden sm:overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label="Податки">
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex flex-col justify-end sm:flex-row sm:items-start sm:justify-center sm:p-4 overflow-hidden sm:overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label="Податки">
             <div className="absolute inset-0" onClick={() => setActiveDrawer(null)} />
-            <div ref={sheetPanelRef} className={`relative bg-dark-600 sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto animate-modal-in ${sheetHeight >= 100 ? "" : "rounded-t-3xl"}`} style={{ border: "1px solid #ffffff15", height: `${sheetHeight}%`, maxWidth: "900px", transition: sheetDragRef.current ? "none" : "height 0.3s ease, border-radius 0.2s ease" }}>
+            <div ref={sheetPanelRef} className={`relative bg-dark-600 sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto animate-modal-in ${sheetHeight >= 100 ? "" : "rounded-t-3xl"}`} style={{ border: "1px solid #ffffff15", height: `${sheetHeight}vh`, maxHeight: "100%", maxWidth: "900px", transition: sheetDragRef.current ? "none" : "height 0.3s ease, border-radius 0.2s ease" }}>
               {/* Drag handle (mobile) */}
               <div ref={dragHandleRef} className="sm:hidden flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing shrink-0 touch-none" onTouchStart={onDragStart} onTouchMove={onDragMove} onTouchEnd={onDragEnd}>
                 <div className="w-10 h-1.5 rounded-full bg-white/30" />
@@ -2438,9 +2438,9 @@ export default function ExpensesPage() {
 
           {/* ── MODAL: ПІДСУМКИ ── */}
           {activeDrawer === "summary" && (
-          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-start justify-center sm:p-4 overflow-hidden sm:overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label="Підсумки">
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex flex-col justify-end sm:flex-row sm:items-start sm:justify-center sm:p-4 overflow-hidden sm:overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label="Підсумки">
             <div className="absolute inset-0" onClick={() => setActiveDrawer(null)} />
-            <div ref={sheetPanelRef} className={`relative bg-dark-600 sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto animate-modal-in ${sheetHeight >= 100 ? "" : "rounded-t-3xl"}`} style={{ border: "1px solid #ffffff15", height: `${sheetHeight}%`, maxWidth: "900px", transition: sheetDragRef.current ? "none" : "height 0.3s ease, border-radius 0.2s ease" }}>
+            <div ref={sheetPanelRef} className={`relative bg-dark-600 sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto animate-modal-in ${sheetHeight >= 100 ? "" : "rounded-t-3xl"}`} style={{ border: "1px solid #ffffff15", height: `${sheetHeight}vh`, maxHeight: "100%", maxWidth: "900px", transition: sheetDragRef.current ? "none" : "height 0.3s ease, border-radius 0.2s ease" }}>
               {/* Drag handle (mobile) */}
               <div ref={dragHandleRef} className="sm:hidden flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing shrink-0 touch-none" onTouchStart={onDragStart} onTouchMove={onDragMove} onTouchEnd={onDragEnd}>
                 <div className="w-10 h-1.5 rounded-full bg-white/30" />
@@ -2764,7 +2764,7 @@ export default function ExpensesPage() {
 
       {/* ── AI parse modal ── */}
       {aiModal.open && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-start justify-center sm:p-4 overflow-hidden sm:overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label="AI-аналіз витрати">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex flex-col justify-end sm:flex-row sm:items-start sm:justify-center sm:p-4 overflow-hidden sm:overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label="AI-аналіз витрати">
           <div className="absolute inset-0" onClick={() => setAiModal({ open: false, text: "", file: null, loading: false, result: null })} />
           <div
             className="relative bg-dark-600 rounded-t-3xl sm:rounded-2xl w-full max-w-lg sm:my-auto modal-glow expense-sheet-modal pb-[env(safe-area-inset-bottom)]"
@@ -2964,7 +2964,7 @@ export default function ExpensesPage() {
         const handleExportKpiExcel = () => exportKpiExcel(rows, totalLabel, totalValue, kpiModal.title, kpiModal.type, year, month);
 
         return (
-          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-start justify-center sm:p-4 overflow-hidden sm:overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label={kpiModal.title}>
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex flex-col justify-end sm:flex-row sm:items-start sm:justify-center sm:p-4 overflow-hidden sm:overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label={kpiModal.title}>
             <div className="absolute inset-0" onClick={() => setKpiModal({ open: false, type: "", title: "" })} />
             <div
               className="relative bg-dark-600 rounded-t-3xl sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto expense-sheet-modal pb-[env(safe-area-inset-bottom)]"
