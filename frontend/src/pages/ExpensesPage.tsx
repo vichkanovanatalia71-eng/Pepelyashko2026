@@ -323,12 +323,12 @@ export default function ExpensesPage() {
   }, []);
 
   // ── Drawer section definitions ──
-  const DRAWER_SECTIONS: { key: DrawerSection; label: string; icon: React.ReactNode; color: string; badgeColor: string; getValue: () => number; getStatus: () => boolean }[] = [
-    { key: "fixed", label: "Постійні витрати", icon: <TrendingDown size={18} />, color: "text-blue-400", badgeColor: "bg-blue-500/15 border-blue-500/30", getValue: () => data?.totals.fixed_total ?? 0, getStatus: () => (data?.fixed.some(r => r.amount > 0) ?? false) },
-    { key: "salary", label: "Зарплатні витрати", icon: <Users size={18} />, color: "text-purple-400", badgeColor: "bg-purple-500/15 border-purple-500/30", getValue: () => data?.totals.salary_total ?? 0, getStatus: () => (data?.salary.some(r => r.brutto > 0) ?? false) },
-    { key: "other", label: "Інші витрати", icon: <Wallet size={18} />, color: "text-amber-400", badgeColor: "bg-amber-500/15 border-amber-500/30", getValue: () => otherTotal, getStatus: () => otherExpenses.length > 0 },
-    { key: "taxes", label: "Податки", icon: <Receipt size={18} />, color: "text-red-400", badgeColor: "bg-red-500/15 border-red-500/30", getValue: () => data?.totals.tax_total ?? 0, getStatus: () => (data?.totals.tax_total ?? 0) > 0 },
-    { key: "summary", label: "Підсумки", icon: <Building2 size={18} />, color: "text-emerald-400", badgeColor: "bg-emerald-500/15 border-emerald-500/30", getValue: () => remaining, getStatus: () => grandWithOther > 0 },
+  const DRAWER_SECTIONS: { key: DrawerSection; label: string; icon: React.ReactNode; color: string; badgeColor: string; glow: string; getValue: () => number; getStatus: () => boolean }[] = [
+    { key: "fixed", label: "Постійні витрати", icon: <TrendingDown size={18} />, color: "text-blue-400", badgeColor: "bg-blue-500/25 border-blue-400/50", glow: "0 0 14px rgba(59,130,246,0.45), 0 0 4px rgba(59,130,246,0.3)", getValue: () => data?.totals.fixed_total ?? 0, getStatus: () => (data?.fixed.some(r => r.amount > 0) ?? false) },
+    { key: "salary", label: "Зарплатні витрати", icon: <Users size={18} />, color: "text-purple-400", badgeColor: "bg-purple-500/25 border-purple-400/50", glow: "0 0 14px rgba(168,85,247,0.45), 0 0 4px rgba(168,85,247,0.3)", getValue: () => data?.totals.salary_total ?? 0, getStatus: () => (data?.salary.some(r => r.brutto > 0) ?? false) },
+    { key: "other", label: "Інші витрати", icon: <Wallet size={18} />, color: "text-amber-400", badgeColor: "bg-amber-500/25 border-amber-400/50", glow: "0 0 14px rgba(245,158,11,0.45), 0 0 4px rgba(245,158,11,0.3)", getValue: () => otherTotal, getStatus: () => otherExpenses.length > 0 },
+    { key: "taxes", label: "Податки", icon: <Receipt size={18} />, color: "text-red-400", badgeColor: "bg-red-500/25 border-red-400/50", glow: "0 0 14px rgba(239,68,68,0.45), 0 0 4px rgba(239,68,68,0.3)", getValue: () => data?.totals.tax_total ?? 0, getStatus: () => (data?.totals.tax_total ?? 0) > 0 },
+    { key: "summary", label: "Підсумки", icon: <Building2 size={18} />, color: "text-emerald-400", badgeColor: "bg-emerald-500/25 border-emerald-400/50", glow: "0 0 14px rgba(16,185,129,0.45), 0 0 4px rgba(16,185,129,0.3)", getValue: () => remaining, getStatus: () => grandWithOther > 0 },
   ];
 
   function toggleDrawer(section: DrawerSection) {
@@ -1369,7 +1369,7 @@ export default function ExpensesPage() {
 
           {/* ═══ MOBILE: Expense Section Tabs (horizontal scroll) ═══ */}
           <div className="lg:hidden -mx-4 px-4 overflow-x-auto scrollbar-hide">
-            <div className="flex gap-2 pb-1 min-w-max">
+            <div className="flex gap-2.5 pb-2 min-w-max">
               {DRAWER_SECTIONS.map(sec => {
                 const isActive = activeDrawer === sec.key;
                 const value = sec.getValue();
@@ -1378,17 +1378,18 @@ export default function ExpensesPage() {
                   <button
                     key={sec.key}
                     onClick={() => toggleDrawer(sec.key as DrawerSection)}
-                    className={`flex items-center gap-2 px-3 py-2.5 rounded-2xl border text-xs font-semibold whitespace-nowrap transition-all active:scale-95 tap-target ${
+                    className={`flex items-center gap-2.5 px-4 py-3 rounded-2xl border text-sm font-bold whitespace-nowrap transition-all duration-200 active:scale-95 tap-target ${
                       isActive
                         ? `${sec.badgeColor} text-white`
-                        : "bg-dark-400/40 border-dark-50/15 text-gray-400 hover:text-gray-200"
+                        : "bg-dark-400/50 border-dark-50/20 text-gray-300 hover:text-white hover:border-dark-50/30"
                     }`}
+                    style={isActive ? { boxShadow: sec.glow } : undefined}
                   >
-                    <span className={`shrink-0 ${isActive ? sec.color : "text-gray-500"}`}>{sec.icon}</span>
+                    <span className={`shrink-0 ${isActive ? sec.color : "text-gray-400"}`}>{sec.icon}</span>
                     <span className="truncate">{sec.label}</span>
-                    <span className={`flex items-center gap-1 ml-0.5 ${isActive ? sec.color : "text-gray-600"}`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${filled ? "bg-emerald-400" : "bg-gray-600"}`} />
-                      <span className="font-mono tabular-nums text-[10px]">
+                    <span className={`flex items-center gap-1.5 ml-0.5 ${isActive ? sec.color : "text-gray-500"}`}>
+                      <span className={`w-2 h-2 rounded-full ${filled ? "bg-emerald-400" : "bg-gray-600"}`} />
+                      <span className="font-mono tabular-nums text-xs">
                         {sec.key === "summary" ? `${value >= 0 ? "+" : ""}${fmt(value)}` : fmt(value)} ₴
                       </span>
                     </span>
