@@ -14,3 +14,6 @@ export type { AccountantNotification } from "./AccountantNotificationModal";
 export { ToastProvider, useToast } from "./Toast";
 export { Skeleton, SkeletonCard, SkeletonTable, SkeletonKPI } from "./Skeleton";
 export { FormError } from "./FormError";
+export { SortableHeader, useSortableData } from "./SortableHeader";
+export type { SortDirection } from "./SortableHeader";
+export { EnhancedTooltip } from "./ChartTooltip";
