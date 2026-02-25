@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, Numeric, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Integer, Numeric, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
@@ -29,6 +29,9 @@ class MonthlyFixedExpense(Base):
     """Запис постійної витрати за місяць (довільна назва)."""
 
     __tablename__ = "monthly_fixed_expenses"
+    __table_args__ = (
+        Index("ix_mfe_user_year_month", "user_id", "year", "month"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
@@ -85,6 +88,9 @@ class MonthlyOtherExpense(Base):
     """Довільна «інша витрата» за місяць (назва, опис, сума, категорія)."""
 
     __tablename__ = "monthly_other_expenses"
+    __table_args__ = (
+        Index("ix_moe_user_year_month", "user_id", "year", "month"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)

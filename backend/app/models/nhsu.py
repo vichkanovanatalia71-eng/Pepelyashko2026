@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import DateTime, ForeignKey, Integer, Numeric, String, UniqueConstraint
+from sqlalchemy import DateTime, ForeignKey, Index, Integer, Numeric, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
@@ -85,6 +85,7 @@ class NhsuRecord(Base):
             "user_id", "doctor_id", "year", "month", "age_group",
             name="uq_nhsu_record",
         ),
+        Index("ix_nhsu_user_year_month", "user_id", "year", "month"),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)

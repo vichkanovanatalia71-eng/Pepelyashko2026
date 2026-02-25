@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import DateTime, ForeignKey, Integer, Numeric, String, UniqueConstraint
+from sqlalchemy import DateTime, ForeignKey, Index, Integer, Numeric, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
@@ -15,6 +15,7 @@ class MonthlyPaidServicesReport(Base):
             "user_id", "doctor_id", "year", "month",
             name="uq_mps_report",
         ),
+        Index("ix_mpsr_user_year_month", "user_id", "year", "month"),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)

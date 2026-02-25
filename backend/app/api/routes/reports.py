@@ -5,7 +5,7 @@ from collections import defaultdict
 from datetime import date
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import case, func, select
+from sqlalchemy import case, extract, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -121,30 +121,40 @@ async def annual_report(
     esv_monthly = float(nhsu.esv_monthly) if nhsu else settings.esv_monthly
     vz_rate = float(nhsu.vz_rate) / 100 if nhsu else 0.015
 
+    # Aggregate income/expenses by month in 2 queries instead of 24
+    year_start = date(year, 1, 1)
+    year_end = date(year, 12, 31)
+
+    inc_by_month_r = await db.execute(
+        select(
+            extract("month", Income.date).label("m"),
+            func.coalesce(func.sum(Income.amount), 0),
+        ).where(
+            Income.user_id == user.id,
+            Income.date >= year_start,
+            Income.date <= year_end,
+        ).group_by("m")
+    )
+    income_map = {int(row[0]): float(row[1]) for row in inc_by_month_r.all()}
+
+    exp_by_month_r = await db.execute(
+        select(
+            extract("month", Expense.date).label("m"),
+            func.coalesce(func.sum(Expense.amount), 0),
+        ).where(
+            Expense.user_id == user.id,
+            Expense.date >= year_start,
+            Expense.date <= year_end,
+        ).group_by("m")
+    )
+    expense_map = {int(row[0]): float(row[1]) for row in exp_by_month_r.all()}
+
     months_data: list[MonthlyPL] = []
     totals = dict(income=0.0, expenses=0.0, net=0.0, single=0.0, esv=0.0, vz=0.0, taxes=0.0, after=0.0)
 
     for m in range(1, 13):
-        d_start = date(year, m, 1)
-        d_end = date(year, m + 1, 1) if m < 12 else date(year, 12, 31)
-
-        inc_r = await db.execute(
-            select(func.coalesce(func.sum(Income.amount), 0)).where(
-                Income.user_id == user.id,
-                Income.date >= d_start,
-                Income.date <= d_end if m == 12 else Income.date < d_end,
-            )
-        )
-        income = float(inc_r.scalar())
-
-        exp_r = await db.execute(
-            select(func.coalesce(func.sum(Expense.amount), 0)).where(
-                Expense.user_id == user.id,
-                Expense.date >= d_start,
-                Expense.date <= d_end if m == 12 else Expense.date < d_end,
-            )
-        )
-        expenses = float(exp_r.scalar())
+        income = income_map.get(m, 0.0)
+        expenses = expense_map.get(m, 0.0)
 
         tax_single = round(income * user.tax_rate, 2)
         tax_esv = round(esv_monthly, 2)
@@ -289,11 +299,18 @@ async def _get_top_services(
         .limit(limit)
     )
 
+    rows = services_q.all()
+    if not rows:
+        return []
+
+    # Batch-load all service info in one query instead of N+1
+    svc_ids = [sid for sid, _ in rows]
+    svcs_r = await db.execute(select(Service).where(Service.id.in_(svc_ids)))
+    svcs_map = {s.id: s for s in svcs_r.scalars().all()}
+
     result: list[ServiceRevenue] = []
-    for service_id, qty in services_q.all():
-        # Get service info
-        svc_result = await db.execute(select(Service).where(Service.id == service_id))
-        svc = svc_result.scalar_one_or_none()
+    for service_id, qty in rows:
+        svc = svcs_map.get(service_id)
         if svc:
             result.append(ServiceRevenue(
                 service_id=service_id,

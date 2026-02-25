@@ -259,31 +259,59 @@ async def _build_analytics(
                 prev_revenue += float(svc.price) * e.quantity
                 prev_qty += e.quantity
 
-    # ── Тренд 12 місяців ──
-    trend_rows: list[MonthlyTrendRow] = []
+    # ── Тренд 12 місяців (batch: 2 queries instead of 24) ──
+    # Pre-compute the 12 (year, month) pairs
+    trend_periods = []
     for i in range(11, -1, -1):
         m_total = month - i
         y_off = year + (m_total - 1) // 12
         m_off = ((m_total - 1) % 12) + 1
-        trq = select(MonthlyPaidServicesReport).where(
-            MonthlyPaidServicesReport.user_id == user_id,
-            MonthlyPaidServicesReport.year == y_off,
-            MonthlyPaidServicesReport.month == m_off,
+        trend_periods.append((y_off, m_off))
+
+    # Load all trend reports in one query using OR conditions
+    from sqlalchemy import or_, and_, tuple_
+    trend_filter = or_(
+        *[
+            and_(
+                MonthlyPaidServicesReport.year == yy,
+                MonthlyPaidServicesReport.month == mm,
+            )
+            for yy, mm in trend_periods
+        ]
+    )
+    trend_rq = select(MonthlyPaidServicesReport).where(
+        MonthlyPaidServicesReport.user_id == user_id,
+        trend_filter,
+    )
+    if doctor_id:
+        trend_rq = trend_rq.where(MonthlyPaidServicesReport.doctor_id == doctor_id)
+    trend_reports_r = await db.execute(trend_rq)
+    all_trend_reports = trend_reports_r.scalars().all()
+
+    # Group reports by (year, month)
+    trend_reports_by_period: dict[tuple, list] = defaultdict(list)
+    all_trend_report_ids = []
+    for r in all_trend_reports:
+        trend_reports_by_period[(r.year, r.month)].append(r)
+        all_trend_report_ids.append(r.id)
+
+    # Load all entries for all trend reports in one query
+    trend_entries_by_report: dict[int, list] = defaultdict(list)
+    if all_trend_report_ids:
+        trend_entries_r = await db.execute(
+            select(MonthlyPaidServiceEntry).where(
+                MonthlyPaidServiceEntry.report_id.in_(all_trend_report_ids)
+            )
         )
-        if doctor_id:
-            trq = trq.where(MonthlyPaidServicesReport.doctor_id == doctor_id)
-        tr = await db.execute(trq)
-        t_reports = tr.scalars().all()
-        t_ids = [r.id for r in t_reports]
+        for e in trend_entries_r.scalars().all():
+            trend_entries_by_report[e.report_id].append(e)
+
+    trend_rows: list[MonthlyTrendRow] = []
+    for y_off, m_off in trend_periods:
         t_sum = t_mat = t_ep = t_vz = t_split = t_dr = 0.0
         t_qty = 0
-        if t_ids:
-            te = await db.execute(
-                select(MonthlyPaidServiceEntry).where(
-                    MonthlyPaidServiceEntry.report_id.in_(t_ids)
-                )
-            )
-            for e in te.scalars().all():
+        for r in trend_reports_by_period.get((y_off, m_off), []):
+            for e in trend_entries_by_report.get(r.id, []):
                 svc = svcs_all.get(e.service_id)
                 if svc:
                     M = _svc_materials_cost(svc)
@@ -353,14 +381,29 @@ async def _build_report_responses(
     reports: list,
     svcs_all: dict[int, Service],
 ) -> list[ReportResponse]:
+    if not reports:
+        return []
+
+    # Batch-load all doctors at once instead of N+1 queries
+    doctor_ids = list({r.doctor_id for r in reports})
+    doc_r = await db.execute(
+        select(Doctor).where(Doctor.id.in_(doctor_ids))
+    )
+    doctors_map = {d.id: d.full_name for d in doc_r.scalars().all()}
+
+    # Batch-load all entries for all reports at once
+    report_ids = [r.id for r in reports]
+    all_entries_r = await db.execute(
+        select(MonthlyPaidServiceEntry).where(
+            MonthlyPaidServiceEntry.report_id.in_(report_ids)
+        )
+    )
+    entries_by_report: dict[int, list] = defaultdict(list)
+    for e in all_entries_r.scalars().all():
+        entries_by_report[e.report_id].append(e)
+
     out = []
     for rep in reports:
-        doc_name = await _get_doctor_name(db, rep.doctor_id)
-        ent_r = await db.execute(
-            select(MonthlyPaidServiceEntry).where(
-                MonthlyPaidServiceEntry.report_id == rep.id
-            )
-        )
         entries = [
             EntryResponse(
                 service_id=e.service_id,
@@ -368,12 +411,12 @@ async def _build_report_responses(
                 service_name=svcs_all[e.service_id].name if e.service_id in svcs_all else "—",
                 quantity=e.quantity,
             )
-            for e in ent_r.scalars().all()
+            for e in entries_by_report.get(rep.id, [])
         ]
         out.append(ReportResponse(
             id=rep.id,
             doctor_id=rep.doctor_id,
-            doctor_name=doc_name,
+            doctor_name=doctors_map.get(rep.doctor_id, "—"),
             year=rep.year,
             month=rep.month,
             cash_in_register=float(rep.cash_in_register),
