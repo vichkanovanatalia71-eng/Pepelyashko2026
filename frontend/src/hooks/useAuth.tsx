@@ -13,6 +13,16 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+/** Check JWT expiry client-side (no network call needed). */
+function isTokenExpired(t: string): boolean {
+  try {
+    const payload = JSON.parse(atob(t.split(".")[1]));
+    return typeof payload.exp === "number" && payload.exp * 1000 < Date.now();
+  } catch {
+    return true; // malformed token → treat as expired
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(
     () => localStorage.getItem("token")
@@ -20,20 +30,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isReady, setIsReady] = useState(false);
 
-  // Validate token on mount by calling /auth/me
+  // Validate token on mount — check JWT expiry locally, then load user data
   useEffect(() => {
     const t = localStorage.getItem("token");
+
+    // No token → ready immediately
     if (!t) {
       setIsReady(true);
       return;
     }
-    api.get("/auth/me", { headers: { Authorization: `Bearer ${t}` } })
+
+    // Token expired → clear silently, no API call needed
+    if (isTokenExpired(t)) {
+      localStorage.removeItem("token");
+      setToken(null);
+      setIsReady(true);
+      return;
+    }
+
+    // Token valid → load user data via fetch (bypasses axios 401 interceptor)
+    const backendUrl = (import.meta.env.VITE_BACKEND_URL || "").replace(/\/+$/, "");
+    fetch(`${backendUrl}/api/auth/me`, {
+      headers: { Authorization: `Bearer ${t}` },
+    })
       .then((res) => {
-        setUser(res.data);
+        if (!res.ok) throw new Error("unauthorized");
+        return res.json();
+      })
+      .then((data) => {
+        setUser(data);
         setToken(t);
       })
       .catch(() => {
-        // Token is invalid/expired — clear it silently
+        // Token revoked server-side → clear
         localStorage.removeItem("token");
         setToken(null);
       })
