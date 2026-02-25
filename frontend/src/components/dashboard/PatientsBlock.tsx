@@ -37,7 +37,7 @@ export function PatientsBlock({ data }: PatientsBlockProps) {
     return (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-3 card-neo card-3d-hover p-5">
-          <div className="flex items-center gap-3 mb-4">
+          <div className="flex items-center justify-center gap-3 mb-4">
             <div className="p-2 rounded-xl bg-blue-500/10">
               <Users size={16} className="text-blue-400" />
             </div>
@@ -59,11 +59,11 @@ export function PatientsBlock({ data }: PatientsBlockProps) {
     <div className="grid grid-cols-1 lg:grid-cols-10 gap-4 stagger-enter">
       {/* ── Left: Age distribution (70 %) ─────────────────────── */}
       <div className="lg:col-span-7 card-neo card-3d-hover p-5">
-        <div className="flex items-center gap-2 mb-5">
+        <div className="flex items-center justify-center gap-2 mb-5">
           <div className="p-2 rounded-xl bg-blue-500/10">
             <Users size={16} className="text-blue-400" />
           </div>
-          <div>
+          <div className="text-center">
             <h3 className="text-sm font-semibold text-white">
               Розподіл пацієнтів
             </h3>
@@ -160,8 +160,8 @@ export function PatientsBlock({ data }: PatientsBlockProps) {
 
       {/* ── Right: Doctor workload (30 %) ─────────────────────── */}
       <div className="lg:col-span-3 card-neo card-3d-hover p-5 flex flex-col">
-        <div className="flex items-center justify-between mb-3">
-          <div>
+        <div className="flex items-center justify-center mb-3">
+          <div className="text-center">
             <h3 className="text-sm font-semibold text-white">
               Завантаженість лікарів
             </h3>

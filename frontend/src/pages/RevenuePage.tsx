@@ -111,11 +111,11 @@ export default function RevenuePage() {
       {/* ── Header & filters ── */}
       <div className="card-neo card-3d-hover p-4 sm:p-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-1 justify-center">
             <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center shrink-0">
               <BadgeDollarSign size={22} className="text-orange-400" />
             </div>
-            <div>
+            <div className="text-center">
               <h1 className="text-xl sm:text-2xl font-bold text-white">Аналітика доходів</h1>
               <p className="text-xs sm:text-sm text-gray-500 mt-0.5">Агрегація НСЗУ + Платних послуг</p>
             </div>
@@ -238,7 +238,7 @@ export default function RevenuePage() {
 
           {/* Line chart — monthly trend */}
           <div className="xl:col-span-2 card-neo card-3d-hover p-5">
-            <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2"><TrendingUp size={15} className="text-orange-400" />Динаміка доходів по місяцях</h3>
+            <h3 className="text-sm font-semibold text-white mb-4 flex items-center justify-center gap-2"><TrendingUp size={15} className="text-orange-400" />Динаміка доходів по місяцях</h3>
             <ResponsiveContainer width="100%" height={220}>
               <LineChart data={data.monthly_trend}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" />
@@ -255,7 +255,7 @@ export default function RevenuePage() {
 
           {/* Pie chart — structure */}
           <div className="card-neo card-3d-hover p-5">
-            <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2"><BarChart3 size={15} className="text-orange-400" />Структура доходу</h3>
+            <h3 className="text-sm font-semibold text-white mb-4 flex items-center justify-center gap-2"><BarChart3 size={15} className="text-orange-400" />Структура доходу</h3>
             {pieData.length > 0 ? (
               <ResponsiveContainer width="100%" height={220}>
                 <PieChart>
@@ -276,7 +276,7 @@ export default function RevenuePage() {
         {/* ── By doctor bar chart ── */}
         {data.by_doctor.length > 0 && (
           <div className="card-neo card-3d-hover p-5">
-            <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2"><Users size={15} className="text-orange-400" />Доходи по лікарях</h3>
+            <h3 className="text-sm font-semibold text-white mb-4 flex items-center justify-center gap-2"><Users size={15} className="text-orange-400" />Доходи по лікарях</h3>
             <ResponsiveContainer width="100%" height={Math.max(160, data.by_doctor.length * 44)}>
               <BarChart
                 data={data.by_doctor.map(d => ({
@@ -305,7 +305,7 @@ export default function RevenuePage() {
           {/* Top services */}
           {data.top_services.length > 0 && (
             <button onClick={() => setDrillModal("services")} className="card-neo card-3d-hover p-5 text-left">
-              <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2"><Trophy size={15} className="text-orange-400" />ТОП послуг за доходом</h3>
+              <h3 className="text-sm font-semibold text-white mb-3 flex items-center justify-center gap-2"><Trophy size={15} className="text-orange-400" />ТОП послуг за доходом</h3>
               <div className="space-y-2">
                 {data.top_services.slice(0, 5).map((s, i) => (
                   <div key={s.service_id} className="flex items-center gap-3 text-xs">
@@ -325,7 +325,7 @@ export default function RevenuePage() {
           {/* Doctor table */}
           {data.by_doctor.length > 0 && (
             <div className="card-neo card-3d-hover p-4 sm:p-5">
-              <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2"><ClipboardList size={15} className="text-orange-400" />Деталізація по лікарях</h3>
+              <h3 className="text-sm font-semibold text-white mb-3 flex items-center justify-center gap-2"><ClipboardList size={15} className="text-orange-400" />Деталізація по лікарях</h3>
               {/* Mobile cards */}
               <div className="sm:hidden space-y-2">
                 {data.by_doctor.map(d => (
@@ -369,7 +369,7 @@ export default function RevenuePage() {
         {/* ── AI Recommendations ── */}
         {data.recommendations.length > 0 && (
           <div className="card-neo card-3d-hover p-5">
-            <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-white mb-4 flex items-center justify-center gap-2">
               <Lightbulb size={16} className="text-amber-400" />
               Рекомендації системи
             </h3>

@@ -29,13 +29,13 @@ export function StaffBlock({ data }: StaffBlockProps) {
   if (data.staff_by_role.length === 0) {
     return (
       <div className="card-neo card-3d-hover p-5">
-        <div className="flex items-center gap-3 mb-4">
+        <div className="flex items-center justify-center gap-3 mb-4">
           <div className="p-2 rounded-xl bg-purple-500/10">
             <Users size={16} className="text-purple-400" />
           </div>
           <h3 className="text-sm font-semibold text-white">Працівники & ФОП</h3>
         </div>
-        <div className="flex items-center justify-center h-24 text-gray-600 text-sm">
+        <div className="flex items-center justify-center h-24 text-gray-600 text-sm text-center">
           Немає даних про персонал
         </div>
       </div>
@@ -63,19 +63,17 @@ export function StaffBlock({ data }: StaffBlockProps) {
   return (
     <div className="card-neo card-3d-hover p-5 stagger-enter">
       {/* ── Header ──────────────────────────────────────────── */}
-      <div className="flex items-center justify-between mb-5">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-purple-500/10">
-            <Users size={16} className="text-purple-400" />
-          </div>
-          <div>
-            <h3 className="text-sm font-semibold text-white">
-              Працівники & ФОП
-            </h3>
-            <p className="text-xs text-gray-600 mt-0.5">
-              Розбивка витрат на персонал
-            </p>
-          </div>
+      <div className="flex items-center justify-center gap-3 mb-5">
+        <div className="p-2 rounded-xl bg-purple-500/10">
+          <Users size={16} className="text-purple-400" />
+        </div>
+        <div className="text-center">
+          <h3 className="text-sm font-semibold text-white">
+            Працівники & ФОП
+          </h3>
+          <p className="text-xs text-gray-600 mt-0.5">
+            Розбивка витрат на персонал
+          </p>
         </div>
       </div>
 

@@ -10,13 +10,13 @@ export function PaidServicesBlock({ data }: PaidServicesBlockProps) {
   if (data.top_paid_services.length === 0) {
     return (
       <div className="card-neo card-3d-hover p-5">
-        <div className="flex items-center gap-3 mb-4">
+        <div className="flex items-center justify-center gap-3 mb-4">
           <div className="p-2 rounded-xl bg-cyan-500/10">
             <Pill size={16} className="text-cyan-400" />
           </div>
           <h3 className="text-sm font-semibold text-white">Платні послуги</h3>
         </div>
-        <div className="flex items-center justify-center h-24 text-gray-600 text-sm">
+        <div className="flex items-center justify-center h-24 text-gray-600 text-sm text-center">
           Немає даних про платні послуги
         </div>
       </div>
@@ -30,15 +30,13 @@ export function PaidServicesBlock({ data }: PaidServicesBlockProps) {
   return (
     <div className="card-neo card-3d-hover p-5 stagger-enter">
       {/* Header */}
-      <div className="flex items-center justify-between mb-5">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-cyan-500/10">
-            <Pill size={16} className="text-cyan-400" />
-          </div>
-          <div>
-            <h3 className="text-sm font-semibold text-white">Платні послуги</h3>
-            <p className="text-xs text-gray-600 mt-0.5">ТОП-5 за виручкою</p>
-          </div>
+      <div className="flex items-center justify-center gap-3 mb-5">
+        <div className="p-2 rounded-xl bg-cyan-500/10">
+          <Pill size={16} className="text-cyan-400" />
+        </div>
+        <div className="text-center">
+          <h3 className="text-sm font-semibold text-white">Платні послуги</h3>
+          <p className="text-xs text-gray-600 mt-0.5">ТОП-5 за виручкою</p>
         </div>
       </div>
 

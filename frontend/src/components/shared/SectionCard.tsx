@@ -28,16 +28,16 @@ export default function SectionCard({
   return (
     <section className={`card-neo card-3d-hover overflow-hidden ${className}`}>
       {title && (
-        <div className="flex items-center gap-3 px-5 py-4 border-b border-dark-50/10
-                        bg-dark-400/20 backdrop-blur-sm">
+        <div className="flex items-center justify-center gap-3 px-5 py-4 border-b border-dark-50/10
+                        bg-dark-400/20 backdrop-blur-sm relative">
           {icon && (
             <div className={`w-8 h-8 rounded-xl ${iconBg} flex items-center justify-center shrink-0
                             shadow-sm icon-badge`}>
               {icon}
             </div>
           )}
-          <h3 className="font-semibold text-white text-sm flex-1 min-w-0">{title}</h3>
-          {trailing && <div className="shrink-0">{trailing}</div>}
+          <h3 className="font-semibold text-white text-sm">{title}</h3>
+          {trailing && <div className="absolute right-5 top-1/2 -translate-y-1/2 shrink-0">{trailing}</div>}
         </div>
       )}
       <div className={noPadding ? "" : "px-5 py-4"}>

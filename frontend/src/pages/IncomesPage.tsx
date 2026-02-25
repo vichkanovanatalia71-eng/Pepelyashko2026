@@ -160,11 +160,11 @@ export default function IncomesPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-5 lg:mb-8 flex-wrap gap-3">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-1 justify-center">
           <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center shrink-0">
             <Wallet size={22} className="text-orange-400" />
           </div>
-          <div>
+          <div className="text-center">
             <h2 className="text-2xl font-bold text-white">Доходи</h2>
             <p className="text-gray-500 text-sm mt-1">
               Всього: <span className="text-emerald-400 font-semibold tabular-nums">{fmt(total)} &#8372;</span>

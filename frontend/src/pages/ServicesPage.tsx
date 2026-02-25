@@ -485,12 +485,12 @@ export default function ServicesPage() {
   return (
     <div className="space-y-6 max-w-full">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-3 flex-1 justify-center">
+          <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center shrink-0">
             <ClipboardList size={22} className="text-orange-400" />
           </div>
-          <div>
+          <div className="text-center">
             <h1 className="text-2xl font-bold text-white">Платні послуги</h1>
             <p className="text-sm text-gray-500">
               Управління послугами, витратами та доходами

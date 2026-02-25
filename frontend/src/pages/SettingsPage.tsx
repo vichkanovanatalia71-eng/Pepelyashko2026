@@ -347,13 +347,11 @@ export default function SettingsPage() {
         type="button"
         onClick={() => toggle(sectionKey)}
         aria-expanded={isOpen}
-        className="w-full flex items-center justify-between gap-2 group"
+        className="w-full flex items-center justify-center gap-2 group relative"
       >
-        <div className="flex items-center gap-2">
-          <Icon size={18} className="text-accent-400" />
-          <h2 className="text-lg font-semibold text-white">{title}</h2>
-          {subtitle && <span className="text-xs text-gray-500 ml-1">{subtitle}</span>}
-        </div>
+        <Icon size={18} className="text-accent-400" />
+        <h2 className="text-lg font-semibold text-white">{title}</h2>
+        {subtitle && <span className="text-xs text-gray-500 ml-1">{subtitle}</span>}
         <ChevronDown
           size={18}
           aria-hidden="true"
@@ -368,11 +366,11 @@ export default function SettingsPage() {
   return (
     <div className="space-y-5 sm:space-y-8 max-w-full">
       {/* Header */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center justify-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center icon-badge shrink-0">
           <Settings size={22} className="text-orange-400" />
         </div>
-        <div>
+        <div className="text-center">
           <h1 className="text-xl sm:text-2xl font-bold text-white">Налаштування сервісу</h1>
           <p className="text-xs sm:text-sm text-gray-500">
             Профіль, персонал та коефіцієнти розрахунку
