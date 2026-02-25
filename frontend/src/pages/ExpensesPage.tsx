@@ -312,6 +312,44 @@ export default function ExpensesPage() {
     return () => document.removeEventListener("keydown", handleKey);
   }, [activeDrawer]);
 
+  // ── Bottom sheet drag-to-resize (mobile) ──
+  const [sheetHeight, setSheetHeight] = useState(92); // vh
+  const sheetDragRef = useRef<{ startY: number; startH: number } | null>(null);
+  const sheetPanelRef = useRef<HTMLDivElement | null>(null);
+
+  // Reset sheet height when drawer opens
+  useEffect(() => {
+    if (activeDrawer) setSheetHeight(92);
+  }, [activeDrawer]);
+
+  const onDragStart = useCallback((e: React.TouchEvent) => {
+    sheetDragRef.current = { startY: e.touches[0].clientY, startH: sheetHeight };
+  }, [sheetHeight]);
+
+  const onDragMove = useCallback((e: React.TouchEvent) => {
+    if (!sheetDragRef.current) return;
+    const deltaY = sheetDragRef.current.startY - e.touches[0].clientY;
+    const deltaVh = (deltaY / window.innerHeight) * 100;
+    const newH = Math.max(30, Math.min(100, sheetDragRef.current.startH + deltaVh));
+    setSheetHeight(newH);
+  }, []);
+
+  const onDragEnd = useCallback(() => {
+    if (!sheetDragRef.current) return;
+    const h = sheetHeight;
+    sheetDragRef.current = null;
+    // Snap to breakpoints: close (<25%), half (25-65%), default (65-96%), full (>96%)
+    if (h < 25) {
+      setActiveDrawer(null);
+    } else if (h < 65) {
+      setSheetHeight(50);
+    } else if (h < 96) {
+      setSheetHeight(92);
+    } else {
+      setSheetHeight(100);
+    }
+  }, [sheetHeight]);
+
   // Sync with left sidebar collapse state
   useEffect(() => {
     function handleSidebarToggle(e: Event) {
@@ -1525,7 +1563,11 @@ export default function ExpensesPage() {
           {activeDrawer === "fixed" && (
           <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-start justify-center sm:p-4 overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label="Постійні витрати">
             <div className="absolute inset-0" onClick={() => setActiveDrawer(null)} />
-            <div className="relative bg-dark-600 rounded-t-3xl sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto animate-modal-in expense-sheet-modal pb-[env(safe-area-inset-bottom)]" style={{ border: "1px solid #ffffff15", maxHeight: "92vh", maxWidth: "900px" }}>
+            <div ref={sheetPanelRef} className="relative bg-dark-600 rounded-t-3xl sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto animate-modal-in pb-[env(safe-area-inset-bottom)]" style={{ border: "1px solid #ffffff15", maxHeight: `${sheetHeight}vh`, maxWidth: "900px", transition: sheetDragRef.current ? "none" : "max-height 0.3s ease" }}>
+              {/* Drag handle (mobile) */}
+              <div className="sm:hidden flex justify-center pt-2.5 pb-1 cursor-grab active:cursor-grabbing shrink-0" onTouchStart={onDragStart} onTouchMove={onDragMove} onTouchEnd={onDragEnd}>
+                <div className="w-9 h-1 rounded-full bg-white/25" />
+              </div>
               <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-xl bg-blue-500/15 flex items-center justify-center shrink-0">
@@ -1637,8 +1679,9 @@ export default function ExpensesPage() {
                   </div>
                 ))}
               </div>
-
-              <div className="flex items-center justify-between px-5 py-3 bg-dark-400/20 border-t border-dark-50/10">
+              </div>
+              {/* Sticky footer — outside scrollable area */}
+              <div className="flex items-center justify-between px-5 py-3 bg-dark-400/30 border-t border-dark-50/15 shrink-0">
                 <button
                   onClick={() => setFixedModal({
                     open: true, isEdit: false, id: null,
@@ -1650,7 +1693,6 @@ export default function ExpensesPage() {
                 </button>
                 <span className="font-bold text-blue-400 font-mono tabular-nums">{fmt(data.totals.fixed_total)} ₴</span>
               </div>
-              </div>
             </div>
           </div>
           )}
@@ -1659,7 +1701,11 @@ export default function ExpensesPage() {
           {activeDrawer === "salary" && (
           <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-start justify-center sm:p-4 overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label="Зарплатні витрати">
             <div className="absolute inset-0" onClick={() => setActiveDrawer(null)} />
-            <div className="relative bg-dark-600 rounded-t-3xl sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto animate-modal-in expense-sheet-modal pb-[env(safe-area-inset-bottom)]" style={{ border: "1px solid #ffffff15", maxHeight: "92vh", maxWidth: "900px" }}>
+            <div ref={sheetPanelRef} className="relative bg-dark-600 rounded-t-3xl sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto animate-modal-in pb-[env(safe-area-inset-bottom)]" style={{ border: "1px solid #ffffff15", maxHeight: `${sheetHeight}vh`, maxWidth: "900px", transition: sheetDragRef.current ? "none" : "max-height 0.3s ease" }}>
+              {/* Drag handle (mobile) */}
+              <div className="sm:hidden flex justify-center pt-2.5 pb-1 cursor-grab active:cursor-grabbing shrink-0" onTouchStart={onDragStart} onTouchMove={onDragMove} onTouchEnd={onDragEnd}>
+                <div className="w-9 h-1 rounded-full bg-white/25" />
+              </div>
               <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-xl bg-purple-500/15 flex items-center justify-center shrink-0">
@@ -2166,12 +2212,12 @@ export default function ExpensesPage() {
                 </>
               )}
 
-              {/* ── Футер ── */}
-              <div className="flex items-center justify-between px-5 py-3 bg-dark-400/20 border-t border-dark-50/10">
+              </div>
+              </div>
+              {/* Sticky footer — outside scrollable area */}
+              <div className="flex items-center justify-between px-5 py-3 bg-dark-400/30 border-t border-dark-50/15 shrink-0">
                 <span className="text-xs text-gray-600">Персонал налаштовується в розділі Налаштування</span>
                 <span className="font-bold text-purple-400 font-mono tabular-nums">{fmt(data.totals.salary_total)} ₴</span>
-              </div>
-              </div>
               </div>
             </div>
           </div>
@@ -2181,7 +2227,11 @@ export default function ExpensesPage() {
           {activeDrawer === "other" && (
           <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-start justify-center sm:p-4 overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label="Інші витрати">
             <div className="absolute inset-0" onClick={() => setActiveDrawer(null)} />
-            <div className="relative bg-dark-600 rounded-t-3xl sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto animate-modal-in expense-sheet-modal pb-[env(safe-area-inset-bottom)]" style={{ border: "1px solid #ffffff15", maxHeight: "92vh", maxWidth: "900px" }}>
+            <div ref={sheetPanelRef} className="relative bg-dark-600 rounded-t-3xl sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto animate-modal-in pb-[env(safe-area-inset-bottom)]" style={{ border: "1px solid #ffffff15", maxHeight: `${sheetHeight}vh`, maxWidth: "900px", transition: sheetDragRef.current ? "none" : "max-height 0.3s ease" }}>
+              {/* Drag handle (mobile) */}
+              <div className="sm:hidden flex justify-center pt-2.5 pb-1 cursor-grab active:cursor-grabbing shrink-0" onTouchStart={onDragStart} onTouchMove={onDragMove} onTouchEnd={onDragEnd}>
+                <div className="w-9 h-1 rounded-full bg-white/25" />
+              </div>
               <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-xl bg-amber-500/15 flex items-center justify-center shrink-0">
@@ -2284,7 +2334,10 @@ export default function ExpensesPage() {
                 </div>
               )}
 
-              <div className="flex items-center justify-between px-5 py-3 bg-dark-400/20 border-t border-dark-50/10">
+              </div>
+              </div>
+              {/* Sticky footer — outside scrollable area */}
+              <div className="flex items-center justify-between px-5 py-3 bg-dark-400/30 border-t border-dark-50/15 shrink-0">
                 <button
                   onClick={() => setOtherModal({
                     open: true, isEdit: false, id: null,
@@ -2296,8 +2349,6 @@ export default function ExpensesPage() {
                 </button>
                 <span className="font-bold text-amber-400 font-mono tabular-nums">{fmt(otherTotal)} ₴</span>
               </div>
-              </div>
-              </div>
             </div>
           </div>
           )}
@@ -2306,7 +2357,11 @@ export default function ExpensesPage() {
           {activeDrawer === "taxes" && (
           <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-start justify-center sm:p-4 overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label="Податки">
             <div className="absolute inset-0" onClick={() => setActiveDrawer(null)} />
-            <div className="relative bg-dark-600 rounded-t-3xl sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto animate-modal-in expense-sheet-modal pb-[env(safe-area-inset-bottom)]" style={{ border: "1px solid #ffffff15", maxHeight: "92vh", maxWidth: "900px" }}>
+            <div ref={sheetPanelRef} className="relative bg-dark-600 rounded-t-3xl sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto animate-modal-in pb-[env(safe-area-inset-bottom)]" style={{ border: "1px solid #ffffff15", maxHeight: `${sheetHeight}vh`, maxWidth: "900px", transition: sheetDragRef.current ? "none" : "max-height 0.3s ease" }}>
+              {/* Drag handle (mobile) */}
+              <div className="sm:hidden flex justify-center pt-2.5 pb-1 cursor-grab active:cursor-grabbing shrink-0" onTouchStart={onDragStart} onTouchMove={onDragMove} onTouchEnd={onDragEnd}>
+                <div className="w-9 h-1 rounded-full bg-white/25" />
+              </div>
               <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-xl bg-red-500/15 flex items-center justify-center shrink-0">
@@ -2373,7 +2428,11 @@ export default function ExpensesPage() {
           {activeDrawer === "summary" && (
           <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-start justify-center sm:p-4 overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label="Підсумки">
             <div className="absolute inset-0" onClick={() => setActiveDrawer(null)} />
-            <div className="relative bg-dark-600 rounded-t-3xl sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto animate-modal-in expense-sheet-modal pb-[env(safe-area-inset-bottom)]" style={{ border: "1px solid #ffffff15", maxHeight: "92vh", maxWidth: "900px" }}>
+            <div ref={sheetPanelRef} className="relative bg-dark-600 rounded-t-3xl sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto animate-modal-in pb-[env(safe-area-inset-bottom)]" style={{ border: "1px solid #ffffff15", maxHeight: `${sheetHeight}vh`, maxWidth: "900px", transition: sheetDragRef.current ? "none" : "max-height 0.3s ease" }}>
+              {/* Drag handle (mobile) */}
+              <div className="sm:hidden flex justify-center pt-2.5 pb-1 cursor-grab active:cursor-grabbing shrink-0" onTouchStart={onDragStart} onTouchMove={onDragMove} onTouchEnd={onDragEnd}>
+                <div className="w-9 h-1 rounded-full bg-white/25" />
+              </div>
               <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-xl bg-emerald-500/15 flex items-center justify-center shrink-0">
