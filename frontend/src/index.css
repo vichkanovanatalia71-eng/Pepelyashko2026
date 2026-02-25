@@ -812,6 +812,13 @@
      ═══════════════════════════════════════════════════════════ */
   .modal-overlay {
     overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Prevent scroll-through to body when drawer content is scrolled */
+  .modal-overlay .overflow-y-auto {
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
   }
 
   .modal-glow {
