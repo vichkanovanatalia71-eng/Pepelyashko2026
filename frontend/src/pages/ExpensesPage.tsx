@@ -1,330 +1,38 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import {
-  ChevronLeft,
-  ChevronRight,
-  ChevronDown,
-  Save,
-  RefreshCw,
-  Lock,
-  LockOpen,
-  TrendingDown,
-  Users,
-  Receipt,
-  Plus,
-  Trash2,
-  Edit2,
-  X,
-  Building2,
-  Wallet,
-  BarChart3,
-  Check,
-  UserPlus,
-
-  Copy,
-  Sparkles,
-  Download,
-  CalendarDays,
-  ImagePlus,
-  AlertCircle,
-  FileSpreadsheet,
-  Eye,
-  Target,
-  Activity,
-  ArrowUpRight,
-  ArrowDownRight,
-  Share2,
-  Link,
-  ExternalLink,
-  ClipboardList,
-  TrendingUp,
-  Banknote,
-  HeartPulse,
+  ChevronLeft, ChevronRight, Save, RefreshCw, Lock, LockOpen,
+  TrendingDown, Users, Receipt, Plus, Trash2, Edit2, X,
+  Building2, Wallet, BarChart3, Check, UserPlus, Copy, Sparkles,
+  Download, CalendarDays, ImagePlus, AlertCircle, FileSpreadsheet,
+  Eye, Target, Activity, ArrowUpRight, ArrowDownRight,
+  Share2, ClipboardList, TrendingUp, Banknote, HeartPulse,
 } from "lucide-react";
 import {
-  LoadingSpinner,
-  AlertBanner,
-  EmptyState,
-  ConfirmDialog,
+  LoadingSpinner, AlertBanner, EmptyState, ConfirmDialog,
 } from "../components/shared";
 import MedFlowLogo from "../components/shared/MedFlowLogo";
-import * as XLSX from "xlsx";
 import {
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Line,
-  AreaChart,
-  Area,
-  Legend,
-  ComposedChart,
+  BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis,
+  CartesianGrid, Tooltip, ResponsiveContainer, Line,
+  AreaChart, Area, Legend, ComposedChart,
 } from "recharts";
 import api from "../api/client";
 import type {
-  MonthlyExpenseData,
-  SalaryExpenseRow,
-  StaffMember,
-  HiredDoctorInfo,
-  Doctor,
-  PeriodSummary,
-  AiParsedExpense,
+  MonthlyExpenseData, SalaryExpenseRow, StaffMember,
+  HiredDoctorInfo, Doctor, PeriodSummary, AiParsedExpense,
 } from "../types";
 
-// ── Constants ──────────────────────────────────────────────────────
-
+// ── Extracted modules ─────────────────────────────────────────────
 import { MONTH_NAMES } from "../components/shared/MonthNavigator";
-
-const MONTH_SHORT = [
-  "Січ","Лют","Бер","Кві","Тра","Чер",
-  "Лип","Сер","Вер","Жов","Лис","Гру",
-];
-
-const ROLE_LABELS: Record<string, string> = {
-  doctor: "Лікар",
-  nurse:  "Медична сестра",
-  other:  "Інший персонал",
-};
-
-
-const TT_STYLE = {
-  background: "#1a1a2e",
-  border: "1px solid #ffffff15",
-  borderRadius: 8,
-  color: "#e2e8f0",
-  fontSize: 12,
-};
-
-const PIE_COLORS = ["#6366f1", "#a855f7", "#f59e0b", "#f43f5e", "#10b981"];
-
-const CATEGORY_BADGE: Record<string, { label: string; cls: string }> = {
-  fixed:  { label: "Постійні",   cls: "bg-blue-500/20 text-blue-300 border-blue-500/30" },
-  salary: { label: "Зарплатні",  cls: "bg-purple-500/20 text-purple-300 border-purple-500/30" },
-  salary_paid: { label: "Платні послуги (ЗП)", cls: "bg-indigo-500/20 text-indigo-300 border-indigo-500/30" },
-  owner_own:   { label: "Власник · Власні декл.", cls: "bg-amber-500/20 text-amber-300 border-amber-500/30" },
-  owner_hired: { label: "Власник · Найм. лікар",  cls: "bg-teal-500/20 text-teal-300 border-teal-500/30" },
-  owner_paid:  { label: "Власник · Платні послуги", cls: "bg-cyan-500/20 text-cyan-300 border-cyan-500/30" },
-  other:  { label: "Інші",       cls: "bg-amber-500/20 text-amber-300 border-amber-500/30" },
-  taxes:  { label: "Податки",    cls: "bg-red-500/20 text-red-300 border-red-500/30" },
-};
-
-const fmt = (n: number) =>
-  n.toLocaleString("uk-UA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
-// ── Local types ────────────────────────────────────────────────────
-
-interface SalaryFormState {
-  brutto: string;
-  has_supplement: boolean;
-  target_net: string;
-  individual_bonus: string;
-  paid_services_from_module: boolean;
-  saving: boolean;
-}
-
-interface OtherExpense {
-  id: number;
-  name: string;
-  description: string;
-  amount: number;
-  category: string;
-  year: number;
-  month: number;
-}
-
-interface DetailRow {
-  name: string;
-  category: string;
-  amount: number;
-}
-
-interface AnnualMonthData {
-  month: number;
-  fixed: number;
-  salary: number;
-  taxes: number;
-  other: number;
-  income: number;
-  total: number;
-  remaining: number;
-}
-
-interface KpiModalState {
-  open: boolean;
-  type: "fixed" | "salary" | "other" | "taxes" | "total" | "remaining" | "";
-  title: string;
-}
-
-// ── Helpers ────────────────────────────────────────────────────────
-
-function initSalaryForm(row: SalaryExpenseRow): SalaryFormState {
-  return {
-    brutto: row.brutto > 0 ? String(row.brutto) : "",
-    has_supplement: row.has_supplement,
-    target_net: row.target_net != null ? String(row.target_net) : "",
-    individual_bonus: row.individual_bonus > 0 ? String(row.individual_bonus) : "",
-    paid_services_from_module: row.paid_services_from_module,
-    saving: false,
-  };
-}
-
-// ── Sub-components ─────────────────────────────────────────────────
-
-function CalcRow({
-  label, value, color = "text-gray-300", info, locked, bold,
-}: {
-  label: string; value: number; color?: string;
-  info?: string; locked?: boolean; bold?: boolean;
-}) {
-  return (
-    <div className="flex items-center justify-between text-sm gap-2">
-      <div className="flex items-center gap-1.5 min-w-0 flex-1">
-        {locked && <Lock size={11} className="text-gray-600 shrink-0" aria-hidden="true" />}
-        <span className="text-gray-400 truncate">{label}</span>
-        {info && <span className="text-xs text-gray-600 italic shrink-0">({info})</span>}
-      </div>
-      <span className={`font-mono shrink-0 tabular-nums ${color} ${bold ? "font-bold" : ""}`}>
-        {fmt(value)} ₴
-      </span>
-    </div>
-  );
-}
-
-function TaxRow({
-  label, value, bold, color = "text-gray-300",
-}: {
-  label: string; value: number; bold?: boolean; color?: string;
-}) {
-  return (
-    <div className="flex items-center justify-between text-sm gap-2">
-      <div className="flex items-center gap-1.5">
-        <Lock size={11} className="text-gray-600 shrink-0" aria-hidden="true" />
-        <span className={bold ? "text-gray-200 font-semibold" : "text-gray-400"}>{label}</span>
-      </div>
-      <span className={`font-mono tabular-nums ${color} ${bold ? "font-bold" : ""}`}>{fmt(value)} ₴</span>
-    </div>
-  );
-}
-
-function SummaryRow({
-  label, value, color = "text-gray-300", bold,
-}: {
-  label: string; value: number; color?: string; bold?: boolean;
-}) {
-  return (
-    <div className="flex items-center justify-between text-sm">
-      <span className={bold ? "text-gray-200 font-semibold" : "text-gray-400"}>{label}</span>
-      <span className={`font-mono tabular-nums ${color} ${bold ? "font-bold" : ""}`}>{fmt(value)} ₴</span>
-    </div>
-  );
-}
-
-function KpiCard({
-  label, value, color, icon, onClick,
-}: {
-  label: string; value: number; color: string; icon: React.ReactNode; onClick?: () => void;
-}) {
-  return (
-    <div
-      className={`card-neo kpi-3d-hover p-3 sm:p-4 flex flex-col gap-1.5 sm:gap-2 ${onClick ? "card-tap cursor-pointer hover:border-accent-500/40 transition-all" : ""}`}
-      onClick={onClick}
-      role={onClick ? "button" : undefined}
-      tabIndex={onClick ? 0 : undefined}
-      onKeyDown={onClick ? (e) => { if (e.key === "Enter" || e.key === " ") onClick(); } : undefined}
-    >
-      <div className="flex items-center justify-between">
-        <span className="text-[10px] sm:text-xs text-gray-500 font-medium">{label}</span>
-        <div className="flex items-center gap-1.5">
-          {onClick && <Eye size={11} className="text-gray-600 hidden sm:block" />}
-          <div className={`w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center ${color}`} aria-hidden="true">
-            {icon}
-          </div>
-        </div>
-      </div>
-      <p className="font-bold text-sm sm:text-lg font-mono leading-tight tabular-nums">
-        {fmt(value)} <span className="text-xs sm:text-sm font-normal text-gray-500">₴</span>
-      </p>
-    </div>
-  );
-}
-
-function CheckboxToggle({
-  checked, onToggle, label,
-}: {
-  checked: boolean; onToggle: () => void; label: string;
-}) {
-  return (
-    <label className="flex items-center gap-2.5 cursor-pointer select-none">
-      <div
-        onClick={onToggle}
-        className={`w-4 h-4 rounded border flex items-center justify-center transition-all cursor-pointer shrink-0 ${
-          checked ? "bg-accent-500 border-accent-500" : "border-dark-50/30 bg-dark-300"
-        }`}
-      >
-        {checked && (
-          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-            <path d="M2 5l2.5 2.5L8 2.5" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
-          </svg>
-        )}
-      </div>
-      <span className="text-sm text-gray-300">{label}</span>
-    </label>
-  );
-}
-
-// ── Modal backdrop ─────────────────────────────────────────────────
-
-function Modal({ title, onClose, children }: {
-  title: string; onClose: () => void; children: React.ReactNode;
-}) {
-  return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-label={title}>
-      {/* Backdrop */}
-      <div className="absolute inset-0" onClick={onClose} />
-      <div
-        className="relative bg-dark-600 rounded-2xl w-full max-w-md my-auto animate-modal-in modal-glow"
-      >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
-          <h4 className="font-semibold text-white text-sm">{title}</h4>
-          <button
-            onClick={onClose}
-            aria-label="Закрити"
-            className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all
-                       focus-visible:outline-2 focus-visible:outline-accent-400"
-          >
-            <X size={16} />
-          </button>
-        </div>
-        <div className="px-5 py-4 space-y-4">{children}</div>
-      </div>
-    </div>
-  );
-}
-
-function ModalField({
-  label, value, onChange, type = "text", placeholder,
-}: {
-  label: string; value: string; onChange: (v: string) => void;
-  type?: string; placeholder?: string;
-}) {
-  return (
-    <div>
-      <label className="label-dark">{label}</label>
-      <input
-        type={type}
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        placeholder={placeholder}
-        className="input-dark w-full"
-      />
-    </div>
-  );
-}
+import { MONTH_SHORT, ROLE_LABELS, TT_STYLE, PIE_COLORS, CATEGORY_BADGE, fmt } from "./expenses/constants";
+import { initSalaryForm, calcSalary as _calcSalary, calcOwnerSalary as _calcOwnerSalary, isSalaryDirty as _isSalaryDirty } from "./expenses/utils/salaryCalculations";
+import { exportExpenseExcel, exportKpiExcel } from "./expenses/utils/excelExport";
+import {
+  CalcRow, TaxRow, SummaryRow, KpiCard, CheckboxToggle,
+  Modal, ModalField,
+} from "./expenses/components/ExpenseUiParts";
+import { ShareLinkModal } from "./expenses/components/ShareLinkModal";
+import type { SalaryFormState, OtherExpense, DetailRow, AnnualMonthData, KpiModalState } from "./expenses/types";
 
 // ══════════════════════════════════════════════════════════════════
 // MAIN COMPONENT
@@ -381,7 +89,7 @@ export default function ExpensesPage() {
   }>({ open: false, isEdit: false, id: null, name: "", desc: "", amount: "", category: "general", saving: false });
 
   // ── View mode: "all" = overview year, "month" = specific month ──
-  const [viewMode, setViewMode] = useState<"all" | "month">("all");
+  const [viewMode, setViewMode] = useState<"all" | "month">("month");
 
   // ── Periods summary (for "all" mode) ──
   const [periods, setPeriods] = useState<PeriodSummary[]>([]);
@@ -426,8 +134,16 @@ export default function ExpensesPage() {
     open: boolean; url: string; expiresAt: string;
   }>({ open: false, url: "", expiresAt: "" });
 
-  // ── Collapsible sections state (all collapsed by default) ──
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
+  // ── Right sidebar drawer state ──
+  type DrawerSection = "fixed" | "salary" | "other" | "taxes" | "summary" | null;
+  const [activeDrawer, setActiveDrawer] = useState<DrawerSection>(null);
+
+  // ── Left sidebar collapse state (inverse coupling: left expanded → right collapsed) ──
+  const [leftCollapsed, setLeftCollapsed] = useState(() => {
+    try { return localStorage.getItem("sidebar-collapsed") === "1"; } catch { return false; }
+  });
+  // Expense sidebar is expanded when left nav is collapsed, and vice versa
+  const expSidebarCollapsed = !leftCollapsed;
 
   // ── Previous month data for copy-from feature ──
   const [prevMonthData, setPrevMonthData] = useState<MonthlyExpenseData | null>(null);
@@ -436,6 +152,16 @@ export default function ExpensesPage() {
   const [sectionCopyLoading, setSectionCopyLoading] = useState<Record<string, boolean>>({});
   // Track which sections have already been copied (to hide the prompt after copy)
   const [sectionCopied, setSectionCopied] = useState<Record<string, boolean>>({});
+
+  // ── Collapsible salary sections ──
+  const [expandedSalary, setExpandedSalary] = useState<Set<number>>(new Set());
+  const toggleSalaryExpand = useCallback((id: number) => {
+    setExpandedSalary(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }, []);
 
   // ── Styled confirm / alert dialogs (replace native browser dialogs) ──
   const [confirmDlg, setConfirmDlg] = useState<{
@@ -577,71 +303,56 @@ export default function ExpensesPage() {
   useEffect(() => { load(); loadOther(); loadStaff(); loadDoctors(); loadPeriods(); loadPrevMonth(); }, [load, loadOther, loadStaff, loadDoctors, loadPeriods, loadPrevMonth]);
   useEffect(() => { if (viewMode === "all") loadAnnualData(); }, [viewMode, loadAnnualData]);
 
-  // ── Toggle collapsible section ──
-  function toggleSection(id: string) {
-    setExpandedSections(s => ({ ...s, [id]: !s[id] }));
+  // Close drawer on Escape key
+  useEffect(() => {
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === "Escape" && activeDrawer) setActiveDrawer(null);
+    }
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [activeDrawer]);
+
+  // Sync with left sidebar collapse state
+  useEffect(() => {
+    function handleSidebarToggle(e: Event) {
+      const detail = (e as CustomEvent).detail;
+      setLeftCollapsed(detail.collapsed);
+    }
+    window.addEventListener("sidebar-toggle", handleSidebarToggle);
+    return () => window.removeEventListener("sidebar-toggle", handleSidebarToggle);
+  }, []);
+
+  // ── Drawer section definitions ──
+  const DRAWER_SECTIONS: { key: DrawerSection; label: string; icon: React.ReactNode; color: string; badgeColor: string; getValue: () => number; getStatus: () => boolean }[] = [
+    { key: "fixed", label: "Постійні витрати", icon: <TrendingDown size={18} />, color: "text-blue-400", badgeColor: "bg-blue-500/15 border-blue-500/30", getValue: () => data?.totals.fixed_total ?? 0, getStatus: () => (data?.fixed.some(r => r.amount > 0) ?? false) },
+    { key: "salary", label: "Зарплатні витрати", icon: <Users size={18} />, color: "text-purple-400", badgeColor: "bg-purple-500/15 border-purple-500/30", getValue: () => data?.totals.salary_total ?? 0, getStatus: () => (data?.salary.some(r => r.brutto > 0) ?? false) },
+    { key: "other", label: "Інші витрати", icon: <Wallet size={18} />, color: "text-amber-400", badgeColor: "bg-amber-500/15 border-amber-500/30", getValue: () => otherTotal, getStatus: () => otherExpenses.length > 0 },
+    { key: "taxes", label: "Податки", icon: <Receipt size={18} />, color: "text-red-400", badgeColor: "bg-red-500/15 border-red-500/30", getValue: () => data?.totals.tax_total ?? 0, getStatus: () => (data?.totals.tax_total ?? 0) > 0 },
+    { key: "summary", label: "Підсумки", icon: <Building2 size={18} />, color: "text-emerald-400", badgeColor: "bg-emerald-500/15 border-emerald-500/30", getValue: () => remaining, getStatus: () => grandWithOther > 0 },
+  ];
+
+  function toggleDrawer(section: DrawerSection) {
+    setActiveDrawer(prev => prev === section ? null : section);
   }
 
   // ── Month navigation ──────────────────────────────────────────
   function prevMonth() {
-    setExpandedSections({});
+    setActiveDrawer(null);
     setSectionCopied({});
     if (month === 1) { setYear(y => y - 1); setMonth(12); }
     else setMonth(m => m - 1);
   }
   function nextMonth() {
-    setExpandedSections({});
+    setActiveDrawer(null);
     setSectionCopied({});
     if (month === 12) { setYear(y => y + 1); setMonth(1); }
     else setMonth(m => m + 1);
   }
 
   // ── Salary calculations ───────────────────────────────────────
-  function calcSalary(form: SalaryFormState) {
-    const s = data?.settings;
-    if (!s) return { pdfo: 0, vz_zp: 0, esv: 0, netto: 0, supplement: 0, total_employer: 0 };
-    const brutto   = parseFloat(form.brutto) || 0;
-    const pdfo     = Math.round(brutto * s.pdfo_rate / 100 * 100) / 100;
-    const vz_zp    = Math.round(brutto * s.vz_zp_rate / 100 * 100) / 100;
-    const esv      = Math.round(brutto * s.esv_employer_rate / 100 * 100) / 100;
-    const netto    = Math.round((brutto - pdfo - vz_zp) * 100) / 100;
-    const targetNet = form.has_supplement && form.target_net ? parseFloat(form.target_net) : null;
-    const supplement = targetNet != null ? Math.max(0, Math.round((targetNet - netto) * 100) / 100) : 0;
-    const indBonus   = parseFloat(form.individual_bonus) || 0;
-    const total_employer = Math.round((brutto + esv + supplement + indBonus) * 100) / 100;
-    return { pdfo, vz_zp, esv, netto, supplement, total_employer };
-  }
-
-  // ── Owner salary calculations ─────────────────────────────────
-  function calcOwnerSalary() {
-    const owner = data?.owner;
-    if (!owner) return { ownDeclarations: 0, hiredDeclarations: 0, paidServices: 0, total: 0 };
-
-    const ownDeclarations = Math.max(
-      0,
-      Math.round(((owner.nhsu_brutto / 2) - (owner.ep_all + owner.vz_all + owner.esv_owner)) * 0.9 * 100) / 100,
-    );
-
-    let hiredDeclarations = 0;
-    if (selectedHiredDoctorId !== null && selectedHiredNurseId !== null) {
-      const hd = owner.hired_doctors.find(d => d.doctor_id === selectedHiredDoctorId);
-      const nurseRow = data?.salary.find(s => s.staff_member_id === selectedHiredNurseId);
-      if (hd && nurseRow) {
-        hiredDeclarations = Math.max(
-          0,
-          Math.round(
-            (hd.nhsu_brutto - hd.nhsu_ep - hd.nhsu_vz
-              - hd.staff_total_employer_cost
-              - nurseRow.total_employer_cost) / 2 * 0.9 * 100,
-          ) / 100,
-        );
-      }
-    }
-
-    const paidServices = owner.paid_services_income;
-    const total = Math.round((ownDeclarations + hiredDeclarations + paidServices) * 100) / 100;
-    return { ownDeclarations, hiredDeclarations, paidServices, total };
-  }
+  // ── Salary calculations (delegated to extracted utils) ───────
+  const calcSalary = (form: SalaryFormState) => _calcSalary(form, data?.settings);
+  const calcOwnerSalary = () => _calcOwnerSalary(data, selectedHiredDoctorId, selectedHiredNurseId);
 
   // ── Share owner report ─────────────────────────────────────────
   async function handleOwnerShare() {
@@ -687,16 +398,9 @@ export default function ExpensesPage() {
     setAccReqLoading(false);
   }
 
-  // ── Dirty checks ──────────────────────────────────────────────
+  // ── Dirty checks (delegated to extracted utils) ──────────────
   function isSalaryDirty(staffId: number, row: SalaryExpenseRow): boolean {
-    const f = salaryForms[staffId];
-    if (!f) return false;
-    return (
-      (parseFloat(f.brutto) || 0)          !== row.brutto ||
-      f.has_supplement                      !== row.has_supplement ||
-      (parseFloat(f.target_net) || 0)      !== (row.target_net ?? 0) ||
-      (parseFloat(f.individual_bonus) || 0) !== row.individual_bonus ||
-      f.paid_services_from_module           !== row.paid_services_from_module
+    return _isSalaryDirty(staffId, row, salaryForms
     );
   }
 
@@ -912,7 +616,7 @@ export default function ExpensesPage() {
       } catch (e) { console.error(e); }
     }
     setAiModal({ open: false, text: "", file: null, loading: false, result: null });
-    setExpandedSections(s => ({ ...s, fixed: true }));
+    setActiveDrawer("fixed");
   }
 
   // ── Per-section copy from previous month ────────────────────────
@@ -979,142 +683,13 @@ export default function ExpensesPage() {
     }
   }
 
-  // ── Excel export (повний звіт, без ПДФО та ВЗ із ЗП) ─────────
+  // ── Excel export (delegated to extracted utils) ─────────────
   function exportExcel() {
     if (!data) return;
-    const wb = XLSX.utils.book_new();
-
-    // ── Sheet 1: Зведена таблиця ──
-    const summaryRows: (string | number)[][] = [
-      [`ЗВЕДЕНИЙ ЗВІТ ВИТРАТ — ${MONTH_NAMES[month - 1]} ${year}`],
-      [],
-      ["РОЗДІЛ", "СТАТТЯ", "СУМА (₴)"],
-      [],
-      ["═══ ДОХОДИ ═══", "", ""],
-      ["Дохід", "Дохід НСЗУ", data.taxes.nhsu_income],
-      ["Дохід", "Платні послуги", data.taxes.paid_services_income],
-      ["", "ЗАГАЛЬНИЙ ДОХІД", data.totals.income],
-      [],
-      ["═══ ПОСТІЙНІ ВИТРАТИ ═══", "", ""],
-      ...data.fixed.filter(r => r.amount > 0).map(r => [
-        "Постійні", `${r.name}${r.is_recurring ? " (постійна)" : ""}`, r.amount,
-      ] as (string | number)[]),
-      ["", "Разом постійні", data.totals.fixed_total],
-      [],
-      ["═══ ЗАРПЛАТНІ ВИТРАТИ ═══", "", ""],
-    ];
-
-    for (const r of data.salary) {
-      const calc_esv = r.esv;
-      summaryRows.push(["Зарплата", `${r.full_name} — Брутто`, r.brutto]);
-      summaryRows.push(["Зарплата", `${r.full_name} — ЄСВ роботодавця (${data.settings.esv_employer_rate}%)`, calc_esv]);
-      if (r.supplement > 0) {
-        summaryRows.push(["Зарплата", `${r.full_name} — Доплата до цільової суми`, r.supplement]);
-      }
-      if (r.individual_bonus > 0) {
-        summaryRows.push(["Зарплата", `${r.full_name} — Індивідуальна доплата`, r.individual_bonus]);
-      }
-      if (r.paid_services_income > 0) {
-        summaryRows.push(["Зарплата", `${r.full_name} — Оплата за платні послуги`, r.paid_services_income]);
-      }
-      summaryRows.push(["Зарплата", `${r.full_name} — ВСЬОГО витрати роботодавця`, r.total_employer_cost]);
-      // НСЗУ дані
-      if (r.nhsu_brutto > 0) {
-        summaryRows.push(["Зарплата", `${r.full_name} — НСЗУ брутто`, r.nhsu_brutto]);
-        summaryRows.push(["Зарплата", `${r.full_name} — НСЗУ ЄП`, r.nhsu_ep]);
-        summaryRows.push(["Зарплата", `${r.full_name} — НСЗУ ВЗ`, r.nhsu_vz]);
-      }
-      // Нетто на руки
-      const netto = r.brutto - (r.brutto * data.settings.pdfo_rate / 100) - (r.brutto * data.settings.vz_zp_rate / 100);
-      summaryRows.push(["Зарплата", `${r.full_name} — Нетто (на руки)`, Math.round(netto * 100) / 100]);
-      summaryRows.push([]);
-    }
-    summaryRows.push(["", "Разом зарплатні", data.totals.salary_total]);
-    summaryRows.push([]);
-
-    if (otherExpenses.length > 0) {
-      summaryRows.push(["═══ ІНШІ ВИТРАТИ ═══", "", ""]);
-      for (const r of otherExpenses) {
-        summaryRows.push(["Інші", `${r.name}${r.description ? ` (${r.description})` : ""}`, r.amount]);
-      }
-      summaryRows.push(["", "Разом інші", otherTotal]);
-      summaryRows.push([]);
-    }
-
-    summaryRows.push(["═══ ПОДАТКИ ═══", "", ""]);
-    summaryRows.push(["Податки", `Єдиний податок (${data.taxes.ep_rate}%)`, data.taxes.ep]);
-    summaryRows.push(["Податки", `Військовий збір (${data.taxes.vz_rate}%)`, data.taxes.vz]);
-    summaryRows.push(["Податки", "ЄСВ власника (щомісячний)", data.taxes.esv_owner]);
-    summaryRows.push(["Податки", `ЄСВ роботодавця (${data.settings.esv_employer_rate}%)`, data.taxes.esv_employer]);
-    summaryRows.push(["", "Разом податки", data.totals.tax_total]);
-    summaryRows.push([]);
-
-    // Власник
-    if (data.owner) {
-      summaryRows.push(["═══ БЛОК ВЛАСНИКА ═══", "", ""]);
-      summaryRows.push(["Власник", data.owner.doctor_name, ""]);
-      summaryRows.push(["Власник", "НСЗУ брутто", data.owner.nhsu_brutto]);
-      summaryRows.push(["Власник", "Платні послуги (дохід лікаря)", data.owner.paid_services_income]);
-      summaryRows.push(["Власник", "ЄП всього", data.owner.ep_all]);
-      summaryRows.push(["Власник", "ВЗ всього", data.owner.vz_all]);
-      summaryRows.push(["Власник", "ЄСВ власника", data.owner.esv_owner]);
-      if (data.owner.hired_doctors.length > 0) {
-        summaryRows.push([]);
-        summaryRows.push(["Власник", "Наймані лікарі:", ""]);
-        for (const hd of data.owner.hired_doctors) {
-          summaryRows.push(["Найм. лікар", `${hd.doctor_name} — НСЗУ`, hd.nhsu_brutto]);
-          summaryRows.push(["Найм. лікар", `${hd.doctor_name} — ЄП`, hd.nhsu_ep]);
-          summaryRows.push(["Найм. лікар", `${hd.doctor_name} — ВЗ`, hd.nhsu_vz]);
-          summaryRows.push(["Найм. лікар", `${hd.doctor_name} — Витрати роботодавця`, hd.staff_total_employer_cost]);
-        }
-      }
-      summaryRows.push([]);
-    }
-
-    summaryRows.push(["═══ ПІДСУМКИ ═══", "", ""]);
-    summaryRows.push(["Підсумок", "Загальний дохід", data.totals.income]);
-    summaryRows.push(["Підсумок", "Всього витрат", grandWithOther]);
-    summaryRows.push(["Підсумок", "ЗАЛИШОК", remaining]);
-
-    // Ставки
-    summaryRows.push([]);
-    summaryRows.push(["═══ СТАВКИ ═══", "", ""]);
-    summaryRows.push(["Ставка", `ЄП`, `${data.taxes.ep_rate}%`]);
-    summaryRows.push(["Ставка", `ВЗ від доходу`, `${data.taxes.vz_rate}%`]);
-    summaryRows.push(["Ставка", `ЄСВ роботодавця`, `${data.settings.esv_employer_rate}%`]);
-    summaryRows.push(["Ставка", "ЄСВ власника (місячний)", data.taxes.esv_owner]);
-
-    const ws = XLSX.utils.aoa_to_sheet(summaryRows);
-    ws["!cols"] = [{ wch: 18 }, { wch: 48 }, { wch: 18 }];
-    XLSX.utils.book_append_sheet(wb, ws, "Зведена таблиця");
-
-    // ── Sheet 2: Персонал (детально) ──
-    const staffHeader = [
-      "ПІБ", "Роль", "Брутто", "ЄСВ роботодавця", "Доплата", "Бонус",
-      "Платні послуги", "Нетто (на руки)", "Витрати роботодавця",
-      "НСЗУ брутто", "НСЗУ ЄП", "НСЗУ ВЗ",
-    ];
-    const staffRows = data.salary.map(r => {
-      const netto = r.brutto - (r.brutto * data.settings.pdfo_rate / 100) - (r.brutto * data.settings.vz_zp_rate / 100);
-      return [
-        r.full_name, ROLE_LABELS[r.role] ?? r.role,
-        r.brutto, r.esv, r.supplement, r.individual_bonus,
-        r.paid_services_income, Math.round(netto * 100) / 100, r.total_employer_cost,
-        r.nhsu_brutto, r.nhsu_ep, r.nhsu_vz,
-      ];
-    });
-    const ws2 = XLSX.utils.aoa_to_sheet([
-      [`Персонал — ${MONTH_NAMES[month - 1]} ${year}`],
-      [],
-      staffHeader,
-      ...staffRows,
-    ]);
-    ws2["!cols"] = staffHeader.map(() => ({ wch: 16 }));
-    (ws2["!cols"] as {wch: number}[])[0] = { wch: 30 };
-    XLSX.utils.book_append_sheet(wb, ws2, "Персонал");
-
-    XLSX.writeFile(wb, `витрати_${year}_${String(month).padStart(2, "0")}.xlsx`);
+    exportExpenseExcel(data, otherExpenses, otherTotal, grandWithOther, remaining, year, month);
   }
+
+  // (inline export code has been moved to expenses/utils/excelExport.ts)
 
   // ── Derived data ──────────────────────────────────────────────
   const otherTotal = otherExpenses.reduce((sum, e) => sum + e.amount, 0);
@@ -1200,85 +775,81 @@ export default function ExpensesPage() {
   // ══════════════════════════════════════════════════════════════
 
   return (
-    <div className="space-y-4 sm:space-y-5 max-w-6xl mx-auto">
+    <div className={`space-y-5 max-w-7xl mx-auto transition-[padding] duration-300 ${
+      viewMode === "month" && data ? (expSidebarCollapsed ? "lg:pr-[80px]" : "lg:pr-[208px]") : ""
+    }`}>
 
       {/* ═══ HEADER ═══ */}
-      <div className="space-y-3">
-        {/* Top row: title + refresh */}
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center shrink-0">
-              <Wallet size={22} className="text-orange-400" />
-            </div>
-            <div className="min-w-0">
-              <h2 className="text-xl sm:text-2xl font-bold text-white">Витрати</h2>
-              {viewMode === "month" && data && (
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5">
-                  <span className="text-gray-500 text-xs sm:text-sm whitespace-nowrap">
-                    Всього: <span className="text-red-400 font-semibold tabular-nums">{fmt(grandWithOther)} ₴</span>
-                  </span>
-                  <span className="text-gray-700 hidden sm:inline">·</span>
-                  <span className="text-gray-500 text-xs sm:text-sm whitespace-nowrap">
-                    Залишок: <span className={`tabular-nums ${remaining >= 0 ? "text-emerald-400 font-semibold" : "text-red-400 font-semibold"}`}>
-                      {remaining >= 0 ? "+" : ""}{fmt(remaining)} ₴
-                    </span>
-                  </span>
-                  {data.is_locked && (
-                    <span className="inline-flex items-center gap-1 text-amber-400 text-xs">
-                      <Lock size={11} /> Зафіксовано
-                    </span>
-                  )}
-                </div>
-              )}
-              {viewMode === "all" && (
-                <p className="text-gray-500 text-xs sm:text-sm mt-0.5">Огляд усіх місяців — {year}</p>
-              )}
-            </div>
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center shrink-0">
+            <Wallet size={22} className="text-orange-400" />
           </div>
+          <div>
+          <h2 className="text-2xl font-bold text-white">Витрати</h2>
+          {viewMode === "month" && data && (
+            <p className="text-gray-500 text-sm mt-1">
+              Всього:{" "}
+              <span className="text-red-400 font-semibold tabular-nums">{fmt(grandWithOther)} ₴</span>
+              {"  ·  "}
+              Залишок:{" "}
+              <span className={`tabular-nums ${remaining >= 0 ? "text-emerald-400 font-semibold" : "text-red-400 font-semibold"}`}>
+                {remaining >= 0 ? "+" : ""}{fmt(remaining)} ₴
+              </span>
+              {data.is_locked && (
+                <span className="ml-2 inline-flex items-center gap-1 text-amber-400">
+                  <Lock size={12} /> Зафіксовано
+                </span>
+              )}
+            </p>
+          )}
+          {viewMode === "all" && (
+            <p className="text-gray-500 text-sm mt-1">Огляд усіх місяців — {year}</p>
+          )}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={() => { load(); loadOther(); loadPeriods(); }}
-            className="p-2 rounded-xl text-gray-400 hover:text-white hover:bg-dark-300 transition-all shrink-0"
+            className="p-2 rounded-xl text-gray-400 hover:text-white hover:bg-dark-300 transition-all"
             title="Оновити"
             aria-label="Оновити дані"
           >
             <RefreshCw size={16} className={loading ? "animate-spin" : ""} aria-hidden="true" />
           </button>
-        </div>
 
-        {/* Bottom row: view mode + navigation */}
-        <div className="flex items-center gap-2">
           {/* View mode switcher */}
-          <div className="flex items-center gap-1 bg-dark-500/50 border border-dark-50/15 rounded-2xl p-1 shrink-0">
+          <div className="flex items-center gap-1 bg-dark-500/50 border border-dark-50/15 rounded-2xl p-1">
             <button
-              onClick={() => { setViewMode("all"); setExpandedSections({}); }}
+              onClick={() => { setViewMode("all"); setActiveDrawer(null); }}
               aria-label="Показати всі місяці"
               aria-pressed={viewMode === "all"}
-              className={`px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1 sm:gap-1.5 ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${
                 viewMode === "all"
                   ? "bg-accent-500/20 text-accent-300 border border-accent-500/40"
                   : "text-gray-500 hover:text-gray-300"
               }`}
             >
-              <CalendarDays size={13} aria-hidden="true" /> <span className="hidden sm:inline">Всього</span><span className="sm:hidden">Рік</span>
+              <CalendarDays size={13} aria-hidden="true" /> Всього
             </button>
             <button
-              onClick={() => { setViewMode("month"); setExpandedSections({}); }}
+              onClick={() => { setViewMode("month"); setActiveDrawer(null); }}
               aria-label={`Показати ${MONTH_NAMES[month - 1]}`}
               aria-pressed={viewMode === "month"}
-              className={`px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
                 viewMode === "month"
                   ? "bg-accent-500/20 text-accent-300 border border-accent-500/40"
                   : "text-gray-500 hover:text-gray-300"
               }`}
             >
-              <span className="hidden sm:inline">{MONTH_NAMES[month - 1]}</span>
-              <span className="sm:hidden">{MONTH_SHORT[month - 1]}</span>
+              {MONTH_NAMES[month - 1]}
             </button>
           </div>
 
           {/* Year/Month nav */}
           {viewMode === "all" ? (
-            <nav className="flex items-center gap-1 bg-dark-500/50 border border-dark-50/15 rounded-2xl px-2 py-1.5 flex-1 justify-center" aria-label="Навігація по роках">
+            <nav className="flex items-center gap-1 bg-dark-500/50 border border-dark-50/15 rounded-2xl px-2 py-1.5" aria-label="Навігація по роках">
               <button onClick={() => setYear(y => y - 1)}
                 aria-label="Попередній рік"
                 className="p-1.5 rounded-xl text-gray-400 hover:text-white hover:bg-dark-300 transition-all">
@@ -1292,13 +863,13 @@ export default function ExpensesPage() {
               </button>
             </nav>
           ) : (
-            <nav className="flex items-center gap-1 bg-dark-500/50 border border-dark-50/15 rounded-2xl px-2 py-1.5 flex-1 justify-center" aria-label="Навігація по місяцях">
+            <nav className="flex items-center gap-1 bg-dark-500/50 border border-dark-50/15 rounded-2xl px-2 py-1.5" aria-label="Навігація по місяцях">
               <button onClick={prevMonth}
                 aria-label="Попередній місяць"
                 className="p-1.5 rounded-xl text-gray-400 hover:text-white hover:bg-dark-300 transition-all">
                 <ChevronLeft size={18} aria-hidden="true" />
               </button>
-              <span className="px-2 sm:px-3 text-sm font-semibold text-white min-w-0 text-center whitespace-nowrap">
+              <span className="px-3 text-sm font-semibold text-white min-w-[140px] text-center">
                 {MONTH_NAMES[month - 1]} {year}
               </span>
               <button onClick={nextMonth}
@@ -1319,7 +890,7 @@ export default function ExpensesPage() {
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-1.5">
               <BarChart3 size={13} className="text-orange-400" />Витрати по місяцях — {year}
             </p>
-            <ResponsiveContainer width="100%" height={180}>
+            <ResponsiveContainer width="100%" height={220}>
               <BarChart
                 data={periods.map(p => ({
                   label: MONTH_SHORT[p.month - 1],
@@ -1327,7 +898,6 @@ export default function ExpensesPage() {
                   salary: p.salary_brutto_total,
                 }))}
                 barSize={14}
-                margin={{ left: -10, right: 4, top: 4, bottom: 0 }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" />
                 <XAxis dataKey="label" tick={{ fill: "#6b7280", fontSize: 11 }} axisLine={false} tickLine={false} />
@@ -1347,30 +917,30 @@ export default function ExpensesPage() {
           {periodsLoading ? (
             <LoadingSpinner height="h-24" />
           ) : (
-            <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 stagger-enter">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 stagger-enter">
               {periods.map(p => (
                 <button
                   key={p.month}
                   onClick={() => { setMonth(p.month); setViewMode("month"); }}
-                  className={`card-neo card-tap p-2.5 sm:p-4 text-left hover:border-accent-500/40 transition-all ${
+                  className={`card-neo card-tap p-4 text-left hover:border-accent-500/40 transition-all ${
                     p.month === month ? "border-accent-500/40" : ""
                   }`}
                 >
-                  <div className="flex items-center justify-between mb-1 sm:mb-2">
-                    <span className="text-xs sm:text-sm font-semibold text-white">{MONTH_SHORT[p.month - 1]}</span>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-semibold text-white">{MONTH_NAMES[p.month - 1]}</span>
                     {p.is_locked ? (
-                      <Lock size={11} className="text-amber-400" />
+                      <Lock size={12} className="text-amber-400" />
                     ) : p.has_data ? (
-                      <Check size={11} className="text-emerald-400" />
+                      <Check size={12} className="text-emerald-400" />
                     ) : null}
                   </div>
                   {p.has_data ? (
                     <div className="space-y-0.5">
-                      <p className="text-[10px] sm:text-xs text-gray-500"><span className="hidden sm:inline">Постійні: </span><span className="text-blue-400 font-mono tabular-nums">{fmt(p.fixed_total)}</span> <span className="hidden sm:inline">₴</span></p>
-                      <p className="text-[10px] sm:text-xs text-gray-500"><span className="hidden sm:inline">Зарплата: </span><span className="text-purple-400 font-mono tabular-nums">{fmt(p.salary_brutto_total)}</span> <span className="hidden sm:inline">₴</span></p>
+                      <p className="text-xs text-gray-500">Постійні: <span className="text-blue-400 font-mono tabular-nums">{fmt(p.fixed_total)}</span> ₴</p>
+                      <p className="text-xs text-gray-500">Зарплата: <span className="text-purple-400 font-mono tabular-nums">{fmt(p.salary_brutto_total)}</span> ₴</p>
                     </div>
                   ) : (
-                    <p className="text-[10px] sm:text-xs text-gray-600">Немає даних</p>
+                    <p className="text-xs text-gray-600">Немає даних</p>
                   )}
                 </button>
               ))}
@@ -1435,34 +1005,34 @@ export default function ExpensesPage() {
                 </p>
 
                 {/* Annual KPI Summary */}
-                <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3 stagger-enter">
-                  <div className="card-neo p-2.5 sm:p-3 space-y-0.5 sm:space-y-1">
-                    <p className="text-[10px] sm:text-xs text-gray-500">Всього витрат</p>
-                    <p className="font-bold text-white font-mono tabular-nums text-xs sm:text-base">{fmt(annualTotal)} ₴</p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 stagger-enter">
+                  <div className="card-neo p-3 space-y-1">
+                    <p className="text-xs text-gray-500">Всього витрат</p>
+                    <p className="font-bold text-white font-mono tabular-nums">{fmt(annualTotal)} ₴</p>
                   </div>
-                  <div className="card-neo p-2.5 sm:p-3 space-y-0.5 sm:space-y-1">
-                    <p className="text-[10px] sm:text-xs text-gray-500">Дохід</p>
-                    <p className="font-bold text-emerald-400 font-mono tabular-nums text-xs sm:text-base">{fmt(annualIncome)} ₴</p>
+                  <div className="card-neo p-3 space-y-1">
+                    <p className="text-xs text-gray-500">Загальний дохід</p>
+                    <p className="font-bold text-emerald-400 font-mono tabular-nums">{fmt(annualIncome)} ₴</p>
                   </div>
-                  <div className="card-neo p-2.5 sm:p-3 space-y-0.5 sm:space-y-1">
-                    <p className="text-[10px] sm:text-xs text-gray-500">Залишок</p>
-                    <p className={`font-bold font-mono tabular-nums text-xs sm:text-base ${annualRemaining >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+                  <div className="card-neo p-3 space-y-1">
+                    <p className="text-xs text-gray-500">Залишок</p>
+                    <p className={`font-bold font-mono tabular-nums ${annualRemaining >= 0 ? "text-emerald-400" : "text-red-400"}`}>
                       {annualRemaining >= 0 ? "+" : ""}{fmt(annualRemaining)} ₴
                     </p>
                   </div>
-                  <div className="card-neo p-2.5 sm:p-3 space-y-0.5 sm:space-y-1">
-                    <p className="text-[10px] sm:text-xs text-gray-500">Серед. / міс.</p>
-                    <p className="font-bold text-blue-400 font-mono tabular-nums text-xs sm:text-base">{fmt(avgPerMonth)} ₴</p>
+                  <div className="card-neo p-3 space-y-1">
+                    <p className="text-xs text-gray-500">Середнє / міс.</p>
+                    <p className="font-bold text-blue-400 font-mono tabular-nums">{fmt(avgPerMonth)} ₴</p>
                   </div>
-                  <div className="card-neo p-2.5 sm:p-3 space-y-0.5 sm:space-y-1">
-                    <p className="text-[10px] sm:text-xs text-gray-500 flex items-center gap-1">Кращий <ArrowUpRight size={10} className="text-emerald-400" /></p>
-                    <p className="font-bold text-emerald-400 font-mono tabular-nums text-xs sm:text-sm">
+                  <div className="card-neo p-3 space-y-1">
+                    <p className="text-xs text-gray-500 flex items-center gap-1">Найкращий <ArrowUpRight size={10} className="text-emerald-400" /></p>
+                    <p className="font-bold text-emerald-400 font-mono tabular-nums text-sm">
                       {bestMonth ? MONTH_NAMES[bestMonth.month - 1] : "—"}
                     </p>
                   </div>
-                  <div className="card-neo p-2.5 sm:p-3 space-y-0.5 sm:space-y-1">
-                    <p className="text-[10px] sm:text-xs text-gray-500 flex items-center gap-1">Гірший <ArrowDownRight size={10} className="text-red-400" /></p>
-                    <p className="font-bold text-red-400 font-mono tabular-nums text-xs sm:text-sm">
+                  <div className="card-neo p-3 space-y-1">
+                    <p className="text-xs text-gray-500 flex items-center gap-1">Найгірший <ArrowDownRight size={10} className="text-red-400" /></p>
+                    <p className="font-bold text-red-400 font-mono tabular-nums text-sm">
                       {worstMonth ? MONTH_NAMES[worstMonth.month - 1] : "—"}
                     </p>
                   </div>
@@ -1471,12 +1041,12 @@ export default function ExpensesPage() {
                 {/* Charts Row 1: Income vs Expenses + Pie */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   {/* Line chart: Income vs Expenses */}
-                  <div className="card-neo p-3 sm:p-4">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 sm:mb-4 flex items-center gap-1.5">
+                  <div className="card-neo p-4">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-1.5">
                       <TrendingUp size={13} className="text-orange-400" />Дохід vs Витрати
                     </p>
-                    <ResponsiveContainer width="100%" height={200}>
-                      <ComposedChart data={chartData} margin={{ left: -10, right: 4, top: 4, bottom: 0 }}>
+                    <ResponsiveContainer width="100%" height={240}>
+                      <ComposedChart data={chartData}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" />
                         <XAxis dataKey="label" tick={{ fill: "#6b7280", fontSize: 11 }} axisLine={false} tickLine={false} />
                         <YAxis tick={{ fill: "#6b7280", fontSize: 10 }} axisLine={false} tickLine={false}
@@ -1490,15 +1060,15 @@ export default function ExpensesPage() {
                   </div>
 
                   {/* Annual Pie */}
-                  <div className="card-neo p-3 sm:p-4">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 sm:mb-4 flex items-center gap-1.5">
+                  <div className="card-neo p-4">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-1.5">
                       <BarChart3 size={13} className="text-orange-400" />Структура витрат за рік
                     </p>
                     {annualPie.length > 0 ? (
-                      <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4">
-                        <ResponsiveContainer width="100%" height={180} className="sm:!w-[55%]">
+                      <div className="flex items-center gap-4">
+                        <ResponsiveContainer width="55%" height={220}>
                           <PieChart>
-                            <Pie data={annualPie} cx="50%" cy="50%" innerRadius={45} outerRadius={75} paddingAngle={3} dataKey="value">
+                            <Pie data={annualPie} cx="50%" cy="50%" innerRadius={55} outerRadius={90} paddingAngle={3} dataKey="value">
                               {annualPie.map((_, idx) => (
                                 <Cell key={idx} fill={PIE_COLORS[idx % PIE_COLORS.length]} />
                               ))}
@@ -1506,7 +1076,7 @@ export default function ExpensesPage() {
                             <Tooltip contentStyle={TT_STYLE} formatter={(v: number) => [fmt(v) + " ₴"]} />
                           </PieChart>
                         </ResponsiveContainer>
-                        <div className="w-full sm:flex-1 space-y-2 sm:space-y-2.5">
+                        <div className="flex-1 space-y-2.5">
                           {annualPie.map((entry, idx) => {
                             const pct = annualTotal > 0 ? Math.round(entry.value / annualTotal * 100) : 0;
                             return (
@@ -1514,14 +1084,14 @@ export default function ExpensesPage() {
                                 <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: PIE_COLORS[idx % PIE_COLORS.length] }} />
                                 <span className="text-xs text-gray-400 flex-1">{entry.name}</span>
                                 <span className="text-xs font-mono text-gray-300">{pct}%</span>
-                                <span className="text-xs font-mono text-gray-500 hidden sm:inline">{fmt(entry.value)}</span>
+                                <span className="text-xs font-mono text-gray-500">{fmt(entry.value)}</span>
                               </div>
                             );
                           })}
                         </div>
                       </div>
                     ) : (
-                      <div className="flex items-center justify-center h-36 sm:h-48 text-gray-600 text-sm">Немає даних</div>
+                      <div className="flex items-center justify-center h-48 text-gray-600 text-sm">Немає даних</div>
                     )}
                   </div>
                 </div>
@@ -1529,12 +1099,12 @@ export default function ExpensesPage() {
                 {/* Charts Row 2: Stacked Categories + Cumulative Growth */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   {/* Stacked bar: categories */}
-                  <div className="card-neo p-3 sm:p-4">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 sm:mb-4 flex items-center gap-1.5">
+                  <div className="card-neo p-4">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-1.5">
                       <BarChart3 size={13} className="text-orange-400" />Витрати за категоріями
                     </p>
-                    <ResponsiveContainer width="100%" height={200}>
-                      <BarChart data={chartData} barSize={14} margin={{ left: -10, right: 4, top: 4, bottom: 0 }}>
+                    <ResponsiveContainer width="100%" height={240}>
+                      <BarChart data={chartData} barSize={14}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" />
                         <XAxis dataKey="label" tick={{ fill: "#6b7280", fontSize: 11 }} axisLine={false} tickLine={false} />
                         <YAxis tick={{ fill: "#6b7280", fontSize: 10 }} axisLine={false} tickLine={false}
@@ -1550,12 +1120,12 @@ export default function ExpensesPage() {
                   </div>
 
                   {/* Cumulative area chart */}
-                  <div className="card-neo p-3 sm:p-4">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 sm:mb-4 flex items-center gap-1.5">
+                  <div className="card-neo p-4">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-1.5">
                       <TrendingUp size={13} className="text-orange-400" />Накопичувальні витрати
                     </p>
-                    <ResponsiveContainer width="100%" height={200}>
-                      <AreaChart data={cumulativeData} margin={{ left: -10, right: 4, top: 4, bottom: 0 }}>
+                    <ResponsiveContainer width="100%" height={240}>
+                      <AreaChart data={cumulativeData}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" />
                         <XAxis dataKey="label" tick={{ fill: "#6b7280", fontSize: 11 }} axisLine={false} tickLine={false} />
                         <YAxis tick={{ fill: "#6b7280", fontSize: 10 }} axisLine={false} tickLine={false}
@@ -1574,12 +1144,12 @@ export default function ExpensesPage() {
                 {/* Charts Row 3: Remaining trend + Forecast */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   {/* Remaining (profit/loss) by month */}
-                  <div className="card-neo p-3 sm:p-4">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 sm:mb-4 flex items-center gap-1.5">
-                      <Wallet size={13} className="text-orange-400" /><span className="hidden sm:inline">Залишок (дохід − витрати) по місяцях</span><span className="sm:hidden">Залишок по місяцях</span>
+                  <div className="card-neo p-4">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-1.5">
+                      <Wallet size={13} className="text-orange-400" />Залишок (дохід − витрати) по місяцях
                     </p>
-                    <ResponsiveContainer width="100%" height={180}>
-                      <BarChart data={chartData} barSize={18} margin={{ left: -10, right: 4, top: 4, bottom: 0 }}>
+                    <ResponsiveContainer width="100%" height={220}>
+                      <BarChart data={chartData} barSize={18}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" />
                         <XAxis dataKey="label" tick={{ fill: "#6b7280", fontSize: 11 }} axisLine={false} tickLine={false} />
                         <YAxis tick={{ fill: "#6b7280", fontSize: 10 }} axisLine={false} tickLine={false}
@@ -1595,24 +1165,24 @@ export default function ExpensesPage() {
                   </div>
 
                   {/* Forecast card */}
-                  <div className="card-neo p-3 sm:p-4">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 sm:mb-4">
+                  <div className="card-neo p-4">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
                       <Target size={13} className="inline mr-1.5 -mt-0.5" />
                       Прогноз на рік
                     </p>
-                    <div className="space-y-3 sm:space-y-4 mt-2">
-                      <div className="grid grid-cols-2 gap-2 sm:gap-3">
-                        <div className="bg-dark-400/30 rounded-xl p-3 sm:p-4 text-center">
-                          <p className="text-[10px] sm:text-xs text-gray-500 mb-1">Прогноз витрат</p>
-                          <p className="font-bold text-sm sm:text-lg text-white font-mono tabular-nums">{fmt(forecast)} ₴</p>
-                          <p className="text-[10px] sm:text-xs text-gray-600 mt-1">на базі {withData.length} міс.</p>
+                    <div className="space-y-4 mt-2">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="bg-dark-400/30 rounded-xl p-4 text-center">
+                          <p className="text-xs text-gray-500 mb-1">Прогноз витрат</p>
+                          <p className="font-bold text-lg text-white font-mono tabular-nums">{fmt(forecast)} ₴</p>
+                          <p className="text-xs text-gray-600 mt-1">на базі {withData.length} міс.</p>
                         </div>
-                        <div className="bg-dark-400/30 rounded-xl p-3 sm:p-4 text-center">
-                          <p className="text-[10px] sm:text-xs text-gray-500 mb-1">Факт / Прогноз</p>
-                          <p className={`font-bold text-sm sm:text-lg font-mono tabular-nums ${annualTotal <= forecast ? "text-emerald-400" : "text-red-400"}`}>
+                        <div className="bg-dark-400/30 rounded-xl p-4 text-center">
+                          <p className="text-xs text-gray-500 mb-1">Факт / Прогноз</p>
+                          <p className={`font-bold text-lg font-mono tabular-nums ${annualTotal <= forecast ? "text-emerald-400" : "text-red-400"}`}>
                             {forecast > 0 ? Math.round(annualTotal / forecast * 100) : 0}%
                           </p>
-                          <p className="text-[10px] sm:text-xs text-gray-600 mt-1">виконання</p>
+                          <p className="text-xs text-gray-600 mt-1">виконання</p>
                         </div>
                       </div>
                       <div className="space-y-2.5">
@@ -1646,14 +1216,14 @@ export default function ExpensesPage() {
       {/* ═══ MONTH MODE: action bar + banners ═══ */}
       {viewMode === "month" && (
         <>
-          {/* Action bar — horizontally scrollable on mobile */}
-          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide -mx-1 px-1 pb-1">
+          {/* Action bar */}
+          <div className="flex items-center gap-2 flex-wrap">
             {data?.is_locked ? (
               <button
                 onClick={unlockPeriod}
                 disabled={lockLoading}
                 aria-label="Розблокувати місяць для редагування"
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-300 text-xs font-semibold hover:bg-amber-500/20 transition-all disabled:opacity-50 whitespace-nowrap shrink-0"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-300 text-xs font-semibold hover:bg-amber-500/20 transition-all disabled:opacity-50"
               >
                 {lockLoading ? <RefreshCw size={13} className="animate-spin" /> : <LockOpen size={13} aria-hidden="true" />}
                 Розблокувати
@@ -1663,7 +1233,7 @@ export default function ExpensesPage() {
                 onClick={lockPeriod}
                 disabled={lockLoading || !data}
                 aria-label="Зафіксувати місяць"
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-dark-400/60 border border-dark-50/15 text-gray-300 text-xs font-semibold hover:border-amber-500/30 hover:text-amber-300 transition-all disabled:opacity-50 whitespace-nowrap shrink-0"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-dark-400/60 border border-dark-50/15 text-gray-300 text-xs font-semibold hover:border-amber-500/30 hover:text-amber-300 transition-all disabled:opacity-50"
               >
                 {lockLoading ? <RefreshCw size={13} className="animate-spin" /> : <Lock size={13} aria-hidden="true" />}
                 Зафіксувати
@@ -1672,31 +1242,31 @@ export default function ExpensesPage() {
             <button
               onClick={openCopyModal}
               aria-label="Копіювати дані з іншого місяця"
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-dark-400/60 border border-dark-50/15 text-gray-300 text-xs font-semibold hover:border-accent-500/30 hover:text-accent-300 transition-all whitespace-nowrap shrink-0"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-dark-400/60 border border-dark-50/15 text-gray-300 text-xs font-semibold hover:border-accent-500/30 hover:text-accent-300 transition-all"
             >
-              <Copy size={13} aria-hidden="true" /> <span className="hidden sm:inline">Копіювати з...</span><span className="sm:hidden">Копія</span>
+              <Copy size={13} aria-hidden="true" /> Копіювати з...
             </button>
             <button
               onClick={() => setAiModal(s => ({ ...s, open: true }))}
               aria-label="AI-аналіз витрати"
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-dark-400/60 border border-dark-50/15 text-gray-300 text-xs font-semibold hover:border-purple-500/30 hover:text-purple-300 transition-all whitespace-nowrap shrink-0"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-dark-400/60 border border-dark-50/15 text-gray-300 text-xs font-semibold hover:border-purple-500/30 hover:text-purple-300 transition-all"
             >
-              <Sparkles size={13} aria-hidden="true" /> AI
+              <Sparkles size={13} aria-hidden="true" /> AI-аналіз
             </button>
             <button
               onClick={handleAccountantRequest}
               disabled={accReqLoading}
               aria-label="Запит до бухгалтера"
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-dark-400/60 border border-dark-50/15 text-gray-300 text-xs font-semibold hover:border-orange-500/30 hover:text-orange-300 transition-all disabled:opacity-50 whitespace-nowrap shrink-0"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-dark-400/60 border border-dark-50/15 text-gray-300 text-xs font-semibold hover:border-orange-500/30 hover:text-orange-300 transition-all disabled:opacity-50"
             >
               {accReqLoading ? <RefreshCw size={13} className="animate-spin" /> : <ClipboardList size={13} aria-hidden="true" />}
-              <span className="hidden sm:inline">Бухгалтеру</span><span className="sm:hidden">Бух.</span>
+              Бухгалтеру
             </button>
             <button
               onClick={exportExcel}
               disabled={!data}
               aria-label="Експортувати в Excel"
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-dark-400/60 border border-dark-50/15 text-gray-300 text-xs font-semibold hover:border-emerald-500/30 hover:text-emerald-300 transition-all disabled:opacity-50 whitespace-nowrap shrink-0"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-dark-400/60 border border-dark-50/15 text-gray-300 text-xs font-semibold hover:border-emerald-500/30 hover:text-emerald-300 transition-all disabled:opacity-50"
             >
               <Download size={13} aria-hidden="true" /> Excel
             </button>
@@ -1731,7 +1301,7 @@ export default function ExpensesPage() {
       {data && viewMode === "month" && (
         <>
           {/* ═══ DASHBOARD: KPI CARDS ═══ */}
-          <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3 stagger-enter">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 stagger-enter">
             <KpiCard
               label="Постійні"
               value={data.totals.fixed_total}
@@ -1768,17 +1338,17 @@ export default function ExpensesPage() {
               onClick={() => setKpiModal({ open: true, type: "total", title: "Всі витрати — деталізація" })}
             />
             <div
-              className="card-neo kpi-3d-hover card-tap p-3 sm:p-4 flex flex-col gap-1.5 sm:gap-2 cursor-pointer hover:border-accent-500/40 transition-all"
+              className="card-neo kpi-3d-hover card-tap p-4 flex flex-col gap-2 cursor-pointer hover:border-accent-500/40 transition-all"
               onClick={() => setKpiModal({ open: true, type: "remaining", title: "Фінансовий результат" })}
               role="button"
               tabIndex={0}
               onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setKpiModal({ open: true, type: "remaining", title: "Фінансовий результат" }); }}
             >
               <div className="flex items-center justify-between">
-                <span className="text-[10px] sm:text-xs text-gray-500 font-medium">Залишок</span>
+                <span className="text-xs text-gray-500 font-medium">Залишок</span>
                 <div className="flex items-center gap-1.5">
-                  <Eye size={11} className="text-gray-600 hidden sm:block" />
-                  <div className={`w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center ${
+                  <Eye size={11} className="text-gray-600" />
+                  <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${
                     remaining >= 0 ? "bg-emerald-500/15" : "bg-red-500/15"
                   }`}>
                     {remaining >= 0
@@ -1788,53 +1358,56 @@ export default function ExpensesPage() {
                   </div>
                 </div>
               </div>
-              <p className={`font-bold text-sm sm:text-lg font-mono leading-tight tabular-nums ${
+              <p className={`font-bold text-lg font-mono leading-tight tabular-nums ${
                 remaining >= 0 ? "text-emerald-400" : "text-red-400"
               }`}>
                 {remaining >= 0 ? "+" : ""}{fmt(remaining)}{" "}
-                <span className="text-xs sm:text-sm font-normal text-gray-500">₴</span>
+                <span className="text-sm font-normal text-gray-500">₴</span>
               </p>
+            </div>
+          </div>
+
+          {/* ═══ MOBILE: Expense Section Tabs (horizontal scroll) ═══ */}
+          <div className="lg:hidden -mx-4 px-4 overflow-x-auto scrollbar-hide">
+            <div className="flex gap-2 pb-1 min-w-max">
+              {DRAWER_SECTIONS.map(sec => {
+                const isActive = activeDrawer === sec.key;
+                const value = sec.getValue();
+                const filled = sec.getStatus();
+                return (
+                  <button
+                    key={sec.key}
+                    onClick={() => toggleDrawer(sec.key as DrawerSection)}
+                    className={`flex items-center gap-2 px-3 py-2.5 rounded-2xl border text-xs font-semibold whitespace-nowrap transition-all active:scale-95 tap-target ${
+                      isActive
+                        ? `${sec.badgeColor} text-white`
+                        : "bg-dark-400/40 border-dark-50/15 text-gray-400 hover:text-gray-200"
+                    }`}
+                  >
+                    <span className={`shrink-0 ${isActive ? sec.color : "text-gray-500"}`}>{sec.icon}</span>
+                    <span className="truncate">{sec.label}</span>
+                    <span className={`flex items-center gap-1 ml-0.5 ${isActive ? sec.color : "text-gray-600"}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${filled ? "bg-emerald-400" : "bg-gray-600"}`} />
+                      <span className="font-mono tabular-nums text-[10px]">
+                        {sec.key === "summary" ? `${value >= 0 ? "+" : ""}${fmt(value)}` : fmt(value)} ₴
+                      </span>
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
           {/* ═══ DETAIL TABLE ═══ */}
           {detailRows.length > 0 && (
             <div className="card-neo overflow-hidden">
-              <div className="flex items-center gap-3 px-4 sm:px-5 py-3 border-b border-dark-50/10 bg-dark-400/20">
+              <div className="flex items-center gap-3 px-5 py-3 border-b border-dark-50/10 bg-dark-400/20">
                 <BarChart3 size={15} className="text-gray-400" />
                 <h3 className="font-semibold text-white text-sm">
                   Деталізація витрат — {MONTH_NAMES[month - 1]} {year}
                 </h3>
               </div>
-
-              {/* Mobile: card-based list */}
-              <div className="sm:hidden divide-y divide-dark-50/5">
-                {detailRows.map((row, idx) => {
-                  const badge = CATEGORY_BADGE[row.category] ?? CATEGORY_BADGE.other;
-                  return (
-                    <div key={idx} className="px-4 py-3 flex items-center gap-3">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-gray-300 truncate">{row.name}</p>
-                        <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] border mt-1 ${badge.cls}`}>
-                          {badge.label}
-                        </span>
-                      </div>
-                      <span className="font-mono text-sm text-gray-200 tabular-nums shrink-0">
-                        {fmt(row.amount)} ₴
-                      </span>
-                    </div>
-                  );
-                })}
-                <div className="flex items-center justify-between px-4 py-3 bg-dark-400/20">
-                  <span className="text-sm font-semibold text-gray-400">Всього</span>
-                  <span className="font-bold font-mono text-white tabular-nums">
-                    {fmt(detailRows.reduce((s, r) => s + r.amount, 0))} ₴
-                  </span>
-                </div>
-              </div>
-
-              {/* Desktop: table */}
-              <div className="hidden sm:block overflow-x-auto">
+              <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-dark-50/10">
@@ -1876,32 +1449,100 @@ export default function ExpensesPage() {
             </div>
           )}
 
-          {/* ═══ COLLAPSIBLE SECTIONS ═══ */}
+          {/* ═══ FIXED RIGHT SIDEBAR: Expense Section Menu ═══ */}
+          <aside
+            className={`hidden lg:flex flex-col shrink-0
+                        bg-dark-600 border-l border-dark-50/10
+                        fixed right-0 top-0 h-screen z-30
+                        expense-sidebar-transition
+                        ${expSidebarCollapsed ? "expense-sidebar-collapsed" : "expense-sidebar-expanded"}`}
+            aria-label="Розділи витрат"
+          >
+            {/* Sidebar header */}
+            <div className={`flex items-center gap-2.5 px-4 py-5 border-b border-dark-50/10 ${expSidebarCollapsed ? "justify-center" : ""}`}>
+              <div className="w-9 h-9 rounded-xl bg-orange-500/10 flex items-center justify-center shrink-0">
+                <BarChart3 size={18} className="text-orange-400" />
+              </div>
+              {!expSidebarCollapsed && <span className="sidebar-label text-sm font-semibold text-gray-300 truncate">Витрати</span>}
+            </div>
 
-          {/* ────────────────────────────────────────
-              SECTION: ПОСТІЙНІ ВИТРАТИ
-          ──────────────────────────────────────── */}
-          {(
-            <section className="card-neo overflow-hidden">
-              <button
-                onClick={() => toggleSection("fixed")}
-                className="w-full flex items-center gap-3 px-5 py-4 bg-dark-400/20 hover:bg-dark-400/30 transition-all cursor-pointer"
-                aria-expanded={!!expandedSections.fixed}
-              >
-                <div className="w-8 h-8 rounded-xl bg-blue-500/15 flex items-center justify-center shrink-0">
-                  <TrendingDown size={16} className="text-blue-400" />
-                </div>
-                <div className="flex-1 text-left">
-                  <h3 className="font-semibold text-white text-sm">Постійні витрати</h3>
-                  <p className={`text-xs mt-0.5 ${data.fixed.some(r => r.amount > 0) ? "text-emerald-400" : "text-gray-600"}`}>
-                    {data.fixed.some(r => r.amount > 0) ? "Заповнено" : "Не заповнено"} · {fmt(data.totals.fixed_total)} ₴
-                  </p>
-                </div>
-                <ChevronDown size={18} className={`text-gray-500 transition-transform duration-200 shrink-0 ${expandedSections.fixed ? "rotate-180" : ""}`} />
-              </button>
+            {/* Expense nav items */}
+            <nav className="flex-1 flex flex-col gap-1 py-3 px-2 overflow-y-auto">
+              {DRAWER_SECTIONS.map(sec => {
+                const isActive = activeDrawer === sec.key;
+                const value = sec.getValue();
+                const filled = sec.getStatus();
+                return (
+                  <button
+                    key={sec.key}
+                    onClick={() => toggleDrawer(sec.key as DrawerSection)}
+                    title={expSidebarCollapsed ? `${sec.label} · ${fmt(value)} ₴` : undefined}
+                    className={`expense-nav-item group ${expSidebarCollapsed ? "justify-center px-0 py-3" : "px-3 py-2.5"} ${
+                      isActive ? "expense-nav-active" : "expense-nav-inactive"
+                    }`}
+                  >
+                    <span className={`expense-nav-icon ${isActive ? "expense-nav-icon-active" : "expense-nav-icon-idle"} ${
+                      isActive ? sec.badgeColor : ""
+                    }`}>
+                      <span className={isActive ? sec.color : ""}>{sec.icon}</span>
+                    </span>
+                    {!expSidebarCollapsed && (
+                      <div className="sidebar-label flex-1 min-w-0">
+                        <p className={`text-xs font-semibold truncate ${isActive ? "text-white" : "text-gray-400"}`}>
+                          {sec.label}
+                        </p>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${filled ? "bg-emerald-400" : "bg-gray-600"}`} />
+                          <span className={`text-[10px] font-mono tabular-nums truncate ${isActive ? sec.color : "text-gray-600"}`}>
+                            {sec.key === "summary" ? (
+                              <>{value >= 0 ? "+" : ""}{fmt(value)} ₴</>
+                            ) : (
+                              <>{fmt(value)} ₴</>
+                            )}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </nav>
 
-              {expandedSections.fixed && (
-              <>
+            {/* Month indicator */}
+            <div className={`px-4 py-3 border-t border-dark-50/10 ${expSidebarCollapsed ? "text-center" : ""}`}>
+              {expSidebarCollapsed ? (
+                <p className="text-[10px] text-gray-600 font-mono">{String(month).padStart(2, "0")}</p>
+              ) : (
+                <p className="sidebar-label text-xs text-gray-600 truncate">{MONTH_NAMES[month - 1]} {year}</p>
+              )}
+            </div>
+          </aside>
+
+          {/* ═══ MODAL OVERLAYS for each expense section ═══ */}
+
+          {/* ── MODAL: ПОСТІЙНІ ВИТРАТИ ── */}
+          {activeDrawer === "fixed" && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-start justify-center sm:p-4 overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label="Постійні витрати">
+            <div className="absolute inset-0" onClick={() => setActiveDrawer(null)} />
+            <div className="relative bg-dark-600 rounded-t-3xl sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto animate-modal-in expense-sheet-modal pb-[env(safe-area-inset-bottom)]" style={{ border: "1px solid #ffffff15", maxHeight: "92vh", maxWidth: "900px" }}>
+              <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-blue-500/15 flex items-center justify-center shrink-0">
+                    <TrendingDown size={16} className="text-blue-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-white text-base">Постійні витрати</h3>
+                    <p className={`text-xs mt-0.5 ${data.fixed.some(r => r.amount > 0) ? "text-emerald-400" : "text-gray-600"}`}>
+                      {data.fixed.some(r => r.amount > 0) ? "Заповнено" : "Не заповнено"} · {fmt(data.totals.fixed_total)} ₴
+                    </p>
+                  </div>
+                </div>
+                <button onClick={() => setActiveDrawer(null)} className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all" aria-label="Закрити">
+                  <X size={16} />
+                </button>
+              </div>
+              <div className="overflow-y-auto flex-1">
+
               {/* Copy from previous month prompt */}
               {data.fixed.length === 0 && !sectionCopied.fixed && prevMonthLoaded && (
                 <div className="px-5 py-4 border-t border-dark-50/10 bg-dark-400/10">
@@ -1945,40 +1586,28 @@ export default function ExpensesPage() {
                   </div>
                 ) : data.fixed.map((row) => (
                   <div key={row.id}
-                    className="flex items-center gap-2 sm:gap-3 px-4 sm:px-5 py-3 hover:bg-dark-400/20 transition-colors">
+                    className="flex items-center gap-3 px-5 py-3 hover:bg-dark-400/20 transition-colors">
 
                     <div className="flex-1 min-w-0">
                       <span className="text-sm text-gray-300 truncate block">{row.name}</span>
                       {row.description && (
                         <span className="text-xs text-gray-600 truncate block">{row.description}</span>
                       )}
-                      <div className="flex items-center gap-1.5 mt-1 sm:hidden">
-                        {row.is_recurring && (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent-500/15 text-accent-400 border border-accent-500/20">
-                            щоміс.
-                          </span>
-                        )}
-                        {row.edited_by === "accountant" && (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-teal-500/15 text-teal-400 border border-teal-500/20">
-                            Бух.
-                          </span>
-                        )}
-                      </div>
                     </div>
 
                     {row.is_recurring && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent-500/15 text-accent-400 border border-accent-500/20 shrink-0 hidden sm:inline">
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent-500/15 text-accent-400 border border-accent-500/20 shrink-0">
                         щомісячно
                       </span>
                     )}
 
                     {row.edited_by === "accountant" && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-teal-500/15 text-teal-400 border border-teal-500/20 shrink-0 hidden sm:inline" title={row.edited_at ? `Оновлено: ${new Date(row.edited_at).toLocaleDateString("uk-UA")}` : undefined}>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-teal-500/15 text-teal-400 border border-teal-500/20 shrink-0" title={row.edited_at ? `Оновлено: ${new Date(row.edited_at).toLocaleDateString("uk-UA")}` : undefined}>
                         Бухгалтер
                       </span>
                     )}
 
-                    <span className="text-sm font-mono font-semibold text-white tabular-nums shrink-0 text-right">
+                    <span className="text-sm font-mono font-semibold text-white tabular-nums shrink-0 w-28 text-right">
                       {fmt(row.amount)} ₴
                     </span>
 
@@ -2020,34 +1649,33 @@ export default function ExpensesPage() {
                 </button>
                 <span className="font-bold text-blue-400 font-mono tabular-nums">{fmt(data.totals.fixed_total)} ₴</span>
               </div>
-              </>
-              )}
-            </section>
+              </div>
+            </div>
+          </div>
           )}
 
-          {/* ────────────────────────────────────────
-              SECTION: ЗАРПЛАТНІ ВИТРАТИ
-          ──────────────────────────────────────── */}
-          {(
-            <section className="card-neo overflow-hidden">
-              <button
-                onClick={() => toggleSection("salary")}
-                className="w-full flex items-center gap-3 px-5 py-4 bg-dark-400/20 hover:bg-dark-400/30 transition-all cursor-pointer"
-                aria-expanded={!!expandedSections.salary}
-              >
-                <div className="w-8 h-8 rounded-xl bg-purple-500/15 flex items-center justify-center shrink-0">
-                  <Users size={16} className="text-purple-400" />
+          {/* ── MODAL: ЗАРПЛАТНІ ВИТРАТИ ── */}
+          {activeDrawer === "salary" && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-start justify-center sm:p-4 overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label="Зарплатні витрати">
+            <div className="absolute inset-0" onClick={() => setActiveDrawer(null)} />
+            <div className="relative bg-dark-600 rounded-t-3xl sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto animate-modal-in expense-sheet-modal pb-[env(safe-area-inset-bottom)]" style={{ border: "1px solid #ffffff15", maxHeight: "92vh", maxWidth: "900px" }}>
+              <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-purple-500/15 flex items-center justify-center shrink-0">
+                    <Users size={16} className="text-purple-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-white text-base">Зарплатні витрати</h3>
+                    <p className={`text-xs mt-0.5 ${data.salary.some(r => r.brutto > 0) ? "text-emerald-400" : "text-gray-600"}`}>
+                      {data.salary.some(r => r.brutto > 0) ? "Заповнено" : "Не заповнено"} · {fmt(data.totals.salary_total)} ₴
+                    </p>
+                  </div>
                 </div>
-                <div className="flex-1 text-left">
-                  <h3 className="font-semibold text-white text-sm">Зарплатні витрати</h3>
-                  <p className={`text-xs mt-0.5 ${data.salary.some(r => r.brutto > 0) ? "text-emerald-400" : "text-gray-600"}`}>
-                    {data.salary.some(r => r.brutto > 0) ? "Заповнено" : "Не заповнено"} · {fmt(data.totals.salary_total)} ₴
-                  </p>
-                </div>
-                <ChevronDown size={18} className={`text-gray-500 transition-transform duration-200 shrink-0 ${expandedSections.salary ? "rotate-180" : ""}`} />
-              </button>
-
-              {expandedSections.salary && (
+                <button onClick={() => setActiveDrawer(null)} className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all" aria-label="Закрити">
+                  <X size={16} />
+                </button>
+              </div>
+              <div className="overflow-y-auto flex-1">
               <div className="border-t border-dark-50/10">
 
               {/* Copy from previous month prompt */}
@@ -2116,17 +1744,17 @@ export default function ExpensesPage() {
                         const nurseRow = data.salary.find(s => s.staff_member_id === selectedHiredNurseId);
                         return (
                           <div className="border-b border-amber-500/20">
-                            <div className="px-4 sm:px-5 py-4 bg-amber-500/5">
-                              <div className="flex flex-wrap items-center gap-2 mb-4">
-                                <Building2 size={16} className="text-amber-400 shrink-0" />
+                            <div className="px-5 py-4 bg-amber-500/5">
+                              <div className="flex items-center gap-2 mb-4">
+                                <Building2 size={16} className="text-amber-400" />
                                 <p className="font-semibold text-amber-300 text-sm">
-                                  {data.owner.doctor_name} — <span className="hidden sm:inline">Власник </span>ФОП
+                                  {data.owner.doctor_name} — Власник ФОП
                                 </p>
                                 <div className="ml-auto flex items-center gap-2">
                                   <button
                                     onClick={handleOwnerShare}
                                     disabled={shareLoading}
-                                    className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium bg-accent-500/10 text-accent-400 border border-accent-500/20 hover:bg-accent-500/20 transition-all disabled:opacity-50"
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-accent-500/10 text-accent-400 border border-accent-500/20 hover:bg-accent-500/20 transition-all disabled:opacity-50"
                                     title="Поділитись звітом"
                                   >
                                     {shareLoading ? (
@@ -2134,9 +1762,9 @@ export default function ExpensesPage() {
                                     ) : (
                                       <Share2 size={13} />
                                     )}
-                                    <span className="hidden sm:inline">Поділитись</span>
+                                    Поділитись
                                   </button>
-                                  <span className="font-bold text-amber-400 font-mono tabular-nums text-sm sm:text-base">
+                                  <span className="font-bold text-amber-400 font-mono tabular-nums">
                                     {fmt(ownerCalc.total)} ₴
                                   </span>
                                 </div>
@@ -2249,25 +1877,33 @@ export default function ExpensesPage() {
                           const calc  = calcSalary(form);
                           const dirty = isSalaryDirty(row.staff_member_id, row);
                           return (
-                            <div key={row.staff_member_id} className="p-4 sm:p-5">
-                              {/* Заголовок рядка */}
-                              <div className="flex items-start justify-between mb-3 sm:mb-4 gap-2">
-                                <div className="min-w-0 flex-1">
-                                  <p className="font-semibold text-white text-sm truncate">{row.full_name}</p>
-                                  <div className="flex items-center gap-1.5 mt-1">
-                                    <span className="inline-block px-2 py-0.5 text-[10px] sm:text-xs rounded-lg bg-teal-500/10 text-teal-400 border border-teal-500/20">
-                                      Лікар
+                            <div key={row.staff_member_id} className="p-5">
+                              {/* Заголовок рядка (клікабельний для collapse/expand) */}
+                              <div className="flex items-start justify-between mb-4 gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => toggleSalaryExpand(row.staff_member_id)}
+                                  className="flex items-center gap-2 text-left group min-w-0"
+                                >
+                                  <ChevronRight size={14} className={`text-gray-600 transition-transform duration-200 shrink-0 mt-0.5 ${expandedSalary.has(row.staff_member_id) ? "rotate-90" : ""}`} />
+                                  <div className="min-w-0">
+                                    <p className="font-semibold text-white text-sm group-hover:text-purple-300 transition-colors truncate">{row.full_name}</p>
+                                    <div className="flex items-center gap-1.5 mt-1">
+                                      <span className="inline-block px-2 py-0.5 text-xs rounded-lg bg-teal-500/10 text-teal-400 border border-teal-500/20">
+                                        Лікар
                                     </span>
                                     {row.edited_by === "accountant" && (
-                                      <span className="inline-block px-2 py-0.5 text-[10px] sm:text-xs rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20" title={row.edited_at ? `Оновлено бухгалтером: ${new Date(row.edited_at).toLocaleDateString("uk-UA")}` : undefined}>
-                                        Бух.
+                                      <span className="inline-block px-2 py-0.5 text-xs rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20" title={row.edited_at ? `Оновлено бухгалтером: ${new Date(row.edited_at).toLocaleDateString("uk-UA")}` : undefined}>
+                                        Бухгалтер
                                       </span>
                                     )}
+                                    </div>
                                   </div>
-                                </div>
-                                <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                                </button>
+                                <div className="flex items-center gap-2 shrink-0">
                                   <button
-                                    onClick={() => {
+                                    onClick={(e) => {
+                                      e.stopPropagation();
                                       const sm = staffList.find(s => s.id === row.staff_member_id);
                                       setStaffModal({
                                         open: true, isEdit: true, id: row.staff_member_id,
@@ -2278,41 +1914,43 @@ export default function ExpensesPage() {
                                         saving:   false,
                                       });
                                     }}
-                                    className="p-1.5 rounded-lg text-gray-600 hover:text-purple-400 hover:bg-purple-500/10 transition-all"
+                                    className="p-2.5 min-w-[44px] min-h-[44px] rounded-lg text-gray-600 hover:text-purple-400 hover:bg-purple-500/10 transition-all flex items-center justify-center"
                                     title="Редагувати"
                                   >
                                     <Edit2 size={14} />
                                   </button>
                                   <button
-                                    onClick={() => deleteStaff(row.staff_member_id, row.full_name)}
-                                    className="p-1.5 rounded-lg text-gray-700 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                                    onClick={(e) => { e.stopPropagation(); deleteStaff(row.staff_member_id, row.full_name); }}
+                                    className="p-2.5 min-w-[44px] min-h-[44px] rounded-lg text-gray-700 hover:text-red-400 hover:bg-red-500/10 transition-all flex items-center justify-center"
                                     title="Видалити"
                                   >
                                     <Trash2 size={14} />
                                   </button>
                                   <div className="text-right">
-                                    <p className="text-[10px] sm:text-xs text-gray-500 hidden sm:block">Витрати роботодавця</p>
-                                    <p className="font-bold text-purple-400 font-mono text-sm sm:text-base tabular-nums">{fmt(calc.total_employer)} ₴</p>
+                                    <p className="text-xs text-gray-500">Витрати роботодавця</p>
+                                    <p className="font-bold text-purple-400 font-mono text-base tabular-nums">{fmt(calc.total_employer)} ₴</p>
                                   </div>
                                 </div>
                               </div>
 
+                              {/* Деталі (collapsible) */}
+                              {expandedSalary.has(row.staff_member_id) && (<>
                               {/* НСЗУ банер (якщо є дані) */}
                               {row.nhsu_brutto > 0 && (
-                                <div className="mb-3 sm:mb-4 p-2.5 sm:p-3 rounded-xl bg-teal-500/5 border border-teal-500/20">
+                                <div className="mb-4 p-3 rounded-xl bg-teal-500/5 border border-teal-500/20">
                                   <p className="text-xs font-semibold text-teal-400 mb-2">НСЗУ — декларації</p>
-                                  <div className="flex flex-wrap gap-3 sm:gap-4">
+                                  <div className="flex flex-wrap gap-4">
                                     <div>
-                                      <p className="text-[10px] sm:text-xs text-gray-500">Брутто</p>
-                                      <p className="text-xs sm:text-sm font-mono text-white">{fmt(row.nhsu_brutto)} ₴</p>
+                                      <p className="text-xs text-gray-500">Брутто</p>
+                                      <p className="text-sm font-mono text-white">{fmt(row.nhsu_brutto)} ₴</p>
                                     </div>
                                     <div>
-                                      <p className="text-[10px] sm:text-xs text-gray-500">ЄП</p>
-                                      <p className="text-xs sm:text-sm font-mono text-red-400">−{fmt(row.nhsu_ep)} ₴</p>
+                                      <p className="text-xs text-gray-500">ЄП</p>
+                                      <p className="text-sm font-mono text-red-400">−{fmt(row.nhsu_ep)} ₴</p>
                                     </div>
                                     <div>
-                                      <p className="text-[10px] sm:text-xs text-gray-500">ВЗ</p>
-                                      <p className="text-xs sm:text-sm font-mono text-red-400">−{fmt(row.nhsu_vz)} ₴</p>
+                                      <p className="text-xs text-gray-500">ВЗ</p>
+                                      <p className="text-sm font-mono text-red-400">−{fmt(row.nhsu_vz)} ₴</p>
                                     </div>
                                   </div>
                                 </div>
@@ -2392,6 +2030,7 @@ export default function ExpensesPage() {
                                   </button>
                                 </div>
                               )}
+                              </>)}
                             </div>
                           );
                         })}
@@ -2415,22 +2054,22 @@ export default function ExpensesPage() {
                           const calc  = calcSalary(form);
                           const dirty = isSalaryDirty(row.staff_member_id, row);
                           return (
-                            <div key={row.staff_member_id} className="p-4 sm:p-5">
-                              <div className="flex items-start justify-between mb-3 sm:mb-4 gap-2">
-                                <div className="min-w-0 flex-1">
-                                  <p className="font-semibold text-white text-sm truncate">{row.full_name}</p>
+                            <div key={row.staff_member_id} className="p-5">
+                              <div className="flex items-start justify-between mb-4 gap-2">
+                                <div>
+                                  <p className="font-semibold text-white text-sm">{row.full_name}</p>
                                   <div className="flex items-center gap-1.5 mt-1">
-                                    <span className="inline-block px-2 py-0.5 text-[10px] sm:text-xs rounded-lg bg-dark-400 text-gray-400 border border-dark-50/10">
+                                    <span className="inline-block px-2 py-0.5 text-xs rounded-lg bg-dark-400 text-gray-400 border border-dark-50/10">
                                       {ROLE_LABELS[row.role] ?? row.role}
                                     </span>
                                     {row.edited_by === "accountant" && (
-                                      <span className="inline-block px-2 py-0.5 text-[10px] sm:text-xs rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20" title={row.edited_at ? `Оновлено бухгалтером: ${new Date(row.edited_at).toLocaleDateString("uk-UA")}` : undefined}>
-                                        Бух.
+                                      <span className="inline-block px-2 py-0.5 text-xs rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20" title={row.edited_at ? `Оновлено бухгалтером: ${new Date(row.edited_at).toLocaleDateString("uk-UA")}` : undefined}>
+                                        Бухгалтер
                                       </span>
                                     )}
                                   </div>
                                 </div>
-                                <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                                <div className="flex items-center gap-2 shrink-0">
                                   <button
                                     onClick={() => {
                                       const sm = staffList.find(s => s.id === row.staff_member_id);
@@ -2456,12 +2095,12 @@ export default function ExpensesPage() {
                                     <Trash2 size={14} />
                                   </button>
                                   <div className="text-right">
-                                    <p className="text-[10px] sm:text-xs text-gray-500 hidden sm:block">Витрати роботодавця</p>
-                                    <p className="font-bold text-purple-400 font-mono text-sm sm:text-base tabular-nums">{fmt(calc.total_employer)} ₴</p>
+                                    <p className="text-xs text-gray-500">Витрати роботодавця</p>
+                                    <p className="font-bold text-purple-400 font-mono text-base tabular-nums">{fmt(calc.total_employer)} ₴</p>
                                   </div>
                                 </div>
                               </div>
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="space-y-3">
                                   <div>
                                     <label className="label-dark">Офіційна зарплата (брутто)</label>
@@ -2492,8 +2131,8 @@ export default function ExpensesPage() {
                                     </div>
                                   )}
                                 </div>
-                                <div className="bg-dark-400/30 rounded-xl p-3 sm:p-4 space-y-2">
-                                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 sm:mb-3">Автоматичний розрахунок</p>
+                                <div className="bg-dark-400/30 rounded-xl p-4 space-y-2">
+                                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Автоматичний розрахунок</p>
                                   <CalcRow label="Брутто" value={parseFloat(form.brutto) || 0} color="text-white" />
                                   <CalcRow label={`ПДФО ${data.settings.pdfo_rate}%`} value={calc.pdfo} color="text-gray-500" info="Інформаційно" />
                                   <CalcRow label={`ВЗ із ЗП ${data.settings.vz_zp_rate}%`} value={calc.vz_zp} color="text-gray-500" info="Інформаційно" />
@@ -2532,33 +2171,33 @@ export default function ExpensesPage() {
                 <span className="font-bold text-purple-400 font-mono tabular-nums">{fmt(data.totals.salary_total)} ₴</span>
               </div>
               </div>
-              )}
-            </section>
+              </div>
+            </div>
+          </div>
           )}
 
-          {/* ────────────────────────────────────────
-              SECTION: ІНШІ ВИТРАТИ
-          ──────────────────────────────────────── */}
-          {(
-            <section className="card-neo overflow-hidden">
-              <button
-                onClick={() => toggleSection("other")}
-                className="w-full flex items-center gap-3 px-5 py-4 bg-dark-400/20 hover:bg-dark-400/30 transition-all cursor-pointer"
-                aria-expanded={!!expandedSections.other}
-              >
-                <div className="w-8 h-8 rounded-xl bg-amber-500/15 flex items-center justify-center shrink-0">
-                  <Wallet size={16} className="text-amber-400" />
+          {/* ── MODAL: ІНШІ ВИТРАТИ ── */}
+          {activeDrawer === "other" && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-start justify-center sm:p-4 overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label="Інші витрати">
+            <div className="absolute inset-0" onClick={() => setActiveDrawer(null)} />
+            <div className="relative bg-dark-600 rounded-t-3xl sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto animate-modal-in expense-sheet-modal pb-[env(safe-area-inset-bottom)]" style={{ border: "1px solid #ffffff15", maxHeight: "92vh", maxWidth: "900px" }}>
+              <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-amber-500/15 flex items-center justify-center shrink-0">
+                    <Wallet size={16} className="text-amber-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-white text-base">Інші витрати</h3>
+                    <p className={`text-xs mt-0.5 ${otherExpenses.length > 0 ? "text-emerald-400" : "text-gray-600"}`}>
+                      {otherExpenses.length > 0 ? "Заповнено" : "Не заповнено"} · {fmt(otherTotal)} ₴
+                    </p>
+                  </div>
                 </div>
-                <div className="flex-1 text-left">
-                  <h3 className="font-semibold text-white text-sm">Інші витрати</h3>
-                  <p className={`text-xs mt-0.5 ${otherExpenses.length > 0 ? "text-emerald-400" : "text-gray-600"}`}>
-                    {otherExpenses.length > 0 ? "Заповнено" : "Не заповнено"} · {fmt(otherTotal)} ₴
-                  </p>
-                </div>
-                <ChevronDown size={18} className={`text-gray-500 transition-transform duration-200 shrink-0 ${expandedSections.other ? "rotate-180" : ""}`} />
-              </button>
-
-              {expandedSections.other && (
+                <button onClick={() => setActiveDrawer(null)} className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all" aria-label="Закрити">
+                  <X size={16} />
+                </button>
+              </div>
+              <div className="overflow-y-auto flex-1">
               <div className="border-t border-dark-50/10">
 
               {/* Copy from previous month prompt */}
@@ -2608,20 +2247,15 @@ export default function ExpensesPage() {
               ) : (
                 <div className="divide-y divide-dark-50/5">
                   {otherExpenses.map((exp) => (
-                    <div key={exp.id} className="flex items-center gap-2 sm:gap-3 px-4 sm:px-5 py-3 hover:bg-dark-400/20 transition-colors">
+                    <div key={exp.id} className="flex items-center gap-3 px-5 py-3 hover:bg-dark-400/20 transition-colors">
                       <div className="flex-1 min-w-0">
                         <p className="text-sm text-gray-200 truncate">{exp.name}</p>
                         {exp.description && (
                           <p className="text-xs text-gray-600 truncate mt-0.5">{exp.description}</p>
                         )}
-                        {exp.category && (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/25 mt-1 inline-block sm:hidden">
-                            {exp.category}
-                          </span>
-                        )}
                       </div>
                       {exp.category && (
-                        <span className="text-xs px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-300 border border-amber-500/25 shrink-0 hidden sm:inline-flex">
+                        <span className="text-xs px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-300 border border-amber-500/25 shrink-0">
                           {exp.category}
                         </span>
                       )}
@@ -2662,33 +2296,33 @@ export default function ExpensesPage() {
                 <span className="font-bold text-amber-400 font-mono tabular-nums">{fmt(otherTotal)} ₴</span>
               </div>
               </div>
-              )}
-            </section>
+              </div>
+            </div>
+          </div>
           )}
 
-          {/* ────────────────────────────────────────
-              SECTION: ПОДАТКИ
-          ──────────────────────────────────────── */}
-          {(
-            <section className="card-neo overflow-hidden">
-              <button
-                onClick={() => toggleSection("taxes")}
-                className="w-full flex items-center gap-3 px-5 py-4 bg-dark-400/20 hover:bg-dark-400/30 transition-all cursor-pointer"
-                aria-expanded={!!expandedSections.taxes}
-              >
-                <div className="w-8 h-8 rounded-xl bg-red-500/15 flex items-center justify-center shrink-0">
-                  <Receipt size={16} className="text-red-400" />
+          {/* ── MODAL: ПОДАТКИ ── */}
+          {activeDrawer === "taxes" && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-start justify-center sm:p-4 overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label="Податки">
+            <div className="absolute inset-0" onClick={() => setActiveDrawer(null)} />
+            <div className="relative bg-dark-600 rounded-t-3xl sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto animate-modal-in expense-sheet-modal pb-[env(safe-area-inset-bottom)]" style={{ border: "1px solid #ffffff15", maxHeight: "92vh", maxWidth: "900px" }}>
+              <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-red-500/15 flex items-center justify-center shrink-0">
+                    <Receipt size={16} className="text-red-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-white text-base">Податки</h3>
+                    <p className={`text-xs mt-0.5 ${data.totals.tax_total > 0 ? "text-emerald-400" : "text-gray-600"}`}>
+                      {data.totals.tax_total > 0 ? "Заповнено" : "Не заповнено"} · {fmt(data.totals.tax_total)} ₴
+                    </p>
+                  </div>
                 </div>
-                <div className="flex-1 text-left">
-                  <h3 className="font-semibold text-white text-sm">Податки</h3>
-                  <p className={`text-xs mt-0.5 ${data.totals.tax_total > 0 ? "text-emerald-400" : "text-gray-600"}`}>
-                    {data.totals.tax_total > 0 ? "Заповнено" : "Не заповнено"} · {fmt(data.totals.tax_total)} ₴
-                  </p>
-                </div>
-                <ChevronDown size={18} className={`text-gray-500 transition-transform duration-200 shrink-0 ${expandedSections.taxes ? "rotate-180" : ""}`} />
-              </button>
-
-              {expandedSections.taxes && (
+                <button onClick={() => setActiveDrawer(null)} className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all" aria-label="Закрити">
+                  <X size={16} />
+                </button>
+              </div>
+              <div className="overflow-y-auto flex-1">
               <div className="px-5 py-4 space-y-3 border-t border-dark-50/10">
                 <div className="bg-dark-400/20 rounded-xl p-4 space-y-2">
                   <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-1.5"><Banknote size={13} className="text-orange-400" />Джерела доходу</p>
@@ -2712,52 +2346,52 @@ export default function ExpensesPage() {
 
                 <div className="bg-dark-400/20 rounded-xl p-4 space-y-2">
                   <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-1.5"><Activity size={13} className="text-orange-400" />Ставки</p>
-                  <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                     {[
                       { label: "ПДФО", value: `${data.settings.pdfo_rate}%` },
                       { label: "ВЗ із ЗП", value: `${data.settings.vz_zp_rate}%` },
-                      { label: "ЄСВ робот.", value: `${data.settings.esv_employer_rate}%` },
+                      { label: "ЄСВ роботодавця", value: `${data.settings.esv_employer_rate}%` },
                       { label: "ЄП", value: `${data.taxes.ep_rate}%` },
-                      { label: "ВЗ доходу", value: `${data.taxes.vz_rate}%` },
-                      { label: "ЄСВ власн.", value: `${fmt(data.taxes.esv_owner)} ₴` },
+                      { label: "ВЗ від доходу", value: `${data.taxes.vz_rate}%` },
+                      { label: "ЄСВ власника", value: `${fmt(data.taxes.esv_owner)} ₴` },
                     ].map(item => (
-                      <div key={item.label} className="bg-dark-500/40 rounded-lg p-2 sm:p-3 text-center">
-                        <p className="text-[10px] sm:text-xs text-gray-500 mb-0.5 sm:mb-1">{item.label}</p>
-                        <p className="font-bold text-white font-mono text-xs sm:text-base">{item.value}</p>
+                      <div key={item.label} className="bg-dark-500/40 rounded-lg p-3 text-center">
+                        <p className="text-xs text-gray-500 mb-1">{item.label}</p>
+                        <p className="font-bold text-white font-mono">{item.value}</p>
                       </div>
                     ))}
                   </div>
                 </div>
               </div>
-              )}
-            </section>
+              </div>
+            </div>
+          </div>
           )}
 
-          {/* ────────────────────────────────────────
-              SECTION: ПІДСУМКИ
-          ──────────────────────────────────────── */}
-          {(
-            <section className="card-neo overflow-hidden">
-              <button
-                onClick={() => toggleSection("summary")}
-                className="w-full flex items-center gap-3 px-5 py-4 bg-dark-400/20 hover:bg-dark-400/30 transition-all cursor-pointer"
-                aria-expanded={!!expandedSections.summary}
-              >
-                <div className="w-8 h-8 rounded-xl bg-emerald-500/15 flex items-center justify-center shrink-0">
-                  <Building2 size={16} className="text-emerald-400" />
+          {/* ── MODAL: ПІДСУМКИ ── */}
+          {activeDrawer === "summary" && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-start justify-center sm:p-4 overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label="Підсумки">
+            <div className="absolute inset-0" onClick={() => setActiveDrawer(null)} />
+            <div className="relative bg-dark-600 rounded-t-3xl sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto animate-modal-in expense-sheet-modal pb-[env(safe-area-inset-bottom)]" style={{ border: "1px solid #ffffff15", maxHeight: "92vh", maxWidth: "900px" }}>
+              <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-500/15 flex items-center justify-center shrink-0">
+                    <Building2 size={16} className="text-emerald-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-white text-base">
+                      Підсумки — {MONTH_NAMES[month - 1]} {year}
+                    </h3>
+                    <p className={`text-xs mt-0.5 ${grandWithOther > 0 ? "text-emerald-400" : "text-gray-600"}`}>
+                      {grandWithOther > 0 ? "Заповнено" : "Не заповнено"} · Залишок: {remaining >= 0 ? "+" : ""}{fmt(remaining)} ₴
+                    </p>
+                  </div>
                 </div>
-                <div className="flex-1 text-left">
-                  <h3 className="font-semibold text-white text-sm">
-                    Підсумки — {MONTH_NAMES[month - 1]} {year}
-                  </h3>
-                  <p className={`text-xs mt-0.5 ${grandWithOther > 0 ? "text-emerald-400" : "text-gray-600"}`}>
-                    {grandWithOther > 0 ? "Заповнено" : "Не заповнено"} · Залишок: {remaining >= 0 ? "+" : ""}{fmt(remaining)} ₴
-                  </p>
-                </div>
-                <ChevronDown size={18} className={`text-gray-500 transition-transform duration-200 shrink-0 ${expandedSections.summary ? "rotate-180" : ""}`} />
-              </button>
-
-              {expandedSections.summary && (
+                <button onClick={() => setActiveDrawer(null)} className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all" aria-label="Закрити">
+                  <X size={16} />
+                </button>
+              </div>
+              <div className="overflow-y-auto flex-1">
               <div className="px-5 py-5 space-y-2.5 border-t border-dark-50/10">
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-1.5">
                   <BarChart3 size={13} className="text-orange-400" />Структура витрат
@@ -2804,8 +2438,9 @@ export default function ExpensesPage() {
                   </div>
                 )}
               </div>
-              )}
-            </section>
+              </div>
+            </div>
+          </div>
           )}
         </>
       )}
@@ -2819,6 +2454,70 @@ export default function ExpensesPage() {
         <Modal
           title={fixedModal.isEdit ? "Редагувати постійну витрату" : "Додати постійну витрату"}
           onClose={() => setFixedModal(s => ({ ...s, open: false }))}
+          footer={
+            <div className="flex gap-3">
+              <button
+                onClick={() => setFixedModal(s => ({ ...s, open: false }))}
+                className="flex-1 py-2.5 rounded-xl border border-dark-50/20 text-gray-400 hover:text-white text-sm transition-all"
+              >
+                Скасувати
+              </button>
+              <button
+                onClick={async () => {
+                  if (!fixedModal.name.trim()) return;
+                  setFixedModal(s => ({ ...s, saving: true }));
+                  try {
+                    if (!fixedModal.recurring) {
+                      // Migrate to "Other expenses" when permanence is unchecked
+                      if (fixedModal.isEdit && fixedModal.id != null) {
+                        // Delete from fixed first
+                        await api.delete(`/monthly-expenses/fixed/${fixedModal.id}`);
+                      }
+                      // Create as other expense
+                      await api.post("/monthly-expenses/other", {
+                        name: fixedModal.name,
+                        description: fixedModal.desc,
+                        amount: parseFloat(fixedModal.amount) || 0,
+                        category: "general",
+                        year,
+                        month,
+                      });
+                      setFixedModal(s => ({ ...s, open: false, saving: false }));
+                      await Promise.all([load(), loadOther()]);
+                    } else {
+                      if (fixedModal.isEdit && fixedModal.id != null) {
+                        await api.put(`/monthly-expenses/fixed/${fixedModal.id}`, {
+                          name: fixedModal.name,
+                          description: fixedModal.desc,
+                          amount: parseFloat(fixedModal.amount) || 0,
+                          is_recurring: fixedModal.recurring,
+                        });
+                      } else {
+                        await api.post("/monthly-expenses/fixed", {
+                          year, month,
+                          name: fixedModal.name,
+                          description: fixedModal.desc,
+                          amount: parseFloat(fixedModal.amount) || 0,
+                          is_recurring: fixedModal.recurring,
+                        });
+                      }
+                      setFixedModal(s => ({ ...s, open: false, saving: false }));
+                      await load();
+                    }
+                  } catch (e: any) {
+                    console.error(e);
+                    setAlertDlg({ title: "Помилка", description: e?.response?.data?.detail || "Не вдалося зберегти витрату. Спробуйте ще раз." });
+                    setFixedModal(s => ({ ...s, saving: false }));
+                  }
+                }}
+                disabled={fixedModal.saving || !fixedModal.name.trim()}
+                className="flex-1 py-2.5 rounded-xl bg-accent-500 hover:bg-accent-400 text-white text-sm font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-60"
+              >
+                {fixedModal.saving ? <RefreshCw size={14} className="animate-spin" /> : <Save size={14} />}
+                Зберегти
+              </button>
+            </div>
+          }
         >
           <ModalField
             label="Назва"
@@ -2844,68 +2543,6 @@ export default function ExpensesPage() {
             label="Постійна (щомісячна)"
             onToggle={() => setFixedModal(s => ({ ...s, recurring: !s.recurring }))}
           />
-          <div className="flex gap-3 pt-2">
-            <button
-              onClick={() => setFixedModal(s => ({ ...s, open: false }))}
-              className="flex-1 py-2.5 rounded-xl border border-dark-50/20 text-gray-400 hover:text-white text-sm transition-all"
-            >
-              Скасувати
-            </button>
-            <button
-              onClick={async () => {
-                if (!fixedModal.name.trim()) return;
-                setFixedModal(s => ({ ...s, saving: true }));
-                try {
-                  if (!fixedModal.recurring) {
-                    // Migrate to "Other expenses" when permanence is unchecked
-                    if (fixedModal.isEdit && fixedModal.id != null) {
-                      // Delete from fixed first
-                      await api.delete(`/monthly-expenses/fixed/${fixedModal.id}`);
-                    }
-                    // Create as other expense
-                    await api.post("/monthly-expenses/other", {
-                      name: fixedModal.name,
-                      description: fixedModal.desc,
-                      amount: parseFloat(fixedModal.amount) || 0,
-                      category: "general",
-                      year,
-                      month,
-                    });
-                    setFixedModal(s => ({ ...s, open: false, saving: false }));
-                    await Promise.all([load(), loadOther()]);
-                  } else {
-                    if (fixedModal.isEdit && fixedModal.id != null) {
-                      await api.put(`/monthly-expenses/fixed/${fixedModal.id}`, {
-                        name: fixedModal.name,
-                        description: fixedModal.desc,
-                        amount: parseFloat(fixedModal.amount) || 0,
-                        is_recurring: fixedModal.recurring,
-                      });
-                    } else {
-                      await api.post("/monthly-expenses/fixed", {
-                        year, month,
-                        name: fixedModal.name,
-                        description: fixedModal.desc,
-                        amount: parseFloat(fixedModal.amount) || 0,
-                        is_recurring: fixedModal.recurring,
-                      });
-                    }
-                    setFixedModal(s => ({ ...s, open: false, saving: false }));
-                    await load();
-                  }
-                } catch (e: any) {
-                  console.error(e);
-                  setAlertDlg({ title: "Помилка", description: e?.response?.data?.detail || "Не вдалося зберегти витрату. Спробуйте ще раз." });
-                  setFixedModal(s => ({ ...s, saving: false }));
-                }
-              }}
-              disabled={fixedModal.saving || !fixedModal.name.trim()}
-              className="flex-1 py-2.5 rounded-xl bg-accent-500 hover:bg-accent-400 text-white text-sm font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-60"
-            >
-              {fixedModal.saving ? <RefreshCw size={14} className="animate-spin" /> : <Save size={14} />}
-              Зберегти
-            </button>
-          </div>
         </Modal>
       )}
 
@@ -2914,6 +2551,24 @@ export default function ExpensesPage() {
         <Modal
           title={staffModal.isEdit ? "Редагувати співробітника" : "Додати співробітника"}
           onClose={() => setStaffModal(s => ({ ...s, open: false }))}
+          footer={
+            <div className="flex gap-3">
+              <button
+                onClick={() => setStaffModal(s => ({ ...s, open: false }))}
+                className="flex-1 py-2.5 rounded-xl border border-dark-50/20 text-gray-400 hover:text-white text-sm transition-all"
+              >
+                Скасувати
+              </button>
+              <button
+                onClick={saveStaff}
+                disabled={staffModal.saving || !staffModal.fullName.trim()}
+                className="flex-1 py-2.5 rounded-xl bg-accent-500 hover:bg-accent-400 text-white text-sm font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-60"
+              >
+                {staffModal.saving ? <RefreshCw size={14} className="animate-spin" /> : <UserPlus size={14} />}
+                {staffModal.isEdit ? "Зберегти" : "Додати"}
+              </button>
+            </div>
+          }
         >
           <ModalField
             label="ПІБ"
@@ -2960,22 +2615,6 @@ export default function ExpensesPage() {
               </p>
             </div>
           )}
-          <div className="flex gap-3 pt-2">
-            <button
-              onClick={() => setStaffModal(s => ({ ...s, open: false }))}
-              className="flex-1 py-2.5 rounded-xl border border-dark-50/20 text-gray-400 hover:text-white text-sm transition-all"
-            >
-              Скасувати
-            </button>
-            <button
-              onClick={saveStaff}
-              disabled={staffModal.saving || !staffModal.fullName.trim()}
-              className="flex-1 py-2.5 rounded-xl bg-accent-500 hover:bg-accent-400 text-white text-sm font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-60"
-            >
-              {staffModal.saving ? <RefreshCw size={14} className="animate-spin" /> : <UserPlus size={14} />}
-              {staffModal.isEdit ? "Зберегти" : "Додати"}
-            </button>
-          </div>
         </Modal>
       )}
 
@@ -2984,6 +2623,24 @@ export default function ExpensesPage() {
         <Modal
           title="Копіювати дані з попереднього місяця"
           onClose={() => setCopyModal(s => ({ ...s, open: false }))}
+          footer={
+            <div className="flex gap-3">
+              <button
+                onClick={() => setCopyModal(s => ({ ...s, open: false }))}
+                className="flex-1 py-2.5 rounded-xl border border-dark-50/20 text-gray-400 hover:text-white text-sm transition-all"
+              >
+                Скасувати
+              </button>
+              <button
+                onClick={copyFromPeriod}
+                disabled={copyModal.saving || (!copyModal.copyFixed && !copyModal.copySalary)}
+                className="flex-1 py-2.5 rounded-xl bg-accent-500 hover:bg-accent-400 text-white text-sm font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-60"
+              >
+                {copyModal.saving ? <RefreshCw size={14} className="animate-spin" /> : <Copy size={14} />}
+                Копіювати
+              </button>
+            </div>
+          }
         >
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
@@ -3030,31 +2687,15 @@ export default function ExpensesPage() {
               Існуючі записи цільового місяця будуть перезаписані.
             </p>
           </div>
-          <div className="flex gap-3 pt-2">
-            <button
-              onClick={() => setCopyModal(s => ({ ...s, open: false }))}
-              className="flex-1 py-2.5 rounded-xl border border-dark-50/20 text-gray-400 hover:text-white text-sm transition-all"
-            >
-              Скасувати
-            </button>
-            <button
-              onClick={copyFromPeriod}
-              disabled={copyModal.saving || (!copyModal.copyFixed && !copyModal.copySalary)}
-              className="flex-1 py-2.5 rounded-xl bg-accent-500 hover:bg-accent-400 text-white text-sm font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-60"
-            >
-              {copyModal.saving ? <RefreshCw size={14} className="animate-spin" /> : <Copy size={14} />}
-              Копіювати
-            </button>
-          </div>
         </Modal>
       )}
 
       {/* ── AI parse modal ── */}
       {aiModal.open && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-label="AI-аналіз витрати">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-start justify-center sm:p-4 overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label="AI-аналіз витрати">
           <div className="absolute inset-0" onClick={() => setAiModal({ open: false, text: "", file: null, loading: false, result: null })} />
           <div
-            className="relative bg-dark-600 rounded-2xl w-full max-w-lg my-auto modal-glow"
+            className="relative bg-dark-600 rounded-t-3xl sm:rounded-2xl w-full max-w-lg sm:my-auto modal-glow expense-sheet-modal pb-[env(safe-area-inset-bottom)]"
           >
             <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
               <div className="flex items-center gap-2">
@@ -3248,39 +2889,24 @@ export default function ExpensesPage() {
             break;
         }
 
-        function exportKpiExcel() {
-          const wb = XLSX.utils.book_new();
-          const header = ["Назва", "Деталі", "Сума (₴)"];
-          const dataRows = rows.map(r => [r.name, r.detail ?? "", r.amount]);
-          dataRows.push(["", totalLabel, totalValue]);
-          const ws = XLSX.utils.aoa_to_sheet([
-            [kpiModal.title],
-            [`${MONTH_NAMES[month - 1]} ${year}`],
-            [],
-            header,
-            ...dataRows,
-          ]);
-          ws["!cols"] = [{ wch: 40 }, { wch: 30 }, { wch: 18 }];
-          XLSX.utils.book_append_sheet(wb, ws, "Деталі");
-          XLSX.writeFile(wb, `${kpiModal.type}_${year}_${String(month).padStart(2, "0")}.xlsx`);
-        }
+        const handleExportKpiExcel = () => exportKpiExcel(rows, totalLabel, totalValue, kpiModal.title, kpiModal.type, year, month);
 
         return (
-          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start justify-center p-2 sm:p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-label={kpiModal.title}>
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-start justify-center sm:p-4 overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label={kpiModal.title}>
             <div className="absolute inset-0" onClick={() => setKpiModal({ open: false, type: "", title: "" })} />
             <div
-              className="relative bg-dark-600 rounded-2xl shadow-2xl w-full flex flex-col my-auto"
-              style={{ border: "1px solid #ffffff15", maxHeight: "85vh", maxWidth: "900px" }}
+              className="relative bg-dark-600 rounded-t-3xl sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto expense-sheet-modal pb-[env(safe-area-inset-bottom)]"
+              style={{ border: "1px solid #ffffff15", maxHeight: "92vh", maxWidth: "900px" }}
             >
               {/* Header */}
-              <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-white/10 shrink-0">
-                <h4 className="font-semibold text-white text-sm sm:text-base truncate mr-2">{kpiModal.title}</h4>
-                <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0">
+                <h4 className="font-semibold text-white text-base">{kpiModal.title}</h4>
+                <div className="flex items-center gap-2">
                   <button
-                    onClick={exportKpiExcel}
-                    className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 text-xs font-semibold hover:bg-emerald-500/20 transition-all"
+                    onClick={handleExportKpiExcel}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 text-xs font-semibold hover:bg-emerald-500/20 transition-all"
                   >
-                    <FileSpreadsheet size={13} /> <span className="hidden sm:inline">Excel</span>
+                    <FileSpreadsheet size={13} /> Excel
                   </button>
                   <button
                     onClick={() => setKpiModal({ open: false, type: "", title: "" })}
@@ -3292,41 +2918,13 @@ export default function ExpensesPage() {
                 </div>
               </div>
               {/* Sub-header */}
-              <div className="px-4 sm:px-6 py-2 border-b border-dark-50/10 bg-dark-400/20 shrink-0">
+              <div className="px-6 py-2 border-b border-dark-50/10 bg-dark-400/20 shrink-0">
                 <p className="text-xs text-gray-500">
                   {MONTH_NAMES[month - 1]} {year} · {rows.length} записів
                 </p>
               </div>
-
-              {/* Mobile: card list */}
-              <div className="overflow-y-auto flex-1 sm:hidden">
-                <div className="divide-y divide-dark-50/5">
-                  {rows.map((row, idx) => (
-                    <div key={idx} className="px-4 py-3">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm text-gray-200 truncate">{row.name}</p>
-                          {row.detail && <p className="text-xs text-gray-500 mt-0.5 truncate">{row.detail}</p>}
-                        </div>
-                        <span className={`font-mono text-sm tabular-nums shrink-0 ${row.amount < 0 ? "text-red-400" : "text-gray-200"}`}>
-                          {row.amount < 0 ? "−" : ""}{fmt(Math.abs(row.amount))} ₴
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className="flex items-center justify-between px-4 py-3 bg-dark-400/20 border-t border-dark-50/15">
-                  <span className="text-sm font-semibold text-gray-300">{totalLabel}</span>
-                  <span className={`font-bold font-mono tabular-nums text-base ${
-                    kpiModal.type === "remaining" ? (totalValue >= 0 ? "text-emerald-400" : "text-red-400") : "text-white"
-                  }`}>
-                    {kpiModal.type === "remaining" && totalValue >= 0 ? "+" : ""}{totalValue < 0 ? "−" : ""}{fmt(Math.abs(totalValue))} ₴
-                  </span>
-                </div>
-              </div>
-
-              {/* Desktop: table */}
-              <div className="overflow-y-auto flex-1 hidden sm:block">
+              {/* Table */}
+              <div className="overflow-y-auto flex-1">
                 <table className="w-full text-sm">
                   <thead className="sticky top-0 bg-dark-600 z-10">
                     <tr className="border-b border-dark-50/10">
@@ -3368,6 +2966,24 @@ export default function ExpensesPage() {
         <Modal
           title={otherModal.isEdit ? "Редагувати витрату" : "Додати витрату"}
           onClose={() => setOtherModal(s => ({ ...s, open: false }))}
+          footer={
+            <div className="flex gap-3">
+              <button
+                onClick={() => setOtherModal(s => ({ ...s, open: false }))}
+                className="flex-1 py-2.5 rounded-xl border border-dark-50/20 text-gray-400 hover:text-white text-sm transition-all"
+              >
+                Скасувати
+              </button>
+              <button
+                onClick={saveOther}
+                disabled={otherModal.saving || !otherModal.name.trim()}
+                className="flex-1 py-2.5 rounded-xl bg-accent-500 hover:bg-accent-400 text-white text-sm font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-60"
+              >
+                {otherModal.saving ? <RefreshCw size={14} className="animate-spin" /> : <Save size={14} />}
+                {otherModal.isEdit ? "Зберегти" : "Додати"}
+              </button>
+            </div>
+          }
         >
           <ModalField
             label="Назва"
@@ -3394,174 +3010,32 @@ export default function ExpensesPage() {
             onChange={v => setOtherModal(s => ({ ...s, category: v }))}
             placeholder="general"
           />
-          <div className="flex gap-3 pt-2">
-            <button
-              onClick={() => setOtherModal(s => ({ ...s, open: false }))}
-              className="flex-1 py-2.5 rounded-xl border border-dark-50/20 text-gray-400 hover:text-white text-sm transition-all"
-            >
-              Скасувати
-            </button>
-            <button
-              onClick={saveOther}
-              disabled={otherModal.saving || !otherModal.name.trim()}
-              className="flex-1 py-2.5 rounded-xl bg-accent-500 hover:bg-accent-400 text-white text-sm font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-60"
-            >
-              {otherModal.saving ? <RefreshCw size={14} className="animate-spin" /> : <Save size={14} />}
-              {otherModal.isEdit ? "Зберегти" : "Додати"}
-            </button>
-          </div>
         </Modal>
       )}
 
-      {/* ── Accountant request modal ── */}
-      {accReqModal.open && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-label="Запит до бухгалтера">
-          <div className="absolute inset-0" onClick={() => setAccReqModal({ open: false, url: "", expiresAt: "" })} />
-          <div className="relative bg-dark-600 rounded-2xl w-full max-w-md my-auto p-6 modal-glow">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <ClipboardList size={18} className="text-orange-400" />
-                <h4 className="font-semibold text-white text-base">Запит до бухгалтера створено</h4>
-              </div>
-              <button
-                onClick={() => setAccReqModal({ open: false, url: "", expiresAt: "" })}
-                aria-label="Закрити"
-                className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all"
-              >
-                <X size={16} />
-              </button>
-            </div>
-            <p className="text-xs text-gray-500 mb-3">
-              Надішліть це посилання бухгалтеру. Сторінка доступна 15 днів (до {accReqModal.expiresAt}).
-            </p>
-            <div className="flex items-center gap-2 bg-dark-400/40 rounded-xl p-3 mb-4">
-              <Link size={14} className="text-gray-500 shrink-0" />
-              <input
-                type="text"
-                readOnly
-                value={accReqModal.url}
-                className="flex-1 bg-transparent text-sm text-gray-200 font-mono outline-none"
-                onFocus={e => e.target.select()}
-              />
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(accReqModal.url);
-                }}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-400 text-sm font-medium hover:bg-orange-500/20 transition-all"
-              >
-                <Copy size={14} /> Копіювати
-              </button>
-              <a
-                href={accReqModal.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-orange-500 text-white text-sm font-semibold hover:bg-orange-400 transition-all"
-              >
-                <ExternalLink size={14} /> Відкрити
-              </a>
-            </div>
-            <div className="flex gap-2 mt-2">
-              <a
-                href={`mailto:?subject=${encodeURIComponent("Запит на заповнення даних")}&body=${encodeURIComponent(accReqModal.url)}`}
-                className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl border border-dark-50/20 text-gray-400 text-xs hover:text-white hover:border-dark-50/40 transition-all"
-              >
-                Email
-              </a>
-              <a
-                href={`viber://forward?text=${encodeURIComponent(accReqModal.url)}`}
-                className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl border border-dark-50/20 text-gray-400 text-xs hover:text-white hover:border-dark-50/40 transition-all"
-              >
-                Viber
-              </a>
-              <a
-                href={`https://t.me/share/url?url=${encodeURIComponent(accReqModal.url)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl border border-dark-50/20 text-gray-400 text-xs hover:text-white hover:border-dark-50/40 transition-all"
-              >
-                Telegram
-              </a>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* ── Accountant request modal (extracted to ShareLinkModal) ── */}
+      <ShareLinkModal
+        open={accReqModal.open}
+        onClose={() => setAccReqModal({ open: false, url: "", expiresAt: "" })}
+        url={accReqModal.url}
+        expiresAt={accReqModal.expiresAt}
+        icon={<ClipboardList size={18} className="text-orange-400" />}
+        title="Запит до бухгалтера створено"
+        description="Надішліть це посилання бухгалтеру. Сторінка доступна 15 днів"
+        accentClass="orange"
+      />
 
-      {/* ── Share modal ── */}
-      {shareModal.open && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-label="Поділитись звітом">
-          <div className="absolute inset-0" onClick={() => setShareModal({ open: false, url: "", expiresAt: "" })} />
-          <div className="relative bg-dark-600 rounded-2xl w-full max-w-md my-auto p-6 modal-glow">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Share2 size={18} className="text-accent-400" />
-                <h4 className="font-semibold text-white text-base">Посилання створено</h4>
-              </div>
-              <button
-                onClick={() => setShareModal({ open: false, url: "", expiresAt: "" })}
-                aria-label="Закрити"
-                className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all"
-              >
-                <X size={16} />
-              </button>
-            </div>
-            <p className="text-xs text-gray-500 mb-3">
-              Сторінка доступна для перегляду без авторизації протягом 30 днів (до {shareModal.expiresAt}).
-            </p>
-            <div className="flex items-center gap-2 bg-dark-400/40 rounded-xl p-3 mb-4">
-              <Link size={14} className="text-gray-500 shrink-0" />
-              <input
-                type="text"
-                readOnly
-                value={shareModal.url}
-                className="flex-1 bg-transparent text-sm text-gray-200 font-mono outline-none"
-                onFocus={e => e.target.select()}
-              />
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(shareModal.url);
-                }}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-accent-500/10 border border-accent-500/20 text-accent-400 text-sm font-medium hover:bg-accent-500/20 transition-all"
-              >
-                <Copy size={14} /> Копіювати
-              </button>
-              <a
-                href={shareModal.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-accent-500 text-white text-sm font-semibold hover:bg-accent-400 transition-all"
-              >
-                <ExternalLink size={14} /> Відкрити
-              </a>
-            </div>
-            <div className="flex gap-2 mt-2">
-              <a
-                href={`mailto:?subject=${encodeURIComponent("Зведений звіт ФОП")}&body=${encodeURIComponent(shareModal.url)}`}
-                className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl border border-dark-50/20 text-gray-400 text-xs hover:text-white hover:border-dark-50/40 transition-all"
-              >
-                Email
-              </a>
-              <a
-                href={`viber://forward?text=${encodeURIComponent(shareModal.url)}`}
-                className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl border border-dark-50/20 text-gray-400 text-xs hover:text-white hover:border-dark-50/40 transition-all"
-              >
-                Viber
-              </a>
-              <a
-                href={`https://t.me/share/url?url=${encodeURIComponent(shareModal.url)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl border border-dark-50/20 text-gray-400 text-xs hover:text-white hover:border-dark-50/40 transition-all"
-              >
-                Telegram
-              </a>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* ── Share modal (extracted to ShareLinkModal) ── */}
+      <ShareLinkModal
+        open={shareModal.open}
+        onClose={() => setShareModal({ open: false, url: "", expiresAt: "" })}
+        url={shareModal.url}
+        expiresAt={shareModal.expiresAt}
+        icon={<Share2 size={18} className="text-accent-400" />}
+        title="Посилання створено"
+        description="Сторінка доступна для перегляду без авторизації протягом 30 днів"
+        accentClass="accent"
+      />
 
       {/* ── Styled confirm dialog (replaces native confirm()) ── */}
       <ConfirmDialog
