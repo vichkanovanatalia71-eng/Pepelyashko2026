@@ -1575,7 +1575,7 @@ export default function ExpensesPage() {
           {activeDrawer === "fixed" && (
           <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-start justify-center sm:p-4 overflow-hidden sm:overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label="Постійні витрати">
             <div className="absolute inset-0" onClick={() => setActiveDrawer(null)} />
-            <div ref={sheetPanelRef} className={`relative bg-dark-600 sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto animate-modal-in pb-[env(safe-area-inset-bottom)] ${sheetHeight >= 100 ? "" : "rounded-t-3xl"}`} style={{ border: "1px solid #ffffff15", height: `${sheetHeight}vh`, maxWidth: "900px", transition: sheetDragRef.current ? "none" : "height 0.3s ease, border-radius 0.2s ease" }}>
+            <div ref={sheetPanelRef} className={`relative bg-dark-600 sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto animate-modal-in ${sheetHeight >= 100 ? "" : "rounded-t-3xl"}`} style={{ border: "1px solid #ffffff15", height: `${sheetHeight}%`, maxWidth: "900px", transition: sheetDragRef.current ? "none" : "height 0.3s ease, border-radius 0.2s ease" }}>
               {/* Drag handle (mobile) */}
               <div ref={dragHandleRef} className="sm:hidden flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing shrink-0 touch-none" onTouchStart={onDragStart} onTouchMove={onDragMove} onTouchEnd={onDragEnd}>
                 <div className="w-10 h-1.5 rounded-full bg-white/30" />
@@ -1693,7 +1693,7 @@ export default function ExpensesPage() {
               </div>
               </div>
               {/* Sticky footer — outside scrollable area */}
-              <div className="flex items-center justify-between px-5 py-3 bg-dark-400/30 border-t border-dark-50/15 shrink-0">
+              <div className="flex items-center justify-between px-5 py-3 bg-dark-400/30 border-t border-dark-50/15 shrink-0 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
                 <button
                   onClick={() => setFixedModal({
                     open: true, isEdit: false, id: null,
@@ -1713,7 +1713,7 @@ export default function ExpensesPage() {
           {activeDrawer === "salary" && (
           <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-start justify-center sm:p-4 overflow-hidden sm:overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label="Зарплатні витрати">
             <div className="absolute inset-0" onClick={() => setActiveDrawer(null)} />
-            <div ref={sheetPanelRef} className={`relative bg-dark-600 sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto animate-modal-in pb-[env(safe-area-inset-bottom)] ${sheetHeight >= 100 ? "" : "rounded-t-3xl"}`} style={{ border: "1px solid #ffffff15", height: `${sheetHeight}vh`, maxWidth: "900px", transition: sheetDragRef.current ? "none" : "height 0.3s ease, border-radius 0.2s ease" }}>
+            <div ref={sheetPanelRef} className={`relative bg-dark-600 sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto animate-modal-in ${sheetHeight >= 100 ? "" : "rounded-t-3xl"}`} style={{ border: "1px solid #ffffff15", height: `${sheetHeight}%`, maxWidth: "900px", transition: sheetDragRef.current ? "none" : "height 0.3s ease, border-radius 0.2s ease" }}>
               {/* Drag handle (mobile) */}
               <div ref={dragHandleRef} className="sm:hidden flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing shrink-0 touch-none" onTouchStart={onDragStart} onTouchMove={onDragMove} onTouchEnd={onDragEnd}>
                 <div className="w-10 h-1.5 rounded-full bg-white/30" />
@@ -2227,7 +2227,7 @@ export default function ExpensesPage() {
               </div>
               </div>
               {/* Sticky footer — outside scrollable area */}
-              <div className="flex items-center justify-between px-5 py-3 bg-dark-400/30 border-t border-dark-50/15 shrink-0">
+              <div className="flex items-center justify-between px-5 py-3 bg-dark-400/30 border-t border-dark-50/15 shrink-0 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
                 <span className="text-xs text-gray-600">Персонал налаштовується в розділі Налаштування</span>
                 <span className="font-bold text-purple-400 font-mono tabular-nums">{fmt(data.totals.salary_total)} ₴</span>
               </div>
@@ -2239,7 +2239,7 @@ export default function ExpensesPage() {
           {activeDrawer === "other" && (
           <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-start justify-center sm:p-4 overflow-hidden sm:overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label="Інші витрати">
             <div className="absolute inset-0" onClick={() => setActiveDrawer(null)} />
-            <div ref={sheetPanelRef} className={`relative bg-dark-600 sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto animate-modal-in pb-[env(safe-area-inset-bottom)] ${sheetHeight >= 100 ? "" : "rounded-t-3xl"}`} style={{ border: "1px solid #ffffff15", height: `${sheetHeight}vh`, maxWidth: "900px", transition: sheetDragRef.current ? "none" : "height 0.3s ease, border-radius 0.2s ease" }}>
+            <div ref={sheetPanelRef} className={`relative bg-dark-600 sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto animate-modal-in ${sheetHeight >= 100 ? "" : "rounded-t-3xl"}`} style={{ border: "1px solid #ffffff15", height: `${sheetHeight}%`, maxWidth: "900px", transition: sheetDragRef.current ? "none" : "height 0.3s ease, border-radius 0.2s ease" }}>
               {/* Drag handle (mobile) */}
               <div ref={dragHandleRef} className="sm:hidden flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing shrink-0 touch-none" onTouchStart={onDragStart} onTouchMove={onDragMove} onTouchEnd={onDragEnd}>
                 <div className="w-10 h-1.5 rounded-full bg-white/30" />
@@ -2349,7 +2349,7 @@ export default function ExpensesPage() {
               </div>
               </div>
               {/* Sticky footer — outside scrollable area */}
-              <div className="flex items-center justify-between px-5 py-3 bg-dark-400/30 border-t border-dark-50/15 shrink-0">
+              <div className="flex items-center justify-between px-5 py-3 bg-dark-400/30 border-t border-dark-50/15 shrink-0 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
                 <button
                   onClick={() => setOtherModal({
                     open: true, isEdit: false, id: null,
@@ -2369,7 +2369,7 @@ export default function ExpensesPage() {
           {activeDrawer === "taxes" && (
           <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-start justify-center sm:p-4 overflow-hidden sm:overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label="Податки">
             <div className="absolute inset-0" onClick={() => setActiveDrawer(null)} />
-            <div ref={sheetPanelRef} className={`relative bg-dark-600 sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto animate-modal-in pb-[env(safe-area-inset-bottom)] ${sheetHeight >= 100 ? "" : "rounded-t-3xl"}`} style={{ border: "1px solid #ffffff15", height: `${sheetHeight}vh`, maxWidth: "900px", transition: sheetDragRef.current ? "none" : "height 0.3s ease, border-radius 0.2s ease" }}>
+            <div ref={sheetPanelRef} className={`relative bg-dark-600 sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto animate-modal-in ${sheetHeight >= 100 ? "" : "rounded-t-3xl"}`} style={{ border: "1px solid #ffffff15", height: `${sheetHeight}%`, maxWidth: "900px", transition: sheetDragRef.current ? "none" : "height 0.3s ease, border-radius 0.2s ease" }}>
               {/* Drag handle (mobile) */}
               <div ref={dragHandleRef} className="sm:hidden flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing shrink-0 touch-none" onTouchStart={onDragStart} onTouchMove={onDragMove} onTouchEnd={onDragEnd}>
                 <div className="w-10 h-1.5 rounded-full bg-white/30" />
@@ -2440,7 +2440,7 @@ export default function ExpensesPage() {
           {activeDrawer === "summary" && (
           <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-start justify-center sm:p-4 overflow-hidden sm:overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label="Підсумки">
             <div className="absolute inset-0" onClick={() => setActiveDrawer(null)} />
-            <div ref={sheetPanelRef} className={`relative bg-dark-600 sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto animate-modal-in pb-[env(safe-area-inset-bottom)] ${sheetHeight >= 100 ? "" : "rounded-t-3xl"}`} style={{ border: "1px solid #ffffff15", height: `${sheetHeight}vh`, maxWidth: "900px", transition: sheetDragRef.current ? "none" : "height 0.3s ease, border-radius 0.2s ease" }}>
+            <div ref={sheetPanelRef} className={`relative bg-dark-600 sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto animate-modal-in ${sheetHeight >= 100 ? "" : "rounded-t-3xl"}`} style={{ border: "1px solid #ffffff15", height: `${sheetHeight}%`, maxWidth: "900px", transition: sheetDragRef.current ? "none" : "height 0.3s ease, border-radius 0.2s ease" }}>
               {/* Drag handle (mobile) */}
               <div ref={dragHandleRef} className="sm:hidden flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing shrink-0 touch-none" onTouchStart={onDragStart} onTouchMove={onDragMove} onTouchEnd={onDragEnd}>
                 <div className="w-10 h-1.5 rounded-full bg-white/30" />
