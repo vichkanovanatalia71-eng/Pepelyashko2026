@@ -6,7 +6,7 @@ from collections import defaultdict
 from datetime import date
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import case, extract, func, select
+from sqlalchemy import and_, case, extract, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -510,6 +510,161 @@ async def _month_totals(
     }
 
 
+async def _batch_month_totals(
+    db: AsyncSession,
+    user_id: int,
+    periods: list[tuple[int, int]],
+    esv_monthly: float,
+    vz_rate: float,
+    tax_rate: float,
+    ep_rate_pct: float = 5.0,
+) -> dict[tuple[int, int], dict]:
+    """Compute month totals for multiple periods in 6 bulk queries instead of 6*N."""
+    if not periods:
+        return {}
+
+    # Global date range for date-based tables (Income, Expense)
+    sorted_periods = sorted(periods)
+    first_y, first_m = sorted_periods[0]
+    last_y, last_m = sorted_periods[-1]
+    global_start = date(first_y, first_m, 1)
+    if last_m == 12:
+        global_end_exclusive = date(last_y + 1, 1, 1)
+    else:
+        global_end_exclusive = date(last_y, last_m + 1, 1)
+
+    # OR filter for year/month-column tables
+    ym_filter_nhsu = or_(*[and_(NhsuRecord.year == y, NhsuRecord.month == m) for y, m in periods])
+    ym_filter_paid = or_(*[and_(MonthlyPaidServicesReport.year == y, MonthlyPaidServicesReport.month == m) for y, m in periods])
+    ym_filter_fixed = or_(*[and_(MonthlyFixedExpense.year == y, MonthlyFixedExpense.month == m) for y, m in periods])
+    ym_filter_salary = or_(*[and_(MonthlySalaryExpense.year == y, MonthlySalaryExpense.month == m) for y, m in periods])
+
+    # Q1: Manual income (GROUP BY year, month)
+    inc_r = await db.execute(
+        select(
+            extract("year", Income.date).label("y"),
+            extract("month", Income.date).label("m"),
+            func.coalesce(func.sum(Income.amount), 0),
+        ).where(
+            Income.user_id == user_id,
+            Income.date >= global_start,
+            Income.date < global_end_exclusive,
+        ).group_by("y", "m")
+    )
+    income_map = {(int(r[0]), int(r[1])): float(r[2]) for r in inc_r.all()}
+
+    # Q2: NHSU income (need full records for .amount property)
+    nhsu_r = await db.execute(
+        select(NhsuRecord).where(NhsuRecord.user_id == user_id, ym_filter_nhsu)
+    )
+    nhsu_map: dict[tuple[int, int], float] = defaultdict(float)
+    for rec in nhsu_r.scalars().all():
+        nhsu_map[(rec.year, rec.month)] += rec.amount
+
+    # Q3: Paid services income (GROUP BY year, month)
+    paid_r = await db.execute(
+        select(
+            MonthlyPaidServicesReport.year,
+            MonthlyPaidServicesReport.month,
+            func.coalesce(func.sum(Service.price * MonthlyPaidServiceEntry.quantity), 0),
+        ).join(
+            MonthlyPaidServiceEntry,
+            MonthlyPaidServiceEntry.report_id == MonthlyPaidServicesReport.id,
+        ).join(
+            Service,
+            MonthlyPaidServiceEntry.service_id == Service.id,
+        ).where(
+            MonthlyPaidServicesReport.user_id == user_id,
+            ym_filter_paid,
+        ).group_by(MonthlyPaidServicesReport.year, MonthlyPaidServicesReport.month)
+    )
+    paid_map = {(int(r[0]), int(r[1])): float(r[2]) for r in paid_r.all()}
+
+    # Q4: Fixed expenses (GROUP BY year, month)
+    fixed_r = await db.execute(
+        select(
+            MonthlyFixedExpense.year,
+            MonthlyFixedExpense.month,
+            func.coalesce(func.sum(MonthlyFixedExpense.amount), 0),
+        ).where(
+            MonthlyFixedExpense.user_id == user_id,
+            ym_filter_fixed,
+        ).group_by(MonthlyFixedExpense.year, MonthlyFixedExpense.month)
+    )
+    fixed_map = {(int(r[0]), int(r[1])): float(r[2]) for r in fixed_r.all()}
+
+    # Q5: Salary records (need full records for supplement/bonus logic)
+    salary_r = await db.execute(
+        select(MonthlySalaryExpense).where(
+            MonthlySalaryExpense.user_id == user_id,
+            ym_filter_salary,
+        )
+    )
+    salary_cost_map: dict[tuple[int, int], float] = defaultdict(float)
+    salary_esv_map: dict[tuple[int, int], float] = defaultdict(float)
+    for rec in salary_r.scalars().all():
+        key = (rec.year, rec.month)
+        brutto = float(rec.brutto) if rec.brutto else 0.0
+        pdfo = round(brutto * 0.18, 2)
+        vz_zp = round(brutto * 0.05, 2)
+        esv = round(brutto * 0.22, 2)
+        netto = round(brutto - pdfo - vz_zp, 2)
+        supplement = 0.0
+        if rec.has_supplement and rec.target_net:
+            supplement = max(0, float(rec.target_net) - netto)
+        bonus = float(rec.individual_bonus) if rec.individual_bonus else 0.0
+        salary_cost_map[key] += round(brutto + esv + supplement + bonus, 2)
+        salary_esv_map[key] += esv
+
+    # Q6: Ad-hoc expenses (GROUP BY year, month)
+    exp_r = await db.execute(
+        select(
+            extract("year", Expense.date).label("y"),
+            extract("month", Expense.date).label("m"),
+            func.coalesce(func.sum(Expense.amount), 0),
+        ).where(
+            Expense.user_id == user_id,
+            Expense.date >= global_start,
+            Expense.date < global_end_exclusive,
+        ).group_by("y", "m")
+    )
+    expense_map = {(int(r[0]), int(r[1])): float(r[2]) for r in exp_r.all()}
+
+    # Assemble results
+    result: dict[tuple[int, int], dict] = {}
+    for y, m in periods:
+        manual_income = income_map.get((y, m), 0.0)
+        nhsu_income = nhsu_map.get((y, m), 0.0)
+        paid_income = paid_map.get((y, m), 0.0)
+        total_income = round(manual_income + nhsu_income + paid_income, 2)
+
+        fixed_total = fixed_map.get((y, m), 0.0)
+        salary_total = salary_cost_map.get((y, m), 0.0)
+        esv_employer = salary_esv_map.get((y, m), 0.0)
+
+        ep = round(total_income * ep_rate_pct / 100, 2)
+        vz = round(total_income * vz_rate, 2)
+        esv_owner = round(esv_monthly, 2)
+        tax_total = round(ep + vz + esv_owner + esv_employer, 2)
+
+        adhoc = expense_map.get((y, m), 0.0)
+        expenses = round(fixed_total + salary_total + tax_total + adhoc, 2)
+        profit = round(total_income - expenses, 2)
+
+        result[(y, m)] = {
+            "income": total_income,
+            "expenses": expenses,
+            "profit": profit,
+            "tax_single": round(total_income * tax_rate, 2),
+            "tax_esv": round(esv_monthly, 2),
+            "tax_vz": vz,
+            "total_taxes": tax_total,
+            "income_after_taxes": round(profit - tax_total, 2),
+        }
+
+    return result
+
+
 def _pct_change(cur: float, prev: float) -> float:
     if prev == 0:
         return 0.0
@@ -979,8 +1134,7 @@ async def _build_dashboard(
     vz_rate = float(nhsu.vz_rate) / 100 if nhsu else 0.015
     ep_rate_pct = float(nhsu.ep_rate) if nhsu else 5.0
 
-    # Compute all 6 unique months at once with memoization
-    # (current + prev are reused from trend, avoiding 2 duplicate _month_totals calls)
+    # Compute all 6 months in ONE batch call (6 bulk queries instead of 36 sequential)
     months_needed: list[tuple[int, int]] = []
     for i in range(5, -1, -1):
         ty = year
@@ -990,23 +1144,15 @@ async def _build_dashboard(
             ty -= 1
         months_needed.append((ty, tm))
 
-    month_cache: dict[tuple[int, int], dict] = {}
-    for ty, tm in months_needed:
-        if (ty, tm) not in month_cache:
-            month_cache[(ty, tm)] = await _month_totals(
-                db, user.id, ty, tm, esv_monthly, vz_rate, user.tax_rate,
-                ep_rate_pct=ep_rate_pct,
-            )
+    month_cache = await _batch_month_totals(
+        db, user.id, months_needed, esv_monthly, vz_rate, user.tax_rate,
+        ep_rate_pct=ep_rate_pct,
+    )
 
-    # Current and previous months (already in cache — zero extra queries)
-    cur = month_cache[months_needed[-1]]   # last = current month
+    # Current and previous months (already in cache)
+    cur = month_cache[months_needed[-1]]
     prev_m, prev_y = (month - 1, year) if month > 1 else (12, year - 1)
-    if (prev_y, prev_m) not in month_cache:
-        month_cache[(prev_y, prev_m)] = await _month_totals(
-            db, user.id, prev_y, prev_m, esv_monthly, vz_rate, user.tax_rate,
-            ep_rate_pct=ep_rate_pct,
-        )
-    prev = month_cache[(prev_y, prev_m)]
+    prev = month_cache.get((prev_y, prev_m), cur)
 
     # 6-month trend (from cached data — zero extra queries)
     trend: list[TrendPoint] = []
