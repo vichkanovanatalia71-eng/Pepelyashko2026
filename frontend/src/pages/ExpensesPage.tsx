@@ -1378,12 +1378,12 @@ export default function ExpensesPage() {
                   <button
                     key={sec.key}
                     onClick={() => toggleDrawer(sec.key as DrawerSection)}
-                    className={`flex items-center gap-2.5 px-4 py-3 rounded-2xl border text-sm font-bold whitespace-nowrap transition-all duration-200 active:scale-95 tap-target ${
+                    className={`flex items-center gap-2.5 px-4 py-3 rounded-2xl border border-orange-400/60 text-sm font-bold whitespace-nowrap transition-all duration-200 active:scale-95 tap-target ${
                       isActive
-                        ? `${sec.badgeColor} text-white`
-                        : "bg-dark-400/50 border-dark-50/20 text-gray-300 hover:text-white hover:border-dark-50/30"
+                        ? "bg-orange-500/20 text-white"
+                        : "bg-dark-400/50 text-gray-300 hover:text-white hover:border-orange-400/80"
                     }`}
-                    style={isActive ? { boxShadow: sec.glow } : undefined}
+                    style={{ boxShadow: "0 0 14px rgba(249,115,22,0.45), 0 0 4px rgba(249,115,22,0.3)" }}
                   >
                     <span className={`shrink-0 ${isActive ? sec.color : "text-gray-400"}`}>{sec.icon}</span>
                     <span className="truncate">{sec.label}</span>
