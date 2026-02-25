@@ -427,11 +427,11 @@ export default function NhsuPage() {
       {/* ── FILTER BAR ── */}
       <div className="card-neo p-5">
         <div className="flex flex-wrap items-center gap-4">
-          <div className="flex items-center gap-3 flex-1 min-w-[160px]">
+          <div className="flex items-center justify-center gap-3 flex-1 min-w-[160px]">
             <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center shrink-0">
               <HeartPulse size={22} className="text-orange-400" />
             </div>
-            <div>
+            <div className="text-center">
               <h2 className="text-xl font-bold text-white">Розрахунок НСЗУ</h2>
               <p className="text-xs text-gray-500 mt-0.5">Капітаційна ставка · ПМГ</p>
             </div>
@@ -649,12 +649,11 @@ export default function NhsuPage() {
         {/* YoY Comparison */}
         {prevYearTotals && (
           <div className="card-neo p-5">
-            <div className="flex items-center gap-2 mb-4">
+            <div className="flex items-center justify-center gap-2 mb-4">
               <History size={15} className="text-purple-400" />
               <h3 className="text-sm font-semibold text-white">
                 Порівняння рік-до-року — {MONTH_NAMES[month-1]}
               </h3>
-              <span className="ml-auto text-xs text-gray-600">{year-1} → {year}</span>
             </div>
             <div className="grid grid-cols-3 gap-3 stagger-enter">
               {[

@@ -559,10 +559,6 @@ const TemplateEditor = () => {
       );
       
       const systemTemplate = systemResponse.data;
-      console.log('System template loaded directly:', {
-        id: systemTemplate._id,
-        size: systemTemplate.content.length
-      });
       
       // 2. Видаляємо ВСІ користувацькі шаблони цього типу
       const allTemplatesResponse = await axios.get(`${API_URL}/api/templates`, {
@@ -576,8 +572,6 @@ const TemplateEditor = () => {
         return t.template_type === selectedType && t.user_id;
       });
       
-      console.log('User templates to delete:', userTemplatesToDelete.length);
-      
       // Видаляємо всі user templates для цього типу
       for (const userTemplate of userTemplatesToDelete) {
         try {
@@ -585,9 +579,8 @@ const TemplateEditor = () => {
             `${API_URL}/api/templates/${userTemplate._id}`,
             { headers: { Authorization: `Bearer ${token}` } }
           );
-          console.log('Deleted user template:', userTemplate._id);
         } catch (deleteError) {
-          console.log('Delete failed for:', userTemplate._id, deleteError.message);
+          // ignore individual delete failures
         }
       }
       

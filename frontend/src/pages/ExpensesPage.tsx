@@ -831,11 +831,11 @@ export default function ExpensesPage() {
 
       {/* ═══ HEADER ═══ */}
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-1 justify-center">
           <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center shrink-0">
             <Wallet size={22} className="text-orange-400" />
           </div>
-          <div>
+          <div className="text-center">
           <h2 className="text-2xl font-bold text-white">Витрати</h2>
           {viewMode === "month" && data && (
             <p className="text-gray-500 text-sm mt-1">
@@ -1452,9 +1452,9 @@ export default function ExpensesPage() {
           {/* ═══ DETAIL TABLE ═══ */}
           {detailRows.length > 0 && (
             <div className="card-neo overflow-hidden">
-              <div className="flex items-center gap-3 px-5 py-3 border-b border-dark-50/10 bg-dark-400/20">
+              <div className="flex items-center justify-center gap-3 px-5 py-3 border-b border-dark-50/10 bg-dark-400/20">
                 <BarChart3 size={15} className="text-gray-400" />
-                <h3 className="font-semibold text-white text-sm">
+                <h3 className="font-semibold text-white text-sm text-center">
                   Деталізація витрат — {MONTH_NAMES[month - 1]} {year}
                 </h3>
               </div>
@@ -1586,7 +1586,7 @@ export default function ExpensesPage() {
                     <TrendingDown size={16} className="text-blue-400" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-white text-base">Постійні витрати</h3>
+                    <h3 className="font-semibold text-white text-base text-center">Постійні витрати</h3>
                     <p className={`text-xs mt-0.5 ${data.fixed.some(r => r.amount > 0) ? "text-emerald-400" : "text-gray-600"}`}>
                       {data.fixed.some(r => r.amount > 0) ? "Заповнено" : "Не заповнено"} · {fmt(data.totals.fixed_total)} ₴
                     </p>
@@ -1724,7 +1724,7 @@ export default function ExpensesPage() {
                     <Users size={16} className="text-purple-400" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-white text-base">Зарплатні витрати</h3>
+                    <h3 className="font-semibold text-white text-base text-center">Зарплатні витрати</h3>
                     <p className={`text-xs mt-0.5 ${data.salary.some(r => r.brutto > 0) ? "text-emerald-400" : "text-gray-600"}`}>
                       {data.salary.some(r => r.brutto > 0) ? "Заповнено" : "Не заповнено"} · {fmt(data.totals.salary_total)} ₴
                     </p>
@@ -2250,7 +2250,7 @@ export default function ExpensesPage() {
                     <Wallet size={16} className="text-amber-400" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-white text-base">Інші витрати</h3>
+                    <h3 className="font-semibold text-white text-base text-center">Інші витрати</h3>
                     <p className={`text-xs mt-0.5 ${otherExpenses.length > 0 ? "text-emerald-400" : "text-gray-600"}`}>
                       {otherExpenses.length > 0 ? "Заповнено" : "Не заповнено"} · {fmt(otherTotal)} ₴
                     </p>
@@ -2380,7 +2380,7 @@ export default function ExpensesPage() {
                     <Receipt size={16} className="text-red-400" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-white text-base">Податки</h3>
+                    <h3 className="font-semibold text-white text-base text-center">Податки</h3>
                     <p className={`text-xs mt-0.5 ${data.totals.tax_total > 0 ? "text-emerald-400" : "text-gray-600"}`}>
                       {data.totals.tax_total > 0 ? "Заповнено" : "Не заповнено"} · {fmt(data.totals.tax_total)} ₴
                     </p>
@@ -2451,7 +2451,7 @@ export default function ExpensesPage() {
                     <Building2 size={16} className="text-emerald-400" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-white text-base">
+                    <h3 className="font-semibold text-white text-base text-center">
                       Підсумки — {MONTH_NAMES[month - 1]} {year}
                     </h3>
                     <p className={`text-xs mt-0.5 ${grandWithOther > 0 ? "text-emerald-400" : "text-gray-600"}`}>

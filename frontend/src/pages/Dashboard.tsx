@@ -424,14 +424,11 @@ export default function Dashboard() {
           {/* ── AI Analytics Block ── */}
           {data.ai_insights && data.ai_insights.length > 0 && (
             <div className="card-neo card-3d-hover p-5 border border-blue-500/15 bg-blue-500/5 stagger-enter">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-                    <Sparkles size={15} className="text-orange-400" />
-                    AI-Асистент / Аналітика системи
-                  </h3>
-                  <p className="text-xs text-gray-600 mt-0.5">Аналіз фінансової ситуації та рекомендації</p>
-                </div>
+              <div className="flex items-center justify-center gap-2 mb-4">
+                <h3 className="text-sm font-semibold text-white flex items-center justify-center gap-2">
+                  <Sparkles size={15} className="text-orange-400" />
+                  AI-Асистент / Аналітика системи
+                </h3>
               </div>
               <div className="space-y-2">
                 {data.ai_insights.map((insight, i) => {
@@ -490,7 +487,7 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {/* Area trend chart — 6 months */}
             <div className="lg:col-span-2 card-neo card-3d-hover p-5">
-              <h3 className="text-sm font-semibold text-white mb-1 flex items-center gap-2"><TrendingUp size={15} className="text-orange-400" />Динаміка за 6 місяців</h3>
+              <h3 className="text-sm font-semibold text-white mb-1 flex items-center justify-center gap-2"><TrendingUp size={15} className="text-orange-400" />Динаміка за 6 місяців</h3>
               <p className="text-xs text-gray-600 mb-4">Доходи, витрати та прибуток — тренд</p>
               {data.trend.length > 1 ? (
                 <ResponsiveContainer width="100%" height={220}>
@@ -542,14 +539,9 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Income by category */}
             <div className="card-neo card-3d-hover p-5">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="text-sm font-semibold text-white flex items-center gap-2"><BarChart3 size={15} className="text-orange-400" />Структура доходів</h3>
-                  <p className="text-xs text-gray-600 mt-0.5">По категоріях</p>
-                </div>
-                <button onClick={() => navigate("/incomes")} className="text-xs text-accent-400 hover:text-accent-300 flex items-center gap-0.5">
-                  Всі доходи <ChevronRight size={12} />
-                </button>
+              <div className="text-center mb-4">
+                <h3 className="text-sm font-semibold text-white flex items-center justify-center gap-2"><BarChart3 size={15} className="text-orange-400" />Структура доходів</h3>
+                <p className="text-xs text-gray-600 mt-0.5">По категоріях</p>
               </div>
               {data.income_by_category.length > 0 ? (
                 <>
@@ -579,14 +571,9 @@ export default function Dashboard() {
 
             {/* Expenses by category */}
             <div className="card-neo card-3d-hover p-5">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="text-sm font-semibold text-white flex items-center gap-2"><BarChart3 size={15} className="text-orange-400" />Структура витрат</h3>
-                  <p className="text-xs text-gray-600 mt-0.5">По категоріях</p>
-                </div>
-                <button onClick={() => navigate("/expenses")} className="text-xs text-accent-400 hover:text-accent-300 flex items-center gap-0.5">
-                  Всі витрати <ChevronRight size={12} />
-                </button>
+              <div className="text-center mb-4">
+                <h3 className="text-sm font-semibold text-white flex items-center justify-center gap-2"><BarChart3 size={15} className="text-orange-400" />Структура витрат</h3>
+                <p className="text-xs text-gray-600 mt-0.5">По категоріях</p>
               </div>
               {data.expense_by_category.length > 0 ? (
                 <>
