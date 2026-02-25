@@ -1,7 +1,9 @@
 import { Suspense, lazy } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import Layout from "./components/Layout";
+import ErrorBoundary from "./components/ErrorBoundary";
 import { LoadingSpinner } from "./components/shared";
+import { ToastProvider } from "./components/shared/Toast";
 import LoginPage from "./pages/LoginPage";
 import VerifyEmailPage from "./pages/VerifyEmailPage";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
@@ -27,6 +29,8 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
+    <ErrorBoundary>
+    <ToastProvider>
     <AuthProvider>
       <Suspense fallback={<LoadingSpinner />}>
         <Routes>
@@ -55,5 +59,7 @@ export default function App() {
         </Routes>
       </Suspense>
     </AuthProvider>
+    </ToastProvider>
+    </ErrorBoundary>
   );
 }

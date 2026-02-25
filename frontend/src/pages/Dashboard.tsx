@@ -685,7 +685,7 @@ export default function Dashboard() {
       {drillModal === "income" && data && (
         <DrillModal title={`Доходи — ${data.period_label}`} onClose={() => setDrillModal(null)}>
           <div className="space-y-4">
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="tile-neo p-3">
                 <p className="text-xs text-gray-500 mb-1">Поточний</p>
                 <p className="text-base font-bold text-emerald-400 font-mono tabular-nums">{fmtUAH(data.total_income)} ₴</p>
@@ -757,7 +757,7 @@ export default function Dashboard() {
       {drillModal === "expenses" && data && (
         <DrillModal title={`Витрати — ${data.period_label}`} onClose={() => setDrillModal(null)}>
           <div className="space-y-4">
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="tile-neo p-3">
                 <p className="text-xs text-gray-500 mb-1">Поточний</p>
                 <p className="text-base font-bold text-red-400 font-mono tabular-nums">{fmtUAH(data.total_expenses)} ₴</p>

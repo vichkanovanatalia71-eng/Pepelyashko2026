@@ -348,7 +348,7 @@ export default function AccountantRequestPage() {
           <div className="card-neo p-5 relative overflow-hidden">
             <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-orange-500/50 to-transparent" />
 
-            <div className="grid grid-cols-3 gap-3 mb-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
               <div className="p-3 rounded-xl bg-blue-500/5 border border-blue-500/15 text-center">
                 <Users size={16} className="text-blue-400 mx-auto mb-1.5" />
                 <p className="text-[10px] text-gray-500 mb-0.5">Зарплати</p>

@@ -102,7 +102,7 @@ export default function ProfilePage() {
               onChange={e => setFullName(e.target.value)}
               className="input-dark" required />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="label-dark">Група ФОП</label>
               <select value={fopGroup}

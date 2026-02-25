@@ -406,7 +406,7 @@ export default function SettingsPage() {
                   onChange={e => setFullName(e.target.value)}
                   className="w-full bg-dark-300 border border-dark-50/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-accent-500/50" required />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs text-gray-400 mb-1">Група ФОП</label>
                   <select value={fopGroup}
@@ -526,7 +526,7 @@ export default function SettingsPage() {
             )}
 
             {/* Таблиця лікарів */}
-            <div className="overflow-hidden rounded-xl border border-dark-50/10">
+            <div className="overflow-x-auto rounded-xl border border-dark-50/10">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-dark-50/10 bg-dark-300/50">
@@ -559,7 +559,7 @@ export default function SettingsPage() {
                         <button
                           onClick={() => handleDeleteDoctor(d.id)}
                           aria-label="Видалити"
-                          className="p-1.5 text-gray-600 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
+                          className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-600 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
                         >
                           <Trash2 size={15} />
                         </button>
@@ -612,7 +612,7 @@ export default function SettingsPage() {
 
             {nurseMsg && <p className="text-xs text-accent-400">{nurseMsg}</p>}
 
-            <div className="overflow-hidden rounded-xl border border-dark-50/10">
+            <div className="overflow-x-auto rounded-xl border border-dark-50/10">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-dark-50/10 bg-dark-300/50">
@@ -637,7 +637,7 @@ export default function SettingsPage() {
                         <button
                           onClick={() => handleDeleteNurse(s.id)}
                           aria-label="Видалити"
-                          className="p-1.5 text-gray-600 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
+                          className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-600 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
                         >
                           <Trash2 size={15} />
                         </button>
@@ -690,7 +690,7 @@ export default function SettingsPage() {
 
             {otherMsg && <p className="text-xs text-accent-400">{otherMsg}</p>}
 
-            <div className="overflow-hidden rounded-xl border border-dark-50/10">
+            <div className="overflow-x-auto rounded-xl border border-dark-50/10">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-dark-50/10 bg-dark-300/50">
@@ -715,7 +715,7 @@ export default function SettingsPage() {
                         <button
                           onClick={() => handleDeleteOtherStaff(s.id)}
                           aria-label="Видалити"
-                          className="p-1.5 text-gray-600 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
+                          className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-600 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
                         >
                           <Trash2 size={15} />
                         </button>
