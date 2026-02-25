@@ -21,6 +21,7 @@ import {
 import { useAuth } from "../hooks/useAuth";
 import MedFlowLogo from "./shared/MedFlowLogo";
 import OfflineIndicator from "./shared/OfflineIndicator";
+import { usePullToRefresh, PullToRefreshIndicator } from "./shared/PullToRefresh";
 import { useTheme } from "../hooks/useTheme";
 import { AccountantNotificationModal } from "./shared";
 import type { AccountantNotification } from "./shared";
@@ -103,6 +104,18 @@ export default function Layout() {
   useEffect(() => {
     setDrawerOpen(false);
   }, [location.pathname]);
+
+  // ── Pull-to-refresh (mobile) ──
+  const handleRefresh = useCallback(async () => {
+    // Reload current page data by dispatching a custom event
+    window.dispatchEvent(new CustomEvent("pull-to-refresh"));
+    // Small delay so spinner is visible
+    await new Promise((r) => setTimeout(r, 600));
+  }, []);
+
+  const { containerRef: pullRef, pullDistance, refreshing } = usePullToRefresh({
+    onRefresh: handleRefresh,
+  });
 
   return (
     <div className="min-h-screen flex bg-dark-700">
@@ -218,11 +231,16 @@ export default function Layout() {
       ══════════════════════════════════════════════ */}
       <div className="flex-1 min-w-0 flex flex-col relative">
         <main
+          ref={pullRef}
           className="flex-1 min-w-0 overflow-auto
                      p-4 pt-[calc(1rem+env(safe-area-inset-top))] pb-[calc(5rem+env(safe-area-inset-bottom))]
                      lg:p-8 lg:pb-8 lg:pt-8"
           id="main-content"
         >
+          {/* Pull-to-refresh indicator (mobile) */}
+          <div className="lg:hidden">
+            <PullToRefreshIndicator pullDistance={pullDistance} refreshing={refreshing} />
+          </div>
           <div key={location.pathname} className="page-enter">
             <Outlet />
           </div>
