@@ -231,23 +231,23 @@ function KpiCard({
 }) {
   return (
     <div
-      className={`card-neo kpi-3d-hover p-4 flex flex-col gap-2 ${onClick ? "card-tap cursor-pointer hover:border-accent-500/40 transition-all" : ""}`}
+      className={`card-neo kpi-3d-hover p-3 sm:p-4 flex flex-col gap-1.5 sm:gap-2 ${onClick ? "card-tap cursor-pointer hover:border-accent-500/40 transition-all" : ""}`}
       onClick={onClick}
       role={onClick ? "button" : undefined}
       tabIndex={onClick ? 0 : undefined}
       onKeyDown={onClick ? (e) => { if (e.key === "Enter" || e.key === " ") onClick(); } : undefined}
     >
       <div className="flex items-center justify-between">
-        <span className="text-xs text-gray-500 font-medium">{label}</span>
+        <span className="text-[10px] sm:text-xs text-gray-500 font-medium">{label}</span>
         <div className="flex items-center gap-1.5">
-          {onClick && <Eye size={11} className="text-gray-600" />}
-          <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${color}`} aria-hidden="true">
+          {onClick && <Eye size={11} className="text-gray-600 hidden sm:block" />}
+          <div className={`w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center ${color}`} aria-hidden="true">
             {icon}
           </div>
         </div>
       </div>
-      <p className="font-bold text-lg font-mono leading-tight tabular-nums">
-        {fmt(value)} <span className="text-sm font-normal text-gray-500">₴</span>
+      <p className="font-bold text-sm sm:text-lg font-mono leading-tight tabular-nums">
+        {fmt(value)} <span className="text-xs sm:text-sm font-normal text-gray-500">₴</span>
       </p>
     </div>
   );
@@ -1200,79 +1200,85 @@ export default function ExpensesPage() {
   // ══════════════════════════════════════════════════════════════
 
   return (
-    <div className="space-y-5 max-w-6xl mx-auto">
+    <div className="space-y-4 sm:space-y-5 max-w-6xl mx-auto">
 
       {/* ═══ HEADER ═══ */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center shrink-0">
-            <Wallet size={22} className="text-orange-400" />
-          </div>
-          <div>
-          <h2 className="text-2xl font-bold text-white">Витрати</h2>
-          {viewMode === "month" && data && (
-            <p className="text-gray-500 text-sm mt-1">
-              Всього:{" "}
-              <span className="text-red-400 font-semibold tabular-nums">{fmt(grandWithOther)} ₴</span>
-              {"  ·  "}
-              Залишок:{" "}
-              <span className={`tabular-nums ${remaining >= 0 ? "text-emerald-400 font-semibold" : "text-red-400 font-semibold"}`}>
-                {remaining >= 0 ? "+" : ""}{fmt(remaining)} ₴
-              </span>
-              {data.is_locked && (
-                <span className="ml-2 inline-flex items-center gap-1 text-amber-400">
-                  <Lock size={12} /> Зафіксовано
-                </span>
+      <div className="space-y-3">
+        {/* Top row: title + refresh */}
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center shrink-0">
+              <Wallet size={22} className="text-orange-400" />
+            </div>
+            <div className="min-w-0">
+              <h2 className="text-xl sm:text-2xl font-bold text-white">Витрати</h2>
+              {viewMode === "month" && data && (
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5">
+                  <span className="text-gray-500 text-xs sm:text-sm whitespace-nowrap">
+                    Всього: <span className="text-red-400 font-semibold tabular-nums">{fmt(grandWithOther)} ₴</span>
+                  </span>
+                  <span className="text-gray-700 hidden sm:inline">·</span>
+                  <span className="text-gray-500 text-xs sm:text-sm whitespace-nowrap">
+                    Залишок: <span className={`tabular-nums ${remaining >= 0 ? "text-emerald-400 font-semibold" : "text-red-400 font-semibold"}`}>
+                      {remaining >= 0 ? "+" : ""}{fmt(remaining)} ₴
+                    </span>
+                  </span>
+                  {data.is_locked && (
+                    <span className="inline-flex items-center gap-1 text-amber-400 text-xs">
+                      <Lock size={11} /> Зафіксовано
+                    </span>
+                  )}
+                </div>
               )}
-            </p>
-          )}
-          {viewMode === "all" && (
-            <p className="text-gray-500 text-sm mt-1">Огляд усіх місяців — {year}</p>
-          )}
+              {viewMode === "all" && (
+                <p className="text-gray-500 text-xs sm:text-sm mt-0.5">Огляд усіх місяців — {year}</p>
+              )}
+            </div>
           </div>
-        </div>
-
-        <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={() => { load(); loadOther(); loadPeriods(); }}
-            className="p-2 rounded-xl text-gray-400 hover:text-white hover:bg-dark-300 transition-all"
+            className="p-2 rounded-xl text-gray-400 hover:text-white hover:bg-dark-300 transition-all shrink-0"
             title="Оновити"
             aria-label="Оновити дані"
           >
             <RefreshCw size={16} className={loading ? "animate-spin" : ""} aria-hidden="true" />
           </button>
+        </div>
 
+        {/* Bottom row: view mode + navigation */}
+        <div className="flex items-center gap-2">
           {/* View mode switcher */}
-          <div className="flex items-center gap-1 bg-dark-500/50 border border-dark-50/15 rounded-2xl p-1">
+          <div className="flex items-center gap-1 bg-dark-500/50 border border-dark-50/15 rounded-2xl p-1 shrink-0">
             <button
               onClick={() => { setViewMode("all"); setExpandedSections({}); }}
               aria-label="Показати всі місяці"
               aria-pressed={viewMode === "all"}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${
+              className={`px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1 sm:gap-1.5 ${
                 viewMode === "all"
                   ? "bg-accent-500/20 text-accent-300 border border-accent-500/40"
                   : "text-gray-500 hover:text-gray-300"
               }`}
             >
-              <CalendarDays size={13} aria-hidden="true" /> Всього
+              <CalendarDays size={13} aria-hidden="true" /> <span className="hidden sm:inline">Всього</span><span className="sm:hidden">Рік</span>
             </button>
             <button
               onClick={() => { setViewMode("month"); setExpandedSections({}); }}
               aria-label={`Показати ${MONTH_NAMES[month - 1]}`}
               aria-pressed={viewMode === "month"}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+              className={`px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
                 viewMode === "month"
                   ? "bg-accent-500/20 text-accent-300 border border-accent-500/40"
                   : "text-gray-500 hover:text-gray-300"
               }`}
             >
-              {MONTH_NAMES[month - 1]}
+              <span className="hidden sm:inline">{MONTH_NAMES[month - 1]}</span>
+              <span className="sm:hidden">{MONTH_SHORT[month - 1]}</span>
             </button>
           </div>
 
           {/* Year/Month nav */}
           {viewMode === "all" ? (
-            <nav className="flex items-center gap-1 bg-dark-500/50 border border-dark-50/15 rounded-2xl px-2 py-1.5" aria-label="Навігація по роках">
+            <nav className="flex items-center gap-1 bg-dark-500/50 border border-dark-50/15 rounded-2xl px-2 py-1.5 flex-1 justify-center" aria-label="Навігація по роках">
               <button onClick={() => setYear(y => y - 1)}
                 aria-label="Попередній рік"
                 className="p-1.5 rounded-xl text-gray-400 hover:text-white hover:bg-dark-300 transition-all">
@@ -1286,13 +1292,13 @@ export default function ExpensesPage() {
               </button>
             </nav>
           ) : (
-            <nav className="flex items-center gap-1 bg-dark-500/50 border border-dark-50/15 rounded-2xl px-2 py-1.5" aria-label="Навігація по місяцях">
+            <nav className="flex items-center gap-1 bg-dark-500/50 border border-dark-50/15 rounded-2xl px-2 py-1.5 flex-1 justify-center" aria-label="Навігація по місяцях">
               <button onClick={prevMonth}
                 aria-label="Попередній місяць"
                 className="p-1.5 rounded-xl text-gray-400 hover:text-white hover:bg-dark-300 transition-all">
                 <ChevronLeft size={18} aria-hidden="true" />
               </button>
-              <span className="px-3 text-sm font-semibold text-white min-w-[140px] text-center">
+              <span className="px-2 sm:px-3 text-sm font-semibold text-white min-w-0 text-center whitespace-nowrap">
                 {MONTH_NAMES[month - 1]} {year}
               </span>
               <button onClick={nextMonth}
@@ -1313,7 +1319,7 @@ export default function ExpensesPage() {
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-1.5">
               <BarChart3 size={13} className="text-orange-400" />Витрати по місяцях — {year}
             </p>
-            <ResponsiveContainer width="100%" height={220}>
+            <ResponsiveContainer width="100%" height={180}>
               <BarChart
                 data={periods.map(p => ({
                   label: MONTH_SHORT[p.month - 1],
@@ -1321,6 +1327,7 @@ export default function ExpensesPage() {
                   salary: p.salary_brutto_total,
                 }))}
                 barSize={14}
+                margin={{ left: -10, right: 4, top: 4, bottom: 0 }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" />
                 <XAxis dataKey="label" tick={{ fill: "#6b7280", fontSize: 11 }} axisLine={false} tickLine={false} />
@@ -1340,30 +1347,30 @@ export default function ExpensesPage() {
           {periodsLoading ? (
             <LoadingSpinner height="h-24" />
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 stagger-enter">
+            <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 stagger-enter">
               {periods.map(p => (
                 <button
                   key={p.month}
                   onClick={() => { setMonth(p.month); setViewMode("month"); }}
-                  className={`card-neo card-tap p-4 text-left hover:border-accent-500/40 transition-all ${
+                  className={`card-neo card-tap p-2.5 sm:p-4 text-left hover:border-accent-500/40 transition-all ${
                     p.month === month ? "border-accent-500/40" : ""
                   }`}
                 >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-semibold text-white">{MONTH_NAMES[p.month - 1]}</span>
+                  <div className="flex items-center justify-between mb-1 sm:mb-2">
+                    <span className="text-xs sm:text-sm font-semibold text-white">{MONTH_SHORT[p.month - 1]}</span>
                     {p.is_locked ? (
-                      <Lock size={12} className="text-amber-400" />
+                      <Lock size={11} className="text-amber-400" />
                     ) : p.has_data ? (
-                      <Check size={12} className="text-emerald-400" />
+                      <Check size={11} className="text-emerald-400" />
                     ) : null}
                   </div>
                   {p.has_data ? (
                     <div className="space-y-0.5">
-                      <p className="text-xs text-gray-500">Постійні: <span className="text-blue-400 font-mono tabular-nums">{fmt(p.fixed_total)}</span> ₴</p>
-                      <p className="text-xs text-gray-500">Зарплата: <span className="text-purple-400 font-mono tabular-nums">{fmt(p.salary_brutto_total)}</span> ₴</p>
+                      <p className="text-[10px] sm:text-xs text-gray-500"><span className="hidden sm:inline">Постійні: </span><span className="text-blue-400 font-mono tabular-nums">{fmt(p.fixed_total)}</span> <span className="hidden sm:inline">₴</span></p>
+                      <p className="text-[10px] sm:text-xs text-gray-500"><span className="hidden sm:inline">Зарплата: </span><span className="text-purple-400 font-mono tabular-nums">{fmt(p.salary_brutto_total)}</span> <span className="hidden sm:inline">₴</span></p>
                     </div>
                   ) : (
-                    <p className="text-xs text-gray-600">Немає даних</p>
+                    <p className="text-[10px] sm:text-xs text-gray-600">Немає даних</p>
                   )}
                 </button>
               ))}
@@ -1428,34 +1435,34 @@ export default function ExpensesPage() {
                 </p>
 
                 {/* Annual KPI Summary */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 stagger-enter">
-                  <div className="card-neo p-3 space-y-1">
-                    <p className="text-xs text-gray-500">Всього витрат</p>
-                    <p className="font-bold text-white font-mono tabular-nums">{fmt(annualTotal)} ₴</p>
+                <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3 stagger-enter">
+                  <div className="card-neo p-2.5 sm:p-3 space-y-0.5 sm:space-y-1">
+                    <p className="text-[10px] sm:text-xs text-gray-500">Всього витрат</p>
+                    <p className="font-bold text-white font-mono tabular-nums text-xs sm:text-base">{fmt(annualTotal)} ₴</p>
                   </div>
-                  <div className="card-neo p-3 space-y-1">
-                    <p className="text-xs text-gray-500">Загальний дохід</p>
-                    <p className="font-bold text-emerald-400 font-mono tabular-nums">{fmt(annualIncome)} ₴</p>
+                  <div className="card-neo p-2.5 sm:p-3 space-y-0.5 sm:space-y-1">
+                    <p className="text-[10px] sm:text-xs text-gray-500">Дохід</p>
+                    <p className="font-bold text-emerald-400 font-mono tabular-nums text-xs sm:text-base">{fmt(annualIncome)} ₴</p>
                   </div>
-                  <div className="card-neo p-3 space-y-1">
-                    <p className="text-xs text-gray-500">Залишок</p>
-                    <p className={`font-bold font-mono tabular-nums ${annualRemaining >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+                  <div className="card-neo p-2.5 sm:p-3 space-y-0.5 sm:space-y-1">
+                    <p className="text-[10px] sm:text-xs text-gray-500">Залишок</p>
+                    <p className={`font-bold font-mono tabular-nums text-xs sm:text-base ${annualRemaining >= 0 ? "text-emerald-400" : "text-red-400"}`}>
                       {annualRemaining >= 0 ? "+" : ""}{fmt(annualRemaining)} ₴
                     </p>
                   </div>
-                  <div className="card-neo p-3 space-y-1">
-                    <p className="text-xs text-gray-500">Середнє / міс.</p>
-                    <p className="font-bold text-blue-400 font-mono tabular-nums">{fmt(avgPerMonth)} ₴</p>
+                  <div className="card-neo p-2.5 sm:p-3 space-y-0.5 sm:space-y-1">
+                    <p className="text-[10px] sm:text-xs text-gray-500">Серед. / міс.</p>
+                    <p className="font-bold text-blue-400 font-mono tabular-nums text-xs sm:text-base">{fmt(avgPerMonth)} ₴</p>
                   </div>
-                  <div className="card-neo p-3 space-y-1">
-                    <p className="text-xs text-gray-500 flex items-center gap-1">Найкращий <ArrowUpRight size={10} className="text-emerald-400" /></p>
-                    <p className="font-bold text-emerald-400 font-mono tabular-nums text-sm">
+                  <div className="card-neo p-2.5 sm:p-3 space-y-0.5 sm:space-y-1">
+                    <p className="text-[10px] sm:text-xs text-gray-500 flex items-center gap-1">Кращий <ArrowUpRight size={10} className="text-emerald-400" /></p>
+                    <p className="font-bold text-emerald-400 font-mono tabular-nums text-xs sm:text-sm">
                       {bestMonth ? MONTH_NAMES[bestMonth.month - 1] : "—"}
                     </p>
                   </div>
-                  <div className="card-neo p-3 space-y-1">
-                    <p className="text-xs text-gray-500 flex items-center gap-1">Найгірший <ArrowDownRight size={10} className="text-red-400" /></p>
-                    <p className="font-bold text-red-400 font-mono tabular-nums text-sm">
+                  <div className="card-neo p-2.5 sm:p-3 space-y-0.5 sm:space-y-1">
+                    <p className="text-[10px] sm:text-xs text-gray-500 flex items-center gap-1">Гірший <ArrowDownRight size={10} className="text-red-400" /></p>
+                    <p className="font-bold text-red-400 font-mono tabular-nums text-xs sm:text-sm">
                       {worstMonth ? MONTH_NAMES[worstMonth.month - 1] : "—"}
                     </p>
                   </div>
@@ -1464,12 +1471,12 @@ export default function ExpensesPage() {
                 {/* Charts Row 1: Income vs Expenses + Pie */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   {/* Line chart: Income vs Expenses */}
-                  <div className="card-neo p-4">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-1.5">
+                  <div className="card-neo p-3 sm:p-4">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 sm:mb-4 flex items-center gap-1.5">
                       <TrendingUp size={13} className="text-orange-400" />Дохід vs Витрати
                     </p>
-                    <ResponsiveContainer width="100%" height={240}>
-                      <ComposedChart data={chartData}>
+                    <ResponsiveContainer width="100%" height={200}>
+                      <ComposedChart data={chartData} margin={{ left: -10, right: 4, top: 4, bottom: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" />
                         <XAxis dataKey="label" tick={{ fill: "#6b7280", fontSize: 11 }} axisLine={false} tickLine={false} />
                         <YAxis tick={{ fill: "#6b7280", fontSize: 10 }} axisLine={false} tickLine={false}
@@ -1483,15 +1490,15 @@ export default function ExpensesPage() {
                   </div>
 
                   {/* Annual Pie */}
-                  <div className="card-neo p-4">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-1.5">
+                  <div className="card-neo p-3 sm:p-4">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 sm:mb-4 flex items-center gap-1.5">
                       <BarChart3 size={13} className="text-orange-400" />Структура витрат за рік
                     </p>
                     {annualPie.length > 0 ? (
-                      <div className="flex items-center gap-4">
-                        <ResponsiveContainer width="55%" height={220}>
+                      <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4">
+                        <ResponsiveContainer width="100%" height={180} className="sm:!w-[55%]">
                           <PieChart>
-                            <Pie data={annualPie} cx="50%" cy="50%" innerRadius={55} outerRadius={90} paddingAngle={3} dataKey="value">
+                            <Pie data={annualPie} cx="50%" cy="50%" innerRadius={45} outerRadius={75} paddingAngle={3} dataKey="value">
                               {annualPie.map((_, idx) => (
                                 <Cell key={idx} fill={PIE_COLORS[idx % PIE_COLORS.length]} />
                               ))}
@@ -1499,7 +1506,7 @@ export default function ExpensesPage() {
                             <Tooltip contentStyle={TT_STYLE} formatter={(v: number) => [fmt(v) + " ₴"]} />
                           </PieChart>
                         </ResponsiveContainer>
-                        <div className="flex-1 space-y-2.5">
+                        <div className="w-full sm:flex-1 space-y-2 sm:space-y-2.5">
                           {annualPie.map((entry, idx) => {
                             const pct = annualTotal > 0 ? Math.round(entry.value / annualTotal * 100) : 0;
                             return (
@@ -1507,14 +1514,14 @@ export default function ExpensesPage() {
                                 <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: PIE_COLORS[idx % PIE_COLORS.length] }} />
                                 <span className="text-xs text-gray-400 flex-1">{entry.name}</span>
                                 <span className="text-xs font-mono text-gray-300">{pct}%</span>
-                                <span className="text-xs font-mono text-gray-500">{fmt(entry.value)}</span>
+                                <span className="text-xs font-mono text-gray-500 hidden sm:inline">{fmt(entry.value)}</span>
                               </div>
                             );
                           })}
                         </div>
                       </div>
                     ) : (
-                      <div className="flex items-center justify-center h-48 text-gray-600 text-sm">Немає даних</div>
+                      <div className="flex items-center justify-center h-36 sm:h-48 text-gray-600 text-sm">Немає даних</div>
                     )}
                   </div>
                 </div>
@@ -1522,12 +1529,12 @@ export default function ExpensesPage() {
                 {/* Charts Row 2: Stacked Categories + Cumulative Growth */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   {/* Stacked bar: categories */}
-                  <div className="card-neo p-4">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-1.5">
+                  <div className="card-neo p-3 sm:p-4">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 sm:mb-4 flex items-center gap-1.5">
                       <BarChart3 size={13} className="text-orange-400" />Витрати за категоріями
                     </p>
-                    <ResponsiveContainer width="100%" height={240}>
-                      <BarChart data={chartData} barSize={14}>
+                    <ResponsiveContainer width="100%" height={200}>
+                      <BarChart data={chartData} barSize={14} margin={{ left: -10, right: 4, top: 4, bottom: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" />
                         <XAxis dataKey="label" tick={{ fill: "#6b7280", fontSize: 11 }} axisLine={false} tickLine={false} />
                         <YAxis tick={{ fill: "#6b7280", fontSize: 10 }} axisLine={false} tickLine={false}
@@ -1543,12 +1550,12 @@ export default function ExpensesPage() {
                   </div>
 
                   {/* Cumulative area chart */}
-                  <div className="card-neo p-4">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-1.5">
+                  <div className="card-neo p-3 sm:p-4">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 sm:mb-4 flex items-center gap-1.5">
                       <TrendingUp size={13} className="text-orange-400" />Накопичувальні витрати
                     </p>
-                    <ResponsiveContainer width="100%" height={240}>
-                      <AreaChart data={cumulativeData}>
+                    <ResponsiveContainer width="100%" height={200}>
+                      <AreaChart data={cumulativeData} margin={{ left: -10, right: 4, top: 4, bottom: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" />
                         <XAxis dataKey="label" tick={{ fill: "#6b7280", fontSize: 11 }} axisLine={false} tickLine={false} />
                         <YAxis tick={{ fill: "#6b7280", fontSize: 10 }} axisLine={false} tickLine={false}
@@ -1567,12 +1574,12 @@ export default function ExpensesPage() {
                 {/* Charts Row 3: Remaining trend + Forecast */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   {/* Remaining (profit/loss) by month */}
-                  <div className="card-neo p-4">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-1.5">
-                      <Wallet size={13} className="text-orange-400" />Залишок (дохід − витрати) по місяцях
+                  <div className="card-neo p-3 sm:p-4">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 sm:mb-4 flex items-center gap-1.5">
+                      <Wallet size={13} className="text-orange-400" /><span className="hidden sm:inline">Залишок (дохід − витрати) по місяцях</span><span className="sm:hidden">Залишок по місяцях</span>
                     </p>
-                    <ResponsiveContainer width="100%" height={220}>
-                      <BarChart data={chartData} barSize={18}>
+                    <ResponsiveContainer width="100%" height={180}>
+                      <BarChart data={chartData} barSize={18} margin={{ left: -10, right: 4, top: 4, bottom: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" />
                         <XAxis dataKey="label" tick={{ fill: "#6b7280", fontSize: 11 }} axisLine={false} tickLine={false} />
                         <YAxis tick={{ fill: "#6b7280", fontSize: 10 }} axisLine={false} tickLine={false}
@@ -1588,24 +1595,24 @@ export default function ExpensesPage() {
                   </div>
 
                   {/* Forecast card */}
-                  <div className="card-neo p-4">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
+                  <div className="card-neo p-3 sm:p-4">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 sm:mb-4">
                       <Target size={13} className="inline mr-1.5 -mt-0.5" />
                       Прогноз на рік
                     </p>
-                    <div className="space-y-4 mt-2">
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="bg-dark-400/30 rounded-xl p-4 text-center">
-                          <p className="text-xs text-gray-500 mb-1">Прогноз витрат</p>
-                          <p className="font-bold text-lg text-white font-mono tabular-nums">{fmt(forecast)} ₴</p>
-                          <p className="text-xs text-gray-600 mt-1">на базі {withData.length} міс.</p>
+                    <div className="space-y-3 sm:space-y-4 mt-2">
+                      <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                        <div className="bg-dark-400/30 rounded-xl p-3 sm:p-4 text-center">
+                          <p className="text-[10px] sm:text-xs text-gray-500 mb-1">Прогноз витрат</p>
+                          <p className="font-bold text-sm sm:text-lg text-white font-mono tabular-nums">{fmt(forecast)} ₴</p>
+                          <p className="text-[10px] sm:text-xs text-gray-600 mt-1">на базі {withData.length} міс.</p>
                         </div>
-                        <div className="bg-dark-400/30 rounded-xl p-4 text-center">
-                          <p className="text-xs text-gray-500 mb-1">Факт / Прогноз</p>
-                          <p className={`font-bold text-lg font-mono tabular-nums ${annualTotal <= forecast ? "text-emerald-400" : "text-red-400"}`}>
+                        <div className="bg-dark-400/30 rounded-xl p-3 sm:p-4 text-center">
+                          <p className="text-[10px] sm:text-xs text-gray-500 mb-1">Факт / Прогноз</p>
+                          <p className={`font-bold text-sm sm:text-lg font-mono tabular-nums ${annualTotal <= forecast ? "text-emerald-400" : "text-red-400"}`}>
                             {forecast > 0 ? Math.round(annualTotal / forecast * 100) : 0}%
                           </p>
-                          <p className="text-xs text-gray-600 mt-1">виконання</p>
+                          <p className="text-[10px] sm:text-xs text-gray-600 mt-1">виконання</p>
                         </div>
                       </div>
                       <div className="space-y-2.5">
@@ -1639,14 +1646,14 @@ export default function ExpensesPage() {
       {/* ═══ MONTH MODE: action bar + banners ═══ */}
       {viewMode === "month" && (
         <>
-          {/* Action bar */}
-          <div className="flex items-center gap-2 flex-wrap">
+          {/* Action bar — horizontally scrollable on mobile */}
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide -mx-1 px-1 pb-1">
             {data?.is_locked ? (
               <button
                 onClick={unlockPeriod}
                 disabled={lockLoading}
                 aria-label="Розблокувати місяць для редагування"
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-300 text-xs font-semibold hover:bg-amber-500/20 transition-all disabled:opacity-50"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-300 text-xs font-semibold hover:bg-amber-500/20 transition-all disabled:opacity-50 whitespace-nowrap shrink-0"
               >
                 {lockLoading ? <RefreshCw size={13} className="animate-spin" /> : <LockOpen size={13} aria-hidden="true" />}
                 Розблокувати
@@ -1656,7 +1663,7 @@ export default function ExpensesPage() {
                 onClick={lockPeriod}
                 disabled={lockLoading || !data}
                 aria-label="Зафіксувати місяць"
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-dark-400/60 border border-dark-50/15 text-gray-300 text-xs font-semibold hover:border-amber-500/30 hover:text-amber-300 transition-all disabled:opacity-50"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-dark-400/60 border border-dark-50/15 text-gray-300 text-xs font-semibold hover:border-amber-500/30 hover:text-amber-300 transition-all disabled:opacity-50 whitespace-nowrap shrink-0"
               >
                 {lockLoading ? <RefreshCw size={13} className="animate-spin" /> : <Lock size={13} aria-hidden="true" />}
                 Зафіксувати
@@ -1665,31 +1672,31 @@ export default function ExpensesPage() {
             <button
               onClick={openCopyModal}
               aria-label="Копіювати дані з іншого місяця"
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-dark-400/60 border border-dark-50/15 text-gray-300 text-xs font-semibold hover:border-accent-500/30 hover:text-accent-300 transition-all"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-dark-400/60 border border-dark-50/15 text-gray-300 text-xs font-semibold hover:border-accent-500/30 hover:text-accent-300 transition-all whitespace-nowrap shrink-0"
             >
-              <Copy size={13} aria-hidden="true" /> Копіювати з...
+              <Copy size={13} aria-hidden="true" /> <span className="hidden sm:inline">Копіювати з...</span><span className="sm:hidden">Копія</span>
             </button>
             <button
               onClick={() => setAiModal(s => ({ ...s, open: true }))}
               aria-label="AI-аналіз витрати"
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-dark-400/60 border border-dark-50/15 text-gray-300 text-xs font-semibold hover:border-purple-500/30 hover:text-purple-300 transition-all"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-dark-400/60 border border-dark-50/15 text-gray-300 text-xs font-semibold hover:border-purple-500/30 hover:text-purple-300 transition-all whitespace-nowrap shrink-0"
             >
-              <Sparkles size={13} aria-hidden="true" /> AI-аналіз
+              <Sparkles size={13} aria-hidden="true" /> AI
             </button>
             <button
               onClick={handleAccountantRequest}
               disabled={accReqLoading}
               aria-label="Запит до бухгалтера"
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-dark-400/60 border border-dark-50/15 text-gray-300 text-xs font-semibold hover:border-orange-500/30 hover:text-orange-300 transition-all disabled:opacity-50"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-dark-400/60 border border-dark-50/15 text-gray-300 text-xs font-semibold hover:border-orange-500/30 hover:text-orange-300 transition-all disabled:opacity-50 whitespace-nowrap shrink-0"
             >
               {accReqLoading ? <RefreshCw size={13} className="animate-spin" /> : <ClipboardList size={13} aria-hidden="true" />}
-              Бухгалтеру
+              <span className="hidden sm:inline">Бухгалтеру</span><span className="sm:hidden">Бух.</span>
             </button>
             <button
               onClick={exportExcel}
               disabled={!data}
               aria-label="Експортувати в Excel"
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-dark-400/60 border border-dark-50/15 text-gray-300 text-xs font-semibold hover:border-emerald-500/30 hover:text-emerald-300 transition-all disabled:opacity-50"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-dark-400/60 border border-dark-50/15 text-gray-300 text-xs font-semibold hover:border-emerald-500/30 hover:text-emerald-300 transition-all disabled:opacity-50 whitespace-nowrap shrink-0"
             >
               <Download size={13} aria-hidden="true" /> Excel
             </button>
@@ -1724,7 +1731,7 @@ export default function ExpensesPage() {
       {data && viewMode === "month" && (
         <>
           {/* ═══ DASHBOARD: KPI CARDS ═══ */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 stagger-enter">
+          <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3 stagger-enter">
             <KpiCard
               label="Постійні"
               value={data.totals.fixed_total}
@@ -1761,17 +1768,17 @@ export default function ExpensesPage() {
               onClick={() => setKpiModal({ open: true, type: "total", title: "Всі витрати — деталізація" })}
             />
             <div
-              className="card-neo kpi-3d-hover card-tap p-4 flex flex-col gap-2 cursor-pointer hover:border-accent-500/40 transition-all"
+              className="card-neo kpi-3d-hover card-tap p-3 sm:p-4 flex flex-col gap-1.5 sm:gap-2 cursor-pointer hover:border-accent-500/40 transition-all"
               onClick={() => setKpiModal({ open: true, type: "remaining", title: "Фінансовий результат" })}
               role="button"
               tabIndex={0}
               onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setKpiModal({ open: true, type: "remaining", title: "Фінансовий результат" }); }}
             >
               <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500 font-medium">Залишок</span>
+                <span className="text-[10px] sm:text-xs text-gray-500 font-medium">Залишок</span>
                 <div className="flex items-center gap-1.5">
-                  <Eye size={11} className="text-gray-600" />
-                  <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${
+                  <Eye size={11} className="text-gray-600 hidden sm:block" />
+                  <div className={`w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center ${
                     remaining >= 0 ? "bg-emerald-500/15" : "bg-red-500/15"
                   }`}>
                     {remaining >= 0
@@ -1781,11 +1788,11 @@ export default function ExpensesPage() {
                   </div>
                 </div>
               </div>
-              <p className={`font-bold text-lg font-mono leading-tight tabular-nums ${
+              <p className={`font-bold text-sm sm:text-lg font-mono leading-tight tabular-nums ${
                 remaining >= 0 ? "text-emerald-400" : "text-red-400"
               }`}>
                 {remaining >= 0 ? "+" : ""}{fmt(remaining)}{" "}
-                <span className="text-sm font-normal text-gray-500">₴</span>
+                <span className="text-xs sm:text-sm font-normal text-gray-500">₴</span>
               </p>
             </div>
           </div>
@@ -1793,13 +1800,41 @@ export default function ExpensesPage() {
           {/* ═══ DETAIL TABLE ═══ */}
           {detailRows.length > 0 && (
             <div className="card-neo overflow-hidden">
-              <div className="flex items-center gap-3 px-5 py-3 border-b border-dark-50/10 bg-dark-400/20">
+              <div className="flex items-center gap-3 px-4 sm:px-5 py-3 border-b border-dark-50/10 bg-dark-400/20">
                 <BarChart3 size={15} className="text-gray-400" />
                 <h3 className="font-semibold text-white text-sm">
                   Деталізація витрат — {MONTH_NAMES[month - 1]} {year}
                 </h3>
               </div>
-              <div className="overflow-x-auto">
+
+              {/* Mobile: card-based list */}
+              <div className="sm:hidden divide-y divide-dark-50/5">
+                {detailRows.map((row, idx) => {
+                  const badge = CATEGORY_BADGE[row.category] ?? CATEGORY_BADGE.other;
+                  return (
+                    <div key={idx} className="px-4 py-3 flex items-center gap-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-gray-300 truncate">{row.name}</p>
+                        <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] border mt-1 ${badge.cls}`}>
+                          {badge.label}
+                        </span>
+                      </div>
+                      <span className="font-mono text-sm text-gray-200 tabular-nums shrink-0">
+                        {fmt(row.amount)} ₴
+                      </span>
+                    </div>
+                  );
+                })}
+                <div className="flex items-center justify-between px-4 py-3 bg-dark-400/20">
+                  <span className="text-sm font-semibold text-gray-400">Всього</span>
+                  <span className="font-bold font-mono text-white tabular-nums">
+                    {fmt(detailRows.reduce((s, r) => s + r.amount, 0))} ₴
+                  </span>
+                </div>
+              </div>
+
+              {/* Desktop: table */}
+              <div className="hidden sm:block overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-dark-50/10">
@@ -1910,28 +1945,40 @@ export default function ExpensesPage() {
                   </div>
                 ) : data.fixed.map((row) => (
                   <div key={row.id}
-                    className="flex items-center gap-3 px-5 py-3 hover:bg-dark-400/20 transition-colors">
+                    className="flex items-center gap-2 sm:gap-3 px-4 sm:px-5 py-3 hover:bg-dark-400/20 transition-colors">
 
                     <div className="flex-1 min-w-0">
                       <span className="text-sm text-gray-300 truncate block">{row.name}</span>
                       {row.description && (
                         <span className="text-xs text-gray-600 truncate block">{row.description}</span>
                       )}
+                      <div className="flex items-center gap-1.5 mt-1 sm:hidden">
+                        {row.is_recurring && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent-500/15 text-accent-400 border border-accent-500/20">
+                            щоміс.
+                          </span>
+                        )}
+                        {row.edited_by === "accountant" && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-teal-500/15 text-teal-400 border border-teal-500/20">
+                            Бух.
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     {row.is_recurring && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent-500/15 text-accent-400 border border-accent-500/20 shrink-0">
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent-500/15 text-accent-400 border border-accent-500/20 shrink-0 hidden sm:inline">
                         щомісячно
                       </span>
                     )}
 
                     {row.edited_by === "accountant" && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-teal-500/15 text-teal-400 border border-teal-500/20 shrink-0" title={row.edited_at ? `Оновлено: ${new Date(row.edited_at).toLocaleDateString("uk-UA")}` : undefined}>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-teal-500/15 text-teal-400 border border-teal-500/20 shrink-0 hidden sm:inline" title={row.edited_at ? `Оновлено: ${new Date(row.edited_at).toLocaleDateString("uk-UA")}` : undefined}>
                         Бухгалтер
                       </span>
                     )}
 
-                    <span className="text-sm font-mono font-semibold text-white tabular-nums shrink-0 w-28 text-right">
+                    <span className="text-sm font-mono font-semibold text-white tabular-nums shrink-0 text-right">
                       {fmt(row.amount)} ₴
                     </span>
 
@@ -2069,17 +2116,17 @@ export default function ExpensesPage() {
                         const nurseRow = data.salary.find(s => s.staff_member_id === selectedHiredNurseId);
                         return (
                           <div className="border-b border-amber-500/20">
-                            <div className="px-5 py-4 bg-amber-500/5">
-                              <div className="flex items-center gap-2 mb-4">
-                                <Building2 size={16} className="text-amber-400" />
+                            <div className="px-4 sm:px-5 py-4 bg-amber-500/5">
+                              <div className="flex flex-wrap items-center gap-2 mb-4">
+                                <Building2 size={16} className="text-amber-400 shrink-0" />
                                 <p className="font-semibold text-amber-300 text-sm">
-                                  {data.owner.doctor_name} — Власник ФОП
+                                  {data.owner.doctor_name} — <span className="hidden sm:inline">Власник </span>ФОП
                                 </p>
                                 <div className="ml-auto flex items-center gap-2">
                                   <button
                                     onClick={handleOwnerShare}
                                     disabled={shareLoading}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-accent-500/10 text-accent-400 border border-accent-500/20 hover:bg-accent-500/20 transition-all disabled:opacity-50"
+                                    className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium bg-accent-500/10 text-accent-400 border border-accent-500/20 hover:bg-accent-500/20 transition-all disabled:opacity-50"
                                     title="Поділитись звітом"
                                   >
                                     {shareLoading ? (
@@ -2087,9 +2134,9 @@ export default function ExpensesPage() {
                                     ) : (
                                       <Share2 size={13} />
                                     )}
-                                    Поділитись
+                                    <span className="hidden sm:inline">Поділитись</span>
                                   </button>
-                                  <span className="font-bold text-amber-400 font-mono tabular-nums">
+                                  <span className="font-bold text-amber-400 font-mono tabular-nums text-sm sm:text-base">
                                     {fmt(ownerCalc.total)} ₴
                                   </span>
                                 </div>
@@ -2202,23 +2249,23 @@ export default function ExpensesPage() {
                           const calc  = calcSalary(form);
                           const dirty = isSalaryDirty(row.staff_member_id, row);
                           return (
-                            <div key={row.staff_member_id} className="p-5">
+                            <div key={row.staff_member_id} className="p-4 sm:p-5">
                               {/* Заголовок рядка */}
-                              <div className="flex items-start justify-between mb-4 gap-2">
-                                <div>
-                                  <p className="font-semibold text-white text-sm">{row.full_name}</p>
+                              <div className="flex items-start justify-between mb-3 sm:mb-4 gap-2">
+                                <div className="min-w-0 flex-1">
+                                  <p className="font-semibold text-white text-sm truncate">{row.full_name}</p>
                                   <div className="flex items-center gap-1.5 mt-1">
-                                    <span className="inline-block px-2 py-0.5 text-xs rounded-lg bg-teal-500/10 text-teal-400 border border-teal-500/20">
+                                    <span className="inline-block px-2 py-0.5 text-[10px] sm:text-xs rounded-lg bg-teal-500/10 text-teal-400 border border-teal-500/20">
                                       Лікар
                                     </span>
                                     {row.edited_by === "accountant" && (
-                                      <span className="inline-block px-2 py-0.5 text-xs rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20" title={row.edited_at ? `Оновлено бухгалтером: ${new Date(row.edited_at).toLocaleDateString("uk-UA")}` : undefined}>
-                                        Бухгалтер
+                                      <span className="inline-block px-2 py-0.5 text-[10px] sm:text-xs rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20" title={row.edited_at ? `Оновлено бухгалтером: ${new Date(row.edited_at).toLocaleDateString("uk-UA")}` : undefined}>
+                                        Бух.
                                       </span>
                                     )}
                                   </div>
                                 </div>
-                                <div className="flex items-center gap-2 shrink-0">
+                                <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                                   <button
                                     onClick={() => {
                                       const sm = staffList.find(s => s.id === row.staff_member_id);
@@ -2244,28 +2291,28 @@ export default function ExpensesPage() {
                                     <Trash2 size={14} />
                                   </button>
                                   <div className="text-right">
-                                    <p className="text-xs text-gray-500">Витрати роботодавця</p>
-                                    <p className="font-bold text-purple-400 font-mono text-base tabular-nums">{fmt(calc.total_employer)} ₴</p>
+                                    <p className="text-[10px] sm:text-xs text-gray-500 hidden sm:block">Витрати роботодавця</p>
+                                    <p className="font-bold text-purple-400 font-mono text-sm sm:text-base tabular-nums">{fmt(calc.total_employer)} ₴</p>
                                   </div>
                                 </div>
                               </div>
 
                               {/* НСЗУ банер (якщо є дані) */}
                               {row.nhsu_brutto > 0 && (
-                                <div className="mb-4 p-3 rounded-xl bg-teal-500/5 border border-teal-500/20">
+                                <div className="mb-3 sm:mb-4 p-2.5 sm:p-3 rounded-xl bg-teal-500/5 border border-teal-500/20">
                                   <p className="text-xs font-semibold text-teal-400 mb-2">НСЗУ — декларації</p>
-                                  <div className="flex flex-wrap gap-4">
+                                  <div className="flex flex-wrap gap-3 sm:gap-4">
                                     <div>
-                                      <p className="text-xs text-gray-500">Брутто</p>
-                                      <p className="text-sm font-mono text-white">{fmt(row.nhsu_brutto)} ₴</p>
+                                      <p className="text-[10px] sm:text-xs text-gray-500">Брутто</p>
+                                      <p className="text-xs sm:text-sm font-mono text-white">{fmt(row.nhsu_brutto)} ₴</p>
                                     </div>
                                     <div>
-                                      <p className="text-xs text-gray-500">ЄП</p>
-                                      <p className="text-sm font-mono text-red-400">−{fmt(row.nhsu_ep)} ₴</p>
+                                      <p className="text-[10px] sm:text-xs text-gray-500">ЄП</p>
+                                      <p className="text-xs sm:text-sm font-mono text-red-400">−{fmt(row.nhsu_ep)} ₴</p>
                                     </div>
                                     <div>
-                                      <p className="text-xs text-gray-500">ВЗ</p>
-                                      <p className="text-sm font-mono text-red-400">−{fmt(row.nhsu_vz)} ₴</p>
+                                      <p className="text-[10px] sm:text-xs text-gray-500">ВЗ</p>
+                                      <p className="text-xs sm:text-sm font-mono text-red-400">−{fmt(row.nhsu_vz)} ₴</p>
                                     </div>
                                   </div>
                                 </div>
@@ -2368,22 +2415,22 @@ export default function ExpensesPage() {
                           const calc  = calcSalary(form);
                           const dirty = isSalaryDirty(row.staff_member_id, row);
                           return (
-                            <div key={row.staff_member_id} className="p-5">
-                              <div className="flex items-start justify-between mb-4 gap-2">
-                                <div>
-                                  <p className="font-semibold text-white text-sm">{row.full_name}</p>
+                            <div key={row.staff_member_id} className="p-4 sm:p-5">
+                              <div className="flex items-start justify-between mb-3 sm:mb-4 gap-2">
+                                <div className="min-w-0 flex-1">
+                                  <p className="font-semibold text-white text-sm truncate">{row.full_name}</p>
                                   <div className="flex items-center gap-1.5 mt-1">
-                                    <span className="inline-block px-2 py-0.5 text-xs rounded-lg bg-dark-400 text-gray-400 border border-dark-50/10">
+                                    <span className="inline-block px-2 py-0.5 text-[10px] sm:text-xs rounded-lg bg-dark-400 text-gray-400 border border-dark-50/10">
                                       {ROLE_LABELS[row.role] ?? row.role}
                                     </span>
                                     {row.edited_by === "accountant" && (
-                                      <span className="inline-block px-2 py-0.5 text-xs rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20" title={row.edited_at ? `Оновлено бухгалтером: ${new Date(row.edited_at).toLocaleDateString("uk-UA")}` : undefined}>
-                                        Бухгалтер
+                                      <span className="inline-block px-2 py-0.5 text-[10px] sm:text-xs rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20" title={row.edited_at ? `Оновлено бухгалтером: ${new Date(row.edited_at).toLocaleDateString("uk-UA")}` : undefined}>
+                                        Бух.
                                       </span>
                                     )}
                                   </div>
                                 </div>
-                                <div className="flex items-center gap-2 shrink-0">
+                                <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                                   <button
                                     onClick={() => {
                                       const sm = staffList.find(s => s.id === row.staff_member_id);
@@ -2409,12 +2456,12 @@ export default function ExpensesPage() {
                                     <Trash2 size={14} />
                                   </button>
                                   <div className="text-right">
-                                    <p className="text-xs text-gray-500">Витрати роботодавця</p>
-                                    <p className="font-bold text-purple-400 font-mono text-base tabular-nums">{fmt(calc.total_employer)} ₴</p>
+                                    <p className="text-[10px] sm:text-xs text-gray-500 hidden sm:block">Витрати роботодавця</p>
+                                    <p className="font-bold text-purple-400 font-mono text-sm sm:text-base tabular-nums">{fmt(calc.total_employer)} ₴</p>
                                   </div>
                                 </div>
                               </div>
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                 <div className="space-y-3">
                                   <div>
                                     <label className="label-dark">Офіційна зарплата (брутто)</label>
@@ -2445,8 +2492,8 @@ export default function ExpensesPage() {
                                     </div>
                                   )}
                                 </div>
-                                <div className="bg-dark-400/30 rounded-xl p-4 space-y-2">
-                                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Автоматичний розрахунок</p>
+                                <div className="bg-dark-400/30 rounded-xl p-3 sm:p-4 space-y-2">
+                                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 sm:mb-3">Автоматичний розрахунок</p>
                                   <CalcRow label="Брутто" value={parseFloat(form.brutto) || 0} color="text-white" />
                                   <CalcRow label={`ПДФО ${data.settings.pdfo_rate}%`} value={calc.pdfo} color="text-gray-500" info="Інформаційно" />
                                   <CalcRow label={`ВЗ із ЗП ${data.settings.vz_zp_rate}%`} value={calc.vz_zp} color="text-gray-500" info="Інформаційно" />
@@ -2561,15 +2608,20 @@ export default function ExpensesPage() {
               ) : (
                 <div className="divide-y divide-dark-50/5">
                   {otherExpenses.map((exp) => (
-                    <div key={exp.id} className="flex items-center gap-3 px-5 py-3 hover:bg-dark-400/20 transition-colors">
+                    <div key={exp.id} className="flex items-center gap-2 sm:gap-3 px-4 sm:px-5 py-3 hover:bg-dark-400/20 transition-colors">
                       <div className="flex-1 min-w-0">
                         <p className="text-sm text-gray-200 truncate">{exp.name}</p>
                         {exp.description && (
                           <p className="text-xs text-gray-600 truncate mt-0.5">{exp.description}</p>
                         )}
+                        {exp.category && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/25 mt-1 inline-block sm:hidden">
+                            {exp.category}
+                          </span>
+                        )}
                       </div>
                       {exp.category && (
-                        <span className="text-xs px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-300 border border-amber-500/25 shrink-0">
+                        <span className="text-xs px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-300 border border-amber-500/25 shrink-0 hidden sm:inline-flex">
                           {exp.category}
                         </span>
                       )}
@@ -2660,18 +2712,18 @@ export default function ExpensesPage() {
 
                 <div className="bg-dark-400/20 rounded-xl p-4 space-y-2">
                   <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-1.5"><Activity size={13} className="text-orange-400" />Ставки</p>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-3 gap-2 sm:gap-3">
                     {[
                       { label: "ПДФО", value: `${data.settings.pdfo_rate}%` },
                       { label: "ВЗ із ЗП", value: `${data.settings.vz_zp_rate}%` },
-                      { label: "ЄСВ роботодавця", value: `${data.settings.esv_employer_rate}%` },
+                      { label: "ЄСВ робот.", value: `${data.settings.esv_employer_rate}%` },
                       { label: "ЄП", value: `${data.taxes.ep_rate}%` },
-                      { label: "ВЗ від доходу", value: `${data.taxes.vz_rate}%` },
-                      { label: "ЄСВ власника", value: `${fmt(data.taxes.esv_owner)} ₴` },
+                      { label: "ВЗ доходу", value: `${data.taxes.vz_rate}%` },
+                      { label: "ЄСВ власн.", value: `${fmt(data.taxes.esv_owner)} ₴` },
                     ].map(item => (
-                      <div key={item.label} className="bg-dark-500/40 rounded-lg p-3 text-center">
-                        <p className="text-xs text-gray-500 mb-1">{item.label}</p>
-                        <p className="font-bold text-white font-mono">{item.value}</p>
+                      <div key={item.label} className="bg-dark-500/40 rounded-lg p-2 sm:p-3 text-center">
+                        <p className="text-[10px] sm:text-xs text-gray-500 mb-0.5 sm:mb-1">{item.label}</p>
+                        <p className="font-bold text-white font-mono text-xs sm:text-base">{item.value}</p>
                       </div>
                     ))}
                   </div>
@@ -3214,21 +3266,21 @@ export default function ExpensesPage() {
         }
 
         return (
-          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-label={kpiModal.title}>
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start justify-center p-2 sm:p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-label={kpiModal.title}>
             <div className="absolute inset-0" onClick={() => setKpiModal({ open: false, type: "", title: "" })} />
             <div
               className="relative bg-dark-600 rounded-2xl shadow-2xl w-full flex flex-col my-auto"
               style={{ border: "1px solid #ffffff15", maxHeight: "85vh", maxWidth: "900px" }}
             >
               {/* Header */}
-              <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0">
-                <h4 className="font-semibold text-white text-base">{kpiModal.title}</h4>
-                <div className="flex items-center gap-2">
+              <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-white/10 shrink-0">
+                <h4 className="font-semibold text-white text-sm sm:text-base truncate mr-2">{kpiModal.title}</h4>
+                <div className="flex items-center gap-2 shrink-0">
                   <button
                     onClick={exportKpiExcel}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 text-xs font-semibold hover:bg-emerald-500/20 transition-all"
+                    className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 text-xs font-semibold hover:bg-emerald-500/20 transition-all"
                   >
-                    <FileSpreadsheet size={13} /> Excel
+                    <FileSpreadsheet size={13} /> <span className="hidden sm:inline">Excel</span>
                   </button>
                   <button
                     onClick={() => setKpiModal({ open: false, type: "", title: "" })}
@@ -3240,13 +3292,41 @@ export default function ExpensesPage() {
                 </div>
               </div>
               {/* Sub-header */}
-              <div className="px-6 py-2 border-b border-dark-50/10 bg-dark-400/20 shrink-0">
+              <div className="px-4 sm:px-6 py-2 border-b border-dark-50/10 bg-dark-400/20 shrink-0">
                 <p className="text-xs text-gray-500">
                   {MONTH_NAMES[month - 1]} {year} · {rows.length} записів
                 </p>
               </div>
-              {/* Table */}
-              <div className="overflow-y-auto flex-1">
+
+              {/* Mobile: card list */}
+              <div className="overflow-y-auto flex-1 sm:hidden">
+                <div className="divide-y divide-dark-50/5">
+                  {rows.map((row, idx) => (
+                    <div key={idx} className="px-4 py-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm text-gray-200 truncate">{row.name}</p>
+                          {row.detail && <p className="text-xs text-gray-500 mt-0.5 truncate">{row.detail}</p>}
+                        </div>
+                        <span className={`font-mono text-sm tabular-nums shrink-0 ${row.amount < 0 ? "text-red-400" : "text-gray-200"}`}>
+                          {row.amount < 0 ? "−" : ""}{fmt(Math.abs(row.amount))} ₴
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex items-center justify-between px-4 py-3 bg-dark-400/20 border-t border-dark-50/15">
+                  <span className="text-sm font-semibold text-gray-300">{totalLabel}</span>
+                  <span className={`font-bold font-mono tabular-nums text-base ${
+                    kpiModal.type === "remaining" ? (totalValue >= 0 ? "text-emerald-400" : "text-red-400") : "text-white"
+                  }`}>
+                    {kpiModal.type === "remaining" && totalValue >= 0 ? "+" : ""}{totalValue < 0 ? "−" : ""}{fmt(Math.abs(totalValue))} ₴
+                  </span>
+                </div>
+              </div>
+
+              {/* Desktop: table */}
+              <div className="overflow-y-auto flex-1 hidden sm:block">
                 <table className="w-full text-sm">
                   <thead className="sticky top-0 bg-dark-600 z-10">
                     <tr className="border-b border-dark-50/10">
