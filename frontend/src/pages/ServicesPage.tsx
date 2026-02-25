@@ -631,132 +631,183 @@ export default function ServicesPage() {
       )}
 
       {/* Таблиця послуг */}
-      <div className="card-neo overflow-hidden">
-        {loading ? (
+      {loading ? (
+        <div className="card-neo overflow-hidden">
           <LoadingSpinner height="h-40" label="Завантаження..." />
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs min-w-[960px]">
-              <thead>
-                <tr className="border-b border-dark-50/10 bg-dark-300/50">
-                  <th scope="col" className="px-4 py-3 w-10">
-                    <input
-                      type="checkbox"
-                      checked={allFilteredSelected}
-                      onChange={toggleSelectAll}
-                      className="accent-accent-500 w-4 h-4 cursor-pointer"
-                    />
-                  </th>
-                  {(
-                    [
-                      ["code", "Код"],
-                      ["name", "Назва"],
-                      ["price", "Ціна (грн)"],
-                      ["total_materials_cost", "Витрати (грн)"],
-                      ["ep_amount", "ЄП (грн)"],
-                      ["vz_amount", "ВЗ (грн)"],
-                      ["total_costs", "Заг. витрати (грн)"],
-                      ["doctor_income", "Дохід лікаря (грн)"],
-                      ["org_income", "Дохід орг. (грн)"],
-                    ] as [SortField, string][]
-                  ).map(([field, label]) => (
-                    <th
-                      key={label}
-                      scope="col"
-                      className="text-left px-4 py-3 text-gray-400 font-medium whitespace-nowrap cursor-pointer hover:text-gray-200 transition-colors"
-                      onClick={() => handleSort(field)}
-                    >
-                      <span className="inline-flex items-center">
-                        {label}
-                        <SortIcon field={field} />
-                      </span>
-                    </th>
-                  ))}
-                  <th scope="col" className="px-4 py-3 w-20" />
-                </tr>
-              </thead>
-              <tbody>
-                {displayedServices.length === 0 && (
-                  <tr>
-                    <td
-                      colSpan={11}
-                      className="text-center py-12 text-gray-600 text-sm"
-                    >
-                      {services.length === 0
-                        ? "Послуг ще немає. Натисніть «Додати послугу»."
-                        : "Нічого не знайдено за вказаними критеріями."}
-                    </td>
-                  </tr>
-                )}
-                {displayedServices.map((svc) => (
-                  <tr
-                    key={svc.id}
-                    className={`card-tap border-b border-dark-50/5 transition-colors ${
-                      selectedIds.has(svc.id)
-                        ? "bg-accent-500/5"
-                        : "hover:bg-dark-300/30"
-                    }`}
-                  >
-                    <td className="px-4 py-3">
+        </div>
+      ) : (
+        <>
+          {/* Mobile card list */}
+          <div className="sm:hidden space-y-2">
+            {displayedServices.length === 0 && (
+              <div className="card-neo p-8 text-center text-gray-600 text-sm">
+                {services.length === 0
+                  ? "Послуг ще немає. Натисніть «Додати послугу»."
+                  : "Нічого не знайдено за вказаними критеріями."}
+              </div>
+            )}
+            {displayedServices.map((svc) => (
+              <div key={svc.id} className={`card-neo p-3.5 ${selectedIds.has(svc.id) ? "border border-accent-500/30 bg-accent-500/5" : ""}`}>
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <div className="flex items-start gap-2 flex-1 min-w-0">
+                    <input type="checkbox" checked={selectedIds.has(svc.id)} onChange={() => toggleSelect(svc.id)}
+                      className="accent-accent-500 w-4 h-4 cursor-pointer mt-0.5 shrink-0" />
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <span className="font-mono text-xs text-accent-400">{svc.code}</span>
+                        <span className="text-sm font-semibold text-gray-200 tabular-nums">{fmt(svc.price)} &#8372;</span>
+                      </div>
+                      <p className="text-xs text-gray-300 truncate">{svc.name}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-0.5 shrink-0">
+                    <button onClick={() => openEdit(svc)} aria-label="Редагувати"
+                      className="p-2 text-gray-600 hover:text-accent-400 hover:bg-accent-500/10 rounded-lg transition-all active:scale-90">
+                      <Pencil size={14} />
+                    </button>
+                    <button onClick={() => setDeleteId(svc.id)} aria-label="Видалити"
+                      className="p-2 text-gray-600 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all active:scale-90">
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-x-3 gap-y-1 text-[10px] ml-6">
+                  <div><span className="text-gray-500">Витрати</span><span className="text-gray-400 tabular-nums block">{fmt(svc.total_materials_cost)}</span></div>
+                  <div><span className="text-gray-500">ЄП</span><span className="text-orange-400/80 tabular-nums block">{fmt(svc.ep_amount)}</span></div>
+                  <div><span className="text-gray-500">ВЗ</span><span className="text-orange-400/80 tabular-nums block">{fmt(svc.vz_amount)}</span></div>
+                  <div><span className="text-gray-500">Заг. витр.</span><span className="text-red-400/80 tabular-nums block">{fmt(svc.total_costs)}</span></div>
+                  <div><span className="text-gray-500">Лікарю</span><span className="text-green-400 tabular-nums font-medium block">{fmt(svc.doctor_income)}</span></div>
+                  <div><span className="text-gray-500">Організації</span><span className="text-green-400 tabular-nums font-medium block">{fmt(svc.org_income)}</span></div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop table */}
+          <div className="card-neo overflow-hidden hidden sm:block">
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs min-w-[960px]">
+                <thead>
+                  <tr className="border-b border-dark-50/10 bg-dark-300/50">
+                    <th scope="col" className="px-4 py-3 w-10">
                       <input
                         type="checkbox"
-                        checked={selectedIds.has(svc.id)}
-                        onChange={() => toggleSelect(svc.id)}
+                        checked={allFilteredSelected}
+                        onChange={toggleSelectAll}
                         className="accent-accent-500 w-4 h-4 cursor-pointer"
                       />
-                    </td>
-                    <td className="px-4 py-3 font-mono text-xs text-accent-400 whitespace-nowrap">
-                      {svc.code}
-                    </td>
-                    <td className="px-4 py-3 text-gray-200">{svc.name}</td>
-                    <td className="px-4 py-3 text-gray-200 text-right tabular-nums">
-                      {fmt(svc.price)}
-                    </td>
-                    <td className="px-4 py-3 text-gray-400 text-right tabular-nums">
-                      {fmt(svc.total_materials_cost)}
-                    </td>
-                    <td className="px-4 py-3 text-orange-400/80 text-right tabular-nums">
-                      {fmt(svc.ep_amount)}
-                    </td>
-                    <td className="px-4 py-3 text-orange-400/80 text-right tabular-nums">
-                      {fmt(svc.vz_amount)}
-                    </td>
-                    <td className="px-4 py-3 text-red-400/80 text-right tabular-nums">
-                      {fmt(svc.total_costs)}
-                    </td>
-                    <td className="px-4 py-3 text-green-400 text-right tabular-nums font-medium">
-                      {fmt(svc.doctor_income)}
-                    </td>
-                    <td className="px-4 py-3 text-green-400 text-right tabular-nums font-medium">
-                      {fmt(svc.org_income)}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-1 justify-end">
-                        <button
-                          onClick={() => openEdit(svc)}
-                          className="p-1.5 text-gray-500 hover:text-accent-400 hover:bg-accent-500/10 rounded-lg transition-all"
-                          title="Редагувати"
-                          aria-label="Редагувати"
-                        >
-                          <Pencil size={14} />
-                        </button>
-                        <button
-                          onClick={() => setDeleteId(svc.id)}
-                          className="p-1.5 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
-                          title="Видалити"
-                          aria-label="Видалити"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </td>
+                    </th>
+                    {(
+                      [
+                        ["code", "Код"],
+                        ["name", "Назва"],
+                        ["price", "Ціна (грн)"],
+                        ["total_materials_cost", "Витрати (грн)"],
+                        ["ep_amount", "ЄП (грн)"],
+                        ["vz_amount", "ВЗ (грн)"],
+                        ["total_costs", "Заг. витрати (грн)"],
+                        ["doctor_income", "Дохід лікаря (грн)"],
+                        ["org_income", "Дохід орг. (грн)"],
+                      ] as [SortField, string][]
+                    ).map(([field, label]) => (
+                      <th
+                        key={label}
+                        scope="col"
+                        className="text-left px-4 py-3 text-gray-400 font-medium whitespace-nowrap cursor-pointer hover:text-gray-200 transition-colors"
+                        onClick={() => handleSort(field)}
+                      >
+                        <span className="inline-flex items-center">
+                          {label}
+                          <SortIcon field={field} />
+                        </span>
+                      </th>
+                    ))}
+                    <th scope="col" className="px-4 py-3 w-20" />
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {displayedServices.length === 0 && (
+                    <tr>
+                      <td
+                        colSpan={11}
+                        className="text-center py-12 text-gray-600 text-sm"
+                      >
+                        {services.length === 0
+                          ? "Послуг ще немає. Натисніть «Додати послугу»."
+                          : "Нічого не знайдено за вказаними критеріями."}
+                      </td>
+                    </tr>
+                  )}
+                  {displayedServices.map((svc) => (
+                    <tr
+                      key={svc.id}
+                      className={`card-tap border-b border-dark-50/5 transition-colors ${
+                        selectedIds.has(svc.id)
+                          ? "bg-accent-500/5"
+                          : "hover:bg-dark-300/30"
+                      }`}
+                    >
+                      <td className="px-4 py-3">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(svc.id)}
+                          onChange={() => toggleSelect(svc.id)}
+                          className="accent-accent-500 w-4 h-4 cursor-pointer"
+                        />
+                      </td>
+                      <td className="px-4 py-3 font-mono text-xs text-accent-400 whitespace-nowrap">
+                        {svc.code}
+                      </td>
+                      <td className="px-4 py-3 text-gray-200">{svc.name}</td>
+                      <td className="px-4 py-3 text-gray-200 text-right tabular-nums">
+                        {fmt(svc.price)}
+                      </td>
+                      <td className="px-4 py-3 text-gray-400 text-right tabular-nums">
+                        {fmt(svc.total_materials_cost)}
+                      </td>
+                      <td className="px-4 py-3 text-orange-400/80 text-right tabular-nums">
+                        {fmt(svc.ep_amount)}
+                      </td>
+                      <td className="px-4 py-3 text-orange-400/80 text-right tabular-nums">
+                        {fmt(svc.vz_amount)}
+                      </td>
+                      <td className="px-4 py-3 text-red-400/80 text-right tabular-nums">
+                        {fmt(svc.total_costs)}
+                      </td>
+                      <td className="px-4 py-3 text-green-400 text-right tabular-nums font-medium">
+                        {fmt(svc.doctor_income)}
+                      </td>
+                      <td className="px-4 py-3 text-green-400 text-right tabular-nums font-medium">
+                        {fmt(svc.org_income)}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-1 justify-end">
+                          <button
+                            onClick={() => openEdit(svc)}
+                            className="p-1.5 text-gray-500 hover:text-accent-400 hover:bg-accent-500/10 rounded-lg transition-all"
+                            title="Редагувати"
+                            aria-label="Редагувати"
+                          >
+                            <Pencil size={14} />
+                          </button>
+                          <button
+                            onClick={() => setDeleteId(svc.id)}
+                            className="p-1.5 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
+                            title="Видалити"
+                            aria-label="Видалити"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-        )}
-      </div>
+        </>
+      )}
 
       {/* ── Модальне вікно форми послуги ── */}
       {showForm && (
@@ -778,7 +829,7 @@ export default function ServicesPage() {
 
             <div className="p-6 space-y-5">
               {/* Основні поля */}
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-xs text-gray-400 mb-1">
                     Код послуги <span className="text-red-400">*</span>

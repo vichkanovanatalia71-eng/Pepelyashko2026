@@ -104,8 +104,43 @@ export default function TaxesPage() {
       {loading ? (
         <LoadingSpinner />
       ) : tab === "annual" && annual ? (
-        /* Annual P&L table */
-        <div className="card-neo overflow-hidden">
+        <>
+        {/* Annual P&L: mobile cards */}
+        <div className="sm:hidden space-y-2">
+          {annual.months.map(m => (
+            <div key={m.month} className="card-neo p-3.5">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-white">{m.month_name}</span>
+                <span className={`text-sm font-semibold tabular-nums ${m.income_after_taxes >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+                  {fmt(m.income_after_taxes)} &#8372;
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                <div className="flex justify-between"><span className="text-gray-500">Доходи</span><span className="text-emerald-400 tabular-nums">{fmt(m.income)}</span></div>
+                <div className="flex justify-between"><span className="text-gray-500">Витрати</span><span className="text-red-400 tabular-nums">{fmt(m.expenses)}</span></div>
+                <div className="flex justify-between"><span className="text-gray-500">ЄП</span><span className="text-accent-400 tabular-nums">{fmt(m.tax_single)}</span></div>
+                <div className="flex justify-between"><span className="text-gray-500">ЄСВ</span><span className="text-yellow-400 tabular-nums">{fmt(m.tax_esv)}</span></div>
+                <div className="flex justify-between"><span className="text-gray-500">ВЗ</span><span className="text-orange-400 tabular-nums">{fmt(m.tax_vz)}</span></div>
+                <div className="flex justify-between"><span className="text-gray-500">Прибуток</span><span className={`tabular-nums ${m.net_profit >= 0 ? "text-gray-200" : "text-red-400"}`}>{fmt(m.net_profit)}</span></div>
+              </div>
+            </div>
+          ))}
+          <div className="card-neo p-3.5 bg-dark-400/50">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-bold text-white">Разом {year}</span>
+              <span className="text-sm font-bold text-emerald-400 tabular-nums">{fmt(annual.total_income_after_taxes)} &#8372;</span>
+            </div>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+              <div className="flex justify-between"><span className="text-gray-500">Доходи</span><span className="text-emerald-400 font-semibold tabular-nums">{fmt(annual.total_income)}</span></div>
+              <div className="flex justify-between"><span className="text-gray-500">Витрати</span><span className="text-red-400 font-semibold tabular-nums">{fmt(annual.total_expenses)}</span></div>
+              <div className="flex justify-between"><span className="text-gray-500">ЄП</span><span className="text-accent-400 font-semibold tabular-nums">{fmt(annual.total_tax_single)}</span></div>
+              <div className="flex justify-between"><span className="text-gray-500">ЄСВ</span><span className="text-yellow-400 font-semibold tabular-nums">{fmt(annual.total_tax_esv)}</span></div>
+            </div>
+          </div>
+        </div>
+
+        /* Annual P&L: desktop table */
+        <div className="card-neo overflow-hidden hidden sm:block">
           <div className="overflow-x-auto">
           <table className="w-full text-xs min-w-[700px]">
             <thead>
@@ -147,6 +182,7 @@ export default function TaxesPage() {
           </table>
           </div>
         </div>
+        </>
       ) : (
         <>
           {/* Quarter cards */}
@@ -204,8 +240,25 @@ export default function TaxesPage() {
             })}
           </div>
 
-          {/* Summary table */}
-          <div className="card-neo overflow-hidden">
+          {/* Summary: mobile cards */}
+          <div className="sm:hidden space-y-2">
+            <div className="card-neo p-3.5 bg-dark-400/50">
+              <p className="text-xs font-bold text-white mb-2">Разом за {year}</p>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div><span className="text-gray-500">Дохід:</span> <span className="text-white font-semibold tabular-nums">{fmt(totalIncome)} &#8372;</span></div>
+                <div><span className="text-gray-500">ЄП:</span> <span className="text-accent-400 font-semibold tabular-nums">{fmt(totalSingleTax)} &#8372;</span></div>
+                <div><span className="text-gray-500">ЄСВ:</span> <span className="text-yellow-400 font-semibold tabular-nums">{fmt(totalEsv)} &#8372;</span></div>
+                <div><span className="text-gray-500">ВЗ:</span> <span className="text-orange-400 font-semibold tabular-nums">{fmt(totalVz)} &#8372;</span></div>
+              </div>
+              <div className="border-t border-dark-50/10 mt-2 pt-2 flex justify-between">
+                <span className="text-xs text-gray-400 font-medium">Всього податків</span>
+                <span className="text-sm text-red-400 font-bold tabular-nums">{fmt(grandTotal)} &#8372;</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Summary: desktop table */}
+          <div className="card-neo overflow-hidden hidden sm:block">
             <div className="overflow-x-auto">
             <table className="w-full text-xs min-w-[600px]">
               <thead>

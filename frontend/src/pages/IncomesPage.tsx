@@ -202,14 +202,14 @@ export default function IncomesPage() {
               {f.label}
             </button>
           ))}
-          <div className="flex items-center gap-1.5 ml-auto">
+          <div className="flex items-center gap-1.5 ml-auto max-sm:ml-0 max-sm:w-full">
             <input type="date" value={dateFrom}
               onChange={e => { setDateFrom(e.target.value); setQuickFilter("custom"); }}
-              className="bg-dark-300 border border-dark-50/20 rounded-xl px-2 py-1.5 text-xs text-white w-[120px]" />
+              className="bg-dark-300 border border-dark-50/20 rounded-xl px-2 py-1.5 text-xs text-white w-[120px] max-sm:flex-1" />
             <span className="text-gray-600 text-xs">—</span>
             <input type="date" value={dateTo}
               onChange={e => { setDateTo(e.target.value); setQuickFilter("custom"); }}
-              className="bg-dark-300 border border-dark-50/20 rounded-xl px-2 py-1.5 text-xs text-white w-[120px]" />
+              className="bg-dark-300 border border-dark-50/20 rounded-xl px-2 py-1.5 text-xs text-white w-[120px] max-sm:flex-1" />
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -297,8 +297,66 @@ export default function IncomesPage() {
         </form>
       )}
 
-      {/* Table */}
-      <div className="card-neo overflow-hidden">
+      {/* Sort buttons (mobile) */}
+      <div className="flex items-center gap-2 mb-3 sm:hidden">
+        <span className="text-xs text-gray-500">Сортувати:</span>
+        <button onClick={() => toggleSort("date")}
+          className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium transition-all border ${sortField === "date" ? "bg-accent-500/15 text-accent-400 border-accent-500/30" : "bg-dark-400/50 text-gray-400 border-dark-50/10"}`}>
+          Дата <ArrowUpDown size={10} />
+        </button>
+        <button onClick={() => toggleSort("amount")}
+          className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium transition-all border ${sortField === "amount" ? "bg-accent-500/15 text-accent-400 border-accent-500/30" : "bg-dark-400/50 text-gray-400 border-dark-50/10"}`}>
+          Сума <ArrowUpDown size={10} />
+        </button>
+      </div>
+
+      {/* Mobile card list */}
+      <div className="sm:hidden space-y-2">
+        {filtered.map((income) => (
+          <div key={income.id} className="card-neo p-3.5 space-y-2">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-emerald-400 tabular-nums">+{fmt(income.amount)} &#8372;</p>
+                <p className="text-xs text-gray-500 mt-0.5">{income.date}</p>
+              </div>
+              <div className="flex items-center gap-0.5 shrink-0">
+                <button onClick={() => handleEdit(income)} aria-label="Редагувати"
+                  className="p-2 rounded-lg text-gray-600 hover:text-accent-400 hover:bg-accent-500/10 transition-all active:scale-90">
+                  <Pencil size={14} />
+                </button>
+                <button onClick={() => handleDelete(income.id)} aria-label="Видалити"
+                  className="p-2 rounded-lg text-gray-600 hover:text-red-400 hover:bg-red-500/10 transition-all active:scale-90">
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-1.5">
+              {income.source && (
+                <span className="text-xs text-gray-300">{income.source}</span>
+              )}
+              <span className="px-2 py-0.5 text-[10px] font-medium rounded-md bg-dark-400 text-gray-400 border border-dark-50/10">
+                {PAYMENT_LABELS[income.payment_method] || income.payment_method}
+              </span>
+              {income.category_id && catMap.get(income.category_id) && (
+                <span className="px-2 py-0.5 text-[10px] font-medium rounded-md bg-accent-500/10 text-accent-400 border border-accent-500/20">
+                  {catMap.get(income.category_id)}
+                </span>
+              )}
+            </div>
+            {income.description && (
+              <p className="text-xs text-gray-500">{income.description}</p>
+            )}
+          </div>
+        ))}
+        {filtered.length === 0 && (
+          <div className="card-neo p-8 text-center text-gray-600 text-sm">
+            {search ? "Нічого не знайдено" : "Доходів поки немає. Натисніть «Додати» щоб почати."}
+          </div>
+        )}
+      </div>
+
+      {/* Desktop table */}
+      <div className="card-neo overflow-hidden hidden sm:block">
         <div className="overflow-x-auto">
         <table className="w-full text-xs min-w-[660px]">
           <thead>

@@ -324,9 +324,23 @@ export default function RevenuePage() {
 
           {/* Doctor table */}
           {data.by_doctor.length > 0 && (
-            <div className="card-neo card-3d-hover p-5">
+            <div className="card-neo card-3d-hover p-4 sm:p-5">
               <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2"><ClipboardList size={15} className="text-orange-400" />Деталізація по лікарях</h3>
-              <div className="overflow-x-auto">
+              {/* Mobile cards */}
+              <div className="sm:hidden space-y-2">
+                {data.by_doctor.map(d => (
+                  <div key={d.doctor_id} className="rounded-xl bg-dark-300/30 border border-dark-50/10 p-3">
+                    <p className="text-xs font-medium text-gray-200 mb-2 truncate">{d.doctor_name}</p>
+                    <div className="grid grid-cols-3 gap-2 text-xs">
+                      <div><span className="text-gray-500 block">НСЗУ</span><span className="text-indigo-400 tabular-nums font-medium">{fmt(d.nhsu)}</span></div>
+                      <div><span className="text-gray-500 block">Платні</span><span className="text-teal-400 tabular-nums font-medium">{fmt(d.paid_services)}</span></div>
+                      <div><span className="text-gray-500 block">Всього</span><span className="text-white tabular-nums font-semibold">{fmt(d.total)}</span></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {/* Desktop table */}
+              <div className="overflow-x-auto hidden sm:block">
                 <table className="w-full text-xs min-w-[400px]">
                   <thead>
                     <tr className="border-b border-dark-50/10 bg-dark-300/50">
@@ -502,28 +516,47 @@ export default function RevenuePage() {
 // ─── Drill Table helper ────────────────────────────────────────────
 function DrillTable({ headers, rows }: { headers: string[]; rows: string[][] }) {
   return (
-    <div className="overflow-x-auto rounded-xl border border-dark-50/10">
-      <table className="w-full text-xs min-w-[400px]">
-        <thead>
-          <tr className="bg-dark-300/50 border-b border-dark-50/10">
-            {headers.map(h => (
-              <th key={h} scope="col" className="text-left px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">{h}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.length === 0 && (
-            <tr><td colSpan={headers.length} className="px-3 py-6 text-center text-gray-600">Немає даних</td></tr>
-          )}
-          {rows.map((row, i) => (
-            <tr key={i} className="border-b border-dark-50/5 hover:bg-dark-300/30 transition-colors">
-              {row.map((cell, j) => (
-                <td key={j} className="px-3 py-2.5 text-gray-300 max-w-[200px] truncate">{cell}</td>
+    <>
+      {/* Mobile cards */}
+      <div className="sm:hidden space-y-2">
+        {rows.length === 0 && (
+          <p className="text-center text-gray-600 text-xs py-4">Немає даних</p>
+        )}
+        {rows.map((row, i) => (
+          <div key={i} className="rounded-xl bg-dark-300/30 border border-dark-50/10 p-3">
+            <p className="text-xs font-medium text-gray-200 mb-1.5 truncate">{row[0]}</p>
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
+              {headers.slice(1).map((h, j) => (
+                <div key={h}><span className="text-gray-500">{h}: </span><span className="text-gray-300 tabular-nums">{row[j + 1]}</span></div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+      {/* Desktop table */}
+      <div className="overflow-x-auto rounded-xl border border-dark-50/10 hidden sm:block">
+        <table className="w-full text-xs min-w-[400px]">
+          <thead>
+            <tr className="bg-dark-300/50 border-b border-dark-50/10">
+              {headers.map(h => (
+                <th key={h} scope="col" className="text-left px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">{h}</th>
               ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {rows.length === 0 && (
+              <tr><td colSpan={headers.length} className="px-3 py-6 text-center text-gray-600">Немає даних</td></tr>
+            )}
+            {rows.map((row, i) => (
+              <tr key={i} className="border-b border-dark-50/5 hover:bg-dark-300/30 transition-colors">
+                {row.map((cell, j) => (
+                  <td key={j} className="px-3 py-2.5 text-gray-300 max-w-[200px] truncate">{cell}</td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
   );
 }

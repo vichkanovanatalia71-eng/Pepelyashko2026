@@ -366,22 +366,22 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="space-y-8 max-w-full">
+    <div className="space-y-5 sm:space-y-8 max-w-full">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center icon-badge">
+        <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center icon-badge shrink-0">
           <Settings size={22} className="text-orange-400" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-white">Налаштування сервісу</h1>
-          <p className="text-sm text-gray-500">
+          <h1 className="text-xl sm:text-2xl font-bold text-white">Налаштування сервісу</h1>
+          <p className="text-xs sm:text-sm text-gray-500">
             Профіль, персонал та коефіцієнти розрахунку
           </p>
         </div>
       </div>
 
       {/* ── Профіль ── */}
-      <div className="card-neo card-3d-hover p-6 space-y-5">
+      <div className="card-neo card-3d-hover p-4 sm:p-6 space-y-4 sm:space-y-5">
         <SectionHeader sectionKey="profile" icon={User} title="Профіль" />
 
         {open.profile && (
@@ -444,7 +444,7 @@ export default function SettingsPage() {
       </div>
 
       {/* ── Зміна пароля ── */}
-      <div className="card-neo card-3d-hover p-6 space-y-5">
+      <div className="card-neo card-3d-hover p-4 sm:p-6 space-y-4 sm:space-y-5">
         <SectionHeader sectionKey="password" icon={Lock} title="Зміна пароля" />
 
         {open.password && (
@@ -485,7 +485,7 @@ export default function SettingsPage() {
       </div>
 
       {/* ── Лікарі ── */}
-      <div className="card-neo card-3d-hover p-6 space-y-5">
+      <div className="card-neo card-3d-hover p-4 sm:p-6 space-y-4 sm:space-y-5">
         <SectionHeader sectionKey="doctors" icon={MedFlowLogo} title="Список лікарів" />
 
         {open.doctors && (
@@ -527,7 +527,7 @@ export default function SettingsPage() {
 
             {/* Таблиця лікарів */}
             <div className="overflow-hidden rounded-xl border border-dark-50/10 overflow-x-auto">
-              <table className="w-full text-xs min-w-[400px]">
+              <table className="w-full text-xs">
                 <thead>
                   <tr className="border-b border-dark-50/10 bg-dark-300/50">
                     <th scope="col" className="text-left px-4 py-2.5 text-gray-400 font-medium whitespace-nowrap">ПІБ</th>
@@ -574,7 +574,7 @@ export default function SettingsPage() {
       </div>
 
       {/* ── Медичні сестри ── */}
-      <div className="card-neo card-3d-hover p-6 space-y-5">
+      <div className="card-neo card-3d-hover p-4 sm:p-6 space-y-4 sm:space-y-5">
         <SectionHeader sectionKey="nurses" icon={HeartHandshake} title="Медичні сестри" />
 
         {open.nurses && (
@@ -613,7 +613,7 @@ export default function SettingsPage() {
             {nurseMsg && <p className="text-xs text-accent-400">{nurseMsg}</p>}
 
             <div className="overflow-hidden rounded-xl border border-dark-50/10 overflow-x-auto">
-              <table className="w-full text-xs min-w-[400px]">
+              <table className="w-full text-xs">
                 <thead>
                   <tr className="border-b border-dark-50/10 bg-dark-300/50">
                     <th scope="col" className="text-left px-4 py-2.5 text-gray-400 font-medium whitespace-nowrap">ПІБ</th>
@@ -652,7 +652,7 @@ export default function SettingsPage() {
       </div>
 
       {/* ── Інший персонал ── */}
-      <div className="card-neo card-3d-hover p-6 space-y-5">
+      <div className="card-neo card-3d-hover p-4 sm:p-6 space-y-4 sm:space-y-5">
         <SectionHeader sectionKey="otherStaff" icon={UserCog} title="Інший персонал" />
 
         {open.otherStaff && (
@@ -691,7 +691,7 @@ export default function SettingsPage() {
             {otherMsg && <p className="text-xs text-accent-400">{otherMsg}</p>}
 
             <div className="overflow-hidden rounded-xl border border-dark-50/10 overflow-x-auto">
-              <table className="w-full text-xs min-w-[400px]">
+              <table className="w-full text-xs">
                 <thead>
                   <tr className="border-b border-dark-50/10 bg-dark-300/50">
                     <th scope="col" className="text-left px-4 py-2.5 text-gray-400 font-medium whitespace-nowrap">ПІБ</th>
@@ -730,7 +730,7 @@ export default function SettingsPage() {
       </div>
 
       {/* ── API ключі ── */}
-      <div className="card-neo card-3d-hover p-6 space-y-5">
+      <div className="card-neo card-3d-hover p-4 sm:p-6 space-y-4 sm:space-y-5">
         <SectionHeader sectionKey="apiKeys" icon={KeyRound} title="API ключі" subtitle="для AI-аналізу зображень" />
 
         {open.apiKeys && (
@@ -844,7 +844,7 @@ export default function SettingsPage() {
       </div>
 
       {/* ── Податки ── */}
-      <div className="card-neo card-3d-hover p-6 space-y-5">
+      <div className="card-neo card-3d-hover p-4 sm:p-6 space-y-4 sm:space-y-5">
         <SectionHeader sectionKey="taxes" icon={Receipt} title="Податки" />
 
         {open.taxes && (
@@ -959,7 +959,7 @@ export default function SettingsPage() {
       </div>
 
       {/* ── Параметри розрахунку НСЗУ ── */}
-      <div className="card-neo card-3d-hover p-6 space-y-5">
+      <div className="card-neo card-3d-hover p-4 sm:p-6 space-y-4 sm:space-y-5">
         <SectionHeader sectionKey="nhsu" icon={PercentCircle} title="Параметри розрахунку НСЗУ" />
 
         {open.nhsu && (
