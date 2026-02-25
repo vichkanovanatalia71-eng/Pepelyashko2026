@@ -703,17 +703,17 @@ export default function Dashboard() {
               <>
                 <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1.5"><Trophy size={12} className="text-orange-400" />Топ джерел доходу</h4>
                 <div className="overflow-x-auto rounded-xl border border-dark-50/10">
-                  <table className="w-full text-xs">
+                  <table className="w-full text-xs min-w-[400px]">
                     <thead>
                       <tr className="bg-dark-300/50 border-b border-dark-50/10">
-                        <th scope="col" className="text-left px-3 py-2.5 text-gray-500 font-medium">Джерело</th>
-                        <th scope="col" className="text-right px-3 py-2.5 text-gray-500 font-medium">Сума</th>
-                        <th scope="col" className="text-right px-3 py-2.5 text-gray-500 font-medium">Частка</th>
+                        <th scope="col" className="text-left px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Джерело</th>
+                        <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Сума</th>
+                        <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Частка</th>
                       </tr>
                     </thead>
                     <tbody>
                       {data.top_income_sources.map((s, i) => (
-                        <tr key={i} className="border-b border-dark-50/5">
+                        <tr key={i} className="border-b border-dark-50/5 hover:bg-dark-300/30 transition-colors">
                           <td className="px-3 py-2.5 text-gray-300">{s.name}</td>
                           <td className="px-3 py-2.5 text-right text-emerald-400 tabular-nums font-medium">{fmtUAH(s.amount)} ₴</td>
                           <td className="px-3 py-2.5 text-right text-gray-500">{s.pct.toFixed(1)}%</td>
@@ -728,17 +728,17 @@ export default function Dashboard() {
               <>
                 <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1.5"><Layers size={12} className="text-orange-400" />По категоріях</h4>
                 <div className="overflow-x-auto rounded-xl border border-dark-50/10">
-                  <table className="w-full text-xs">
+                  <table className="w-full text-xs min-w-[400px]">
                     <thead>
                       <tr className="bg-dark-300/50 border-b border-dark-50/10">
-                        <th scope="col" className="text-left px-3 py-2.5 text-gray-500 font-medium">Категорія</th>
-                        <th scope="col" className="text-right px-3 py-2.5 text-gray-500 font-medium">Сума</th>
-                        <th scope="col" className="text-right px-3 py-2.5 text-gray-500 font-medium">Частка</th>
+                        <th scope="col" className="text-left px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Категорія</th>
+                        <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Сума</th>
+                        <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Частка</th>
                       </tr>
                     </thead>
                     <tbody>
                       {data.income_by_category.map((c, i) => (
-                        <tr key={i} className="border-b border-dark-50/5">
+                        <tr key={i} className="border-b border-dark-50/5 hover:bg-dark-300/30 transition-colors">
                           <td className="px-3 py-2.5 text-gray-300">{c.name}</td>
                           <td className="px-3 py-2.5 text-right text-emerald-400 tabular-nums font-medium">{fmtUAH(c.amount)} ₴</td>
                           <td className="px-3 py-2.5 text-right text-gray-500">{c.pct.toFixed(1)}%</td>
@@ -775,17 +775,17 @@ export default function Dashboard() {
               <>
                 <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1.5"><Layers size={12} className="text-orange-400" />По категоріях</h4>
                 <div className="overflow-x-auto rounded-xl border border-dark-50/10">
-                  <table className="w-full text-xs">
+                  <table className="w-full text-xs min-w-[400px]">
                     <thead>
                       <tr className="bg-dark-300/50 border-b border-dark-50/10">
-                        <th scope="col" className="text-left px-3 py-2.5 text-gray-500 font-medium">Категорія</th>
-                        <th scope="col" className="text-right px-3 py-2.5 text-gray-500 font-medium">Сума</th>
-                        <th scope="col" className="text-right px-3 py-2.5 text-gray-500 font-medium">Частка</th>
+                        <th scope="col" className="text-left px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Категорія</th>
+                        <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Сума</th>
+                        <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Частка</th>
                       </tr>
                     </thead>
                     <tbody>
                       {data.expense_by_category.map((c, i) => (
-                        <tr key={i} className="border-b border-dark-50/5">
+                        <tr key={i} className="border-b border-dark-50/5 hover:bg-dark-300/30 transition-colors">
                           <td className="px-3 py-2.5 text-gray-300">{c.name}</td>
                           <td className="px-3 py-2.5 text-right text-red-400 tabular-nums font-medium">{fmtUAH(c.amount)} ₴</td>
                           <td className="px-3 py-2.5 text-right text-gray-500">{c.pct.toFixed(1)}%</td>
@@ -800,17 +800,17 @@ export default function Dashboard() {
               <>
                 <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1.5"><TrendingDown size={12} className="text-orange-400" />Топ статей витрат</h4>
                 <div className="overflow-x-auto rounded-xl border border-dark-50/10">
-                  <table className="w-full text-xs">
+                  <table className="w-full text-xs min-w-[400px]">
                     <thead>
                       <tr className="bg-dark-300/50 border-b border-dark-50/10">
-                        <th scope="col" className="text-left px-3 py-2.5 text-gray-500 font-medium">Стаття</th>
-                        <th scope="col" className="text-right px-3 py-2.5 text-gray-500 font-medium">Сума</th>
-                        <th scope="col" className="text-right px-3 py-2.5 text-gray-500 font-medium">Частка</th>
+                        <th scope="col" className="text-left px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Стаття</th>
+                        <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Сума</th>
+                        <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Частка</th>
                       </tr>
                     </thead>
                     <tbody>
                       {data.top_expense_items.map((e, i) => (
-                        <tr key={i} className="border-b border-dark-50/5">
+                        <tr key={i} className="border-b border-dark-50/5 hover:bg-dark-300/30 transition-colors">
                           <td className="px-3 py-2.5 text-gray-300 max-w-[200px] truncate">{e.name}</td>
                           <td className="px-3 py-2.5 text-right text-red-400 tabular-nums font-medium">{fmtUAH(e.amount)} ₴</td>
                           <td className="px-3 py-2.5 text-right text-gray-500">{e.pct.toFixed(1)}%</td>

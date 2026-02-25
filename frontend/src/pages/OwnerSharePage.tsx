@@ -306,17 +306,17 @@ export default function OwnerSharePage() {
                   <table className="w-full text-xs min-w-[700px]">
                     <thead>
                       <tr className="border-b border-dark-50/10 bg-dark-300/50">
-                        <th scope="col" className="text-left px-3 py-2.5 text-gray-400 font-medium">Лікар</th>
-                        <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium">Пацієнтів</th>
-                        <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium">Нарахування</th>
-                        <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium">ЄП</th>
-                        <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium">ВЗ</th>
-                        <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium">ЄП + ВЗ</th>
+                        <th scope="col" className="text-left px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Лікар</th>
+                        <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Пацієнтів</th>
+                        <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Нарахування</th>
+                        <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">ЄП</th>
+                        <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">ВЗ</th>
+                        <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">ЄП + ВЗ</th>
                       </tr>
                     </thead>
                     <tbody>
                       {nhsuDoctors.map((doc: any) => (
-                        <tr key={doc.doctor_id} className="border-b border-dark-50/5">
+                        <tr key={doc.doctor_id} className="border-b border-dark-50/5 hover:bg-dark-300/30 transition-colors">
                           <td className="px-3 py-2.5 text-gray-200">
                             {doc.doctor_name}
                             {doc.is_owner && <span className="ml-1.5 text-amber-400 text-[10px]">(власник)</span>}
@@ -354,16 +354,16 @@ export default function OwnerSharePage() {
                   <table className="w-full text-xs min-w-[700px]">
                     <thead>
                       <tr className="border-b border-dark-50/10 bg-dark-300/50">
-                        <th scope="col" className="text-left px-3 py-2.5 text-gray-400 font-medium">Вікова група</th>
-                        <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium">Коефіцієнт</th>
-                        <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium">Пацієнтів</th>
-                        <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium">Нарахування</th>
-                        <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium">ЄП + ВЗ</th>
+                        <th scope="col" className="text-left px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Вікова група</th>
+                        <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Коефіцієнт</th>
+                        <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Пацієнтів</th>
+                        <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Нарахування</th>
+                        <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">ЄП + ВЗ</th>
                       </tr>
                     </thead>
                     <tbody>
                       {nhsuAgeGroups.map((ag: any) => (
-                        <tr key={ag.age_group} className="border-b border-dark-50/5">
+                        <tr key={ag.age_group} className="border-b border-dark-50/5 hover:bg-dark-300/30 transition-colors">
                           <td className="px-3 py-2.5 text-gray-200">{ag.age_group_label}</td>
                           <td className="px-3 py-2.5 text-right text-gray-400 tabular-nums">{ag.age_coefficient}</td>
                           <td className="px-3 py-2.5 text-right text-gray-200 tabular-nums">{ag.total_patients}</td>
@@ -461,19 +461,19 @@ export default function OwnerSharePage() {
                   <table className="w-full text-xs min-w-[900px]">
                     <thead>
                       <tr className="border-b border-dark-50/10 bg-dark-300/50">
-                        <th scope="col" className="text-left px-3 py-2.5 text-gray-400 font-medium">Код</th>
-                        <th scope="col" className="text-left px-3 py-2.5 text-gray-400 font-medium">Назва</th>
-                        <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium">К-ть</th>
-                        <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium">Сума</th>
-                        <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium">Витрати</th>
-                        <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium">До розподілу</th>
-                        <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium">Дохід лікаря</th>
-                        <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium">Дохід орг.</th>
+                        <th scope="col" className="text-left px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Код</th>
+                        <th scope="col" className="text-left px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Назва</th>
+                        <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">К-ть</th>
+                        <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Сума</th>
+                        <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Витрати</th>
+                        <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">До розподілу</th>
+                        <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Дохід лікаря</th>
+                        <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Дохід орг.</th>
                       </tr>
                     </thead>
                     <tbody>
                       {paidTable.map((row: any) => (
-                        <tr key={row.service_id} className="border-b border-dark-50/5">
+                        <tr key={row.service_id} className="border-b border-dark-50/5 hover:bg-dark-300/30 transition-colors">
                           <td className="px-3 py-2.5 font-mono text-accent-400">{row.code}</td>
                           <td className="px-3 py-2.5 text-gray-200">{row.name}</td>
                           <td className="px-3 py-2.5 text-right text-gray-200 tabular-nums">{row.total_quantity}</td>

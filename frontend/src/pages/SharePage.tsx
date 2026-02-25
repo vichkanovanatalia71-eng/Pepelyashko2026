@@ -234,19 +234,19 @@ export default function SharePage() {
                 <table className="w-full text-xs min-w-[900px]">
                   <thead>
                     <tr className="border-b border-dark-50/10 bg-dark-300/50">
-                      <th scope="col" className="text-left px-3 py-2.5 text-gray-400 font-medium">Код</th>
-                      <th scope="col" className="text-left px-3 py-2.5 text-gray-400 font-medium">Назва</th>
-                      <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium">К-ть</th>
-                      <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium">Сума</th>
-                      <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium">Витрати</th>
-                      <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium">До розподілу</th>
-                      <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium">Дохід лікаря</th>
-                      <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium">Дохід орг.</th>
+                      <th scope="col" className="text-left px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Код</th>
+                      <th scope="col" className="text-left px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Назва</th>
+                      <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">К-ть</th>
+                      <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Сума</th>
+                      <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Витрати</th>
+                      <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">До розподілу</th>
+                      <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Дохід лікаря</th>
+                      <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Дохід орг.</th>
                     </tr>
                   </thead>
                   <tbody>
                     {(a?.services_table ?? []).map((row: any) => (
-                      <tr key={row.service_id} className="border-b border-dark-50/5">
+                      <tr key={row.service_id} className="border-b border-dark-50/5 hover:bg-dark-300/30 transition-colors">
                         <td className="px-3 py-2.5 font-mono text-accent-400">{row.code}</td>
                         <td className="px-3 py-2.5 text-gray-200">{row.name}</td>
                         <td className="px-3 py-2.5 text-right text-gray-200 tabular-nums">{row.total_quantity}</td>

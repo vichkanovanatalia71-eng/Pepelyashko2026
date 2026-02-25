@@ -636,7 +636,7 @@ export default function ServicesPage() {
           <LoadingSpinner height="h-40" label="Завантаження..." />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm min-w-[960px]">
+            <table className="w-full text-xs min-w-[960px]">
               <thead>
                 <tr className="border-b border-dark-50/10 bg-dark-300/50">
                   <th scope="col" className="px-4 py-3 w-10">

@@ -183,28 +183,28 @@ export function StaffBlock({ data }: StaffBlockProps) {
           Розбивка по ролях
         </h4>
         <div className="overflow-x-auto">
-          <table className="w-full text-xs">
+          <table className="w-full text-xs min-w-[580px]">
             <thead>
-              <tr className="border-b border-white/10">
-                <th className="text-left py-2.5 px-3 text-gray-500 font-medium">
+              <tr className="border-b border-dark-50/10 bg-dark-300/50">
+                <th className="text-left py-2.5 px-3 text-gray-400 font-medium whitespace-nowrap">
                   Роль
                 </th>
-                <th className="text-right py-2.5 px-3 text-gray-500 font-medium">
+                <th className="text-right py-2.5 px-3 text-gray-400 font-medium whitespace-nowrap">
                   К-сть
                 </th>
-                <th className="text-right py-2.5 px-3 text-gray-500 font-medium">
+                <th className="text-right py-2.5 px-3 text-gray-400 font-medium whitespace-nowrap">
                   Брутто
                 </th>
-                <th className="text-right py-2.5 px-3 text-gray-500 font-medium">
+                <th className="text-right py-2.5 px-3 text-gray-400 font-medium whitespace-nowrap">
                   ЄСВ 22%
                 </th>
-                <th className="text-right py-2.5 px-3 text-gray-500 font-medium">
+                <th className="text-right py-2.5 px-3 text-gray-400 font-medium whitespace-nowrap">
                   Доплати
                 </th>
-                <th className="text-right py-2.5 px-3 text-gray-500 font-medium">
+                <th className="text-right py-2.5 px-3 text-gray-400 font-medium whitespace-nowrap">
                   Доп. до суми
                 </th>
-                <th className="text-right py-2.5 px-3 text-gray-500 font-medium">
+                <th className="text-right py-2.5 px-3 text-gray-400 font-medium whitespace-nowrap">
                   <span className="px-1.5 py-0.5 rounded bg-orange-500/10 text-orange-400">
                     Витрати
                   </span>
@@ -212,12 +212,10 @@ export function StaffBlock({ data }: StaffBlockProps) {
               </tr>
             </thead>
             <tbody>
-              {data.staff_by_role.map((role, i) => (
+              {data.staff_by_role.map((role) => (
                 <tr
                   key={role.role}
-                  className={`border-b border-white/5 transition-colors hover:bg-white/[0.02] ${
-                    i % 2 === 0 ? "bg-white/[0.01]" : ""
-                  }`}
+                  className="border-b border-dark-50/5 hover:bg-dark-300/30 transition-colors"
                 >
                   <td className="py-2.5 px-3 text-white font-medium">
                     {role.role_label}

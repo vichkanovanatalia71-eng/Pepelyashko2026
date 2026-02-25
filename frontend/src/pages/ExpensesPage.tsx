@@ -1408,38 +1408,38 @@ export default function ExpensesPage() {
                 </h3>
               </div>
               <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+                <table className="w-full text-xs min-w-[520px]">
                   <thead>
-                    <tr className="border-b border-dark-50/10">
-                      <th scope="col" className="text-left px-5 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Назва</th>
-                      <th scope="col" className="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Категорія</th>
-                      <th scope="col" className="text-right px-5 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Сума</th>
+                    <tr className="border-b border-dark-50/10 bg-dark-300/50">
+                      <th scope="col" className="text-left px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Назва</th>
+                      <th scope="col" className="text-left px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Категорія</th>
+                      <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Сума</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-dark-50/5">
                     {detailRows.map((row, idx) => {
                       const badge = CATEGORY_BADGE[row.category] ?? CATEGORY_BADGE.other;
                       return (
-                        <tr key={idx} className="hover:bg-dark-400/15 transition-colors">
-                          <td className="px-5 py-2.5 text-gray-300">{row.name}</td>
-                          <td className="px-4 py-2.5">
+                        <tr key={idx} className="hover:bg-dark-300/30 transition-colors">
+                          <td className="px-3 py-2.5 text-gray-200">{row.name}</td>
+                          <td className="px-3 py-2.5">
                             <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs border ${badge.cls}`}>
                               {badge.label}
                             </span>
                           </td>
-                          <td className="px-5 py-2.5 text-right font-mono text-gray-200 tabular-nums">
+                          <td className="px-3 py-2.5 text-right font-mono text-gray-200 tabular-nums">
                             {fmt(row.amount)} ₴
                           </td>
                         </tr>
                       );
                     })}
                   </tbody>
-                  <tfoot className="border-t border-dark-50/15 bg-dark-400/20">
+                  <tfoot className="border-t border-dark-50/15 bg-dark-300/50">
                     <tr>
-                      <td colSpan={2} className="px-5 py-3 text-sm font-semibold text-gray-400">
+                      <td colSpan={2} className="px-3 py-2.5 text-xs font-semibold text-gray-400">
                         Всього
                       </td>
-                      <td className="px-5 py-3 text-right font-bold font-mono text-white tabular-nums">
+                      <td className="px-3 py-2.5 text-right font-bold font-mono text-white tabular-nums">
                         {fmt(detailRows.reduce((s, r) => s + r.amount, 0))} ₴
                       </td>
                     </tr>
@@ -2925,29 +2925,30 @@ export default function ExpensesPage() {
               </div>
               {/* Table */}
               <div className="overflow-y-auto flex-1">
-                <table className="w-full text-sm">
+                <div className="overflow-x-auto">
+                <table className="w-full text-xs min-w-[520px]">
                   <thead className="sticky top-0 bg-dark-600 z-10">
-                    <tr className="border-b border-dark-50/10">
-                      <th scope="col" className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Назва</th>
-                      <th scope="col" className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Деталі</th>
-                      <th scope="col" className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Сума</th>
+                    <tr className="border-b border-dark-50/10 bg-dark-300/50">
+                      <th scope="col" className="text-left px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Назва</th>
+                      <th scope="col" className="text-left px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Деталі</th>
+                      <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Сума</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-dark-50/5">
                     {rows.map((row, idx) => (
-                      <tr key={idx} className="hover:bg-dark-400/15 transition-colors">
-                        <td className="px-6 py-3 text-gray-200">{row.name}</td>
-                        <td className="px-4 py-3 text-gray-500 text-xs">{row.detail}</td>
-                        <td className={`px-6 py-3 text-right font-mono tabular-nums ${row.amount < 0 ? "text-red-400" : "text-gray-200"}`}>
+                      <tr key={idx} className="hover:bg-dark-300/30 transition-colors">
+                        <td className="px-3 py-2.5 text-gray-200">{row.name}</td>
+                        <td className="px-3 py-2.5 text-gray-500 text-xs">{row.detail}</td>
+                        <td className={`px-3 py-2.5 text-right font-mono tabular-nums ${row.amount < 0 ? "text-red-400" : "text-gray-200"}`}>
                           {row.amount < 0 ? "−" : ""}{fmt(Math.abs(row.amount))} ₴
                         </td>
                       </tr>
                     ))}
                   </tbody>
-                  <tfoot className="border-t border-dark-50/15 bg-dark-400/20">
+                  <tfoot className="border-t border-dark-50/15 bg-dark-300/50">
                     <tr>
-                      <td colSpan={2} className="px-6 py-3 text-sm font-semibold text-gray-300">{totalLabel}</td>
-                      <td className={`px-6 py-3 text-right font-bold font-mono tabular-nums text-lg ${
+                      <td colSpan={2} className="px-3 py-2.5 text-xs font-semibold text-gray-300">{totalLabel}</td>
+                      <td className={`px-3 py-2.5 text-right font-bold font-mono tabular-nums text-lg ${
                         kpiModal.type === "remaining" ? (totalValue >= 0 ? "text-emerald-400" : "text-red-400") : "text-white"
                       }`}>
                         {kpiModal.type === "remaining" && totalValue >= 0 ? "+" : ""}{totalValue < 0 ? "−" : ""}{fmt(Math.abs(totalValue))} ₴
@@ -2955,6 +2956,7 @@ export default function ExpensesPage() {
                     </tr>
                   </tfoot>
                 </table>
+                </div>
               </div>
             </div>
           </div>
