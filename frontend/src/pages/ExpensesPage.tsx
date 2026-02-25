@@ -2530,6 +2530,24 @@ export default function ExpensesPage() {
         <Modal
           title={staffModal.isEdit ? "Редагувати співробітника" : "Додати співробітника"}
           onClose={() => setStaffModal(s => ({ ...s, open: false }))}
+          footer={
+            <div className="flex gap-3">
+              <button
+                onClick={() => setStaffModal(s => ({ ...s, open: false }))}
+                className="flex-1 py-2.5 rounded-xl border border-dark-50/20 text-gray-400 hover:text-white text-sm transition-all"
+              >
+                Скасувати
+              </button>
+              <button
+                onClick={saveStaff}
+                disabled={staffModal.saving || !staffModal.fullName.trim()}
+                className="flex-1 py-2.5 rounded-xl bg-accent-500 hover:bg-accent-400 text-white text-sm font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-60"
+              >
+                {staffModal.saving ? <RefreshCw size={14} className="animate-spin" /> : <UserPlus size={14} />}
+                {staffModal.isEdit ? "Зберегти" : "Додати"}
+              </button>
+            </div>
+          }
         >
           <ModalField
             label="ПІБ"
@@ -2576,22 +2594,6 @@ export default function ExpensesPage() {
               </p>
             </div>
           )}
-          <div className="flex gap-3 pt-2">
-            <button
-              onClick={() => setStaffModal(s => ({ ...s, open: false }))}
-              className="flex-1 py-2.5 rounded-xl border border-dark-50/20 text-gray-400 hover:text-white text-sm transition-all"
-            >
-              Скасувати
-            </button>
-            <button
-              onClick={saveStaff}
-              disabled={staffModal.saving || !staffModal.fullName.trim()}
-              className="flex-1 py-2.5 rounded-xl bg-accent-500 hover:bg-accent-400 text-white text-sm font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-60"
-            >
-              {staffModal.saving ? <RefreshCw size={14} className="animate-spin" /> : <UserPlus size={14} />}
-              {staffModal.isEdit ? "Зберегти" : "Додати"}
-            </button>
-          </div>
         </Modal>
       )}
 
@@ -2600,6 +2602,24 @@ export default function ExpensesPage() {
         <Modal
           title="Копіювати дані з попереднього місяця"
           onClose={() => setCopyModal(s => ({ ...s, open: false }))}
+          footer={
+            <div className="flex gap-3">
+              <button
+                onClick={() => setCopyModal(s => ({ ...s, open: false }))}
+                className="flex-1 py-2.5 rounded-xl border border-dark-50/20 text-gray-400 hover:text-white text-sm transition-all"
+              >
+                Скасувати
+              </button>
+              <button
+                onClick={copyFromPeriod}
+                disabled={copyModal.saving || (!copyModal.copyFixed && !copyModal.copySalary)}
+                className="flex-1 py-2.5 rounded-xl bg-accent-500 hover:bg-accent-400 text-white text-sm font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-60"
+              >
+                {copyModal.saving ? <RefreshCw size={14} className="animate-spin" /> : <Copy size={14} />}
+                Копіювати
+              </button>
+            </div>
+          }
         >
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
@@ -2645,22 +2665,6 @@ export default function ExpensesPage() {
               Дані буде скопійовано в <span className="text-white">{MONTH_NAMES[month - 1]} {year}</span>.
               Існуючі записи цільового місяця будуть перезаписані.
             </p>
-          </div>
-          <div className="flex gap-3 pt-2">
-            <button
-              onClick={() => setCopyModal(s => ({ ...s, open: false }))}
-              className="flex-1 py-2.5 rounded-xl border border-dark-50/20 text-gray-400 hover:text-white text-sm transition-all"
-            >
-              Скасувати
-            </button>
-            <button
-              onClick={copyFromPeriod}
-              disabled={copyModal.saving || (!copyModal.copyFixed && !copyModal.copySalary)}
-              className="flex-1 py-2.5 rounded-xl bg-accent-500 hover:bg-accent-400 text-white text-sm font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-60"
-            >
-              {copyModal.saving ? <RefreshCw size={14} className="animate-spin" /> : <Copy size={14} />}
-              Копіювати
-            </button>
           </div>
         </Modal>
       )}
@@ -2941,6 +2945,24 @@ export default function ExpensesPage() {
         <Modal
           title={otherModal.isEdit ? "Редагувати витрату" : "Додати витрату"}
           onClose={() => setOtherModal(s => ({ ...s, open: false }))}
+          footer={
+            <div className="flex gap-3">
+              <button
+                onClick={() => setOtherModal(s => ({ ...s, open: false }))}
+                className="flex-1 py-2.5 rounded-xl border border-dark-50/20 text-gray-400 hover:text-white text-sm transition-all"
+              >
+                Скасувати
+              </button>
+              <button
+                onClick={saveOther}
+                disabled={otherModal.saving || !otherModal.name.trim()}
+                className="flex-1 py-2.5 rounded-xl bg-accent-500 hover:bg-accent-400 text-white text-sm font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-60"
+              >
+                {otherModal.saving ? <RefreshCw size={14} className="animate-spin" /> : <Save size={14} />}
+                {otherModal.isEdit ? "Зберегти" : "Додати"}
+              </button>
+            </div>
+          }
         >
           <ModalField
             label="Назва"
@@ -2967,22 +2989,6 @@ export default function ExpensesPage() {
             onChange={v => setOtherModal(s => ({ ...s, category: v }))}
             placeholder="general"
           />
-          <div className="flex gap-3 pt-2">
-            <button
-              onClick={() => setOtherModal(s => ({ ...s, open: false }))}
-              className="flex-1 py-2.5 rounded-xl border border-dark-50/20 text-gray-400 hover:text-white text-sm transition-all"
-            >
-              Скасувати
-            </button>
-            <button
-              onClick={saveOther}
-              disabled={otherModal.saving || !otherModal.name.trim()}
-              className="flex-1 py-2.5 rounded-xl bg-accent-500 hover:bg-accent-400 text-white text-sm font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-60"
-            >
-              {otherModal.saving ? <RefreshCw size={14} className="animate-spin" /> : <Save size={14} />}
-              {otherModal.isEdit ? "Зберегти" : "Додати"}
-            </button>
-          </div>
         </Modal>
       )}
 

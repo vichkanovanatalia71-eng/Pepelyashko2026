@@ -1,4 +1,5 @@
 import { Lock, X, Eye, AlertCircle, Copy, RefreshCw } from "lucide-react";
+import { useRef, useCallback } from "react";
 import { fmt } from "../constants";
 
 // ── Calculation Row ───────────────────────────────────────────────
@@ -112,18 +113,69 @@ export function CheckboxToggle({
 export function Modal({ title, onClose, children, footer }: {
   title: string; onClose: () => void; children: React.ReactNode; footer?: React.ReactNode;
 }) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  const dragStartY = useRef<number | null>(null);
+  const dragCurrentY = useRef(0);
+
+  const onTouchStart = useCallback((e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    const panel = panelRef.current;
+    if (!panel) return;
+    const rect = panel.getBoundingClientRect();
+    if (touch.clientY - rect.top > 48) return;
+    dragStartY.current = touch.clientY;
+  }, []);
+
+  const onTouchMove = useCallback((e: React.TouchEvent) => {
+    if (dragStartY.current === null) return;
+    const dy = e.touches[0].clientY - dragStartY.current;
+    if (dy < 0) return;
+    dragCurrentY.current = dy;
+    if (panelRef.current) {
+      panelRef.current.style.transform = `translateY(${dy}px)`;
+      panelRef.current.style.transition = "none";
+    }
+  }, []);
+
+  const onTouchEnd = useCallback(() => {
+    if (dragStartY.current === null) return;
+    const dy = dragCurrentY.current;
+    dragStartY.current = null;
+    dragCurrentY.current = 0;
+    if (panelRef.current) {
+      if (dy > 120) {
+        panelRef.current.style.transition = "transform 0.25s ease-out";
+        panelRef.current.style.transform = "translateY(100%)";
+        setTimeout(onClose, 250);
+      } else {
+        panelRef.current.style.transition = "transform 0.2s ease-out";
+        panelRef.current.style.transform = "translateY(0)";
+      }
+    }
+  }, [onClose]);
+
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-start justify-center sm:p-4 overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label={title}>
       <div className="absolute inset-0" onClick={onClose} />
-      <div className="relative bg-dark-600 rounded-t-3xl sm:rounded-2xl w-full max-w-md sm:my-auto animate-modal-in modal-glow expense-sheet-modal pb-[env(safe-area-inset-bottom)] flex flex-col max-h-[calc(100vh-2rem)] sm:max-h-none">
+      <div
+        ref={panelRef}
+        className="relative bg-dark-600 rounded-t-3xl sm:rounded-2xl w-full max-w-md sm:my-auto animate-modal-in modal-glow expense-sheet-modal pb-[env(safe-area-inset-bottom)] flex flex-col max-h-[calc(100vh-2rem)] sm:max-h-none"
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+      >
+        {/* Drag handle — mobile only */}
+        <div className="flex justify-center pt-2 pb-1 sm:hidden">
+          <div className="w-10 h-1 rounded-full bg-white/20" />
+        </div>
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/10 shrink-0">
           <h4 className="font-semibold text-white text-sm">{title}</h4>
           <button
             onClick={onClose}
             aria-label="Закрити"
-            className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all focus-visible:outline-2 focus-visible:outline-accent-400"
+            className="p-2.5 min-w-[44px] min-h-[44px] rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all flex items-center justify-center focus-visible:outline-2 focus-visible:outline-accent-400"
           >
-            <X size={16} />
+            <X size={18} />
           </button>
         </div>
         <div className="px-5 py-4 space-y-4 overflow-y-auto flex-1">{children}</div>
@@ -158,7 +210,7 @@ export function ModalField({
   );
 }
 
-// ── Drawer Section Modal Shell ────────────────────────────────────
+// ── Drawer Section Modal Shell (with swipe-to-dismiss on mobile) ──
 export function DrawerModalShell({
   ariaLabel, icon, iconBg, title, subtitle, onClose, children,
 }: {
@@ -170,10 +222,67 @@ export function DrawerModalShell({
   onClose: () => void;
   children: React.ReactNode;
 }) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  const dragStartY = useRef<number | null>(null);
+  const dragCurrentY = useRef(0);
+
+  const onTouchStart = useCallback((e: React.TouchEvent) => {
+    // Only activate swipe on the drag handle area (first 40px)
+    const touch = e.touches[0];
+    const panel = panelRef.current;
+    if (!panel) return;
+    const rect = panel.getBoundingClientRect();
+    if (touch.clientY - rect.top > 48) return; // only top handle area
+    dragStartY.current = touch.clientY;
+  }, []);
+
+  const onTouchMove = useCallback((e: React.TouchEvent) => {
+    if (dragStartY.current === null) return;
+    const dy = e.touches[0].clientY - dragStartY.current;
+    if (dy < 0) return; // don't allow upward drag
+    dragCurrentY.current = dy;
+    if (panelRef.current) {
+      panelRef.current.style.transform = `translateY(${dy}px)`;
+      panelRef.current.style.transition = "none";
+    }
+  }, []);
+
+  const onTouchEnd = useCallback(() => {
+    if (dragStartY.current === null) return;
+    const dy = dragCurrentY.current;
+    dragStartY.current = null;
+    dragCurrentY.current = 0;
+
+    if (panelRef.current) {
+      if (dy > 120) {
+        // Threshold met — dismiss
+        panelRef.current.style.transition = "transform 0.25s ease-out";
+        panelRef.current.style.transform = "translateY(100%)";
+        setTimeout(onClose, 250);
+      } else {
+        // Snap back
+        panelRef.current.style.transition = "transform 0.2s ease-out";
+        panelRef.current.style.transform = "translateY(0)";
+      }
+    }
+  }, [onClose]);
+
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-start justify-center sm:p-4 overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label={ariaLabel}>
       <div className="absolute inset-0" onClick={onClose} />
-      <div className="relative bg-dark-600 rounded-t-3xl sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto animate-modal-in expense-sheet-modal pb-[env(safe-area-inset-bottom)]" style={{ border: "1px solid #ffffff15", maxHeight: "92vh", maxWidth: "900px" }}>
+      <div
+        ref={panelRef}
+        className="relative bg-dark-600 rounded-t-3xl sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto animate-modal-in expense-sheet-modal pb-[env(safe-area-inset-bottom)]"
+        style={{ border: "1px solid #ffffff15", maxHeight: "92vh", maxWidth: "900px" }}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+      >
+        {/* Drag handle — visible only on mobile */}
+        <div className="flex justify-center pt-2 pb-1 sm:hidden cursor-grab active:cursor-grabbing">
+          <div className="w-10 h-1 rounded-full bg-white/20" />
+        </div>
+
         <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0">
           <div className="flex items-center gap-3">
             <div className={`w-8 h-8 rounded-xl ${iconBg} flex items-center justify-center shrink-0`}>
@@ -184,8 +293,8 @@ export function DrawerModalShell({
               <div className="text-xs mt-0.5">{subtitle}</div>
             </div>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all" aria-label="Закрити">
-            <X size={16} />
+          <button onClick={onClose} className="p-2.5 min-w-[44px] min-h-[44px] rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all flex items-center justify-center" aria-label="Закрити">
+            <X size={18} />
           </button>
         </div>
         <div className="overflow-y-auto flex-1">
