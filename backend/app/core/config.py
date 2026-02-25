@@ -37,7 +37,7 @@ class Settings(BaseSettings):
     @field_validator("database_url", mode="before")
     @classmethod
     def fix_database_url(cls, v: str) -> str:
-        """Railway injects DATABASE_URL as postgres:// — convert to asyncpg."""
+        """Railway/Fly.io inject DATABASE_URL as postgres:// — convert to asyncpg."""
         if v.startswith("postgres://"):
             return v.replace("postgres://", "postgresql+asyncpg://", 1)
         if v.startswith("postgresql://"):
