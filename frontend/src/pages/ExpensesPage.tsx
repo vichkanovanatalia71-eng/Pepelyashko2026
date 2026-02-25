@@ -153,6 +153,16 @@ export default function ExpensesPage() {
   // Track which sections have already been copied (to hide the prompt after copy)
   const [sectionCopied, setSectionCopied] = useState<Record<string, boolean>>({});
 
+  // ── Collapsible salary sections ──
+  const [expandedSalary, setExpandedSalary] = useState<Set<number>>(new Set());
+  const toggleSalaryExpand = useCallback((id: number) => {
+    setExpandedSalary(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }, []);
+
   // ── Styled confirm / alert dialogs (replace native browser dialogs) ──
   const [confirmDlg, setConfirmDlg] = useState<{
     title: string; description?: string;
@@ -1868,24 +1878,32 @@ export default function ExpensesPage() {
                           const dirty = isSalaryDirty(row.staff_member_id, row);
                           return (
                             <div key={row.staff_member_id} className="p-5">
-                              {/* Заголовок рядка */}
+                              {/* Заголовок рядка (клікабельний для collapse/expand) */}
                               <div className="flex items-start justify-between mb-4 gap-2">
-                                <div>
-                                  <p className="font-semibold text-white text-sm">{row.full_name}</p>
-                                  <div className="flex items-center gap-1.5 mt-1">
-                                    <span className="inline-block px-2 py-0.5 text-xs rounded-lg bg-teal-500/10 text-teal-400 border border-teal-500/20">
-                                      Лікар
+                                <button
+                                  type="button"
+                                  onClick={() => toggleSalaryExpand(row.staff_member_id)}
+                                  className="flex items-center gap-2 text-left group min-w-0"
+                                >
+                                  <ChevronRight size={14} className={`text-gray-600 transition-transform duration-200 shrink-0 mt-0.5 ${expandedSalary.has(row.staff_member_id) ? "rotate-90" : ""}`} />
+                                  <div className="min-w-0">
+                                    <p className="font-semibold text-white text-sm group-hover:text-purple-300 transition-colors truncate">{row.full_name}</p>
+                                    <div className="flex items-center gap-1.5 mt-1">
+                                      <span className="inline-block px-2 py-0.5 text-xs rounded-lg bg-teal-500/10 text-teal-400 border border-teal-500/20">
+                                        Лікар
                                     </span>
                                     {row.edited_by === "accountant" && (
                                       <span className="inline-block px-2 py-0.5 text-xs rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20" title={row.edited_at ? `Оновлено бухгалтером: ${new Date(row.edited_at).toLocaleDateString("uk-UA")}` : undefined}>
                                         Бухгалтер
                                       </span>
                                     )}
+                                    </div>
                                   </div>
-                                </div>
+                                </button>
                                 <div className="flex items-center gap-2 shrink-0">
                                   <button
-                                    onClick={() => {
+                                    onClick={(e) => {
+                                      e.stopPropagation();
                                       const sm = staffList.find(s => s.id === row.staff_member_id);
                                       setStaffModal({
                                         open: true, isEdit: true, id: row.staff_member_id,
@@ -1896,14 +1914,14 @@ export default function ExpensesPage() {
                                         saving:   false,
                                       });
                                     }}
-                                    className="p-1.5 rounded-lg text-gray-600 hover:text-purple-400 hover:bg-purple-500/10 transition-all"
+                                    className="p-2.5 min-w-[44px] min-h-[44px] rounded-lg text-gray-600 hover:text-purple-400 hover:bg-purple-500/10 transition-all flex items-center justify-center"
                                     title="Редагувати"
                                   >
                                     <Edit2 size={14} />
                                   </button>
                                   <button
-                                    onClick={() => deleteStaff(row.staff_member_id, row.full_name)}
-                                    className="p-1.5 rounded-lg text-gray-700 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                                    onClick={(e) => { e.stopPropagation(); deleteStaff(row.staff_member_id, row.full_name); }}
+                                    className="p-2.5 min-w-[44px] min-h-[44px] rounded-lg text-gray-700 hover:text-red-400 hover:bg-red-500/10 transition-all flex items-center justify-center"
                                     title="Видалити"
                                   >
                                     <Trash2 size={14} />
@@ -1915,6 +1933,8 @@ export default function ExpensesPage() {
                                 </div>
                               </div>
 
+                              {/* Деталі (collapsible) */}
+                              {expandedSalary.has(row.staff_member_id) && (<>
                               {/* НСЗУ банер (якщо є дані) */}
                               {row.nhsu_brutto > 0 && (
                                 <div className="mb-4 p-3 rounded-xl bg-teal-500/5 border border-teal-500/20">
@@ -2010,6 +2030,7 @@ export default function ExpensesPage() {
                                   </button>
                                 </div>
                               )}
+                              </>)}
                             </div>
                           );
                         })}

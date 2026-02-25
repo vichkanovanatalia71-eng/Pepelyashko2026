@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import MedFlowLogo from "./shared/MedFlowLogo";
+import OfflineIndicator from "./shared/OfflineIndicator";
 import { useTheme } from "../hooks/useTheme";
 import { AccountantNotificationModal } from "./shared";
 import type { AccountantNotification } from "./shared";
@@ -105,6 +106,7 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen flex bg-dark-700">
+      <OfflineIndicator />
 
       {/* ══════════════════════════════════════════════
           DESKTOP: бокова панель — фіксована (lg+)
