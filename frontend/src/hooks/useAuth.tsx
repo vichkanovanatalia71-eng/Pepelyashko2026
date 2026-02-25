@@ -25,30 +25,39 @@ function isTokenExpired(t: string): boolean {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(
-    () => localStorage.getItem("token")
+    () => {
+      const t = localStorage.getItem("token");
+      // Immediately reject expired tokens during initialization
+      if (t && isTokenExpired(t)) {
+        localStorage.removeItem("token");
+        return null;
+      }
+      return t;
+    }
   );
   const [user, setUser] = useState<User | null>(null);
   const [isReady, setIsReady] = useState(false);
 
-  // Validate token on mount — check JWT expiry locally, then load user data
+  // Listen for "auth:expired" events from axios interceptor (401 responses)
   useEffect(() => {
-    const t = localStorage.getItem("token");
-
-    // No token → ready immediately
-    if (!t) {
-      setIsReady(true);
-      return;
-    }
-
-    // Token expired → clear silently, no API call needed
-    if (isTokenExpired(t)) {
+    const handleExpired = () => {
       localStorage.removeItem("token");
       setToken(null);
+      setUser(null);
+    };
+    window.addEventListener("auth:expired", handleExpired);
+    return () => window.removeEventListener("auth:expired", handleExpired);
+  }, []);
+
+  // Load user data on mount (if token is valid)
+  useEffect(() => {
+    const t = localStorage.getItem("token");
+    if (!t || isTokenExpired(t)) {
       setIsReady(true);
       return;
     }
 
-    // Token valid → load user data via fetch (bypasses axios 401 interceptor)
+    // Load user data via fetch (bypasses axios 401 interceptor)
     const backendUrl = (import.meta.env.VITE_BACKEND_URL || "").replace(/\/+$/, "");
     fetch(`${backendUrl}/api/auth/me`, {
       headers: { Authorization: `Bearer ${t}` },
@@ -57,12 +66,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!res.ok) throw new Error("unauthorized");
         return res.json();
       })
-      .then((data) => {
-        setUser(data);
-        setToken(t);
-      })
+      .then((data) => setUser(data))
       .catch(() => {
-        // Token revoked server-side → clear
         localStorage.removeItem("token");
         setToken(null);
       })
