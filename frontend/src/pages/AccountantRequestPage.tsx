@@ -604,7 +604,7 @@ export default function AccountantRequestPage() {
 
                       <button
                         onClick={() => removeExpense(exp.id)}
-                        className="p-2 rounded-lg text-gray-600 hover:text-red-400 hover:bg-red-500/10 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 mt-1"
+                        className="p-2.5 min-w-[44px] min-h-[44px] rounded-lg text-gray-600 hover:text-red-400 hover:bg-red-500/10 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 mt-1 flex items-center justify-center"
                         title="Видалити"
                       >
                         <Trash2 size={14} />
