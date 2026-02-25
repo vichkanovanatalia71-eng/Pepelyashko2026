@@ -891,6 +891,77 @@
     overflow: hidden;
   }
 
+  /* ═══════════════════════════════════════════════════════════
+     RIGHT EXPENSE SIDEBAR — Mirrors left nav behavior
+     ═══════════════════════════════════════════════════════════ */
+  .expense-sidebar-transition {
+    transition: width 0.3s var(--ease-spring);
+    will-change: width;
+    overflow: hidden;
+  }
+  .expense-sidebar-expanded {
+    width: 200px;
+  }
+  .expense-sidebar-collapsed {
+    width: 72px;
+  }
+
+  /* Expense nav item base */
+  .expense-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    border-radius: 0.75rem;
+    transition: all var(--duration-normal) var(--ease-smooth);
+    cursor: pointer;
+    border: 1px solid transparent;
+    background: transparent;
+    text-align: left;
+    width: 100%;
+  }
+
+  /* Expense nav — inactive */
+  .expense-nav-inactive {
+    color: var(--text-muted);
+  }
+  .expense-nav-inactive:hover {
+    color: var(--text-primary);
+    background: var(--bg-active);
+  }
+
+  /* Expense nav — active */
+  .expense-nav-active {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  /* Expense nav icon wrapper */
+  .expense-nav-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 0.625rem;
+    flex-shrink: 0;
+    transition: all var(--duration-normal) var(--ease-smooth);
+  }
+
+  .expense-nav-icon-idle {
+    color: var(--text-muted);
+    background: transparent;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .expense-nav-item:hover .expense-nav-icon-idle {
+      transform: scale(1.12);
+    }
+  }
+
+  .expense-nav-icon-active {
+    transform: scale(1.1);
+  }
+
   /* ── Collapse/expand toggle button ───────────────────────── */
   .sidebar-toggle-btn {
     width: 32px;
@@ -1075,6 +1146,21 @@
     to { width: 100%; }
   }
 
+  @keyframes modalGlow {
+    0%, 100% {
+      box-shadow: 0 0 30px rgba(249, 115, 22, 0.3),
+                  0 0 60px rgba(249, 115, 22, 0.15),
+                  0 0 100px rgba(249, 115, 22, 0.08),
+                  0 8px 32px rgba(0, 0, 0, 0.4);
+    }
+    50% {
+      box-shadow: 0 0 45px rgba(249, 115, 22, 0.45),
+                  0 0 80px rgba(249, 115, 22, 0.25),
+                  0 0 120px rgba(249, 115, 22, 0.12),
+                  0 8px 32px rgba(0, 0, 0, 0.4);
+    }
+  }
+
   /* ── Glow pulse for accent elements ──────────────────────── */
   @keyframes glowPulse {
     0%, 100% { box-shadow: 0 0 24px rgba(249, 115, 22, 0.25), 0 0 60px rgba(249, 115, 22, 0.08); }
@@ -1131,6 +1217,22 @@
       @apply fixed inset-x-0 bottom-0 rounded-t-3xl;
       padding-bottom: calc(1.5rem + env(safe-area-inset-bottom));
       max-height: 92vh;
+    }
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     MOBILE BOTTOM-SHEET MODAL — Drag handle
+     ═══════════════════════════════════════════════════════════ */
+  @media (max-width: 639px) {
+    .expense-sheet-modal::before {
+      content: "";
+      display: block;
+      width: 36px;
+      height: 4px;
+      border-radius: 2px;
+      background: rgba(255, 255, 255, 0.2);
+      margin: 10px auto 4px;
+      flex-shrink: 0;
     }
   }
 
