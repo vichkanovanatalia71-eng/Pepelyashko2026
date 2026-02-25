@@ -13,3 +13,4 @@ export { default as AccountantNotificationModal } from "./AccountantNotification
 export type { AccountantNotification } from "./AccountantNotificationModal";
 export { ToastProvider, useToast } from "./Toast";
 export { Skeleton, SkeletonCard, SkeletonTable, SkeletonKPI } from "./Skeleton";
+export { FormError } from "./FormError";
