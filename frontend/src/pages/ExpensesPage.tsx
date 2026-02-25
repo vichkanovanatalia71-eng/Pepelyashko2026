@@ -312,6 +312,56 @@ export default function ExpensesPage() {
     return () => document.removeEventListener("keydown", handleKey);
   }, [activeDrawer]);
 
+  // ── Bottom sheet drag-to-resize (mobile) ──
+  const [sheetHeight, setSheetHeight] = useState(92); // vh
+  const sheetDragRef = useRef<{ startY: number; startH: number } | null>(null);
+  const sheetPanelRef = useRef<HTMLDivElement | null>(null);
+  const dragHandleRef = useRef<HTMLDivElement | null>(null);
+
+  // Reset sheet height when drawer opens + lock body scroll
+  useEffect(() => {
+    if (activeDrawer) {
+      setSheetHeight(100);
+      document.body.style.overflow = "hidden";
+      return () => { document.body.style.overflow = ""; };
+    }
+  }, [activeDrawer]);
+
+  // Prevent default touchmove on drag handle (avoids page scroll during drag)
+  useEffect(() => {
+    const handle = dragHandleRef.current;
+    if (!handle) return;
+    const prevent = (e: TouchEvent) => { e.preventDefault(); };
+    handle.addEventListener("touchmove", prevent, { passive: false });
+    return () => handle.removeEventListener("touchmove", prevent);
+  });
+
+  const onDragStart = useCallback((e: React.TouchEvent) => {
+    sheetDragRef.current = { startY: e.touches[0].clientY, startH: sheetHeight };
+  }, [sheetHeight]);
+
+  const onDragMove = useCallback((e: React.TouchEvent) => {
+    if (!sheetDragRef.current) return;
+    const deltaY = sheetDragRef.current.startY - e.touches[0].clientY;
+    const deltaVh = (deltaY / window.innerHeight) * 100;
+    const newH = Math.max(20, Math.min(100, sheetDragRef.current.startH + deltaVh));
+    setSheetHeight(newH);
+  }, []);
+
+  const onDragEnd = useCallback(() => {
+    if (!sheetDragRef.current) return;
+    const h = sheetHeight;
+    sheetDragRef.current = null;
+    // Snap to breakpoints: close (<30%), half (30-75%), full (>75%)
+    if (h < 30) {
+      setActiveDrawer(null);
+    } else if (h < 75) {
+      setSheetHeight(50);
+    } else {
+      setSheetHeight(100);
+    }
+  }, [sheetHeight]);
+
   // Sync with left sidebar collapse state
   useEffect(() => {
     function handleSidebarToggle(e: Event) {
@@ -323,12 +373,12 @@ export default function ExpensesPage() {
   }, []);
 
   // ── Drawer section definitions ──
-  const DRAWER_SECTIONS: { key: DrawerSection; label: string; icon: React.ReactNode; color: string; badgeColor: string; getValue: () => number; getStatus: () => boolean }[] = [
-    { key: "fixed", label: "Постійні витрати", icon: <TrendingDown size={18} />, color: "text-blue-400", badgeColor: "bg-blue-500/15 border-blue-500/30", getValue: () => data?.totals.fixed_total ?? 0, getStatus: () => (data?.fixed.some(r => r.amount > 0) ?? false) },
-    { key: "salary", label: "Зарплатні витрати", icon: <Users size={18} />, color: "text-purple-400", badgeColor: "bg-purple-500/15 border-purple-500/30", getValue: () => data?.totals.salary_total ?? 0, getStatus: () => (data?.salary.some(r => r.brutto > 0) ?? false) },
-    { key: "other", label: "Інші витрати", icon: <Wallet size={18} />, color: "text-amber-400", badgeColor: "bg-amber-500/15 border-amber-500/30", getValue: () => otherTotal, getStatus: () => otherExpenses.length > 0 },
-    { key: "taxes", label: "Податки", icon: <Receipt size={18} />, color: "text-red-400", badgeColor: "bg-red-500/15 border-red-500/30", getValue: () => data?.totals.tax_total ?? 0, getStatus: () => (data?.totals.tax_total ?? 0) > 0 },
-    { key: "summary", label: "Підсумки", icon: <Building2 size={18} />, color: "text-emerald-400", badgeColor: "bg-emerald-500/15 border-emerald-500/30", getValue: () => remaining, getStatus: () => grandWithOther > 0 },
+  const DRAWER_SECTIONS: { key: DrawerSection; label: string; icon: React.ReactNode; color: string; badgeColor: string; glow: string; getValue: () => number; getStatus: () => boolean }[] = [
+    { key: "fixed", label: "Постійні витрати", icon: <TrendingDown size={18} />, color: "text-blue-400", badgeColor: "bg-blue-500/25 border-blue-400/50", glow: "0 0 14px rgba(59,130,246,0.45), 0 0 4px rgba(59,130,246,0.3)", getValue: () => data?.totals.fixed_total ?? 0, getStatus: () => (data?.fixed.some(r => r.amount > 0) ?? false) },
+    { key: "salary", label: "Зарплатні витрати", icon: <Users size={18} />, color: "text-purple-400", badgeColor: "bg-purple-500/25 border-purple-400/50", glow: "0 0 14px rgba(168,85,247,0.45), 0 0 4px rgba(168,85,247,0.3)", getValue: () => data?.totals.salary_total ?? 0, getStatus: () => (data?.salary.some(r => r.brutto > 0) ?? false) },
+    { key: "other", label: "Інші витрати", icon: <Wallet size={18} />, color: "text-amber-400", badgeColor: "bg-amber-500/25 border-amber-400/50", glow: "0 0 14px rgba(245,158,11,0.45), 0 0 4px rgba(245,158,11,0.3)", getValue: () => otherTotal, getStatus: () => otherExpenses.length > 0 },
+    { key: "taxes", label: "Податки", icon: <Receipt size={18} />, color: "text-red-400", badgeColor: "bg-red-500/25 border-red-400/50", glow: "0 0 14px rgba(239,68,68,0.45), 0 0 4px rgba(239,68,68,0.3)", getValue: () => data?.totals.tax_total ?? 0, getStatus: () => (data?.totals.tax_total ?? 0) > 0 },
+    { key: "summary", label: "Підсумки", icon: <Building2 size={18} />, color: "text-emerald-400", badgeColor: "bg-emerald-500/25 border-emerald-400/50", glow: "0 0 14px rgba(16,185,129,0.45), 0 0 4px rgba(16,185,129,0.3)", getValue: () => remaining, getStatus: () => grandWithOther > 0 },
   ];
 
   function toggleDrawer(section: DrawerSection) {
@@ -1369,7 +1419,7 @@ export default function ExpensesPage() {
 
           {/* ═══ MOBILE: Expense Section Tabs (horizontal scroll) ═══ */}
           <div className="lg:hidden -mx-4 px-4 overflow-x-auto scrollbar-hide">
-            <div className="flex gap-2 pb-1 min-w-max">
+            <div className="flex gap-2.5 pb-2 min-w-max">
               {DRAWER_SECTIONS.map(sec => {
                 const isActive = activeDrawer === sec.key;
                 const value = sec.getValue();
@@ -1378,17 +1428,18 @@ export default function ExpensesPage() {
                   <button
                     key={sec.key}
                     onClick={() => toggleDrawer(sec.key as DrawerSection)}
-                    className={`flex items-center gap-2 px-3 py-2.5 rounded-2xl border text-xs font-semibold whitespace-nowrap transition-all active:scale-95 tap-target ${
+                    className={`flex items-center gap-2.5 px-4 py-3 rounded-2xl border border-orange-400/60 text-sm font-bold whitespace-nowrap transition-all duration-200 active:scale-95 tap-target ${
                       isActive
-                        ? `${sec.badgeColor} text-white`
-                        : "bg-dark-400/40 border-dark-50/15 text-gray-400 hover:text-gray-200"
+                        ? "bg-orange-500/20 text-white"
+                        : "bg-dark-400/50 text-gray-300 hover:text-white hover:border-orange-400/80"
                     }`}
+                    style={{ boxShadow: "0 0 14px rgba(249,115,22,0.45), 0 0 4px rgba(249,115,22,0.3)" }}
                   >
-                    <span className={`shrink-0 ${isActive ? sec.color : "text-gray-500"}`}>{sec.icon}</span>
+                    <span className={`shrink-0 ${isActive ? sec.color : "text-gray-400"}`}>{sec.icon}</span>
                     <span className="truncate">{sec.label}</span>
-                    <span className={`flex items-center gap-1 ml-0.5 ${isActive ? sec.color : "text-gray-600"}`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${filled ? "bg-emerald-400" : "bg-gray-600"}`} />
-                      <span className="font-mono tabular-nums text-[10px]">
+                    <span className={`flex items-center gap-1.5 ml-0.5 ${isActive ? sec.color : "text-gray-500"}`}>
+                      <span className={`w-2 h-2 rounded-full ${filled ? "bg-emerald-400" : "bg-gray-600"}`} />
+                      <span className="font-mono tabular-nums text-xs">
                         {sec.key === "summary" ? `${value >= 0 ? "+" : ""}${fmt(value)}` : fmt(value)} ₴
                       </span>
                     </span>
@@ -1408,38 +1459,38 @@ export default function ExpensesPage() {
                 </h3>
               </div>
               <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+                <table className="w-full text-xs min-w-[520px]">
                   <thead>
-                    <tr className="border-b border-dark-50/10">
-                      <th scope="col" className="text-left px-5 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Назва</th>
-                      <th scope="col" className="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Категорія</th>
-                      <th scope="col" className="text-right px-5 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Сума</th>
+                    <tr className="border-b border-dark-50/10 bg-dark-300/50">
+                      <th scope="col" className="text-left px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Назва</th>
+                      <th scope="col" className="text-left px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Категорія</th>
+                      <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Сума</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-dark-50/5">
                     {detailRows.map((row, idx) => {
                       const badge = CATEGORY_BADGE[row.category] ?? CATEGORY_BADGE.other;
                       return (
-                        <tr key={idx} className="hover:bg-dark-400/15 transition-colors">
-                          <td className="px-5 py-2.5 text-gray-300">{row.name}</td>
-                          <td className="px-4 py-2.5">
+                        <tr key={idx} className="hover:bg-dark-300/30 transition-colors">
+                          <td className="px-3 py-2.5 text-gray-200">{row.name}</td>
+                          <td className="px-3 py-2.5">
                             <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs border ${badge.cls}`}>
                               {badge.label}
                             </span>
                           </td>
-                          <td className="px-5 py-2.5 text-right font-mono text-gray-200 tabular-nums">
+                          <td className="px-3 py-2.5 text-right font-mono text-gray-200 tabular-nums">
                             {fmt(row.amount)} ₴
                           </td>
                         </tr>
                       );
                     })}
                   </tbody>
-                  <tfoot className="border-t border-dark-50/15 bg-dark-400/20">
+                  <tfoot className="border-t border-dark-50/15 bg-dark-300/50">
                     <tr>
-                      <td colSpan={2} className="px-5 py-3 text-sm font-semibold text-gray-400">
+                      <td colSpan={2} className="px-3 py-2.5 text-xs font-semibold text-gray-400">
                         Всього
                       </td>
-                      <td className="px-5 py-3 text-right font-bold font-mono text-white tabular-nums">
+                      <td className="px-3 py-2.5 text-right font-bold font-mono text-white tabular-nums">
                         {fmt(detailRows.reduce((s, r) => s + r.amount, 0))} ₴
                       </td>
                     </tr>
@@ -1522,9 +1573,13 @@ export default function ExpensesPage() {
 
           {/* ── MODAL: ПОСТІЙНІ ВИТРАТИ ── */}
           {activeDrawer === "fixed" && (
-          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-start justify-center sm:p-4 overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label="Постійні витрати">
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex flex-col justify-end sm:flex-row sm:items-start sm:justify-center sm:p-4 overflow-hidden sm:overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label="Постійні витрати">
             <div className="absolute inset-0" onClick={() => setActiveDrawer(null)} />
-            <div className="relative bg-dark-600 rounded-t-3xl sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto animate-modal-in expense-sheet-modal pb-[env(safe-area-inset-bottom)]" style={{ border: "1px solid #ffffff15", maxHeight: "92vh", maxWidth: "900px" }}>
+            <div ref={sheetPanelRef} className={`relative bg-dark-600 sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto animate-modal-in ${sheetHeight >= 100 ? "flex-1 sm:flex-none sm:max-h-[90vh]" : "rounded-t-3xl"}`} style={sheetHeight < 100 ? { border: "1px solid #ffffff15", height: `${sheetHeight}vh`, maxWidth: "900px", transition: sheetDragRef.current ? "none" : "height 0.3s ease" } : { border: "1px solid #ffffff15", maxWidth: "900px" }}>
+              {/* Drag handle (mobile) */}
+              <div ref={dragHandleRef} className="sm:hidden flex justify-center py-3 cursor-grab active:cursor-grabbing shrink-0 touch-none" onTouchStart={onDragStart} onTouchMove={onDragMove} onTouchEnd={onDragEnd}>
+                <div className="w-12 h-1.5 rounded-full bg-white/50" />
+              </div>
               <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-xl bg-blue-500/15 flex items-center justify-center shrink-0">
@@ -1636,8 +1691,9 @@ export default function ExpensesPage() {
                   </div>
                 ))}
               </div>
-
-              <div className="flex items-center justify-between px-5 py-3 bg-dark-400/20 border-t border-dark-50/10">
+              </div>
+              {/* Sticky footer — outside scrollable area */}
+              <div className="flex items-center justify-between px-5 py-3 bg-dark-400/30 border-t border-dark-50/15 shrink-0 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
                 <button
                   onClick={() => setFixedModal({
                     open: true, isEdit: false, id: null,
@@ -1649,16 +1705,19 @@ export default function ExpensesPage() {
                 </button>
                 <span className="font-bold text-blue-400 font-mono tabular-nums">{fmt(data.totals.fixed_total)} ₴</span>
               </div>
-              </div>
             </div>
           </div>
           )}
 
           {/* ── MODAL: ЗАРПЛАТНІ ВИТРАТИ ── */}
           {activeDrawer === "salary" && (
-          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-start justify-center sm:p-4 overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label="Зарплатні витрати">
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex flex-col justify-end sm:flex-row sm:items-start sm:justify-center sm:p-4 overflow-hidden sm:overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label="Зарплатні витрати">
             <div className="absolute inset-0" onClick={() => setActiveDrawer(null)} />
-            <div className="relative bg-dark-600 rounded-t-3xl sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto animate-modal-in expense-sheet-modal pb-[env(safe-area-inset-bottom)]" style={{ border: "1px solid #ffffff15", maxHeight: "92vh", maxWidth: "900px" }}>
+            <div ref={sheetPanelRef} className={`relative bg-dark-600 sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto animate-modal-in ${sheetHeight >= 100 ? "flex-1 sm:flex-none sm:max-h-[90vh]" : "rounded-t-3xl"}`} style={sheetHeight < 100 ? { border: "1px solid #ffffff15", height: `${sheetHeight}vh`, maxWidth: "900px", transition: sheetDragRef.current ? "none" : "height 0.3s ease" } : { border: "1px solid #ffffff15", maxWidth: "900px" }}>
+              {/* Drag handle (mobile) */}
+              <div ref={dragHandleRef} className="sm:hidden flex justify-center py-3 cursor-grab active:cursor-grabbing shrink-0 touch-none" onTouchStart={onDragStart} onTouchMove={onDragMove} onTouchEnd={onDragEnd}>
+                <div className="w-12 h-1.5 rounded-full bg-white/50" />
+              </div>
               <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-xl bg-purple-500/15 flex items-center justify-center shrink-0">
@@ -2165,12 +2224,12 @@ export default function ExpensesPage() {
                 </>
               )}
 
-              {/* ── Футер ── */}
-              <div className="flex items-center justify-between px-5 py-3 bg-dark-400/20 border-t border-dark-50/10">
+              </div>
+              </div>
+              {/* Sticky footer — outside scrollable area */}
+              <div className="flex items-center justify-between px-5 py-3 bg-dark-400/30 border-t border-dark-50/15 shrink-0 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
                 <span className="text-xs text-gray-600">Персонал налаштовується в розділі Налаштування</span>
                 <span className="font-bold text-purple-400 font-mono tabular-nums">{fmt(data.totals.salary_total)} ₴</span>
-              </div>
-              </div>
               </div>
             </div>
           </div>
@@ -2178,9 +2237,13 @@ export default function ExpensesPage() {
 
           {/* ── MODAL: ІНШІ ВИТРАТИ ── */}
           {activeDrawer === "other" && (
-          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-start justify-center sm:p-4 overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label="Інші витрати">
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex flex-col justify-end sm:flex-row sm:items-start sm:justify-center sm:p-4 overflow-hidden sm:overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label="Інші витрати">
             <div className="absolute inset-0" onClick={() => setActiveDrawer(null)} />
-            <div className="relative bg-dark-600 rounded-t-3xl sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto animate-modal-in expense-sheet-modal pb-[env(safe-area-inset-bottom)]" style={{ border: "1px solid #ffffff15", maxHeight: "92vh", maxWidth: "900px" }}>
+            <div ref={sheetPanelRef} className={`relative bg-dark-600 sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto animate-modal-in ${sheetHeight >= 100 ? "flex-1 sm:flex-none sm:max-h-[90vh]" : "rounded-t-3xl"}`} style={sheetHeight < 100 ? { border: "1px solid #ffffff15", height: `${sheetHeight}vh`, maxWidth: "900px", transition: sheetDragRef.current ? "none" : "height 0.3s ease" } : { border: "1px solid #ffffff15", maxWidth: "900px" }}>
+              {/* Drag handle (mobile) */}
+              <div ref={dragHandleRef} className="sm:hidden flex justify-center py-3 cursor-grab active:cursor-grabbing shrink-0 touch-none" onTouchStart={onDragStart} onTouchMove={onDragMove} onTouchEnd={onDragEnd}>
+                <div className="w-12 h-1.5 rounded-full bg-white/50" />
+              </div>
               <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-xl bg-amber-500/15 flex items-center justify-center shrink-0">
@@ -2283,7 +2346,10 @@ export default function ExpensesPage() {
                 </div>
               )}
 
-              <div className="flex items-center justify-between px-5 py-3 bg-dark-400/20 border-t border-dark-50/10">
+              </div>
+              </div>
+              {/* Sticky footer — outside scrollable area */}
+              <div className="flex items-center justify-between px-5 py-3 bg-dark-400/30 border-t border-dark-50/15 shrink-0 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
                 <button
                   onClick={() => setOtherModal({
                     open: true, isEdit: false, id: null,
@@ -2295,17 +2361,19 @@ export default function ExpensesPage() {
                 </button>
                 <span className="font-bold text-amber-400 font-mono tabular-nums">{fmt(otherTotal)} ₴</span>
               </div>
-              </div>
-              </div>
             </div>
           </div>
           )}
 
           {/* ── MODAL: ПОДАТКИ ── */}
           {activeDrawer === "taxes" && (
-          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-start justify-center sm:p-4 overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label="Податки">
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex flex-col justify-end sm:flex-row sm:items-start sm:justify-center sm:p-4 overflow-hidden sm:overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label="Податки">
             <div className="absolute inset-0" onClick={() => setActiveDrawer(null)} />
-            <div className="relative bg-dark-600 rounded-t-3xl sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto animate-modal-in expense-sheet-modal pb-[env(safe-area-inset-bottom)]" style={{ border: "1px solid #ffffff15", maxHeight: "92vh", maxWidth: "900px" }}>
+            <div ref={sheetPanelRef} className={`relative bg-dark-600 sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto animate-modal-in ${sheetHeight >= 100 ? "flex-1 sm:flex-none sm:max-h-[90vh]" : "rounded-t-3xl"}`} style={sheetHeight < 100 ? { border: "1px solid #ffffff15", height: `${sheetHeight}vh`, maxWidth: "900px", transition: sheetDragRef.current ? "none" : "height 0.3s ease" } : { border: "1px solid #ffffff15", maxWidth: "900px" }}>
+              {/* Drag handle (mobile) */}
+              <div ref={dragHandleRef} className="sm:hidden flex justify-center py-3 cursor-grab active:cursor-grabbing shrink-0 touch-none" onTouchStart={onDragStart} onTouchMove={onDragMove} onTouchEnd={onDragEnd}>
+                <div className="w-12 h-1.5 rounded-full bg-white/50" />
+              </div>
               <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-xl bg-red-500/15 flex items-center justify-center shrink-0">
@@ -2370,9 +2438,13 @@ export default function ExpensesPage() {
 
           {/* ── MODAL: ПІДСУМКИ ── */}
           {activeDrawer === "summary" && (
-          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-start justify-center sm:p-4 overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label="Підсумки">
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex flex-col justify-end sm:flex-row sm:items-start sm:justify-center sm:p-4 overflow-hidden sm:overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label="Підсумки">
             <div className="absolute inset-0" onClick={() => setActiveDrawer(null)} />
-            <div className="relative bg-dark-600 rounded-t-3xl sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto animate-modal-in expense-sheet-modal pb-[env(safe-area-inset-bottom)]" style={{ border: "1px solid #ffffff15", maxHeight: "92vh", maxWidth: "900px" }}>
+            <div ref={sheetPanelRef} className={`relative bg-dark-600 sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto animate-modal-in ${sheetHeight >= 100 ? "flex-1 sm:flex-none sm:max-h-[90vh]" : "rounded-t-3xl"}`} style={sheetHeight < 100 ? { border: "1px solid #ffffff15", height: `${sheetHeight}vh`, maxWidth: "900px", transition: sheetDragRef.current ? "none" : "height 0.3s ease" } : { border: "1px solid #ffffff15", maxWidth: "900px" }}>
+              {/* Drag handle (mobile) */}
+              <div ref={dragHandleRef} className="sm:hidden flex justify-center py-3 cursor-grab active:cursor-grabbing shrink-0 touch-none" onTouchStart={onDragStart} onTouchMove={onDragMove} onTouchEnd={onDragEnd}>
+                <div className="w-12 h-1.5 rounded-full bg-white/50" />
+              </div>
               <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-xl bg-emerald-500/15 flex items-center justify-center shrink-0">
@@ -2692,7 +2764,7 @@ export default function ExpensesPage() {
 
       {/* ── AI parse modal ── */}
       {aiModal.open && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-start justify-center sm:p-4 overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label="AI-аналіз витрати">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex flex-col justify-end sm:flex-row sm:items-start sm:justify-center sm:p-4 overflow-hidden sm:overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label="AI-аналіз витрати">
           <div className="absolute inset-0" onClick={() => setAiModal({ open: false, text: "", file: null, loading: false, result: null })} />
           <div
             className="relative bg-dark-600 rounded-t-3xl sm:rounded-2xl w-full max-w-lg sm:my-auto modal-glow expense-sheet-modal pb-[env(safe-area-inset-bottom)]"
@@ -2892,7 +2964,7 @@ export default function ExpensesPage() {
         const handleExportKpiExcel = () => exportKpiExcel(rows, totalLabel, totalValue, kpiModal.title, kpiModal.type, year, month);
 
         return (
-          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-start justify-center sm:p-4 overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label={kpiModal.title}>
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex flex-col justify-end sm:flex-row sm:items-start sm:justify-center sm:p-4 overflow-hidden sm:overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label={kpiModal.title}>
             <div className="absolute inset-0" onClick={() => setKpiModal({ open: false, type: "", title: "" })} />
             <div
               className="relative bg-dark-600 rounded-t-3xl sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto expense-sheet-modal pb-[env(safe-area-inset-bottom)]"
@@ -2925,29 +2997,30 @@ export default function ExpensesPage() {
               </div>
               {/* Table */}
               <div className="overflow-y-auto flex-1">
-                <table className="w-full text-sm">
+                <div className="overflow-x-auto">
+                <table className="w-full text-xs min-w-[520px]">
                   <thead className="sticky top-0 bg-dark-600 z-10">
-                    <tr className="border-b border-dark-50/10">
-                      <th scope="col" className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Назва</th>
-                      <th scope="col" className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Деталі</th>
-                      <th scope="col" className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Сума</th>
+                    <tr className="border-b border-dark-50/10 bg-dark-300/50">
+                      <th scope="col" className="text-left px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Назва</th>
+                      <th scope="col" className="text-left px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Деталі</th>
+                      <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Сума</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-dark-50/5">
                     {rows.map((row, idx) => (
-                      <tr key={idx} className="hover:bg-dark-400/15 transition-colors">
-                        <td className="px-6 py-3 text-gray-200">{row.name}</td>
-                        <td className="px-4 py-3 text-gray-500 text-xs">{row.detail}</td>
-                        <td className={`px-6 py-3 text-right font-mono tabular-nums ${row.amount < 0 ? "text-red-400" : "text-gray-200"}`}>
+                      <tr key={idx} className="hover:bg-dark-300/30 transition-colors">
+                        <td className="px-3 py-2.5 text-gray-200">{row.name}</td>
+                        <td className="px-3 py-2.5 text-gray-500 text-xs">{row.detail}</td>
+                        <td className={`px-3 py-2.5 text-right font-mono tabular-nums ${row.amount < 0 ? "text-red-400" : "text-gray-200"}`}>
                           {row.amount < 0 ? "−" : ""}{fmt(Math.abs(row.amount))} ₴
                         </td>
                       </tr>
                     ))}
                   </tbody>
-                  <tfoot className="border-t border-dark-50/15 bg-dark-400/20">
+                  <tfoot className="border-t border-dark-50/15 bg-dark-300/50">
                     <tr>
-                      <td colSpan={2} className="px-6 py-3 text-sm font-semibold text-gray-300">{totalLabel}</td>
-                      <td className={`px-6 py-3 text-right font-bold font-mono tabular-nums text-lg ${
+                      <td colSpan={2} className="px-3 py-2.5 text-xs font-semibold text-gray-300">{totalLabel}</td>
+                      <td className={`px-3 py-2.5 text-right font-bold font-mono tabular-nums text-lg ${
                         kpiModal.type === "remaining" ? (totalValue >= 0 ? "text-emerald-400" : "text-red-400") : "text-white"
                       }`}>
                         {kpiModal.type === "remaining" && totalValue >= 0 ? "+" : ""}{totalValue < 0 ? "−" : ""}{fmt(Math.abs(totalValue))} ₴
@@ -2955,6 +3028,7 @@ export default function ExpensesPage() {
                     </tr>
                   </tfoot>
                 </table>
+                </div>
               </div>
             </div>
           </div>

@@ -812,6 +812,13 @@
      ═══════════════════════════════════════════════════════════ */
   .modal-overlay {
     overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Prevent scroll-through to body when drawer content is scrolled */
+  .modal-overlay .overflow-y-auto {
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
   }
 
   .modal-glow {
@@ -1221,20 +1228,8 @@
   }
 
   /* ═══════════════════════════════════════════════════════════
-     MOBILE BOTTOM-SHEET MODAL — Drag handle
+     MOBILE BOTTOM-SHEET MODAL — Drag handle (now rendered in JSX)
      ═══════════════════════════════════════════════════════════ */
-  @media (max-width: 639px) {
-    .expense-sheet-modal::before {
-      content: "";
-      display: block;
-      width: 36px;
-      height: 4px;
-      border-radius: 2px;
-      background: rgba(255, 255, 255, 0.2);
-      margin: 10px auto 4px;
-      flex-shrink: 0;
-    }
-  }
 
   /* ═══════════════════════════════════════════════════════════
      THEME TRANSITION

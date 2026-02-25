@@ -75,24 +75,22 @@ export function PaidServicesBlock({ data }: PaidServicesBlockProps) {
 
       {/* Services table */}
       <div className="overflow-x-auto">
-        <table className="w-full text-xs">
+        <table className="w-full text-xs min-w-[520px]">
           <thead>
-            <tr className="border-b border-white/10">
-              <th className="text-left py-2.5 px-2 text-gray-500 font-medium">Послуга</th>
-              <th className="text-right py-2.5 px-2 text-gray-500 font-medium">Код</th>
-              <th className="text-right py-2.5 px-2 text-gray-500 font-medium">К-сть</th>
-              <th className="text-right py-2.5 px-2 text-gray-500 font-medium">Виручка</th>
-              <th className="text-right py-2.5 px-2 text-gray-500 font-medium">Матер.</th>
-              <th className="text-right py-2.5 px-2 text-gray-500 font-medium">Маржа</th>
+            <tr className="border-b border-dark-50/10 bg-dark-300/50">
+              <th className="text-left py-2.5 px-3 text-gray-400 font-medium whitespace-nowrap">Послуга</th>
+              <th className="text-right py-2.5 px-3 text-gray-400 font-medium whitespace-nowrap">Код</th>
+              <th className="text-right py-2.5 px-3 text-gray-400 font-medium whitespace-nowrap">К-сть</th>
+              <th className="text-right py-2.5 px-3 text-gray-400 font-medium whitespace-nowrap">Виручка</th>
+              <th className="text-right py-2.5 px-3 text-gray-400 font-medium whitespace-nowrap">Матер.</th>
+              <th className="text-right py-2.5 px-3 text-gray-400 font-medium whitespace-nowrap">Маржа</th>
             </tr>
           </thead>
           <tbody>
             {data.top_paid_services.map((service, idx) => (
               <tr
                 key={idx}
-                className={`border-b border-white/5 transition-colors hover:bg-white/[0.02] ${
-                  idx % 2 === 0 ? "bg-white/[0.01]" : ""
-                }`}
+                className="border-b border-dark-50/5 hover:bg-dark-300/30 transition-colors"
               >
                 <td className="py-2.5 px-2">
                   <p className="text-white font-medium truncate max-w-[200px]">

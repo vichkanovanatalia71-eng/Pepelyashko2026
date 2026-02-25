@@ -327,22 +327,22 @@ export default function RevenuePage() {
             <div className="card-neo card-3d-hover p-5">
               <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2"><ClipboardList size={15} className="text-orange-400" />Деталізація по лікарях</h3>
               <div className="overflow-x-auto">
-                <table className="w-full text-xs">
+                <table className="w-full text-xs min-w-[400px]">
                   <thead>
-                    <tr className="border-b border-dark-50/10">
-                      <th className="text-left py-2 text-gray-500">Лікар</th>
-                      <th className="text-right py-2 text-gray-500">НСЗУ</th>
-                      <th className="text-right py-2 text-gray-500">Платні</th>
-                      <th className="text-right py-2 text-gray-500 font-medium">Всього</th>
+                    <tr className="border-b border-dark-50/10 bg-dark-300/50">
+                      <th className="text-left px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Лікар</th>
+                      <th className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">НСЗУ</th>
+                      <th className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Платні</th>
+                      <th className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Всього</th>
                     </tr>
                   </thead>
                   <tbody>
                     {data.by_doctor.map(d => (
                       <tr key={d.doctor_id} className="border-b border-dark-50/5 hover:bg-dark-300/30 transition-colors">
-                        <td className="py-2 text-gray-300 truncate max-w-[120px]">{d.doctor_name}</td>
-                        <td className="py-2 text-right text-indigo-400 tabular-nums">{fmt(d.nhsu)}</td>
-                        <td className="py-2 text-right text-teal-400 tabular-nums">{fmt(d.paid_services)}</td>
-                        <td className="py-2 text-right text-white font-semibold tabular-nums">{fmt(d.total)}</td>
+                        <td className="px-3 py-2.5 text-gray-300 truncate max-w-[120px]">{d.doctor_name}</td>
+                        <td className="px-3 py-2.5 text-right text-indigo-400 tabular-nums">{fmt(d.nhsu)}</td>
+                        <td className="px-3 py-2.5 text-right text-teal-400 tabular-nums">{fmt(d.paid_services)}</td>
+                        <td className="px-3 py-2.5 text-right text-white font-semibold tabular-nums">{fmt(d.total)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -503,11 +503,11 @@ export default function RevenuePage() {
 function DrillTable({ headers, rows }: { headers: string[]; rows: string[][] }) {
   return (
     <div className="overflow-x-auto rounded-xl border border-dark-50/10">
-      <table className="w-full text-xs">
+      <table className="w-full text-xs min-w-[400px]">
         <thead>
           <tr className="bg-dark-300/50 border-b border-dark-50/10">
             {headers.map(h => (
-              <th key={h} scope="col" className="text-left px-3 py-2.5 text-gray-500 font-medium">{h}</th>
+              <th key={h} scope="col" className="text-left px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">{h}</th>
             ))}
           </tr>
         </thead>

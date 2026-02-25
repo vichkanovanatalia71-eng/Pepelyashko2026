@@ -297,84 +297,37 @@ export default function IncomesPage() {
         </form>
       )}
 
-      {/* Mobile card list */}
-      <div className="sm:hidden space-y-2.5 stagger-enter">
-        {filtered.length === 0 && (
-          <div className="card-neo p-10 text-center text-gray-600 text-sm">
-            {search ? "Нічого не знайдено" : "Доходів поки немає. Натисніть «Додати» щоб почати."}
-          </div>
-        )}
-        {filtered.map((income) => (
-          <div key={income.id} className="card-neo card-tap p-4">
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex-1 min-w-0" onClick={() => handleEdit(income)}>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs text-gray-500">{income.date}</span>
-                  <span className="font-bold text-emerald-400 tabular-nums">+{fmt(income.amount)} &#8372;</span>
-                </div>
-                <p className="text-sm text-gray-200 font-medium truncate">{income.source || "—"}</p>
-                <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                  <span className="px-2 py-0.5 text-xs font-medium rounded-lg bg-dark-400 text-gray-400 border border-dark-50/10">
-                    {PAYMENT_LABELS[income.payment_method] || income.payment_method}
-                  </span>
-                  {income.category_id && catMap.get(income.category_id) && (
-                    <span className="px-2 py-0.5 text-xs font-medium rounded-lg bg-accent-500/10 text-accent-400 border border-accent-500/20">
-                      {catMap.get(income.category_id)}
-                    </span>
-                  )}
-                  {income.description && (
-                    <span className="text-xs text-gray-600 truncate">{income.description}</span>
-                  )}
-                </div>
-              </div>
-              <div className="flex flex-col gap-1 shrink-0">
-                <button onClick={() => handleEdit(income)}
-                  aria-label="Редагувати"
-                  className="p-2 rounded-xl text-gray-600 hover:text-accent-400 hover:bg-accent-500/10 transition-all tap-target">
-                  <Pencil size={14} />
-                </button>
-                <button onClick={() => handleDelete(income.id)}
-                  aria-label="Видалити"
-                  className="p-2 rounded-xl text-gray-600 hover:text-red-400 hover:bg-red-500/10 transition-all tap-target">
-                  <Trash2 size={14} />
-                </button>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Desktop table */}
-      <div className="hidden sm:block card-neo overflow-hidden">
+      {/* Table */}
+      <div className="card-neo overflow-hidden">
         <div className="overflow-x-auto">
-        <table className="w-full text-sm min-w-[660px]">
+        <table className="w-full text-xs min-w-[660px]">
           <thead>
-            <tr className="border-b border-dark-50/10">
-              <th scope="col" className="text-left px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer select-none hover:text-gray-300"
+            <tr className="border-b border-dark-50/10 bg-dark-300/50">
+              <th scope="col" className="text-left px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap cursor-pointer select-none hover:text-gray-200 transition-colors"
                 onClick={() => toggleSort("date")}
                 aria-label="Сортувати за датою">
                 <span className="flex items-center gap-1">Дата {sortField === "date" && <ArrowUpDown size={11}/>}</span>
               </th>
-              <th scope="col" className="text-left px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer select-none hover:text-gray-300"
+              <th scope="col" className="text-left px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap cursor-pointer select-none hover:text-gray-200 transition-colors"
                 onClick={() => toggleSort("amount")}
                 aria-label="Сортувати за сумою">
                 <span className="flex items-center gap-1">Сума {sortField === "amount" && <ArrowUpDown size={11}/>}</span>
               </th>
-              <th scope="col" className="text-left px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Джерело</th>
-              <th scope="col" className="text-left px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Категорія</th>
-              <th scope="col" className="text-left px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Оплата</th>
-              <th scope="col" className="text-left px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Опис</th>
-              <th scope="col" className="px-5 py-4"></th>
+              <th scope="col" className="text-left px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Джерело</th>
+              <th scope="col" className="text-left px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Категорія</th>
+              <th scope="col" className="text-left px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Оплата</th>
+              <th scope="col" className="text-left px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Опис</th>
+              <th scope="col" className="px-3 py-2.5"></th>
             </tr>
           </thead>
           <tbody>
             {filtered.map((income) => (
               <tr key={income.id}
-                className="border-b border-dark-50/5 hover:bg-dark-200/50 transition-colors">
-                <td className="px-5 py-4 text-gray-300">{income.date}</td>
-                <td className="px-5 py-4 font-semibold text-emerald-400 tabular-nums">+{fmt(income.amount)} &#8372;</td>
-                <td className="px-5 py-4 text-gray-300">{income.source || "—"}</td>
-                <td className="px-5 py-4">
+                className="border-b border-dark-50/5 hover:bg-dark-300/30 transition-colors">
+                <td className="px-3 py-2.5 text-gray-300">{income.date}</td>
+                <td className="px-3 py-2.5 font-semibold text-emerald-400 tabular-nums">+{fmt(income.amount)} &#8372;</td>
+                <td className="px-3 py-2.5 text-gray-300">{income.source || "—"}</td>
+                <td className="px-3 py-2.5">
                   {income.category_id && catMap.get(income.category_id) ? (
                     <span className="px-2.5 py-1 text-xs font-medium rounded-lg bg-accent-500/10 text-accent-400 border border-accent-500/20">
                       {catMap.get(income.category_id)}
@@ -383,13 +336,13 @@ export default function IncomesPage() {
                     <span className="text-gray-600">—</span>
                   )}
                 </td>
-                <td className="px-5 py-4">
+                <td className="px-3 py-2.5">
                   <span className="px-2.5 py-1 text-xs font-medium rounded-lg bg-dark-400 text-gray-400 border border-dark-50/10">
                     {PAYMENT_LABELS[income.payment_method] || income.payment_method}
                   </span>
                 </td>
-                <td className="px-5 py-4 text-gray-500">{income.description || "—"}</td>
-                <td className="px-5 py-4">
+                <td className="px-3 py-2.5 text-gray-500">{income.description || "—"}</td>
+                <td className="px-3 py-2.5">
                   <div className="flex items-center gap-1">
                     <button onClick={() => handleEdit(income)}
                       aria-label="Редагувати"

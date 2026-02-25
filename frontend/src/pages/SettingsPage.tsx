@@ -526,12 +526,12 @@ export default function SettingsPage() {
             )}
 
             {/* Таблиця лікарів */}
-            <div className="overflow-hidden rounded-xl border border-dark-50/10">
-              <table className="w-full text-sm">
+            <div className="overflow-hidden rounded-xl border border-dark-50/10 overflow-x-auto">
+              <table className="w-full text-xs min-w-[400px]">
                 <thead>
                   <tr className="border-b border-dark-50/10 bg-dark-300/50">
-                    <th scope="col" className="text-left px-4 py-3 text-gray-400 font-medium">ПІБ</th>
-                    <th scope="col" className="text-center px-4 py-3 text-gray-400 font-medium">Власник</th>
+                    <th scope="col" className="text-left px-4 py-2.5 text-gray-400 font-medium whitespace-nowrap">ПІБ</th>
+                    <th scope="col" className="text-center px-4 py-2.5 text-gray-400 font-medium whitespace-nowrap">Власник</th>
                     <th scope="col" className="px-4 py-3" />
                   </tr>
                 </thead>
@@ -612,12 +612,12 @@ export default function SettingsPage() {
 
             {nurseMsg && <p className="text-xs text-accent-400">{nurseMsg}</p>}
 
-            <div className="overflow-hidden rounded-xl border border-dark-50/10">
-              <table className="w-full text-sm">
+            <div className="overflow-hidden rounded-xl border border-dark-50/10 overflow-x-auto">
+              <table className="w-full text-xs min-w-[400px]">
                 <thead>
                   <tr className="border-b border-dark-50/10 bg-dark-300/50">
-                    <th scope="col" className="text-left px-4 py-3 text-gray-400 font-medium">ПІБ</th>
-                    <th scope="col" className="text-left px-4 py-3 text-gray-400 font-medium">Посада</th>
+                    <th scope="col" className="text-left px-4 py-2.5 text-gray-400 font-medium whitespace-nowrap">ПІБ</th>
+                    <th scope="col" className="text-left px-4 py-2.5 text-gray-400 font-medium whitespace-nowrap">Посада</th>
                     <th scope="col" className="px-4 py-3" />
                   </tr>
                 </thead>
@@ -690,12 +690,12 @@ export default function SettingsPage() {
 
             {otherMsg && <p className="text-xs text-accent-400">{otherMsg}</p>}
 
-            <div className="overflow-hidden rounded-xl border border-dark-50/10">
-              <table className="w-full text-sm">
+            <div className="overflow-hidden rounded-xl border border-dark-50/10 overflow-x-auto">
+              <table className="w-full text-xs min-w-[400px]">
                 <thead>
                   <tr className="border-b border-dark-50/10 bg-dark-300/50">
-                    <th scope="col" className="text-left px-4 py-3 text-gray-400 font-medium">ПІБ</th>
-                    <th scope="col" className="text-left px-4 py-3 text-gray-400 font-medium">Посада</th>
+                    <th scope="col" className="text-left px-4 py-2.5 text-gray-400 font-medium whitespace-nowrap">ПІБ</th>
+                    <th scope="col" className="text-left px-4 py-2.5 text-gray-400 font-medium whitespace-nowrap">Посада</th>
                     <th scope="col" className="px-4 py-3" />
                   </tr>
                 </thead>

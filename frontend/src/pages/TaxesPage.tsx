@@ -107,22 +107,22 @@ export default function TaxesPage() {
         /* Annual P&L table */
         <div className="card-neo overflow-hidden">
           <div className="overflow-x-auto">
-          <table className="w-full text-sm min-w-[700px]">
+          <table className="w-full text-xs min-w-[700px]">
             <thead>
-              <tr className="border-b border-dark-50/10">
-                <th scope="col" className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Місяць</th>
-                <th scope="col" className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Доходи</th>
-                <th scope="col" className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Витрати</th>
-                <th scope="col" className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Прибуток</th>
-                <th scope="col" className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">ЄП (5%)</th>
-                <th scope="col" className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">ЄСВ</th>
-                <th scope="col" className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">ВЗ</th>
-                <th scope="col" className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Після податків</th>
+              <tr className="border-b border-dark-50/10 bg-dark-300/50">
+                <th scope="col" className="text-left px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Місяць</th>
+                <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Доходи</th>
+                <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Витрати</th>
+                <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Прибуток</th>
+                <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">ЄП (5%)</th>
+                <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">ЄСВ</th>
+                <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">ВЗ</th>
+                <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Після податків</th>
               </tr>
             </thead>
             <tbody>
               {annual.months.map(m => (
-                <tr key={m.month} className="border-b border-dark-50/5 hover:bg-dark-200/50 transition-colors">
+                <tr key={m.month} className="border-b border-dark-50/5 hover:bg-dark-300/30 transition-colors">
                   <td className="px-4 py-3 text-white font-medium">{m.month_name}</td>
                   <td className="px-4 py-3 text-right text-emerald-400 tabular-nums">{fmt(m.income)}</td>
                   <td className="px-4 py-3 text-right text-red-400 tabular-nums">{fmt(m.expenses)}</td>
@@ -207,16 +207,16 @@ export default function TaxesPage() {
           {/* Summary table */}
           <div className="card-neo overflow-hidden">
             <div className="overflow-x-auto">
-            <table className="w-full text-sm min-w-[600px]">
+            <table className="w-full text-xs min-w-[600px]">
               <thead>
-                <tr className="border-b border-dark-50/10">
-                  <th scope="col" className="text-left px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Квартал</th>
-                  <th scope="col" className="text-right px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Дохід</th>
-                  <th scope="col" className="text-right px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Єдиний податок</th>
-                  <th scope="col" className="text-right px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">ЄСВ</th>
-                  <th scope="col" className="text-right px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">ВЗ</th>
-                  <th scope="col" className="text-right px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Всього</th>
-                  <th scope="col" className="text-center px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Статус</th>
+                <tr className="border-b border-dark-50/10 bg-dark-300/50">
+                  <th scope="col" className="text-left px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Квартал</th>
+                  <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Дохід</th>
+                  <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Єдиний податок</th>
+                  <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">ЄСВ</th>
+                  <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">ВЗ</th>
+                  <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Всього</th>
+                  <th scope="col" className="text-center px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Статус</th>
                 </tr>
               </thead>
               <tbody>
@@ -226,10 +226,10 @@ export default function TaxesPage() {
                   return (
                     <tr
                       key={t.quarter}
-                      className="border-b border-dark-50/5 hover:bg-dark-200/50 transition-colors"
+                      className="border-b border-dark-50/5 hover:bg-dark-300/30 transition-colors"
                     >
-                      <td className="px-5 py-4 text-white font-medium">{t.quarter}</td>
-                      <td className="px-5 py-4 text-right text-gray-300 tabular-nums">{fmt(t.income)} &#8372;</td>
+                      <td className="px-3 py-2.5 text-white font-medium">{t.quarter}</td>
+                      <td className="px-3 py-2.5 text-right text-gray-300 tabular-nums">{fmt(t.income)} &#8372;</td>
                       <td className={`px-5 py-4 text-right text-accent-400 tabular-nums ${isPaid(q, "single_tax") ? "line-through opacity-50" : ""}`}>
                         {fmt(t.single_tax)} &#8372;
                       </td>
@@ -239,10 +239,10 @@ export default function TaxesPage() {
                       <td className={`px-5 py-4 text-right text-orange-400 tabular-nums ${isPaid(q, "vz") ? "line-through opacity-50" : ""}`}>
                         {fmt(t.vz)} &#8372;
                       </td>
-                      <td className="px-5 py-4 text-right font-semibold text-red-400 tabular-nums">
+                      <td className="px-3 py-2.5 text-right font-semibold text-red-400 tabular-nums">
                         {fmt(t.total)} &#8372;
                       </td>
-                      <td className="px-5 py-4 text-center">
+                      <td className="px-3 py-2.5 text-center">
                         <StatusBadge
                           label={allPaid ? "Сплачено" : "Очікує"}
                           variant={allPaid ? "success" : "warning"}
@@ -254,13 +254,13 @@ export default function TaxesPage() {
 
                 {/* Total row */}
                 <tr className="bg-dark-400/50">
-                  <td className="px-5 py-4 text-white font-bold">Разом за {year}</td>
-                  <td className="px-5 py-4 text-right text-white font-bold tabular-nums">{fmt(totalIncome)} &#8372;</td>
-                  <td className="px-5 py-4 text-right text-accent-400 font-bold tabular-nums">{fmt(totalSingleTax)} &#8372;</td>
-                  <td className="px-5 py-4 text-right text-yellow-400 font-bold tabular-nums">{fmt(totalEsv)} &#8372;</td>
-                  <td className="px-5 py-4 text-right text-orange-400 font-bold tabular-nums">{fmt(totalVz)} &#8372;</td>
-                  <td className="px-5 py-4 text-right text-red-400 font-bold text-base tabular-nums">{fmt(grandTotal)} &#8372;</td>
-                  <td className="px-5 py-4"></td>
+                  <td className="px-3 py-2.5 text-white font-bold">Разом за {year}</td>
+                  <td className="px-3 py-2.5 text-right text-white font-bold tabular-nums">{fmt(totalIncome)} &#8372;</td>
+                  <td className="px-3 py-2.5 text-right text-accent-400 font-bold tabular-nums">{fmt(totalSingleTax)} &#8372;</td>
+                  <td className="px-3 py-2.5 text-right text-yellow-400 font-bold tabular-nums">{fmt(totalEsv)} &#8372;</td>
+                  <td className="px-3 py-2.5 text-right text-orange-400 font-bold tabular-nums">{fmt(totalVz)} &#8372;</td>
+                  <td className="px-3 py-2.5 text-right text-red-400 font-bold text-base tabular-nums">{fmt(grandTotal)} &#8372;</td>
+                  <td className="px-3 py-2.5"></td>
                 </tr>
               </tbody>
             </table>

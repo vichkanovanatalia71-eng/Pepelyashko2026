@@ -155,11 +155,11 @@ export function Modal({ title, onClose, children, footer }: {
   }, [onClose]);
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-start justify-center sm:p-4 overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label={title}>
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex flex-col justify-end sm:flex-row sm:items-start sm:justify-center sm:p-4 sm:overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label={title}>
       <div className="absolute inset-0" onClick={onClose} />
       <div
         ref={panelRef}
-        className="relative bg-dark-600 rounded-t-3xl sm:rounded-2xl w-full max-w-md sm:my-auto animate-modal-in modal-glow expense-sheet-modal pb-[env(safe-area-inset-bottom)] flex flex-col max-h-[calc(100vh-2rem)] sm:max-h-none"
+        className="relative bg-dark-600 rounded-t-3xl sm:rounded-2xl w-full max-w-md sm:my-auto animate-modal-in modal-glow flex flex-col max-h-[85vh] sm:max-h-[90vh]"
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
@@ -180,7 +180,7 @@ export function Modal({ title, onClose, children, footer }: {
         </div>
         <div className="px-5 py-4 space-y-4 overflow-y-auto flex-1">{children}</div>
         {footer && (
-          <div className="px-5 py-4 border-t border-white/10 bg-dark-600/50 backdrop-blur-sm shrink-0">
+          <div className="px-5 py-4 border-t border-white/10 bg-dark-600/50 backdrop-blur-sm shrink-0 pb-[max(1rem,env(safe-area-inset-bottom))]">
             {footer}
           </div>
         )}

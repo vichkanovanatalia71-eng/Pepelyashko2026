@@ -590,15 +590,15 @@ export default function NhsuPage() {
                 </span>
               </div>
               <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead><tr className="border-b border-dark-50/10">
+                <table className="w-full text-xs min-w-[600px]">
+                  <thead><tr className="border-b border-dark-50/10 bg-dark-300/50">
                     {["Місяць","Сума (брутто)","ЄП","ВЗ","ЄП+ВЗ","Чистий дохід"].map(h=>
-                      <th key={h} scope="col" className="px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase text-right first:text-left">{h}</th>
+                      <th key={h} scope="col" className="px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap text-right first:text-left">{h}</th>
                     )}
                   </tr></thead>
                   <tbody>
                     {rangeData.months.map(m => (
-                      <tr key={`${m.year}-${m.month}`} className={`border-b border-dark-50/5 hover:bg-dark-200/40 ${!m.has_data ? "opacity-35" : ""}`}>
+                      <tr key={`${m.year}-${m.month}`} className={`border-b border-dark-50/5 hover:bg-dark-300/30 transition-colors ${!m.has_data ? "opacity-35" : ""}`}>
                         <td className="px-4 py-2.5 text-gray-300">{m.label}</td>
                         <td className="px-4 py-2.5 text-right text-emerald-400 font-mono">{m.has_data ? fmt2(m.amount) : "—"}</td>
                         <td className="px-4 py-2.5 text-right text-red-400/70 font-mono">{m.has_data ? fmt2(m.ep) : "—"}</td>
@@ -748,15 +748,15 @@ export default function NhsuPage() {
               <span className="ml-auto text-xs text-gray-500 font-mono">{doc.total_patients} пац. · {fmt2(doc.total_amount)} грн</span>
             </div>
             <div className="overflow-x-auto">
-            <table className="w-full text-sm min-w-[580px]">
-              <thead><tr className="border-b border-dark-50/10">
+            <table className="w-full text-xs min-w-[580px]">
+              <thead><tr className="border-b border-dark-50/10 bg-dark-300/50">
                 {["Вікова група","Коеф.","Пацієнти","Не вериф.","Сума","ЄП","ВЗ","ЄП+ВЗ"].map(h=>
-                  <th key={h} scope="col" className="px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase text-right first:text-left">{h}</th>
+                  <th key={h} scope="col" className="px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap text-right first:text-left">{h}</th>
                 )}
               </tr></thead>
               <tbody>
                 {doc.rows.map(r => (
-                  <tr key={r.age_group} className="border-b border-dark-50/5 hover:bg-dark-200/40">
+                  <tr key={r.age_group} className="border-b border-dark-50/5 hover:bg-dark-300/30 transition-colors">
                     <td className="px-4 py-2.5 text-gray-300">{r.age_group_label}</td>
                     <td className="px-4 py-2.5 text-right text-gray-500">{r.age_coefficient}</td>
                     <td className="px-4 py-2.5 text-right text-gray-200 font-mono">{r.patient_count}</td>
@@ -949,13 +949,13 @@ export default function NhsuPage() {
                       {doc.is_owner && <span className="text-xs bg-accent-500/10 text-accent-400 px-2 py-0.5 rounded-full border border-accent-500/20">Власник</span>}
                     </div>
                     <div className="overflow-x-auto rounded-xl border border-dark-50/10">
-                      <table className="w-full text-sm min-w-[480px]">
-                        <thead><tr className="bg-dark-400/40 border-b border-dark-50/10">
-                          <th scope="col" className="text-left px-4 py-2.5 text-xs text-gray-500 uppercase">Вікова група</th>
-                          <th scope="col" className="text-center px-4 py-2.5 text-xs text-gray-500 uppercase">Коеф.</th>
-                          <th scope="col" className="text-center px-4 py-2.5 text-xs text-gray-500 uppercase">Пацієнти</th>
-                          <th scope="col" className="text-center px-4 py-2.5 text-xs text-gray-500 uppercase">Не верифіковані</th>
-                          <th scope="col" className="text-right px-4 py-2.5 text-xs text-gray-500 uppercase">Сума</th>
+                      <table className="w-full text-xs min-w-[480px]">
+                        <thead><tr className="bg-dark-300/50 border-b border-dark-50/10">
+                          <th scope="col" className="text-left px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Вікова група</th>
+                          <th scope="col" className="text-center px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Коеф.</th>
+                          <th scope="col" className="text-center px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Пацієнти</th>
+                          <th scope="col" className="text-center px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Не верифіковані</th>
+                          <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Сума</th>
                         </tr></thead>
                         <tbody>
                           {ageGroups.map(ag => {
@@ -966,7 +966,7 @@ export default function NhsuPage() {
                             const nv = parseFloat(rec.non_verified)||0;
                             const preview = (settings.capitation_rate * coeff * (p-nv)) / 12;
                             return (
-                              <tr key={ag.key} className="border-b border-dark-50/5">
+                              <tr key={ag.key} className="border-b border-dark-50/5 hover:bg-dark-300/30 transition-colors">
                                 <td className="px-4 py-2.5 text-gray-300">{ag.label}</td>
                                 <td className="px-4 py-2.5 text-center text-gray-500">{coeff}</td>
                                 <td className="px-4 py-2.5 text-center">

@@ -588,22 +588,22 @@ export default function BudgetPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-[1100px]">
             <thead>
-              <tr className="border-b border-dark-50/10 bg-dark-500/50">
-                <th scope="col" className="sticky left-0 z-20 bg-dark-500/80 w-8 px-2 py-2.5 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-wider border-r border-dark-50/5">
+              <tr className="border-b border-dark-50/10 bg-dark-300/50">
+                <th scope="col" className="sticky left-0 z-20 bg-dark-300/80 w-8 px-2 py-2.5 text-center text-gray-400 font-medium whitespace-nowrap border-r border-dark-50/5">
                   №
                 </th>
-                <th scope="col" className="sticky left-8 z-20 bg-dark-500/80 min-w-[200px] px-3 py-2.5 text-[10px] font-semibold text-gray-500 uppercase tracking-wider border-r border-dark-50/5">
+                <th scope="col" className="sticky left-8 z-20 bg-dark-300/80 min-w-[200px] px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap border-r border-dark-50/5">
                   Стаття витрат
                 </th>
                 {MONTHS_SHORT.map((m, i) => (
-                  <th scope="col" key={i} className="px-1 py-2.5 text-right text-[10px] font-semibold text-gray-500 uppercase tracking-wider min-w-[80px]">
+                  <th scope="col" key={i} className="px-1 py-2.5 text-right text-gray-400 font-medium whitespace-nowrap min-w-[80px]">
                     {m}
                   </th>
                 ))}
-                <th scope="col" className="px-3 py-2.5 text-right text-[10px] font-semibold text-gray-500 uppercase tracking-wider min-w-[90px] border-l border-dark-50/5">
+                <th scope="col" className="px-3 py-2.5 text-right text-gray-400 font-medium whitespace-nowrap min-w-[90px] border-l border-dark-50/5">
                   Всього
                 </th>
-                <th scope="col" className="px-2 py-2.5 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-wider min-w-[60px] border-l border-dark-50/5">
+                <th scope="col" className="px-2 py-2.5 text-center text-gray-400 font-medium whitespace-nowrap min-w-[60px] border-l border-dark-50/5">
                   Дії
                 </th>
               </tr>
