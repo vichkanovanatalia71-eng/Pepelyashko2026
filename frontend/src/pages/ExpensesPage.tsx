@@ -1,329 +1,38 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import {
-  ChevronLeft,
-  ChevronRight,
-  Save,
-  RefreshCw,
-  Lock,
-  LockOpen,
-  TrendingDown,
-  Users,
-  Receipt,
-  Plus,
-  Trash2,
-  Edit2,
-  X,
-  Building2,
-  Wallet,
-  BarChart3,
-  Check,
-  UserPlus,
-
-  Copy,
-  Sparkles,
-  Download,
-  CalendarDays,
-  ImagePlus,
-  AlertCircle,
-  FileSpreadsheet,
-  Eye,
-  Target,
-  Activity,
-  ArrowUpRight,
-  ArrowDownRight,
-  Share2,
-  Link,
-  ExternalLink,
-  ClipboardList,
-  TrendingUp,
-  Banknote,
-  HeartPulse,
+  ChevronLeft, ChevronRight, Save, RefreshCw, Lock, LockOpen,
+  TrendingDown, Users, Receipt, Plus, Trash2, Edit2, X,
+  Building2, Wallet, BarChart3, Check, UserPlus, Copy, Sparkles,
+  Download, CalendarDays, ImagePlus, AlertCircle, FileSpreadsheet,
+  Eye, Target, Activity, ArrowUpRight, ArrowDownRight,
+  Share2, ClipboardList, TrendingUp, Banknote, HeartPulse,
 } from "lucide-react";
 import {
-  LoadingSpinner,
-  AlertBanner,
-  EmptyState,
-  ConfirmDialog,
+  LoadingSpinner, AlertBanner, EmptyState, ConfirmDialog,
 } from "../components/shared";
 import MedFlowLogo from "../components/shared/MedFlowLogo";
-import * as XLSX from "xlsx";
 import {
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Line,
-  AreaChart,
-  Area,
-  Legend,
-  ComposedChart,
+  BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis,
+  CartesianGrid, Tooltip, ResponsiveContainer, Line,
+  AreaChart, Area, Legend, ComposedChart,
 } from "recharts";
 import api from "../api/client";
 import type {
-  MonthlyExpenseData,
-  SalaryExpenseRow,
-  StaffMember,
-  HiredDoctorInfo,
-  Doctor,
-  PeriodSummary,
-  AiParsedExpense,
+  MonthlyExpenseData, SalaryExpenseRow, StaffMember,
+  HiredDoctorInfo, Doctor, PeriodSummary, AiParsedExpense,
 } from "../types";
 
-// ── Constants ──────────────────────────────────────────────────────
-
+// ── Extracted modules ─────────────────────────────────────────────
 import { MONTH_NAMES } from "../components/shared/MonthNavigator";
-
-const MONTH_SHORT = [
-  "Січ","Лют","Бер","Кві","Тра","Чер",
-  "Лип","Сер","Вер","Жов","Лис","Гру",
-];
-
-const ROLE_LABELS: Record<string, string> = {
-  doctor: "Лікар",
-  nurse:  "Медична сестра",
-  other:  "Інший персонал",
-};
-
-
-const TT_STYLE = {
-  background: "#1a1a2e",
-  border: "1px solid #ffffff15",
-  borderRadius: 8,
-  color: "#e2e8f0",
-  fontSize: 12,
-};
-
-const PIE_COLORS = ["#6366f1", "#a855f7", "#f59e0b", "#f43f5e", "#10b981"];
-
-const CATEGORY_BADGE: Record<string, { label: string; cls: string }> = {
-  fixed:  { label: "Постійні",   cls: "bg-blue-500/20 text-blue-300 border-blue-500/30" },
-  salary: { label: "Зарплатні",  cls: "bg-purple-500/20 text-purple-300 border-purple-500/30" },
-  salary_paid: { label: "Платні послуги (ЗП)", cls: "bg-indigo-500/20 text-indigo-300 border-indigo-500/30" },
-  owner_own:   { label: "Власник · Власні декл.", cls: "bg-amber-500/20 text-amber-300 border-amber-500/30" },
-  owner_hired: { label: "Власник · Найм. лікар",  cls: "bg-teal-500/20 text-teal-300 border-teal-500/30" },
-  owner_paid:  { label: "Власник · Платні послуги", cls: "bg-cyan-500/20 text-cyan-300 border-cyan-500/30" },
-  other:  { label: "Інші",       cls: "bg-amber-500/20 text-amber-300 border-amber-500/30" },
-  taxes:  { label: "Податки",    cls: "bg-red-500/20 text-red-300 border-red-500/30" },
-};
-
-const fmt = (n: number) =>
-  n.toLocaleString("uk-UA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
-// ── Local types ────────────────────────────────────────────────────
-
-interface SalaryFormState {
-  brutto: string;
-  has_supplement: boolean;
-  target_net: string;
-  individual_bonus: string;
-  paid_services_from_module: boolean;
-  saving: boolean;
-}
-
-interface OtherExpense {
-  id: number;
-  name: string;
-  description: string;
-  amount: number;
-  category: string;
-  year: number;
-  month: number;
-}
-
-interface DetailRow {
-  name: string;
-  category: string;
-  amount: number;
-}
-
-interface AnnualMonthData {
-  month: number;
-  fixed: number;
-  salary: number;
-  taxes: number;
-  other: number;
-  income: number;
-  total: number;
-  remaining: number;
-}
-
-interface KpiModalState {
-  open: boolean;
-  type: "fixed" | "salary" | "other" | "taxes" | "total" | "remaining" | "";
-  title: string;
-}
-
-// ── Helpers ────────────────────────────────────────────────────────
-
-function initSalaryForm(row: SalaryExpenseRow): SalaryFormState {
-  return {
-    brutto: row.brutto > 0 ? String(row.brutto) : "",
-    has_supplement: row.has_supplement,
-    target_net: row.target_net != null ? String(row.target_net) : "",
-    individual_bonus: row.individual_bonus > 0 ? String(row.individual_bonus) : "",
-    paid_services_from_module: row.paid_services_from_module,
-    saving: false,
-  };
-}
-
-// ── Sub-components ─────────────────────────────────────────────────
-
-function CalcRow({
-  label, value, color = "text-gray-300", info, locked, bold,
-}: {
-  label: string; value: number; color?: string;
-  info?: string; locked?: boolean; bold?: boolean;
-}) {
-  return (
-    <div className="flex items-center justify-between text-sm gap-2">
-      <div className="flex items-center gap-1.5 min-w-0 flex-1">
-        {locked && <Lock size={11} className="text-gray-600 shrink-0" aria-hidden="true" />}
-        <span className="text-gray-400 truncate">{label}</span>
-        {info && <span className="text-xs text-gray-600 italic shrink-0">({info})</span>}
-      </div>
-      <span className={`font-mono shrink-0 tabular-nums ${color} ${bold ? "font-bold" : ""}`}>
-        {fmt(value)} ₴
-      </span>
-    </div>
-  );
-}
-
-function TaxRow({
-  label, value, bold, color = "text-gray-300",
-}: {
-  label: string; value: number; bold?: boolean; color?: string;
-}) {
-  return (
-    <div className="flex items-center justify-between text-sm gap-2">
-      <div className="flex items-center gap-1.5">
-        <Lock size={11} className="text-gray-600 shrink-0" aria-hidden="true" />
-        <span className={bold ? "text-gray-200 font-semibold" : "text-gray-400"}>{label}</span>
-      </div>
-      <span className={`font-mono tabular-nums ${color} ${bold ? "font-bold" : ""}`}>{fmt(value)} ₴</span>
-    </div>
-  );
-}
-
-function SummaryRow({
-  label, value, color = "text-gray-300", bold,
-}: {
-  label: string; value: number; color?: string; bold?: boolean;
-}) {
-  return (
-    <div className="flex items-center justify-between text-sm">
-      <span className={bold ? "text-gray-200 font-semibold" : "text-gray-400"}>{label}</span>
-      <span className={`font-mono tabular-nums ${color} ${bold ? "font-bold" : ""}`}>{fmt(value)} ₴</span>
-    </div>
-  );
-}
-
-function KpiCard({
-  label, value, color, icon, onClick,
-}: {
-  label: string; value: number; color: string; icon: React.ReactNode; onClick?: () => void;
-}) {
-  return (
-    <div
-      className={`card-neo kpi-3d-hover p-4 flex flex-col gap-2 ${onClick ? "card-tap cursor-pointer hover:border-accent-500/40 transition-all" : ""}`}
-      onClick={onClick}
-      role={onClick ? "button" : undefined}
-      tabIndex={onClick ? 0 : undefined}
-      onKeyDown={onClick ? (e) => { if (e.key === "Enter" || e.key === " ") onClick(); } : undefined}
-    >
-      <div className="flex items-center justify-between">
-        <span className="text-xs text-gray-500 font-medium">{label}</span>
-        <div className="flex items-center gap-1.5">
-          {onClick && <Eye size={11} className="text-gray-600" />}
-          <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${color}`} aria-hidden="true">
-            {icon}
-          </div>
-        </div>
-      </div>
-      <p className="font-bold text-lg font-mono leading-tight tabular-nums">
-        {fmt(value)} <span className="text-sm font-normal text-gray-500">₴</span>
-      </p>
-    </div>
-  );
-}
-
-function CheckboxToggle({
-  checked, onToggle, label,
-}: {
-  checked: boolean; onToggle: () => void; label: string;
-}) {
-  return (
-    <label className="flex items-center gap-2.5 cursor-pointer select-none">
-      <div
-        onClick={onToggle}
-        className={`w-4 h-4 rounded border flex items-center justify-center transition-all cursor-pointer shrink-0 ${
-          checked ? "bg-accent-500 border-accent-500" : "border-dark-50/30 bg-dark-300"
-        }`}
-      >
-        {checked && (
-          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-            <path d="M2 5l2.5 2.5L8 2.5" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
-          </svg>
-        )}
-      </div>
-      <span className="text-sm text-gray-300">{label}</span>
-    </label>
-  );
-}
-
-// ── Modal backdrop ─────────────────────────────────────────────────
-
-function Modal({ title, onClose, children }: {
-  title: string; onClose: () => void; children: React.ReactNode;
-}) {
-  return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-start justify-center sm:p-4 overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label={title}>
-      {/* Backdrop */}
-      <div className="absolute inset-0" onClick={onClose} />
-      <div
-        className="relative bg-dark-600 rounded-t-3xl sm:rounded-2xl w-full max-w-md sm:my-auto animate-modal-in modal-glow expense-sheet-modal pb-[env(safe-area-inset-bottom)]"
-      >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
-          <h4 className="font-semibold text-white text-sm">{title}</h4>
-          <button
-            onClick={onClose}
-            aria-label="Закрити"
-            className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all
-                       focus-visible:outline-2 focus-visible:outline-accent-400"
-          >
-            <X size={16} />
-          </button>
-        </div>
-        <div className="px-5 py-4 space-y-4">{children}</div>
-      </div>
-    </div>
-  );
-}
-
-function ModalField({
-  label, value, onChange, type = "text", placeholder,
-}: {
-  label: string; value: string; onChange: (v: string) => void;
-  type?: string; placeholder?: string;
-}) {
-  return (
-    <div>
-      <label className="label-dark">{label}</label>
-      <input
-        type={type}
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        placeholder={placeholder}
-        className="input-dark w-full"
-      />
-    </div>
-  );
-}
+import { MONTH_SHORT, ROLE_LABELS, TT_STYLE, PIE_COLORS, CATEGORY_BADGE, fmt } from "./expenses/constants";
+import { initSalaryForm, calcSalary as _calcSalary, calcOwnerSalary as _calcOwnerSalary, isSalaryDirty as _isSalaryDirty } from "./expenses/utils/salaryCalculations";
+import { exportExpenseExcel, exportKpiExcel } from "./expenses/utils/excelExport";
+import {
+  CalcRow, TaxRow, SummaryRow, KpiCard, CheckboxToggle,
+  Modal, ModalField,
+} from "./expenses/components/ExpenseUiParts";
+import { ShareLinkModal } from "./expenses/components/ShareLinkModal";
+import type { SalaryFormState, OtherExpense, DetailRow, AnnualMonthData, KpiModalState } from "./expenses/types";
 
 // ══════════════════════════════════════════════════════════════════
 // MAIN COMPONENT
@@ -631,51 +340,9 @@ export default function ExpensesPage() {
   }
 
   // ── Salary calculations ───────────────────────────────────────
-  function calcSalary(form: SalaryFormState) {
-    const s = data?.settings;
-    if (!s) return { pdfo: 0, vz_zp: 0, esv: 0, netto: 0, supplement: 0, total_employer: 0 };
-    const brutto   = parseFloat(form.brutto) || 0;
-    const pdfo     = Math.round(brutto * s.pdfo_rate / 100 * 100) / 100;
-    const vz_zp    = Math.round(brutto * s.vz_zp_rate / 100 * 100) / 100;
-    const esv      = Math.round(brutto * s.esv_employer_rate / 100 * 100) / 100;
-    const netto    = Math.round((brutto - pdfo - vz_zp) * 100) / 100;
-    const targetNet = form.has_supplement && form.target_net ? parseFloat(form.target_net) : null;
-    const supplement = targetNet != null ? Math.max(0, Math.round((targetNet - netto) * 100) / 100) : 0;
-    const indBonus   = parseFloat(form.individual_bonus) || 0;
-    const total_employer = Math.round((brutto + esv + supplement + indBonus) * 100) / 100;
-    return { pdfo, vz_zp, esv, netto, supplement, total_employer };
-  }
-
-  // ── Owner salary calculations ─────────────────────────────────
-  function calcOwnerSalary() {
-    const owner = data?.owner;
-    if (!owner) return { ownDeclarations: 0, hiredDeclarations: 0, paidServices: 0, total: 0 };
-
-    const ownDeclarations = Math.max(
-      0,
-      Math.round(((owner.nhsu_brutto / 2) - (owner.ep_all + owner.vz_all + owner.esv_owner)) * 0.9 * 100) / 100,
-    );
-
-    let hiredDeclarations = 0;
-    if (selectedHiredDoctorId !== null && selectedHiredNurseId !== null) {
-      const hd = owner.hired_doctors.find(d => d.doctor_id === selectedHiredDoctorId);
-      const nurseRow = data?.salary.find(s => s.staff_member_id === selectedHiredNurseId);
-      if (hd && nurseRow) {
-        hiredDeclarations = Math.max(
-          0,
-          Math.round(
-            (hd.nhsu_brutto - hd.nhsu_ep - hd.nhsu_vz
-              - hd.staff_total_employer_cost
-              - nurseRow.total_employer_cost) / 2 * 0.9 * 100,
-          ) / 100,
-        );
-      }
-    }
-
-    const paidServices = owner.paid_services_income;
-    const total = Math.round((ownDeclarations + hiredDeclarations + paidServices) * 100) / 100;
-    return { ownDeclarations, hiredDeclarations, paidServices, total };
-  }
+  // ── Salary calculations (delegated to extracted utils) ───────
+  const calcSalary = (form: SalaryFormState) => _calcSalary(form, data?.settings);
+  const calcOwnerSalary = () => _calcOwnerSalary(data, selectedHiredDoctorId, selectedHiredNurseId);
 
   // ── Share owner report ─────────────────────────────────────────
   async function handleOwnerShare() {
@@ -721,16 +388,9 @@ export default function ExpensesPage() {
     setAccReqLoading(false);
   }
 
-  // ── Dirty checks ──────────────────────────────────────────────
+  // ── Dirty checks (delegated to extracted utils) ──────────────
   function isSalaryDirty(staffId: number, row: SalaryExpenseRow): boolean {
-    const f = salaryForms[staffId];
-    if (!f) return false;
-    return (
-      (parseFloat(f.brutto) || 0)          !== row.brutto ||
-      f.has_supplement                      !== row.has_supplement ||
-      (parseFloat(f.target_net) || 0)      !== (row.target_net ?? 0) ||
-      (parseFloat(f.individual_bonus) || 0) !== row.individual_bonus ||
-      f.paid_services_from_module           !== row.paid_services_from_module
+    return _isSalaryDirty(staffId, row, salaryForms
     );
   }
 
@@ -1013,142 +673,13 @@ export default function ExpensesPage() {
     }
   }
 
-  // ── Excel export (повний звіт, без ПДФО та ВЗ із ЗП) ─────────
+  // ── Excel export (delegated to extracted utils) ─────────────
   function exportExcel() {
     if (!data) return;
-    const wb = XLSX.utils.book_new();
-
-    // ── Sheet 1: Зведена таблиця ──
-    const summaryRows: (string | number)[][] = [
-      [`ЗВЕДЕНИЙ ЗВІТ ВИТРАТ — ${MONTH_NAMES[month - 1]} ${year}`],
-      [],
-      ["РОЗДІЛ", "СТАТТЯ", "СУМА (₴)"],
-      [],
-      ["═══ ДОХОДИ ═══", "", ""],
-      ["Дохід", "Дохід НСЗУ", data.taxes.nhsu_income],
-      ["Дохід", "Платні послуги", data.taxes.paid_services_income],
-      ["", "ЗАГАЛЬНИЙ ДОХІД", data.totals.income],
-      [],
-      ["═══ ПОСТІЙНІ ВИТРАТИ ═══", "", ""],
-      ...data.fixed.filter(r => r.amount > 0).map(r => [
-        "Постійні", `${r.name}${r.is_recurring ? " (постійна)" : ""}`, r.amount,
-      ] as (string | number)[]),
-      ["", "Разом постійні", data.totals.fixed_total],
-      [],
-      ["═══ ЗАРПЛАТНІ ВИТРАТИ ═══", "", ""],
-    ];
-
-    for (const r of data.salary) {
-      const calc_esv = r.esv;
-      summaryRows.push(["Зарплата", `${r.full_name} — Брутто`, r.brutto]);
-      summaryRows.push(["Зарплата", `${r.full_name} — ЄСВ роботодавця (${data.settings.esv_employer_rate}%)`, calc_esv]);
-      if (r.supplement > 0) {
-        summaryRows.push(["Зарплата", `${r.full_name} — Доплата до цільової суми`, r.supplement]);
-      }
-      if (r.individual_bonus > 0) {
-        summaryRows.push(["Зарплата", `${r.full_name} — Індивідуальна доплата`, r.individual_bonus]);
-      }
-      if (r.paid_services_income > 0) {
-        summaryRows.push(["Зарплата", `${r.full_name} — Оплата за платні послуги`, r.paid_services_income]);
-      }
-      summaryRows.push(["Зарплата", `${r.full_name} — ВСЬОГО витрати роботодавця`, r.total_employer_cost]);
-      // НСЗУ дані
-      if (r.nhsu_brutto > 0) {
-        summaryRows.push(["Зарплата", `${r.full_name} — НСЗУ брутто`, r.nhsu_brutto]);
-        summaryRows.push(["Зарплата", `${r.full_name} — НСЗУ ЄП`, r.nhsu_ep]);
-        summaryRows.push(["Зарплата", `${r.full_name} — НСЗУ ВЗ`, r.nhsu_vz]);
-      }
-      // Нетто на руки
-      const netto = r.brutto - (r.brutto * data.settings.pdfo_rate / 100) - (r.brutto * data.settings.vz_zp_rate / 100);
-      summaryRows.push(["Зарплата", `${r.full_name} — Нетто (на руки)`, Math.round(netto * 100) / 100]);
-      summaryRows.push([]);
-    }
-    summaryRows.push(["", "Разом зарплатні", data.totals.salary_total]);
-    summaryRows.push([]);
-
-    if (otherExpenses.length > 0) {
-      summaryRows.push(["═══ ІНШІ ВИТРАТИ ═══", "", ""]);
-      for (const r of otherExpenses) {
-        summaryRows.push(["Інші", `${r.name}${r.description ? ` (${r.description})` : ""}`, r.amount]);
-      }
-      summaryRows.push(["", "Разом інші", otherTotal]);
-      summaryRows.push([]);
-    }
-
-    summaryRows.push(["═══ ПОДАТКИ ═══", "", ""]);
-    summaryRows.push(["Податки", `Єдиний податок (${data.taxes.ep_rate}%)`, data.taxes.ep]);
-    summaryRows.push(["Податки", `Військовий збір (${data.taxes.vz_rate}%)`, data.taxes.vz]);
-    summaryRows.push(["Податки", "ЄСВ власника (щомісячний)", data.taxes.esv_owner]);
-    summaryRows.push(["Податки", `ЄСВ роботодавця (${data.settings.esv_employer_rate}%)`, data.taxes.esv_employer]);
-    summaryRows.push(["", "Разом податки", data.totals.tax_total]);
-    summaryRows.push([]);
-
-    // Власник
-    if (data.owner) {
-      summaryRows.push(["═══ БЛОК ВЛАСНИКА ═══", "", ""]);
-      summaryRows.push(["Власник", data.owner.doctor_name, ""]);
-      summaryRows.push(["Власник", "НСЗУ брутто", data.owner.nhsu_brutto]);
-      summaryRows.push(["Власник", "Платні послуги (дохід лікаря)", data.owner.paid_services_income]);
-      summaryRows.push(["Власник", "ЄП всього", data.owner.ep_all]);
-      summaryRows.push(["Власник", "ВЗ всього", data.owner.vz_all]);
-      summaryRows.push(["Власник", "ЄСВ власника", data.owner.esv_owner]);
-      if (data.owner.hired_doctors.length > 0) {
-        summaryRows.push([]);
-        summaryRows.push(["Власник", "Наймані лікарі:", ""]);
-        for (const hd of data.owner.hired_doctors) {
-          summaryRows.push(["Найм. лікар", `${hd.doctor_name} — НСЗУ`, hd.nhsu_brutto]);
-          summaryRows.push(["Найм. лікар", `${hd.doctor_name} — ЄП`, hd.nhsu_ep]);
-          summaryRows.push(["Найм. лікар", `${hd.doctor_name} — ВЗ`, hd.nhsu_vz]);
-          summaryRows.push(["Найм. лікар", `${hd.doctor_name} — Витрати роботодавця`, hd.staff_total_employer_cost]);
-        }
-      }
-      summaryRows.push([]);
-    }
-
-    summaryRows.push(["═══ ПІДСУМКИ ═══", "", ""]);
-    summaryRows.push(["Підсумок", "Загальний дохід", data.totals.income]);
-    summaryRows.push(["Підсумок", "Всього витрат", grandWithOther]);
-    summaryRows.push(["Підсумок", "ЗАЛИШОК", remaining]);
-
-    // Ставки
-    summaryRows.push([]);
-    summaryRows.push(["═══ СТАВКИ ═══", "", ""]);
-    summaryRows.push(["Ставка", `ЄП`, `${data.taxes.ep_rate}%`]);
-    summaryRows.push(["Ставка", `ВЗ від доходу`, `${data.taxes.vz_rate}%`]);
-    summaryRows.push(["Ставка", `ЄСВ роботодавця`, `${data.settings.esv_employer_rate}%`]);
-    summaryRows.push(["Ставка", "ЄСВ власника (місячний)", data.taxes.esv_owner]);
-
-    const ws = XLSX.utils.aoa_to_sheet(summaryRows);
-    ws["!cols"] = [{ wch: 18 }, { wch: 48 }, { wch: 18 }];
-    XLSX.utils.book_append_sheet(wb, ws, "Зведена таблиця");
-
-    // ── Sheet 2: Персонал (детально) ──
-    const staffHeader = [
-      "ПІБ", "Роль", "Брутто", "ЄСВ роботодавця", "Доплата", "Бонус",
-      "Платні послуги", "Нетто (на руки)", "Витрати роботодавця",
-      "НСЗУ брутто", "НСЗУ ЄП", "НСЗУ ВЗ",
-    ];
-    const staffRows = data.salary.map(r => {
-      const netto = r.brutto - (r.brutto * data.settings.pdfo_rate / 100) - (r.brutto * data.settings.vz_zp_rate / 100);
-      return [
-        r.full_name, ROLE_LABELS[r.role] ?? r.role,
-        r.brutto, r.esv, r.supplement, r.individual_bonus,
-        r.paid_services_income, Math.round(netto * 100) / 100, r.total_employer_cost,
-        r.nhsu_brutto, r.nhsu_ep, r.nhsu_vz,
-      ];
-    });
-    const ws2 = XLSX.utils.aoa_to_sheet([
-      [`Персонал — ${MONTH_NAMES[month - 1]} ${year}`],
-      [],
-      staffHeader,
-      ...staffRows,
-    ]);
-    ws2["!cols"] = staffHeader.map(() => ({ wch: 16 }));
-    (ws2["!cols"] as {wch: number}[])[0] = { wch: 30 };
-    XLSX.utils.book_append_sheet(wb, ws2, "Персонал");
-
-    XLSX.writeFile(wb, `витрати_${year}_${String(month).padStart(2, "0")}.xlsx`);
+    exportExpenseExcel(data, otherExpenses, otherTotal, grandWithOther, remaining, year, month);
   }
+
+  // (inline export code has been moved to expenses/utils/excelExport.ts)
 
   // ── Derived data ──────────────────────────────────────────────
   const otherTotal = otherExpenses.reduce((sum, e) => sum + e.amount, 0);
@@ -3331,22 +2862,7 @@ export default function ExpensesPage() {
             break;
         }
 
-        function exportKpiExcel() {
-          const wb = XLSX.utils.book_new();
-          const header = ["Назва", "Деталі", "Сума (₴)"];
-          const dataRows = rows.map(r => [r.name, r.detail ?? "", r.amount]);
-          dataRows.push(["", totalLabel, totalValue]);
-          const ws = XLSX.utils.aoa_to_sheet([
-            [kpiModal.title],
-            [`${MONTH_NAMES[month - 1]} ${year}`],
-            [],
-            header,
-            ...dataRows,
-          ]);
-          ws["!cols"] = [{ wch: 40 }, { wch: 30 }, { wch: 18 }];
-          XLSX.utils.book_append_sheet(wb, ws, "Деталі");
-          XLSX.writeFile(wb, `${kpiModal.type}_${year}_${String(month).padStart(2, "0")}.xlsx`);
-        }
+        const handleExportKpiExcel = () => exportKpiExcel(rows, totalLabel, totalValue, kpiModal.title, kpiModal.type, year, month);
 
         return (
           <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-start justify-center sm:p-4 overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label={kpiModal.title}>
@@ -3360,7 +2876,7 @@ export default function ExpensesPage() {
                 <h4 className="font-semibold text-white text-base">{kpiModal.title}</h4>
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={exportKpiExcel}
+                    onClick={handleExportKpiExcel}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 text-xs font-semibold hover:bg-emerald-500/20 transition-all"
                   >
                     <FileSpreadsheet size={13} /> Excel
@@ -3468,155 +2984,29 @@ export default function ExpensesPage() {
         </Modal>
       )}
 
-      {/* ── Accountant request modal ── */}
-      {accReqModal.open && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-start justify-center sm:p-4 overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label="Запит до бухгалтера">
-          <div className="absolute inset-0" onClick={() => setAccReqModal({ open: false, url: "", expiresAt: "" })} />
-          <div className="relative bg-dark-600 rounded-t-3xl sm:rounded-2xl w-full max-w-md sm:my-auto p-6 modal-glow expense-sheet-modal pb-[env(safe-area-inset-bottom)]">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <ClipboardList size={18} className="text-orange-400" />
-                <h4 className="font-semibold text-white text-base">Запит до бухгалтера створено</h4>
-              </div>
-              <button
-                onClick={() => setAccReqModal({ open: false, url: "", expiresAt: "" })}
-                aria-label="Закрити"
-                className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all"
-              >
-                <X size={16} />
-              </button>
-            </div>
-            <p className="text-xs text-gray-500 mb-3">
-              Надішліть це посилання бухгалтеру. Сторінка доступна 15 днів (до {accReqModal.expiresAt}).
-            </p>
-            <div className="flex items-center gap-2 bg-dark-400/40 rounded-xl p-3 mb-4">
-              <Link size={14} className="text-gray-500 shrink-0" />
-              <input
-                type="text"
-                readOnly
-                value={accReqModal.url}
-                className="flex-1 bg-transparent text-sm text-gray-200 font-mono outline-none"
-                onFocus={e => e.target.select()}
-              />
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(accReqModal.url);
-                }}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-400 text-sm font-medium hover:bg-orange-500/20 transition-all"
-              >
-                <Copy size={14} /> Копіювати
-              </button>
-              <a
-                href={accReqModal.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-orange-500 text-white text-sm font-semibold hover:bg-orange-400 transition-all"
-              >
-                <ExternalLink size={14} /> Відкрити
-              </a>
-            </div>
-            <div className="flex gap-2 mt-2">
-              <a
-                href={`mailto:?subject=${encodeURIComponent("Запит на заповнення даних")}&body=${encodeURIComponent(accReqModal.url)}`}
-                className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl border border-dark-50/20 text-gray-400 text-xs hover:text-white hover:border-dark-50/40 transition-all"
-              >
-                Email
-              </a>
-              <a
-                href={`viber://forward?text=${encodeURIComponent(accReqModal.url)}`}
-                className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl border border-dark-50/20 text-gray-400 text-xs hover:text-white hover:border-dark-50/40 transition-all"
-              >
-                Viber
-              </a>
-              <a
-                href={`https://t.me/share/url?url=${encodeURIComponent(accReqModal.url)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl border border-dark-50/20 text-gray-400 text-xs hover:text-white hover:border-dark-50/40 transition-all"
-              >
-                Telegram
-              </a>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* ── Accountant request modal (extracted to ShareLinkModal) ── */}
+      <ShareLinkModal
+        open={accReqModal.open}
+        onClose={() => setAccReqModal({ open: false, url: "", expiresAt: "" })}
+        url={accReqModal.url}
+        expiresAt={accReqModal.expiresAt}
+        icon={<ClipboardList size={18} className="text-orange-400" />}
+        title="Запит до бухгалтера створено"
+        description="Надішліть це посилання бухгалтеру. Сторінка доступна 15 днів"
+        accentClass="orange"
+      />
 
-      {/* ── Share modal ── */}
-      {shareModal.open && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-start justify-center sm:p-4 overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label="Поділитись звітом">
-          <div className="absolute inset-0" onClick={() => setShareModal({ open: false, url: "", expiresAt: "" })} />
-          <div className="relative bg-dark-600 rounded-t-3xl sm:rounded-2xl w-full max-w-md sm:my-auto p-6 modal-glow expense-sheet-modal pb-[env(safe-area-inset-bottom)]">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Share2 size={18} className="text-accent-400" />
-                <h4 className="font-semibold text-white text-base">Посилання створено</h4>
-              </div>
-              <button
-                onClick={() => setShareModal({ open: false, url: "", expiresAt: "" })}
-                aria-label="Закрити"
-                className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all"
-              >
-                <X size={16} />
-              </button>
-            </div>
-            <p className="text-xs text-gray-500 mb-3">
-              Сторінка доступна для перегляду без авторизації протягом 30 днів (до {shareModal.expiresAt}).
-            </p>
-            <div className="flex items-center gap-2 bg-dark-400/40 rounded-xl p-3 mb-4">
-              <Link size={14} className="text-gray-500 shrink-0" />
-              <input
-                type="text"
-                readOnly
-                value={shareModal.url}
-                className="flex-1 bg-transparent text-sm text-gray-200 font-mono outline-none"
-                onFocus={e => e.target.select()}
-              />
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(shareModal.url);
-                }}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-accent-500/10 border border-accent-500/20 text-accent-400 text-sm font-medium hover:bg-accent-500/20 transition-all"
-              >
-                <Copy size={14} /> Копіювати
-              </button>
-              <a
-                href={shareModal.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-accent-500 text-white text-sm font-semibold hover:bg-accent-400 transition-all"
-              >
-                <ExternalLink size={14} /> Відкрити
-              </a>
-            </div>
-            <div className="flex gap-2 mt-2">
-              <a
-                href={`mailto:?subject=${encodeURIComponent("Зведений звіт ФОП")}&body=${encodeURIComponent(shareModal.url)}`}
-                className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl border border-dark-50/20 text-gray-400 text-xs hover:text-white hover:border-dark-50/40 transition-all"
-              >
-                Email
-              </a>
-              <a
-                href={`viber://forward?text=${encodeURIComponent(shareModal.url)}`}
-                className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl border border-dark-50/20 text-gray-400 text-xs hover:text-white hover:border-dark-50/40 transition-all"
-              >
-                Viber
-              </a>
-              <a
-                href={`https://t.me/share/url?url=${encodeURIComponent(shareModal.url)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl border border-dark-50/20 text-gray-400 text-xs hover:text-white hover:border-dark-50/40 transition-all"
-              >
-                Telegram
-              </a>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* ── Share modal (extracted to ShareLinkModal) ── */}
+      <ShareLinkModal
+        open={shareModal.open}
+        onClose={() => setShareModal({ open: false, url: "", expiresAt: "" })}
+        url={shareModal.url}
+        expiresAt={shareModal.expiresAt}
+        icon={<Share2 size={18} className="text-accent-400" />}
+        title="Посилання створено"
+        description="Сторінка доступна для перегляду без авторизації протягом 30 днів"
+        accentClass="accent"
+      />
 
       {/* ── Styled confirm dialog (replaces native confirm()) ── */}
       <ConfirmDialog
