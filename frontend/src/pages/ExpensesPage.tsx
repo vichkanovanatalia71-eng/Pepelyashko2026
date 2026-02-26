@@ -736,16 +736,26 @@ export default function ExpensesPage() {
   async function applyAiResult() {
     if (!aiModal.result) return;
     const r = aiModal.result;
-    if (r.category === "fixed") {
-      try {
+    try {
+      if (r.category === "other" || !r.is_recurring) {
+        await api.post("/monthly-expenses/other", {
+          year, month, name: r.name, amount: r.amount, category: "general",
+        });
+        await loadOther();
+        setAiModal({ open: false, text: "", file: null, loading: false, result: null });
+        setActiveDrawer("other");
+      } else {
         await api.post("/monthly-expenses/fixed", {
           year, month, name: r.name, amount: r.amount, is_recurring: r.is_recurring,
         });
         await load();
-      } catch (e) { console.error(e); }
+        setAiModal({ open: false, text: "", file: null, loading: false, result: null });
+        setActiveDrawer("fixed");
+      }
+    } catch (e: any) {
+      console.error(e);
+      setAlertDlg({ title: "Помилка", description: e?.response?.data?.detail || "Не вдалося зберегти витрату." });
     }
-    setAiModal({ open: false, text: "", file: null, loading: false, result: null });
-    setActiveDrawer("fixed");
   }
 
   // ── Per-section copy from previous month ────────────────────────
