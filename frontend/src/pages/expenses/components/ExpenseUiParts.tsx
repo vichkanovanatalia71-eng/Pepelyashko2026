@@ -1,5 +1,5 @@
-import { Lock, X, Eye, AlertCircle, Copy, RefreshCw } from "lucide-react";
-import { useRef, useCallback } from "react";
+import { Lock, X, Eye, AlertCircle, Copy, RefreshCw, Check } from "lucide-react";
+import { useRef, useCallback, useState, useEffect } from "react";
 import { fmt } from "../constants";
 
 // ── Calculation Row ───────────────────────────────────────────────
@@ -110,73 +110,123 @@ export function CheckboxToggle({
 }
 
 // ── Modal Backdrop ────────────────────────────────────────────────
-export function Modal({ title, onClose, children, footer }: {
+export function Modal({ title, onClose, children, footer, onSave, saveDisabled, saving }: {
   title: string; onClose: () => void; children: React.ReactNode; footer?: React.ReactNode;
+  onSave?: () => void; saveDisabled?: boolean; saving?: boolean;
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
-  const dragStartY = useRef<number | null>(null);
-  const dragCurrentY = useRef(0);
+  const dragHandleRef = useRef<HTMLDivElement>(null);
+  const dragRef = useRef<{ startY: number; startH: number } | null>(null);
+  const [sheetHeight, setSheetHeight] = useState(65);
+  const [vvHeight, setVvHeight] = useState<number | null>(null);
 
-  const onTouchStart = useCallback((e: React.TouchEvent) => {
-    const touch = e.touches[0];
-    const panel = panelRef.current;
-    if (!panel) return;
-    const rect = panel.getBoundingClientRect();
-    if (touch.clientY - rect.top > 48) return;
-    dragStartY.current = touch.clientY;
+  // Lock body scroll while modal is open
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
   }, []);
 
-  const onTouchMove = useCallback((e: React.TouchEvent) => {
-    if (dragStartY.current === null) return;
-    const dy = e.touches[0].clientY - dragStartY.current;
-    if (dy < 0) return;
-    dragCurrentY.current = dy;
-    if (panelRef.current) {
-      panelRef.current.style.transform = `translateY(${dy}px)`;
-      panelRef.current.style.transition = "none";
-    }
-  }, []);
-
-  const onTouchEnd = useCallback(() => {
-    if (dragStartY.current === null) return;
-    const dy = dragCurrentY.current;
-    dragStartY.current = null;
-    dragCurrentY.current = 0;
-    if (panelRef.current) {
-      if (dy > 120) {
-        panelRef.current.style.transition = "transform 0.25s ease-out";
-        panelRef.current.style.transform = "translateY(100%)";
-        setTimeout(onClose, 250);
+  // Adapt to iOS keyboard via visualViewport API
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const onResize = () => {
+      // When keyboard opens, vv.height < window.innerHeight
+      if (vv.height < window.innerHeight * 0.85) {
+        setVvHeight(vv.height);
       } else {
-        panelRef.current.style.transition = "transform 0.2s ease-out";
-        panelRef.current.style.transform = "translateY(0)";
+        setVvHeight(null);
       }
+    };
+    vv.addEventListener("resize", onResize);
+    return () => vv.removeEventListener("resize", onResize);
+  }, []);
+
+  // Prevent default touchmove on drag handle (avoids page scroll during drag)
+  useEffect(() => {
+    const handle = dragHandleRef.current;
+    if (!handle) return;
+    const prevent = (e: TouchEvent) => { e.preventDefault(); };
+    handle.addEventListener("touchmove", prevent, { passive: false });
+    return () => handle.removeEventListener("touchmove", prevent);
+  });
+
+  const onDragStart = useCallback((e: React.TouchEvent) => {
+    dragRef.current = { startY: e.touches[0].clientY, startH: sheetHeight };
+  }, [sheetHeight]);
+
+  const onDragMove = useCallback((e: React.TouchEvent) => {
+    if (!dragRef.current) return;
+    const deltaY = dragRef.current.startY - e.touches[0].clientY;
+    const deltaVh = (deltaY / window.innerHeight) * 100;
+    const newH = Math.max(20, Math.min(85, dragRef.current.startH + deltaVh));
+    setSheetHeight(newH);
+  }, []);
+
+  const onDragEnd = useCallback(() => {
+    if (!dragRef.current) return;
+    const h = sheetHeight;
+    dragRef.current = null;
+    if (h < 30) {
+      onClose();
+    } else if (h < 55) {
+      setSheetHeight(50);
+    } else if (h < 78) {
+      setSheetHeight(65);
+    } else {
+      setSheetHeight(85);
     }
-  }, [onClose]);
+  }, [sheetHeight, onClose]);
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex flex-col justify-end sm:flex-row sm:items-start sm:justify-center sm:p-4 overflow-hidden sm:overflow-y-auto modal-overlay" style={{ height: '100dvh' }} role="dialog" aria-modal="true" aria-label={title}>
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex flex-col justify-end sm:flex-row sm:items-start sm:justify-center sm:p-4 overflow-hidden sm:overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label={title}>
       <div className="absolute inset-0" onClick={onClose} />
       <div
         ref={panelRef}
-        className="relative bg-dark-600 rounded-t-3xl sm:rounded-2xl w-full max-w-md sm:my-auto animate-modal-in modal-glow flex flex-col max-h-[80vh] sm:max-h-[90vh]"
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
+        className={`relative bg-dark-600 sm:rounded-2xl shadow-2xl w-full max-w-md sm:my-auto animate-modal-in modal-glow flex flex-col ${sheetHeight >= 100 ? "flex-1 sm:flex-none sm:max-h-[90vh]" : "rounded-t-3xl"}`}
+        style={sheetHeight < 100 ? {
+          border: "1px solid #ffffff15",
+          height: vvHeight ? `${Math.min(vvHeight - 20, (sheetHeight / 100) * window.innerHeight)}px` : `${sheetHeight}dvh`,
+          maxWidth: "28rem",
+          transition: dragRef.current ? "none" : "height 0.3s ease",
+        } : {
+          border: "1px solid #ffffff15",
+          maxWidth: "28rem",
+          ...(vvHeight ? { maxHeight: `${vvHeight - 20}px` } : {}),
+        }}
       >
         {/* Drag handle — mobile only */}
-        <div className="flex justify-center pt-2 pb-1 sm:hidden">
-          <div className="w-10 h-1 rounded-full bg-white/20" />
+        <div
+          ref={dragHandleRef}
+          className="sm:hidden flex justify-center py-3 cursor-grab active:cursor-grabbing shrink-0 touch-none"
+          onTouchStart={onDragStart}
+          onTouchMove={onDragMove}
+          onTouchEnd={onDragEnd}
+        >
+          <div className="w-12 h-1.5 rounded-full bg-white/50" />
         </div>
+        {/* Header with save button */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/10 shrink-0">
-          <h4 className="font-semibold text-white text-sm">{title}</h4>
-          <button
-            onClick={onClose}
-            aria-label="Закрити"
-            className="p-2.5 min-w-[44px] min-h-[44px] rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all flex items-center justify-center focus-visible:outline-2 focus-visible:outline-accent-400"
-          >
-            <X size={18} />
-          </button>
+          <h4 className="font-semibold text-white text-sm truncate">{title}</h4>
+          <div className="flex items-center gap-2 shrink-0">
+            {onSave && (
+              <button
+                onClick={onSave}
+                disabled={saveDisabled || saving}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent-500 text-white text-xs font-semibold hover:bg-accent-400 transition-all disabled:opacity-50"
+              >
+                {saving ? <RefreshCw size={13} className="animate-spin" /> : <Check size={13} />}
+                Зберегти
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              aria-label="Закрити"
+              className="p-2.5 min-w-[44px] min-h-[44px] rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all flex items-center justify-center focus-visible:outline-2 focus-visible:outline-accent-400"
+            >
+              <X size={18} />
+            </button>
+          </div>
         </div>
         <div className="px-5 py-4 space-y-4 overflow-y-auto flex-1">{children}</div>
         {footer && (
@@ -204,6 +254,7 @@ export function ModalField({
         value={value}
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
+        {...(type === "number" ? { min: "0" } : {})}
         className="input-dark w-full"
       />
     </div>

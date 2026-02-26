@@ -5,7 +5,7 @@ import {
   Building2, Wallet, BarChart3, Check, UserPlus, Copy, Sparkles,
   Download, CalendarDays, ImagePlus, AlertCircle, FileSpreadsheet,
   Eye, Target, Activity, ArrowUpRight, ArrowDownRight,
-  Share2, ClipboardList, TrendingUp, Banknote, HeartPulse,
+  Share2, ClipboardList, TrendingUp, Banknote, HeartPulse, Search,
 } from "lucide-react";
 import {
   LoadingSpinner, AlertBanner, EmptyState, ConfirmDialog,
@@ -88,6 +88,10 @@ export default function ExpensesPage() {
     name: string; desc: string; amount: string; saving: boolean;
   }>({ open: false, isEdit: false, id: null, name: "", desc: "", amount: "", saving: false });
 
+  // ── Search in drawers ──
+  const [fixedSearch, setFixedSearch] = useState("");
+  const [otherSearch, setOtherSearch] = useState("");
+
   // ── View mode: "all" = overview year, "month" = specific month ──
   const [viewMode, setViewMode] = useState<"all" | "month">("month");
 
@@ -114,6 +118,7 @@ export default function ExpensesPage() {
     result: AiParsedExpense | null;
   }>({ open: false, text: "", file: null, loading: false, result: null });
   const aiFileRef = useRef<HTMLInputElement>(null);
+  const mobileTabsRef = useRef<HTMLDivElement>(null);
 
   // ── Annual analytics data (for "all" mode) ──
   const [annualMonths, setAnnualMonths] = useState<AnnualMonthData[]>([]);
@@ -133,6 +138,7 @@ export default function ExpensesPage() {
   const [accReqModal, setAccReqModal] = useState<{
     open: boolean; url: string; expiresAt: string;
   }>({ open: false, url: "", expiresAt: "" });
+  const [accBannerDismissed, setAccBannerDismissed] = useState<string | null>(null);
 
   // ── Right sidebar drawer state ──
   type DrawerSection = "fixed" | "salary" | "other" | "taxes" | "summary" | null;
@@ -303,6 +309,21 @@ export default function ExpensesPage() {
   useEffect(() => { load(); loadOther(); loadStaff(); loadDoctors(); loadPeriods(); loadPrevMonth(); }, [load, loadOther, loadStaff, loadDoctors, loadPeriods, loadPrevMonth]);
   useEffect(() => { if (viewMode === "all") loadAnnualData(); }, [viewMode, loadAnnualData]);
 
+  // Validate localStorage hired doctor/nurse ids against actual data
+  useEffect(() => {
+    if (!data?.owner?.hired_doctors) return;
+    const validDoctorIds = new Set(data.owner.hired_doctors.map(d => d.doctor_id));
+    if (selectedHiredDoctorId !== null && !validDoctorIds.has(selectedHiredDoctorId)) {
+      setSelectedHiredDoctorId(null);
+      localStorage.removeItem("owner_hired_doctor_id");
+    }
+    const validNurseIds = new Set(data.salary.filter(s => s.role === "nurse").map(s => s.staff_member_id));
+    if (selectedHiredNurseId !== null && !validNurseIds.has(selectedHiredNurseId)) {
+      setSelectedHiredNurseId(null);
+      localStorage.removeItem("owner_hired_nurse_id");
+    }
+  }, [data]);
+
   // Close drawer on Escape key
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
@@ -372,6 +393,13 @@ export default function ExpensesPage() {
     return () => window.removeEventListener("sidebar-toggle", handleSidebarToggle);
   }, []);
 
+  // Auto-scroll mobile tabs to active drawer
+  useEffect(() => {
+    if (!activeDrawer || !mobileTabsRef.current) return;
+    const btn = mobileTabsRef.current.querySelector(`[data-tab="${activeDrawer}"]`) as HTMLElement | null;
+    btn?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+  }, [activeDrawer]);
+
   // ── Drawer section definitions ──
   const DRAWER_SECTIONS: { key: DrawerSection; label: string; icon: React.ReactNode; color: string; badgeColor: string; glow: string; getValue: () => number; getStatus: () => boolean }[] = [
     { key: "fixed", label: "Постійні витрати", icon: <TrendingDown size={18} />, color: "text-blue-400", badgeColor: "bg-blue-500/25 border-blue-400/50", glow: "0 0 14px rgba(59,130,246,0.45), 0 0 4px rgba(59,130,246,0.3)", getValue: () => data?.totals.fixed_total ?? 0, getStatus: () => (data?.fixed.some(r => r.amount > 0) ?? false) },
@@ -382,21 +410,52 @@ export default function ExpensesPage() {
   ];
 
   function toggleDrawer(section: DrawerSection) {
+    setFixedSearch(""); setOtherSearch("");
     setActiveDrawer(prev => prev === section ? null : section);
   }
 
   // ── Month navigation ──────────────────────────────────────────
-  function prevMonth() {
+  function hasDirtySalary(): boolean {
+    if (!data) return false;
+    return data.salary.some(row => isSalaryDirty(row.staff_member_id, row));
+  }
+
+  function doMonthChange(direction: "prev" | "next") {
     setActiveDrawer(null);
+    setFixedSearch(""); setOtherSearch("");
     setSectionCopied({});
-    if (month === 1) { setYear(y => y - 1); setMonth(12); }
-    else setMonth(m => m - 1);
+    if (direction === "prev") {
+      if (month === 1) { setYear(y => y - 1); setMonth(12); }
+      else setMonth(m => m - 1);
+    } else {
+      if (month === 12) { setYear(y => y + 1); setMonth(1); }
+      else setMonth(m => m + 1);
+    }
+  }
+
+  function prevMonth() {
+    if (hasDirtySalary()) {
+      setConfirmDlg({
+        title: "Є незбережені зміни зарплат",
+        description: "При переході на інший місяць незбережені зміни буде втрачено. Продовжити?",
+        confirmLabel: "Продовжити",
+        action: () => doMonthChange("prev"),
+      });
+    } else {
+      doMonthChange("prev");
+    }
   }
   function nextMonth() {
-    setActiveDrawer(null);
-    setSectionCopied({});
-    if (month === 12) { setYear(y => y + 1); setMonth(1); }
-    else setMonth(m => m + 1);
+    if (hasDirtySalary()) {
+      setConfirmDlg({
+        title: "Є незбережені зміни зарплат",
+        description: "При переході на інший місяць незбережені зміни буде втрачено. Продовжити?",
+        confirmLabel: "Продовжити",
+        action: () => doMonthChange("next"),
+      });
+    } else {
+      doMonthChange("next");
+    }
   }
 
   // ── Salary calculations ───────────────────────────────────────
@@ -494,6 +553,54 @@ export default function ExpensesPage() {
     }
   }
 
+  // ── Fixed expense save ─────────────────────────────────────────
+  async function saveFixed() {
+    if (!fixedModal.name.trim()) return;
+    const fixedAmount = parseFloat(fixedModal.amount) || 0;
+    if (fixedAmount < 0) { setAlertDlg({ title: "Помилка", description: "Сума не може бути від'ємною." }); return; }
+    setFixedModal(s => ({ ...s, saving: true }));
+    try {
+      if (!fixedModal.recurring) {
+        if (fixedModal.isEdit && fixedModal.id != null) {
+          await api.delete(`/monthly-expenses/fixed/${fixedModal.id}`);
+        }
+        await api.post("/monthly-expenses/other", {
+          name: fixedModal.name,
+          description: fixedModal.desc,
+          amount: parseFloat(fixedModal.amount) || 0,
+          category: "general",
+          year,
+          month,
+        });
+        setFixedModal(s => ({ ...s, open: false, saving: false }));
+        await Promise.all([load(), loadOther()]);
+      } else {
+        if (fixedModal.isEdit && fixedModal.id != null) {
+          await api.put(`/monthly-expenses/fixed/${fixedModal.id}`, {
+            name: fixedModal.name,
+            description: fixedModal.desc,
+            amount: parseFloat(fixedModal.amount) || 0,
+            is_recurring: fixedModal.recurring,
+          });
+        } else {
+          await api.post("/monthly-expenses/fixed", {
+            year, month,
+            name: fixedModal.name,
+            description: fixedModal.desc,
+            amount: parseFloat(fixedModal.amount) || 0,
+            is_recurring: fixedModal.recurring,
+          });
+        }
+        setFixedModal(s => ({ ...s, open: false, saving: false }));
+        await load();
+      }
+    } catch (e: any) {
+      console.error(e);
+      setAlertDlg({ title: "Помилка", description: e?.response?.data?.detail || "Не вдалося зберегти витрату. Спробуйте ще раз." });
+      setFixedModal(s => ({ ...s, saving: false }));
+    }
+  }
+
   // ── Staff CRUD ─────────────────────────────────────────────────
   async function saveStaff() {
     if (!staffModal.fullName.trim()) return;
@@ -542,6 +649,8 @@ export default function ExpensesPage() {
   // ── Other expenses CRUD ────────────────────────────────────────
   async function saveOther() {
     if (!otherModal.name.trim()) return;
+    const otherAmount = parseFloat(otherModal.amount) || 0;
+    if (otherAmount < 0) { setAlertDlg({ title: "Помилка", description: "Сума не може бути від'ємною." }); return; }
     setOtherModal(s => ({ ...s, saving: true }));
     try {
       const payload = {
@@ -657,16 +766,26 @@ export default function ExpensesPage() {
   async function applyAiResult() {
     if (!aiModal.result) return;
     const r = aiModal.result;
-    if (r.category === "fixed") {
-      try {
+    try {
+      if (r.category === "other" || !r.is_recurring) {
+        await api.post("/monthly-expenses/other", {
+          year, month, name: r.name, amount: r.amount, category: "general",
+        });
+        await loadOther();
+        setAiModal({ open: false, text: "", file: null, loading: false, result: null });
+        setActiveDrawer("other");
+      } else {
         await api.post("/monthly-expenses/fixed", {
           year, month, name: r.name, amount: r.amount, is_recurring: r.is_recurring,
         });
         await load();
-      } catch (e) { console.error(e); }
+        setAiModal({ open: false, text: "", file: null, loading: false, result: null });
+        setActiveDrawer("fixed");
+      }
+    } catch (e: any) {
+      console.error(e);
+      setAlertDlg({ title: "Помилка", description: e?.response?.data?.detail || "Не вдалося зберегти витрату." });
     }
-    setAiModal({ open: false, text: "", file: null, loading: false, result: null });
-    setActiveDrawer("fixed");
   }
 
   // ── Per-section copy from previous month ────────────────────────
@@ -711,8 +830,11 @@ export default function ExpensesPage() {
         });
         await load();
       } else {
-        // Copy other expenses one by one (no backend bulk copy)
+        // Copy other expenses one by one, skip duplicates by name
+        const existingNames = new Set(otherExpenses.map(e => e.name.toLowerCase().trim()));
+        let copied = 0;
         for (const exp of prevOtherExpenses) {
+          if (existingNames.has(exp.name.toLowerCase().trim())) continue;
           await api.post("/monthly-expenses/other", {
             name: exp.name,
             description: exp.description,
@@ -721,8 +843,12 @@ export default function ExpensesPage() {
             year,
             month,
           });
+          copied++;
         }
         await loadOther();
+        if (copied === 0 && prevOtherExpenses.length > 0) {
+          setAlertDlg({ title: "Інформація", description: "Усі витрати вже існують у поточному місяці." });
+        }
       }
       setSectionCopied(s => ({ ...s, [section]: true }));
     } catch (e) {
@@ -1417,8 +1543,43 @@ export default function ExpensesPage() {
             </div>
           </div>
 
+          {/* ═══ ACCOUNTANT SUBMITTED BANNER ═══ */}
+          {data.accountant_submitted_at && accBannerDismissed !== data.accountant_submitted_at && (
+            <AlertBanner variant="info" onDismiss={() => setAccBannerDismissed(data.accountant_submitted_at!)}>
+              Бухгалтер подав звіт за {MONTH_NAMES[month - 1]}.
+              Записи з позначкою «Бухгалтер» оновлені —{" "}
+              {new Date(data.accountant_submitted_at).toLocaleString("uk-UA", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })}
+            </AlertBanner>
+          )}
+
+          {/* ═══ MONTH COMPLETION INDICATOR ═══ */}
+          {(() => {
+            const sections = [
+              { label: "Постійні", filled: data.fixed.some(r => r.amount > 0), color: "bg-blue-400" },
+              { label: "Зарплати", filled: data.salary.some(r => r.brutto > 0), color: "bg-purple-400" },
+              { label: "Інші", filled: otherExpenses.length > 0, color: "bg-amber-400" },
+              { label: "Фіксація", filled: data.is_locked, color: "bg-emerald-400" },
+            ];
+            const filledCount = sections.filter(s => s.filled).length;
+            return (
+              <div className="flex items-center gap-3 px-1">
+                <div className="flex gap-1 flex-1">
+                  {sections.map(s => (
+                    <div key={s.label} className="flex-1 flex flex-col items-center gap-1">
+                      <div className={`w-full h-1.5 rounded-full ${s.filled ? s.color : "bg-dark-50/15"}`} />
+                      <span className={`text-[10px] ${s.filled ? "text-gray-300" : "text-gray-600"}`}>{s.label}</span>
+                    </div>
+                  ))}
+                </div>
+                <span className={`text-xs font-semibold tabular-nums ${filledCount === 4 ? "text-emerald-400" : "text-gray-500"}`}>
+                  {filledCount}/4
+                </span>
+              </div>
+            );
+          })()}
+
           {/* ═══ MOBILE: Expense Section Tabs (horizontal scroll) ═══ */}
-          <div className="lg:hidden -mx-4 px-4 overflow-x-auto scrollbar-hide">
+          <div ref={mobileTabsRef} className="lg:hidden -mx-4 px-4 overflow-x-auto scrollbar-hide">
             <div className="flex gap-2.5 pb-2 min-w-max">
               {DRAWER_SECTIONS.map(sec => {
                 const isActive = activeDrawer === sec.key;
@@ -1427,6 +1588,7 @@ export default function ExpensesPage() {
                 return (
                   <button
                     key={sec.key}
+                    data-tab={sec.key}
                     onClick={() => toggleDrawer(sec.key as DrawerSection)}
                     className={`flex items-center gap-2.5 px-4 py-3 rounded-2xl border border-orange-400/60 text-sm font-bold whitespace-nowrap transition-all duration-200 active:scale-95 tap-target ${
                       isActive
@@ -1609,6 +1771,22 @@ export default function ExpensesPage() {
               </div>
               <div className="overflow-y-auto flex-1">
 
+              {/* Search bar */}
+              {data.fixed.length > 3 && (
+                <div className="px-4 py-2 border-b border-dark-50/10 shrink-0">
+                  <div className="relative">
+                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+                    <input
+                      type="text"
+                      value={fixedSearch}
+                      onChange={e => setFixedSearch(e.target.value)}
+                      placeholder="Пошук витрат…"
+                      className="w-full pl-9 pr-3 py-2 rounded-lg bg-dark-400/40 border border-dark-50/10 text-sm text-gray-200 placeholder:text-gray-600 focus:outline-none focus:border-accent-500/40"
+                    />
+                  </div>
+                </div>
+              )}
+
               {/* Copy from previous month prompt */}
               {data.fixed.length === 0 && !sectionCopied.fixed && prevMonthLoaded && (
                 <div className="px-5 py-4 border-t border-dark-50/10 bg-dark-400/10">
@@ -1650,7 +1828,11 @@ export default function ExpensesPage() {
                   <div className="px-5 py-8 text-center text-gray-600 text-sm">
                     Ще немає постійних витрат. Натисніть «Додати витрату» щоб створити.
                   </div>
-                ) : data.fixed.map((row) => (
+                ) : data.fixed.filter(r => !fixedSearch || r.name.toLowerCase().includes(fixedSearch.toLowerCase())).length === 0 ? (
+                  <div className="px-5 py-6 text-center text-gray-600 text-sm">
+                    Нічого не знайдено за запитом «{fixedSearch}»
+                  </div>
+                ) : data.fixed.filter(r => !fixedSearch || r.name.toLowerCase().includes(fixedSearch.toLowerCase())).map((row) => (
                   <div key={row.id}
                     className="flex items-center gap-3 px-5 py-3 hover:bg-dark-400/20 transition-colors">
 
@@ -2030,12 +2212,12 @@ export default function ExpensesPage() {
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="space-y-3">
                                   <div>
-                                    <label className="label-dark">Офіційна зарплата (брутто)</label>
+                                    <label className="label-dark flex items-center gap-1.5">Офіційна зарплата (брутто) <Edit2 size={10} className="text-gray-600" /></label>
                                     <div className="relative">
                                       <input type="number" step="0.01" min="0"
                                         value={form.brutto}
                                         onChange={e => setSalaryForms(s => ({ ...s, [row.staff_member_id]: { ...s[row.staff_member_id], brutto: e.target.value } }))}
-                                        className="input-dark pr-8 w-full" placeholder="0.00"
+                                        className="input-dark pr-8 w-full border-dashed" placeholder="0.00"
                                       />
                                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 text-xs">₴</span>
                                     </div>
@@ -2046,24 +2228,24 @@ export default function ExpensesPage() {
                                   />
                                   {form.has_supplement && (
                                     <div>
-                                      <label className="label-dark">Цільова сума на руки</label>
+                                      <label className="label-dark flex items-center gap-1.5">Цільова сума на руки <Edit2 size={10} className="text-gray-600" /></label>
                                       <div className="relative">
                                         <input type="number" step="0.01" min="0"
                                           value={form.target_net}
                                           onChange={e => setSalaryForms(s => ({ ...s, [row.staff_member_id]: { ...s[row.staff_member_id], target_net: e.target.value } }))}
-                                          className="input-dark pr-8 w-full" placeholder="0.00"
+                                          className="input-dark pr-8 w-full border-dashed" placeholder="0.00"
                                         />
                                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 text-xs">₴</span>
                                       </div>
                                     </div>
                                   )}
                                   <div>
-                                    <label className="label-dark">Індивідуальні доплати</label>
+                                    <label className="label-dark flex items-center gap-1.5">Індивідуальні доплати <Edit2 size={10} className="text-gray-600" /></label>
                                     <div className="relative">
                                       <input type="number" step="0.01" min="0"
                                         value={form.individual_bonus}
                                         onChange={e => setSalaryForms(s => ({ ...s, [row.staff_member_id]: { ...s[row.staff_member_id], individual_bonus: e.target.value } }))}
-                                        className="input-dark pr-8 w-full" placeholder="0.00"
+                                        className="input-dark pr-8 w-full border-dashed" placeholder="0.00"
                                       />
                                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 text-xs">₴</span>
                                     </div>
@@ -2173,12 +2355,12 @@ export default function ExpensesPage() {
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="space-y-3">
                                   <div>
-                                    <label className="label-dark">Офіційна зарплата (брутто)</label>
+                                    <label className="label-dark flex items-center gap-1.5">Офіційна зарплата (брутто) <Edit2 size={10} className="text-gray-600" /></label>
                                     <div className="relative">
                                       <input type="number" step="0.01" min="0"
                                         value={form.brutto}
                                         onChange={e => setSalaryForms(s => ({ ...s, [row.staff_member_id]: { ...s[row.staff_member_id], brutto: e.target.value } }))}
-                                        className="input-dark pr-8 w-full" placeholder="0.00"
+                                        className="input-dark pr-8 w-full border-dashed" placeholder="0.00"
                                       />
                                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 text-xs">₴</span>
                                     </div>
@@ -2189,12 +2371,12 @@ export default function ExpensesPage() {
                                   />
                                   {form.has_supplement && (
                                     <div>
-                                      <label className="label-dark">Цільова сума на руки</label>
+                                      <label className="label-dark flex items-center gap-1.5">Цільова сума на руки <Edit2 size={10} className="text-gray-600" /></label>
                                       <div className="relative">
                                         <input type="number" step="0.01" min="0"
                                           value={form.target_net}
                                           onChange={e => setSalaryForms(s => ({ ...s, [row.staff_member_id]: { ...s[row.staff_member_id], target_net: e.target.value } }))}
-                                          className="input-dark pr-8 w-full" placeholder="0.00"
+                                          className="input-dark pr-8 w-full border-dashed" placeholder="0.00"
                                         />
                                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 text-xs">₴</span>
                                       </div>
@@ -2285,6 +2467,22 @@ export default function ExpensesPage() {
               <div className="overflow-y-auto flex-1">
               <div className="border-t border-dark-50/10">
 
+              {/* Search bar */}
+              {otherExpenses.length > 3 && (
+                <div className="px-4 py-2 border-b border-dark-50/10">
+                  <div className="relative">
+                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+                    <input
+                      type="text"
+                      value={otherSearch}
+                      onChange={e => setOtherSearch(e.target.value)}
+                      placeholder="Пошук витрат…"
+                      className="w-full pl-9 pr-3 py-2 rounded-lg bg-dark-400/40 border border-dark-50/10 text-sm text-gray-200 placeholder:text-gray-600 focus:outline-none focus:border-accent-500/40"
+                    />
+                  </div>
+                </div>
+              )}
+
               {/* Copy from previous month prompt */}
               {otherExpenses.length === 0 && !sectionCopied.other && prevMonthLoaded && !otherLoading && (
                 <div className="px-5 py-4 bg-dark-400/10">
@@ -2331,7 +2529,11 @@ export default function ExpensesPage() {
                 />
               ) : (
                 <div className="divide-y divide-dark-50/5">
-                  {otherExpenses.map((exp) => (
+                  {otherExpenses.filter(e => !otherSearch || e.name.toLowerCase().includes(otherSearch.toLowerCase())).length === 0 ? (
+                    <div className="px-5 py-6 text-center text-gray-600 text-sm">
+                      Нічого не знайдено за запитом «{otherSearch}»
+                    </div>
+                  ) : otherExpenses.filter(e => !otherSearch || e.name.toLowerCase().includes(otherSearch.toLowerCase())).map((exp) => (
                     <div key={exp.id} className="flex items-center gap-3 px-5 py-3 hover:bg-dark-400/20 transition-colors">
                       <div className="flex-1 min-w-0">
                         <p className="text-sm text-gray-200 truncate">{exp.name}</p>
@@ -2543,6 +2745,9 @@ export default function ExpensesPage() {
         <Modal
           title={fixedModal.isEdit ? "Редагувати постійну витрату" : "Додати постійну витрату"}
           onClose={() => setFixedModal(s => ({ ...s, open: false }))}
+          onSave={saveFixed}
+          saveDisabled={!fixedModal.name.trim()}
+          saving={fixedModal.saving}
           footer={
             <div className="flex gap-3">
               <button
@@ -2552,53 +2757,7 @@ export default function ExpensesPage() {
                 Скасувати
               </button>
               <button
-                onClick={async () => {
-                  if (!fixedModal.name.trim()) return;
-                  setFixedModal(s => ({ ...s, saving: true }));
-                  try {
-                    if (!fixedModal.recurring) {
-                      // Migrate to "Other expenses" when permanence is unchecked
-                      if (fixedModal.isEdit && fixedModal.id != null) {
-                        // Delete from fixed first
-                        await api.delete(`/monthly-expenses/fixed/${fixedModal.id}`);
-                      }
-                      // Create as other expense
-                      await api.post("/monthly-expenses/other", {
-                        name: fixedModal.name,
-                        description: fixedModal.desc,
-                        amount: parseFloat(fixedModal.amount) || 0,
-                        category: "general",
-                        year,
-                        month,
-                      });
-                      setFixedModal(s => ({ ...s, open: false, saving: false }));
-                      await Promise.all([load(), loadOther()]);
-                    } else {
-                      if (fixedModal.isEdit && fixedModal.id != null) {
-                        await api.put(`/monthly-expenses/fixed/${fixedModal.id}`, {
-                          name: fixedModal.name,
-                          description: fixedModal.desc,
-                          amount: parseFloat(fixedModal.amount) || 0,
-                          is_recurring: fixedModal.recurring,
-                        });
-                      } else {
-                        await api.post("/monthly-expenses/fixed", {
-                          year, month,
-                          name: fixedModal.name,
-                          description: fixedModal.desc,
-                          amount: parseFloat(fixedModal.amount) || 0,
-                          is_recurring: fixedModal.recurring,
-                        });
-                      }
-                      setFixedModal(s => ({ ...s, open: false, saving: false }));
-                      await load();
-                    }
-                  } catch (e: any) {
-                    console.error(e);
-                    setAlertDlg({ title: "Помилка", description: e?.response?.data?.detail || "Не вдалося зберегти витрату. Спробуйте ще раз." });
-                    setFixedModal(s => ({ ...s, saving: false }));
-                  }
-                }}
+                onClick={saveFixed}
                 disabled={fixedModal.saving || !fixedModal.name.trim()}
                 className="flex-1 py-2.5 rounded-xl bg-accent-500 hover:bg-accent-400 text-white text-sm font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-60"
               >
@@ -2640,6 +2799,9 @@ export default function ExpensesPage() {
         <Modal
           title={staffModal.isEdit ? "Редагувати співробітника" : "Додати співробітника"}
           onClose={() => setStaffModal(s => ({ ...s, open: false }))}
+          onSave={saveStaff}
+          saveDisabled={!staffModal.fullName.trim()}
+          saving={staffModal.saving}
           footer={
             <div className="flex gap-3">
               <button
@@ -3057,6 +3219,9 @@ export default function ExpensesPage() {
         <Modal
           title={otherModal.isEdit ? "Редагувати витрату" : "Додати витрату"}
           onClose={() => setOtherModal(s => ({ ...s, open: false }))}
+          onSave={saveOther}
+          saveDisabled={!otherModal.name.trim()}
+          saving={otherModal.saving}
           footer={
             <div className="flex gap-3">
               <button
