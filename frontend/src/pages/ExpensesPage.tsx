@@ -1542,6 +1542,32 @@ export default function ExpensesPage() {
             </div>
           </div>
 
+          {/* ═══ MONTH COMPLETION INDICATOR ═══ */}
+          {(() => {
+            const sections = [
+              { label: "Постійні", filled: data.fixed.some(r => r.amount > 0), color: "bg-blue-400" },
+              { label: "Зарплати", filled: data.salary.some(r => r.brutto > 0), color: "bg-purple-400" },
+              { label: "Інші", filled: otherExpenses.length > 0, color: "bg-amber-400" },
+              { label: "Фіксація", filled: data.is_locked, color: "bg-emerald-400" },
+            ];
+            const filledCount = sections.filter(s => s.filled).length;
+            return (
+              <div className="flex items-center gap-3 px-1">
+                <div className="flex gap-1 flex-1">
+                  {sections.map(s => (
+                    <div key={s.label} className="flex-1 flex flex-col items-center gap-1">
+                      <div className={`w-full h-1.5 rounded-full ${s.filled ? s.color : "bg-dark-50/15"}`} />
+                      <span className={`text-[10px] ${s.filled ? "text-gray-300" : "text-gray-600"}`}>{s.label}</span>
+                    </div>
+                  ))}
+                </div>
+                <span className={`text-xs font-semibold tabular-nums ${filledCount === 4 ? "text-emerald-400" : "text-gray-500"}`}>
+                  {filledCount}/4
+                </span>
+              </div>
+            );
+          })()}
+
           {/* ═══ MOBILE: Expense Section Tabs (horizontal scroll) ═══ */}
           <div ref={mobileTabsRef} className="lg:hidden -mx-4 px-4 overflow-x-auto scrollbar-hide">
             <div className="flex gap-2.5 pb-2 min-w-max">
