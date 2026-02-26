@@ -2202,12 +2202,12 @@ export default function ExpensesPage() {
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="space-y-3">
                                   <div>
-                                    <label className="label-dark">Офіційна зарплата (брутто)</label>
+                                    <label className="label-dark flex items-center gap-1.5">Офіційна зарплата (брутто) <Edit2 size={10} className="text-gray-600" /></label>
                                     <div className="relative">
                                       <input type="number" step="0.01" min="0"
                                         value={form.brutto}
                                         onChange={e => setSalaryForms(s => ({ ...s, [row.staff_member_id]: { ...s[row.staff_member_id], brutto: e.target.value } }))}
-                                        className="input-dark pr-8 w-full" placeholder="0.00"
+                                        className="input-dark pr-8 w-full border-dashed" placeholder="0.00"
                                       />
                                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 text-xs">₴</span>
                                     </div>
@@ -2218,24 +2218,24 @@ export default function ExpensesPage() {
                                   />
                                   {form.has_supplement && (
                                     <div>
-                                      <label className="label-dark">Цільова сума на руки</label>
+                                      <label className="label-dark flex items-center gap-1.5">Цільова сума на руки <Edit2 size={10} className="text-gray-600" /></label>
                                       <div className="relative">
                                         <input type="number" step="0.01" min="0"
                                           value={form.target_net}
                                           onChange={e => setSalaryForms(s => ({ ...s, [row.staff_member_id]: { ...s[row.staff_member_id], target_net: e.target.value } }))}
-                                          className="input-dark pr-8 w-full" placeholder="0.00"
+                                          className="input-dark pr-8 w-full border-dashed" placeholder="0.00"
                                         />
                                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 text-xs">₴</span>
                                       </div>
                                     </div>
                                   )}
                                   <div>
-                                    <label className="label-dark">Індивідуальні доплати</label>
+                                    <label className="label-dark flex items-center gap-1.5">Індивідуальні доплати <Edit2 size={10} className="text-gray-600" /></label>
                                     <div className="relative">
                                       <input type="number" step="0.01" min="0"
                                         value={form.individual_bonus}
                                         onChange={e => setSalaryForms(s => ({ ...s, [row.staff_member_id]: { ...s[row.staff_member_id], individual_bonus: e.target.value } }))}
-                                        className="input-dark pr-8 w-full" placeholder="0.00"
+                                        className="input-dark pr-8 w-full border-dashed" placeholder="0.00"
                                       />
                                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 text-xs">₴</span>
                                     </div>
@@ -2345,12 +2345,12 @@ export default function ExpensesPage() {
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="space-y-3">
                                   <div>
-                                    <label className="label-dark">Офіційна зарплата (брутто)</label>
+                                    <label className="label-dark flex items-center gap-1.5">Офіційна зарплата (брутто) <Edit2 size={10} className="text-gray-600" /></label>
                                     <div className="relative">
                                       <input type="number" step="0.01" min="0"
                                         value={form.brutto}
                                         onChange={e => setSalaryForms(s => ({ ...s, [row.staff_member_id]: { ...s[row.staff_member_id], brutto: e.target.value } }))}
-                                        className="input-dark pr-8 w-full" placeholder="0.00"
+                                        className="input-dark pr-8 w-full border-dashed" placeholder="0.00"
                                       />
                                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 text-xs">₴</span>
                                     </div>
@@ -2361,12 +2361,12 @@ export default function ExpensesPage() {
                                   />
                                   {form.has_supplement && (
                                     <div>
-                                      <label className="label-dark">Цільова сума на руки</label>
+                                      <label className="label-dark flex items-center gap-1.5">Цільова сума на руки <Edit2 size={10} className="text-gray-600" /></label>
                                       <div className="relative">
                                         <input type="number" step="0.01" min="0"
                                           value={form.target_net}
                                           onChange={e => setSalaryForms(s => ({ ...s, [row.staff_member_id]: { ...s[row.staff_member_id], target_net: e.target.value } }))}
-                                          className="input-dark pr-8 w-full" placeholder="0.00"
+                                          className="input-dark pr-8 w-full border-dashed" placeholder="0.00"
                                         />
                                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 text-xs">₴</span>
                                       </div>
