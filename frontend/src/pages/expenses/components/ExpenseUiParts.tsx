@@ -155,7 +155,7 @@ export function Modal({ title, onClose, children, footer }: {
   }, [onClose]);
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex flex-col justify-end sm:flex-row sm:items-start sm:justify-center sm:p-4 overflow-hidden sm:overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label={title}>
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex flex-col justify-end sm:flex-row sm:items-start sm:justify-center sm:p-4 overflow-hidden sm:overflow-y-auto modal-overlay" style={{ height: '100dvh' }} role="dialog" aria-modal="true" aria-label={title}>
       <div className="absolute inset-0" onClick={onClose} />
       <div
         ref={panelRef}
