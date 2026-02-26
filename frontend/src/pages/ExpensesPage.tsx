@@ -386,17 +386,46 @@ export default function ExpensesPage() {
   }
 
   // ── Month navigation ──────────────────────────────────────────
-  function prevMonth() {
+  function hasDirtySalary(): boolean {
+    if (!data) return false;
+    return data.salary.some(row => isSalaryDirty(row.staff_member_id, row));
+  }
+
+  function doMonthChange(direction: "prev" | "next") {
     setActiveDrawer(null);
     setSectionCopied({});
-    if (month === 1) { setYear(y => y - 1); setMonth(12); }
-    else setMonth(m => m - 1);
+    if (direction === "prev") {
+      if (month === 1) { setYear(y => y - 1); setMonth(12); }
+      else setMonth(m => m - 1);
+    } else {
+      if (month === 12) { setYear(y => y + 1); setMonth(1); }
+      else setMonth(m => m + 1);
+    }
+  }
+
+  function prevMonth() {
+    if (hasDirtySalary()) {
+      setConfirmDlg({
+        title: "Є незбережені зміни зарплат",
+        description: "При переході на інший місяць незбережені зміни буде втрачено. Продовжити?",
+        confirmLabel: "Продовжити",
+        action: () => doMonthChange("prev"),
+      });
+    } else {
+      doMonthChange("prev");
+    }
   }
   function nextMonth() {
-    setActiveDrawer(null);
-    setSectionCopied({});
-    if (month === 12) { setYear(y => y + 1); setMonth(1); }
-    else setMonth(m => m + 1);
+    if (hasDirtySalary()) {
+      setConfirmDlg({
+        title: "Є незбережені зміни зарплат",
+        description: "При переході на інший місяць незбережені зміни буде втрачено. Продовжити?",
+        confirmLabel: "Продовжити",
+        action: () => doMonthChange("next"),
+      });
+    } else {
+      doMonthChange("next");
+    }
   }
 
   // ── Salary calculations ───────────────────────────────────────
