@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     # Auth
     secret_key: str = "change-me-in-production"
     algorithm: str = "HS256"
-    access_token_expire_minutes: int = 480
+    access_token_expire_minutes: int = 43200  # 30 days
 
     # CORS — Railway frontend proxies via nginx, so allow all origins
     cors_origins: list[str] = ["*"]
@@ -32,7 +32,7 @@ class Settings(BaseSettings):
     smtp_user: str = ""       # напр. your@gmail.com
     smtp_password: str = ""   # пароль додатку Gmail або SMTP-пароль
     smtp_from: str = ""       # якщо не вказано — використовується smtp_user
-    frontend_url: str = "http://localhost:5173"  # базова URL фронтенду
+    frontend_url: str = "https://medflow.live"  # базова URL фронтенду
 
     @field_validator("database_url", mode="before")
     @classmethod

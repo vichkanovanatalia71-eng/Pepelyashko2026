@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import io
 import secrets
+import time
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from typing import Optional
@@ -772,6 +773,11 @@ async def get_period_info(
 # ── Аналітика ─────────────────────────────────────────────────────
 
 
+# Simple TTL cache for analytics (30 seconds per user+period+doctor)
+_analytics_cache: dict[str, tuple[float, object]] = {}
+_ANALYTICS_CACHE_TTL = 30
+
+
 @router.get("/analytics", response_model=AnalyticsResponse)
 async def get_analytics(
     year: int = Query(...),
@@ -780,7 +786,21 @@ async def get_analytics(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    return await _build_analytics(db, user.id, year, month, doctor_id)
+    cache_key = f"{user.id}:{year}:{month}:{doctor_id}"
+    now = time.time()
+    if cache_key in _analytics_cache:
+        cached_ts, cached_data = _analytics_cache[cache_key]
+        if now - cached_ts < _ANALYTICS_CACHE_TTL:
+            return cached_data
+
+    result = await _build_analytics(db, user.id, year, month, doctor_id)
+
+    _analytics_cache[cache_key] = (now, result)
+    stale = [k for k, (ts, _) in _analytics_cache.items() if now - ts > _ANALYTICS_CACHE_TTL * 2]
+    for k in stale:
+        _analytics_cache.pop(k, None)
+
+    return result
 
 
 # ── Експорт Excel ──────────────────────────────────────────────────

@@ -14,12 +14,15 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// On 401: fire a custom event instead of hard redirect.
+// AuthProvider listens for this event and handles logout via React state.
+// This avoids window.location.href which causes issues on mobile browsers
+// and race conditions when multiple concurrent requests all return 401.
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem("token");
-      window.location.href = "/login";
+      window.dispatchEvent(new CustomEvent("auth:expired"));
     }
     return Promise.reject(error);
   }
