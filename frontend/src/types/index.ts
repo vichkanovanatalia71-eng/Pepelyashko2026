@@ -286,6 +286,7 @@ export interface MonthlyExpenseData {
   owner?: OwnerBlock;
   is_locked: boolean;
   missing_salary_staff: string[];
+  accountant_submitted_at?: string | null;
 }
 
 export interface DoctorAgeGroupRow {

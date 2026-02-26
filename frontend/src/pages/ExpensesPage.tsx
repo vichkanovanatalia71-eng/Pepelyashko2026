@@ -138,6 +138,7 @@ export default function ExpensesPage() {
   const [accReqModal, setAccReqModal] = useState<{
     open: boolean; url: string; expiresAt: string;
   }>({ open: false, url: "", expiresAt: "" });
+  const [accBannerDismissed, setAccBannerDismissed] = useState<string | null>(null);
 
   // ── Right sidebar drawer state ──
   type DrawerSection = "fixed" | "salary" | "other" | "taxes" | "summary" | null;
@@ -1541,6 +1542,15 @@ export default function ExpensesPage() {
               </p>
             </div>
           </div>
+
+          {/* ═══ ACCOUNTANT SUBMITTED BANNER ═══ */}
+          {data.accountant_submitted_at && accBannerDismissed !== data.accountant_submitted_at && (
+            <AlertBanner variant="info" onDismiss={() => setAccBannerDismissed(data.accountant_submitted_at!)}>
+              Бухгалтер подав звіт за {MONTH_NAMES[month - 1]}.
+              Записи з позначкою «Бухгалтер» оновлені —{" "}
+              {new Date(data.accountant_submitted_at).toLocaleString("uk-UA", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })}
+            </AlertBanner>
+          )}
 
           {/* ═══ MONTH COMPLETION INDICATOR ═══ */}
           {(() => {

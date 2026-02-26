@@ -17,6 +17,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import get_current_user, get_db
+from app.core.email import send_accountant_report_notification
 from app.models.doctor import Doctor
 from app.models.monthly_expense import (
     FIXED_CATEGORY_NAMES,
@@ -262,6 +263,7 @@ class MonthlyExpenseResponse(BaseModel):
     owner: Optional[OwnerBlock] = None
     is_locked: bool = False
     missing_salary_staff: list[str] = []
+    accountant_submitted_at: str | None = None
 
 
 # ── Нові схеми ──
@@ -550,6 +552,27 @@ async def get_monthly_expenses(
         if m.id not in staff_with_salary
     ]
 
+    # 9. Перевірка останнього звіту бухгалтера для цього місяця
+    accountant_submitted_at: str | None = None
+    acc_res = await db.execute(
+        select(ShareReport).where(
+            ShareReport.user_id == user.id,
+            ShareReport.is_deleted == False,
+        )
+    )
+    for sr in acc_res.scalars().all():
+        fs_sr = sr.filter_snapshot or {}
+        if (
+            fs_sr.get("type") == "accountant_request"
+            and fs_sr.get("year") == year
+            and fs_sr.get("month") == month
+            and fs_sr.get("submitted")
+        ):
+            sd = fs_sr.get("submitted_data") or {}
+            sat = sd.get("submitted_at")
+            if sat and (accountant_submitted_at is None or sat > accountant_submitted_at):
+                accountant_submitted_at = sat
+
     return MonthlyExpenseResponse(
         year=year,
         month=month,
@@ -568,6 +591,7 @@ async def get_monthly_expenses(
         owner=owner_block,
         is_locked=is_locked,
         missing_salary_staff=missing_salary_staff,
+        accountant_submitted_at=accountant_submitted_at,
     )
 
 
@@ -1841,6 +1865,26 @@ async def submit_accountant_request(
     share.filter_snapshot = new_fs
 
     await db.commit()
+
+    # ── 4. Email-повідомлення власнику ──
+    owner_res = await db.execute(select(User).where(User.id == user_id))
+    owner = owner_res.scalar_one_or_none()
+    if owner and owner.email:
+        salary_total = sum(s["brutto"] for s in saved_salaries)
+        expenses_total = sum(e["amount"] for e in saved_fixed) + sum(
+            e["amount"] for e in saved_other
+        )
+        month_name = MONTHS_UA[month]
+        try:
+            await send_accountant_report_notification(
+                to_email=owner.email,
+                month_name=month_name,
+                year=year,
+                salary_total=salary_total,
+                expenses_total=expenses_total,
+            )
+        except Exception:
+            pass  # не блокуємо відповідь якщо email не вдалося надіслати
 
     return {
         "status": "ok",
