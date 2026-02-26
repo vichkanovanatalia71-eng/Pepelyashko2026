@@ -1592,9 +1592,20 @@ export default function ExpensesPage() {
                     </p>
                   </div>
                 </div>
-                <button onClick={() => setActiveDrawer(null)} className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all" aria-label="Закрити">
-                  <X size={16} />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setFixedModal({
+                      open: true, isEdit: false, id: null,
+                      name: "", desc: "", amount: "", recurring: true, saving: false,
+                    })}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent-500/15 text-accent-400 border border-accent-500/20 text-xs font-semibold hover:bg-accent-500/25 transition-all"
+                  >
+                    <Plus size={13} /> Додати
+                  </button>
+                  <button onClick={() => setActiveDrawer(null)} className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all" aria-label="Закрити">
+                    <X size={16} />
+                  </button>
+                </div>
               </div>
               <div className="overflow-y-auto flex-1">
 
@@ -2256,9 +2267,20 @@ export default function ExpensesPage() {
                     </p>
                   </div>
                 </div>
-                <button onClick={() => setActiveDrawer(null)} className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all" aria-label="Закрити">
-                  <X size={16} />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setOtherModal({
+                      open: true, isEdit: false, id: null,
+                      name: "", desc: "", amount: "", category: "general", saving: false,
+                    })}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent-500/15 text-accent-400 border border-accent-500/20 text-xs font-semibold hover:bg-accent-500/25 transition-all"
+                  >
+                    <Plus size={13} /> Додати
+                  </button>
+                  <button onClick={() => setActiveDrawer(null)} className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all" aria-label="Закрити">
+                    <X size={16} />
+                  </button>
+                </div>
               </div>
               <div className="overflow-y-auto flex-1">
               <div className="border-t border-dark-50/10">
