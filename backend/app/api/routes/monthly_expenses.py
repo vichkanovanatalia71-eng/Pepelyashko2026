@@ -605,20 +605,19 @@ async def get_monthly_expenses(
     # 9. Перевірка останнього звіту бухгалтера для цього місяця
     accountant_submitted_at: str | None = None
     acc_res = await db.execute(
-        select(
-            ShareReport.filter_snapshot["submitted_data"]["submitted_at"].as_string()
-        ).where(
+        select(ShareReport).where(
             ShareReport.user_id == user.id,
             ShareReport.is_deleted == False,
-            ShareReport.filter_snapshot["type"].as_string() == "accountant_request",
-            ShareReport.filter_snapshot["year"].as_integer() == year,
-            ShareReport.filter_snapshot["month"].as_integer() == month,
-            ShareReport.filter_snapshot["submitted"].as_boolean() == True,
-        ).order_by(
-            ShareReport.filter_snapshot["submitted_data"]["submitted_at"].as_string().desc()
-        ).limit(1)
+            ShareReport.filter_snapshot["type"].astext == "accountant_request",
+            ShareReport.filter_snapshot["year"].astext == str(year),
+            ShareReport.filter_snapshot["month"].astext == str(month),
+            ShareReport.filter_snapshot["submitted"].astext == "true",
+        ).order_by(ShareReport.created_at.desc()).limit(5)
     )
-    accountant_submitted_at = acc_res.scalar_one_or_none()
+    for sr in acc_res.scalars().all():
+        sat = (sr.filter_snapshot.get("submitted_data") or {}).get("submitted_at")
+        if sat and (accountant_submitted_at is None or sat > accountant_submitted_at):
+            accountant_submitted_at = sat
 
     return MonthlyExpenseResponse(
         year=year,
