@@ -526,6 +526,8 @@ export default function ExpensesPage() {
   // ── Fixed expense save ─────────────────────────────────────────
   async function saveFixed() {
     if (!fixedModal.name.trim()) return;
+    const fixedAmount = parseFloat(fixedModal.amount) || 0;
+    if (fixedAmount < 0) { setAlertDlg({ title: "Помилка", description: "Сума не може бути від'ємною." }); return; }
     setFixedModal(s => ({ ...s, saving: true }));
     try {
       if (!fixedModal.recurring) {
@@ -617,6 +619,8 @@ export default function ExpensesPage() {
   // ── Other expenses CRUD ────────────────────────────────────────
   async function saveOther() {
     if (!otherModal.name.trim()) return;
+    const otherAmount = parseFloat(otherModal.amount) || 0;
+    if (otherAmount < 0) { setAlertDlg({ title: "Помилка", description: "Сума не може бути від'ємною." }); return; }
     setOtherModal(s => ({ ...s, saving: true }));
     try {
       const payload = {

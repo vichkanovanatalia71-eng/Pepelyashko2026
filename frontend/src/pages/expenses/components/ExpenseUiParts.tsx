@@ -236,6 +236,7 @@ export function ModalField({
         value={value}
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
+        {...(type === "number" ? { min: "0" } : {})}
         className="input-dark w-full"
       />
     </div>
