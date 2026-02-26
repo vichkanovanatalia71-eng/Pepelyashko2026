@@ -303,6 +303,21 @@ export default function ExpensesPage() {
   useEffect(() => { load(); loadOther(); loadStaff(); loadDoctors(); loadPeriods(); loadPrevMonth(); }, [load, loadOther, loadStaff, loadDoctors, loadPeriods, loadPrevMonth]);
   useEffect(() => { if (viewMode === "all") loadAnnualData(); }, [viewMode, loadAnnualData]);
 
+  // Validate localStorage hired doctor/nurse ids against actual data
+  useEffect(() => {
+    if (!data?.owner?.hired_doctors) return;
+    const validDoctorIds = new Set(data.owner.hired_doctors.map(d => d.doctor_id));
+    if (selectedHiredDoctorId !== null && !validDoctorIds.has(selectedHiredDoctorId)) {
+      setSelectedHiredDoctorId(null);
+      localStorage.removeItem("owner_hired_doctor_id");
+    }
+    const validNurseIds = new Set(data.salary.filter(s => s.role === "nurse").map(s => s.staff_member_id));
+    if (selectedHiredNurseId !== null && !validNurseIds.has(selectedHiredNurseId)) {
+      setSelectedHiredNurseId(null);
+      localStorage.removeItem("owner_hired_nurse_id");
+    }
+  }, [data]);
+
   // Close drawer on Escape key
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
