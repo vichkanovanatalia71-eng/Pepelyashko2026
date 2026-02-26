@@ -5,7 +5,7 @@ import {
   Building2, Wallet, BarChart3, Check, UserPlus, Copy, Sparkles,
   Download, CalendarDays, ImagePlus, AlertCircle, FileSpreadsheet,
   Eye, Target, Activity, ArrowUpRight, ArrowDownRight,
-  Share2, ClipboardList, TrendingUp, Banknote, HeartPulse,
+  Share2, ClipboardList, TrendingUp, Banknote, HeartPulse, Search,
 } from "lucide-react";
 import {
   LoadingSpinner, AlertBanner, EmptyState, ConfirmDialog,
@@ -87,6 +87,10 @@ export default function ExpensesPage() {
     open: boolean; isEdit: boolean; id: number | null;
     name: string; desc: string; amount: string; saving: boolean;
   }>({ open: false, isEdit: false, id: null, name: "", desc: "", amount: "", saving: false });
+
+  // ── Search in drawers ──
+  const [fixedSearch, setFixedSearch] = useState("");
+  const [otherSearch, setOtherSearch] = useState("");
 
   // ── View mode: "all" = overview year, "month" = specific month ──
   const [viewMode, setViewMode] = useState<"all" | "month">("month");
@@ -397,6 +401,7 @@ export default function ExpensesPage() {
   ];
 
   function toggleDrawer(section: DrawerSection) {
+    setFixedSearch(""); setOtherSearch("");
     setActiveDrawer(prev => prev === section ? null : section);
   }
 
@@ -408,6 +413,7 @@ export default function ExpensesPage() {
 
   function doMonthChange(direction: "prev" | "next") {
     setActiveDrawer(null);
+    setFixedSearch(""); setOtherSearch("");
     setSectionCopied({});
     if (direction === "prev") {
       if (month === 1) { setYear(y => y - 1); setMonth(12); }
@@ -1720,6 +1726,22 @@ export default function ExpensesPage() {
               </div>
               <div className="overflow-y-auto flex-1">
 
+              {/* Search bar */}
+              {data.fixed.length > 3 && (
+                <div className="px-4 py-2 border-b border-dark-50/10 shrink-0">
+                  <div className="relative">
+                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+                    <input
+                      type="text"
+                      value={fixedSearch}
+                      onChange={e => setFixedSearch(e.target.value)}
+                      placeholder="Пошук витрат…"
+                      className="w-full pl-9 pr-3 py-2 rounded-lg bg-dark-400/40 border border-dark-50/10 text-sm text-gray-200 placeholder:text-gray-600 focus:outline-none focus:border-accent-500/40"
+                    />
+                  </div>
+                </div>
+              )}
+
               {/* Copy from previous month prompt */}
               {data.fixed.length === 0 && !sectionCopied.fixed && prevMonthLoaded && (
                 <div className="px-5 py-4 border-t border-dark-50/10 bg-dark-400/10">
@@ -1761,7 +1783,11 @@ export default function ExpensesPage() {
                   <div className="px-5 py-8 text-center text-gray-600 text-sm">
                     Ще немає постійних витрат. Натисніть «Додати витрату» щоб створити.
                   </div>
-                ) : data.fixed.map((row) => (
+                ) : data.fixed.filter(r => !fixedSearch || r.name.toLowerCase().includes(fixedSearch.toLowerCase())).length === 0 ? (
+                  <div className="px-5 py-6 text-center text-gray-600 text-sm">
+                    Нічого не знайдено за запитом «{fixedSearch}»
+                  </div>
+                ) : data.fixed.filter(r => !fixedSearch || r.name.toLowerCase().includes(fixedSearch.toLowerCase())).map((row) => (
                   <div key={row.id}
                     className="flex items-center gap-3 px-5 py-3 hover:bg-dark-400/20 transition-colors">
 
@@ -2396,6 +2422,22 @@ export default function ExpensesPage() {
               <div className="overflow-y-auto flex-1">
               <div className="border-t border-dark-50/10">
 
+              {/* Search bar */}
+              {otherExpenses.length > 3 && (
+                <div className="px-4 py-2 border-b border-dark-50/10">
+                  <div className="relative">
+                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+                    <input
+                      type="text"
+                      value={otherSearch}
+                      onChange={e => setOtherSearch(e.target.value)}
+                      placeholder="Пошук витрат…"
+                      className="w-full pl-9 pr-3 py-2 rounded-lg bg-dark-400/40 border border-dark-50/10 text-sm text-gray-200 placeholder:text-gray-600 focus:outline-none focus:border-accent-500/40"
+                    />
+                  </div>
+                </div>
+              )}
+
               {/* Copy from previous month prompt */}
               {otherExpenses.length === 0 && !sectionCopied.other && prevMonthLoaded && !otherLoading && (
                 <div className="px-5 py-4 bg-dark-400/10">
@@ -2442,7 +2484,11 @@ export default function ExpensesPage() {
                 />
               ) : (
                 <div className="divide-y divide-dark-50/5">
-                  {otherExpenses.map((exp) => (
+                  {otherExpenses.filter(e => !otherSearch || e.name.toLowerCase().includes(otherSearch.toLowerCase())).length === 0 ? (
+                    <div className="px-5 py-6 text-center text-gray-600 text-sm">
+                      Нічого не знайдено за запитом «{otherSearch}»
+                    </div>
+                  ) : otherExpenses.filter(e => !otherSearch || e.name.toLowerCase().includes(otherSearch.toLowerCase())).map((exp) => (
                     <div key={exp.id} className="flex items-center gap-3 px-5 py-3 hover:bg-dark-400/20 transition-colors">
                       <div className="flex-1 min-w-0">
                         <p className="text-sm text-gray-200 truncate">{exp.name}</p>
