@@ -85,8 +85,8 @@ export default function ExpensesPage() {
   // ── Other expense modal state
   const [otherModal, setOtherModal] = useState<{
     open: boolean; isEdit: boolean; id: number | null;
-    name: string; desc: string; amount: string; category: string; saving: boolean;
-  }>({ open: false, isEdit: false, id: null, name: "", desc: "", amount: "", category: "general", saving: false });
+    name: string; desc: string; amount: string; saving: boolean;
+  }>({ open: false, isEdit: false, id: null, name: "", desc: "", amount: "", saving: false });
 
   // ── View mode: "all" = overview year, "month" = specific month ──
   const [viewMode, setViewMode] = useState<"all" | "month">("month");
@@ -548,7 +548,7 @@ export default function ExpensesPage() {
         name:        otherModal.name,
         description: otherModal.desc,
         amount:      parseFloat(otherModal.amount) || 0,
-        category:    otherModal.category,
+        category:    "general",
         year,
         month,
       };
@@ -2271,7 +2271,7 @@ export default function ExpensesPage() {
                   <button
                     onClick={() => setOtherModal({
                       open: true, isEdit: false, id: null,
-                      name: "", desc: "", amount: "", category: "general", saving: false,
+                      name: "", desc: "", amount: "", saving: false,
                     })}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent-500/15 text-accent-400 border border-accent-500/20 text-xs font-semibold hover:bg-accent-500/25 transition-all"
                   >
@@ -2339,17 +2339,12 @@ export default function ExpensesPage() {
                           <p className="text-xs text-gray-600 truncate mt-0.5">{exp.description}</p>
                         )}
                       </div>
-                      {exp.category && (
-                        <span className="text-xs px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-300 border border-amber-500/25 shrink-0">
-                          {exp.category}
-                        </span>
-                      )}
                       <span className="font-mono text-sm text-gray-200 shrink-0 tabular-nums">{fmt(exp.amount)} ₴</span>
                       <button
                         onClick={() => setOtherModal({
                           open: true, isEdit: true, id: exp.id,
                           name: exp.name, desc: exp.description, amount: String(exp.amount),
-                          category: exp.category, saving: false,
+                          saving: false,
                         })}
                         className="p-1.5 rounded-lg text-gray-600 hover:text-amber-400 hover:bg-amber-500/10 transition-all shrink-0"
                         title="Редагувати"
@@ -2375,7 +2370,7 @@ export default function ExpensesPage() {
                 <button
                   onClick={() => setOtherModal({
                     open: true, isEdit: false, id: null,
-                    name: "", desc: "", amount: "", category: "general", saving: false,
+                    name: "", desc: "", amount: "", saving: false,
                   })}
                   className="flex items-center gap-1.5 text-xs text-accent-400 hover:text-accent-300 transition-colors"
                 >
@@ -2937,7 +2932,7 @@ export default function ExpensesPage() {
           case "other":
             rows = otherExpenses.map(r => ({
               name: r.name,
-              detail: r.description || r.category,
+              detail: r.description || "",
               amount: r.amount,
             }));
             totalValue = otherTotal;
@@ -3099,12 +3094,6 @@ export default function ExpensesPage() {
             onChange={v => setOtherModal(s => ({ ...s, amount: v }))}
             type="number"
             placeholder="0.00"
-          />
-          <ModalField
-            label="Категорія"
-            value={otherModal.category}
-            onChange={v => setOtherModal(s => ({ ...s, category: v }))}
-            placeholder="general"
           />
         </Modal>
       )}
