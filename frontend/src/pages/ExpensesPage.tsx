@@ -321,7 +321,7 @@ export default function ExpensesPage() {
   // Reset sheet height when drawer opens + lock body scroll
   useEffect(() => {
     if (activeDrawer) {
-      setSheetHeight(100);
+      setSheetHeight(92);
       document.body.style.overflow = "hidden";
       return () => { document.body.style.overflow = ""; };
     }
@@ -358,7 +358,7 @@ export default function ExpensesPage() {
     } else if (h < 75) {
       setSheetHeight(50);
     } else {
-      setSheetHeight(100);
+      setSheetHeight(92);
     }
   }, [sheetHeight]);
 
