@@ -494,6 +494,52 @@ export default function ExpensesPage() {
     }
   }
 
+  // ── Fixed expense save ─────────────────────────────────────────
+  async function saveFixed() {
+    if (!fixedModal.name.trim()) return;
+    setFixedModal(s => ({ ...s, saving: true }));
+    try {
+      if (!fixedModal.recurring) {
+        if (fixedModal.isEdit && fixedModal.id != null) {
+          await api.delete(`/monthly-expenses/fixed/${fixedModal.id}`);
+        }
+        await api.post("/monthly-expenses/other", {
+          name: fixedModal.name,
+          description: fixedModal.desc,
+          amount: parseFloat(fixedModal.amount) || 0,
+          category: "general",
+          year,
+          month,
+        });
+        setFixedModal(s => ({ ...s, open: false, saving: false }));
+        await Promise.all([load(), loadOther()]);
+      } else {
+        if (fixedModal.isEdit && fixedModal.id != null) {
+          await api.put(`/monthly-expenses/fixed/${fixedModal.id}`, {
+            name: fixedModal.name,
+            description: fixedModal.desc,
+            amount: parseFloat(fixedModal.amount) || 0,
+            is_recurring: fixedModal.recurring,
+          });
+        } else {
+          await api.post("/monthly-expenses/fixed", {
+            year, month,
+            name: fixedModal.name,
+            description: fixedModal.desc,
+            amount: parseFloat(fixedModal.amount) || 0,
+            is_recurring: fixedModal.recurring,
+          });
+        }
+        setFixedModal(s => ({ ...s, open: false, saving: false }));
+        await load();
+      }
+    } catch (e: any) {
+      console.error(e);
+      setAlertDlg({ title: "Помилка", description: e?.response?.data?.detail || "Не вдалося зберегти витрату. Спробуйте ще раз." });
+      setFixedModal(s => ({ ...s, saving: false }));
+    }
+  }
+
   // ── Staff CRUD ─────────────────────────────────────────────────
   async function saveStaff() {
     if (!staffModal.fullName.trim()) return;
@@ -2543,6 +2589,9 @@ export default function ExpensesPage() {
         <Modal
           title={fixedModal.isEdit ? "Редагувати постійну витрату" : "Додати постійну витрату"}
           onClose={() => setFixedModal(s => ({ ...s, open: false }))}
+          onSave={saveFixed}
+          saveDisabled={!fixedModal.name.trim()}
+          saving={fixedModal.saving}
           footer={
             <div className="flex gap-3">
               <button
@@ -2552,53 +2601,7 @@ export default function ExpensesPage() {
                 Скасувати
               </button>
               <button
-                onClick={async () => {
-                  if (!fixedModal.name.trim()) return;
-                  setFixedModal(s => ({ ...s, saving: true }));
-                  try {
-                    if (!fixedModal.recurring) {
-                      // Migrate to "Other expenses" when permanence is unchecked
-                      if (fixedModal.isEdit && fixedModal.id != null) {
-                        // Delete from fixed first
-                        await api.delete(`/monthly-expenses/fixed/${fixedModal.id}`);
-                      }
-                      // Create as other expense
-                      await api.post("/monthly-expenses/other", {
-                        name: fixedModal.name,
-                        description: fixedModal.desc,
-                        amount: parseFloat(fixedModal.amount) || 0,
-                        category: "general",
-                        year,
-                        month,
-                      });
-                      setFixedModal(s => ({ ...s, open: false, saving: false }));
-                      await Promise.all([load(), loadOther()]);
-                    } else {
-                      if (fixedModal.isEdit && fixedModal.id != null) {
-                        await api.put(`/monthly-expenses/fixed/${fixedModal.id}`, {
-                          name: fixedModal.name,
-                          description: fixedModal.desc,
-                          amount: parseFloat(fixedModal.amount) || 0,
-                          is_recurring: fixedModal.recurring,
-                        });
-                      } else {
-                        await api.post("/monthly-expenses/fixed", {
-                          year, month,
-                          name: fixedModal.name,
-                          description: fixedModal.desc,
-                          amount: parseFloat(fixedModal.amount) || 0,
-                          is_recurring: fixedModal.recurring,
-                        });
-                      }
-                      setFixedModal(s => ({ ...s, open: false, saving: false }));
-                      await load();
-                    }
-                  } catch (e: any) {
-                    console.error(e);
-                    setAlertDlg({ title: "Помилка", description: e?.response?.data?.detail || "Не вдалося зберегти витрату. Спробуйте ще раз." });
-                    setFixedModal(s => ({ ...s, saving: false }));
-                  }
-                }}
+                onClick={saveFixed}
                 disabled={fixedModal.saving || !fixedModal.name.trim()}
                 className="flex-1 py-2.5 rounded-xl bg-accent-500 hover:bg-accent-400 text-white text-sm font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-60"
               >
@@ -2640,6 +2643,9 @@ export default function ExpensesPage() {
         <Modal
           title={staffModal.isEdit ? "Редагувати співробітника" : "Додати співробітника"}
           onClose={() => setStaffModal(s => ({ ...s, open: false }))}
+          onSave={saveStaff}
+          saveDisabled={!staffModal.fullName.trim()}
+          saving={staffModal.saving}
           footer={
             <div className="flex gap-3">
               <button
@@ -3057,6 +3063,9 @@ export default function ExpensesPage() {
         <Modal
           title={otherModal.isEdit ? "Редагувати витрату" : "Додати витрату"}
           onClose={() => setOtherModal(s => ({ ...s, open: false }))}
+          onSave={saveOther}
+          saveDisabled={!otherModal.name.trim()}
+          saving={otherModal.saving}
           footer={
             <div className="flex gap-3">
               <button
