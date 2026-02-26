@@ -800,8 +800,11 @@ export default function ExpensesPage() {
         });
         await load();
       } else {
-        // Copy other expenses one by one (no backend bulk copy)
+        // Copy other expenses one by one, skip duplicates by name
+        const existingNames = new Set(otherExpenses.map(e => e.name.toLowerCase().trim()));
+        let copied = 0;
         for (const exp of prevOtherExpenses) {
+          if (existingNames.has(exp.name.toLowerCase().trim())) continue;
           await api.post("/monthly-expenses/other", {
             name: exp.name,
             description: exp.description,
@@ -810,8 +813,12 @@ export default function ExpensesPage() {
             year,
             month,
           });
+          copied++;
         }
         await loadOther();
+        if (copied === 0 && prevOtherExpenses.length > 0) {
+          setAlertDlg({ title: "Інформація", description: "Усі витрати вже існують у поточному місяці." });
+        }
       }
       setSectionCopied(s => ({ ...s, [section]: true }));
     } catch (e) {
