@@ -118,6 +118,7 @@ export default function ExpensesPage() {
     result: AiParsedExpense | null;
   }>({ open: false, text: "", file: null, loading: false, result: null });
   const aiFileRef = useRef<HTMLInputElement>(null);
+  const mobileTabsRef = useRef<HTMLDivElement>(null);
 
   // ── Annual analytics data (for "all" mode) ──
   const [annualMonths, setAnnualMonths] = useState<AnnualMonthData[]>([]);
@@ -390,6 +391,13 @@ export default function ExpensesPage() {
     window.addEventListener("sidebar-toggle", handleSidebarToggle);
     return () => window.removeEventListener("sidebar-toggle", handleSidebarToggle);
   }, []);
+
+  // Auto-scroll mobile tabs to active drawer
+  useEffect(() => {
+    if (!activeDrawer || !mobileTabsRef.current) return;
+    const btn = mobileTabsRef.current.querySelector(`[data-tab="${activeDrawer}"]`) as HTMLElement | null;
+    btn?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+  }, [activeDrawer]);
 
   // ── Drawer section definitions ──
   const DRAWER_SECTIONS: { key: DrawerSection; label: string; icon: React.ReactNode; color: string; badgeColor: string; glow: string; getValue: () => number; getStatus: () => boolean }[] = [
@@ -1535,7 +1543,7 @@ export default function ExpensesPage() {
           </div>
 
           {/* ═══ MOBILE: Expense Section Tabs (horizontal scroll) ═══ */}
-          <div className="lg:hidden -mx-4 px-4 overflow-x-auto scrollbar-hide">
+          <div ref={mobileTabsRef} className="lg:hidden -mx-4 px-4 overflow-x-auto scrollbar-hide">
             <div className="flex gap-2.5 pb-2 min-w-max">
               {DRAWER_SECTIONS.map(sec => {
                 const isActive = activeDrawer === sec.key;
@@ -1544,6 +1552,7 @@ export default function ExpensesPage() {
                 return (
                   <button
                     key={sec.key}
+                    data-tab={sec.key}
                     onClick={() => toggleDrawer(sec.key as DrawerSection)}
                     className={`flex items-center gap-2.5 px-4 py-3 rounded-2xl border border-orange-400/60 text-sm font-bold whitespace-nowrap transition-all duration-200 active:scale-95 tap-target ${
                       isActive
