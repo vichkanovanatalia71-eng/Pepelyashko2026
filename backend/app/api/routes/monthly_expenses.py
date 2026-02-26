@@ -123,6 +123,53 @@ async def _doctor_paid_services_income(
     return round(total, 2)
 
 
+async def _all_doctors_paid_services_income(
+    db: AsyncSession,
+    user_id: int,
+    year: int,
+    month: int,
+    ep_rate_pct: float = 0.0,
+    vz_rate_pct: float = 0.0,
+) -> tuple[dict[int, float], float]:
+    """Дохід від платних послуг по ВСІХ лікарях за місяць — 2 запити замість 2×N.
+
+    Повертає (dict {doctor_id: net_income}, gross_total).
+    """
+    reports_res = await db.execute(
+        select(MonthlyPaidServicesReport).where(
+            MonthlyPaidServicesReport.user_id == user_id,
+            MonthlyPaidServicesReport.year == year,
+            MonthlyPaidServicesReport.month == month,
+        )
+    )
+    reports = reports_res.scalars().all()
+    if not reports:
+        return {}, 0.0
+    report_to_doctor = {r.id: r.doctor_id for r in reports}
+    entries_res = await db.execute(
+        select(MonthlyPaidServiceEntry, Service)
+        .join(Service, MonthlyPaidServiceEntry.service_id == Service.id)
+        .where(MonthlyPaidServiceEntry.report_id.in_(list(report_to_doctor.keys())))
+    )
+    ep_r = ep_rate_pct / 100
+    vz_r = vz_rate_pct / 100
+    per_doctor: dict[int, float] = {}
+    gross_total = 0.0
+    for entry, svc in entries_res.all():
+        doctor_id = report_to_doctor[entry.report_id]
+        price = float(svc.price)
+        qty = int(entry.quantity)
+        gross_total += price * qty
+        mat_cost = sum(float(m.get("cost", 0)) for m in (svc.materials or []))
+        ep = round(price * ep_r, 2)
+        vz = round(price * vz_r, 2)
+        to_split = price - mat_cost - ep - vz
+        per_doctor[doctor_id] = round(
+            per_doctor.get(doctor_id, 0.0) + round(to_split / 2 * qty, 2), 2
+        )
+    return per_doctor, round(gross_total, 2)
+
+
 async def _nhsu_doctors_data(
     db: AsyncSession, user_id: int, year: int, month: int
 ) -> list[dict]:
@@ -396,6 +443,12 @@ async def get_monthly_expenses(
     nhsu_data_all = await _nhsu_doctors_data(db, user.id, year, month)
     nhsu_by_doctor_id = {d["doctor_id"]: d for d in nhsu_data_all}
 
+    # 3б. Підтягуємо дохід від платних послуг для ВСІХ лікарів одним батч-запитом (2 SQL замість 2×N)
+    paid_by_doctor, paid_gross_total = await _all_doctors_paid_services_income(
+        db, user.id, year, month,
+        ep_rate_pct=rates.ep_rate, vz_rate_pct=rates.vz_rate,
+    )
+
     pdfo_rate = rates.pdfo_rate / 100
     vz_zp_rate = rates.vz_zp_rate / 100
     esv_rate = rates.esv_employer_rate / 100
@@ -418,13 +471,10 @@ async def get_monthly_expenses(
         individual_bonus = float(rec.individual_bonus) if rec else 0.0
         paid_services_from_module = rec.paid_services_from_module if rec else False
 
-        # Для лікарів: завжди підтягуємо дохід з платних послуг автоматично
+        # Для лікарів: дохід з платних послуг з батч-запиту
         paid_services_income = 0.0
         if member.role == "doctor" and member.doctor_id:
-            paid_services_income = await _doctor_paid_services_income(
-                db, user.id, member.doctor_id, year, month,
-                ep_rate_pct=rates.ep_rate, vz_rate_pct=rates.vz_rate,
-            )
+            paid_services_income = paid_by_doctor.get(member.doctor_id, 0.0)
 
         total_employer_cost = round(brutto + esv + supplement + individual_bonus, 2)
 
@@ -456,9 +506,9 @@ async def get_monthly_expenses(
             edited_at=rec.edited_at.isoformat() if (rec and rec.edited_at) else None,
         ))
 
-    # 4. Податковий блок
-    nhsu_inc = await _nhsu_income(db, user.id, year, month)
-    paid_inc = await _paid_services_income(db, user.id, year, month)
+    # 4. Податковий блок (використовуємо вже завантажені дані — без додаткових запитів)
+    nhsu_inc = round(sum(d["nhsu_brutto"] for d in nhsu_data_all), 2)
+    paid_inc = paid_gross_total
     total_income = round(nhsu_inc + paid_inc, 2)
     ep = round(total_income * rates.ep_rate / 100, 2)
     vz = round(total_income * rates.vz_rate / 100, 2)
@@ -524,16 +574,11 @@ async def get_monthly_expenses(
                 staff_total_employer_cost=sal_row.total_employer_cost if sal_row else 0.0,
             ))
 
-        owner_paid = await _doctor_paid_services_income(
-            db, user.id, owner_doctor.id, year, month,
-            ep_rate_pct=rates.ep_rate, vz_rate_pct=rates.vz_rate,
-        )
-
         owner_block = OwnerBlock(
             doctor_id=owner_doctor.id,
             doctor_name=owner_doctor.full_name,
             nhsu_brutto=owner_nhsu["nhsu_brutto"] if owner_nhsu else 0.0,
-            paid_services_income=owner_paid,
+            paid_services_income=paid_by_doctor.get(owner_doctor.id, 0.0),
             ep_all=ep_all,
             vz_all=vz_all,
             esv_owner=esv_owner,
@@ -560,23 +605,20 @@ async def get_monthly_expenses(
     # 9. Перевірка останнього звіту бухгалтера для цього місяця
     accountant_submitted_at: str | None = None
     acc_res = await db.execute(
-        select(ShareReport).where(
+        select(
+            ShareReport.filter_snapshot["submitted_data"]["submitted_at"].as_string()
+        ).where(
             ShareReport.user_id == user.id,
             ShareReport.is_deleted == False,
-        )
+            ShareReport.filter_snapshot["type"].as_string() == "accountant_request",
+            ShareReport.filter_snapshot["year"].as_integer() == year,
+            ShareReport.filter_snapshot["month"].as_integer() == month,
+            ShareReport.filter_snapshot["submitted"].as_boolean() == True,
+        ).order_by(
+            ShareReport.filter_snapshot["submitted_data"]["submitted_at"].as_string().desc()
+        ).limit(1)
     )
-    for sr in acc_res.scalars().all():
-        fs_sr = sr.filter_snapshot or {}
-        if (
-            fs_sr.get("type") == "accountant_request"
-            and fs_sr.get("year") == year
-            and fs_sr.get("month") == month
-            and fs_sr.get("submitted")
-        ):
-            sd = fs_sr.get("submitted_data") or {}
-            sat = sd.get("submitted_at")
-            if sat and (accountant_submitted_at is None or sat > accountant_submitted_at):
-                accountant_submitted_at = sat
+    accountant_submitted_at = acc_res.scalar_one_or_none()
 
     return MonthlyExpenseResponse(
         year=year,
