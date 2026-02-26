@@ -118,11 +118,28 @@ export function Modal({ title, onClose, children, footer, onSave, saveDisabled, 
   const dragHandleRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{ startY: number; startH: number } | null>(null);
   const [sheetHeight, setSheetHeight] = useState(65);
+  const [vvHeight, setVvHeight] = useState<number | null>(null);
 
   // Lock body scroll while modal is open
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = ""; };
+  }, []);
+
+  // Adapt to iOS keyboard via visualViewport API
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const onResize = () => {
+      // When keyboard opens, vv.height < window.innerHeight
+      if (vv.height < window.innerHeight * 0.85) {
+        setVvHeight(vv.height);
+      } else {
+        setVvHeight(null);
+      }
+    };
+    vv.addEventListener("resize", onResize);
+    return () => vv.removeEventListener("resize", onResize);
   }, []);
 
   // Prevent default touchmove on drag handle (avoids page scroll during drag)
@@ -169,12 +186,13 @@ export function Modal({ title, onClose, children, footer, onSave, saveDisabled, 
         className={`relative bg-dark-600 sm:rounded-2xl shadow-2xl w-full max-w-md sm:my-auto animate-modal-in modal-glow flex flex-col ${sheetHeight >= 100 ? "flex-1 sm:flex-none sm:max-h-[90vh]" : "rounded-t-3xl"}`}
         style={sheetHeight < 100 ? {
           border: "1px solid #ffffff15",
-          height: `${sheetHeight}dvh`,
+          height: vvHeight ? `${Math.min(vvHeight - 20, (sheetHeight / 100) * window.innerHeight)}px` : `${sheetHeight}dvh`,
           maxWidth: "28rem",
           transition: dragRef.current ? "none" : "height 0.3s ease",
         } : {
           border: "1px solid #ffffff15",
           maxWidth: "28rem",
+          ...(vvHeight ? { maxHeight: `${vvHeight - 20}px` } : {}),
         }}
       >
         {/* Drag handle — mobile only */}
