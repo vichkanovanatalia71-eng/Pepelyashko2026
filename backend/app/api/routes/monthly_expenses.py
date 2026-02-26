@@ -5,6 +5,8 @@
 """
 from __future__ import annotations
 
+import logging
+
 import base64
 import secrets
 import uuid
@@ -15,6 +17,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Upload
 from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm.attributes import flag_modified
 
 from app.core.deps import get_current_user, get_db
 from app.core.email import send_accountant_report_notification
@@ -34,6 +37,8 @@ from app.models.staff import StaffMember
 from app.models.user import User
 from app.services.ai_provider import analyze_image, get_provider, parse_ai_json
 from app.services.nhsu import get_monthly_report
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -1863,6 +1868,7 @@ async def submit_accountant_request(
         "submitted_at": datetime.now(timezone.utc).isoformat(),
     }
     share.filter_snapshot = new_fs
+    flag_modified(share, "filter_snapshot")
 
     await db.commit()
 
@@ -1876,15 +1882,20 @@ async def submit_accountant_request(
         )
         month_name = MONTHS_UA[month]
         try:
-            await send_accountant_report_notification(
+            sent = await send_accountant_report_notification(
                 to_email=owner.email,
                 month_name=month_name,
                 year=year,
                 salary_total=salary_total,
                 expenses_total=expenses_total,
             )
+            if not sent:
+                logger.warning(
+                    "Email-повідомлення про звіт бухгалтера не надіслано для %s (SMTP не налаштовано?)",
+                    owner.email,
+                )
         except Exception:
-            pass  # не блокуємо відповідь якщо email не вдалося надіслати
+            logger.exception("Помилка при відправці email-повідомлення про звіт бухгалтера")
 
     return {
         "status": "ok",
