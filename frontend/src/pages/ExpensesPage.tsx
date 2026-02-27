@@ -138,8 +138,15 @@ export default function ExpensesPage() {
   const [accReqModal, setAccReqModal] = useState<{
     open: boolean; url: string; expiresAt: string;
   }>({ open: false, url: "", expiresAt: "" });
-  const [accBannerDismissed, setAccBannerDismissed] = useState<string | null>(null);
+  const [accBannerDismissed, setAccBannerDismissed] = useState<string | null>(() => {
+    try { return localStorage.getItem("acc-submitted-dismissed"); } catch { return null; }
+  });
   const [accSubmittedModal, setAccSubmittedModal] = useState(false);
+  const dismissAccModal = (ts: string) => {
+    setAccSubmittedModal(false);
+    setAccBannerDismissed(ts);
+    try { localStorage.setItem("acc-submitted-dismissed", ts); } catch { /* ignore */ }
+  };
 
   // ── Right sidebar drawer state ──
   type DrawerSection = "fixed" | "salary" | "other" | "taxes" | "summary" | null;
@@ -3361,10 +3368,10 @@ export default function ExpensesPage() {
       {/* ── Accountant submitted modal ── */}
       {accSubmittedModal && data?.accountant_submitted_at && (
         <div className="fixed inset-0 z-50 flex items-start justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-md animate-fade-in" onClick={() => { setAccSubmittedModal(false); setAccBannerDismissed(data.accountant_submitted_at!); }} />
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-md animate-fade-in" onClick={() => dismissAccModal(data.accountant_submitted_at!)} />
           <div className="relative p-6 max-w-sm w-full my-auto animate-modal-in rounded-2xl bg-dark-600 border border-blue-500/25 shadow-[0_0_60px_rgba(59,130,246,0.22),0_0_120px_rgba(59,130,246,0.08),0_24px_70px_rgba(0,0,0,0.55)]">
             <div className="absolute top-0 left-0 right-0 h-[2px] rounded-t-2xl bg-gradient-to-r from-transparent via-blue-500/90 to-transparent shadow-[0_0_20px_6px_rgba(59,130,246,0.20)]" />
-            <button onClick={() => { setAccSubmittedModal(false); setAccBannerDismissed(data.accountant_submitted_at!); }} aria-label="Закрити" className="absolute top-4 right-4 p-1.5 rounded-xl text-gray-500 hover:text-white hover:bg-dark-300/50 active:scale-90 transition-all duration-150">
+            <button onClick={() => dismissAccModal(data.accountant_submitted_at!)} aria-label="Закрити" className="absolute top-4 right-4 p-1.5 rounded-xl text-gray-500 hover:text-white hover:bg-dark-300/50 active:scale-90 transition-all duration-150">
               <X size={16} />
             </button>
             <div className="flex flex-col items-center text-center">
@@ -3383,7 +3390,7 @@ export default function ExpensesPage() {
               </p>
             </div>
             <button
-              onClick={() => { setAccSubmittedModal(false); setAccBannerDismissed(data.accountant_submitted_at!); }}
+              onClick={() => dismissAccModal(data.accountant_submitted_at!)}
               className="w-full px-4 py-3 rounded-xl text-sm font-semibold text-white bg-blue-500 hover:bg-blue-600 active:scale-97 transition-all duration-150 shadow-lg shadow-blue-500/20"
             >
               Зрозуміло
