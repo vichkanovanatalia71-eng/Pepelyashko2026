@@ -909,7 +909,7 @@ class OtherExpenseResponse(BaseModel):
     year: int
     month: int
     edited_by: Optional[str] = None
-    edited_at: Optional[str] = None
+    edited_at: Optional[datetime] = None
 
     model_config = {"from_attributes": True}
 
