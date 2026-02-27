@@ -15,7 +15,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
 from pydantic import BaseModel
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm.attributes import flag_modified
 
@@ -1105,6 +1105,45 @@ async def unlock_period(
         await db.delete(lock)
         await db.commit()
     return {"is_locked": False}
+
+
+@router.delete("/period", status_code=204)
+async def delete_period_data(
+    year: int = Query(...),
+    month: int = Query(...),
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Видалити всі дані витрат за обраний місяць (постійні, зарплатні, інші витрати + блокування)."""
+    await db.execute(
+        delete(MonthlyFixedExpense).where(
+            MonthlyFixedExpense.user_id == user.id,
+            MonthlyFixedExpense.year == year,
+            MonthlyFixedExpense.month == month,
+        )
+    )
+    await db.execute(
+        delete(MonthlySalaryExpense).where(
+            MonthlySalaryExpense.user_id == user.id,
+            MonthlySalaryExpense.year == year,
+            MonthlySalaryExpense.month == month,
+        )
+    )
+    await db.execute(
+        delete(MonthlyOtherExpense).where(
+            MonthlyOtherExpense.user_id == user.id,
+            MonthlyOtherExpense.year == year,
+            MonthlyOtherExpense.month == month,
+        )
+    )
+    await db.execute(
+        delete(MonthlyExpenseLock).where(
+            MonthlyExpenseLock.user_id == user.id,
+            MonthlyExpenseLock.year == year,
+            MonthlyExpenseLock.month == month,
+        )
+    )
+    await db.commit()
 
 
 @router.post("/copy-from", status_code=200)

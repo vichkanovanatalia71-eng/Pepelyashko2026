@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import api from "../api/client";
-import { MONTH_NAMES, LoadingSpinner, EmptyState, AlertBanner } from "../components/shared";
+import { MONTH_NAMES, LoadingSpinner, EmptyState, AlertBanner, ConfirmDialog } from "../components/shared";
 import type {
   AgeGroup, Doctor, DoctorSummary,
   NhsuMonthlyReport, NhsuSettings,
@@ -96,6 +96,9 @@ export default function NhsuPage() {
   const [aiHistory,   setAiHistory]   = useState<AiHistoryEntry[]>(loadHistory);
   const [showHistory, setShowHistory] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Delete confirmation state
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // YoY comparison state
   const [prevYearReport, setPrevYearReport] = useState<NhsuMonthlyReport | null>(null);
@@ -420,6 +423,15 @@ export default function NhsuPage() {
 
   const clearHistory = () => { saveHistory([]); setAiHistory([]); };
 
+  const handleDeletePeriod = async () => {
+    try {
+      await api.delete(`/nhsu/monthly?year=${year}&month=${month}`);
+      setShowDeleteConfirm(false);
+      setReport(null);
+      await loadTrend();
+    } catch { /* ignore */ }
+  };
+
   // ─────────────────────────────────────────────────────────────────
   return (
     <div className="space-y-5">
@@ -523,11 +535,18 @@ export default function NhsuPage() {
               <Plus size={15} aria-hidden="true"/>{report?"Редагувати":"Заповнити"}
             </button>
             {report && (
-              <button onClick={exportExcel}
-                aria-label="Експортувати в Excel"
-                className="flex items-center gap-2 px-4 py-2.5 bg-dark-300 hover:bg-dark-200 text-gray-300 rounded-xl text-sm border border-dark-50/20">
-                <Download size={15} aria-hidden="true"/>Excel
-              </button>
+              <>
+                <button onClick={exportExcel}
+                  aria-label="Експортувати в Excel"
+                  className="flex items-center gap-2 px-4 py-2.5 bg-dark-300 hover:bg-dark-200 text-gray-300 rounded-xl text-sm border border-dark-50/20">
+                  <Download size={15} aria-hidden="true"/>Excel
+                </button>
+                <button onClick={() => setShowDeleteConfirm(true)}
+                  aria-label="Видалити дані за місяць"
+                  className="flex items-center gap-2 px-4 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl text-sm border border-red-500/20">
+                  <Trash2 size={15} aria-hidden="true"/>Видалити
+                </button>
+              </>
             )}
           </div>
         </div>
@@ -1004,6 +1023,16 @@ export default function NhsuPage() {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        title={`Видалити дані НСЗУ за ${MONTH_NAMES[month-1]} ${year}?`}
+        description="Усі записи декларацій за цей місяць буде видалено. Цю дію неможливо скасувати."
+        variant="danger"
+        confirmLabel="Видалити"
+        onConfirm={handleDeletePeriod}
+        onCancel={() => setShowDeleteConfirm(false)}
+      />
     </div>
   );
 }

@@ -30,7 +30,7 @@ import {
   ClipboardList,
   Users,
 } from "lucide-react";
-import { LoadingSpinner, ConfirmDialog, AlertBanner } from "../components/shared";
+import { LoadingSpinner, ConfirmDialog, AlertBanner, MONTH_NAMES } from "../components/shared";
 import MedFlowLogo from "../components/shared/MedFlowLogo";
 import {
   BarChart,
@@ -97,6 +97,7 @@ export default function MonthlyServicesPage() {
   const [deleteReportId, setDeleteReportId] = useState<number | null>(null);
   const [finalizeWarningId, setFinalizeWarningId] = useState<number | null>(null);
   const [alertDlg, setAlertDlg] = useState<{ title: string; description?: string } | null>(null);
+  const [showDeletePeriod, setShowDeletePeriod] = useState(false);
 
   // ── Форма звіту ──
   const [formDoctor, setFormDoctor] = useState<number>(0);
@@ -367,6 +368,14 @@ export default function MonthlyServicesPage() {
     } catch {}
   }
 
+  async function handleDeletePeriod() {
+    try {
+      await api.delete(`/monthly-services/period?year=${selectedYear}&month=${selectedMonth}`);
+      setShowDeletePeriod(false);
+      await Promise.all([loadAnalytics(), loadPeriodInfo()]);
+    } catch {}
+  }
+
   async function handleCopyPrevious() {
     if (!selectedDoctor) {
       setAlertDlg({ title: "Увага", description: "Оберіть конкретного лікаря для копіювання звіту" });
@@ -516,6 +525,12 @@ export default function MonthlyServicesPage() {
             <Plus size={16} aria-hidden="true" />
             <span className="hidden sm:inline">Додати звіт</span>
           </button>
+          {analytics && analytics.reports.length > 0 && (
+            <button onClick={() => setShowDeletePeriod(true)} aria-label="Видалити дані за місяць" className="flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 rounded-xl border border-red-500/20 transition-all tap-target">
+              <Trash2 size={15} aria-hidden="true" />
+              <span className="hidden sm:inline">Видалити</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -1156,6 +1171,17 @@ export default function MonthlyServicesPage() {
         cancelLabel="Скасувати"
         onConfirm={() => handleDeleteReport(deleteReportId!)}
         onCancel={() => setDeleteReportId(null)}
+      />
+
+      {/* ── Видалення всіх даних за місяць ── */}
+      <ConfirmDialog
+        open={showDeletePeriod}
+        title={`Видалити дані послуг за ${MONTH_NAMES[selectedMonth-1]} ${selectedYear}?`}
+        description="Усі звіти, записи та готівку за цей місяць буде видалено. Цю дію неможливо скасувати."
+        variant="danger"
+        confirmLabel="Видалити"
+        onConfirm={handleDeletePeriod}
+        onCancel={() => setShowDeletePeriod(false)}
       />
 
       {/* ── Попередження: зафіксувати без каси ── */}

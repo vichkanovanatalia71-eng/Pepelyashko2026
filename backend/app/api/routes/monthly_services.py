@@ -15,7 +15,7 @@ from typing import Optional
 import openpyxl
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
 from fastapi.responses import StreamingResponse
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import get_current_user, get_db
@@ -667,6 +667,48 @@ async def delete_report(
     if not report:
         raise HTTPException(404, detail="Звіт не знайдено")
     await db.delete(report)
+    await db.commit()
+
+
+@router.delete("/period", status_code=204)
+async def delete_period_data(
+    year: int = Query(...),
+    month: int = Query(...),
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Видалити всі дані платних послуг за обраний місяць (звіти, записи та готівку)."""
+    # Знайти всі звіти за період
+    r = await db.execute(
+        select(MonthlyPaidServicesReport.id).where(
+            MonthlyPaidServicesReport.user_id == user.id,
+            MonthlyPaidServicesReport.year == year,
+            MonthlyPaidServicesReport.month == month,
+        )
+    )
+    report_ids = [row[0] for row in r.all()]
+
+    if report_ids:
+        # Записи видаляться каскадно (ondelete="CASCADE"), але на всяк випадок:
+        await db.execute(
+            delete(MonthlyPaidServiceEntry).where(
+                MonthlyPaidServiceEntry.report_id.in_(report_ids)
+            )
+        )
+        await db.execute(
+            delete(MonthlyPaidServicesReport).where(
+                MonthlyPaidServicesReport.id.in_(report_ids)
+            )
+        )
+
+    # Видалити готівку за період
+    await db.execute(
+        delete(MonthlyPeriodCash).where(
+            MonthlyPeriodCash.user_id == user.id,
+            MonthlyPeriodCash.period_year == year,
+            MonthlyPeriodCash.period_month == month,
+        )
+    )
     await db.commit()
 
 

@@ -2,13 +2,13 @@ from datetime import datetime, timezone
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import get_current_user, get_db
 from app.services.ai_provider import analyze_image as ai_analyze_image, get_provider, parse_ai_json
 from app.models.doctor import Doctor
-from app.models.nhsu import AGE_GROUPS
+from app.models.nhsu import AGE_GROUPS, NhsuRecord
 from app.models.staff import StaffMember
 from app.models.user import User
 from app.schemas.nhsu import (
@@ -295,6 +295,24 @@ async def get_monthly(
             detail="Дані за цей місяць не знайдено",
         )
     return report
+
+
+@router.delete("/monthly", status_code=204)
+async def delete_monthly(
+    year: int = Query(...),
+    month: int = Query(...),
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Видалити всі дані НСЗУ за обраний місяць."""
+    await db.execute(
+        delete(NhsuRecord).where(
+            NhsuRecord.user_id == user.id,
+            NhsuRecord.year == year,
+            NhsuRecord.month == month,
+        )
+    )
+    await db.commit()
 
 
 # ── Тренд / прогноз (останні N місяців) ─────────────────────────────

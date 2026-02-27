@@ -692,6 +692,24 @@ export default function ExpensesPage() {
     });
   }
 
+  function deletePeriodData() {
+    setConfirmDlg({
+      title: `Видалити всі витрати за ${MONTH_NAMES[month - 1]} ${year}?`,
+      description: "Усі постійні, зарплатні та інші витрати за цей місяць буде видалено. Цю дію неможливо скасувати.",
+      variant: "danger",
+      confirmLabel: "Видалити",
+      action: async () => {
+        try {
+          await api.delete(`/monthly-expenses/period?year=${year}&month=${month}`);
+          await Promise.all([load(), loadOther()]);
+        } catch (e: any) {
+          console.error(e);
+          setAlertDlg({ title: "Помилка", description: e?.response?.data?.detail || "Не вдалося видалити дані." });
+        }
+      },
+    });
+  }
+
   // ── Lock / Unlock period ──────────────────────────────────────
   async function lockPeriod() {
     setLockLoading(true);
@@ -1446,6 +1464,15 @@ export default function ExpensesPage() {
             >
               <Download size={13} aria-hidden="true" /> Excel
             </button>
+            {data && (
+              <button
+                onClick={deletePeriodData}
+                aria-label="Видалити всі дані за місяць"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-semibold hover:bg-red-500/20 transition-all"
+              >
+                <Trash2 size={13} aria-hidden="true" /> Видалити
+              </button>
+            )}
           </div>
 
           {/* Lock banner */}
