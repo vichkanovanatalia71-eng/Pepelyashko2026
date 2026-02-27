@@ -17,6 +17,8 @@ export interface OtherExpense {
   category: string;
   year: number;
   month: number;
+  edited_by?: string | null;
+  edited_at?: string | null;
 }
 
 export interface DetailRow {

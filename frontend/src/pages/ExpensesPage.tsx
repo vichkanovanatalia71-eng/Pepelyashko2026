@@ -2585,6 +2585,11 @@ export default function ExpensesPage() {
                           <p className="text-xs text-gray-600 truncate mt-0.5">{exp.description}</p>
                         )}
                       </div>
+                      {exp.edited_by === "accountant" && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-teal-500/15 text-teal-400 border border-teal-500/20 shrink-0" title={exp.edited_at ? `Оновлено: ${new Date(exp.edited_at).toLocaleDateString("uk-UA")}` : undefined}>
+                          Бухгалтер
+                        </span>
+                      )}
                       <span className="font-mono text-sm text-gray-200 shrink-0 tabular-nums">{fmt(exp.amount)} ₴</span>
                       <button
                         onClick={() => setOtherModal({

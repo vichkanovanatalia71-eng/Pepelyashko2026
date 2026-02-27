@@ -100,6 +100,9 @@ class MonthlyOtherExpense(Base):
     description: Mapped[str] = mapped_column(Text, default="")
     amount: Mapped[float] = mapped_column(Numeric(12, 2), default=0.0)
     category: Mapped[str] = mapped_column(String(50), default="general")
+    # Хто останній редагував: "user" | "accountant" | None
+    edited_by: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    edited_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )

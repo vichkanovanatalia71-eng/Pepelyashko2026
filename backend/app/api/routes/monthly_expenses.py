@@ -908,6 +908,8 @@ class OtherExpenseResponse(BaseModel):
     category: str
     year: int
     month: int
+    edited_by: Optional[str] = None
+    edited_at: Optional[str] = None
 
     model_config = {"from_attributes": True}
 
@@ -1928,6 +1930,8 @@ async def submit_accountant_request(
                 name=exp.name,
                 amount=exp.amount,
                 category="general",
+                edited_by="accountant",
+                edited_at=datetime.now(timezone.utc),
             )
             db.add(oe)
             await db.flush()
