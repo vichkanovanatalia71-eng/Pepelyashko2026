@@ -1429,7 +1429,7 @@ async def _build_owner_share_payload(
             hired_declarations = max(
                 0,
                 round(
-                    (hd["nhsu_brutto"]
+                    (hd["nhsu_brutto"] - hd["nhsu_ep"] - hd["nhsu_vz"]
                      - doctor_employer_cost - nurse_employer_cost) / 2 * 0.9, 2,
                 ),
             )
@@ -1439,7 +1439,7 @@ async def _build_owner_share_payload(
                 "doctor_name": hd["doctor_name"],
                 "nhsu_brutto": hd["nhsu_brutto"],
                 "total_expenses": round(
-                    doctor_employer_cost + nurse_employer_cost, 2,
+                    hd["nhsu_ep"] + hd["nhsu_vz"] + doctor_employer_cost + nurse_employer_cost, 2,
                 ),
             }
             hired_nurse_detail = {

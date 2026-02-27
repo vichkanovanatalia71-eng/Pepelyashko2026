@@ -2083,6 +2083,8 @@ export default function ExpensesPage() {
                                   {hd && nurseRow ? (
                                     <div className="space-y-2 pt-2 border-t border-dark-50/10">
                                       <CalcRow label={`Брутто НСЗУ (${hd.doctor_name})`} value={hd.nhsu_brutto} color="text-white" />
+                                      <CalcRow label="ЄП лікаря" value={hd.nhsu_ep} color="text-red-400" info="відрахування" />
+                                      <CalcRow label="ВЗ лікаря" value={hd.nhsu_vz} color="text-red-400" info="відрахування" />
                                       <CalcRow label="ЗП лікаря (витрати)" value={hd.staff_total_employer_cost} color="text-red-400" info="відрахування" />
                                       {(doctorSalaryRow?.supplement ?? 0) > 0 && (
                                         <CalcRow label="  з них Доплата лікаря" value={doctorSalaryRow!.supplement} color="text-orange-400" info="до цільової" />
