@@ -52,7 +52,7 @@ export function calcOwnerSalary(
       hiredDeclarations = Math.max(
         0,
         Math.round(
-          (hd.nhsu_brutto - hd.nhsu_ep - hd.nhsu_vz
+          (hd.nhsu_brutto
             - hd.staff_total_employer_cost
             - nurseRow.total_employer_cost) / 2 * 0.9 * 100,
         ) / 100,

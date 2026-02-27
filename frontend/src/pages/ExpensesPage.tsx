@@ -1994,6 +1994,7 @@ export default function ExpensesPage() {
                           d => d.doctor_id === selectedHiredDoctorId
                         );
                         const nurseRow = data.salary.find(s => s.staff_member_id === selectedHiredNurseId);
+                        const doctorSalaryRow = hd ? data.salary.find(s => s.staff_member_id === hd.staff_member_id) : undefined;
                         return (
                           <div className="border-b border-amber-500/20">
                             <div className="px-5 py-4 bg-amber-500/5">
@@ -2082,10 +2083,14 @@ export default function ExpensesPage() {
                                   {hd && nurseRow ? (
                                     <div className="space-y-2 pt-2 border-t border-dark-50/10">
                                       <CalcRow label={`Брутто НСЗУ (${hd.doctor_name})`} value={hd.nhsu_brutto} color="text-white" />
-                                      <CalcRow label="ЄП лікаря" value={hd.nhsu_ep} color="text-red-400" info="відрахування" />
-                                      <CalcRow label="ВЗ лікаря" value={hd.nhsu_vz} color="text-red-400" info="відрахування" />
                                       <CalcRow label="ЗП лікаря (витрати)" value={hd.staff_total_employer_cost} color="text-red-400" info="відрахування" />
+                                      {(doctorSalaryRow?.supplement ?? 0) > 0 && (
+                                        <CalcRow label="  з них Доплата лікаря" value={doctorSalaryRow!.supplement} color="text-orange-400" info="до цільової" />
+                                      )}
                                       <CalcRow label={`ЗП сестри (${nurseRow.full_name})`} value={nurseRow.total_employer_cost} color="text-red-400" info="відрахування" />
+                                      {(nurseRow.supplement ?? 0) > 0 && (
+                                        <CalcRow label="  з них Доплата сестри" value={nurseRow.supplement} color="text-orange-400" info="до цільової" />
+                                      )}
                                       <div className="border-t border-dark-50/10 pt-2">
                                         <CalcRow label="÷ 2 × 90%" value={ownerCalc.hiredDeclarations} color="text-emerald-400" bold />
                                       </div>
