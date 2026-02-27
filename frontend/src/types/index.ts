@@ -204,6 +204,7 @@ export interface FixedExpenseRow {
   is_recurring: boolean;
   edited_by?: string | null;
   edited_at?: string | null;
+  visible_to_accountant?: boolean;
 }
 
 export interface SalaryExpenseRow {

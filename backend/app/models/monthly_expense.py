@@ -45,6 +45,8 @@ class MonthlyFixedExpense(Base):
     # Хто останній редагував: "user" | "accountant" | None
     edited_by: Mapped[str | None] = mapped_column(String(20), nullable=True)
     edited_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # Видимість для бухгалтера
+    visible_to_accountant: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )
@@ -103,6 +105,8 @@ class MonthlyOtherExpense(Base):
     # Хто останній редагував: "user" | "accountant" | None
     edited_by: Mapped[str | None] = mapped_column(String(20), nullable=True)
     edited_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # Видимість для бухгалтера
+    visible_to_accountant: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )

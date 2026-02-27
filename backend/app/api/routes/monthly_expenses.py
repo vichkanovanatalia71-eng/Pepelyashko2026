@@ -233,6 +233,7 @@ class FixedExpenseRow(BaseModel):
     is_recurring: bool
     edited_by: Optional[str] = None
     edited_at: Optional[str] = None
+    visible_to_accountant: bool = True
 
 
 class SalaryExpenseRow(BaseModel):
@@ -417,6 +418,7 @@ async def get_monthly_expenses(
             is_recurring=rec.is_recurring,
             edited_by=rec.edited_by,
             edited_at=rec.edited_at.isoformat() if rec.edited_at else None,
+            visible_to_accountant=rec.visible_to_accountant,
         ))
 
     # 3. Зарплатні витрати — всі активні співробітники
@@ -717,6 +719,7 @@ async def create_fixed_expense(
         is_recurring=rec.is_recurring,
         edited_by=rec.edited_by,
         edited_at=rec.edited_at.isoformat() if rec.edited_at else None,
+        visible_to_accountant=rec.visible_to_accountant,
     )
 
 
@@ -763,6 +766,7 @@ async def update_fixed_expense(
         is_recurring=rec.is_recurring,
         edited_by=rec.edited_by,
         edited_at=rec.edited_at.isoformat() if rec.edited_at else None,
+        visible_to_accountant=rec.visible_to_accountant,
     )
 
 
@@ -784,6 +788,27 @@ async def delete_fixed_expense(
         raise HTTPException(status_code=404, detail="Витрату не знайдено")
     await db.delete(rec)
     await db.commit()
+
+
+@router.patch("/fixed/{expense_id}/visibility")
+async def toggle_fixed_visibility(
+    expense_id: int,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Перемикає видимість постійної витрати для бухгалтера."""
+    res = await db.execute(
+        select(MonthlyFixedExpense).where(
+            MonthlyFixedExpense.id == expense_id,
+            MonthlyFixedExpense.user_id == user.id,
+        )
+    )
+    rec = res.scalar_one_or_none()
+    if not rec:
+        raise HTTPException(status_code=404, detail="Витрату не знайдено")
+    rec.visible_to_accountant = not rec.visible_to_accountant
+    await db.commit()
+    return {"visible_to_accountant": rec.visible_to_accountant}
 
 
 # ────────────────────────────── Endpoint: PUT salary ──────────────────────────────
@@ -910,6 +935,7 @@ class OtherExpenseResponse(BaseModel):
     month: int
     edited_by: Optional[str] = None
     edited_at: Optional[datetime] = None
+    visible_to_accountant: bool = True
 
     model_config = {"from_attributes": True}
 
@@ -1000,6 +1026,27 @@ async def delete_other_expense(
         raise HTTPException(status_code=404, detail="Витрату не знайдено")
     await db.delete(rec)
     await db.commit()
+
+
+@router.patch("/other/{expense_id}/visibility")
+async def toggle_other_visibility(
+    expense_id: int,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Перемикає видимість іншої витрати для бухгалтера."""
+    res = await db.execute(
+        select(MonthlyOtherExpense).where(
+            MonthlyOtherExpense.id == expense_id,
+            MonthlyOtherExpense.user_id == user.id,
+        )
+    )
+    rec = res.scalar_one_or_none()
+    if not rec:
+        raise HTTPException(status_code=404, detail="Витрату не знайдено")
+    rec.visible_to_accountant = not rec.visible_to_accountant
+    await db.commit()
+    return {"visible_to_accountant": rec.visible_to_accountant}
 
 
 # ══════════════════════════════════════════════════════════════════
@@ -1760,17 +1807,99 @@ async def view_accountant_request(token: str, db: AsyncSession = Depends(get_db)
         raise HTTPException(404, detail="Посилання не знайдено")
 
     month_name = MONTHS_UA[fs.get("month", 1)]
-    year = fs.get("year", "")
+    year = fs.get("year")
+    month = fs.get("month")
+    user_id = share.user_id
+
+    # ── Актуальні дані з БД (live_data) ──
+    # Зарплати
+    sal_res = await db.execute(
+        select(MonthlySalaryExpense).where(
+            MonthlySalaryExpense.user_id == user_id,
+            MonthlySalaryExpense.year == year,
+            MonthlySalaryExpense.month == month,
+        )
+    )
+    salary_map = {s.staff_member_id: s for s in sal_res.scalars().all()}
+
+    # Staff members (для full_name/role/position) — тільки ті, що у payload
+    payload_staff_ids = {s["staff_member_id"] for s in share.payload_snapshot.get("salary_staff", [])}
+    staff_res = await db.execute(
+        select(StaffMember).where(StaffMember.id.in_(payload_staff_ids)) if payload_staff_ids else select(StaffMember).where(False)
+    )
+    staff_map = {s.id: s for s in staff_res.scalars().all()}
+
+    live_salaries = []
+    for ps in share.payload_snapshot.get("salary_staff", []):
+        sid = ps["staff_member_id"]
+        sal = salary_map.get(sid)
+        sm = staff_map.get(sid)
+        live_salaries.append({
+            "staff_member_id": sid,
+            "full_name": sm.full_name if sm else ps.get("full_name", ""),
+            "role": sm.role if sm else ps.get("role", ""),
+            "position": sm.position if sm else ps.get("position", ""),
+            "current_brutto": float(sal.brutto) if sal else ps.get("prev_brutto", 0.0),
+            "prev_brutto": ps.get("prev_brutto", 0.0),
+            "edited_by": sal.edited_by if sal else None,
+            "edited_at": sal.edited_at.isoformat() if sal and sal.edited_at else None,
+        })
+
+    # Постійні витрати (visible_to_accountant=True)
+    fixed_res = await db.execute(
+        select(MonthlyFixedExpense).where(
+            MonthlyFixedExpense.user_id == user_id,
+            MonthlyFixedExpense.year == year,
+            MonthlyFixedExpense.month == month,
+            MonthlyFixedExpense.visible_to_accountant == True,
+        ).order_by(MonthlyFixedExpense.id)
+    )
+    live_fixed = []
+    for fe in fixed_res.scalars().all():
+        live_fixed.append({
+            "id": fe.id,
+            "name": fe.name or FIXED_CATEGORY_NAMES.get(fe.category_key, fe.category_key),
+            "amount": float(fe.amount),
+            "is_recurring": fe.is_recurring,
+            "category_key": fe.category_key,
+            "edited_by": fe.edited_by,
+            "edited_at": fe.edited_at.isoformat() if fe.edited_at else None,
+        })
+
+    # Інші витрати (visible_to_accountant=True)
+    other_res = await db.execute(
+        select(MonthlyOtherExpense).where(
+            MonthlyOtherExpense.user_id == user_id,
+            MonthlyOtherExpense.year == year,
+            MonthlyOtherExpense.month == month,
+            MonthlyOtherExpense.visible_to_accountant == True,
+        ).order_by(MonthlyOtherExpense.id)
+    )
+    live_other = []
+    for oe in other_res.scalars().all():
+        live_other.append({
+            "id": oe.id,
+            "name": oe.name,
+            "amount": float(oe.amount),
+            "category": oe.category,
+            "edited_by": oe.edited_by,
+            "edited_at": oe.edited_at.isoformat() if oe.edited_at else None,
+        })
 
     return {
         "token": token,
         "filter_label": f"{month_name} {year}",
-        "year": fs.get("year"),
-        "month": fs.get("month"),
+        "year": year,
+        "month": month,
         "expires_at": share.expires_at.isoformat(),
         "submitted": fs.get("submitted", False),
         "submitted_data": fs.get("submitted_data"),
         "data": share.payload_snapshot,
+        "live_data": {
+            "salaries": live_salaries,
+            "fixed_expenses": live_fixed,
+            "other_expenses": live_other,
+        },
     }
 
 

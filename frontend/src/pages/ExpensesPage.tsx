@@ -4,7 +4,7 @@ import {
   TrendingDown, Users, Receipt, Plus, Trash2, Edit2, X,
   Building2, Wallet, BarChart3, Check, UserPlus, Copy, Sparkles,
   Download, CalendarDays, ImagePlus, AlertCircle, FileSpreadsheet,
-  Eye, Target, Activity, ArrowUpRight, ArrowDownRight,
+  Eye, EyeOff, Target, Activity, ArrowUpRight, ArrowDownRight,
   Share2, ClipboardList, TrendingUp, Banknote, HeartPulse, Search,
 } from "lucide-react";
 import {
@@ -705,6 +705,24 @@ export default function ExpensesPage() {
         }
       },
     });
+  }
+
+  async function toggleFixedVisibility(id: number) {
+    try {
+      await api.patch(`/monthly-expenses/fixed/${id}/visibility`);
+      await load();
+    } catch (e: any) {
+      console.error(e);
+    }
+  }
+
+  async function toggleOtherVisibility(id: number) {
+    try {
+      await api.patch(`/monthly-expenses/other/${id}/visibility`);
+      await loadOther();
+    } catch (e: any) {
+      console.error(e);
+    }
   }
 
   function deletePeriodData() {
@@ -1878,7 +1896,7 @@ export default function ExpensesPage() {
                   </div>
                 ) : data.fixed.filter(r => !fixedSearch || r.name.toLowerCase().includes(fixedSearch.toLowerCase())).map((row) => (
                   <div key={row.id}
-                    className="flex items-center gap-3 px-5 py-3 hover:bg-dark-400/20 transition-colors">
+                    className={`flex items-center gap-3 px-5 py-3 hover:bg-dark-400/20 transition-colors ${row.visible_to_accountant === false ? "opacity-50" : ""}`}>
 
                     <div className="flex-1 min-w-0">
                       <span className="text-sm text-gray-300 truncate block">{row.name}</span>
@@ -1902,6 +1920,18 @@ export default function ExpensesPage() {
                     <span className="text-sm font-mono font-semibold text-white tabular-nums shrink-0 w-28 text-right">
                       {fmt(row.amount)} ₴
                     </span>
+
+                    <button
+                      onClick={() => toggleFixedVisibility(row.id)}
+                      className={`p-1.5 rounded-lg transition-all shrink-0 ${
+                        row.visible_to_accountant === false
+                          ? "text-gray-700 hover:text-orange-400 hover:bg-orange-500/10"
+                          : "text-gray-600 hover:text-orange-400 hover:bg-orange-500/10"
+                      }`}
+                      title={row.visible_to_accountant === false ? "Приховано від бухгалтера" : "Видно бухгалтеру"}
+                    >
+                      {row.visible_to_accountant === false ? <EyeOff size={13} /> : <Eye size={13} />}
+                    </button>
 
                     <button
                       onClick={() => {
@@ -2585,7 +2615,7 @@ export default function ExpensesPage() {
                       Нічого не знайдено за запитом «{otherSearch}»
                     </div>
                   ) : otherExpenses.filter(e => !otherSearch || e.name.toLowerCase().includes(otherSearch.toLowerCase())).map((exp) => (
-                    <div key={exp.id} className="flex items-center gap-3 px-5 py-3 hover:bg-dark-400/20 transition-colors">
+                    <div key={exp.id} className={`flex items-center gap-3 px-5 py-3 hover:bg-dark-400/20 transition-colors ${exp.visible_to_accountant === false ? "opacity-50" : ""}`}>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm text-gray-200 truncate">{exp.name}</p>
                         {exp.description && (
@@ -2598,6 +2628,17 @@ export default function ExpensesPage() {
                         </span>
                       )}
                       <span className="font-mono text-sm text-gray-200 shrink-0 tabular-nums">{fmt(exp.amount)} ₴</span>
+                      <button
+                        onClick={() => toggleOtherVisibility(exp.id)}
+                        className={`p-1.5 rounded-lg transition-all shrink-0 ${
+                          exp.visible_to_accountant === false
+                            ? "text-gray-700 hover:text-orange-400 hover:bg-orange-500/10"
+                            : "text-gray-600 hover:text-orange-400 hover:bg-orange-500/10"
+                        }`}
+                        title={exp.visible_to_accountant === false ? "Приховано від бухгалтера" : "Видно бухгалтеру"}
+                      >
+                        {exp.visible_to_accountant === false ? <EyeOff size={13} /> : <Eye size={13} />}
+                      </button>
                       <button
                         onClick={() => setOtherModal({
                           open: true, isEdit: true, id: exp.id,

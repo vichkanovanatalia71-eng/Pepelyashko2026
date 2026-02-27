@@ -19,6 +19,7 @@ export interface OtherExpense {
   month: number;
   edited_by?: string | null;
   edited_at?: string | null;
+  visible_to_accountant?: boolean;
 }
 
 export interface DetailRow {
