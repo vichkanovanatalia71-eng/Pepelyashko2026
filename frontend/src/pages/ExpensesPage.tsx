@@ -139,6 +139,7 @@ export default function ExpensesPage() {
     open: boolean; url: string; expiresAt: string;
   }>({ open: false, url: "", expiresAt: "" });
   const [accBannerDismissed, setAccBannerDismissed] = useState<string | null>(null);
+  const [accSubmittedModal, setAccSubmittedModal] = useState(false);
 
   // ── Right sidebar drawer state ──
   type DrawerSection = "fixed" | "salary" | "other" | "taxes" | "summary" | null;
@@ -308,6 +309,13 @@ export default function ExpensesPage() {
 
   useEffect(() => { load(); loadOther(); loadStaff(); loadDoctors(); loadPeriods(); loadPrevMonth(); }, [load, loadOther, loadStaff, loadDoctors, loadPeriods, loadPrevMonth]);
   useEffect(() => { if (viewMode === "all") loadAnnualData(); }, [viewMode, loadAnnualData]);
+
+  // Show accountant submitted modal when new submission detected
+  useEffect(() => {
+    if (data?.accountant_submitted_at && data.accountant_submitted_at !== accBannerDismissed) {
+      setAccSubmittedModal(true);
+    }
+  }, [data?.accountant_submitted_at]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Validate localStorage hired doctor/nurse ids against actual data
   useEffect(() => {
@@ -1570,13 +1578,15 @@ export default function ExpensesPage() {
             </div>
           </div>
 
-          {/* ═══ ACCOUNTANT SUBMITTED BANNER ═══ */}
-          {data.accountant_submitted_at && accBannerDismissed !== data.accountant_submitted_at && (
-            <AlertBanner variant="info" onDismiss={() => setAccBannerDismissed(data.accountant_submitted_at!)}>
-              Бухгалтер подав звіт за {MONTH_NAMES[month - 1]}.
-              Записи з позначкою «Бухгалтер» оновлені —{" "}
-              {new Date(data.accountant_submitted_at).toLocaleString("uk-UA", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })}
-            </AlertBanner>
+          {/* ═══ ACCOUNTANT SUBMITTED INDICATOR (small) ═══ */}
+          {data.accountant_submitted_at && (
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-blue-500/10 border border-blue-500/20">
+              <ClipboardList size={14} className="text-blue-400 shrink-0" />
+              <p className="text-xs text-blue-300">
+                Бухгалтер подав звіт —{" "}
+                {new Date(data.accountant_submitted_at).toLocaleString("uk-UA", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })}
+              </p>
+            </div>
           )}
 
           {/* ═══ MONTH COMPLETION INDICATOR ═══ */}
@@ -3342,6 +3352,40 @@ export default function ExpensesPage() {
         onConfirm={() => setAlertDlg(null)}
         onCancel={() => setAlertDlg(null)}
       />
+
+      {/* ── Accountant submitted modal ── */}
+      {accSubmittedModal && data?.accountant_submitted_at && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-md animate-fade-in" onClick={() => { setAccSubmittedModal(false); setAccBannerDismissed(data.accountant_submitted_at!); }} />
+          <div className="relative p-6 max-w-sm w-full my-auto animate-modal-in rounded-2xl bg-dark-600 border border-blue-500/25 shadow-[0_0_60px_rgba(59,130,246,0.22),0_0_120px_rgba(59,130,246,0.08),0_24px_70px_rgba(0,0,0,0.55)]">
+            <div className="absolute top-0 left-0 right-0 h-[2px] rounded-t-2xl bg-gradient-to-r from-transparent via-blue-500/90 to-transparent shadow-[0_0_20px_6px_rgba(59,130,246,0.20)]" />
+            <button onClick={() => { setAccSubmittedModal(false); setAccBannerDismissed(data.accountant_submitted_at!); }} aria-label="Закрити" className="absolute top-4 right-4 p-1.5 rounded-xl text-gray-500 hover:text-white hover:bg-dark-300/50 active:scale-90 transition-all duration-150">
+              <X size={16} />
+            </button>
+            <div className="flex flex-col items-center text-center">
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4 bg-blue-500/15 shadow-[0_0_30px_rgba(59,130,246,0.35),0_0_60px_rgba(59,130,246,0.15)]">
+                <ClipboardList size={26} className="text-blue-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-white mb-2">Бухгалтер подав звіт</h3>
+              <p className="text-sm text-gray-400 mb-1 leading-relaxed">
+                Звіт за <strong className="text-white">{MONTH_NAMES[month - 1]} {year}</strong> оброблено.
+              </p>
+              <p className="text-sm text-gray-400 mb-4 leading-relaxed">
+                Записи з позначкою «Бухгалтер» оновлені —{" "}
+                <span className="text-blue-400">
+                  {new Date(data.accountant_submitted_at).toLocaleString("uk-UA", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })}
+                </span>
+              </p>
+            </div>
+            <button
+              onClick={() => { setAccSubmittedModal(false); setAccBannerDismissed(data.accountant_submitted_at!); }}
+              className="w-full px-4 py-3 rounded-xl text-sm font-semibold text-white bg-blue-500 hover:bg-blue-600 active:scale-97 transition-all duration-150 shadow-lg shadow-blue-500/20"
+            >
+              Зрозуміло
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
