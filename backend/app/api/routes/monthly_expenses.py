@@ -1684,7 +1684,11 @@ async def _build_owner_share_payload(
         "esv_owner": esv_owner,
     }
 
+    # ПІБ власника
+    owner_name = owner_doctor.full_name if owner_doctor else ""
+
     return {
+        "owner_name": owner_name,
         "nhsu": nhsu_data,
         "paid_services": paid_data,
         "formed_income": formed_income,
