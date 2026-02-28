@@ -2007,27 +2007,61 @@ async def submit_accountant_request(
         now = datetime.now(timezone.utc)
 
         if exp.backend_id and exp.source == "fixed" and exp.backend_id in visible_fixed:
-            # ── Редагування існуючого MonthlyFixedExpense ──
+            # ── Існуючий MonthlyFixedExpense ──
             rec = visible_fixed[exp.backend_id]
-            rec.name = exp.name
-            rec.amount = exp.amount
-            rec.is_recurring = exp.is_recurring
-            rec.edited_by = "accountant"
-            rec.edited_at = now
-            await db.flush()
             submitted_fixed_ids.add(exp.backend_id)
-            saved_fixed.append({"name": exp.name, "amount": exp.amount, "category": "Постійні витрати"})
+
+            if exp.is_recurring:
+                # Залишається у fixed — оновлюємо на місці
+                rec.name = exp.name
+                rec.amount = exp.amount
+                rec.is_recurring = True
+                rec.edited_by = "accountant"
+                rec.edited_at = now
+                await db.flush()
+                saved_fixed.append({"name": exp.name, "amount": exp.amount, "category": "Постійні витрати"})
+            else:
+                # Переміщення fixed → other (прапорець знято)
+                await db.delete(rec)
+                await db.flush()
+                oe = MonthlyOtherExpense(
+                    user_id=user_id, year=year, month=month,
+                    name=exp.name, amount=exp.amount, category="general",
+                    edited_by="accountant", edited_at=now,
+                )
+                db.add(oe)
+                await db.flush()
+                saved_other.append({"name": exp.name, "amount": exp.amount, "category": "Інші витрати"})
 
         elif exp.backend_id and exp.source == "other" and exp.backend_id in visible_other:
-            # ── Редагування існуючого MonthlyOtherExpense ──
+            # ── Існуючий MonthlyOtherExpense ──
             rec = visible_other[exp.backend_id]
-            rec.name = exp.name
-            rec.amount = exp.amount
-            rec.edited_by = "accountant"
-            rec.edited_at = now
-            await db.flush()
             submitted_other_ids.add(exp.backend_id)
-            saved_other.append({"name": exp.name, "amount": exp.amount, "category": "Інші витрати"})
+
+            if not exp.is_recurring:
+                # Залишається у other — оновлюємо на місці
+                rec.name = exp.name
+                rec.amount = exp.amount
+                rec.edited_by = "accountant"
+                rec.edited_at = now
+                await db.flush()
+                saved_other.append({"name": exp.name, "amount": exp.amount, "category": "Інші витрати"})
+            else:
+                # Переміщення other → fixed (прапорець поставлено)
+                await db.delete(rec)
+                await db.flush()
+                cat_key = str(uuid.uuid4())[:12]
+                fe = MonthlyFixedExpense(
+                    user_id=user_id, year=year, month=month,
+                    category_key=cat_key, name=exp.name, amount=exp.amount,
+                    is_recurring=True, edited_by="accountant", edited_at=now,
+                )
+                db.add(fe)
+                await db.flush()
+                await _propagate_recurring(
+                    db, user_id, year, month, cat_key, exp.name, "", exp.amount,
+                )
+                saved_fixed.append({"name": exp.name, "amount": exp.amount, "category": "Постійні витрати"})
 
         else:
             # ── Нова витрата від бухгалтера ──

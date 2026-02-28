@@ -133,14 +133,14 @@ export default function AccountantRequestPage() {
   const [successAnim, setSuccessAnim] = useState(false);
   const [resubmitConfirmOpen, setResubmitConfirmOpen] = useState(false);
 
-  async function loadData() {
+  async function loadData(isEdit = false) {
     if (!token) return;
     setLoading(true);
     setError("");
     try {
       const r = await api.get(`/monthly-expenses/accountant-request/${token}/view`);
       setData(r.data);
-      initForm(r.data);
+      initForm(r.data, isEdit);
     } catch (err: any) {
       const detail = err?.response?.data?.detail;
       const status = err?.response?.status;
@@ -160,8 +160,8 @@ export default function AccountantRequestPage() {
     loadData();
   }, [token]);
 
-  function initForm(d: ShareData) {
-    if (d.submitted && d.submitted_data && !editMode) {
+  function initForm(d: ShareData, isEdit = false) {
+    if (d.submitted && d.submitted_data && !editMode && !isEdit) {
       setSubmitted(true);
       setSavedResult(d.submitted_data);
     }
@@ -317,8 +317,8 @@ export default function AccountantRequestPage() {
     setResubmitConfirmOpen(false);
     setSubmitted(false);
     setEditMode(true);
-    // Re-fetch live data when entering edit mode
-    loadData();
+    // Re-fetch live data when entering edit mode (isEdit=true skips submitted check)
+    loadData(true);
   }
 
   // Helper: badge for edited_by
