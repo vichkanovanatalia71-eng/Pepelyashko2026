@@ -117,29 +117,31 @@ function DrillModal({ title, onClose, children }: { title: string; onClose: () =
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-start justify-center p-0 sm:p-4 overflow-y-auto"
+      className="fixed inset-0 z-50 flex flex-col justify-end sm:flex-row sm:items-start sm:justify-center sm:p-4 overflow-hidden sm:overflow-y-auto bg-black/60 backdrop-blur-md modal-overlay"
     >
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-md animate-fade-in"
+        className="absolute inset-0"
         onClick={onClose}
       />
       {/* Panel */}
-      <div className="relative bg-dark-600 border border-dark-50/10
-                      rounded-none sm:rounded-2xl w-full max-w-2xl min-h-full sm:min-h-0 sm:my-8
-                      shadow-elevation-3 animate-modal-in pb-20 sm:pb-0">
-        <div className="flex items-center justify-between p-5 border-b border-dark-50/10 bg-dark-400/20 backdrop-blur-sm">
+      <div
+        className="relative bg-dark-600 rounded-t-3xl sm:rounded-2xl w-full max-w-2xl flex flex-col sm:my-8
+                      shadow-elevation-3 animate-modal-in"
+        style={{ border: "1px solid rgba(255,255,255,0.06)", height: "85dvh", maxHeight: "85dvh" }}
+      >
+        <div className="flex items-center justify-between p-5 border-b border-dark-50/10 bg-dark-400/20 backdrop-blur-sm shrink-0 rounded-t-3xl sm:rounded-t-2xl">
           <h3 className="text-base font-semibold text-white">{title}</h3>
           <button
             onClick={onClose}
             aria-label="Закрити"
-            className="p-2 text-gray-500 hover:text-gray-300 rounded-xl hover:bg-dark-300
-                       active:scale-90 transition-all duration-150"
+            className="p-2.5 min-w-[44px] min-h-[44px] text-gray-500 hover:text-gray-300 rounded-xl hover:bg-dark-300
+                       active:scale-90 transition-all duration-150 flex items-center justify-center"
           >
             <X size={18} />
           </button>
         </div>
-        <div className="p-5">{children}</div>
+        <div className="p-5 overflow-y-auto flex-1">{children}</div>
       </div>
     </div>
   );

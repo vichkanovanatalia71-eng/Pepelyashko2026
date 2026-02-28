@@ -3244,7 +3244,7 @@ export default function ExpensesPage() {
             <div className="absolute inset-0" onClick={() => setKpiModal({ open: false, type: "", title: "" })} />
             <div
               className="relative bg-dark-600 rounded-t-3xl sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto expense-sheet-modal pb-[env(safe-area-inset-bottom)]"
-              style={{ border: "1px solid #ffffff15", maxHeight: "92vh", maxWidth: "900px" }}
+              style={{ border: "1px solid #ffffff15", height: "85dvh", maxHeight: "85dvh", maxWidth: "900px" }}
             >
               {/* Header */}
               <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0">
