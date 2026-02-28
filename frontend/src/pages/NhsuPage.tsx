@@ -730,46 +730,6 @@ export default function NhsuPage() {
           </div>
         )}
 
-        {/* Charts */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-          <div className="card-neo card-3d-hover p-5">
-            <p className="text-sm font-semibold text-white mb-4 flex items-center gap-2"><Users size={15} className="text-orange-400" />Пацієнти по вікових групах</p>
-            <ResponsiveContainer width="100%" height={210}>
-              <BarChart data={ageBarData} margin={{top:0,right:0,left:-20,bottom:30}}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08"/>
-                <XAxis dataKey="name" tick={{fill:"#6b7280",fontSize:11}} angle={-25} textAnchor="end"/>
-                <YAxis tick={{fill:"#6b7280",fontSize:11}}/>
-                <Tooltip cursor={{ fill: 'transparent' }} contentStyle={TT_STYLE}/>
-                <Bar dataKey="patients" fill="#6366f1" radius={[4,4,0,0]}/>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="card-neo card-3d-hover p-5">
-            <p className="text-sm font-semibold text-white mb-4 flex items-center gap-2"><BadgeDollarSign size={15} className="text-orange-400" />Надходження по лікарях (грн)</p>
-            <ResponsiveContainer width="100%" height={210}>
-              <BarChart data={doctorBarData} margin={{top:0,right:0,left:-10,bottom:30}}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08"/>
-                <XAxis dataKey="name" tick={{fill:"#6b7280",fontSize:11}} angle={-25} textAnchor="end"/>
-                <YAxis tick={{fill:"#6b7280",fontSize:11}}/>
-                <Tooltip cursor={{ fill: 'transparent' }} contentStyle={TT_STYLE} formatter={(v:number)=>[`${v.toLocaleString("uk-UA")} грн`,"Сума"]}/>
-                <Bar dataKey="amount" fill="#22d3ee" radius={[4,4,0,0]}/>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="card-neo card-3d-hover p-5">
-            <p className="text-sm font-semibold text-white mb-4 flex items-center gap-2"><Users size={15} className="text-orange-400" />Розподіл пацієнтів</p>
-            <ResponsiveContainer width="100%" height={210}>
-              <PieChart>
-                <Pie data={pieData} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={3} dataKey="value">
-                  {pieData.map((_,i) => <Cell key={i} fill={PIE_COLORS[i%PIE_COLORS.length]}/>)}
-                </Pie>
-                <Legend formatter={v=><span style={{color:"#9ca3af",fontSize:12}}>{v}</span>}/>
-                <Tooltip cursor={{ fill: 'transparent' }} contentStyle={TT_STYLE}/>
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
         {/* Detail tables */}
         {filteredDoctors.map(doc => (
           <div key={doc.doctor_id} className="card-neo card-3d-hover overflow-hidden">
@@ -812,6 +772,46 @@ export default function NhsuPage() {
             </div>
           </div>
         ))}
+
+        {/* Charts */}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+          <div className="card-neo card-3d-hover p-5">
+            <p className="text-sm font-semibold text-white mb-4 flex items-center gap-2"><Users size={15} className="text-orange-400" />Пацієнти по вікових групах</p>
+            <ResponsiveContainer width="100%" height={210}>
+              <BarChart data={ageBarData} margin={{top:0,right:0,left:-20,bottom:30}}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08"/>
+                <XAxis dataKey="name" tick={{fill:"#6b7280",fontSize:11}} angle={-25} textAnchor="end"/>
+                <YAxis tick={{fill:"#6b7280",fontSize:11}}/>
+                <Tooltip cursor={{ fill: 'transparent' }} contentStyle={TT_STYLE}/>
+                <Bar dataKey="patients" fill="#6366f1" radius={[4,4,0,0]}/>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="card-neo card-3d-hover p-5">
+            <p className="text-sm font-semibold text-white mb-4 flex items-center gap-2"><BadgeDollarSign size={15} className="text-orange-400" />Надходження по лікарях (грн)</p>
+            <ResponsiveContainer width="100%" height={210}>
+              <BarChart data={doctorBarData} margin={{top:0,right:0,left:-10,bottom:30}}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08"/>
+                <XAxis dataKey="name" tick={{fill:"#6b7280",fontSize:11}} angle={-25} textAnchor="end"/>
+                <YAxis tick={{fill:"#6b7280",fontSize:11}}/>
+                <Tooltip cursor={{ fill: 'transparent' }} contentStyle={TT_STYLE} formatter={(v:number)=>[`${v.toLocaleString("uk-UA")} грн`,"Сума"]}/>
+                <Bar dataKey="amount" fill="#22d3ee" radius={[4,4,0,0]}/>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="card-neo card-3d-hover p-5">
+            <p className="text-sm font-semibold text-white mb-4 flex items-center gap-2"><Users size={15} className="text-orange-400" />Розподіл пацієнтів</p>
+            <ResponsiveContainer width="100%" height={210}>
+              <PieChart>
+                <Pie data={pieData} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={3} dataKey="value">
+                  {pieData.map((_,i) => <Cell key={i} fill={PIE_COLORS[i%PIE_COLORS.length]}/>)}
+                </Pie>
+                <Legend formatter={v=><span style={{color:"#9ca3af",fontSize:12}}>{v}</span>}/>
+                <Tooltip cursor={{ fill: 'transparent' }} contentStyle={TT_STYLE}/>
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
       </>)}
 
       {/* ── TREND + FORECAST ── */}

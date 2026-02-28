@@ -948,8 +948,8 @@ export default function ExpensesPage() {
   // ══════════════════════════════════════════════════════════════
 
   return (
-    <div className={`space-y-5 max-w-7xl mx-auto transition-[padding] duration-300 ${
-      viewMode === "month" && data ? (expSidebarCollapsed ? "lg:pr-[80px]" : "lg:pr-[208px]") : ""
+    <div className={`space-y-5 transition-[padding] duration-300 ${
+      viewMode === "month" && data ? (expSidebarCollapsed ? "lg:pr-[80px]" : "lg:pr-[280px]") : ""
     }`}>
 
       {/* ═══ HEADER ═══ */}
