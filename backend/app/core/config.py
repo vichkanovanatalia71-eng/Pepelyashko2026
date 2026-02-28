@@ -16,8 +16,12 @@ class Settings(BaseSettings):
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 480
 
-    # CORS — Railway frontend proxies via nginx, so allow all origins
+    # CORS — у продакшені обмежуйте через змінну CORS_ORIGINS
+    # Приклад: CORS_ORIGINS=["https://your-app.up.railway.app"]
     cors_origins: list[str] = ["*"]
+
+    # Rate limiting (auth endpoints)
+    rate_limit_per_minute: int = 10  # Макс. запитів на хвилину для login/register
 
     # Ukrainian FOP tax rates (3rd group, single tax)
     fop_tax_rate: float = 0.05  # 5% єдиний податок

@@ -1,12 +1,13 @@
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import get_current_user, get_db
 from app.core.email import send_verification_email
+from app.core.rate_limit import auth_rate_limiter
 from app.core.security import create_access_token, get_password_hash, verify_password
 from app.models.user import User
 from app.schemas.user import (
@@ -22,7 +23,8 @@ router = APIRouter()
 
 
 @router.post("/register", response_model=RegisterResponse, status_code=201)
-async def register(user_in: UserCreate, db: AsyncSession = Depends(get_db)):
+async def register(request: Request, user_in: UserCreate, db: AsyncSession = Depends(get_db)):
+    auth_rate_limiter.check(request)
     # Перевіряємо унікальність email
     result = await db.execute(select(User).where(User.email == user_in.email))
     if result.scalar_one_or_none():
@@ -87,9 +89,11 @@ async def verify_email(
 
 @router.post("/login", response_model=Token)
 async def login(
+    request: Request,
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: AsyncSession = Depends(get_db),
 ):
+    auth_rate_limiter.check(request)
     result = await db.execute(select(User).where(User.email == form_data.username))
     user = result.scalar_one_or_none()
 
