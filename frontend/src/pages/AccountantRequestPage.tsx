@@ -92,6 +92,7 @@ interface SalaryRow {
 interface ExpenseRow {
   id: number;
   backendId?: number;
+  source?: "fixed" | "other";
   name: string;
   amount: number | string;
   is_recurring: boolean;
@@ -203,6 +204,7 @@ export default function AccountantRequestPage() {
         allExpenses.push({
           id: nextId++,
           backendId: fe.id,
+          source: "fixed",
           name: fe.name,
           amount: fe.amount,
           is_recurring: fe.is_recurring,
@@ -216,6 +218,7 @@ export default function AccountantRequestPage() {
         allExpenses.push({
           id: nextId++,
           backendId: oe.id,
+          source: "other",
           name: oe.name,
           amount: oe.amount,
           is_recurring: false,
@@ -285,6 +288,8 @@ export default function AccountantRequestPage() {
             name: e.name,
             amount: e.amount,
             is_recurring: e.is_recurring,
+            backend_id: e.backendId ?? null,
+            source: e.source ?? "fixed",
           })),
       });
       setSavedResult(res.data.saved);
@@ -856,18 +861,6 @@ export default function AccountantRequestPage() {
           </div>
         </div>
       )}
-
-      {/* Resubmit confirmation dialog */}
-      <ConfirmDialog
-        open={resubmitConfirmOpen}
-        icon={<AlertTriangle size={22} className="text-amber-400" />}
-        title="Звіт уже подано"
-        description={`За ${data.filter_label} звіт уже було подано раніше. Бажаєте подати повторно? Попередні дані буде замінено.`}
-        confirmLabel="Так, редагувати"
-        cancelLabel="Скасувати"
-        onConfirm={confirmResubmit}
-        onCancel={() => setResubmitConfirmOpen(false)}
-      />
 
       <ConfirmDialog
         open={!!alertDlg}
