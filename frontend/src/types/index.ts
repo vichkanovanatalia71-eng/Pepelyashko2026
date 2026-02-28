@@ -702,11 +702,3 @@ export interface PeriodSummary {
   has_data: boolean;
 }
 
-export interface AiParsedExpense {
-  category: string;       // "fixed" | "other"
-  name: string;
-  amount: number;
-  is_recurring: boolean;
-  confidence: number;     // 0–1
-  note: string;
-}

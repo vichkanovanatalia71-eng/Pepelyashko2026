@@ -1,5 +1,3 @@
-import type { AiParsedExpense } from "../../../types";
-
 export type ExpenseCategory =
   | "fixed" | "salary" | "salary_paid"
   | "owner_own" | "owner_hired" | "owner_paid"
@@ -92,15 +90,6 @@ export interface CopyModalState {
   copyFixed: boolean;
   copySalary: boolean;
   saving: boolean;
-}
-
-export interface AiModalState {
-  open: boolean;
-  text: string;
-  file: File | null;
-  loading: boolean;
-  result: AiParsedExpense | null;
-  error?: string;
 }
 
 export interface ShareModalState {

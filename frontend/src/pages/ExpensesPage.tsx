@@ -2,8 +2,9 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import {
   ChevronLeft, ChevronRight, Save, RefreshCw, Lock, LockOpen,
   TrendingDown, Users, Receipt, Plus, Trash2, Edit2, X,
-  Building2, Wallet, BarChart3, Check, UserPlus, Copy, Sparkles,
-  Download, CalendarDays, ImagePlus, AlertCircle, FileSpreadsheet,
+  Building2, Wallet, BarChart3, Check, UserPlus, Copy,
+  Download, CalendarDays, AlertCircle, FileSpreadsheet,
+  PanelRightClose, PanelRightOpen,
   Eye, EyeOff, Target, Activity, ArrowUpRight, ArrowDownRight,
   Share2, ClipboardList, TrendingUp, Banknote, HeartPulse, Search,
 } from "lucide-react";
@@ -19,7 +20,7 @@ import {
 import api from "../api/client";
 import type {
   MonthlyExpenseData, SalaryExpenseRow, StaffMember,
-  HiredDoctorInfo, Doctor, PeriodSummary, AiParsedExpense,
+  HiredDoctorInfo, Doctor, PeriodSummary,
 } from "../types";
 
 // ── Extracted modules ─────────────────────────────────────────────
@@ -109,15 +110,6 @@ export default function ExpensesPage() {
     copyFixed: boolean; copySalary: boolean; saving: boolean;
   }>({ open: false, srcYear: 0, srcMonth: 0, copyFixed: true, copySalary: true, saving: false });
 
-  // ── AI parse modal ──
-  const [aiModal, setAiModal] = useState<{
-    open: boolean;
-    text: string;
-    file: File | null;
-    loading: boolean;
-    result: AiParsedExpense | null;
-  }>({ open: false, text: "", file: null, loading: false, result: null });
-  const aiFileRef = useRef<HTMLInputElement>(null);
   const mobileTabsRef = useRef<HTMLDivElement>(null);
 
   // ── Annual analytics data (for "all" mode) ──
@@ -151,12 +143,10 @@ export default function ExpensesPage() {
   // ── Right sidebar drawer state ──
   const [activeDrawer, setActiveDrawer] = useState<DrawerSection>(null);
 
-  // ── Left sidebar collapse state (inverse coupling: left expanded → right collapsed) ──
-  const [leftCollapsed, setLeftCollapsed] = useState(() => {
-    try { return localStorage.getItem("sidebar-collapsed") === "1"; } catch { return false; }
+  // ── Right sidebar collapse state (independent, default expanded) ──
+  const [expSidebarCollapsed, setExpSidebarCollapsed] = useState(() => {
+    try { return localStorage.getItem("expense-sidebar-collapsed") === "1"; } catch { return false; }
   });
-  // Expense sidebar is expanded when left nav is collapsed, and vice versa
-  const expSidebarCollapsed = !leftCollapsed;
 
   // ── Previous month data for copy-from feature ──
   const [prevMonthData, setPrevMonthData] = useState<MonthlyExpenseData | null>(null);
@@ -397,16 +387,6 @@ export default function ExpensesPage() {
     }
   }, [sheetHeight]);
 
-  // Sync with left sidebar collapse state
-  useEffect(() => {
-    function handleSidebarToggle(e: Event) {
-      const detail = (e as CustomEvent).detail;
-      setLeftCollapsed(detail.collapsed);
-    }
-    window.addEventListener("sidebar-toggle", handleSidebarToggle);
-    return () => window.removeEventListener("sidebar-toggle", handleSidebarToggle);
-  }, []);
-
   // Auto-scroll mobile tabs to active drawer
   useEffect(() => {
     if (!activeDrawer || !mobileTabsRef.current) return;
@@ -422,6 +402,14 @@ export default function ExpensesPage() {
     { key: "taxes", label: "Податки", icon: <Receipt size={18} />, color: "text-red-400", badgeColor: "bg-red-500/25 border-red-400/50", glow: "0 0 14px rgba(239,68,68,0.45), 0 0 4px rgba(239,68,68,0.3)", getValue: () => data?.totals.tax_total ?? 0, getStatus: () => (data?.totals.tax_total ?? 0) > 0 },
     { key: "summary", label: "Підсумки", icon: <Building2 size={18} />, color: "text-emerald-400", badgeColor: "bg-emerald-500/25 border-emerald-400/50", glow: "0 0 14px rgba(16,185,129,0.45), 0 0 4px rgba(16,185,129,0.3)", getValue: () => remaining, getStatus: () => grandWithOther > 0 },
   ];
+
+  function toggleExpSidebar() {
+    setExpSidebarCollapsed(prev => {
+      const next = !prev;
+      try { localStorage.setItem("expense-sidebar-collapsed", next ? "1" : "0"); } catch {}
+      return next;
+    });
+  }
 
   function toggleDrawer(section: DrawerSection) {
     setFixedSearch(""); setOtherSearch("");
@@ -795,48 +783,6 @@ export default function ExpensesPage() {
     let srcMonth = month - 1;
     if (srcMonth < 1) { srcMonth = 12; srcYear--; }
     setCopyModal({ open: true, srcYear, srcMonth, copyFixed: true, copySalary: true, saving: false });
-  }
-
-  // ── AI parse expense ──────────────────────────────────────────
-  async function submitAiParse() {
-    setAiModal(s => ({ ...s, loading: true }));
-    try {
-      const formData = new FormData();
-      if (aiModal.text) formData.append("text", aiModal.text);
-      if (aiModal.file) formData.append("file", aiModal.file);
-      const { data: result } = await api.post<AiParsedExpense>("/monthly-expenses/ai-parse", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      setAiModal(s => ({ ...s, loading: false, result }));
-    } catch (e) {
-      console.error(e);
-      setAiModal(s => ({ ...s, loading: false }));
-    }
-  }
-
-  async function applyAiResult() {
-    if (!aiModal.result) return;
-    const r = aiModal.result;
-    try {
-      if (r.category === "other" || !r.is_recurring) {
-        await api.post("/monthly-expenses/other", {
-          year, month, name: r.name, amount: r.amount, category: "general",
-        });
-        await loadOther();
-        setAiModal({ open: false, text: "", file: null, loading: false, result: null });
-        setActiveDrawer("other");
-      } else {
-        await api.post("/monthly-expenses/fixed", {
-          year, month, name: r.name, amount: r.amount, is_recurring: r.is_recurring,
-        });
-        await load();
-        setAiModal({ open: false, text: "", file: null, loading: false, result: null });
-        setActiveDrawer("fixed");
-      }
-    } catch (e: any) {
-      console.error(e);
-      setAlertDlg({ title: "Помилка", description: e?.response?.data?.detail || "Не вдалося зберегти витрату." });
-    }
   }
 
   // ── Per-section copy from previous month ────────────────────────
@@ -1474,13 +1420,6 @@ export default function ExpensesPage() {
               <Copy size={13} aria-hidden="true" /> Копіювати з...
             </button>
             <button
-              onClick={() => setAiModal(s => ({ ...s, open: true }))}
-              aria-label="AI-аналіз витрати"
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-dark-400/60 border border-dark-50/15 text-gray-300 text-xs font-semibold hover:border-purple-500/30 hover:text-purple-300 transition-all"
-            >
-              <Sparkles size={13} aria-hidden="true" /> AI-аналіз
-            </button>
-            <button
               onClick={handleAccountantRequest}
               disabled={accReqLoading}
               aria-label="Запит до бухгалтера"
@@ -1715,7 +1654,7 @@ export default function ExpensesPage() {
                         Всього
                       </td>
                       <td className="px-3 py-2.5 text-right font-bold font-mono text-white tabular-nums">
-                        {fmt(detailRows.reduce((s, r) => s + r.amount, 0))} ₴
+                        {fmt(grandWithOther)} ₴
                       </td>
                     </tr>
                   </tfoot>
@@ -1739,6 +1678,22 @@ export default function ExpensesPage() {
                 <BarChart3 size={18} className="text-orange-400" />
               </div>
               {!expSidebarCollapsed && <span className="sidebar-label text-sm font-semibold text-gray-300 truncate">Витрати</span>}
+            </div>
+
+            {/* Toggle button */}
+            <div className={`px-3 pt-2 pb-1 ${expSidebarCollapsed ? "flex justify-center" : ""}`}>
+              <button
+                onClick={toggleExpSidebar}
+                title={expSidebarCollapsed ? "Розгорнути меню" : "Згорнути меню"}
+                className={`sidebar-toggle-btn ${expSidebarCollapsed ? "" : "w-full justify-between px-3"}`}
+              >
+                {expSidebarCollapsed
+                  ? <PanelRightOpen size={18} aria-hidden="true" />
+                  : <>
+                      <span className="text-xs font-medium sidebar-label">Згорнути</span>
+                      <PanelRightClose size={16} aria-hidden="true" />
+                    </>}
+              </button>
             </div>
 
             {/* Expense nav items */}
@@ -3036,132 +2991,6 @@ export default function ExpensesPage() {
             </p>
           </div>
         </Modal>
-      )}
-
-      {/* ── AI parse modal ── */}
-      {aiModal.open && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex flex-col justify-end sm:flex-row sm:items-start sm:justify-center sm:p-4 overflow-hidden sm:overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label="AI-аналіз витрати">
-          <div className="absolute inset-0" onClick={() => setAiModal({ open: false, text: "", file: null, loading: false, result: null })} />
-          <div
-            className="relative bg-dark-600 rounded-t-3xl sm:rounded-2xl w-full max-w-lg sm:my-auto modal-glow expense-sheet-modal pb-[env(safe-area-inset-bottom)]"
-          >
-            <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
-              <div className="flex items-center gap-2">
-                <Sparkles size={16} className="text-purple-400" />
-                <h4 className="font-semibold text-white text-sm">AI-аналіз витрати</h4>
-              </div>
-              <button
-                onClick={() => setAiModal({ open: false, text: "", file: null, loading: false, result: null })}
-                aria-label="Закрити"
-                className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all
-                           focus-visible:outline-2 focus-visible:outline-accent-400"
-              >
-                <X size={16} />
-              </button>
-            </div>
-
-            <div className="px-5 py-4 space-y-4">
-              {!aiModal.result ? (
-                <>
-                  <div>
-                    <label className="label-dark">Опис витрати (текст)</label>
-                    <textarea
-                      value={aiModal.text}
-                      onChange={e => setAiModal(s => ({ ...s, text: e.target.value }))}
-                      placeholder="Наприклад: оплатив оренду 15000 грн за лютий, щомісячно..."
-                      className="input-dark w-full h-24 resize-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="label-dark">або зображення / чек</label>
-                    <div
-                      onClick={() => aiFileRef.current?.click()}
-                      className="border border-dashed border-dark-50/20 rounded-xl p-6 text-center cursor-pointer hover:border-purple-500/40 hover:bg-purple-500/5 transition-all"
-                    >
-                      <ImagePlus size={24} className="text-gray-600 mx-auto mb-2" />
-                      {aiModal.file ? (
-                        <p className="text-sm text-purple-300">{aiModal.file.name}</p>
-                      ) : (
-                        <p className="text-xs text-gray-600">Натисніть щоб обрати зображення (JPG, PNG, PDF)</p>
-                      )}
-                    </div>
-                    <input
-                      ref={aiFileRef}
-                      type="file"
-                      accept="image/*,application/pdf"
-                      className="hidden"
-                      onChange={e => setAiModal(s => ({ ...s, file: e.target.files?.[0] ?? null }))}
-                    />
-                  </div>
-                  <div className="flex gap-3 pt-2">
-                    <button
-                      onClick={() => setAiModal({ open: false, text: "", file: null, loading: false, result: null })}
-                      className="flex-1 py-2.5 rounded-xl border border-dark-50/20 text-gray-400 hover:text-white text-sm transition-all"
-                    >
-                      Скасувати
-                    </button>
-                    <button
-                      onClick={submitAiParse}
-                      disabled={aiModal.loading || (!aiModal.text.trim() && !aiModal.file)}
-                      className="flex-1 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-sm font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-60"
-                    >
-                      {aiModal.loading ? <RefreshCw size={14} className="animate-spin" /> : <Sparkles size={14} />}
-                      Аналізувати
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="p-4 rounded-xl bg-purple-500/10 border border-purple-500/20 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <p className="text-xs font-semibold text-purple-400 uppercase tracking-wider">Результат AI</p>
-                      <span className="text-xs text-gray-500">
-                        Впевненість: {Math.round(aiModal.result.confidence * 100)}%
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3 text-sm">
-                      <div>
-                        <p className="text-xs text-gray-500">Категорія</p>
-                        <p className="text-white font-medium">{aiModal.result.category === "fixed" ? "Постійна витрата" : "Інша витрата"}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500">Сума</p>
-                        <p className="text-emerald-400 font-bold font-mono tabular-nums">{fmt(aiModal.result.amount)} ₴</p>
-                      </div>
-                      <div className="col-span-2">
-                        <p className="text-xs text-gray-500">Назва</p>
-                        <p className="text-white">{aiModal.result.name}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500">Постійна</p>
-                        <p className="text-white">{aiModal.result.is_recurring ? "Так" : "Ні"}</p>
-                      </div>
-                    </div>
-                    {aiModal.result.note && (
-                      <p className="text-xs text-gray-500 italic border-t border-purple-500/20 pt-2">
-                        {aiModal.result.note}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex gap-3">
-                    <button
-                      onClick={() => setAiModal(s => ({ ...s, result: null }))}
-                      className="flex-1 py-2.5 rounded-xl border border-dark-50/20 text-gray-400 hover:text-white text-sm transition-all"
-                    >
-                      Назад
-                    </button>
-                    <button
-                      onClick={applyAiResult}
-                      className="flex-1 py-2.5 rounded-xl bg-accent-500 hover:bg-accent-400 text-white text-sm font-semibold transition-all flex items-center justify-center gap-2"
-                    >
-                      <Check size={14} /> Застосувати
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
       )}
 
       {/* ── KPI Detail modal (85% screen) ── */}
