@@ -59,8 +59,8 @@ interface ShareData {
 type TabKey = "own" | "hired" | "paid";
 
 const TABS: { key: TabKey; label: string; Icon: typeof FileText }[] = [
-  { key: "own",   label: "Дохід від власної декларації",             Icon: FileText },
-  { key: "hired", label: "Дохід від декларації лікаря/працівника",   Icon: Users },
+  { key: "own",   label: "Дохід від власних декларацій",              Icon: FileText },
+  { key: "hired", label: "Дохід від декларацій лікаря-працівника",   Icon: Users },
   { key: "paid",  label: "Надані платні послуги",                     Icon: CreditCard },
 ];
 
@@ -189,8 +189,8 @@ export default function OwnerSharePage() {
               onClick={() => setActiveTab(key)}
               className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
                 activeTab === key
-                  ? "bg-accent-500/15 text-accent-400 border border-accent-500/30 shadow-sm"
-                  : "text-gray-500 hover:text-gray-300 hover:bg-dark-400/30 border border-transparent"
+                  ? "bg-accent-500/20 text-accent-300 border border-accent-500/40 shadow-md ring-1 ring-accent-500/20 underline underline-offset-4 decoration-accent-400/60"
+                  : "text-gray-400 hover:text-gray-200 hover:bg-dark-400/40 border border-transparent cursor-pointer hover:underline hover:underline-offset-4 hover:decoration-gray-500/40"
               }`}
             >
               <Icon size={14} aria-hidden="true" />
@@ -209,7 +209,7 @@ export default function OwnerSharePage() {
           <section className="space-y-4">
             <h2 className="text-lg font-bold text-white flex items-center gap-2">
               <BadgeDollarSign size={20} className="text-emerald-400" />
-              Дохід від власної декларації
+              Дохід від власних декларацій
             </h2>
 
             {/* KPI cards */}
@@ -224,7 +224,7 @@ export default function OwnerSharePage() {
                   <p className="text-xl font-bold text-red-400 tabular-nums">{fmt(fi.ep_all + fi.vz_all)} <span className="text-xs text-gray-500">грн</span></p>
                 </div>
                 <div className="card-neo p-5">
-                  <p className="text-xs text-gray-500 mb-2">ЄСВ власника</p>
+                  <p className="text-xs text-gray-500 mb-2">ЄСВ ФОПа</p>
                   <p className="text-xl font-bold text-orange-400 tabular-nums">{fmt(fi.esv_owner)} <span className="text-xs text-gray-500">грн</span></p>
                 </div>
                 <div className="card-neo p-5 bg-emerald-500/5 border-emerald-500/20">
@@ -245,11 +245,11 @@ export default function OwnerSharePage() {
                 <div className="px-5 py-4 space-y-1.5 text-sm">
                   <div className="flex justify-between"><span className="text-gray-400">Брутто НСЗУ (власник)</span><span className="text-white font-mono tabular-nums">{fmt(fi.own_nhsu_brutto)} грн</span></div>
                   <div className="flex justify-between"><span className="text-gray-400">÷ 2</span><span className="text-amber-400 font-mono tabular-nums">{fmt(fi.own_nhsu_brutto / 2)} грн</span></div>
-                  <div className="flex justify-between"><span className="text-gray-400">ЄП (всі лікарі)</span><span className="text-red-400 font-mono tabular-nums">−{fmt(fi.ep_all)} грн</span></div>
-                  <div className="flex justify-between"><span className="text-gray-400">ВЗ (всі лікарі)</span><span className="text-red-400 font-mono tabular-nums">−{fmt(fi.vz_all)} грн</span></div>
-                  <div className="flex justify-between"><span className="text-gray-400">ЄСВ власника</span><span className="text-red-400 font-mono tabular-nums">−{fmt(fi.esv_owner)} грн</span></div>
+                  <div className="flex justify-between"><span className="text-gray-400">ЄП (від доходу)</span><span className="text-red-400 font-mono tabular-nums">−{fmt(fi.ep_all)} грн</span></div>
+                  <div className="flex justify-between"><span className="text-gray-400">ВЗ (від доходу)</span><span className="text-red-400 font-mono tabular-nums">−{fmt(fi.vz_all)} грн</span></div>
+                  <div className="flex justify-between"><span className="text-gray-400">ЄСВ ФОПа</span><span className="text-red-400 font-mono tabular-nums">−{fmt(fi.esv_owner)} грн</span></div>
                   <div className="flex justify-between border-t border-dark-50/10 pt-1.5">
-                    <span className="text-gray-300 font-semibold">= × 90%</span>
+                    <span className="text-gray-300 font-semibold">Чистий дохід</span>
                     <span className="text-emerald-400 font-bold font-mono tabular-nums">{fmt(fi.own_declarations)} грн</span>
                   </div>
                 </div>
@@ -337,7 +337,7 @@ export default function OwnerSharePage() {
           <section className="space-y-4">
             <h2 className="text-lg font-bold text-white flex items-center gap-2">
               <Users size={20} className="text-blue-400" />
-              Дохід від декларації лікаря/працівника
+              Дохід від декларацій лікаря-працівника
             </h2>
 
             {fi?.hired_doctor ? (
@@ -369,7 +369,7 @@ export default function OwnerSharePage() {
                     <div className="flex justify-between"><span className="text-gray-400">Брутто НСЗУ ({fi.hired_doctor.doctor_name})</span><span className="text-white font-mono tabular-nums">{fmt(fi.hired_doctor.nhsu_brutto)} грн</span></div>
                     <div className="flex justify-between"><span className="text-gray-400">Витрати (ЄП, ВЗ, ЗП лікаря та сестри)</span><span className="text-red-400 font-mono tabular-nums">−{fmt(fi.hired_doctor.total_expenses)} грн</span></div>
                     <div className="flex justify-between border-t border-dark-50/10 pt-1.5">
-                      <span className="text-gray-300 font-semibold">÷ 2 × 90%</span>
+                      <span className="text-gray-300 font-semibold">Чистий дохід</span>
                       <span className="text-emerald-400 font-bold font-mono tabular-nums">{fmt(fi.hired_declarations)} грн</span>
                     </div>
                   </div>
