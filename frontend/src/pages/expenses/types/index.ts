@@ -1,5 +1,10 @@
 import type { AiParsedExpense } from "../../../types";
 
+export type ExpenseCategory =
+  | "fixed" | "salary" | "salary_paid"
+  | "owner_own" | "owner_hired" | "owner_paid"
+  | "other" | "taxes" | "general";
+
 export interface SalaryFormState {
   brutto: string;
   has_supplement: boolean;
@@ -14,7 +19,7 @@ export interface OtherExpense {
   name: string;
   description: string;
   amount: number;
-  category: string;
+  category: ExpenseCategory | string;
   year: number;
   month: number;
   edited_by?: string | null;
@@ -95,6 +100,7 @@ export interface AiModalState {
   file: File | null;
   loading: boolean;
   result: AiParsedExpense | null;
+  error?: string;
 }
 
 export interface ShareModalState {

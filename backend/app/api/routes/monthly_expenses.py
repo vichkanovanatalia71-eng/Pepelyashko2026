@@ -14,7 +14,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm.attributes import flag_modified
@@ -214,6 +214,22 @@ async def _nhsu_doctors_data(
     return list(per_doctor.values())
 
 
+async def _check_period_lock(db: AsyncSession, user_id: int, year: int, month: int) -> None:
+    """Перевіряє чи заблокований період. Кидає 423 якщо так."""
+    res = await db.execute(
+        select(MonthlyExpenseLock).where(
+            MonthlyExpenseLock.user_id == user_id,
+            MonthlyExpenseLock.year == year,
+            MonthlyExpenseLock.month == month,
+        )
+    )
+    if res.scalar_one_or_none() is not None:
+        raise HTTPException(
+            status_code=423,
+            detail=f"Період {month:02d}/{year} заблоковано. Розблокуйте для редагування.",
+        )
+
+
 # ────────────────────────────── Schemas ──────────────────────────────
 
 
@@ -334,6 +350,16 @@ class LockRequest(BaseModel):
     year: int
     month: int
 
+    @field_validator("month")
+    @classmethod
+    def check_month(cls, v: int) -> int:
+        return _validate_month(v)
+
+    @field_validator("year")
+    @classmethod
+    def check_year(cls, v: int) -> int:
+        return _validate_year(v)
+
 
 class CopyFromRequest(BaseModel):
     source_year: int
@@ -342,6 +368,16 @@ class CopyFromRequest(BaseModel):
     target_month: int
     copy_fixed: bool = True
     copy_salary: bool = True
+
+    @field_validator("source_month", "target_month")
+    @classmethod
+    def check_month(cls, v: int) -> int:
+        return _validate_month(v)
+
+    @field_validator("source_year", "target_year")
+    @classmethod
+    def check_year(cls, v: int) -> int:
+        return _validate_year(v)
 
 
 class AiParsedExpense(BaseModel):
@@ -353,6 +389,24 @@ class AiParsedExpense(BaseModel):
     note: str = ""
 
 
+def _validate_month(v: int) -> int:
+    if v < 1 or v > 12:
+        raise ValueError("Місяць має бути від 1 до 12")
+    return v
+
+
+def _validate_year(v: int) -> int:
+    if v < 2020 or v > 2100:
+        raise ValueError("Рік має бути від 2020 до 2100")
+    return v
+
+
+def _validate_amount_positive(v: float) -> float:
+    if v < 0:
+        raise ValueError("Сума не може бути від'ємною")
+    return round(v, 2)
+
+
 class CreateFixedRequest(BaseModel):
     year: int
     month: int
@@ -361,12 +415,32 @@ class CreateFixedRequest(BaseModel):
     amount: float
     is_recurring: bool
 
+    @field_validator("month")
+    @classmethod
+    def check_month(cls, v: int) -> int:
+        return _validate_month(v)
+
+    @field_validator("year")
+    @classmethod
+    def check_year(cls, v: int) -> int:
+        return _validate_year(v)
+
+    @field_validator("amount")
+    @classmethod
+    def check_amount(cls, v: float) -> float:
+        return _validate_amount_positive(v)
+
 
 class UpdateFixedRequest(BaseModel):
     name: str
     description: str = ""
     amount: float
     is_recurring: bool
+
+    @field_validator("amount")
+    @classmethod
+    def check_amount(cls, v: float) -> float:
+        return _validate_amount_positive(v)
 
 
 class UpdateSalaryRequest(BaseModel):
@@ -378,6 +452,21 @@ class UpdateSalaryRequest(BaseModel):
     target_net: Optional[float] = None
     individual_bonus: float = 0.0
     paid_services_from_module: bool = False
+
+    @field_validator("month")
+    @classmethod
+    def check_month(cls, v: int) -> int:
+        return _validate_month(v)
+
+    @field_validator("year")
+    @classmethod
+    def check_year(cls, v: int) -> int:
+        return _validate_year(v)
+
+    @field_validator("brutto")
+    @classmethod
+    def check_brutto(cls, v: float) -> float:
+        return _validate_amount_positive(v)
 
 
 # ────────────────────────────── Endpoint: GET ──────────────────────────────
@@ -650,13 +739,19 @@ async def _propagate_recurring(
     db: AsyncSession, user_id: int, year: int, month: int,
     category_key: str, name: str, description: str, amount: float,
 ):
-    """Якщо витрата постійна — копіюємо на всі наступні місяці поточного року."""
-    for future_month in range(month + 1, 13):
+    """Якщо витрата постійна — копіюємо на всі наступні місяці поточного року
+    та на всі місяці наступного року."""
+    # Поточний рік: від наступного місяця до грудня
+    periods: list[tuple[int, int]] = [(year, m) for m in range(month + 1, 13)]
+    # Наступний рік: всі 12 місяців
+    periods += [(year + 1, m) for m in range(1, 13)]
+
+    for fut_year, fut_month in periods:
         fut_res = await db.execute(
             select(MonthlyFixedExpense).where(
                 MonthlyFixedExpense.user_id == user_id,
-                MonthlyFixedExpense.year == year,
-                MonthlyFixedExpense.month == future_month,
+                MonthlyFixedExpense.year == fut_year,
+                MonthlyFixedExpense.month == fut_month,
                 MonthlyFixedExpense.category_key == category_key,
             )
         )
@@ -664,8 +759,8 @@ async def _propagate_recurring(
         if fut_rec is None:
             fut_rec = MonthlyFixedExpense(
                 user_id=user_id,
-                year=year,
-                month=future_month,
+                year=fut_year,
+                month=fut_month,
                 category_key=category_key,
                 name=name,
                 description=description,
@@ -686,6 +781,7 @@ async def create_fixed_expense(
     user: User = Depends(get_current_user),
 ):
     """Створює нову постійну витрату."""
+    await _check_period_lock(db, user.id, body.year, body.month)
     cat_key = str(uuid.uuid4())[:12]
     rec = MonthlyFixedExpense(
         user_id=user.id,
@@ -740,6 +836,7 @@ async def update_fixed_expense(
     rec = res.scalar_one_or_none()
     if not rec:
         raise HTTPException(status_code=404, detail="Витрату не знайдено")
+    await _check_period_lock(db, user.id, rec.year, rec.month)
 
     rec.name = body.name
     rec.description = body.description
@@ -786,6 +883,7 @@ async def delete_fixed_expense(
     rec = res.scalar_one_or_none()
     if not rec:
         raise HTTPException(status_code=404, detail="Витрату не знайдено")
+    await _check_period_lock(db, user.id, rec.year, rec.month)
     await db.delete(rec)
     await db.commit()
 
@@ -821,6 +919,7 @@ async def update_salary_expense(
     user: User = Depends(get_current_user),
 ):
     """Оновлює або створює запис зарплатних витрат по співробітнику."""
+    await _check_period_lock(db, user.id, body.year, body.month)
     # Перевіряємо що співробітник належить цьому користувачу
     member_res = await db.execute(
         select(StaffMember).where(
@@ -924,6 +1023,21 @@ class OtherExpenseCreate(BaseModel):
     year: int
     month: int
 
+    @field_validator("month")
+    @classmethod
+    def check_month(cls, v: int) -> int:
+        return _validate_month(v)
+
+    @field_validator("year")
+    @classmethod
+    def check_year(cls, v: int) -> int:
+        return _validate_year(v)
+
+    @field_validator("amount")
+    @classmethod
+    def check_amount(cls, v: float) -> float:
+        return _validate_amount_positive(v)
+
 
 class OtherExpenseResponse(BaseModel):
     id: int
@@ -965,6 +1079,7 @@ async def create_other_expense(
     user: User = Depends(get_current_user),
 ):
     """Створює нову іншу витрату."""
+    await _check_period_lock(db, user.id, body.year, body.month)
     rec = MonthlyOtherExpense(
         user_id=user.id,
         year=body.year,
@@ -997,6 +1112,7 @@ async def update_other_expense(
     rec = res.scalar_one_or_none()
     if not rec:
         raise HTTPException(status_code=404, detail="Витрату не знайдено")
+    await _check_period_lock(db, user.id, rec.year, rec.month)
     rec.name = body.name
     rec.description = body.description
     rec.amount = body.amount
@@ -1024,6 +1140,7 @@ async def delete_other_expense(
     rec = res.scalar_one_or_none()
     if not rec:
         raise HTTPException(status_code=404, detail="Витрату не знайдено")
+    await _check_period_lock(db, user.id, rec.year, rec.month)
     await db.delete(rec)
     await db.commit()
 
@@ -1202,6 +1319,7 @@ async def copy_from_period(
     user: User = Depends(get_current_user),
 ):
     """Копіює дані з одного місяця в інший."""
+    await _check_period_lock(db, user.id, body.target_year, body.target_month)
     copied_fixed = 0
     copied_salary = 0
 

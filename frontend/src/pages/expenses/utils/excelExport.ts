@@ -3,6 +3,7 @@ import type { MonthlyExpenseData } from "../../../types";
 import type { OtherExpense } from "../types";
 import { ROLE_LABELS } from "../constants";
 import { MONTH_NAMES } from "../../../components/shared/MonthNavigator";
+import { calcNetto } from "./salaryCalculations";
 
 export function exportExpenseExcel(
   data: MonthlyExpenseData,
@@ -14,10 +15,11 @@ export function exportExpenseExcel(
   month: number,
 ) {
   const wb = XLSX.utils.book_new();
+  const monthName = MONTH_NAMES[month - 1] ?? `Місяць ${month}`;
 
   // ── Sheet 1: Summary ──
   const summaryRows: (string | number)[][] = [
-    [`ЗВЕДЕНИЙ ЗВІТ ВИТРАТ — ${MONTH_NAMES[month - 1]} ${year}`],
+    [`ЗВЕДЕНИЙ ЗВІТ ВИТРАТ — ${monthName} ${year}`],
     [],
     ["РОЗДІЛ", "СТАТТЯ", "СУМА (₴)"],
     [],
@@ -47,8 +49,8 @@ export function exportExpenseExcel(
       summaryRows.push(["Зарплата", `${r.full_name} — НСЗУ ЄП`, r.nhsu_ep]);
       summaryRows.push(["Зарплата", `${r.full_name} — НСЗУ ВЗ`, r.nhsu_vz]);
     }
-    const netto = r.brutto - (r.brutto * data.settings.pdfo_rate / 100) - (r.brutto * data.settings.vz_zp_rate / 100);
-    summaryRows.push(["Зарплата", `${r.full_name} — Нетто (на руки)`, Math.round(netto * 100) / 100]);
+    const netto = calcNetto(r.brutto, data.settings.pdfo_rate, data.settings.vz_zp_rate);
+    summaryRows.push(["Зарплата", `${r.full_name} — Нетто (на руки)`, netto]);
     summaryRows.push([]);
   }
   summaryRows.push(["", "Разом зарплатні", data.totals.salary_total]);
@@ -114,16 +116,16 @@ export function exportExpenseExcel(
     "НСЗУ брутто", "НСЗУ ЄП", "НСЗУ ВЗ",
   ];
   const staffRows = data.salary.map(r => {
-    const netto = r.brutto - (r.brutto * data.settings.pdfo_rate / 100) - (r.brutto * data.settings.vz_zp_rate / 100);
+    const netto = calcNetto(r.brutto, data.settings.pdfo_rate, data.settings.vz_zp_rate);
     return [
       r.full_name, ROLE_LABELS[r.role] ?? r.role,
       r.brutto, r.esv, r.supplement, r.individual_bonus,
-      r.paid_services_income, Math.round(netto * 100) / 100, r.total_employer_cost,
+      r.paid_services_income, netto, r.total_employer_cost,
       r.nhsu_brutto, r.nhsu_ep, r.nhsu_vz,
     ];
   });
   const ws2 = XLSX.utils.aoa_to_sheet([
-    [`Персонал — ${MONTH_NAMES[month - 1]} ${year}`],
+    [`Персонал — ${monthName} ${year}`],
     [],
     staffHeader,
     ...staffRows,
@@ -148,9 +150,10 @@ export function exportKpiExcel(
   const header = ["Назва", "Деталі", "Сума (₴)"];
   const dataRows = rows.map(r => [r.name, r.detail ?? "", r.amount]);
   dataRows.push(["", totalLabel, totalValue]);
+  const monthName = MONTH_NAMES[month - 1] ?? `Місяць ${month}`;
   const ws = XLSX.utils.aoa_to_sheet([
     [title],
-    [`${MONTH_NAMES[month - 1]} ${year}`],
+    [`${monthName} ${year}`],
     [],
     header,
     ...dataRows,

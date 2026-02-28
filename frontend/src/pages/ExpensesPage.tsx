@@ -32,7 +32,7 @@ import {
   Modal, ModalField,
 } from "./expenses/components/ExpenseUiParts";
 import { ShareLinkModal } from "./expenses/components/ShareLinkModal";
-import type { SalaryFormState, OtherExpense, DetailRow, AnnualMonthData, KpiModalState } from "./expenses/types";
+import type { SalaryFormState, OtherExpense, DetailRow, AnnualMonthData, KpiModalState, DrawerSection } from "./expenses/types";
 
 // ══════════════════════════════════════════════════════════════════
 // MAIN COMPONENT
@@ -149,7 +149,6 @@ export default function ExpensesPage() {
   };
 
   // ── Right sidebar drawer state ──
-  type DrawerSection = "fixed" | "salary" | "other" | "taxes" | "summary" | null;
   const [activeDrawer, setActiveDrawer] = useState<DrawerSection>(null);
 
   // ── Left sidebar collapse state (inverse coupling: left expanded → right collapsed) ──
@@ -562,8 +561,9 @@ export default function ExpensesPage() {
         paid_services_from_module: form.paid_services_from_module,
       });
       await load();
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
+      setAlertDlg({ title: "Помилка", description: e?.response?.data?.detail || "Не вдалося зберегти зарплату." });
       setSalaryForms(s => ({ ...s, [staffId]: { ...s[staffId], saving: false } }));
     }
   }
