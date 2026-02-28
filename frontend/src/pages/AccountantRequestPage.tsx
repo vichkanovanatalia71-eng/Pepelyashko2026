@@ -366,7 +366,7 @@ export default function AccountantRequestPage() {
           <h1 className="text-xl font-bold text-white mb-2">Посилання недійсне</h1>
           <p className="text-gray-400 text-sm mb-4">{error || "Термін дії закінчився."}</p>
           <button
-            onClick={loadData}
+            onClick={() => loadData()}
             className="flex items-center gap-2 mx-auto px-5 py-2.5 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-400 text-sm font-medium hover:bg-orange-500/20 transition-all"
           >
             <RefreshCw size={14} />
