@@ -198,10 +198,10 @@ async def get_monthly_report(
             )
         )
         grand_total_patients += doc_patients
-        grand_total_non_verified += doc_non_verified
-        grand_total_amount += doc_amount
-        grand_total_ep += doc_ep
-        grand_total_vz += doc_vz
+        grand_total_non_verified += round(doc_non_verified, 1)
+        grand_total_amount += round(doc_amount, 2)
+        grand_total_ep += round(doc_ep, 2)
+        grand_total_vz += round(doc_vz, 2)
 
     # Побудувати підсумки по вікових групах
     age_group_summaries = []
