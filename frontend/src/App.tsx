@@ -12,7 +12,6 @@ const SettingsPage = React.lazy(() => import("./pages/SettingsPage"));
 const ServicesPage = React.lazy(() => import("./pages/ServicesPage"));
 const RevenuePage = React.lazy(() => import("./pages/RevenuePage"));
 const MonthlyServicesPage = React.lazy(() => import("./pages/MonthlyServicesPage"));
-const AiConsultantPage = React.lazy(() => import("./pages/AiConsultantPage"));
 const SharePage = React.lazy(() => import("./pages/SharePage"));
 const OwnerSharePage = React.lazy(() => import("./pages/OwnerSharePage"));
 const AccountantRequestPage = React.lazy(() => import("./pages/AccountantRequestPage"));
@@ -88,7 +87,6 @@ export default function App() {
             <Route index element={<PageErrorBoundary><Dashboard /></PageErrorBoundary>} />
             <Route path="expenses" element={<PageErrorBoundary><ExpensesPage /></PageErrorBoundary>} />
             <Route path="nhsu" element={<PageErrorBoundary><NhsuPage /></PageErrorBoundary>} />
-            <Route path="ai-consultant" element={<PageErrorBoundary><AiConsultantPage /></PageErrorBoundary>} />
             <Route path="settings" element={<PageErrorBoundary><SettingsPage /></PageErrorBoundary>} />
             <Route path="services" element={<PageErrorBoundary><ServicesPage /></PageErrorBoundary>} />
             <Route path="monthly-services" element={<PageErrorBoundary><MonthlyServicesPage /></PageErrorBoundary>} />

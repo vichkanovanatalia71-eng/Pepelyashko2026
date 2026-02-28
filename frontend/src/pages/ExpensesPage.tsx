@@ -396,11 +396,11 @@ export default function ExpensesPage() {
 
   // ── Drawer section definitions ──
   const DRAWER_SECTIONS: { key: DrawerSection; label: string; icon: React.ReactNode; color: string; badgeColor: string; glow: string; getValue: () => number; getStatus: () => boolean }[] = [
-    { key: "fixed", label: "Постійні витрати", icon: <TrendingDown size={18} />, color: "text-blue-400", badgeColor: "bg-blue-500/25 border-blue-400/50", glow: "0 0 14px rgba(59,130,246,0.45), 0 0 4px rgba(59,130,246,0.3)", getValue: () => data?.totals.fixed_total ?? 0, getStatus: () => (data?.fixed.some(r => r.amount > 0) ?? false) },
-    { key: "salary", label: "Зарплатні витрати", icon: <Users size={18} />, color: "text-purple-400", badgeColor: "bg-purple-500/25 border-purple-400/50", glow: "0 0 14px rgba(168,85,247,0.45), 0 0 4px rgba(168,85,247,0.3)", getValue: () => data?.totals.salary_total ?? 0, getStatus: () => (data?.salary.some(r => r.brutto > 0) ?? false) },
-    { key: "other", label: "Інші витрати", icon: <Wallet size={18} />, color: "text-amber-400", badgeColor: "bg-amber-500/25 border-amber-400/50", glow: "0 0 14px rgba(245,158,11,0.45), 0 0 4px rgba(245,158,11,0.3)", getValue: () => otherTotal, getStatus: () => otherExpenses.length > 0 },
-    { key: "taxes", label: "Податки", icon: <Receipt size={18} />, color: "text-red-400", badgeColor: "bg-red-500/25 border-red-400/50", glow: "0 0 14px rgba(239,68,68,0.45), 0 0 4px rgba(239,68,68,0.3)", getValue: () => data?.totals.tax_total ?? 0, getStatus: () => (data?.totals.tax_total ?? 0) > 0 },
-    { key: "summary", label: "Підсумки", icon: <Building2 size={18} />, color: "text-emerald-400", badgeColor: "bg-emerald-500/25 border-emerald-400/50", glow: "0 0 14px rgba(16,185,129,0.45), 0 0 4px rgba(16,185,129,0.3)", getValue: () => remaining, getStatus: () => grandWithOther > 0 },
+    { key: "fixed", label: "Постійні витрати", icon: <TrendingDown size={20} />, color: "text-blue-400", badgeColor: "bg-blue-500/25 border-blue-400/50", glow: "0 0 14px rgba(59,130,246,0.45), 0 0 4px rgba(59,130,246,0.3)", getValue: () => data?.totals.fixed_total ?? 0, getStatus: () => (data?.fixed.some(r => r.amount > 0) ?? false) },
+    { key: "salary", label: "Зарплатні витрати", icon: <Users size={20} />, color: "text-purple-400", badgeColor: "bg-purple-500/25 border-purple-400/50", glow: "0 0 14px rgba(168,85,247,0.45), 0 0 4px rgba(168,85,247,0.3)", getValue: () => data?.totals.salary_total ?? 0, getStatus: () => (data?.salary.some(r => r.brutto > 0) ?? false) },
+    { key: "other", label: "Інші витрати", icon: <Wallet size={20} />, color: "text-amber-400", badgeColor: "bg-amber-500/25 border-amber-400/50", glow: "0 0 14px rgba(245,158,11,0.45), 0 0 4px rgba(245,158,11,0.3)", getValue: () => otherTotal, getStatus: () => otherExpenses.length > 0 },
+    { key: "taxes", label: "Податки", icon: <Receipt size={20} />, color: "text-red-400", badgeColor: "bg-red-500/25 border-red-400/50", glow: "0 0 14px rgba(239,68,68,0.45), 0 0 4px rgba(239,68,68,0.3)", getValue: () => data?.totals.tax_total ?? 0, getStatus: () => (data?.totals.tax_total ?? 0) > 0 },
+    { key: "summary", label: "Підсумки", icon: <Building2 size={20} />, color: "text-emerald-400", badgeColor: "bg-emerald-500/25 border-emerald-400/50", glow: "0 0 14px rgba(16,185,129,0.45), 0 0 4px rgba(16,185,129,0.3)", getValue: () => remaining, getStatus: () => grandWithOther > 0 },
   ];
 
   function toggleExpSidebar() {
@@ -1673,11 +1673,18 @@ export default function ExpensesPage() {
             aria-label="Розділи витрат"
           >
             {/* Sidebar header */}
-            <div className={`flex items-center gap-2.5 px-4 py-5 border-b border-dark-50/10 ${expSidebarCollapsed ? "justify-center" : ""}`}>
-              <div className="w-9 h-9 rounded-xl bg-orange-500/10 flex items-center justify-center shrink-0">
-                <BarChart3 size={18} className="text-orange-400" />
+            <div className="p-4 border-b border-dark-50/10">
+              <div className={`flex items-center ${expSidebarCollapsed ? "justify-center" : "gap-3"}`}>
+                <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center shrink-0">
+                  <BarChart3 size={22} className="text-orange-400" />
+                </div>
+                {!expSidebarCollapsed && (
+                  <div className="min-w-0 sidebar-label">
+                    <h2 className="text-lg font-bold text-white tracking-tight">Витрати</h2>
+                    <p className="text-xs text-gray-500">Розділи</p>
+                  </div>
+                )}
               </div>
-              {!expSidebarCollapsed && <span className="sidebar-label text-sm font-semibold text-gray-300 truncate">Витрати</span>}
             </div>
 
             {/* Toggle button */}
@@ -1697,7 +1704,7 @@ export default function ExpensesPage() {
             </div>
 
             {/* Expense nav items */}
-            <nav className="flex-1 flex flex-col gap-1 py-3 px-2 overflow-y-auto">
+            <nav className="flex-1 p-3 space-y-1 overflow-y-auto scrollbar-hide">
               {DRAWER_SECTIONS.map(sec => {
                 const isActive = activeDrawer === sec.key;
                 const value = sec.getValue();
@@ -1707,7 +1714,7 @@ export default function ExpensesPage() {
                     key={sec.key}
                     onClick={() => toggleDrawer(sec.key as DrawerSection)}
                     title={expSidebarCollapsed ? `${sec.label} · ${fmt(value)} ₴` : undefined}
-                    className={`expense-nav-item group ${expSidebarCollapsed ? "justify-center px-0 py-3" : "px-3 py-2.5"} ${
+                    className={`expense-nav-item group ${expSidebarCollapsed ? "justify-center px-0 py-3" : "px-4 py-3"} ${
                       isActive ? "expense-nav-active" : "expense-nav-inactive"
                     }`}
                   >
@@ -1718,12 +1725,12 @@ export default function ExpensesPage() {
                     </span>
                     {!expSidebarCollapsed && (
                       <div className="sidebar-label flex-1 min-w-0">
-                        <p className={`text-xs font-semibold truncate ${isActive ? "text-white" : "text-gray-400"}`}>
+                        <p className={`text-sm font-medium truncate ${isActive ? "text-white" : "text-gray-400"}`}>
                           {sec.label}
                         </p>
                         <div className="flex items-center gap-1.5 mt-0.5">
                           <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${filled ? "bg-emerald-400" : "bg-gray-600"}`} />
-                          <span className={`text-[10px] font-mono tabular-nums truncate ${isActive ? sec.color : "text-gray-600"}`}>
+                          <span className={`text-xs font-mono tabular-nums truncate ${isActive ? sec.color : "text-gray-600"}`}>
                             {sec.key === "summary" ? (
                               <>{value >= 0 ? "+" : ""}{fmt(value)} ₴</>
                             ) : (
@@ -1739,11 +1746,15 @@ export default function ExpensesPage() {
             </nav>
 
             {/* Month indicator */}
-            <div className={`px-4 py-3 border-t border-dark-50/10 ${expSidebarCollapsed ? "text-center" : ""}`}>
-              {expSidebarCollapsed ? (
-                <p className="text-[10px] text-gray-600 font-mono">{String(month).padStart(2, "0")}</p>
-              ) : (
-                <p className="sidebar-label text-xs text-gray-600 truncate">{MONTH_NAMES[month - 1]} {year}</p>
+            <div className="p-3 border-t border-dark-50/10">
+              {!expSidebarCollapsed && (
+                <div className="card-neo-inset px-4 py-3 sidebar-label">
+                  <p className="text-sm text-gray-300 font-medium truncate">{MONTH_NAMES[month - 1]} {year}</p>
+                  <p className="text-xs text-gray-500 truncate">Поточний період</p>
+                </div>
+              )}
+              {expSidebarCollapsed && (
+                <p className="text-[10px] text-gray-600 font-mono text-center">{String(month).padStart(2, "0")}</p>
               )}
             </div>
           </aside>
