@@ -29,7 +29,8 @@ interface RecordInput {
 }
 interface UploadedImage {
   file: File; preview: string; doctorId: number | null;
-  analyzed: boolean; error?: string; result?: Record<string, number>;
+  analyzed: boolean; error?: string; warning?: string;
+  confidence?: string; result?: Record<string, number>;
 }
 interface TrendPoint {
   label: string; year: number; month: number; has_data: boolean;
@@ -39,7 +40,7 @@ interface TrendPoint {
 interface AiHistoryEntry {
   id: string; date: string; filename: string;
   doctorId: number | null; doctorName: string;
-  confidence: string; notes: string;
+  confidence: string; notes: string; warning: string;
   totals: { age_0_5:number; age_6_17:number; age_18_39:number; age_40_64:number; age_65_plus:number };
 }
 interface MonthRangeEntry {
@@ -370,6 +371,8 @@ export default function NhsuPage() {
         const res = results[i];
         if (!res) return img;
         if (res.error) return { ...img, analyzed:true, error:String(res.error) };
+        const conf = String(res.confidence ?? "low");
+        const warn = String(res.warning ?? "");
         if (img.doctorId) {
           setRecords(prev => prev.map(r => {
             if (r.doctor_id!==img.doctorId) return r;
@@ -382,7 +385,7 @@ export default function NhsuPage() {
           id: `${Date.now()}_${i}`, date: new Date().toLocaleString("uk-UA"),
           filename: img.file.name, doctorId: img.doctorId,
           doctorName: img.doctorId ? (doctors.find(d=>d.id===img.doctorId)?.full_name??"—") : "—",
-          confidence: String(res.confidence??"low"), notes: String(res.notes??""),
+          confidence: conf, notes: String(res.notes??""), warning: warn,
           totals: {
             age_0_5:    Number(res.age_0_5)||0,
             age_6_17:   Number(res.age_6_17)||0,
@@ -391,7 +394,7 @@ export default function NhsuPage() {
             age_65_plus:Number(res.age_65_plus)||0,
           },
         });
-        return { ...img, analyzed:true, result:{
+        return { ...img, analyzed:true, confidence:conf, warning:warn, result:{
           age_0_5:Number(res.age_0_5)||0, age_6_17:Number(res.age_6_17)||0,
           age_18_39:Number(res.age_18_39)||0, age_40_64:Number(res.age_40_64)||0,
           age_65_plus:Number(res.age_65_plus)||0,
@@ -884,6 +887,7 @@ export default function NhsuPage() {
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-gray-300 truncate">{h.filename}</p>
                       <p className="text-xs text-gray-500">{h.doctorName} · {h.date}</p>
+                      {h.warning && <p className="text-xs text-amber-400/80 mt-0.5 truncate">{h.warning}</p>}
                       {h.notes && <p className="text-xs text-gray-600 italic mt-0.5 truncate">{h.notes}</p>}
                     </div>
                     <div className="text-right flex-shrink-0 space-y-1">
@@ -894,7 +898,7 @@ export default function NhsuPage() {
                         h.confidence==="high"  ?"text-emerald-400 bg-emerald-400/10":
                         h.confidence==="medium"?"text-yellow-400 bg-yellow-400/10":
                                                 "text-red-400 bg-red-400/10"}`}>
-                        {h.confidence}
+                        {h.confidence==="high"?"Висока":h.confidence==="medium"?"Середня":"Низька"}
                       </span>
                     </div>
                   </div>
@@ -943,9 +947,20 @@ export default function NhsuPage() {
                         <div className="flex-1 min-w-0">
                           <p className="text-sm text-gray-300 truncate">{img.file.name}</p>
                           {img.analyzed && !img.error && (
-                            <p className="text-xs text-emerald-400 flex items-center gap-1">
-                              <CheckCircle2 size={11}/>Проаналізовано · {img.result?Object.values(img.result).reduce((a,b)=>a+b,0):0} пац.
-                            </p>
+                            <>
+                              <p className="text-xs flex items-center gap-1.5">
+                                <CheckCircle2 size={11} className="text-emerald-400"/>
+                                <span className="text-emerald-400">Проаналізовано · {img.result?Object.values(img.result).reduce((a,b)=>a+b,0):0} пац.</span>
+                                {img.confidence && (
+                                  <span className={`ml-1 px-1.5 py-0.5 rounded text-[10px] font-semibold ${
+                                    img.confidence==="high"?"bg-emerald-500/20 text-emerald-400":
+                                    img.confidence==="medium"?"bg-amber-500/20 text-amber-400":
+                                    "bg-red-500/20 text-red-400"
+                                  }`}>{img.confidence==="high"?"Висока":img.confidence==="medium"?"Середня":"Низька"}</span>
+                                )}
+                              </p>
+                              {img.warning && <p className="text-[11px] text-amber-400/80 mt-0.5 truncate">{img.warning}</p>}
+                            </>
                           )}
                           {img.error && <p className="text-xs text-red-400 flex items-center gap-1"><AlertCircle size={11}/>{img.error}</p>}
                         </div>
