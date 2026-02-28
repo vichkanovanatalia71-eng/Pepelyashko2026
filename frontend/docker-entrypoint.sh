@@ -13,14 +13,13 @@ esac
 # Strip trailing slash to prevent double-slash paths (//api/)
 BACKEND_URL=${BACKEND_URL%/}
 
-# Get DNS resolver from container (for dynamic upstream resolution)
-RESOLVER=$(awk '/^nameserver/{print $2; exit}' /etc/resolv.conf)
-RESOLVER=${RESOLVER:-127.0.0.11}
+export PORT BACKEND_URL
 
-export PORT BACKEND_URL RESOLVER
+envsubst '$PORT $BACKEND_URL' < /etc/nginx/nginx.conf.template > /etc/nginx/conf.d/default.conf
 
-envsubst '$PORT $BACKEND_URL $RESOLVER' < /etc/nginx/nginx.conf.template > /etc/nginx/conf.d/default.conf
+# Validate nginx config before starting (shows errors if any)
+nginx -t 2>&1
 
-echo "Starting nginx on port ${PORT}, backend at ${BACKEND_URL}, resolver ${RESOLVER}"
+echo "Starting nginx on port ${PORT}, backend at ${BACKEND_URL}"
 
 exec nginx -g 'daemon off;'
