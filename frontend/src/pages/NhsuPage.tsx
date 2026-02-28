@@ -57,6 +57,13 @@ interface RangeSummary {
 const fmt  = (n: number) => n.toLocaleString("uk-UA",{minimumFractionDigits:1,maximumFractionDigits:1});
 const fmt2 = (n: number) => n.toLocaleString("uk-UA",{minimumFractionDigits:2,maximumFractionDigits:2});
 
+// Порядок вікових груп: від 0 до 65+
+const AGE_GROUP_ORDER: Record<string, number> = {
+  "0_5": 0, "6_17": 1, "18_39": 2, "40_64": 3, "65_plus": 4,
+};
+const sortRows = <T extends { age_group: string }>(rows: T[]): T[] =>
+  [...rows].sort((a, b) => (AGE_GROUP_ORDER[a.age_group] ?? 99) - (AGE_GROUP_ORDER[b.age_group] ?? 99));
+
 function loadHistory(): AiHistoryEntry[] {
   try { return JSON.parse(localStorage.getItem(AI_HIST_KEY)??"[]"); } catch { return []; }
 }
@@ -147,14 +154,14 @@ export default function NhsuPage() {
   useEffect(() => { loadReport(); }, [loadReport]);
 
   // Load previous year report for YoY comparison
-  useEffect(() => {
-    (async () => {
-      try {
-        const { data } = await api.get("/nhsu/monthly", { params: { year: year - 1, month } });
-        setPrevYearReport(data);
-      } catch { setPrevYearReport(null); }
-    })();
+  const loadPrevYear = useCallback(async () => {
+    try {
+      const { data } = await api.get("/nhsu/monthly", { params: { year: year - 1, month } });
+      setPrevYearReport(data);
+    } catch { setPrevYearReport(null); }
   }, [year, month]);
+
+  useEffect(() => { loadPrevYear(); }, [loadPrevYear]);
 
   // Load trend (last 6 months) once
   const loadTrend = useCallback(async () => {
@@ -401,6 +408,12 @@ export default function NhsuPage() {
     } finally { setAnalyzing(false); }
   };
 
+  // Centralized refresh — единий виклик після будь-якої мутації
+  const refreshAllData = useCallback(async () => {
+    await Promise.all([loadReport(), loadTrend(), loadPrevYear()]);
+    if (rangeMode) loadRangeData();
+  }, [loadReport, loadTrend, loadPrevYear, rangeMode, loadRangeData]);
+
   // Save monthly data
   const handleSave = async () => {
     setSaving(true); setSaveMsg("");
@@ -414,7 +427,7 @@ export default function NhsuPage() {
         })),
       });
       setSaveMsg("Збережено");
-      await Promise.all([loadReport(), loadTrend()]);
+      await refreshAllData();
       setTimeout(() => setShowModal(false), 700);
     } catch (e: unknown) {
       setSaveMsg((e as {response?:{data?:{detail?:string}}})?.response?.data?.detail ?? "Помилка");
@@ -428,7 +441,7 @@ export default function NhsuPage() {
       await api.delete(`/nhsu/monthly?year=${year}&month=${month}`);
       setShowDeleteConfirm(false);
       setReport(null);
-      await loadTrend();
+      await refreshAllData();
     } catch { /* ignore */ }
   };
 
@@ -773,26 +786,26 @@ export default function NhsuPage() {
                 )}
               </tr></thead>
               <tbody>
-                {doc.rows.map(r => (
+                {sortRows(doc.rows).map(r => (
                   <tr key={r.age_group} className="border-b border-dark-50/5 hover:bg-dark-300/30 transition-colors">
                     <td className="px-4 py-2.5 text-gray-300">{r.age_group_label}</td>
                     <td className="px-4 py-2.5 text-right text-gray-500">{r.age_coefficient}</td>
                     <td className="px-4 py-2.5 text-right text-gray-200 font-mono">{r.patient_count}</td>
                     <td className="px-4 py-2.5 text-right text-yellow-400/70 font-mono">{r.non_verified}</td>
-                    <td className="px-4 py-2.5 text-right text-emerald-400 font-mono">{fmt(r.amount)}</td>
-                    <td className="px-4 py-2.5 text-right text-red-400/70 font-mono">{fmt(r.ep_amount)}</td>
-                    <td className="px-4 py-2.5 text-right text-orange-400/70 font-mono">{fmt(r.vz_amount)}</td>
-                    <td className="px-4 py-2.5 text-right text-red-400 font-mono">{fmt(r.ep_vz_amount)}</td>
+                    <td className="px-4 py-2.5 text-right text-emerald-400 font-mono">{fmt2(r.amount)}</td>
+                    <td className="px-4 py-2.5 text-right text-red-400/70 font-mono">{fmt2(r.ep_amount)}</td>
+                    <td className="px-4 py-2.5 text-right text-orange-400/70 font-mono">{fmt2(r.vz_amount)}</td>
+                    <td className="px-4 py-2.5 text-right text-red-400 font-mono">{fmt2(r.ep_vz_amount)}</td>
                   </tr>
                 ))}
                 <tr className="bg-dark-400/40 font-semibold">
                   <td className="px-4 py-2.5 text-gray-300">Всього</td><td/>
                   <td className="px-4 py-2.5 text-right text-white font-mono">{doc.total_patients}</td>
                   <td className="px-4 py-2.5 text-right text-yellow-400/70 font-mono">{fmt(doc.total_non_verified)}</td>
-                  <td className="px-4 py-2.5 text-right text-emerald-400 font-mono">{fmt(doc.total_amount)}</td>
-                  <td className="px-4 py-2.5 text-right text-red-400/70 font-mono">{fmt(doc.total_ep)}</td>
-                  <td className="px-4 py-2.5 text-right text-orange-400/70 font-mono">{fmt(doc.total_vz)}</td>
-                  <td className="px-4 py-2.5 text-right text-red-400 font-mono">{fmt(doc.total_ep_vz)}</td>
+                  <td className="px-4 py-2.5 text-right text-emerald-400 font-mono">{fmt2(doc.total_amount)}</td>
+                  <td className="px-4 py-2.5 text-right text-red-400/70 font-mono">{fmt2(doc.total_ep)}</td>
+                  <td className="px-4 py-2.5 text-right text-orange-400/70 font-mono">{fmt2(doc.total_vz)}</td>
+                  <td className="px-4 py-2.5 text-right text-red-400 font-mono">{fmt2(doc.total_ep_vz)}</td>
                 </tr>
               </tbody>
             </table>
