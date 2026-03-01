@@ -322,7 +322,9 @@ export default function ExpensesPage() {
         const otherSum = (others as OtherExpense[]).reduce((s, e) => s + e.amount, 0);
         if (!d) return { month: i + 1, fixed: 0, salary: 0, taxes: 0, other: 0, income: 0, total: 0, remaining: 0 };
         const md = d as MonthlyExpenseData;
-        const total = md.totals.fixed_total + md.totals.salary_total + md.totals.tax_total + otherSum;
+        const ownerCalc = _calcOwnerSalary(md, selectedHiredDoctorId, selectedHiredNurseId);
+        const paidSvc = md.salary.filter(s => !s.is_owner).reduce((s, r) => s + r.paid_services_income, 0);
+        const total = md.totals.fixed_total + md.totals.salary_total + md.totals.tax_total + otherSum + ownerCalc.total + paidSvc;
         return {
           month: i + 1,
           fixed: md.totals.fixed_total,
@@ -330,8 +332,8 @@ export default function ExpensesPage() {
           taxes: md.totals.tax_total,
           other: otherSum,
           income: md.totals.income,
-          total,
-          remaining: md.totals.income - total,
+          total: Math.round(total * 100) / 100,
+          remaining: Math.round((md.totals.income - total) * 100) / 100,
         };
       });
       setAnnualMonths(annual);
@@ -1007,9 +1009,16 @@ export default function ExpensesPage() {
     : [];
 
   const detailRowsTotal = detailRows.reduce((sum, row) => sum + row.amount, 0);
+  const ownerSubtotal = detailRows
+    .filter(r => r.category === "owner_own" || r.category === "owner_hired" || r.category === "owner_paid")
+    .reduce((sum, r) => sum + r.amount, 0);
+  const paidServicesSubtotal = detailRows
+    .filter(r => r.category === "salary_paid")
+    .reduce((sum, r) => sum + r.amount, 0);
 
-  const grandWithOther = (data?.totals.grand_total ?? 0) + otherTotal;
-  const remaining      = (data?.totals.income ?? 0) - grandWithOther;
+  // grandWithOther = detailRowsTotal: включає fixed + salary + paid_services + owner + other + taxes
+  const grandWithOther = Math.round(detailRowsTotal * 100) / 100;
+  const remaining      = Math.round(((data?.totals.income ?? 0) - grandWithOther) * 100) / 100;
 
   // ── Cash return / refund table calculations ────────────────────
   const cashReturnFixed = (data?.fixed ?? []).filter(r => r.is_cash_return);
@@ -2865,6 +2874,12 @@ export default function ExpensesPage() {
                 </p>
                 <SummaryRow label="Постійні витрати"  value={data.totals.fixed_total}  color="text-blue-400" />
                 <SummaryRow label="Зарплатні витрати" value={data.totals.salary_total} color="text-purple-400" />
+                {paidServicesSubtotal > 0 && (
+                  <SummaryRow label="Платні послуги персоналу" value={paidServicesSubtotal} color="text-cyan-400" />
+                )}
+                {ownerSubtotal > 0 && (
+                  <SummaryRow label="Виплати власнику" value={ownerSubtotal} color="text-amber-400" />
+                )}
                 <SummaryRow label="Інші витрати"      value={otherTotal}               color="text-amber-400" />
                 <SummaryRow label="Податки"           value={data.totals.tax_total}    color="text-red-400" />
                 <div className="border-t border-dark-50/10 pt-2.5">
@@ -3268,8 +3283,14 @@ export default function ExpensesPage() {
               ...data.fixed.filter(r => r.amount > 0).map(r => ({
                 name: r.name, detail: "Постійні", amount: r.amount,
               })),
-              ...data.salary.map(r => ({
+              ...data.salary.filter(s => !s.is_owner).map(r => ({
                 name: r.full_name, detail: `Зарплатні · ${ROLE_LABELS[r.role] ?? r.role}`, amount: r.total_employer_cost,
+              })),
+              ...data.salary.filter(s => !s.is_owner && s.paid_services_income > 0).map(r => ({
+                name: `${r.full_name} — Платні послуги`, detail: "Платні послуги", amount: r.paid_services_income,
+              })),
+              ...detailRows.filter(r => r.category === "owner_own" || r.category === "owner_hired" || r.category === "owner_paid").map(r => ({
+                name: r.name, detail: "Виплати власнику", amount: r.amount,
               })),
               ...otherExpenses.map(r => ({
                 name: r.name, detail: "Інші", amount: r.amount,
@@ -3287,6 +3308,8 @@ export default function ExpensesPage() {
               { name: "Платні послуги", detail: "Дохід", amount: data.taxes.paid_services_income },
               { name: "Постійні витрати", detail: "Витрати", amount: -data.totals.fixed_total },
               { name: "Зарплатні витрати", detail: "Витрати", amount: -data.totals.salary_total },
+              ...(paidServicesSubtotal > 0 ? [{ name: "Платні послуги персоналу", detail: "Витрати", amount: -paidServicesSubtotal }] : []),
+              ...(ownerSubtotal > 0 ? [{ name: "Виплати власнику", detail: "Витрати", amount: -ownerSubtotal }] : []),
               { name: "Інші витрати", detail: "Витрати", amount: -otherTotal },
               { name: "Податки", detail: "Витрати", amount: -data.totals.tax_total },
             ];
