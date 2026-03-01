@@ -15,8 +15,10 @@ from typing import Optional
 import openpyxl
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
 from fastapi.responses import StreamingResponse
+from pydantic import BaseModel, field_validator
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm.attributes import flag_modified
 
 from app.core.deps import get_current_user, get_db
 from app.models.doctor import Doctor
@@ -24,6 +26,7 @@ from app.models.monthly_service import (
     MonthlyPaidServiceEntry,
     MonthlyPaidServicesReport,
     MonthlyPeriodCash,
+    MonthlyServiceLock,
 )
 from app.models.service import Service
 from app.models.share_report import ShareReport
@@ -127,6 +130,34 @@ async def _set_period_cash(
     )
     db.add(cash_rec)
     return amount, True
+
+
+class ServiceLockRequest(BaseModel):
+    year: int
+    month: int
+
+    @field_validator("month")
+    @classmethod
+    def check_month(cls, v: int) -> int:
+        if v < 1 or v > 12:
+            raise ValueError("Місяць повинен бути від 1 до 12")
+        return v
+
+
+async def _check_service_period_lock(db: AsyncSession, user_id: int, year: int, month: int) -> None:
+    """Перевіряє чи заблокований період платних послуг. Кидає 423 якщо так."""
+    res = await db.execute(
+        select(MonthlyServiceLock).where(
+            MonthlyServiceLock.user_id == user_id,
+            MonthlyServiceLock.year == year,
+            MonthlyServiceLock.month == month,
+        )
+    )
+    if res.scalar_one_or_none() is not None:
+        raise HTTPException(
+            status_code=423,
+            detail=f"Період {month:02d}/{year} заблоковано. Розблокуйте для редагування.",
+        )
 
 
 async def _build_analytics(
@@ -461,6 +492,8 @@ async def create_report(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
+    await _check_service_period_lock(db, user.id, body.year, body.month)
+
     # Перевірка унікальності
     ex = await db.execute(
         select(MonthlyPaidServicesReport).where(
@@ -551,6 +584,7 @@ async def update_report(
     report = r.scalar_one_or_none()
     if not report:
         raise HTTPException(404, detail="Звіт не знайдено")
+    await _check_service_period_lock(db, user.id, report.year, report.month)
     if report.status == "final":
         raise HTTPException(403, detail="Фінальний звіт не можна редагувати")
 
@@ -616,6 +650,7 @@ async def finalize_report(
     report = r.scalar_one_or_none()
     if not report:
         raise HTTPException(404, detail="Звіт не знайдено")
+    await _check_service_period_lock(db, user.id, report.year, report.month)
     report.status = "final"
     report.updated_at = datetime.now(timezone.utc)
     await db.commit()
@@ -641,6 +676,7 @@ async def unfinalize_report(
     report = r.scalar_one_or_none()
     if not report:
         raise HTTPException(404, detail="Звіт не знайдено")
+    await _check_service_period_lock(db, user.id, report.year, report.month)
     report.status = "draft"
     report.updated_at = datetime.now(timezone.utc)
     await db.commit()
@@ -666,6 +702,7 @@ async def delete_report(
     report = r.scalar_one_or_none()
     if not report:
         raise HTTPException(404, detail="Звіт не знайдено")
+    await _check_service_period_lock(db, user.id, report.year, report.month)
     await db.delete(report)
     await db.commit()
 
@@ -678,6 +715,7 @@ async def delete_period_data(
     user: User = Depends(get_current_user),
 ):
     """Видалити всі дані платних послуг за обраний місяць (звіти, записи та готівку)."""
+    await _check_service_period_lock(db, user.id, year, month)
     # Знайти всі звіти за період
     r = await db.execute(
         select(MonthlyPaidServicesReport.id).where(
@@ -721,6 +759,7 @@ async def copy_previous_month(
     user: User = Depends(get_current_user),
 ):
     """Копіює записи послуг з попереднього місяця для вказаного лікаря."""
+    await _check_service_period_lock(db, user.id, year, month)
     ex = await db.execute(
         select(MonthlyPaidServicesReport).where(
             MonthlyPaidServicesReport.user_id == user.id,
@@ -828,6 +867,21 @@ async def get_analytics(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
+    # Перевірка фіксації: якщо є знімок — повертаємо його замість динамічного розрахунку
+    lock_res = await db.execute(
+        select(MonthlyServiceLock).where(
+            MonthlyServiceLock.user_id == user.id,
+            MonthlyServiceLock.year == year,
+            MonthlyServiceLock.month == month,
+        )
+    )
+    lock = lock_res.scalar_one_or_none()
+
+    if lock is not None and lock.snapshot is not None:
+        snapshot_data = dict(lock.snapshot)
+        snapshot_data["is_locked"] = True
+        return AnalyticsResponse(**snapshot_data)
+
     cache_key = f"{user.id}:{year}:{month}:{doctor_id}"
     now = time.time()
     if cache_key in _analytics_cache:
@@ -837,12 +891,91 @@ async def get_analytics(
 
     result = await _build_analytics(db, user.id, year, month, doctor_id)
 
+    if lock is not None:
+        result.is_locked = True
+
     _analytics_cache[cache_key] = (now, result)
     stale = [k for k, (ts, _) in _analytics_cache.items() if now - ts > _ANALYTICS_CACHE_TTL * 2]
     for k in stale:
         _analytics_cache.pop(k, None)
 
     return result
+
+
+# ── Фіксація / розблокування періоду ─────────────────────────────────
+
+
+@router.post("/lock", status_code=200)
+async def lock_period(
+    body: ServiceLockRequest,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Фіксує (блокує) місяць платних послуг від редагування та зберігає знімок даних."""
+    existing_res = await db.execute(
+        select(MonthlyServiceLock).where(
+            MonthlyServiceLock.user_id == user.id,
+            MonthlyServiceLock.year == body.year,
+            MonthlyServiceLock.month == body.month,
+        )
+    )
+    existing = existing_res.scalar_one_or_none()
+
+    # Обчислюємо актуальний знімок аналітики
+    analytics = await _build_analytics(db, user.id, body.year, body.month, doctor_id=None)
+    analytics.is_locked = True
+    analytics_dict = analytics.model_dump(mode="json")
+
+    if existing:
+        # Повторна фіксація — оновлюємо знімок
+        existing.snapshot = analytics_dict
+        existing.locked_at = datetime.now(timezone.utc)
+        flag_modified(existing, "snapshot")
+    else:
+        lock = MonthlyServiceLock(
+            user_id=user.id,
+            year=body.year,
+            month=body.month,
+            snapshot=analytics_dict,
+        )
+        db.add(lock)
+
+    await db.commit()
+
+    # Інвалідуємо кеш аналітики для цього періоду
+    for key in list(_analytics_cache.keys()):
+        if key.startswith(f"{user.id}:{body.year}:{body.month}:"):
+            _analytics_cache.pop(key, None)
+
+    return {"is_locked": True}
+
+
+@router.delete("/lock", status_code=200)
+async def unlock_period(
+    year: int = Query(...),
+    month: int = Query(...),
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Розблоковує місяць платних послуг для редагування."""
+    res = await db.execute(
+        select(MonthlyServiceLock).where(
+            MonthlyServiceLock.user_id == user.id,
+            MonthlyServiceLock.year == year,
+            MonthlyServiceLock.month == month,
+        )
+    )
+    lock = res.scalar_one_or_none()
+    if lock:
+        await db.delete(lock)
+        await db.commit()
+
+    # Інвалідуємо кеш аналітики для цього періоду
+    for key in list(_analytics_cache.keys()):
+        if key.startswith(f"{user.id}:{year}:{month}:"):
+            _analytics_cache.pop(key, None)
+
+    return {"is_locked": False}
 
 
 # ── Експорт Excel ──────────────────────────────────────────────────

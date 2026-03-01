@@ -471,6 +471,7 @@ export interface AnalyticsData {
   reports: MonthReport[];
   ep_rate: number;
   vz_rate: number;
+  is_locked?: boolean;
 }
 
 export interface ShareResponse {

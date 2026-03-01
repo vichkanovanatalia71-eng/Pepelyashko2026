@@ -133,6 +133,7 @@ class AnalyticsResponse(BaseModel):
     reports: list[ReportResponse]
     ep_rate: float
     vz_rate: float
+    is_locked: bool = False
 
 
 # ── Поширення (Share) ───────────────────────────────────────────────
