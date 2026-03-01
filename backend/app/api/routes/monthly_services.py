@@ -76,16 +76,19 @@ def _calc_row(price: float, mat_cost: float, qty: int, ep_r: float, vz_r: float)
     P, M, Q = price, mat_cost, qty
     EP = round(P * ep_r / 100, 2)
     VZ = round(P * vz_r / 100, 2)
-    to_split1 = P - M - EP - VZ
+    to_split1 = round(P - M - EP - VZ, 2)
+    ts = round(to_split1 * Q, 2)
+    dr = round(ts / 2, 2)
+    org = round(ts - dr, 2)
     return {
         "sum": round(P * Q, 2),
         "materials": round(M * Q, 2),
         "ep_amount": round(EP * Q, 2),
         "vz_amount": round(VZ * Q, 2),
         "total_costs": round((M + EP + VZ) * Q, 2),
-        "to_split": round(to_split1 * Q, 2),
-        "doctor_income": round(to_split1 * Q / 2, 2),
-        "org_income": round(to_split1 * Q / 2, 2),
+        "to_split": ts,
+        "doctor_income": dr,
+        "org_income": org,
     }
 
 
@@ -216,7 +219,9 @@ async def _build_analytics(
             svc_qty[e.service_id] += e.quantity
             svc_by_doc[e.service_id].append((rep.doctor_id, e.quantity))
 
-    # ── Підсумки ──
+    # ── Підсумки (per-entry для точного округлення) ──
+    _CALC_KEYS = ("sum", "materials", "ep_amount", "vz_amount", "total_costs",
+                  "to_split", "doctor_income", "org_income")
     totals = dict(sum=0.0, materials=0.0, ep=0.0, vz=0.0, to_split=0.0, dr=0.0, org=0.0)
     services_table: list[ServiceTableRow] = []
     mat_agg: dict[str, dict] = {}   # material name → {unit, qty, cost}
@@ -229,15 +234,23 @@ async def _build_analytics(
             continue
 
         M = _svc_materials_cost(svc)
-        c = _calc_row(float(svc.price), M, qty, ep_rate, vz_rate)
 
-        totals["sum"] += c["sum"]
-        totals["materials"] += c["materials"]
-        totals["ep"] += c["ep_amount"]
-        totals["vz"] += c["vz_amount"]
-        totals["to_split"] += c["to_split"]
-        totals["dr"] += c["doctor_income"]
-        totals["org"] += c["org_income"]
+        # Суммуємо per-entry результати для кожної послуги
+        s_agg = {k: 0.0 for k in _CALC_KEYS}
+        for _doc_id, entry_qty in svc_by_doc[svc_id]:
+            c = _calc_row(float(svc.price), M, entry_qty, ep_rate, vz_rate)
+            for k in _CALC_KEYS:
+                s_agg[k] += c[k]
+        for k in _CALC_KEYS:
+            s_agg[k] = round(s_agg[k], 2)
+
+        totals["sum"] += s_agg["sum"]
+        totals["materials"] += s_agg["materials"]
+        totals["ep"] += s_agg["ep_amount"]
+        totals["vz"] += s_agg["vz_amount"]
+        totals["to_split"] += s_agg["to_split"]
+        totals["dr"] += s_agg["doctor_income"]
+        totals["org"] += s_agg["org_income"]
 
         by_doc = [
             DoctorBreakdown(doctor_id=did, doctor_name=doctors_map.get(did, "—"), quantity=q)
@@ -250,7 +263,7 @@ async def _build_analytics(
             price=float(svc.price),
             total_quantity=qty,
             by_doctor=by_doc,
-            **c,
+            **s_agg,
         ))
 
         # Агрегація матеріалів для ТОП
