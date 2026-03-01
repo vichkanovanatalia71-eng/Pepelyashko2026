@@ -470,16 +470,14 @@ class UpdateSalaryRequest(BaseModel):
         return _validate_amount_positive(v)
 
 
-# ────────────────────────────── Endpoint: GET ──────────────────────────────
+# ────────────────────────────── Helper: побудова відповіді ──────────────────────────────
 
 
-@router.get("/", response_model=MonthlyExpenseResponse)
-async def get_monthly_expenses(
-    year: int = Query(...),
-    month: int = Query(...),
-    db: AsyncSession = Depends(get_db),
-    user: User = Depends(get_current_user),
-):
+async def _build_monthly_expense_response(
+    db: AsyncSession, user: User, year: int, month: int
+) -> MonthlyExpenseResponse:
+    """Обчислює повну відповідь витрат за місяць з актуальних даних у БД."""
+
     # 1. Налаштування ставок
     nhsu = await _get_settings(db, user.id)
     rates = TaxRates(
@@ -678,24 +676,14 @@ async def get_monthly_expenses(
             hired_doctors=hired_doctors_info,
         )
 
-    # 7. Перевірка блокування
-    lock_res = await db.execute(
-        select(MonthlyExpenseLock).where(
-            MonthlyExpenseLock.user_id == user.id,
-            MonthlyExpenseLock.year == year,
-            MonthlyExpenseLock.month == month,
-        )
-    )
-    is_locked = lock_res.scalar_one_or_none() is not None
-
-    # 8. Попередження про відсутність зарплати
+    # 7. Попередження про відсутність зарплати
     staff_with_salary = {r.staff_member_id for r in salary_rows if r.brutto > 0}
     missing_salary_staff = [
         m.full_name for m in staff_list
         if m.id not in staff_with_salary
     ]
 
-    # 9. Перевірка останнього звіту бухгалтера для цього місяця
+    # 8. Перевірка останнього звіту бухгалтера для цього місяця
     accountant_submitted_at: str | None = None
     acc_res = await db.execute(
         select(ShareReport).where(
@@ -728,10 +716,44 @@ async def get_monthly_expenses(
             remaining=remaining,
         ),
         owner=owner_block,
-        is_locked=is_locked,
+        is_locked=False,
         missing_salary_staff=missing_salary_staff,
         accountant_submitted_at=accountant_submitted_at,
     )
+
+
+# ────────────────────────────── Endpoint: GET ──────────────────────────────
+
+
+@router.get("/", response_model=MonthlyExpenseResponse)
+async def get_monthly_expenses(
+    year: int = Query(...),
+    month: int = Query(...),
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    # Перевірка фіксації: якщо є знімок — повертаємо його замість динамічного розрахунку
+    lock_res = await db.execute(
+        select(MonthlyExpenseLock).where(
+            MonthlyExpenseLock.user_id == user.id,
+            MonthlyExpenseLock.year == year,
+            MonthlyExpenseLock.month == month,
+        )
+    )
+    lock = lock_res.scalar_one_or_none()
+
+    if lock is not None and lock.snapshot is not None:
+        # Повертаємо зафіксований знімок
+        snapshot_data = dict(lock.snapshot)
+        snapshot_data["is_locked"] = True
+        return MonthlyExpenseResponse(**snapshot_data)
+
+    # Динамічний розрахунок
+    response = await _build_monthly_expense_response(db, user, year, month)
+    if lock is not None:
+        # Є блокування без знімка (legacy) — позначаємо як заблокований
+        response.is_locked = True
+    return response
 
 
 # ────────────────────────────── Endpoints: fixed expenses CRUD ──────────────────────────────
@@ -1088,6 +1110,18 @@ async def list_other_expenses(
     user: User = Depends(get_current_user),
 ):
     """Повертає список інших витрат за місяць."""
+    # Перевірка фіксації: якщо є знімок — повертаємо його
+    lock_res = await db.execute(
+        select(MonthlyExpenseLock).where(
+            MonthlyExpenseLock.user_id == user.id,
+            MonthlyExpenseLock.year == year,
+            MonthlyExpenseLock.month == month,
+        )
+    )
+    lock = lock_res.scalar_one_or_none()
+    if lock is not None and lock.other_expenses_snapshot is not None:
+        return lock.other_expenses_snapshot
+
     res = await db.execute(
         select(MonthlyOtherExpense).where(
             MonthlyOtherExpense.user_id == user.id,
@@ -1283,18 +1317,52 @@ async def lock_period(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    """Фіксує (блокує) місяць від редагування."""
-    existing = await db.execute(
+    """Фіксує (блокує) місяць від редагування та зберігає знімок даних."""
+    existing_res = await db.execute(
         select(MonthlyExpenseLock).where(
             MonthlyExpenseLock.user_id == user.id,
             MonthlyExpenseLock.year == body.year,
             MonthlyExpenseLock.month == body.month,
         )
     )
-    if not existing.scalar_one_or_none():
-        lock = MonthlyExpenseLock(user_id=user.id, year=body.year, month=body.month)
+    existing = existing_res.scalar_one_or_none()
+
+    # Обчислюємо актуальний знімок витрат
+    expense_response = await _build_monthly_expense_response(db, user, body.year, body.month)
+    expense_response.is_locked = True
+    expenses_dict = expense_response.model_dump(mode="json")
+
+    # Знімок інших витрат
+    other_res = await db.execute(
+        select(MonthlyOtherExpense).where(
+            MonthlyOtherExpense.user_id == user.id,
+            MonthlyOtherExpense.year == body.year,
+            MonthlyOtherExpense.month == body.month,
+        )
+    )
+    other_list = [
+        OtherExpenseResponse.model_validate(rec).model_dump(mode="json")
+        for rec in other_res.scalars().all()
+    ]
+
+    if existing:
+        # Повторна фіксація — оновлюємо знімок
+        existing.snapshot = expenses_dict
+        existing.other_expenses_snapshot = other_list
+        existing.locked_at = datetime.now(timezone.utc)
+        flag_modified(existing, "snapshot")
+        flag_modified(existing, "other_expenses_snapshot")
+    else:
+        lock = MonthlyExpenseLock(
+            user_id=user.id,
+            year=body.year,
+            month=body.month,
+            snapshot=expenses_dict,
+            other_expenses_snapshot=other_list,
+        )
         db.add(lock)
-        await db.commit()
+
+    await db.commit()
     return {"is_locked": True}
 
 

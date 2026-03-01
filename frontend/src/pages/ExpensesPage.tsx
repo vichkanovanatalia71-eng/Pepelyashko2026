@@ -796,7 +796,7 @@ export default function ExpensesPage() {
     setLockLoading(true);
     try {
       await api.post("/monthly-expenses/lock", { year, month });
-      await Promise.all([load(), loadPeriods()]);
+      await Promise.all([load(), loadOther(), loadPeriods()]);
     } catch (e) { console.error(e); }
     finally { setLockLoading(false); }
   }
@@ -809,7 +809,7 @@ export default function ExpensesPage() {
         setLockLoading(true);
         try {
           await api.delete("/monthly-expenses/lock", { params: { year, month } });
-          await Promise.all([load(), loadPeriods()]);
+          await Promise.all([load(), loadOther(), loadPeriods()]);
         } catch (e) { console.error(e); }
         finally { setLockLoading(false); }
       },
