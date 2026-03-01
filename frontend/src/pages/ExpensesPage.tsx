@@ -1007,6 +1007,8 @@ export default function ExpensesPage() {
       })()
     : [];
 
+  const detailRowsTotal = detailRows.reduce((sum, row) => sum + row.amount, 0);
+
   const grandWithOther = (data?.totals.grand_total ?? 0) + otherTotal;
   const remaining      = (data?.totals.income ?? 0) - grandWithOther;
 
@@ -1747,7 +1749,7 @@ export default function ExpensesPage() {
                         Всього
                       </td>
                       <td className="px-3 py-2.5 text-right font-bold font-mono text-white tabular-nums">
-                        {fmt(grandWithOther)} ₴
+                        {fmt(detailRowsTotal)} ₴
                       </td>
                     </tr>
                   </tfoot>
