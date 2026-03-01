@@ -8,3 +8,18 @@ dist/
 Dockerfile
 Dockerfile.prod
 railway.toml
+
+# Legacy Create React App config (проект на Vite)
+craco.config.js
+
+# Legacy JS config (проект на TypeScript з tsconfig.json)
+jsconfig.json
+
+# Legacy Vercel config (проект на Railway)
+vercel.json
+
+# Legacy startup script (замінений на docker-entrypoint.sh)
+start.sh
+
+# shadcn/ui registry (не потрібний в runtime)
+components.json

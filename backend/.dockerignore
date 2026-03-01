@@ -23,3 +23,16 @@ server_old.py
 
 # Tests (не потрібні в prod image)
 tests/
+
+# Legacy auth directory (old Google OAuth — app uses app/api/routes/auth)
+auth/
+
+# Legacy Fly.io config (проект на Railway)
+fly.toml
+
+# Legacy HTML templates та документи (не інтегровані в app/)
+*.html
+*.docx
+
+# Documentation (не потрібна в prod image)
+*.md
