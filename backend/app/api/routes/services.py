@@ -41,14 +41,14 @@ def _calc(service: Service, ep_rate: float, vz_rate: float) -> dict:
     materials = service.materials or []
 
     total_materials_cost = round(
-        sum(float(m.get("cost", 0)) for m in materials), 2
+        sum(float(m.get("quantity", 0)) * float(m.get("cost", 0)) for m in materials), 2
     )
     ep_amount = round(price * ep_rate / 100, 2)
     vz_amount = round(price * vz_rate / 100, 2)
     total_costs = round(total_materials_cost + ep_amount + vz_amount, 2)
     net_income = round(price - total_costs, 2)
     doctor_income = round(net_income / 2, 2)
-    org_income = round(net_income / 2, 2)
+    org_income = round(net_income - doctor_income, 2)
 
     return {
         "total_materials_cost": total_materials_cost,

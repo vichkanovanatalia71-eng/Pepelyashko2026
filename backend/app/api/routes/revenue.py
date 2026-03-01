@@ -219,8 +219,8 @@ async def revenue_analytics(
     doctors_list = doc_res.scalars().all()
     doctors_map = {d.id: d.full_name for d in doctors_list}
 
-    # Load all services (for price lookup)
-    svc_res = await db.execute(select(Service))
+    # Load user's services (for price lookup)
+    svc_res = await db.execute(select(Service).where(Service.user_id == user.id))
     services_map: dict[int, Service] = {s.id: s for s in svc_res.scalars().all()}
 
     # Current month data

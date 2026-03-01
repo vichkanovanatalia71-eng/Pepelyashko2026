@@ -16,6 +16,9 @@ const SharePage = React.lazy(() => import("./pages/SharePage"));
 const OwnerSharePage = React.lazy(() => import("./pages/OwnerSharePage"));
 const AccountantRequestPage = React.lazy(() => import("./pages/AccountantRequestPage"));
 const VerifyEmailPage = React.lazy(() => import("./pages/VerifyEmailPage"));
+const IncomesPage = React.lazy(() => import("./pages/IncomesPage"));
+const BudgetPage = React.lazy(() => import("./pages/BudgetPage"));
+const TaxesPage = React.lazy(() => import("./pages/TaxesPage"));
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { token, isReady } = useAuth();
@@ -91,6 +94,9 @@ export default function App() {
             <Route path="services" element={<PageErrorBoundary><ServicesPage /></PageErrorBoundary>} />
             <Route path="monthly-services" element={<PageErrorBoundary><MonthlyServicesPage /></PageErrorBoundary>} />
             <Route path="revenue" element={<PageErrorBoundary><RevenuePage /></PageErrorBoundary>} />
+            <Route path="incomes" element={<PageErrorBoundary><IncomesPage /></PageErrorBoundary>} />
+            <Route path="budget" element={<PageErrorBoundary><BudgetPage /></PageErrorBoundary>} />
+            <Route path="taxes" element={<PageErrorBoundary><TaxesPage /></PageErrorBoundary>} />
           </Route>
         </Routes>
       </Suspense>

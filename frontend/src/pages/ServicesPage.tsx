@@ -38,7 +38,7 @@ function calcFinancials(
   ep_rate: number,
   vz_rate: number
 ) {
-  const total_materials_cost = materials.reduce((s, m) => s + (parseFloat(String(m.cost)) || 0), 0);
+  const total_materials_cost = materials.reduce((s, m) => s + (parseFloat(String(m.quantity)) || 0) * (parseFloat(String(m.cost)) || 0), 0);
   const ep_amount = price * ep_rate / 100;
   const vz_amount = price * vz_rate / 100;
   const total_costs = total_materials_cost + ep_amount + vz_amount;

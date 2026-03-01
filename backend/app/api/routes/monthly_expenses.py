@@ -930,6 +930,7 @@ async def toggle_fixed_visibility(
     rec = res.scalar_one_or_none()
     if not rec:
         raise HTTPException(status_code=404, detail="Витрату не знайдено")
+    await _check_period_lock(db, user.id, rec.year, rec.month)
     rec.visible_to_accountant = not rec.visible_to_accountant
     await db.commit()
     return {"visible_to_accountant": rec.visible_to_accountant}
@@ -951,6 +952,7 @@ async def toggle_fixed_cash_return(
     rec = res.scalar_one_or_none()
     if not rec:
         raise HTTPException(status_code=404, detail="Витрату не знайдено")
+    await _check_period_lock(db, user.id, rec.year, rec.month)
     rec.is_cash_return = not rec.is_cash_return
     await db.commit()
     return {"is_cash_return": rec.is_cash_return}
@@ -1173,6 +1175,9 @@ async def update_other_expense(
     if not rec:
         raise HTTPException(status_code=404, detail="Витрату не знайдено")
     await _check_period_lock(db, user.id, rec.year, rec.month)
+    # Also check the target period lock if moving to a different period
+    if body.year != rec.year or body.month != rec.month:
+        await _check_period_lock(db, user.id, body.year, body.month)
     rec.name = body.name
     rec.description = body.description
     rec.amount = body.amount

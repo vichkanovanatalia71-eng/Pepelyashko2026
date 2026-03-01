@@ -398,7 +398,7 @@ export default function ExpensesPage() {
     const prevent = (e: TouchEvent) => { e.preventDefault(); };
     handle.addEventListener("touchmove", prevent, { passive: false });
     return () => handle.removeEventListener("touchmove", prevent);
-  });
+  }, [activeDrawer]);
 
   const onDragStart = useCallback((e: React.TouchEvent) => {
     sheetDragRef.current = { startY: e.touches[0].clientY, startH: sheetHeight };

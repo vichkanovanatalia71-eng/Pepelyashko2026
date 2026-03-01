@@ -5,12 +5,12 @@ from app.models.doctor import Doctor
 from app.models.nhsu import NhsuSettings, NhsuRecord
 from app.models.user_api_keys import UserApiKeys
 from app.models.service import Service
-from app.models.monthly_service import MonthlyPaidServicesReport, MonthlyPaidServiceEntry
+from app.models.monthly_service import MonthlyPaidServicesReport, MonthlyPaidServiceEntry, MonthlyPeriodCash
 from app.models.share_report import ShareReport
 from app.models.tax_payment import TaxPayment
 from app.models.staff import StaffMember
 from app.models.budget import BudgetRow, BudgetCell
-from app.models.monthly_expense import MonthlyFixedExpense, MonthlySalaryExpense, MonthlyExpenseLock
+from app.models.monthly_expense import MonthlyFixedExpense, MonthlySalaryExpense, MonthlyExpenseLock, MonthlyOtherExpense
 
 __all__ = [
     "User",
@@ -25,6 +25,7 @@ __all__ = [
     "Service",
     "MonthlyPaidServicesReport",
     "MonthlyPaidServiceEntry",
+    "MonthlyPeriodCash",
     "ShareReport",
     "TaxPayment",
     "StaffMember",
@@ -33,4 +34,5 @@ __all__ = [
     "MonthlyFixedExpense",
     "MonthlySalaryExpense",
     "MonthlyExpenseLock",
+    "MonthlyOtherExpense",
 ]

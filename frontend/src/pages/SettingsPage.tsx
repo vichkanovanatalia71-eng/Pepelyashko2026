@@ -62,6 +62,15 @@ export default function SettingsPage() {
   const [profileMsg, setProfileMsg] = useState("");
   const [profileErr, setProfileErr] = useState("");
 
+  // Re-sync profile form when user data loads/changes
+  useEffect(() => {
+    if (user) {
+      setFullName(user.full_name ?? "");
+      setFopGroup(user.fop_group ?? 3);
+      setTaxRate(String((user.tax_rate ?? 0.05) * 100));
+    }
+  }, [user]);
+
   // ── Зміна пароля ──
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");

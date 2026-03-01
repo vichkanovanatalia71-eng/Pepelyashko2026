@@ -1,13 +1,19 @@
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.routes import auth, incomes, expenses, taxes, reports, nhsu, user_settings, services, monthly_services, revenue, staff, budget, monthly_expenses
 from app.core.config import settings
+from app.core.deps import get_db
 
 app = FastAPI(
     title="MedFlow API",
     description="Фінансовий менеджер для медичної практики ФОП",
     version="0.1.0",
+    docs_url="/docs" if settings.debug else None,
+    redoc_url="/redoc" if settings.debug else None,
+    openapi_url="/openapi.json" if settings.debug else None,
 )
 
 app.add_middleware(
@@ -43,5 +49,13 @@ async def root():
 
 
 @app.get("/api/health")
-async def health_check():
-    return {"status": "ok"}
+async def health_check(db: AsyncSession = Depends(get_db)):
+    try:
+        await db.execute(text("SELECT 1"))
+        return {"status": "ok", "db": "connected"}
+    except Exception:
+        from fastapi.responses import JSONResponse
+        return JSONResponse(
+            status_code=503,
+            content={"status": "degraded", "db": "disconnected"},
+        )

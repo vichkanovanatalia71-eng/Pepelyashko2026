@@ -1039,8 +1039,8 @@ async def _get_top_paid_services_detailed(db: AsyncSession, user_id: int, year: 
             if data["materials"]:
                 materials = json.loads(data["materials"]) if isinstance(data["materials"], str) else data["materials"]
                 if isinstance(materials, list):
-                    materials_cost = sum(float(m.get("cost", 0)) for m in materials) * data["quantity"]
-        except:
+                    materials_cost = sum(float(m.get("quantity", 0)) * float(m.get("cost", 0)) for m in materials) * data["quantity"]
+        except (ValueError, TypeError, KeyError):
             pass
 
         revenue = data["revenue"]

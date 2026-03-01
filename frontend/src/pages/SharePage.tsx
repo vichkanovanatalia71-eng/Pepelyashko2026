@@ -36,7 +36,7 @@ const MONTHS_UA = [
 const PIE_COLORS = ["#60a5fa", "#f97316", "#ef4444"];
 
 const fmt = (v: number) =>
-  v.toLocaleString("uk-UA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  (v ?? 0).toLocaleString("uk-UA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 interface ShareData {
   token: string;

@@ -11,14 +11,14 @@ from pydantic import BaseModel
 
 class EntryInput(BaseModel):
     service_id: int
-    quantity: int = 0
+    quantity: int = Field(default=0, ge=0)
 
 
 class ReportCreate(BaseModel):
     doctor_id: int
-    year: int
-    month: int
-    cash_in_register: Optional[float] = None  # None = не вводилась
+    year: int = Field(ge=2020, le=2100)
+    month: int = Field(ge=1, le=12)
+    cash_in_register: Optional[float] = Field(default=None, ge=0)
     entries: list[EntryInput] = []
 
 
