@@ -17,8 +17,20 @@ class Settings(BaseSettings):
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 60  # 1 hour; use refresh tokens for longer sessions
 
-    # CORS — set CORS_ORIGINS env var as comma-separated list for production
+    # CORS — set CORS_ORIGINS env var as comma-separated list or JSON array
     cors_origins: list[str] = ["https://medflow.live"]
+
+    @field_validator("cors_origins", mode="before")
+    @classmethod
+    def parse_cors_origins(cls, v):
+        """Accept both JSON arrays and comma-separated strings."""
+        if isinstance(v, str):
+            import json
+            v = v.strip()
+            if v.startswith("["):
+                return json.loads(v)
+            return [origin.strip() for origin in v.split(",") if origin.strip()]
+        return v
 
     @field_validator("secret_key", mode="after")
     @classmethod

@@ -12,8 +12,8 @@ echo "Running Alembic migrations..."
 if [ "${SKIP_MIGRATIONS}" = "true" ]; then
   echo "SKIP_MIGRATIONS=true — skipping Alembic"
 else
-  timeout 60 alembic upgrade head && echo "Migrations OK" || echo "WARNING: migrations failed or timed out — server will start anyway"
+  timeout 30 alembic upgrade head && echo "Migrations OK" || echo "WARNING: migrations failed or timed out — server will start anyway"
 fi
 
 echo "Starting uvicorn on port $PORT..."
-exec uvicorn app.main:app --host 0.0.0.0 --port "$PORT" --workers 2
+exec uvicorn app.main:app --host 0.0.0.0 --port "$PORT" --workers 1
