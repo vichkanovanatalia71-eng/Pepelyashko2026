@@ -16,9 +16,9 @@ COPY . .
 # Fix Windows line endings in entrypoint and make executable
 RUN sed -i 's/\r$//' entrypoint.sh && chmod +x entrypoint.sh
 
-# Run as non-root user
-RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
-RUN chown -R appuser:appgroup /app
+# Run as non-root user (single layer)
+RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser \
+    && chown -R appuser:appgroup /app
 USER appuser
 
 EXPOSE 8000
