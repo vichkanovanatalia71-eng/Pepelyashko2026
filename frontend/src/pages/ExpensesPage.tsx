@@ -27,7 +27,7 @@ import type {
 import { MONTH_NAMES } from "../components/shared/MonthNavigator";
 import { MONTH_SHORT, ROLE_LABELS, TT_STYLE, PIE_COLORS, CATEGORY_BADGE, fmt } from "./expenses/constants";
 import { initSalaryForm, calcSalary as _calcSalary, calcOwnerSalary as _calcOwnerSalary, isSalaryDirty as _isSalaryDirty } from "./expenses/utils/salaryCalculations";
-import { exportExpenseExcel, exportKpiExcel } from "./expenses/utils/excelExport";
+import { exportExpenseExcel, exportKpiExcel, exportReturnExpensesExcel } from "./expenses/utils/excelExport";
 import {
   CalcRow, TaxRow, SummaryRow, KpiCard, CheckboxToggle,
   Modal, ModalField,
@@ -920,6 +920,18 @@ export default function ExpensesPage() {
   function exportExcel() {
     if (!data) return;
     exportExpenseExcel(data, otherExpenses, otherTotal, grandWithOther, remaining, year, month);
+  }
+
+  function exportReturnExcel() {
+    if (!data) return;
+    const supplements = (data.salary ?? []).filter(r => r.has_supplement && r.supplement > 0);
+    exportReturnExpensesExcel(
+      cashReturnFixed, cashReturnOther, cashReturnSum,
+      supplements, supplementsTotal,
+      paidServicesData?.doctor_incomes ?? [], doctorIncomeTotal,
+      cashInRegister, withdrawToCard,
+      year, month,
+    );
   }
 
   // (inline export code has been moved to expenses/utils/excelExport.ts)
@@ -2900,6 +2912,14 @@ export default function ExpensesPage() {
                 <Banknote size={18} className="text-teal-400" />
               </div>
               <h3 className="font-semibold text-white text-base">Витрати на повернення</h3>
+              <button
+                onClick={exportReturnExcel}
+                className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 text-xs font-medium transition-colors"
+                title="Завантажити в Excel"
+              >
+                <Download size={14} />
+                Excel
+              </button>
             </div>
 
             {/* Витрати з позначкою "Повернення готівки" */}

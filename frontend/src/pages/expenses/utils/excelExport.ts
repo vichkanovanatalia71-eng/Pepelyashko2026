@@ -137,6 +137,79 @@ export function exportExpenseExcel(
   XLSX.writeFile(wb, `витрати_${year}_${String(month).padStart(2, "0")}.xlsx`);
 }
 
+export function exportReturnExpensesExcel(
+  cashReturnFixed: { id: number; name: string; amount: number }[],
+  cashReturnOther: { id: number; name: string; amount: number }[],
+  cashReturnSum: number,
+  supplements: { full_name: string; supplement: number }[],
+  supplementsTotal: number,
+  doctorIncomes: { doctor_name: string; income: number }[],
+  doctorIncomeTotal: number,
+  cashInRegister: number,
+  withdrawToCard: number,
+  year: number,
+  month: number,
+) {
+  const wb = XLSX.utils.book_new();
+  const monthName = MONTH_NAMES[month - 1] ?? `Місяць ${month}`;
+
+  const rows: (string | number)[][] = [
+    [`ВИТРАТИ НА ПОВЕРНЕННЯ — ${monthName} ${year}`],
+    [],
+    ["КАТЕГОРІЯ", "СТАТТЯ", "СУМА (₴)"],
+    [],
+    ["═══ ПОВЕРНЕННЯ ГОТІВКИ ═══", "", ""],
+  ];
+
+  for (const r of cashReturnFixed) {
+    rows.push(["Постійна витрата", r.name, r.amount]);
+  }
+  for (const r of cashReturnOther) {
+    rows.push(["Інша витрата", r.name, r.amount]);
+  }
+  rows.push(["", "Разом повернення готівки", cashReturnSum]);
+  rows.push([]);
+
+  rows.push(["═══ ДОПЛАТИ ДО ЦІЛЬОВОЇ СУМИ ═══", "", ""]);
+  if (supplements.length === 0) {
+    rows.push(["", "Немає доплат", 0]);
+  } else {
+    for (const r of supplements) {
+      rows.push(["Доплата", `${r.full_name} — доплата`, r.supplement]);
+    }
+  }
+  rows.push(["", "Разом доплати", supplementsTotal]);
+  rows.push([]);
+
+  rows.push(["═══ ДОХІД ЛІКАРІВ (ПЛАТНІ ПОСЛУГИ) ═══", "", ""]);
+  if (doctorIncomes.length === 0) {
+    rows.push(["", "Немає даних", 0]);
+  } else {
+    for (const d of doctorIncomes) {
+      rows.push(["Дохід лікаря", d.doctor_name, d.income]);
+    }
+  }
+  rows.push(["", "Разом дохід лікарів", doctorIncomeTotal]);
+  rows.push([]);
+
+  rows.push(["═══ ГОТІВКА В КАСІ ═══", "", ""]);
+  rows.push(["Каса", `Готівка в касі за ${monthName} ${year}`, cashInRegister]);
+  rows.push([]);
+
+  rows.push(["═══ ПІДСУМОК ═══", "", ""]);
+  rows.push(["Підсумок", "Витрати на повернення", cashReturnSum]);
+  rows.push(["Підсумок", "+ Доплати до цільової суми", supplementsTotal]);
+  rows.push(["Підсумок", "+ Дохід лікарів", doctorIncomeTotal]);
+  rows.push(["Підсумок", "− Готівка в касі", cashInRegister]);
+  rows.push(["", "ВИВЕСТИ НА КАРТКУ", withdrawToCard]);
+
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws["!cols"] = [{ wch: 20 }, { wch: 48 }, { wch: 18 }];
+  XLSX.utils.book_append_sheet(wb, ws, "Витрати на повернення");
+
+  XLSX.writeFile(wb, `повернення_${year}_${String(month).padStart(2, "0")}.xlsx`);
+}
+
 export function exportKpiExcel(
   rows: { name: string; detail?: string; amount: number }[],
   totalLabel: string,
