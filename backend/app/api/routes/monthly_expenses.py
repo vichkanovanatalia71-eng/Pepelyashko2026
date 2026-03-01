@@ -250,6 +250,7 @@ class FixedExpenseRow(BaseModel):
     edited_by: Optional[str] = None
     edited_at: Optional[str] = None
     visible_to_accountant: bool = True
+    is_cash_return: bool = False
 
 
 class SalaryExpenseRow(BaseModel):
@@ -508,6 +509,7 @@ async def get_monthly_expenses(
             edited_by=rec.edited_by,
             edited_at=rec.edited_at.isoformat() if rec.edited_at else None,
             visible_to_accountant=rec.visible_to_accountant,
+            is_cash_return=rec.is_cash_return,
         ))
 
     # 3. Зарплатні витрати — всі активні співробітники
@@ -816,6 +818,7 @@ async def create_fixed_expense(
         edited_by=rec.edited_by,
         edited_at=rec.edited_at.isoformat() if rec.edited_at else None,
         visible_to_accountant=rec.visible_to_accountant,
+        is_cash_return=rec.is_cash_return,
     )
 
 
@@ -864,6 +867,7 @@ async def update_fixed_expense(
         edited_by=rec.edited_by,
         edited_at=rec.edited_at.isoformat() if rec.edited_at else None,
         visible_to_accountant=rec.visible_to_accountant,
+        is_cash_return=rec.is_cash_return,
     )
 
 
@@ -907,6 +911,27 @@ async def toggle_fixed_visibility(
     rec.visible_to_accountant = not rec.visible_to_accountant
     await db.commit()
     return {"visible_to_accountant": rec.visible_to_accountant}
+
+
+@router.patch("/fixed/{expense_id}/cash-return")
+async def toggle_fixed_cash_return(
+    expense_id: int,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Перемикає прапорець повернення готівки для постійної витрати."""
+    res = await db.execute(
+        select(MonthlyFixedExpense).where(
+            MonthlyFixedExpense.id == expense_id,
+            MonthlyFixedExpense.user_id == user.id,
+        )
+    )
+    rec = res.scalar_one_or_none()
+    if not rec:
+        raise HTTPException(status_code=404, detail="Витрату не знайдено")
+    rec.is_cash_return = not rec.is_cash_return
+    await db.commit()
+    return {"is_cash_return": rec.is_cash_return}
 
 
 # ────────────────────────────── Endpoint: PUT salary ──────────────────────────────
@@ -1050,6 +1075,7 @@ class OtherExpenseResponse(BaseModel):
     edited_by: Optional[str] = None
     edited_at: Optional[datetime] = None
     visible_to_accountant: bool = True
+    is_cash_return: bool = False
 
     model_config = {"from_attributes": True}
 
@@ -1164,6 +1190,27 @@ async def toggle_other_visibility(
     rec.visible_to_accountant = not rec.visible_to_accountant
     await db.commit()
     return {"visible_to_accountant": rec.visible_to_accountant}
+
+
+@router.patch("/other/{expense_id}/cash-return")
+async def toggle_other_cash_return(
+    expense_id: int,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Перемикає прапорець повернення готівки для іншої витрати."""
+    res = await db.execute(
+        select(MonthlyOtherExpense).where(
+            MonthlyOtherExpense.id == expense_id,
+            MonthlyOtherExpense.user_id == user.id,
+        )
+    )
+    rec = res.scalar_one_or_none()
+    if not rec:
+        raise HTTPException(status_code=404, detail="Витрату не знайдено")
+    rec.is_cash_return = not rec.is_cash_return
+    await db.commit()
+    return {"is_cash_return": rec.is_cash_return}
 
 
 # ══════════════════════════════════════════════════════════════════

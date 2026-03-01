@@ -23,6 +23,7 @@ export interface OtherExpense {
   edited_by?: string | null;
   edited_at?: string | null;
   visible_to_accountant?: boolean;
+  is_cash_return?: boolean;
 }
 
 export interface DetailRow {

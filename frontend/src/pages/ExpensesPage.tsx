@@ -20,7 +20,7 @@ import {
 import api from "../api/client";
 import type {
   MonthlyExpenseData, SalaryExpenseRow, StaffMember,
-  HiredDoctorInfo, Doctor, PeriodSummary,
+  HiredDoctorInfo, Doctor, PeriodSummary, AnalyticsData,
 } from "../types";
 
 // ── Extracted modules ─────────────────────────────────────────────
@@ -58,6 +58,13 @@ export default function ExpensesPage() {
   // Staff list & NHSU doctors
   const [staffList, setStaffList] = useState<StaffMember[]>([]);
   const [doctorsList, setDoctorsList] = useState<Doctor[]>([]);
+
+  // Paid services analytics (for refund table)
+  const [paidServicesData, setPaidServicesData] = useState<{
+    doctor_income: number;
+    cash_in_register: number;
+    doctor_incomes: { doctor_id: number; doctor_name: string; income: number }[];
+  } | null>(null);
 
   // Owner hired doctor/nurse selection (persisted in localStorage)
   const [selectedHiredDoctorId, setSelectedHiredDoctorId] = useState<number | null>(() => {
@@ -212,6 +219,38 @@ export default function ExpensesPage() {
     }
   }, [year, month]);
 
+  // ── Load paid services analytics (for refund table) ────────
+  const loadPaidServicesData = useCallback(async () => {
+    try {
+      const { data: resp } = await api.get<AnalyticsData>("/monthly-services/analytics", {
+        params: { year, month },
+      });
+      const incomeByDoctor: Record<number, { name: string; income: number }> = {};
+      for (const svc of resp.services_table) {
+        if (svc.total_quantity === 0) continue;
+        for (const doc of svc.by_doctor) {
+          if (!incomeByDoctor[doc.doctor_id]) {
+            incomeByDoctor[doc.doctor_id] = { name: doc.doctor_name, income: 0 };
+          }
+          incomeByDoctor[doc.doctor_id].income +=
+            svc.doctor_income * (doc.quantity / svc.total_quantity);
+        }
+      }
+      const doctorIncomes = Object.entries(incomeByDoctor).map(([id, v]) => ({
+        doctor_id: Number(id),
+        doctor_name: v.name,
+        income: Math.round(v.income * 100) / 100,
+      }));
+      setPaidServicesData({
+        doctor_income: resp.dashboard.doctor_income,
+        cash_in_register: resp.dashboard.cash_in_register,
+        doctor_incomes: doctorIncomes,
+      });
+    } catch {
+      setPaidServicesData(null);
+    }
+  }, [year, month]);
+
   // ── Load staff & doctors ─────────────────────────────────────
   const loadStaff = useCallback(async () => {
     try {
@@ -303,7 +342,7 @@ export default function ExpensesPage() {
     }
   }, [year]);
 
-  useEffect(() => { load(); loadOther(); loadStaff(); loadDoctors(); loadPeriods(); loadPrevMonth(); }, [load, loadOther, loadStaff, loadDoctors, loadPeriods, loadPrevMonth]);
+  useEffect(() => { load(); loadOther(); loadStaff(); loadDoctors(); loadPeriods(); loadPrevMonth(); loadPaidServicesData(); }, [load, loadOther, loadStaff, loadDoctors, loadPeriods, loadPrevMonth, loadPaidServicesData]);
   useEffect(() => { if (viewMode === "all") loadAnnualData(); }, [viewMode, loadAnnualData]);
 
   // Show accountant submitted modal when new submission detected
@@ -713,6 +752,27 @@ export default function ExpensesPage() {
     }
   }
 
+  async function toggleFixedCashReturn(id: number) {
+    try {
+      const { data: resp } = await api.patch(`/monthly-expenses/fixed/${id}/cash-return`);
+      setData(prev => prev ? {
+        ...prev,
+        fixed: prev.fixed.map(r => r.id === id ? { ...r, is_cash_return: resp.is_cash_return } : r),
+      } : prev);
+    } catch (e: any) {
+      console.error(e);
+    }
+  }
+
+  async function toggleOtherCashReturn(id: number) {
+    try {
+      const { data: resp } = await api.patch(`/monthly-expenses/other/${id}/cash-return`);
+      setOtherExpenses(prev => prev.map(e => e.id === id ? { ...e, is_cash_return: resp.is_cash_return } : e));
+    } catch (e: any) {
+      console.error(e);
+    }
+  }
+
   function deletePeriodData() {
     setConfirmDlg({
       title: `Видалити всі витрати за ${MONTH_NAMES[month - 1]} ${year}?`,
@@ -938,6 +998,18 @@ export default function ExpensesPage() {
   const grandWithOther = (data?.totals.grand_total ?? 0) + otherTotal;
   const remaining      = (data?.totals.income ?? 0) - grandWithOther;
 
+  // ── Cash return / refund table calculations ────────────────────
+  const cashReturnFixed = (data?.fixed ?? []).filter(r => r.is_cash_return);
+  const cashReturnOther = otherExpenses.filter(e => e.is_cash_return);
+  const cashReturnSum = cashReturnFixed.reduce((s, r) => s + r.amount, 0)
+                      + cashReturnOther.reduce((s, e) => s + e.amount, 0);
+  const supplementsTotal = (data?.salary ?? [])
+    .filter(r => r.has_supplement && r.supplement > 0)
+    .reduce((s, r) => s + r.supplement, 0);
+  const doctorIncomeTotal = paidServicesData?.doctor_income ?? 0;
+  const cashInRegister = paidServicesData?.cash_in_register ?? 0;
+  const withdrawToCard = cashReturnSum + supplementsTotal + doctorIncomeTotal - cashInRegister;
+
   // ── Loading state ─────────────────────────────────────────────
   if (loading && !data) {
     return <LoadingSpinner label="Завантаження витрат…" />;
@@ -984,7 +1056,7 @@ export default function ExpensesPage() {
 
         <div className="flex items-center gap-2 flex-wrap">
           <button
-            onClick={() => { load(); loadOther(); loadPeriods(); }}
+            onClick={() => { load(); loadOther(); loadPeriods(); loadPaidServicesData(); }}
             className="p-2 rounded-xl text-gray-400 hover:text-white hover:bg-dark-300 transition-all"
             title="Оновити"
             aria-label="Оновити дані"
@@ -1888,6 +1960,18 @@ export default function ExpensesPage() {
                     </span>
 
                     <button
+                      onClick={() => toggleFixedCashReturn(row.id)}
+                      className={`p-1.5 rounded-lg transition-all shrink-0 ${
+                        row.is_cash_return
+                          ? "text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10"
+                          : "text-gray-700 hover:text-emerald-400 hover:bg-emerald-500/10"
+                      }`}
+                      title={row.is_cash_return ? "Позначено як повернення готівки" : "Позначити як повернення готівки"}
+                    >
+                      <Banknote size={13} />
+                    </button>
+
+                    <button
                       onClick={() => toggleFixedVisibility(row.id)}
                       className={`p-1.5 rounded-lg transition-all shrink-0 ${
                         row.visible_to_accountant === false
@@ -2595,6 +2679,17 @@ export default function ExpensesPage() {
                       )}
                       <span className="font-mono text-sm text-gray-200 shrink-0 tabular-nums">{fmt(exp.amount)} ₴</span>
                       <button
+                        onClick={() => toggleOtherCashReturn(exp.id)}
+                        className={`p-1.5 rounded-lg transition-all shrink-0 ${
+                          exp.is_cash_return
+                            ? "text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10"
+                            : "text-gray-700 hover:text-emerald-400 hover:bg-emerald-500/10"
+                        }`}
+                        title={exp.is_cash_return ? "Позначено як повернення готівки" : "Позначити як повернення готівки"}
+                      >
+                        <Banknote size={13} />
+                      </button>
+                      <button
                         onClick={() => toggleOtherVisibility(exp.id)}
                         className={`p-1.5 rounded-lg transition-all shrink-0 ${
                           exp.visible_to_accountant === false
@@ -2792,6 +2887,104 @@ export default function ExpensesPage() {
                   </div>
                 )}
               </div>
+              </div>
+            </div>
+          </div>
+          )}
+
+          {/* ── ТАБЛИЦЯ: ВИТРАТИ НА ПОВЕРНЕННЯ ── */}
+          {data && (
+          <div className="card-neo p-5 space-y-4">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-8 h-8 rounded-xl bg-teal-500/10 flex items-center justify-center shrink-0">
+                <Banknote size={18} className="text-teal-400" />
+              </div>
+              <h3 className="font-semibold text-white text-base">Витрати на повернення</h3>
+            </div>
+
+            {/* Витрати з позначкою "Повернення готівки" */}
+            <div>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                Повернення готівки
+              </p>
+              {cashReturnFixed.length === 0 && cashReturnOther.length === 0 ? (
+                <p className="text-sm text-gray-600">Немає витрат з позначкою повернення.</p>
+              ) : (
+                <div className="space-y-1">
+                  {cashReturnFixed.map(r => (
+                    <SummaryRow key={`f-${r.id}`} label={r.name} value={r.amount} color="text-blue-400" />
+                  ))}
+                  {cashReturnOther.map(e => (
+                    <SummaryRow key={`o-${e.id}`} label={e.name} value={e.amount} color="text-amber-400" />
+                  ))}
+                  <div className="border-t border-dark-50/10 pt-1.5 mt-1.5">
+                    <SummaryRow label="Разом" value={cashReturnSum} color="text-white" bold />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Доплати до цільової суми */}
+            <div>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                Доплати до цільової суми
+              </p>
+              {(data.salary ?? []).filter(r => r.has_supplement && r.supplement > 0).length === 0 ? (
+                <p className="text-sm text-gray-600">Немає доплат.</p>
+              ) : (
+                <div className="space-y-1">
+                  {data.salary.filter(r => r.has_supplement && r.supplement > 0).map(r => (
+                    <SummaryRow key={r.staff_member_id} label={`${r.full_name} — доплата`} value={r.supplement} color="text-purple-400" />
+                  ))}
+                  <div className="border-t border-dark-50/10 pt-1.5 mt-1.5">
+                    <SummaryRow label="Разом" value={supplementsTotal} color="text-white" bold />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Дохід лікарів */}
+            <div>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                Дохід лікарів (платні послуги)
+              </p>
+              {(paidServicesData?.doctor_incomes ?? []).length === 0 ? (
+                <p className="text-sm text-gray-600">Немає даних.</p>
+              ) : (
+                <div className="space-y-1">
+                  {paidServicesData!.doctor_incomes.map(d => (
+                    <SummaryRow key={d.doctor_id} label={d.doctor_name} value={d.income} color="text-emerald-400" />
+                  ))}
+                  <div className="border-t border-dark-50/10 pt-1.5 mt-1.5">
+                    <SummaryRow label="Разом" value={doctorIncomeTotal} color="text-white" bold />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Готівка в касі */}
+            <div>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                Готівка в касі
+              </p>
+              <SummaryRow label={`Готівка в касі за ${MONTH_NAMES[month - 1]} ${year}`} value={cashInRegister} color="text-yellow-400" />
+            </div>
+
+            {/* Підсумок: Вивести на картку */}
+            <div className="border-t border-white/10 pt-4">
+              <div className="space-y-1.5 text-sm">
+                <SummaryRow label="Витрати на повернення" value={cashReturnSum} />
+                <SummaryRow label="+ Доплати до цільової суми" value={supplementsTotal} />
+                <SummaryRow label="+ Дохід лікарів" value={doctorIncomeTotal} />
+                <SummaryRow label="− Готівка в касі" value={cashInRegister} />
+                <div className="border-t border-dark-50/10 pt-2.5 mt-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-white">Вивести на картку</span>
+                    <span className={`font-bold text-xl font-mono tabular-nums ${withdrawToCard >= 0 ? "text-teal-400" : "text-red-400"}`}>
+                      {fmt(withdrawToCard)} ₴
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

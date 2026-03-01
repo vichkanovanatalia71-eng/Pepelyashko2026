@@ -47,6 +47,8 @@ class MonthlyFixedExpense(Base):
     edited_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     # Видимість для бухгалтера
     visible_to_accountant: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
+    # Повернення готівки
+    is_cash_return: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )
@@ -107,6 +109,8 @@ class MonthlyOtherExpense(Base):
     edited_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     # Видимість для бухгалтера
     visible_to_accountant: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
+    # Повернення готівки
+    is_cash_return: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )
