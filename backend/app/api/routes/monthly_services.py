@@ -69,7 +69,10 @@ async def _get_doctor_name(db: AsyncSession, doctor_id: int) -> str:
 
 
 def _svc_materials_cost(svc: Service) -> float:
-    return sum(float(m.get("cost", 0)) for m in (svc.materials or []))
+    return sum(
+        float(m.get("quantity", 0)) * float(m.get("cost", 0))
+        for m in (svc.materials or [])
+    )
 
 
 def _calc_row(price: float, mat_cost: float, qty: int, ep_r: float, vz_r: float) -> dict:
@@ -272,7 +275,7 @@ async def _build_analytics(
             if key not in mat_agg:
                 mat_agg[key] = {"unit": mat.get("unit", ""), "qty": 0.0, "cost": 0.0}
             mat_agg[key]["qty"] += float(mat.get("quantity", 0)) * qty
-            mat_agg[key]["cost"] += float(mat.get("cost", 0)) * qty
+            mat_agg[key]["cost"] += float(mat.get("quantity", 0)) * float(mat.get("cost", 0)) * qty
 
     # Готівка: бере з окремої таблиці (один запис на período)
     period_cash = await _get_period_cash(db, user_id, year, month)

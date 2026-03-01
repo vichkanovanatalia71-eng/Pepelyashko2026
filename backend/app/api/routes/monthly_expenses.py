@@ -115,7 +115,7 @@ async def _doctor_paid_services_income(
     total = 0.0
     for entry, svc in entries_res.all():
         price = float(svc.price)
-        mat_cost = sum(float(m.get("cost", 0)) for m in (svc.materials or []))
+        mat_cost = sum(float(m.get("quantity", 0)) * float(m.get("cost", 0)) for m in (svc.materials or []))
         ep = round(price * ep_r, 2)
         vz = round(price * vz_r, 2)
         to_split = round(price - mat_cost - ep - vz, 2)
@@ -162,7 +162,7 @@ async def _all_doctors_paid_services_income(
         price = float(svc.price)
         qty = int(entry.quantity)
         gross_total += price * qty
-        mat_cost = sum(float(m.get("cost", 0)) for m in (svc.materials or []))
+        mat_cost = sum(float(m.get("quantity", 0)) * float(m.get("cost", 0)) for m in (svc.materials or []))
         ep = round(price * ep_r, 2)
         vz = round(price * vz_r, 2)
         to_split = round(price - mat_cost - ep - vz, 2)
