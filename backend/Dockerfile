@@ -6,9 +6,9 @@ ENV PYTHONPATH=/app
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Install dependencies first for better layer caching
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Install production dependencies only (no pytest/httpx)
+COPY requirements.prod.txt .
+RUN pip install --no-cache-dir -r requirements.prod.txt
 
 # Copy application code
 COPY . .
