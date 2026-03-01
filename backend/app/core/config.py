@@ -15,10 +15,10 @@ class Settings(BaseSettings):
     # Auth
     secret_key: str = "change-me-in-production"
     algorithm: str = "HS256"
-    access_token_expire_minutes: int = 43200  # 30 days
+    access_token_expire_minutes: int = 60  # 1 hour; use refresh tokens for longer sessions
 
-    # CORS
-    cors_origins: list[str] = ["*"]
+    # CORS — set CORS_ORIGINS env var as comma-separated list for production
+    cors_origins: list[str] = ["https://medflow.live"]
 
     @field_validator("secret_key", mode="after")
     @classmethod

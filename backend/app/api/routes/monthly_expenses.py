@@ -759,18 +759,32 @@ async def get_monthly_expenses(
 # ────────────────────────────── Endpoints: fixed expenses CRUD ──────────────────────────────
 
 
+async def _is_period_locked(db: AsyncSession, user_id: int, year: int, month: int) -> bool:
+    """Return True if the period is locked (without raising)."""
+    res = await db.execute(
+        select(MonthlyExpenseLock).where(
+            MonthlyExpenseLock.user_id == user_id,
+            MonthlyExpenseLock.year == year,
+            MonthlyExpenseLock.month == month,
+        )
+    )
+    return res.scalar_one_or_none() is not None
+
+
 async def _propagate_recurring(
     db: AsyncSession, user_id: int, year: int, month: int,
     category_key: str, name: str, description: str, amount: float,
 ):
     """Якщо витрата постійна — копіюємо на всі наступні місяці поточного року
-    та на всі місяці наступного року."""
+    та на всі місяці наступного року. Пропускаємо заблоковані періоди."""
     # Поточний рік: від наступного місяця до грудня
     periods: list[tuple[int, int]] = [(year, m) for m in range(month + 1, 13)]
     # Наступний рік: всі 12 місяців
     periods += [(year + 1, m) for m in range(1, 13)]
 
     for fut_year, fut_month in periods:
+        if await _is_period_locked(db, user_id, fut_year, fut_month):
+            continue
         fut_res = await db.execute(
             select(MonthlyFixedExpense).where(
                 MonthlyFixedExpense.user_id == user_id,
@@ -1401,6 +1415,7 @@ async def delete_period_data(
     user: User = Depends(get_current_user),
 ):
     """Видалити всі дані витрат за обраний місяць (постійні, зарплатні, інші витрати + блокування)."""
+    await _check_period_lock(db, user.id, year, month)
     await db.execute(
         delete(MonthlyFixedExpense).where(
             MonthlyFixedExpense.user_id == user.id,

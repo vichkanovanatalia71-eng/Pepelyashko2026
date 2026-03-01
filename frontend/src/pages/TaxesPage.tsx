@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Check, Receipt } from "lucide-react";
 import api from "../api/client";
+import { useAuth } from "../hooks/useAuth";
 import type { TaxSummary, AnnualReport } from "../types";
 import {
   PageHeader,
@@ -30,6 +31,9 @@ const TABS = [
 ];
 
 export default function TaxesPage() {
+  const { user } = useAuth();
+  const fopGroup = user?.fop_group ?? 3;
+  const taxRatePct = ((user?.tax_rate ?? 0.05) * 100).toFixed(0);
   const [taxes, setTaxes] = useState<TaxSummary[]>([]);
   const [year, setYear] = useState(new Date().getFullYear());
   const [loading, setLoading] = useState(true);
@@ -87,7 +91,7 @@ export default function TaxesPage() {
     <div>
       <PageHeader
         title="Податки"
-        subtitle="Поквартальний розрахунок для ФОП 3 групи"
+        subtitle={`Поквартальний розрахунок для ФОП ${fopGroup} групи`}
         icon={<Receipt size={22} className="text-orange-400" />}
       >
         <MonthNavigator
@@ -149,7 +153,7 @@ export default function TaxesPage() {
                 <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Доходи</th>
                 <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Витрати</th>
                 <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Прибуток</th>
-                <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">ЄП (5%)</th>
+                <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">{`ЄП (${taxRatePct}%)`}</th>
                 <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">ЄСВ</th>
                 <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">ВЗ</th>
                 <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Після податків</th>

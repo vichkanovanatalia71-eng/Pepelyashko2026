@@ -2,8 +2,12 @@
 AI Consultant API - handles user queries about financial data.
 """
 
-from fastapi import APIRouter, Depends, Query
+import logging
+
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
+
+logger = logging.getLogger(__name__)
 
 from app.core.deps import get_current_user, get_db
 from app.models.user import User
@@ -88,10 +92,8 @@ async def ask_consultant(
         return response
 
     except Exception as e:
-        return {
-            "status": "error",
-            "message": str(e),
-        }
+        logger.exception("AI consultant error")
+        raise HTTPException(status_code=502, detail="Помилка AI-консультанта. Спробуйте пізніше.")
 
 
 @router.get("/suggestions")

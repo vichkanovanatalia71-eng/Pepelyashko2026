@@ -178,6 +178,10 @@ export default function NhsuPage() {
   // Load and aggregate range data
   const loadRangeData = useCallback(async () => {
     if (!rangeMode) { setRangeData(null); return; }
+    // Ensure end is not before start
+    if (rangeEndYear < year || (rangeEndYear === year && rangeEndMonth < month)) {
+      setRangeData(null); setRangeLoading(false); return;
+    }
     setRangeLoading(true);
     try {
       const months: {year:number; month:number}[] = [];
