@@ -64,7 +64,7 @@ async def period_report(
     )
     total_income = float(income_result.scalar())
 
-    # Total expenses
+    # Ad-hoc expenses from Expense table
     expense_result = await db.execute(
         select(func.coalesce(func.sum(Expense.amount), 0)).where(
             Expense.user_id == user.id,
@@ -72,7 +72,57 @@ async def period_report(
             Expense.date <= date_to,
         )
     )
-    total_expenses = float(expense_result.scalar())
+    adhoc_expenses = float(expense_result.scalar())
+
+    # Structured expenses: determine (year, month) pairs in the period
+    _periods = []
+    _y, _m = date_from.year, date_from.month
+    while (_y, _m) <= (date_to.year, date_to.month):
+        _periods.append((_y, _m))
+        _m += 1
+        if _m > 12:
+            _m = 1
+            _y += 1
+
+    # Fixed monthly expenses
+    fixed_total = 0.0
+    if _periods:
+        ym_filter = or_(*[
+            and_(MonthlyFixedExpense.year == y, MonthlyFixedExpense.month == m)
+            for y, m in _periods
+        ])
+        fixed_r = await db.execute(
+            select(func.coalesce(func.sum(MonthlyFixedExpense.amount), 0)).where(
+                MonthlyFixedExpense.user_id == user.id,
+                ym_filter,
+            )
+        )
+        fixed_total = float(fixed_r.scalar())
+
+    # Salary expenses (brutto + ESV employer + supplement + bonus)
+    salary_total = 0.0
+    if _periods:
+        ym_filter_sal = or_(*[
+            and_(MonthlySalaryExpense.year == y, MonthlySalaryExpense.month == m)
+            for y, m in _periods
+        ])
+        sal_r = await db.execute(
+            select(MonthlySalaryExpense).where(
+                MonthlySalaryExpense.user_id == user.id,
+                ym_filter_sal,
+            )
+        )
+        for rec in sal_r.scalars().all():
+            brutto = float(rec.brutto) if rec.brutto else 0.0
+            esv = round(brutto * 0.22, 2)
+            netto = round(brutto - round(brutto * 0.18, 2) - round(brutto * 0.05, 2), 2)
+            supplement = 0.0
+            if rec.has_supplement and rec.target_net:
+                supplement = max(0, float(rec.target_net) - netto)
+            bonus = float(rec.individual_bonus) if rec.individual_bonus else 0.0
+            salary_total += round(brutto + esv + supplement + bonus, 2)
+
+    total_expenses = round(adhoc_expenses + fixed_total + salary_total, 2)
 
     # Calculate taxes
     tax_single = round(total_income * user.tax_rate, 2)
@@ -486,7 +536,9 @@ async def _month_totals(
     vz = round(income * vz_rate, 2)
     esv_owner = round(esv_monthly, 2)
 
-    tax_total = round(ep + vz + esv_owner + esv_employer, 2)
+    # esv_employer already included in salary_total (via employer_cost),
+    # so do NOT add it again here to avoid double-counting.
+    tax_total = round(ep + vz + esv_owner, 2)
 
     # 7. Ad-hoc expenses from Expense table
     exp_r = await db.execute(
@@ -660,7 +712,8 @@ async def _batch_month_totals(
         ep = round(total_income * ep_rate_pct / 100, 2)
         vz = round(total_income * vz_rate, 2)
         esv_owner = round(esv_monthly, 2)
-        tax_total = round(ep + vz + esv_owner + esv_employer, 2)
+        # esv_employer already included in salary_total (via employer_cost)
+        tax_total = round(ep + vz + esv_owner, 2)
 
         adhoc = expense_map.get((y, m), 0.0)
         expenses = round(fixed_total + salary_total + tax_total + adhoc, 2)
@@ -1254,6 +1307,38 @@ async def _build_dashboard(
     for cat_id, amt in exp_cat_q.all():
         name = expense_cats.get(cat_id, "Без категорії") if cat_id else "Без категорії"
         expense_by_cat_raw[name] += float(amt)
+
+    # Add structured expenses (fixed + salary) to category breakdown
+    fixed_cat_r = await db.execute(
+        select(func.coalesce(func.sum(MonthlyFixedExpense.amount), 0)).where(
+            MonthlyFixedExpense.user_id == user.id,
+            MonthlyFixedExpense.year == year,
+            MonthlyFixedExpense.month == month,
+        )
+    )
+    fixed_cat_total = float(fixed_cat_r.scalar())
+    if fixed_cat_total > 0:
+        expense_by_cat_raw["Постійні витрати"] = fixed_cat_total
+
+    salary_cat_r = await db.execute(
+        select(MonthlySalaryExpense).where(
+            MonthlySalaryExpense.user_id == user.id,
+            MonthlySalaryExpense.year == year,
+            MonthlySalaryExpense.month == month,
+        )
+    )
+    salary_cat_total = 0.0
+    for rec in salary_cat_r.scalars().all():
+        brutto = float(rec.brutto) if rec.brutto else 0.0
+        esv = round(brutto * 0.22, 2)
+        netto = round(brutto - round(brutto * 0.18, 2) - round(brutto * 0.05, 2), 2)
+        supplement = 0.0
+        if rec.has_supplement and rec.target_net:
+            supplement = max(0, float(rec.target_net) - netto)
+        bonus = float(rec.individual_bonus) if rec.individual_bonus else 0.0
+        salary_cat_total += round(brutto + esv + supplement + bonus, 2)
+    if salary_cat_total > 0:
+        expense_by_cat_raw["Зарплати"] = salary_cat_total
 
     expense_by_category = sorted(
         [
