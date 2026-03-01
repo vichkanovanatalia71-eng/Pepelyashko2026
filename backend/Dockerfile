@@ -1,16 +1,3 @@
-# ── Build stage: install Python dependencies ──
-FROM python:3.12-slim AS builder
-
-WORKDIR /build
-
-COPY requirements.txt .
-
-# Filter out test/dev dependencies and install only production packages
-RUN grep -vE '^\s*(#.*)?$' requirements.txt \
-    | grep -viE '^(pytest|httpx|python-dotenv)' > requirements.prod.txt \
-    && pip install --no-cache-dir --no-compile --prefix=/install -r requirements.prod.txt
-
-# ── Production stage: minimal runtime image ──
 FROM python:3.12-slim
 
 WORKDIR /app
@@ -19,8 +6,12 @@ ENV PYTHONPATH=/app
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Copy only installed packages from builder (no pip cache, no build tools)
-COPY --from=builder /install /usr/local
+# Install only production dependencies (filter out test/dev packages)
+COPY requirements.txt .
+RUN grep -vE '^\s*(#.*)?$' requirements.txt \
+    | grep -viE '^(pytest|pytest-asyncio|python-dotenv)' > requirements.prod.txt \
+    && pip install --no-cache-dir -r requirements.prod.txt \
+    && rm -f requirements.prod.txt
 
 # Copy application code
 COPY . .
