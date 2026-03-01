@@ -1513,6 +1513,15 @@ export default function ExpensesPage() {
               Бухгалтеру
             </button>
             <button
+              onClick={handleOwnerShare}
+              disabled={shareLoading}
+              aria-label="Звіт для ФОП"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-dark-400/60 border border-dark-50/15 text-gray-300 text-xs font-semibold hover:border-amber-500/30 hover:text-amber-300 transition-all disabled:opacity-50"
+            >
+              {shareLoading ? <RefreshCw size={13} className="animate-spin" /> : <Building2 size={13} aria-hidden="true" />}
+              Для ФОП
+            </button>
+            <button
               onClick={exportExcel}
               disabled={!data}
               aria-label="Експортувати в Excel"
