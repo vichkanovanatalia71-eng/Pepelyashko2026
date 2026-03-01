@@ -290,7 +290,6 @@ class TaxBlock(BaseModel):
     ep: float
     vz: float
     esv_owner: float
-    esv_employer: float
 
 
 class ExpenseTotals(BaseModel):
@@ -609,9 +608,6 @@ async def _build_monthly_expense_response(
     # ЄСВ власника (щомісячна фіксована сума з налаштувань)
     esv_owner = float(nhsu.esv_monthly) if nhsu else 1760.0
 
-    # ЄСВ роботодавця (сума ЄСВ із виплачених зарплат за місяць)
-    esv_employer = round(sum(r.esv for r in salary_rows), 2)
-
     tax_block = TaxBlock(
         nhsu_income=nhsu_inc,
         paid_services_income=paid_inc,
@@ -621,13 +617,12 @@ async def _build_monthly_expense_response(
         ep=ep,
         vz=vz,
         esv_owner=esv_owner,
-        esv_employer=esv_employer,
     )
 
     # 5. Підсумки
     fixed_total = round(sum(r.amount for r in fixed_rows), 2)
     salary_total = round(sum(r.total_employer_cost for r in salary_rows), 2)
-    tax_total = round(ep + vz + esv_owner + esv_employer, 2)
+    tax_total = round(ep + vz + esv_owner, 2)
     grand_total = round(fixed_total + salary_total + tax_total, 2)
     remaining = round(total_income - grand_total, 2)
 

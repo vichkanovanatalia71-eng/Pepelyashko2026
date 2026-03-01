@@ -1001,7 +1001,6 @@ export default function ExpensesPage() {
         rows.push({ name: `ЄП (${data.taxes.ep_rate}%)`,   category: "taxes", amount: data.taxes.ep });
         rows.push({ name: `ВЗ (${data.taxes.vz_rate}%)`,   category: "taxes", amount: data.taxes.vz });
         rows.push({ name: "ЄСВ власника",                   category: "taxes", amount: data.taxes.esv_owner });
-        rows.push({ name: `ЄСВ роботодавця (${data.settings.esv_employer_rate}%)`, category: "taxes", amount: data.taxes.esv_employer });
 
         return rows;
       })()
@@ -2803,10 +2802,9 @@ export default function ExpensesPage() {
 
                 <div className="bg-dark-400/20 rounded-xl p-4 space-y-2">
                   <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-1.5"><Receipt size={13} className="text-orange-400" />Нараховані податки</p>
-                  <TaxRow label={`ЄП (${data.taxes.ep_rate}%)`}          value={data.taxes.ep} />
-                  <TaxRow label={`ВЗ від доходу (${data.taxes.vz_rate}%)`} value={data.taxes.vz} />
-                  <TaxRow label="ЄСВ власника (щомісячно)"               value={data.taxes.esv_owner} />
-                  <TaxRow label={`ЄСВ роботодавця (${data.settings.esv_employer_rate}%)`} value={data.taxes.esv_employer} />
+                  <TaxRow label={`Єдиний податок (${data.taxes.ep_rate}%)`}     value={data.taxes.ep} />
+                  <TaxRow label={`Військовий збір (${data.taxes.vz_rate}%)`} value={data.taxes.vz} />
+                  <TaxRow label="ЄСВ (щомісячно)"                            value={data.taxes.esv_owner} />
                   <div className="border-t border-dark-50/10 pt-2">
                     <TaxRow label="Разом податки" value={data.totals.tax_total} bold color="text-red-400" />
                   </div>
@@ -2814,14 +2812,11 @@ export default function ExpensesPage() {
 
                 <div className="bg-dark-400/20 rounded-xl p-4 space-y-2">
                   <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-1.5"><Activity size={13} className="text-orange-400" />Ставки</p>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-3 gap-3">
                     {[
-                      { label: "ПДФО", value: `${data.settings.pdfo_rate}%` },
-                      { label: "ВЗ із ЗП", value: `${data.settings.vz_zp_rate}%` },
-                      { label: "ЄСВ роботодавця", value: `${data.settings.esv_employer_rate}%` },
-                      { label: "ЄП", value: `${data.taxes.ep_rate}%` },
-                      { label: "ВЗ від доходу", value: `${data.taxes.vz_rate}%` },
-                      { label: "ЄСВ власника", value: `${fmt(data.taxes.esv_owner)} ₴` },
+                      { label: "Єдиний податок", value: `${data.taxes.ep_rate}%` },
+                      { label: "Військовий збір", value: `${data.taxes.vz_rate}%` },
+                      { label: "ЄСВ", value: `${fmt(data.taxes.esv_owner)} ₴` },
                     ].map(item => (
                       <div key={item.label} className="bg-dark-500/40 rounded-lg p-3 text-center">
                         <p className="text-xs text-gray-500 mb-1">{item.label}</p>
@@ -3264,8 +3259,7 @@ export default function ExpensesPage() {
             rows = [
               { name: `Єдиний податок (${data.taxes.ep_rate}%)`, detail: `від доходу ${fmt(data.taxes.total_income)} ₴`, amount: data.taxes.ep },
               { name: `Військовий збір (${data.taxes.vz_rate}%)`, detail: `від доходу ${fmt(data.taxes.total_income)} ₴`, amount: data.taxes.vz },
-              { name: "ЄСВ власника", detail: "Фіксований щомісячний", amount: data.taxes.esv_owner },
-              { name: `ЄСВ роботодавця (${data.settings.esv_employer_rate}%)`, detail: "Від зарплатного фонду", amount: data.taxes.esv_employer },
+              { name: "ЄСВ", detail: "Фіксований щомісячний", amount: data.taxes.esv_owner },
             ];
             totalValue = data.totals.tax_total;
             break;
@@ -3280,10 +3274,9 @@ export default function ExpensesPage() {
               ...otherExpenses.map(r => ({
                 name: r.name, detail: "Інші", amount: r.amount,
               })),
-              { name: `ЄП (${data.taxes.ep_rate}%)`, detail: "Податки", amount: data.taxes.ep },
-              { name: `ВЗ (${data.taxes.vz_rate}%)`, detail: "Податки", amount: data.taxes.vz },
-              { name: "ЄСВ власника", detail: "Податки", amount: data.taxes.esv_owner },
-              { name: `ЄСВ роботодавця (${data.settings.esv_employer_rate}%)`, detail: "Податки", amount: data.taxes.esv_employer },
+              { name: `Єдиний податок (${data.taxes.ep_rate}%)`, detail: "Податки", amount: data.taxes.ep },
+              { name: `Військовий збір (${data.taxes.vz_rate}%)`, detail: "Податки", amount: data.taxes.vz },
+              { name: "ЄСВ", detail: "Податки", amount: data.taxes.esv_owner },
             ];
             totalValue = grandWithOther;
             break;

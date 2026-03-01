@@ -68,8 +68,7 @@ export function exportExpenseExcel(
   summaryRows.push(["═══ ПОДАТКИ ═══", "", ""]);
   summaryRows.push(["Податки", `Єдиний податок (${data.taxes.ep_rate}%)`, data.taxes.ep]);
   summaryRows.push(["Податки", `Військовий збір (${data.taxes.vz_rate}%)`, data.taxes.vz]);
-  summaryRows.push(["Податки", "ЄСВ власника (щомісячний)", data.taxes.esv_owner]);
-  summaryRows.push(["Податки", `ЄСВ роботодавця (${data.settings.esv_employer_rate}%)`, data.taxes.esv_employer]);
+  summaryRows.push(["Податки", "ЄСВ (щомісячний)", data.taxes.esv_owner]);
   summaryRows.push(["", "Разом податки", data.totals.tax_total]);
   summaryRows.push([]);
 
@@ -100,10 +99,9 @@ export function exportExpenseExcel(
   summaryRows.push(["Підсумок", "ЗАЛИШОК", remaining]);
   summaryRows.push([]);
   summaryRows.push(["═══ СТАВКИ ═══", "", ""]);
-  summaryRows.push(["Ставка", "ЄП", `${data.taxes.ep_rate}%`]);
-  summaryRows.push(["Ставка", "ВЗ від доходу", `${data.taxes.vz_rate}%`]);
-  summaryRows.push(["Ставка", "ЄСВ роботодавця", `${data.settings.esv_employer_rate}%`]);
-  summaryRows.push(["Ставка", "ЄСВ власника (місячний)", data.taxes.esv_owner]);
+  summaryRows.push(["Ставка", "Єдиний податок", `${data.taxes.ep_rate}%`]);
+  summaryRows.push(["Ставка", "Військовий збір", `${data.taxes.vz_rate}%`]);
+  summaryRows.push(["Ставка", "ЄСВ (місячний)", data.taxes.esv_owner]);
 
   const ws = XLSX.utils.aoa_to_sheet(summaryRows);
   ws["!cols"] = [{ wch: 18 }, { wch: 48 }, { wch: 18 }];
