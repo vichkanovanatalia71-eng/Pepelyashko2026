@@ -6,7 +6,7 @@ dist/
 .env.*
 *.md
 Dockerfile
-Dockerfile.prod
+Dockerfile.dev
 railway.toml
 
 # Legacy Create React App config (проект на Vite)
