@@ -288,6 +288,8 @@ export interface MonthlyExpenseData {
   is_locked: boolean;
   missing_salary_staff: string[];
   accountant_submitted_at?: string | null;
+  hired_doctor_id?: number | null;
+  hired_nurse_id?: number | null;
 }
 
 export interface DoctorAgeGroupRow {

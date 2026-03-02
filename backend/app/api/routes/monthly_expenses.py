@@ -28,6 +28,7 @@ from app.models.monthly_expense import (
     MonthlyFixedExpense,
     MonthlyOtherExpense,
     MonthlySalaryExpense,
+    MonthlyStaffSelection,
 )
 from app.models.monthly_service import MonthlyPaidServiceEntry, MonthlyPaidServicesReport
 from app.models.nhsu import NhsuRecord, NhsuSettings
@@ -335,6 +336,8 @@ class MonthlyExpenseResponse(BaseModel):
     is_locked: bool = False
     missing_salary_staff: list[str] = []
     accountant_submitted_at: str | None = None
+    hired_doctor_id: int | None = None
+    hired_nurse_id: int | None = None
 
 
 # ── Нові схеми ──
@@ -697,6 +700,16 @@ async def _build_monthly_expense_response(
         if sat and (accountant_submitted_at is None or sat > accountant_submitted_at):
             accountant_submitted_at = sat
 
+    # 9. Збережений вибір найнятого лікаря та медсестри
+    sel_res = await db.execute(
+        select(MonthlyStaffSelection).where(
+            MonthlyStaffSelection.user_id == user.id,
+            MonthlyStaffSelection.year == year,
+            MonthlyStaffSelection.month == month,
+        )
+    )
+    selection = sel_res.scalar_one_or_none()
+
     return MonthlyExpenseResponse(
         year=year,
         month=month,
@@ -716,6 +729,8 @@ async def _build_monthly_expense_response(
         is_locked=False,
         missing_salary_staff=missing_salary_staff,
         accountant_submitted_at=accountant_submitted_at,
+        hired_doctor_id=selection.hired_doctor_id if selection else None,
+        hired_nurse_id=selection.hired_nurse_id if selection else None,
     )
 
 
@@ -1402,6 +1417,62 @@ async def unlock_period(
         await db.delete(lock)
         await db.commit()
     return {"is_locked": False}
+
+
+# ────────────────────────────── Staff selection per period ──────────────────────────────
+
+
+class StaffSelectionUpdate(BaseModel):
+    year: int
+    month: int
+    hired_doctor_id: Optional[int] = None
+    hired_nurse_id: Optional[int] = None
+
+    @field_validator("month")
+    @classmethod
+    def check_month(cls, v: int) -> int:
+        return _validate_month(v)
+
+    @field_validator("year")
+    @classmethod
+    def check_year(cls, v: int) -> int:
+        return _validate_year(v)
+
+
+@router.put("/staff-selection", status_code=200)
+async def update_staff_selection(
+    body: StaffSelectionUpdate,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Зберігає вибір найнятого лікаря та медсестри для конкретного періоду."""
+    res = await db.execute(
+        select(MonthlyStaffSelection).where(
+            MonthlyStaffSelection.user_id == user.id,
+            MonthlyStaffSelection.year == body.year,
+            MonthlyStaffSelection.month == body.month,
+        )
+    )
+    existing = res.scalar_one_or_none()
+
+    if existing:
+        existing.hired_doctor_id = body.hired_doctor_id
+        existing.hired_nurse_id = body.hired_nurse_id
+    else:
+        sel = MonthlyStaffSelection(
+            user_id=user.id,
+            year=body.year,
+            month=body.month,
+            hired_doctor_id=body.hired_doctor_id,
+            hired_nurse_id=body.hired_nurse_id,
+        )
+        db.add(sel)
+
+    await db.commit()
+    return {
+        "hired_doctor_id": body.hired_doctor_id,
+        "hired_nurse_id": body.hired_nurse_id,
+    }
 
 
 @router.delete("/period", status_code=204)

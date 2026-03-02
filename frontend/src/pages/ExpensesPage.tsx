@@ -66,15 +66,9 @@ export default function ExpensesPage() {
     doctor_incomes: { doctor_id: number; doctor_name: string; income: number }[];
   } | null>(null);
 
-  // Owner hired doctor/nurse selection (persisted in localStorage)
-  const [selectedHiredDoctorId, setSelectedHiredDoctorId] = useState<number | null>(() => {
-    const v = localStorage.getItem("owner_hired_doctor_id");
-    return v ? parseInt(v) : null;
-  });
-  const [selectedHiredNurseId, setSelectedHiredNurseId] = useState<number | null>(() => {
-    const v = localStorage.getItem("owner_hired_nurse_id");
-    return v ? parseInt(v) : null;
-  });
+  // Owner hired doctor/nurse selection (persisted on server per period)
+  const [selectedHiredDoctorId, setSelectedHiredDoctorId] = useState<number | null>(null);
+  const [selectedHiredNurseId, setSelectedHiredNurseId] = useState<number | null>(null);
 
 
   // ── Fixed modal state
@@ -191,6 +185,8 @@ export default function ExpensesPage() {
         params: { year, month },
       });
       setData(resp);
+      setSelectedHiredDoctorId(resp.hired_doctor_id ?? null);
+      setSelectedHiredNurseId(resp.hired_nurse_id ?? null);
 
       const sf: Record<number, SalaryFormState> = {};
       for (const row of resp.salary) {
@@ -353,21 +349,6 @@ export default function ExpensesPage() {
       setAccSubmittedModal(true);
     }
   }, [data?.accountant_submitted_at]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Validate localStorage hired doctor/nurse ids against actual data
-  useEffect(() => {
-    if (!data?.owner?.hired_doctors) return;
-    const validDoctorIds = new Set(data.owner.hired_doctors.map(d => d.doctor_id));
-    if (selectedHiredDoctorId !== null && !validDoctorIds.has(selectedHiredDoctorId)) {
-      setSelectedHiredDoctorId(null);
-      localStorage.removeItem("owner_hired_doctor_id");
-    }
-    const validNurseIds = new Set(data.salary.filter(s => s.role === "nurse").map(s => s.staff_member_id));
-    if (selectedHiredNurseId !== null && !validNurseIds.has(selectedHiredNurseId)) {
-      setSelectedHiredNurseId(null);
-      localStorage.removeItem("owner_hired_nurse_id");
-    }
-  }, [data]);
 
   // Close drawer on Escape key
   useEffect(() => {
@@ -2207,7 +2188,11 @@ export default function ExpensesPage() {
                                         onChange={e => {
                                           const id = e.target.value ? parseInt(e.target.value) : null;
                                           setSelectedHiredDoctorId(id);
-                                          localStorage.setItem("owner_hired_doctor_id", id ? String(id) : "");
+                                          api.put("/monthly-expenses/staff-selection", {
+                                            year, month,
+                                            hired_doctor_id: id,
+                                            hired_nurse_id: selectedHiredNurseId,
+                                          }).catch(console.error);
                                         }}
                                         className="input-dark w-full"
                                       >
@@ -2224,7 +2209,11 @@ export default function ExpensesPage() {
                                         onChange={e => {
                                           const id = e.target.value ? parseInt(e.target.value) : null;
                                           setSelectedHiredNurseId(id);
-                                          localStorage.setItem("owner_hired_nurse_id", id ? String(id) : "");
+                                          api.put("/monthly-expenses/staff-selection", {
+                                            year, month,
+                                            hired_doctor_id: selectedHiredDoctorId,
+                                            hired_nurse_id: id,
+                                          }).catch(console.error);
                                         }}
                                         className="input-dark w-full"
                                       >

@@ -141,3 +141,22 @@ class MonthlyExpenseLock(Base):
     snapshot: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     # Знімок списку інших витрат (OtherExpenseResponse[]) на момент фіксації
     other_expenses_snapshot: Mapped[list | None] = mapped_column(JSONB, nullable=True)
+
+
+class MonthlyStaffSelection(Base):
+    """Збережений вибір найнятого лікаря та медсестри за період."""
+
+    __tablename__ = "monthly_staff_selections"
+    __table_args__ = (
+        UniqueConstraint("user_id", "year", "month", name="uq_mss"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    year: Mapped[int] = mapped_column(Integer)
+    month: Mapped[int] = mapped_column(Integer)        # 1–12
+    hired_doctor_id: Mapped[int | None] = mapped_column(ForeignKey("doctors.id"), nullable=True)
+    hired_nurse_id: Mapped[int | None] = mapped_column(ForeignKey("staff_members.id"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
