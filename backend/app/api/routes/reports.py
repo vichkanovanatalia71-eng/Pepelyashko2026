@@ -99,6 +99,17 @@ async def period_report(
         )
         fixed_total = float(fixed_r.scalar())
 
+    # Load user settings for tax rates
+    nhsu_result = await db.execute(
+        select(NhsuSettings).where(NhsuSettings.user_id == user.id)
+    )
+    nhsu = nhsu_result.scalar_one_or_none()
+    esv_monthly = float(nhsu.esv_monthly) if nhsu else settings.esv_monthly
+    vz_rate = float(nhsu.vz_rate) / 100 if nhsu else 0.015
+    pdfo_rate_v = float(nhsu.pdfo_rate) / 100 if nhsu else 0.18
+    vz_zp_rate_v = float(nhsu.vz_zp_rate) / 100 if nhsu else 0.05
+    esv_emp_rate_v = float(nhsu.esv_employer_rate) / 100 if nhsu else 0.22
+
     # Salary expenses (brutto + ESV employer + supplement + bonus)
     salary_total = 0.0
     if _periods:
@@ -114,8 +125,8 @@ async def period_report(
         )
         for rec in sal_r.scalars().all():
             brutto = float(rec.brutto) if rec.brutto else 0.0
-            esv = round(brutto * 0.22, 2)
-            netto = round(brutto - round(brutto * 0.18, 2) - round(brutto * 0.05, 2), 2)
+            esv = round(brutto * esv_emp_rate_v, 2)
+            netto = round(brutto - round(brutto * pdfo_rate_v, 2) - round(brutto * vz_zp_rate_v, 2), 2)
             supplement = 0.0
             if rec.has_supplement and rec.target_net:
                 supplement = max(0, float(rec.target_net) - netto)
@@ -126,13 +137,6 @@ async def period_report(
 
     # Calculate taxes
     tax_single = round(total_income * user.tax_rate, 2)
-    # Approximate ESV based on number of months in period
-    nhsu_result = await db.execute(
-        select(NhsuSettings).where(NhsuSettings.user_id == user.id)
-    )
-    nhsu = nhsu_result.scalar_one_or_none()
-    esv_monthly = float(nhsu.esv_monthly) if nhsu else settings.esv_monthly
-    vz_rate = float(nhsu.vz_rate) / 100 if nhsu else 0.015
     days = (date_to - date_from).days + 1
     months = max(1, round(days / 30))
     tax_esv = round(esv_monthly * months, 2)
@@ -174,48 +178,35 @@ async def annual_report(
     nhsu = nhsu_result.scalar_one_or_none()
     esv_monthly = float(nhsu.esv_monthly) if nhsu else settings.esv_monthly
     vz_rate = float(nhsu.vz_rate) / 100 if nhsu else 0.015
+    ep_rate_pct = float(nhsu.ep_rate) if nhsu else 5.0
+    pdfo_rate_pct = float(nhsu.pdfo_rate) if nhsu else 18.0
+    vz_zp_rate_pct = float(nhsu.vz_zp_rate) if nhsu else 5.0
+    esv_employer_rate_pct = float(nhsu.esv_employer_rate) if nhsu else 22.0
 
-    # Aggregate income/expenses by month in 2 queries instead of 24
-    year_start = date(year, 1, 1)
-    year_end = date(year, 12, 31)
-
-    inc_by_month_r = await db.execute(
-        select(
-            extract("month", Income.date).label("m"),
-            func.coalesce(func.sum(Income.amount), 0),
-        ).where(
-            Income.user_id == user.id,
-            Income.date >= year_start,
-            Income.date <= year_end,
-        ).group_by("m")
+    # Use _batch_month_totals to include ALL expense sources
+    # (fixed, salary, taxes, ad-hoc) — not just the old Expense table
+    all_periods = [(year, m) for m in range(1, 13)]
+    month_cache = await _batch_month_totals(
+        db, user.id, all_periods, esv_monthly, vz_rate, user.tax_rate,
+        ep_rate_pct=ep_rate_pct,
+        pdfo_rate_pct=pdfo_rate_pct,
+        vz_zp_rate_pct=vz_zp_rate_pct,
+        esv_employer_rate_pct=esv_employer_rate_pct,
     )
-    income_map = {int(row[0]): float(row[1]) for row in inc_by_month_r.all()}
-
-    exp_by_month_r = await db.execute(
-        select(
-            extract("month", Expense.date).label("m"),
-            func.coalesce(func.sum(Expense.amount), 0),
-        ).where(
-            Expense.user_id == user.id,
-            Expense.date >= year_start,
-            Expense.date <= year_end,
-        ).group_by("m")
-    )
-    expense_map = {int(row[0]): float(row[1]) for row in exp_by_month_r.all()}
 
     months_data: list[MonthlyPL] = []
     totals = dict(income=0.0, expenses=0.0, net=0.0, single=0.0, esv=0.0, vz=0.0, taxes=0.0, after=0.0)
 
     for m in range(1, 13):
-        income = income_map.get(m, 0.0)
-        expenses = expense_map.get(m, 0.0)
-
-        tax_single = round(income * user.tax_rate, 2)
-        tax_esv = round(esv_monthly, 2)
-        tax_vz = round(income * vz_rate, 2)
-        total_taxes = round(tax_single + tax_esv + tax_vz, 2)
+        m_data = month_cache[(year, m)]
+        income = m_data["income"]
+        expenses = m_data["expenses"]
+        tax_single = m_data["tax_single"]
+        tax_esv = m_data["tax_esv"]
+        tax_vz = m_data["tax_vz"]
+        total_taxes = m_data["total_taxes"]
         net_profit = round(income - expenses, 2)
-        income_after = round(net_profit - total_taxes, 2)
+        income_after = m_data["income_after_taxes"]
 
         months_data.append(MonthlyPL(
             month=m,
@@ -1328,10 +1319,13 @@ async def _build_dashboard(
         )
     )
     salary_cat_total = 0.0
+    pdfo_frac_cat = pdfo_rate_pct / 100
+    vz_zp_frac_cat = vz_zp_rate_pct / 100
+    esv_emp_frac_cat = esv_employer_rate_pct / 100
     for rec in salary_cat_r.scalars().all():
         brutto = float(rec.brutto) if rec.brutto else 0.0
-        esv = round(brutto * 0.22, 2)
-        netto = round(brutto - round(brutto * 0.18, 2) - round(brutto * 0.05, 2), 2)
+        esv = round(brutto * esv_emp_frac_cat, 2)
+        netto = round(brutto - round(brutto * pdfo_frac_cat, 2) - round(brutto * vz_zp_frac_cat, 2), 2)
         supplement = 0.0
         if rec.has_supplement and rec.target_net:
             supplement = max(0, float(rec.target_net) - netto)
