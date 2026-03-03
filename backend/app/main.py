@@ -1,13 +1,17 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 
-from app.api.routes import auth, incomes, expenses, taxes, reports, nhsu, user_settings, services, monthly_services, revenue, staff, budget, monthly_expenses, ai_consultant
+from app.api.routes import auth, incomes, expenses, taxes, reports, nhsu, user_settings, services, monthly_services, revenue, staff, budget, monthly_expenses
 from app.core.config import settings
 
 app = FastAPI(
     title="MedFlow API",
     description="Фінансовий менеджер для медичної практики ФОП",
     version="0.1.0",
+    docs_url="/docs" if settings.debug else None,
+    redoc_url="/redoc" if settings.debug else None,
+    openapi_url="/openapi.json" if settings.debug else None,
 )
 
 app.add_middleware(
@@ -31,7 +35,6 @@ app.include_router(revenue.router, prefix="/api/revenue", tags=["revenue"])
 app.include_router(staff.router, prefix="/api/staff", tags=["staff"])
 app.include_router(budget.router, prefix="/api/budget", tags=["budget"])
 app.include_router(monthly_expenses.router, prefix="/api/monthly-expenses", tags=["monthly-expenses"])
-app.include_router(ai_consultant.router, prefix="/api", tags=["ai-consultant"])
 
 
 @app.get("/")
@@ -45,4 +48,16 @@ async def root():
 
 @app.get("/api/health")
 async def health_check():
-    return {"status": "ok"}
+    """Lightweight health check that always responds 200 so Railway accepts the deploy.
+    Database connectivity is tested opportunistically — a DB failure returns
+    200 with degraded status instead of 503, keeping the container alive."""
+    try:
+        from app.db.session import async_session
+
+        async with async_session() as db:
+            await db.execute(text("SELECT 1"))
+        db_status = "connected"
+    except Exception:
+        db_status = "disconnected"
+
+    return {"status": "ok" if db_status == "connected" else "degraded", "db": db_status}

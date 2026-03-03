@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class MaterialItem(BaseModel):
@@ -10,14 +10,14 @@ class MaterialItem(BaseModel):
 
     name: str = ""
     unit: str = ""
-    quantity: float = 0.0
-    cost: float = 0.0  # загальна вартість цього матеріалу
+    quantity: float = Field(default=0.0, ge=0)
+    cost: float = Field(default=0.0, ge=0)
 
 
 class ServiceCreate(BaseModel):
-    code: str
-    name: str
-    price: float
+    code: str = Field(min_length=1, max_length=50)
+    name: str = Field(min_length=1, max_length=255)
+    price: float = Field(ge=0)
     materials: list[MaterialItem] = []
 
 

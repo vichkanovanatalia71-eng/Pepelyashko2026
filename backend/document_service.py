@@ -74,7 +74,8 @@ class DocumentService:
                 )
             
             # Create PDF
-            filename = f"Рахунок_{doc_number}_{invoice_data['counterparty_edrpou']}.pdf"
+            safe_doc_number = doc_number.replace('/', '_').replace('\\', '_')
+            filename = f"Рахунок_{safe_doc_number}_{invoice_data['counterparty_edrpou']}.pdf"
             filepath = self.output_dir / filename
             
             doc = SimpleDocTemplate(
@@ -275,7 +276,8 @@ class DocumentService:
                 )
             
             # Create PDF
-            filename = f"Акт_{doc_number}_{act_data['counterparty_edrpou']}.pdf"
+            safe_doc_number = doc_number.replace('/', '_').replace('\\', '_')
+            filename = f"Акт_{safe_doc_number}_{act_data['counterparty_edrpou']}.pdf"
             filepath = self.output_dir / filename
             
             doc = SimpleDocTemplate(
@@ -490,7 +492,8 @@ class DocumentService:
             )
             
             # Create PDF
-            filename = f"Накладна_{doc_number}_{waybill_data['counterparty_edrpou']}.pdf"
+            safe_doc_number = doc_number.replace('/', '_').replace('\\', '_')
+            filename = f"Накладна_{safe_doc_number}_{waybill_data['counterparty_edrpou']}.pdf"
             filepath = self.output_dir / filename
             
             doc = SimpleDocTemplate(

@@ -3,11 +3,11 @@ from __future__ import annotations
 from datetime import date as Date
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class IncomeCategoryCreate(BaseModel):
-    name: str
+    name: str = Field(min_length=1, max_length=255)
     description: str = ""
 
 
@@ -20,10 +20,10 @@ class IncomeCategoryResponse(BaseModel):
 
 
 class IncomeCreate(BaseModel):
-    amount: float
-    description: str = ""
-    source: str = ""
-    payment_method: str = "cash"
+    amount: float = Field(gt=0)
+    description: str = Field(default="", max_length=2000)
+    source: str = Field(default="", max_length=255)
+    payment_method: str = Field(default="cash", pattern=r"^(cash|card|bank_transfer)$")
     category_id: Optional[int] = None
     date: Date
 

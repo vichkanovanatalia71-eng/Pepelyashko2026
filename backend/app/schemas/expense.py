@@ -3,11 +3,11 @@ from __future__ import annotations
 from datetime import date as Date
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class ExpenseCategoryCreate(BaseModel):
-    name: str
+    name: str = Field(min_length=1, max_length=255)
     description: str = ""
 
 
@@ -20,8 +20,8 @@ class ExpenseCategoryResponse(BaseModel):
 
 
 class ExpenseCreate(BaseModel):
-    amount: float
-    description: str = ""
+    amount: float = Field(gt=0)
+    description: str = Field(default="", max_length=2000)
     category_id: Optional[int] = None
     staff_member_id: Optional[int] = None
     date: Date

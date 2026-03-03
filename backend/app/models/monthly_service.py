@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 
 from sqlalchemy import DateTime, ForeignKey, Index, Integer, Numeric, String, UniqueConstraint
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
@@ -34,7 +35,9 @@ class MonthlyPaidServicesReport(Base):
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
     )
 
 
@@ -74,3 +77,27 @@ class MonthlyPeriodCash(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )
+
+
+class MonthlyServiceLock(Base):
+    """Фіксація місяця платних послуг — після блокування дані вимагають розблокування для редагування.
+
+    При фіксації зберігається повний знімок (snapshot) AnalyticsResponse,
+    щоб при перегляді зафіксованого періоду відображались саме ті значення,
+    які були актуальні на момент фіксації.
+    """
+
+    __tablename__ = "monthly_service_locks"
+    __table_args__ = (
+        UniqueConstraint("user_id", "year", "month", name="uq_msl"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    year: Mapped[int] = mapped_column(Integer)
+    month: Mapped[int] = mapped_column(Integer)   # 1–12
+    locked_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
+    # Знімок повної відповіді AnalyticsResponse на момент фіксації
+    snapshot: Mapped[dict | None] = mapped_column(JSONB, nullable=True)

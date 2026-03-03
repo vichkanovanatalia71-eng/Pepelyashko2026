@@ -17,6 +17,9 @@ export PORT BACKEND_URL
 
 envsubst '$PORT $BACKEND_URL' < /etc/nginx/nginx.conf.template > /etc/nginx/conf.d/default.conf
 
+# Validate nginx config before starting (shows errors if any)
+nginx -t 2>&1
+
 echo "Starting nginx on port ${PORT}, backend at ${BACKEND_URL}"
 
 exec nginx -g 'daemon off;'

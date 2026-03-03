@@ -204,6 +204,8 @@ export interface FixedExpenseRow {
   is_recurring: boolean;
   edited_by?: string | null;
   edited_at?: string | null;
+  visible_to_accountant?: boolean;
+  is_cash_return?: boolean;
 }
 
 export interface SalaryExpenseRow {
@@ -241,7 +243,6 @@ export interface TaxBlock {
   ep: number;
   vz: number;
   esv_owner: number;
-  esv_employer: number;
 }
 
 export interface ExpenseTotals {
@@ -287,6 +288,8 @@ export interface MonthlyExpenseData {
   is_locked: boolean;
   missing_salary_staff: string[];
   accountant_submitted_at?: string | null;
+  hired_doctor_id?: number | null;
+  hired_nurse_id?: number | null;
 }
 
 export interface DoctorAgeGroupRow {
@@ -469,6 +472,7 @@ export interface AnalyticsData {
   reports: MonthReport[];
   ep_rate: number;
   vz_rate: number;
+  is_locked?: boolean;
 }
 
 export interface ShareResponse {
@@ -701,11 +705,3 @@ export interface PeriodSummary {
   has_data: boolean;
 }
 
-export interface AiParsedExpense {
-  category: string;       // "fixed" | "other"
-  name: string;
-  amount: number;
-  is_recurring: boolean;
-  confidence: number;     // 0–1
-  note: string;
-}

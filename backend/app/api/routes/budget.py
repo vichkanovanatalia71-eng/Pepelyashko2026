@@ -83,9 +83,9 @@ _DEFAULT_VARIABLE = [
 
 # ESV employer rate (Україна, 2024)
 _ESV_EMPLOYER_RATE = 0.22
-# Ставки утримань із ЗП (інформаційний рядок)
-_PDFO_RATE = 0.18
-_VZ_ZP_RATE = 0.015
+# Ставки утримань із ЗП (за замовчуванням, можуть бути перевизначені через налаштування)
+_DEFAULT_PDFO_RATE = 0.18
+_DEFAULT_VZ_ZP_RATE = 0.05
 
 
 # ────────── Helpers ──────────
@@ -205,8 +205,8 @@ async def _ensure_staff_rows(db: AsyncSession, user_id: int) -> None:
                       staff_member_id=member.id),
             BudgetRow(user_id=user_id, section="fixed", sub_type="fixed",
                       input_type="auto_formula", name=f"ПДФО та ВЗ із ЗП ({name})",
-                      description=f"Інформаційний рядок: ПДФО (18%) + ВЗ (1.5%) = "
-                                  f"19.5% від (Оклад + Доплата). "
+                      description=f"Інформаційний рядок: ПДФО + ВЗ від Окладу. "
+                                  f"Ставки беруться з Налаштувань. "
                                   f"Не входить у «Всього витрат».",
                       order_index=base_idx + 3, is_system=True, is_info_row=True,
                       formula_key=f"salary_pdfo_info__{member.id}",
@@ -227,6 +227,8 @@ def _compute_cell_value(
     ep_rate: float,
     vz_rate: float,
     all_rows: list[BudgetRow],
+    pdfo_rate: float = _DEFAULT_PDFO_RATE,
+    vz_zp_rate: float = _DEFAULT_VZ_ZP_RATE,
 ) -> tuple[Optional[float], bool]:
     """Повертає (value, is_locked) для рядка і місяця."""
     key = row.formula_key
@@ -261,18 +263,13 @@ def _compute_cell_value(
             brutto_row = next(
                 (r for r in all_rows if r.formula_key == f"salary_brutto__{sid}"), None
             )
-            bonus_row = next(
-                (r for r in all_rows if r.formula_key == f"salary_bonus__{sid}"), None
-            )
             brutto = cells.get((brutto_row.id, month), 0.0) if brutto_row else 0.0
-            bonus = cells.get((bonus_row.id, month), 0.0) if bonus_row else 0.0
             brutto = brutto or 0.0
-            bonus = bonus or 0.0
 
             if f"salary_esv__{sid}" == key:
                 return round(brutto * _ESV_EMPLOYER_RATE, 2), True
             if f"salary_pdfo_info__{sid}" == key:
-                return round((brutto + bonus) * (_PDFO_RATE + _VZ_ZP_RATE), 2), True
+                return round(brutto * (pdfo_rate + vz_zp_rate), 2), True
 
     return None, True
 
@@ -315,6 +312,8 @@ async def get_budget_table(
     esv_owner = float(nhsu_settings.esv_monthly) if nhsu_settings else 1760.0
     ep_rate = float(nhsu_settings.ep_rate) / 100 if nhsu_settings else 0.05
     vz_rate = float(nhsu_settings.vz_rate) / 100 if nhsu_settings else 0.015
+    pdfo_rate = float(nhsu_settings.pdfo_rate) / 100 if nhsu_settings else _DEFAULT_PDFO_RATE
+    vz_zp_rate = float(nhsu_settings.vz_zp_rate) / 100 if nhsu_settings else _DEFAULT_VZ_ZP_RATE
 
     # Обчислюємо місячні доходи та лаг-НСЗУ
     monthly_income: dict[int, float] = {}
@@ -333,7 +332,8 @@ async def get_budget_table(
         for m in range(1, 13):
             val, locked = _compute_cell_value(
                 row, m, cells, monthly_income, monthly_nhsu_lag,
-                esv_owner, ep_rate, vz_rate, list(rows)
+                esv_owner, ep_rate, vz_rate, list(rows),
+                pdfo_rate=pdfo_rate, vz_zp_rate=vz_zp_rate,
             )
             months_data[str(m)] = BudgetCellValue(value=val, is_locked=locked)
             if val is not None:
@@ -559,6 +559,8 @@ async def get_recommendations(
     esv_owner = float(nhsu_settings.esv_monthly) if nhsu_settings else 1760.0
     ep_rate = float(nhsu_settings.ep_rate) / 100 if nhsu_settings else 0.05
     vz_rate = float(nhsu_settings.vz_rate) / 100 if nhsu_settings else 0.015
+    pdfo_rate = float(nhsu_settings.pdfo_rate) / 100 if nhsu_settings else _DEFAULT_PDFO_RATE
+    vz_zp_rate = float(nhsu_settings.vz_zp_rate) / 100 if nhsu_settings else _DEFAULT_VZ_ZP_RATE
 
     # Місячні доходи
     monthly_income: dict[int, float] = {}
@@ -572,7 +574,8 @@ async def get_recommendations(
             continue
         for m in range(1, 13):
             val, _ = _compute_cell_value(
-                row, m, cells, monthly_income, {}, esv_owner, ep_rate, vz_rate, list(rows)
+                row, m, cells, monthly_income, {}, esv_owner, ep_rate, vz_rate, list(rows),
+                pdfo_rate=pdfo_rate, vz_zp_rate=vz_zp_rate,
             )
             if val is not None:
                 fixed_monthly[m] += val

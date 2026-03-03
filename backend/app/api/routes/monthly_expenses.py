@@ -5,6 +5,8 @@
 """
 from __future__ import annotations
 
+import logging
+
 import base64
 import secrets
 import uuid
@@ -12,9 +14,10 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
-from pydantic import BaseModel
-from sqlalchemy import func, select
+from pydantic import BaseModel, field_validator
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm.attributes import flag_modified
 
 from app.core.deps import get_current_user, get_db
 from app.core.email import send_accountant_report_notification
@@ -25,6 +28,7 @@ from app.models.monthly_expense import (
     MonthlyFixedExpense,
     MonthlyOtherExpense,
     MonthlySalaryExpense,
+    MonthlyStaffSelection,
 )
 from app.models.monthly_service import MonthlyPaidServiceEntry, MonthlyPaidServicesReport
 from app.models.nhsu import NhsuRecord, NhsuSettings
@@ -34,6 +38,8 @@ from app.models.staff import StaffMember
 from app.models.user import User
 from app.services.ai_provider import analyze_image, get_provider, parse_ai_json
 from app.services.nhsu import get_monthly_report
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -110,12 +116,61 @@ async def _doctor_paid_services_income(
     total = 0.0
     for entry, svc in entries_res.all():
         price = float(svc.price)
-        mat_cost = sum(float(m.get("cost", 0)) for m in (svc.materials or []))
+        mat_cost = sum(float(m.get("quantity", 0)) * float(m.get("cost", 0)) for m in (svc.materials or []))
         ep = round(price * ep_r, 2)
         vz = round(price * vz_r, 2)
-        to_split = price - mat_cost - ep - vz
-        total += round(to_split / 2 * int(entry.quantity), 2)
+        to_split = round(price - mat_cost - ep - vz, 2)
+        qty = int(entry.quantity)
+        ts = round(to_split * qty, 2)
+        total += round(ts / 2, 2)
     return round(total, 2)
+
+
+async def _all_doctors_paid_services_income(
+    db: AsyncSession,
+    user_id: int,
+    year: int,
+    month: int,
+    ep_rate_pct: float = 0.0,
+    vz_rate_pct: float = 0.0,
+) -> tuple[dict[int, float], float]:
+    """Дохід від платних послуг по ВСІХ лікарях за місяць — 2 запити замість 2×N.
+
+    Повертає (dict {doctor_id: net_income}, gross_total).
+    """
+    reports_res = await db.execute(
+        select(MonthlyPaidServicesReport).where(
+            MonthlyPaidServicesReport.user_id == user_id,
+            MonthlyPaidServicesReport.year == year,
+            MonthlyPaidServicesReport.month == month,
+        )
+    )
+    reports = reports_res.scalars().all()
+    if not reports:
+        return {}, 0.0
+    report_to_doctor = {r.id: r.doctor_id for r in reports}
+    entries_res = await db.execute(
+        select(MonthlyPaidServiceEntry, Service)
+        .join(Service, MonthlyPaidServiceEntry.service_id == Service.id)
+        .where(MonthlyPaidServiceEntry.report_id.in_(list(report_to_doctor.keys())))
+    )
+    ep_r = ep_rate_pct / 100
+    vz_r = vz_rate_pct / 100
+    per_doctor: dict[int, float] = {}
+    gross_total = 0.0
+    for entry, svc in entries_res.all():
+        doctor_id = report_to_doctor[entry.report_id]
+        price = float(svc.price)
+        qty = int(entry.quantity)
+        gross_total += price * qty
+        mat_cost = sum(float(m.get("quantity", 0)) * float(m.get("cost", 0)) for m in (svc.materials or []))
+        ep = round(price * ep_r, 2)
+        vz = round(price * vz_r, 2)
+        to_split = round(price - mat_cost - ep - vz, 2)
+        ts = round(to_split * qty, 2)
+        dr = round(ts / 2, 2)
+        per_doctor[doctor_id] = round(per_doctor.get(doctor_id, 0.0) + dr, 2)
+    return per_doctor, round(gross_total, 2)
 
 
 async def _nhsu_doctors_data(
@@ -162,6 +217,22 @@ async def _nhsu_doctors_data(
     return list(per_doctor.values())
 
 
+async def _check_period_lock(db: AsyncSession, user_id: int, year: int, month: int) -> None:
+    """Перевіряє чи заблокований період. Кидає 423 якщо так."""
+    res = await db.execute(
+        select(MonthlyExpenseLock).where(
+            MonthlyExpenseLock.user_id == user_id,
+            MonthlyExpenseLock.year == year,
+            MonthlyExpenseLock.month == month,
+        )
+    )
+    if res.scalar_one_or_none() is not None:
+        raise HTTPException(
+            status_code=423,
+            detail=f"Період {month:02d}/{year} заблоковано. Розблокуйте для редагування.",
+        )
+
+
 # ────────────────────────────── Schemas ──────────────────────────────
 
 
@@ -181,6 +252,8 @@ class FixedExpenseRow(BaseModel):
     is_recurring: bool
     edited_by: Optional[str] = None
     edited_at: Optional[str] = None
+    visible_to_accountant: bool = True
+    is_cash_return: bool = False
 
 
 class SalaryExpenseRow(BaseModel):
@@ -218,7 +291,6 @@ class TaxBlock(BaseModel):
     ep: float
     vz: float
     esv_owner: float
-    esv_employer: float
 
 
 class ExpenseTotals(BaseModel):
@@ -264,6 +336,8 @@ class MonthlyExpenseResponse(BaseModel):
     is_locked: bool = False
     missing_salary_staff: list[str] = []
     accountant_submitted_at: str | None = None
+    hired_doctor_id: int | None = None
+    hired_nurse_id: int | None = None
 
 
 # ── Нові схеми ──
@@ -281,6 +355,16 @@ class LockRequest(BaseModel):
     year: int
     month: int
 
+    @field_validator("month")
+    @classmethod
+    def check_month(cls, v: int) -> int:
+        return _validate_month(v)
+
+    @field_validator("year")
+    @classmethod
+    def check_year(cls, v: int) -> int:
+        return _validate_year(v)
+
 
 class CopyFromRequest(BaseModel):
     source_year: int
@@ -289,6 +373,16 @@ class CopyFromRequest(BaseModel):
     target_month: int
     copy_fixed: bool = True
     copy_salary: bool = True
+
+    @field_validator("source_month", "target_month")
+    @classmethod
+    def check_month(cls, v: int) -> int:
+        return _validate_month(v)
+
+    @field_validator("source_year", "target_year")
+    @classmethod
+    def check_year(cls, v: int) -> int:
+        return _validate_year(v)
 
 
 class AiParsedExpense(BaseModel):
@@ -300,6 +394,24 @@ class AiParsedExpense(BaseModel):
     note: str = ""
 
 
+def _validate_month(v: int) -> int:
+    if v < 1 or v > 12:
+        raise ValueError("Місяць має бути від 1 до 12")
+    return v
+
+
+def _validate_year(v: int) -> int:
+    if v < 2020 or v > 2100:
+        raise ValueError("Рік має бути від 2020 до 2100")
+    return v
+
+
+def _validate_amount_positive(v: float) -> float:
+    if v < 0:
+        raise ValueError("Сума не може бути від'ємною")
+    return round(v, 2)
+
+
 class CreateFixedRequest(BaseModel):
     year: int
     month: int
@@ -308,12 +420,32 @@ class CreateFixedRequest(BaseModel):
     amount: float
     is_recurring: bool
 
+    @field_validator("month")
+    @classmethod
+    def check_month(cls, v: int) -> int:
+        return _validate_month(v)
+
+    @field_validator("year")
+    @classmethod
+    def check_year(cls, v: int) -> int:
+        return _validate_year(v)
+
+    @field_validator("amount")
+    @classmethod
+    def check_amount(cls, v: float) -> float:
+        return _validate_amount_positive(v)
+
 
 class UpdateFixedRequest(BaseModel):
     name: str
     description: str = ""
     amount: float
     is_recurring: bool
+
+    @field_validator("amount")
+    @classmethod
+    def check_amount(cls, v: float) -> float:
+        return _validate_amount_positive(v)
 
 
 class UpdateSalaryRequest(BaseModel):
@@ -326,17 +458,30 @@ class UpdateSalaryRequest(BaseModel):
     individual_bonus: float = 0.0
     paid_services_from_module: bool = False
 
+    @field_validator("month")
+    @classmethod
+    def check_month(cls, v: int) -> int:
+        return _validate_month(v)
 
-# ────────────────────────────── Endpoint: GET ──────────────────────────────
+    @field_validator("year")
+    @classmethod
+    def check_year(cls, v: int) -> int:
+        return _validate_year(v)
+
+    @field_validator("brutto")
+    @classmethod
+    def check_brutto(cls, v: float) -> float:
+        return _validate_amount_positive(v)
 
 
-@router.get("/", response_model=MonthlyExpenseResponse)
-async def get_monthly_expenses(
-    year: int = Query(...),
-    month: int = Query(...),
-    db: AsyncSession = Depends(get_db),
-    user: User = Depends(get_current_user),
-):
+# ────────────────────────────── Helper: побудова відповіді ──────────────────────────────
+
+
+async def _build_monthly_expense_response(
+    db: AsyncSession, user: User, year: int, month: int
+) -> MonthlyExpenseResponse:
+    """Обчислює повну відповідь витрат за місяць з актуальних даних у БД."""
+
     # 1. Налаштування ставок
     nhsu = await _get_settings(db, user.id)
     rates = TaxRates(
@@ -365,6 +510,8 @@ async def get_monthly_expenses(
             is_recurring=rec.is_recurring,
             edited_by=rec.edited_by,
             edited_at=rec.edited_at.isoformat() if rec.edited_at else None,
+            visible_to_accountant=rec.visible_to_accountant,
+            is_cash_return=rec.is_cash_return,
         ))
 
     # 3. Зарплатні витрати — всі активні співробітники
@@ -391,6 +538,12 @@ async def get_monthly_expenses(
     nhsu_data_all = await _nhsu_doctors_data(db, user.id, year, month)
     nhsu_by_doctor_id = {d["doctor_id"]: d for d in nhsu_data_all}
 
+    # 3б. Підтягуємо дохід від платних послуг для ВСІХ лікарів одним батч-запитом (2 SQL замість 2×N)
+    paid_by_doctor, paid_gross_total = await _all_doctors_paid_services_income(
+        db, user.id, year, month,
+        ep_rate_pct=rates.ep_rate, vz_rate_pct=rates.vz_rate,
+    )
+
     pdfo_rate = rates.pdfo_rate / 100
     vz_zp_rate = rates.vz_zp_rate / 100
     esv_rate = rates.esv_employer_rate / 100
@@ -413,13 +566,10 @@ async def get_monthly_expenses(
         individual_bonus = float(rec.individual_bonus) if rec else 0.0
         paid_services_from_module = rec.paid_services_from_module if rec else False
 
-        # Для лікарів: завжди підтягуємо дохід з платних послуг автоматично
+        # Для лікарів: дохід з платних послуг з батч-запиту
         paid_services_income = 0.0
         if member.role == "doctor" and member.doctor_id:
-            paid_services_income = await _doctor_paid_services_income(
-                db, user.id, member.doctor_id, year, month,
-                ep_rate_pct=rates.ep_rate, vz_rate_pct=rates.vz_rate,
-            )
+            paid_services_income = paid_by_doctor.get(member.doctor_id, 0.0)
 
         total_employer_cost = round(brutto + esv + supplement + individual_bonus, 2)
 
@@ -451,18 +601,15 @@ async def get_monthly_expenses(
             edited_at=rec.edited_at.isoformat() if (rec and rec.edited_at) else None,
         ))
 
-    # 4. Податковий блок
-    nhsu_inc = await _nhsu_income(db, user.id, year, month)
-    paid_inc = await _paid_services_income(db, user.id, year, month)
+    # 4. Податковий блок (використовуємо вже завантажені дані — без додаткових запитів)
+    nhsu_inc = round(sum(d["nhsu_brutto"] for d in nhsu_data_all), 2)
+    paid_inc = paid_gross_total
     total_income = round(nhsu_inc + paid_inc, 2)
     ep = round(total_income * rates.ep_rate / 100, 2)
     vz = round(total_income * rates.vz_rate / 100, 2)
 
     # ЄСВ власника (щомісячна фіксована сума з налаштувань)
     esv_owner = float(nhsu.esv_monthly) if nhsu else 1760.0
-
-    # ЄСВ роботодавця (сума ЄСВ із виплачених зарплат за місяць)
-    esv_employer = round(sum(r.esv for r in salary_rows), 2)
 
     tax_block = TaxBlock(
         nhsu_income=nhsu_inc,
@@ -473,13 +620,12 @@ async def get_monthly_expenses(
         ep=ep,
         vz=vz,
         esv_owner=esv_owner,
-        esv_employer=esv_employer,
     )
 
     # 5. Підсумки
     fixed_total = round(sum(r.amount for r in fixed_rows), 2)
     salary_total = round(sum(r.total_employer_cost for r in salary_rows), 2)
-    tax_total = round(ep + vz + esv_owner + esv_employer, 2)
+    tax_total = round(ep + vz + esv_owner, 2)
     grand_total = round(fixed_total + salary_total + tax_total, 2)
     remaining = round(total_income - grand_total, 2)
 
@@ -519,59 +665,50 @@ async def get_monthly_expenses(
                 staff_total_employer_cost=sal_row.total_employer_cost if sal_row else 0.0,
             ))
 
-        owner_paid = await _doctor_paid_services_income(
-            db, user.id, owner_doctor.id, year, month,
-            ep_rate_pct=rates.ep_rate, vz_rate_pct=rates.vz_rate,
-        )
-
         owner_block = OwnerBlock(
             doctor_id=owner_doctor.id,
             doctor_name=owner_doctor.full_name,
             nhsu_brutto=owner_nhsu["nhsu_brutto"] if owner_nhsu else 0.0,
-            paid_services_income=owner_paid,
+            paid_services_income=paid_by_doctor.get(owner_doctor.id, 0.0),
             ep_all=ep_all,
             vz_all=vz_all,
             esv_owner=esv_owner,
             hired_doctors=hired_doctors_info,
         )
 
-    # 7. Перевірка блокування
-    lock_res = await db.execute(
-        select(MonthlyExpenseLock).where(
-            MonthlyExpenseLock.user_id == user.id,
-            MonthlyExpenseLock.year == year,
-            MonthlyExpenseLock.month == month,
-        )
-    )
-    is_locked = lock_res.scalar_one_or_none() is not None
-
-    # 8. Попередження про відсутність зарплати
+    # 7. Попередження про відсутність зарплати
     staff_with_salary = {r.staff_member_id for r in salary_rows if r.brutto > 0}
     missing_salary_staff = [
         m.full_name for m in staff_list
         if m.id not in staff_with_salary
     ]
 
-    # 9. Перевірка останнього звіту бухгалтера для цього місяця
+    # 8. Перевірка останнього звіту бухгалтера для цього місяця
     accountant_submitted_at: str | None = None
     acc_res = await db.execute(
         select(ShareReport).where(
             ShareReport.user_id == user.id,
             ShareReport.is_deleted == False,
-        )
+            ShareReport.filter_snapshot["type"].astext == "accountant_request",
+            ShareReport.filter_snapshot["year"].astext == str(year),
+            ShareReport.filter_snapshot["month"].astext == str(month),
+            ShareReport.filter_snapshot["submitted"].astext == "true",
+        ).order_by(ShareReport.created_at.desc()).limit(5)
     )
     for sr in acc_res.scalars().all():
-        fs_sr = sr.filter_snapshot or {}
-        if (
-            fs_sr.get("type") == "accountant_request"
-            and fs_sr.get("year") == year
-            and fs_sr.get("month") == month
-            and fs_sr.get("submitted")
-        ):
-            sd = fs_sr.get("submitted_data") or {}
-            sat = sd.get("submitted_at")
-            if sat and (accountant_submitted_at is None or sat > accountant_submitted_at):
-                accountant_submitted_at = sat
+        sat = (sr.filter_snapshot.get("submitted_data") or {}).get("submitted_at")
+        if sat and (accountant_submitted_at is None or sat > accountant_submitted_at):
+            accountant_submitted_at = sat
+
+    # 9. Збережений вибір найнятого лікаря та медсестри
+    sel_res = await db.execute(
+        select(MonthlyStaffSelection).where(
+            MonthlyStaffSelection.user_id == user.id,
+            MonthlyStaffSelection.year == year,
+            MonthlyStaffSelection.month == month,
+        )
+    )
+    selection = sel_res.scalar_one_or_none()
 
     return MonthlyExpenseResponse(
         year=year,
@@ -589,26 +726,82 @@ async def get_monthly_expenses(
             remaining=remaining,
         ),
         owner=owner_block,
-        is_locked=is_locked,
+        is_locked=False,
         missing_salary_staff=missing_salary_staff,
         accountant_submitted_at=accountant_submitted_at,
+        hired_doctor_id=selection.hired_doctor_id if selection else None,
+        hired_nurse_id=selection.hired_nurse_id if selection else None,
     )
 
 
+# ────────────────────────────── Endpoint: GET ──────────────────────────────
+
+
+@router.get("/", response_model=MonthlyExpenseResponse)
+async def get_monthly_expenses(
+    year: int = Query(...),
+    month: int = Query(...),
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    # Перевірка фіксації: якщо є знімок — повертаємо його замість динамічного розрахунку
+    lock_res = await db.execute(
+        select(MonthlyExpenseLock).where(
+            MonthlyExpenseLock.user_id == user.id,
+            MonthlyExpenseLock.year == year,
+            MonthlyExpenseLock.month == month,
+        )
+    )
+    lock = lock_res.scalar_one_or_none()
+
+    if lock is not None and lock.snapshot is not None:
+        # Повертаємо зафіксований знімок
+        snapshot_data = dict(lock.snapshot)
+        snapshot_data["is_locked"] = True
+        return MonthlyExpenseResponse(**snapshot_data)
+
+    # Динамічний розрахунок
+    response = await _build_monthly_expense_response(db, user, year, month)
+    if lock is not None:
+        # Є блокування без знімка (legacy) — позначаємо як заблокований
+        response.is_locked = True
+    return response
+
+
 # ────────────────────────────── Endpoints: fixed expenses CRUD ──────────────────────────────
+
+
+async def _is_period_locked(db: AsyncSession, user_id: int, year: int, month: int) -> bool:
+    """Return True if the period is locked (without raising)."""
+    res = await db.execute(
+        select(MonthlyExpenseLock).where(
+            MonthlyExpenseLock.user_id == user_id,
+            MonthlyExpenseLock.year == year,
+            MonthlyExpenseLock.month == month,
+        )
+    )
+    return res.scalar_one_or_none() is not None
 
 
 async def _propagate_recurring(
     db: AsyncSession, user_id: int, year: int, month: int,
     category_key: str, name: str, description: str, amount: float,
 ):
-    """Якщо витрата постійна — копіюємо на всі наступні місяці поточного року."""
-    for future_month in range(month + 1, 13):
+    """Якщо витрата постійна — копіюємо на всі наступні місяці поточного року
+    та на всі місяці наступного року. Пропускаємо заблоковані періоди."""
+    # Поточний рік: від наступного місяця до грудня
+    periods: list[tuple[int, int]] = [(year, m) for m in range(month + 1, 13)]
+    # Наступний рік: всі 12 місяців
+    periods += [(year + 1, m) for m in range(1, 13)]
+
+    for fut_year, fut_month in periods:
+        if await _is_period_locked(db, user_id, fut_year, fut_month):
+            continue
         fut_res = await db.execute(
             select(MonthlyFixedExpense).where(
                 MonthlyFixedExpense.user_id == user_id,
-                MonthlyFixedExpense.year == year,
-                MonthlyFixedExpense.month == future_month,
+                MonthlyFixedExpense.year == fut_year,
+                MonthlyFixedExpense.month == fut_month,
                 MonthlyFixedExpense.category_key == category_key,
             )
         )
@@ -616,8 +809,8 @@ async def _propagate_recurring(
         if fut_rec is None:
             fut_rec = MonthlyFixedExpense(
                 user_id=user_id,
-                year=year,
-                month=future_month,
+                year=fut_year,
+                month=fut_month,
                 category_key=category_key,
                 name=name,
                 description=description,
@@ -638,6 +831,7 @@ async def create_fixed_expense(
     user: User = Depends(get_current_user),
 ):
     """Створює нову постійну витрату."""
+    await _check_period_lock(db, user.id, body.year, body.month)
     cat_key = str(uuid.uuid4())[:12]
     rec = MonthlyFixedExpense(
         user_id=user.id,
@@ -671,6 +865,8 @@ async def create_fixed_expense(
         is_recurring=rec.is_recurring,
         edited_by=rec.edited_by,
         edited_at=rec.edited_at.isoformat() if rec.edited_at else None,
+        visible_to_accountant=rec.visible_to_accountant,
+        is_cash_return=rec.is_cash_return,
     )
 
 
@@ -691,6 +887,7 @@ async def update_fixed_expense(
     rec = res.scalar_one_or_none()
     if not rec:
         raise HTTPException(status_code=404, detail="Витрату не знайдено")
+    await _check_period_lock(db, user.id, rec.year, rec.month)
 
     rec.name = body.name
     rec.description = body.description
@@ -717,6 +914,8 @@ async def update_fixed_expense(
         is_recurring=rec.is_recurring,
         edited_by=rec.edited_by,
         edited_at=rec.edited_at.isoformat() if rec.edited_at else None,
+        visible_to_accountant=rec.visible_to_accountant,
+        is_cash_return=rec.is_cash_return,
     )
 
 
@@ -736,8 +935,53 @@ async def delete_fixed_expense(
     rec = res.scalar_one_or_none()
     if not rec:
         raise HTTPException(status_code=404, detail="Витрату не знайдено")
+    await _check_period_lock(db, user.id, rec.year, rec.month)
     await db.delete(rec)
     await db.commit()
+
+
+@router.patch("/fixed/{expense_id}/visibility")
+async def toggle_fixed_visibility(
+    expense_id: int,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Перемикає видимість постійної витрати для бухгалтера."""
+    res = await db.execute(
+        select(MonthlyFixedExpense).where(
+            MonthlyFixedExpense.id == expense_id,
+            MonthlyFixedExpense.user_id == user.id,
+        )
+    )
+    rec = res.scalar_one_or_none()
+    if not rec:
+        raise HTTPException(status_code=404, detail="Витрату не знайдено")
+    await _check_period_lock(db, user.id, rec.year, rec.month)
+    rec.visible_to_accountant = not rec.visible_to_accountant
+    await db.commit()
+    return {"visible_to_accountant": rec.visible_to_accountant}
+
+
+@router.patch("/fixed/{expense_id}/cash-return")
+async def toggle_fixed_cash_return(
+    expense_id: int,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Перемикає прапорець повернення готівки для постійної витрати."""
+    res = await db.execute(
+        select(MonthlyFixedExpense).where(
+            MonthlyFixedExpense.id == expense_id,
+            MonthlyFixedExpense.user_id == user.id,
+        )
+    )
+    rec = res.scalar_one_or_none()
+    if not rec:
+        raise HTTPException(status_code=404, detail="Витрату не знайдено")
+    await _check_period_lock(db, user.id, rec.year, rec.month)
+    rec.is_cash_return = not rec.is_cash_return
+    await db.commit()
+    return {"is_cash_return": rec.is_cash_return}
 
 
 # ────────────────────────────── Endpoint: PUT salary ──────────────────────────────
@@ -750,6 +994,7 @@ async def update_salary_expense(
     user: User = Depends(get_current_user),
 ):
     """Оновлює або створює запис зарплатних витрат по співробітнику."""
+    await _check_period_lock(db, user.id, body.year, body.month)
     # Перевіряємо що співробітник належить цьому користувачу
     member_res = await db.execute(
         select(StaffMember).where(
@@ -853,6 +1098,21 @@ class OtherExpenseCreate(BaseModel):
     year: int
     month: int
 
+    @field_validator("month")
+    @classmethod
+    def check_month(cls, v: int) -> int:
+        return _validate_month(v)
+
+    @field_validator("year")
+    @classmethod
+    def check_year(cls, v: int) -> int:
+        return _validate_year(v)
+
+    @field_validator("amount")
+    @classmethod
+    def check_amount(cls, v: float) -> float:
+        return _validate_amount_positive(v)
+
 
 class OtherExpenseResponse(BaseModel):
     id: int
@@ -862,6 +1122,10 @@ class OtherExpenseResponse(BaseModel):
     category: str
     year: int
     month: int
+    edited_by: Optional[str] = None
+    edited_at: Optional[datetime] = None
+    visible_to_accountant: bool = True
+    is_cash_return: bool = False
 
     model_config = {"from_attributes": True}
 
@@ -874,6 +1138,18 @@ async def list_other_expenses(
     user: User = Depends(get_current_user),
 ):
     """Повертає список інших витрат за місяць."""
+    # Перевірка фіксації: якщо є знімок — повертаємо його
+    lock_res = await db.execute(
+        select(MonthlyExpenseLock).where(
+            MonthlyExpenseLock.user_id == user.id,
+            MonthlyExpenseLock.year == year,
+            MonthlyExpenseLock.month == month,
+        )
+    )
+    lock = lock_res.scalar_one_or_none()
+    if lock is not None and lock.other_expenses_snapshot is not None:
+        return lock.other_expenses_snapshot
+
     res = await db.execute(
         select(MonthlyOtherExpense).where(
             MonthlyOtherExpense.user_id == user.id,
@@ -891,6 +1167,7 @@ async def create_other_expense(
     user: User = Depends(get_current_user),
 ):
     """Створює нову іншу витрату."""
+    await _check_period_lock(db, user.id, body.year, body.month)
     rec = MonthlyOtherExpense(
         user_id=user.id,
         year=body.year,
@@ -923,6 +1200,10 @@ async def update_other_expense(
     rec = res.scalar_one_or_none()
     if not rec:
         raise HTTPException(status_code=404, detail="Витрату не знайдено")
+    await _check_period_lock(db, user.id, rec.year, rec.month)
+    # Also check the target period lock if moving to a different period
+    if body.year != rec.year or body.month != rec.month:
+        await _check_period_lock(db, user.id, body.year, body.month)
     rec.name = body.name
     rec.description = body.description
     rec.amount = body.amount
@@ -950,8 +1231,51 @@ async def delete_other_expense(
     rec = res.scalar_one_or_none()
     if not rec:
         raise HTTPException(status_code=404, detail="Витрату не знайдено")
+    await _check_period_lock(db, user.id, rec.year, rec.month)
     await db.delete(rec)
     await db.commit()
+
+
+@router.patch("/other/{expense_id}/visibility")
+async def toggle_other_visibility(
+    expense_id: int,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Перемикає видимість іншої витрати для бухгалтера."""
+    res = await db.execute(
+        select(MonthlyOtherExpense).where(
+            MonthlyOtherExpense.id == expense_id,
+            MonthlyOtherExpense.user_id == user.id,
+        )
+    )
+    rec = res.scalar_one_or_none()
+    if not rec:
+        raise HTTPException(status_code=404, detail="Витрату не знайдено")
+    rec.visible_to_accountant = not rec.visible_to_accountant
+    await db.commit()
+    return {"visible_to_accountant": rec.visible_to_accountant}
+
+
+@router.patch("/other/{expense_id}/cash-return")
+async def toggle_other_cash_return(
+    expense_id: int,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Перемикає прапорець повернення готівки для іншої витрати."""
+    res = await db.execute(
+        select(MonthlyOtherExpense).where(
+            MonthlyOtherExpense.id == expense_id,
+            MonthlyOtherExpense.user_id == user.id,
+        )
+    )
+    rec = res.scalar_one_or_none()
+    if not rec:
+        raise HTTPException(status_code=404, detail="Витрату не знайдено")
+    rec.is_cash_return = not rec.is_cash_return
+    await db.commit()
+    return {"is_cash_return": rec.is_cash_return}
 
 
 # ══════════════════════════════════════════════════════════════════
@@ -1024,18 +1348,52 @@ async def lock_period(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    """Фіксує (блокує) місяць від редагування."""
-    existing = await db.execute(
+    """Фіксує (блокує) місяць від редагування та зберігає знімок даних."""
+    existing_res = await db.execute(
         select(MonthlyExpenseLock).where(
             MonthlyExpenseLock.user_id == user.id,
             MonthlyExpenseLock.year == body.year,
             MonthlyExpenseLock.month == body.month,
         )
     )
-    if not existing.scalar_one_or_none():
-        lock = MonthlyExpenseLock(user_id=user.id, year=body.year, month=body.month)
+    existing = existing_res.scalar_one_or_none()
+
+    # Обчислюємо актуальний знімок витрат
+    expense_response = await _build_monthly_expense_response(db, user, body.year, body.month)
+    expense_response.is_locked = True
+    expenses_dict = expense_response.model_dump(mode="json")
+
+    # Знімок інших витрат
+    other_res = await db.execute(
+        select(MonthlyOtherExpense).where(
+            MonthlyOtherExpense.user_id == user.id,
+            MonthlyOtherExpense.year == body.year,
+            MonthlyOtherExpense.month == body.month,
+        )
+    )
+    other_list = [
+        OtherExpenseResponse.model_validate(rec).model_dump(mode="json")
+        for rec in other_res.scalars().all()
+    ]
+
+    if existing:
+        # Повторна фіксація — оновлюємо знімок
+        existing.snapshot = expenses_dict
+        existing.other_expenses_snapshot = other_list
+        existing.locked_at = datetime.now(timezone.utc)
+        flag_modified(existing, "snapshot")
+        flag_modified(existing, "other_expenses_snapshot")
+    else:
+        lock = MonthlyExpenseLock(
+            user_id=user.id,
+            year=body.year,
+            month=body.month,
+            snapshot=expenses_dict,
+            other_expenses_snapshot=other_list,
+        )
         db.add(lock)
-        await db.commit()
+
+    await db.commit()
     return {"is_locked": True}
 
 
@@ -1061,6 +1419,102 @@ async def unlock_period(
     return {"is_locked": False}
 
 
+# ────────────────────────────── Staff selection per period ──────────────────────────────
+
+
+class StaffSelectionUpdate(BaseModel):
+    year: int
+    month: int
+    hired_doctor_id: Optional[int] = None
+    hired_nurse_id: Optional[int] = None
+
+    @field_validator("month")
+    @classmethod
+    def check_month(cls, v: int) -> int:
+        return _validate_month(v)
+
+    @field_validator("year")
+    @classmethod
+    def check_year(cls, v: int) -> int:
+        return _validate_year(v)
+
+
+@router.put("/staff-selection", status_code=200)
+async def update_staff_selection(
+    body: StaffSelectionUpdate,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Зберігає вибір найнятого лікаря та медсестри для конкретного періоду."""
+    res = await db.execute(
+        select(MonthlyStaffSelection).where(
+            MonthlyStaffSelection.user_id == user.id,
+            MonthlyStaffSelection.year == body.year,
+            MonthlyStaffSelection.month == body.month,
+        )
+    )
+    existing = res.scalar_one_or_none()
+
+    if existing:
+        existing.hired_doctor_id = body.hired_doctor_id
+        existing.hired_nurse_id = body.hired_nurse_id
+    else:
+        sel = MonthlyStaffSelection(
+            user_id=user.id,
+            year=body.year,
+            month=body.month,
+            hired_doctor_id=body.hired_doctor_id,
+            hired_nurse_id=body.hired_nurse_id,
+        )
+        db.add(sel)
+
+    await db.commit()
+    return {
+        "hired_doctor_id": body.hired_doctor_id,
+        "hired_nurse_id": body.hired_nurse_id,
+    }
+
+
+@router.delete("/period", status_code=204)
+async def delete_period_data(
+    year: int = Query(...),
+    month: int = Query(...),
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Видалити всі дані витрат за обраний місяць (постійні, зарплатні, інші витрати + блокування)."""
+    await _check_period_lock(db, user.id, year, month)
+    await db.execute(
+        delete(MonthlyFixedExpense).where(
+            MonthlyFixedExpense.user_id == user.id,
+            MonthlyFixedExpense.year == year,
+            MonthlyFixedExpense.month == month,
+        )
+    )
+    await db.execute(
+        delete(MonthlySalaryExpense).where(
+            MonthlySalaryExpense.user_id == user.id,
+            MonthlySalaryExpense.year == year,
+            MonthlySalaryExpense.month == month,
+        )
+    )
+    await db.execute(
+        delete(MonthlyOtherExpense).where(
+            MonthlyOtherExpense.user_id == user.id,
+            MonthlyOtherExpense.year == year,
+            MonthlyOtherExpense.month == month,
+        )
+    )
+    await db.execute(
+        delete(MonthlyExpenseLock).where(
+            MonthlyExpenseLock.user_id == user.id,
+            MonthlyExpenseLock.year == year,
+            MonthlyExpenseLock.month == month,
+        )
+    )
+    await db.commit()
+
+
 @router.post("/copy-from", status_code=200)
 async def copy_from_period(
     body: CopyFromRequest,
@@ -1068,6 +1522,7 @@ async def copy_from_period(
     user: User = Depends(get_current_user),
 ):
     """Копіює дані з одного місяця в інший."""
+    await _check_period_lock(db, user.id, body.target_year, body.target_month)
     copied_fixed = 0
     copied_salary = 0
 
@@ -1432,7 +1887,11 @@ async def _build_owner_share_payload(
         "esv_owner": esv_owner,
     }
 
+    # ПІБ власника
+    owner_name = owner_doctor.full_name if owner_doctor else ""
+
     return {
+        "owner_name": owner_name,
         "nhsu": nhsu_data,
         "paid_services": paid_data,
         "formed_income": formed_income,
@@ -1543,6 +2002,8 @@ class AccExpenseItem(BaseModel):
     name: str
     amount: float
     is_recurring: bool = False
+    backend_id: int | None = None  # id існуючого запису (якщо редагування)
+    source: str = "fixed"          # "fixed" | "other" — тип оригінального запису
 
 
 class AccountantSubmitRequest(BaseModel):
@@ -1673,17 +2134,99 @@ async def view_accountant_request(token: str, db: AsyncSession = Depends(get_db)
         raise HTTPException(404, detail="Посилання не знайдено")
 
     month_name = MONTHS_UA[fs.get("month", 1)]
-    year = fs.get("year", "")
+    year = fs.get("year")
+    month = fs.get("month")
+    user_id = share.user_id
+
+    # ── Актуальні дані з БД (live_data) ──
+    # Зарплати
+    sal_res = await db.execute(
+        select(MonthlySalaryExpense).where(
+            MonthlySalaryExpense.user_id == user_id,
+            MonthlySalaryExpense.year == year,
+            MonthlySalaryExpense.month == month,
+        )
+    )
+    salary_map = {s.staff_member_id: s for s in sal_res.scalars().all()}
+
+    # Staff members (для full_name/role/position) — тільки ті, що у payload
+    payload_staff_ids = {s["staff_member_id"] for s in share.payload_snapshot.get("salary_staff", [])}
+    staff_res = await db.execute(
+        select(StaffMember).where(StaffMember.id.in_(payload_staff_ids)) if payload_staff_ids else select(StaffMember).where(False)
+    )
+    staff_map = {s.id: s for s in staff_res.scalars().all()}
+
+    live_salaries = []
+    for ps in share.payload_snapshot.get("salary_staff", []):
+        sid = ps["staff_member_id"]
+        sal = salary_map.get(sid)
+        sm = staff_map.get(sid)
+        live_salaries.append({
+            "staff_member_id": sid,
+            "full_name": sm.full_name if sm else ps.get("full_name", ""),
+            "role": sm.role if sm else ps.get("role", ""),
+            "position": sm.position if sm else ps.get("position", ""),
+            "current_brutto": float(sal.brutto) if sal else ps.get("prev_brutto", 0.0),
+            "prev_brutto": ps.get("prev_brutto", 0.0),
+            "edited_by": sal.edited_by if sal else None,
+            "edited_at": sal.edited_at.isoformat() if sal and sal.edited_at else None,
+        })
+
+    # Постійні витрати (visible_to_accountant=True)
+    fixed_res = await db.execute(
+        select(MonthlyFixedExpense).where(
+            MonthlyFixedExpense.user_id == user_id,
+            MonthlyFixedExpense.year == year,
+            MonthlyFixedExpense.month == month,
+            MonthlyFixedExpense.visible_to_accountant == True,
+        ).order_by(MonthlyFixedExpense.id)
+    )
+    live_fixed = []
+    for fe in fixed_res.scalars().all():
+        live_fixed.append({
+            "id": fe.id,
+            "name": fe.name or FIXED_CATEGORY_NAMES.get(fe.category_key, fe.category_key),
+            "amount": float(fe.amount),
+            "is_recurring": fe.is_recurring,
+            "category_key": fe.category_key,
+            "edited_by": fe.edited_by,
+            "edited_at": fe.edited_at.isoformat() if fe.edited_at else None,
+        })
+
+    # Інші витрати (visible_to_accountant=True)
+    other_res = await db.execute(
+        select(MonthlyOtherExpense).where(
+            MonthlyOtherExpense.user_id == user_id,
+            MonthlyOtherExpense.year == year,
+            MonthlyOtherExpense.month == month,
+            MonthlyOtherExpense.visible_to_accountant == True,
+        ).order_by(MonthlyOtherExpense.id)
+    )
+    live_other = []
+    for oe in other_res.scalars().all():
+        live_other.append({
+            "id": oe.id,
+            "name": oe.name,
+            "amount": float(oe.amount),
+            "category": oe.category,
+            "edited_by": oe.edited_by,
+            "edited_at": oe.edited_at.isoformat() if oe.edited_at else None,
+        })
 
     return {
         "token": token,
         "filter_label": f"{month_name} {year}",
-        "year": fs.get("year"),
-        "month": fs.get("month"),
+        "year": year,
+        "month": month,
         "expires_at": share.expires_at.isoformat(),
         "submitted": fs.get("submitted", False),
         "submitted_data": fs.get("submitted_data"),
         "data": share.payload_snapshot,
+        "live_data": {
+            "salaries": live_salaries,
+            "fixed_expenses": live_fixed,
+            "other_expenses": live_other,
+        },
     }
 
 
@@ -1760,98 +2303,124 @@ async def submit_accountant_request(
         })
 
     # ── 2. Зберігаємо витрати бухгалтера ──
-    # Recurring → MonthlyFixedExpense
-    # Non-recurring (нові або зняли прапорець) → MonthlyOtherExpense
-    payload_expenses = share.payload_snapshot.get("recurring_expenses", [])
+    # Збираємо ID всіх ВИДИМИХ витрат (тільки ті, які бухгалтер бачив)
+    vis_fixed_res = await db.execute(
+        select(MonthlyFixedExpense).where(
+            MonthlyFixedExpense.user_id == user_id,
+            MonthlyFixedExpense.year == year,
+            MonthlyFixedExpense.month == month,
+            MonthlyFixedExpense.visible_to_accountant == True,
+        )
+    )
+    visible_fixed = {fe.id: fe for fe in vis_fixed_res.scalars().all()}
+
+    vis_other_res = await db.execute(
+        select(MonthlyOtherExpense).where(
+            MonthlyOtherExpense.user_id == user_id,
+            MonthlyOtherExpense.year == year,
+            MonthlyOtherExpense.month == month,
+            MonthlyOtherExpense.visible_to_accountant == True,
+        )
+    )
+    visible_other = {oe.id: oe for oe in vis_other_res.scalars().all()}
+
+    # Множини ID які бухгалтер залишив у формі
+    submitted_fixed_ids: set[int] = set()
+    submitted_other_ids: set[int] = set()
 
     for exp in body.expenses:
         now = datetime.now(timezone.utc)
 
-        if exp.is_recurring:
-            # ── Постійна витрата → MonthlyFixedExpense ──
-            existing_fe = None
-            for pe in payload_expenses:
-                if pe.get("name") == exp.name and pe.get("category_key"):
-                    fe_res = await db.execute(
-                        select(MonthlyFixedExpense).where(
-                            MonthlyFixedExpense.user_id == user_id,
-                            MonthlyFixedExpense.year == year,
-                            MonthlyFixedExpense.month == month,
-                            MonthlyFixedExpense.category_key == pe["category_key"],
-                        )
-                    )
-                    existing_fe = fe_res.scalar_one_or_none()
-                    break
+        if exp.backend_id and exp.source == "fixed" and exp.backend_id in visible_fixed:
+            # ── Існуючий MonthlyFixedExpense ──
+            rec = visible_fixed[exp.backend_id]
+            submitted_fixed_ids.add(exp.backend_id)
 
-            if existing_fe:
-                existing_fe.amount = exp.amount
-                existing_fe.name = exp.name
-                existing_fe.is_recurring = True
-                existing_fe.edited_by = "accountant"
-                existing_fe.edited_at = now
+            if exp.is_recurring:
+                # Залишається у fixed — оновлюємо на місці
+                rec.name = exp.name
+                rec.amount = exp.amount
+                rec.is_recurring = True
+                rec.edited_by = "accountant"
+                rec.edited_at = now
                 await db.flush()
+                saved_fixed.append({"name": exp.name, "amount": exp.amount, "category": "Постійні витрати"})
             else:
+                # Переміщення fixed → other (прапорець знято)
+                await db.delete(rec)
+                await db.flush()
+                oe = MonthlyOtherExpense(
+                    user_id=user_id, year=year, month=month,
+                    name=exp.name, amount=exp.amount, category="general",
+                    edited_by="accountant", edited_at=now,
+                )
+                db.add(oe)
+                await db.flush()
+                saved_other.append({"name": exp.name, "amount": exp.amount, "category": "Інші витрати"})
+
+        elif exp.backend_id and exp.source == "other" and exp.backend_id in visible_other:
+            # ── Існуючий MonthlyOtherExpense ──
+            rec = visible_other[exp.backend_id]
+            submitted_other_ids.add(exp.backend_id)
+
+            if not exp.is_recurring:
+                # Залишається у other — оновлюємо на місці
+                rec.name = exp.name
+                rec.amount = exp.amount
+                rec.edited_by = "accountant"
+                rec.edited_at = now
+                await db.flush()
+                saved_other.append({"name": exp.name, "amount": exp.amount, "category": "Інші витрати"})
+            else:
+                # Переміщення other → fixed (прапорець поставлено)
+                await db.delete(rec)
+                await db.flush()
                 cat_key = str(uuid.uuid4())[:12]
                 fe = MonthlyFixedExpense(
-                    user_id=user_id,
-                    year=year,
-                    month=month,
-                    category_key=cat_key,
-                    name=exp.name,
-                    amount=exp.amount,
-                    is_recurring=True,
-                    edited_by="accountant",
-                    edited_at=now,
+                    user_id=user_id, year=year, month=month,
+                    category_key=cat_key, name=exp.name, amount=exp.amount,
+                    is_recurring=True, edited_by="accountant", edited_at=now,
                 )
                 db.add(fe)
                 await db.flush()
                 await _propagate_recurring(
-                    db, user_id, year, month,
-                    cat_key, exp.name, "", exp.amount,
+                    db, user_id, year, month, cat_key, exp.name, "", exp.amount,
                 )
+                saved_fixed.append({"name": exp.name, "amount": exp.amount, "category": "Постійні витрати"})
 
-            saved_fixed.append({
-                "name": exp.name,
-                "amount": exp.amount,
-                "category": "Постійні витрати",
-            })
         else:
-            # ── Не постійна витрата → MonthlyOtherExpense ──
-            # Якщо це була recurring витрата з payload і прапорець зняли —
-            # видаляємо з MonthlyFixedExpense
-            for pe in payload_expenses:
-                if pe.get("name") == exp.name and pe.get("category_key"):
-                    old_fe_res = await db.execute(
-                        select(MonthlyFixedExpense).where(
-                            MonthlyFixedExpense.user_id == user_id,
-                            MonthlyFixedExpense.year == year,
-                            MonthlyFixedExpense.month == month,
-                            MonthlyFixedExpense.category_key == pe["category_key"],
-                        )
-                    )
-                    old_fe = old_fe_res.scalar_one_or_none()
-                    if old_fe:
-                        await db.delete(old_fe)
-                        await db.flush()
-                    break
+            # ── Нова витрата від бухгалтера ──
+            if exp.is_recurring:
+                cat_key = str(uuid.uuid4())[:12]
+                fe = MonthlyFixedExpense(
+                    user_id=user_id, year=year, month=month,
+                    category_key=cat_key, name=exp.name, amount=exp.amount,
+                    is_recurring=True, edited_by="accountant", edited_at=now,
+                )
+                db.add(fe)
+                await db.flush()
+                await _propagate_recurring(
+                    db, user_id, year, month, cat_key, exp.name, "", exp.amount,
+                )
+                saved_fixed.append({"name": exp.name, "amount": exp.amount, "category": "Постійні витрати"})
+            else:
+                oe = MonthlyOtherExpense(
+                    user_id=user_id, year=year, month=month,
+                    name=exp.name, amount=exp.amount, category="general",
+                    edited_by="accountant", edited_at=now,
+                )
+                db.add(oe)
+                await db.flush()
+                saved_other.append({"name": exp.name, "amount": exp.amount, "category": "Інші витрати"})
 
-            # Створюємо запис в MonthlyOtherExpense
-            oe = MonthlyOtherExpense(
-                user_id=user_id,
-                year=year,
-                month=month,
-                name=exp.name,
-                amount=exp.amount,
-                category="general",
-            )
-            db.add(oe)
-            await db.flush()
-
-            saved_other.append({
-                "name": exp.name,
-                "amount": exp.amount,
-                "category": "Інші витрати",
-            })
+    # ── Видалити витрати які бухгалтер прибрав (тільки серед ВИДИМИХ) ──
+    for fid, fe_rec in visible_fixed.items():
+        if fid not in submitted_fixed_ids:
+            await db.delete(fe_rec)
+    for oid, oe_rec in visible_other.items():
+        if oid not in submitted_other_ids:
+            await db.delete(oe_rec)
+    await db.flush()
 
     # ── 3. Оновлюємо share запис як підтверджений ──
     new_fs = dict(fs)
@@ -1863,6 +2432,7 @@ async def submit_accountant_request(
         "submitted_at": datetime.now(timezone.utc).isoformat(),
     }
     share.filter_snapshot = new_fs
+    flag_modified(share, "filter_snapshot")
 
     await db.commit()
 
@@ -1876,15 +2446,20 @@ async def submit_accountant_request(
         )
         month_name = MONTHS_UA[month]
         try:
-            await send_accountant_report_notification(
+            sent = await send_accountant_report_notification(
                 to_email=owner.email,
                 month_name=month_name,
                 year=year,
                 salary_total=salary_total,
                 expenses_total=expenses_total,
             )
+            if not sent:
+                logger.warning(
+                    "Email-повідомлення про звіт бухгалтера не надіслано для %s (SMTP не налаштовано?)",
+                    owner.email,
+                )
         except Exception:
-            pass  # не блокуємо відповідь якщо email не вдалося надіслати
+            logger.exception("Помилка при відправці email-повідомлення про звіт бухгалтера")
 
     return {
         "status": "ok",

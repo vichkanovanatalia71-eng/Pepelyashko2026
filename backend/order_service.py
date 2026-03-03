@@ -365,7 +365,8 @@ class OrderService:
             parsed_html = self._parse_template(html_template, context)
             
             # Create PDF filename
-            filename = f"Замовлення_{order_number}_{buyer_data.get('ЄДРПОУ', '')}.pdf"
+            safe_order_number = order_number.replace('/', '_').replace('\\', '_')
+            filename = f"Замовлення_{safe_order_number}_{buyer_data.get('ЄДРПОУ', '')}.pdf"
             filepath = self.output_dir / filename
             
             # Generate PDF from HTML using WeasyPrint

@@ -9,6 +9,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Integer, Numeric, String, Text, UniqueConstraint
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
@@ -45,6 +46,10 @@ class MonthlyFixedExpense(Base):
     # Хто останній редагував: "user" | "accountant" | None
     edited_by: Mapped[str | None] = mapped_column(String(20), nullable=True)
     edited_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # Видимість для бухгалтера
+    visible_to_accountant: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
+    # Повернення готівки
+    is_cash_return: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )
@@ -100,13 +105,25 @@ class MonthlyOtherExpense(Base):
     description: Mapped[str] = mapped_column(Text, default="")
     amount: Mapped[float] = mapped_column(Numeric(12, 2), default=0.0)
     category: Mapped[str] = mapped_column(String(50), default="general")
+    # Хто останній редагував: "user" | "accountant" | None
+    edited_by: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    edited_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # Видимість для бухгалтера
+    visible_to_accountant: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
+    # Повернення готівки
+    is_cash_return: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )
 
 
 class MonthlyExpenseLock(Base):
-    """Фіксація місяця — після блокування дані вимагають розблокування для редагування."""
+    """Фіксація місяця — після блокування дані вимагають розблокування для редагування.
+
+    При фіксації зберігається повний знімок (snapshot) розрахованих даних,
+    щоб при перегляді зафіксованого періоду відображались саме ті значення,
+    які були актуальні на момент фіксації.
+    """
 
     __tablename__ = "monthly_expense_locks"
     __table_args__ = (
@@ -118,5 +135,28 @@ class MonthlyExpenseLock(Base):
     year: Mapped[int] = mapped_column(Integer)
     month: Mapped[int] = mapped_column(Integer)   # 1–12
     locked_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
+    # Знімок повної відповіді MonthlyExpenseResponse на момент фіксації
+    snapshot: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    # Знімок списку інших витрат (OtherExpenseResponse[]) на момент фіксації
+    other_expenses_snapshot: Mapped[list | None] = mapped_column(JSONB, nullable=True)
+
+
+class MonthlyStaffSelection(Base):
+    """Збережений вибір найнятого лікаря та медсестри за період."""
+
+    __tablename__ = "monthly_staff_selections"
+    __table_args__ = (
+        UniqueConstraint("user_id", "year", "month", name="uq_mss"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    year: Mapped[int] = mapped_column(Integer)
+    month: Mapped[int] = mapped_column(Integer)        # 1–12
+    hired_doctor_id: Mapped[int | None] = mapped_column(ForeignKey("doctors.id"), nullable=True)
+    hired_nurse_id: Mapped[int | None] = mapped_column(ForeignKey("staff_members.id"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )

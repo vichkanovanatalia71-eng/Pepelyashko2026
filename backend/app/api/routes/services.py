@@ -41,14 +41,14 @@ def _calc(service: Service, ep_rate: float, vz_rate: float) -> dict:
     materials = service.materials or []
 
     total_materials_cost = round(
-        sum(float(m.get("cost", 0)) for m in materials), 2
+        sum(float(m.get("quantity", 0)) * float(m.get("cost", 0)) for m in materials), 2
     )
     ep_amount = round(price * ep_rate / 100, 2)
     vz_amount = round(price * vz_rate / 100, 2)
     total_costs = round(total_materials_cost + ep_amount + vz_amount, 2)
     net_income = round(price - total_costs, 2)
     doctor_income = round(net_income / 2, 2)
-    org_income = round(net_income / 2, 2)
+    org_income = round(net_income - doctor_income, 2)
 
     return {
         "total_materials_cost": total_materials_cost,
@@ -214,43 +214,76 @@ async def seed_services(
 # ── AI-аналіз зображень послуг ─────────────────────────────────────
 
 _SERVICE_AI_SYSTEM = """\
-Ти — спеціалізований OCR-асистент для розпізнавання прайс-листів медичних послуг.
-Твоя задача — точно розпізнати дані послуг з зображення та повернути їх у форматі JSON.
-Відповідай ТІЛЬКИ валідним JSON без markdown, коментарів чи пояснень."""
+Ти — експертний AI-асистент з розпізнавання прайс-листів медичних послуг.
+
+ТВОЇ МОЖЛИВОСТІ:
+- Розпізнавання будь-яких типів зображень: скріншоти, фотографії, скани, \
+рукописні документи, таблиці, неструктуровані переліки, комбіновані формати.
+- Робота з низькою якістю: розмиті, нахилені, частково обрізані, погано \
+освітлені зображення.
+- Розпізнавання тексту українською, англійською та латиницею.
+
+КРИТИЧНІ ПРАВИЛА:
+1. НІКОЛИ не вигадуй послуги, яких немає на зображенні.
+2. Якщо щось не вдається прочитати — позначай confidence як "low" для \
+цього конкретного запису і вкажи warning з описом проблеми.
+3. Відповідай ТІЛЬКИ валідним JSON без markdown, коментарів чи пояснень.
+4. Якщо зображення не містить прайс-листа або списку послуг — поверни \
+порожній масив services з відповідним поясненням у notes."""
 
 _SERVICE_AI_PROMPT = """\
-<context>
-Це зображення прайс-листа, таблиці або списку медичних послуг.
-На зображенні можуть бути: назви послуг, коди послуг, ціни, матеріали та їх вартість.
-</context>
-
 <task>
-Розпізнай ВСІ послуги з зображення. Для кожної послуги вилучи:
-
-1. **code** — код або номер послуги (якщо є). Якщо коду немає — генеруй порядковий номер як рядок: "001", "002", "003"...
-2. **name** — повна назва послуги українською мовою
-3. **price** — ціна послуги для клієнта (в грн). Якщо ціна не вказана — постав 0.
-4. **materials** — список матеріалів/витрат (якщо видно на зображенні):
-   - name: назва матеріалу
-   - unit: одиниця виміру (штука, пара, мл тощо)
-   - quantity: кількість (число)
-   - cost: загальна вартість цього матеріалу (грн, число)
-   Якщо матеріали не вказані — повертай порожній масив [].
+Проаналізуй зображення та витягни з нього дані про платні медичні послуги.
 </task>
 
-<rules>
-- Розпізнай ВСІ послуги, навіть якщо їх десятки
-- Ціни — числа (float), наприклад 150.0, 2500.00
-- quantity та cost — числа (float)
-- Якщо код не видно — використай порядкові номери: "001", "002" тощо
-- Якщо назва частково видима — вкажи те, що вдалося розпізнати
-- НЕ вигадуй послуги, яких немає на зображенні
-- confidence: "high" = все чітко видно, "medium" = є неточності, "low" = дані погано розпізнані
-</rules>
+<step_1_identify_format>
+Спочатку визнач тип зображення:
+- ТАБЛИЦЯ: структурована таблиця зі стовпцями (код, назва, ціна тощо)
+- ПЕРЕЛІК: текстовий список послуг (нумерований або ненумерований)
+- РУКОПИС: рукописний текст (почерк, записка)
+- ФОТО_ДОКУМЕНТА: фото друкованого документа / прайсу
+- СКРІНШОТ: скріншот екрану із цифровим контентом
+- ЗМІШАНИЙ: комбінація кількох форматів
+- НЕ_ПРАЙС: зображення не містить інформації про послуги
+Запиши визначений тип у поле "image_type".
+</step_1_identify_format>
+
+<step_2_extract_data>
+Для кожної послуги витягни:
+
+1. "code" — код/номер послуги. Якщо немає — генеруй: "001", "002"...
+2. "name" — повна назва послуги. Зберігай мову оригіналу, переважно українська.
+3. "price" — ціна для клієнта (грн). Якщо ціна не вказана — 0.
+   УВАГА: розрізняй ціну послуги та собівартість/витратну частину!
+4. "materials" — перелік розхідних матеріалів (якщо є):
+   - "name": назва матеріалу
+   - "unit": одиниця виміру (штука, пара, мл, послуга тощо)
+   - "quantity": кількість (число)
+   - "cost": загальна вартість цього матеріалу (грн)
+   Якщо матеріалів немає — порожній масив [].
+5. "confidence" — впевненість для ЦЬОГО запису:
+   - "high": текст чіткий, все читається однозначно
+   - "medium": дрібні неточності, але дані загалом вірні
+   - "low": значна частина тексту нечитабельна або неоднозначна
+6. "warning" — опис проблеми (порожній рядок якщо confidence = "high"):
+   - "Назва частково нечитабельна"
+   - "Ціна нечітка, можливо 150 або 450"
+   - "Рукописний текст, можливі помилки"
+   тощо.
+</step_2_extract_data>
+
+<step_3_validate>
+Перевір кожен запис:
+- Чи ціна є реалістичною для медичної послуги (зазвичай 50 - 50000 грн)?
+- Чи назва виглядає як медична послуга?
+- Чи немає дублікатів?
+- Чи правильно розрізнені ціна і собівартість?
+Якщо є сумніви — зниж confidence і додай warning.
+</step_3_validate>
 
 <output_format>
-Поверни ТІЛЬКИ JSON:
 {
+  "image_type": "ТАБЛИЦЯ",
   "services": [
     {
       "code": "001",
@@ -258,14 +291,57 @@ _SERVICE_AI_PROMPT = """\
       "price": 100.0,
       "materials": [
         {"name": "Матеріал", "unit": "штука", "quantity": 1, "cost": 5.0}
-      ]
+      ],
+      "confidence": "high",
+      "warning": ""
     }
   ],
   "total_found": 5,
   "confidence": "high",
-  "notes": ""
+  "notes": "",
+  "warnings": []
 }
+
+Поля верхнього рівня:
+- "confidence": загальна оцінка (мінімум з усіх окремих)
+- "notes": додаткова інформація (порожній рядок якщо все ОК)
+- "warnings": масив загальних попереджень, наприклад:
+  ["Зображення низької якості — рекомендовано перевірити ціни",
+   "Частина тексту обрізана внизу зображення"]
 </output_format>"""
+
+
+def _normalize_service(svc: dict, idx: int) -> dict:
+    """Normalise a single service dict from AI response."""
+    materials = []
+    for m in svc.get("materials", []):
+        try:
+            materials.append({
+                "name": str(m.get("name", "")),
+                "unit": str(m.get("unit", "")),
+                "quantity": float(m.get("quantity", 0)),
+                "cost": float(m.get("cost", 0)),
+            })
+        except (ValueError, TypeError):
+            continue
+
+    try:
+        price = float(svc.get("price", 0))
+    except (ValueError, TypeError):
+        price = 0.0
+
+    confidence = svc.get("confidence", "medium")
+    if confidence not in ("high", "medium", "low"):
+        confidence = "medium"
+
+    return {
+        "code": str(svc.get("code", "") or f"{idx + 1:03d}"),
+        "name": str(svc.get("name", "")),
+        "price": price,
+        "materials": materials,
+        "confidence": confidence,
+        "warning": str(svc.get("warning", "")),
+    }
 
 
 @router.post("/analyze-image")
@@ -287,8 +363,10 @@ async def analyze_services_image(
             ),
         )
 
-    all_services = []
-    notes_parts = []
+    all_services: list[dict] = []
+    notes_parts: list[str] = []
+    warnings_parts: list[str] = []
+    overall_confidence = "high"
 
     for image_file in images:
         raw = await image_file.read()
@@ -303,38 +381,52 @@ async def analyze_services_image(
                 provider, api_key, raw, media_type,
                 _SERVICE_AI_SYSTEM, _SERVICE_AI_PROMPT,
             )
-            data = parse_ai_json(text, {"services": [], "confidence": "low", "notes": "Не вдалося розпізнати"})
+            data = parse_ai_json(text, {
+                "services": [],
+                "confidence": "low",
+                "notes": "Не вдалося розпізнати",
+                "warnings": [],
+            })
 
             services_list = data.get("services", [])
-            for svc in services_list:
-                # Normalise materials
-                materials = []
-                for m in svc.get("materials", []):
-                    materials.append({
-                        "name": str(m.get("name", "")),
-                        "unit": str(m.get("unit", "")),
-                        "quantity": float(m.get("quantity", 0)),
-                        "cost": float(m.get("cost", 0)),
-                    })
-                all_services.append({
-                    "code": str(svc.get("code", "")),
-                    "name": str(svc.get("name", "")),
-                    "price": float(svc.get("price", 0)),
-                    "materials": materials,
-                })
+            for idx, svc in enumerate(services_list):
+                all_services.append(_normalize_service(svc, len(all_services) + idx))
+
+            file_conf = data.get("confidence", "medium")
+            if file_conf == "low":
+                overall_confidence = "low"
+            elif file_conf == "medium" and overall_confidence == "high":
+                overall_confidence = "medium"
 
             if data.get("notes"):
-                notes_parts.append(f"{image_file.filename}: {data['notes']}")
+                notes_parts.append(
+                    f"{image_file.filename}: {data['notes']}"
+                    if len(images) > 1 else data["notes"]
+                )
+
+            for w in data.get("warnings", []):
+                warnings_parts.append(str(w))
 
         except Exception as exc:
             logger.exception("AI analysis failed for %s", image_file.filename)
             notes_parts.append(f"Помилка аналізу {image_file.filename}: {exc}")
+            overall_confidence = "low"
+
+    # Determine per-item confidence minimum
+    if all_services:
+        item_confs = [s["confidence"] for s in all_services]
+        if "low" in item_confs:
+            overall_confidence = "low"
+        elif "medium" in item_confs and overall_confidence == "high":
+            overall_confidence = "medium"
 
     return {
         "services": all_services,
         "total_found": len(all_services),
+        "confidence": overall_confidence,
         "provider": provider,
         "notes": "; ".join(notes_parts) if notes_parts else "",
+        "warnings": warnings_parts,
     }
 
 
