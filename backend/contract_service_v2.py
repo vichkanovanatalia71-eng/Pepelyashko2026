@@ -231,7 +231,8 @@ class ContractServiceV2:
                 total_amount = sum(item.get('amount', 0) for item in items)
             
             # Create PDF with correct margins (top/bottom: 2cm, left: 3cm, right: 1cm)
-            filename = f"Договір_{contract_number.replace('/', '_')}_{buyer_data.get('ЄДРПОУ', '')}.pdf"
+            safe_contract_number = contract_number.replace('/', '_').replace('\\', '_')
+            filename = f"Договір_{safe_contract_number}_{buyer_data.get('ЄДРПОУ', '')}.pdf"
             filepath = self.output_dir / filename
             
             doc = SimpleDocTemplate(

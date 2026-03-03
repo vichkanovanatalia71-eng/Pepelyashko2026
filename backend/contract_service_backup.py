@@ -66,7 +66,8 @@ class ContractService:
             subject = contract_data.get('subject', 'Товар')
             
             # Generate filename
-            filename = f"contract_{contract_number}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+            safe_contract_number = contract_number.replace('/', '_').replace('\\', '_')
+            filename = f"contract_{safe_contract_number}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
             output_path = self.output_dir / filename
             
             # Create PDF
@@ -224,7 +225,8 @@ class ContractService:
             if upload_to_drive and self.drive_service:
                 try:
                     # Create custom filename with EDRPOU
-                    drive_filename = f"Договір_{contract_number}_{supplier_edrpou}.pdf"
+                    safe_contract_number = contract_number.replace('/', '_').replace('\\', '_')
+                    drive_filename = f"Договір_{safe_contract_number}_{supplier_edrpou}.pdf"
                     
                     drive_result = self.drive_service.upload_file(
                         file_path=str(output_path),

@@ -280,9 +280,10 @@ class InvoiceService:
             parsed_html = self._parse_template(html_template, context)
             
             # 14. Create PDF filename
-            filename = f"Рахунок_{invoice_number}_{buyer_data.get('ЄДРПОУ', '')}.pdf"
+            safe_invoice_number = invoice_number.replace('/', '_').replace('\\', '_')
+            filename = f"Рахунок_{safe_invoice_number}_{buyer_data.get('ЄДРПОУ', '')}.pdf"
             filepath = self.output_dir / filename
-            
+
             # 15. Generate PDF from HTML using WeasyPrint
             HTML(string=parsed_html).write_pdf(str(filepath))
             
@@ -573,9 +574,10 @@ class InvoiceService:
             parsed_html = self._parse_template(html_template, context)
             
             # 12. Create PDF filename
-            filename = f"Рахунок_{invoice_number}_{buyer_data.get('ЄДРПОУ', '')}.pdf"
+            safe_invoice_number = invoice_number.replace('/', '_').replace('\\', '_')
+            filename = f"Рахунок_{safe_invoice_number}_{buyer_data.get('ЄДРПОУ', '')}.pdf"
             filepath = self.output_dir / filename
-            
+
             # 13. Generate PDF from HTML using WeasyPrint
             HTML(string=parsed_html).write_pdf(str(filepath))
             
