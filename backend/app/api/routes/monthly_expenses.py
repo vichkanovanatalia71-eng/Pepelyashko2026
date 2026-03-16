@@ -1968,7 +1968,7 @@ async def _build_owner_share_payload(
         svcs = ps_dict.get("services_table", [])
         income_by_doctor: dict[int, dict] = {}
         for svc in svcs:
-            for doc in svc.get("doctors", []):
+            for doc in svc.get("by_doctor", []):
                 did = doc.get("doctor_id")
                 if did not in income_by_doctor:
                     income_by_doctor[did] = {"name": doc.get("doctor_name", ""), "income": 0.0}
