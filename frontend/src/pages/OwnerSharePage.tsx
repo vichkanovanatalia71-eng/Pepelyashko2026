@@ -22,7 +22,7 @@ import {
   PiggyBank,
   CircleDollarSign,
 } from "lucide-react";
-import MedFlowLogo from "../components/shared/MedFlowLogo";
+
 import {
   BarChart,
   Bar,
@@ -228,7 +228,6 @@ export default function OwnerSharePage() {
   ].filter((x: any) => x.value > 0) : [];
 
   // ── Combined totals for Block 1 ──
-  const totalNhsuNet = fi ? (fi.own_nhsu_brutto + (fi.hired_doctor?.nhsu_brutto ?? 0)) : nhsuGrandAmount;
   const totalPaidRevenue = paidDash?.total_revenue ?? 0;
 
   return (
