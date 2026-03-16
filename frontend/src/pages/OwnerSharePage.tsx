@@ -479,6 +479,108 @@ function TabPaidServices({ paidDash, paidTable }: {
           <ServicesTable rows={paidTable} />
         </div>
       )}
+
+      {/* Per-doctor services breakdown */}
+      {paidTable.length > 0 && (() => {
+        // Collect unique doctors from by_doctor arrays
+        const doctorMap = new Map<number, { doctor_id: number; doctor_name: string }>();
+        for (const row of paidTable) {
+          for (const bd of (row.by_doctor ?? [])) {
+            if (!doctorMap.has(bd.doctor_id)) {
+              doctorMap.set(bd.doctor_id, { doctor_id: bd.doctor_id, doctor_name: bd.doctor_name });
+            }
+          }
+        }
+        const doctors = Array.from(doctorMap.values());
+        if (doctors.length < 2) return null;
+
+        return (
+          <div>
+            <p className="text-xs text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+              <Stethoscope size={12} />
+              Надані послуги по лікарях
+            </p>
+            <div className="space-y-4">
+              {doctors.map((doc) => {
+                const doctorRows = paidTable
+                  .filter((row: any) => (row.by_doctor ?? []).some((bd: any) => bd.doctor_id === doc.doctor_id))
+                  .map((row: any) => {
+                    const bd = row.by_doctor.find((b: any) => b.doctor_id === doc.doctor_id);
+                    const qty = bd?.quantity ?? 0;
+                    const ratio = row.total_quantity > 0 ? qty / row.total_quantity : 0;
+                    return {
+                      service_id: row.service_id,
+                      code: row.code,
+                      name: row.name,
+                      price: row.price,
+                      quantity: qty,
+                      sum: (row.price ?? 0) * qty,
+                      materials: (row.materials ?? 0) * ratio,
+                      ep_amount: (row.ep_amount ?? 0) * ratio,
+                      vz_amount: (row.vz_amount ?? 0) * ratio,
+                      to_split: (row.to_split ?? 0) * ratio,
+                      doctor_income: (row.doctor_income ?? 0) * ratio,
+                      org_income: (row.org_income ?? 0) * ratio,
+                    };
+                  });
+
+                const totalQty = doctorRows.reduce((s: number, r: any) => s + r.quantity, 0);
+                const totalSum = doctorRows.reduce((s: number, r: any) => s + r.sum, 0);
+                const totalDocIncome = doctorRows.reduce((s: number, r: any) => s + r.doctor_income, 0);
+
+                return (
+                  <div key={doc.doctor_id} className="card-neo overflow-hidden">
+                    <div className="px-5 py-3 border-b border-dark-50/10 flex items-center gap-2">
+                      <Stethoscope size={14} className="text-emerald-400" />
+                      <h4 className="text-sm font-medium text-gray-300">{doc.doctor_name}</h4>
+                      <span className="ml-auto text-xs text-gray-500">
+                        {totalQty} послуг · {fmt(totalSum)} грн · дохід {fmt(totalDocIncome)} грн
+                      </span>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs min-w-[700px]">
+                        <thead>
+                          <tr className="border-b border-dark-50/10 bg-dark-300/50">
+                            <th scope="col" className="text-left px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Код</th>
+                            <th scope="col" className="text-left px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Назва</th>
+                            <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">К-ть</th>
+                            <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Сума</th>
+                            <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Дохід лікаря</th>
+                            <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Дохід орг.</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {doctorRows.map((r: any) => (
+                            <tr key={r.service_id} className="border-b border-dark-50/5 hover:bg-dark-300/30 transition-colors">
+                              <td className="px-3 py-2.5 font-mono text-accent-400">{r.code}</td>
+                              <td className="px-3 py-2.5 text-gray-200">{r.name}</td>
+                              <td className="px-3 py-2.5 text-right text-gray-200 tabular-nums">{r.quantity}</td>
+                              <td className="px-3 py-2.5 text-right text-gray-200 tabular-nums">{fmt(r.sum)}</td>
+                              <td className="px-3 py-2.5 text-right text-green-400 font-medium tabular-nums">{fmt(r.doctor_income)}</td>
+                              <td className="px-3 py-2.5 text-right text-green-400 font-medium tabular-nums">{fmt(r.org_income)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                        <tfoot>
+                          <tr className="border-t border-dark-50/15 bg-dark-400/20">
+                            <td className="px-3 py-2.5 text-gray-300 font-semibold" colSpan={2}>Разом</td>
+                            <td className="px-3 py-2.5 text-right text-white font-bold tabular-nums">{totalQty}</td>
+                            <td className="px-3 py-2.5 text-right text-white font-bold tabular-nums">{fmt(totalSum)}</td>
+                            <td className="px-3 py-2.5 text-right text-green-400 font-bold tabular-nums">{fmt(totalDocIncome)}</td>
+                            <td className="px-3 py-2.5 text-right text-green-400 font-bold tabular-nums">
+                              {fmt(doctorRows.reduce((s: number, r: any) => s + r.org_income, 0))}
+                            </td>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
