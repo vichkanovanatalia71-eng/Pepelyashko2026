@@ -278,8 +278,8 @@ function ServicesTable({ rows }: { rows: any[] }) {
    ════════════════════════════════════════════════════════════ */
 
 /* ── Tab: Огляд ── */
-function TabOverview({ nhsuGrandAmount, nhsuGrandEpVz, totalPaidRevenue, paidDash, fi, ownerName }: {
-  nhsuGrandAmount: number; nhsuGrandEpVz: number; totalPaidRevenue: number;
+function TabOverview({ nhsuGrandAmount, totalPaidRevenue, paidDash, fi, ownerName }: {
+  nhsuGrandAmount: number; totalPaidRevenue: number;
   paidDash: any; fi: any; ownerName: string;
 }) {
   const totalRevenue = nhsuGrandAmount + totalPaidRevenue;
@@ -875,7 +875,6 @@ export default function OwnerSharePage() {
         {activeTab === "overview" && (
           <TabOverview
             nhsuGrandAmount={nhsuGrandAmount}
-            nhsuGrandEpVz={nhsuGrandEpVz}
             totalPaidRevenue={totalPaidRevenue}
             paidDash={paidDash}
             fi={fi}
