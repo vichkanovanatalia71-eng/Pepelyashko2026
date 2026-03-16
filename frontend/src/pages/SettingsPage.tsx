@@ -62,6 +62,15 @@ export default function SettingsPage() {
   const [profileMsg, setProfileMsg] = useState("");
   const [profileErr, setProfileErr] = useState("");
 
+  // Re-sync profile form when user data loads/changes
+  useEffect(() => {
+    if (user) {
+      setFullName(user.full_name ?? "");
+      setFopGroup(user.fop_group ?? 3);
+      setTaxRate(String((user.tax_rate ?? 0.05) * 100));
+    }
+  }, [user]);
+
   // ── Зміна пароля ──
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -127,7 +136,9 @@ export default function SettingsPage() {
     try {
       const res = await api.get("/nhsu/doctors");
       setDoctors(res.data);
-    } catch {}
+    } catch {
+      setDoctorMsg("Не вдалося завантажити лікарів");
+    }
   }
 
   async function loadSettings() {
@@ -135,7 +146,9 @@ export default function SettingsPage() {
       const res = await api.get("/nhsu/settings");
       setNhsuSettings(res.data);
       setSettingsForm(res.data);
-    } catch {}
+    } catch {
+      setSettingsMsg("Не вдалося завантажити налаштування");
+    }
   }
 
   async function handleAddDoctor() {
@@ -162,14 +175,18 @@ export default function SettingsPage() {
     try {
       await api.delete(`/nhsu/doctors/${id}`);
       await loadDoctors();
-    } catch {}
+    } catch (e: any) {
+      setDoctorMsg(e?.response?.data?.detail ?? "Помилка видалення лікаря");
+    }
   }
 
   async function loadNurses() {
     try {
       const res = await api.get("/staff/", { params: { role: "nurse" } });
       setNurses(res.data);
-    } catch {}
+    } catch {
+      setNurseMsg("Не вдалося завантажити медсестер");
+    }
   }
 
   async function handleAddNurse() {
@@ -197,14 +214,18 @@ export default function SettingsPage() {
     try {
       await api.delete(`/staff/${id}`);
       await loadNurses();
-    } catch {}
+    } catch (e: any) {
+      setNurseMsg(e?.response?.data?.detail ?? "Помилка видалення");
+    }
   }
 
   async function loadOtherStaff() {
     try {
       const res = await api.get("/staff/", { params: { role: "other" } });
       setOtherStaff(res.data);
-    } catch {}
+    } catch {
+      setOtherMsg("Не вдалося завантажити персонал");
+    }
   }
 
   async function handleAddOtherStaff() {
@@ -232,7 +253,9 @@ export default function SettingsPage() {
     try {
       await api.delete(`/staff/${id}`);
       await loadOtherStaff();
-    } catch {}
+    } catch (e: any) {
+      setOtherMsg(e?.response?.data?.detail ?? "Помилка видалення");
+    }
   }
 
   async function handleSaveSettings() {
@@ -253,7 +276,9 @@ export default function SettingsPage() {
     try {
       const res = await api.get("/settings/api-keys");
       setApiKeysStatus(res.data);
-    } catch {}
+    } catch {
+      setApiKeysMsg("Не вдалося завантажити ключі");
+    }
   }
 
   async function handleProfileSubmit(e: FormEvent) {
@@ -326,7 +351,9 @@ export default function SettingsPage() {
     try {
       await api.put("/settings/api-keys", { [field]: "" });
       await loadApiKeys();
-    } catch {}
+    } catch (e: any) {
+      setApiKeysMsg(e?.response?.data?.detail ?? "Помилка видалення ключа");
+    }
   }
 
   /* ── Заголовок блоку (клікабельний, 3D-ховер, шеврон) ── */

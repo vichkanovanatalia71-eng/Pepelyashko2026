@@ -1,12 +1,12 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 
 
 class UserCreate(BaseModel):
     email: EmailStr
-    password: str
-    full_name: str
-    fop_group: int = 3
-    tax_rate: float = 0.05
+    password: str = Field(min_length=8, max_length=128)
+    full_name: str = Field(min_length=1, max_length=255)
+    fop_group: int = Field(default=3, ge=1, le=3)
+    tax_rate: float = Field(default=0.05, ge=0, le=1)
 
 
 class UserResponse(BaseModel):
@@ -34,10 +34,10 @@ class Token(BaseModel):
 
 class PasswordChange(BaseModel):
     old_password: str
-    new_password: str
+    new_password: str = Field(min_length=8, max_length=128)
 
 
 class ProfileUpdate(BaseModel):
-    full_name: str | None = None
-    fop_group: int | None = None
-    tax_rate: float | None = None
+    full_name: str | None = Field(default=None, min_length=1, max_length=255)
+    fop_group: int | None = Field(default=None, ge=1, le=3)
+    tax_rate: float | None = Field(default=None, ge=0, le=1)

@@ -1,4 +1,7 @@
-import type { AiParsedExpense } from "../../../types";
+export type ExpenseCategory =
+  | "fixed" | "salary" | "salary_paid"
+  | "owner_own" | "owner_hired" | "owner_paid"
+  | "other" | "taxes" | "general";
 
 export interface SalaryFormState {
   brutto: string;
@@ -14,9 +17,13 @@ export interface OtherExpense {
   name: string;
   description: string;
   amount: number;
-  category: string;
+  category: ExpenseCategory | string;
   year: number;
   month: number;
+  edited_by?: string | null;
+  edited_at?: string | null;
+  visible_to_accountant?: boolean;
+  is_cash_return?: boolean;
 }
 
 export interface DetailRow {
@@ -84,14 +91,6 @@ export interface CopyModalState {
   copyFixed: boolean;
   copySalary: boolean;
   saving: boolean;
-}
-
-export interface AiModalState {
-  open: boolean;
-  text: string;
-  file: File | null;
-  loading: boolean;
-  result: AiParsedExpense | null;
 }
 
 export interface ShareModalState {

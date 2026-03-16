@@ -5,6 +5,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.core.deps import get_current_user, get_db
 from app.core.email import send_verification_email
 from app.core.security import create_access_token, get_password_hash, verify_password
@@ -49,11 +50,10 @@ async def register(user_in: UserCreate, db: AsyncSession = Depends(get_db)):
     try:
         email_sent = await send_verification_email(email, token)
     except Exception:
-        # Якщо відправлення не вдалось — автоверифікуємо користувача
         email_sent = False
 
-    # Якщо SMTP не налаштовано — автоматично верифікуємо (режим розробки)
-    if not email_sent:
+    # Auto-verify ONLY in debug mode (development); in production require email
+    if not email_sent and settings.debug:
         user.is_verified = True
         user.verification_token = None
         await db.commit()

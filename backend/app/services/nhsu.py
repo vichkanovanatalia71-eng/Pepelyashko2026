@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from sqlalchemy import select, delete
+from sqlalchemy import case, select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.doctor import Doctor
@@ -88,6 +88,12 @@ async def get_monthly_report(
 ) -> NhsuMonthlyReport | None:
     """Отримати повний звіт НСЗУ за місяць з підсумками у різних розрізах."""
 
+    # Сортуємо вікові групи за визначеним порядком (0-5, 6-17, 18-39, 40-64, 65+)
+    age_order = case(
+        {key: idx for idx, key in enumerate(AGE_GROUP_KEYS)},
+        value=NhsuRecord.age_group,
+        else_=len(AGE_GROUP_KEYS),
+    )
     result = await db.execute(
         select(NhsuRecord)
         .where(
@@ -95,7 +101,7 @@ async def get_monthly_report(
             NhsuRecord.year == year,
             NhsuRecord.month == month,
         )
-        .order_by(NhsuRecord.doctor_id, NhsuRecord.age_group)
+        .order_by(NhsuRecord.doctor_id, age_order)
     )
     records = result.scalars().all()
 
@@ -198,10 +204,10 @@ async def get_monthly_report(
             )
         )
         grand_total_patients += doc_patients
-        grand_total_non_verified += doc_non_verified
-        grand_total_amount += doc_amount
-        grand_total_ep += doc_ep
-        grand_total_vz += doc_vz
+        grand_total_non_verified += round(doc_non_verified, 1)
+        grand_total_amount += round(doc_amount, 2)
+        grand_total_ep += round(doc_ep, 2)
+        grand_total_vz += round(doc_vz, 2)
 
     # Побудувати підсумки по вікових групах
     age_group_summaries = []

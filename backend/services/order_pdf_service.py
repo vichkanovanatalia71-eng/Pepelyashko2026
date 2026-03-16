@@ -501,7 +501,8 @@ class OrderPDFService:
             
             # Generate PDF
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            pdf_filename = f"order_{order_number}_{timestamp}.pdf"
+            safe_order_number = order_number.replace('/', '_').replace('\\', '_')
+            pdf_filename = f"order_{safe_order_number}_{timestamp}.pdf"
             pdf_path = self.output_dir / pdf_filename
             
             HTML(string=html_content).write_pdf(pdf_path)

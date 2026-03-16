@@ -280,7 +280,8 @@ class ActService:
             parsed_html = self._parse_template(html_template, context)
             
             # 13. Create PDF filename
-            filename = f"Акт_{act_number}_{buyer_data.get('ЄДРПОУ', '')}.pdf"
+            safe_act_number = act_number.replace('/', '_').replace('\\', '_')
+            filename = f"Акт_{safe_act_number}_{buyer_data.get('ЄДРПОУ', '')}.pdf"
             filepath = self.output_dir / filename
             
             # 14. Generate PDF from HTML using WeasyPrint

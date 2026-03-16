@@ -14,7 +14,6 @@ import {
   BadgeDollarSign,
   Sun,
   Moon,
-  MessageCircle,
   PanelLeftClose,
   PanelLeftOpen,
 } from "lucide-react";
@@ -24,12 +23,11 @@ import { useTheme } from "../hooks/useTheme";
 
 // ── Навігаційні пункти ────────────────────────────────────────────
 const navItems = [
-  { to: "/",                   icon: LayoutDashboard,  label: "Дашборд",        short: "Дашборд"  },
-  { to: "/revenue",            icon: BadgeDollarSign,  label: "Доходи",         short: "Доходи"   },
-  { to: "/monthly-services",   icon: BarChart3,        label: "Платні послуги", short: "Послуги"  },
-  { to: "/nhsu",               icon: HeartPulse,       label: "НСЗУ",           short: "НСЗУ"     },
   { to: "/expenses",           icon: TrendingDown,     label: "Витрати",        short: "Витрати"  },
-  { to: "/ai-consultant",      icon: MessageCircle,    label: "AI-Консультант", short: "AI"       },
+  { to: "/nhsu",               icon: HeartPulse,       label: "НСЗУ",           short: "НСЗУ"     },
+  { to: "/monthly-services",   icon: BarChart3,        label: "Платні послуги", short: "Послуги"  },
+  { to: "/revenue",            icon: BadgeDollarSign,  label: "Доходи",         short: "Доходи"   },
+  { to: "/",                   icon: LayoutDashboard,  label: "Дашборд",        short: "Дашборд"  },
   { to: "/services",           icon: ClipboardList,    label: "Прайс послуг",   short: "Прайс"    },
   { to: "/settings",           icon: Settings,         label: "Налаштування",   short: "Налашт."  },
 ];
@@ -92,7 +90,7 @@ export default function Layout() {
             {!collapsed && (
               <div className="min-w-0 sidebar-label">
                 <h1 className="text-lg font-bold text-white tracking-tight">MedFlow</h1>
-                <p className="text-xs text-gray-500">Фінанси ФОП</p>
+                <p className="text-xs text-gray-500">Зведені фінанси за ФОП</p>
               </div>
             )}
           </div>

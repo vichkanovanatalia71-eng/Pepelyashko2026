@@ -15,25 +15,43 @@ import {
   RefreshCw,
   Info,
   History,
+  AlertTriangle,
 } from "lucide-react";
 import { ConfirmDialog } from "../components/shared";
 
 const fmt = (v: number) =>
   v.toLocaleString("uk-UA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-interface StaffItem {
+/* ── Interfaces ── */
+
+interface LiveSalary {
   staff_member_id: number;
   full_name: string;
   role: string;
   position: string;
+  current_brutto: number;
   prev_brutto: number;
+  edited_by: string | null;
+  edited_at: string | null;
 }
 
-interface RecurringExpense {
+interface LiveFixedExpense {
+  id: number;
   name: string;
   amount: number;
-  category_key?: string;
-  is_recurring?: boolean;
+  is_recurring: boolean;
+  category_key: string;
+  edited_by: string | null;
+  edited_at: string | null;
+}
+
+interface LiveOtherExpense {
+  id: number;
+  name: string;
+  amount: number;
+  category: string;
+  edited_by: string | null;
+  edited_at: string | null;
 }
 
 interface ShareData {
@@ -50,8 +68,13 @@ interface ShareData {
     submitted_at: string;
   } | null;
   data: {
-    salary_staff: StaffItem[];
-    recurring_expenses: RecurringExpense[];
+    salary_staff: { staff_member_id: number; full_name: string; role: string; position: string; prev_brutto: number }[];
+    recurring_expenses?: { name: string; amount: number; category_key?: string; is_recurring?: boolean }[];
+  };
+  live_data: {
+    salaries: LiveSalary[];
+    fixed_expenses: LiveFixedExpense[];
+    other_expenses: LiveOtherExpense[];
   };
 }
 
@@ -62,15 +85,21 @@ interface SalaryRow {
   position: string;
   brutto: number;
   prev_brutto: number;
+  edited_by?: string | null;
+  edited_at?: string | null;
 }
 
 interface ExpenseRow {
   id: number;
+  backendId?: number;
+  source?: "fixed" | "other";
   name: string;
   amount: number | string;
   is_recurring: boolean;
   fromPrev: boolean;
   prevAmount: number;
+  edited_by?: string | null;
+  edited_at?: string | null;
 }
 
 const MONTHS_UA = [
@@ -102,15 +131,16 @@ export default function AccountantRequestPage() {
   const [editMode, setEditMode] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [successAnim, setSuccessAnim] = useState(false);
+  const [resubmitConfirmOpen, setResubmitConfirmOpen] = useState(false);
 
-  async function loadData() {
+  async function loadData(isEdit = false) {
     if (!token) return;
     setLoading(true);
     setError("");
     try {
       const r = await api.get(`/monthly-expenses/accountant-request/${token}/view`);
       setData(r.data);
-      initForm(r.data);
+      initForm(r.data, isEdit);
     } catch (err: any) {
       const detail = err?.response?.data?.detail;
       const status = err?.response?.status;
@@ -130,34 +160,90 @@ export default function AccountantRequestPage() {
     loadData();
   }, [token]);
 
-  function initForm(d: ShareData) {
-    if (d.submitted && d.submitted_data && !editMode) {
+  function initForm(d: ShareData, isEdit = false) {
+    if (d.submitted && d.submitted_data && !editMode && !isEdit) {
       setSubmitted(true);
       setSavedResult(d.submitted_data);
     }
 
-    // Init salaries from payload
-    const rows: SalaryRow[] = (d.data.salary_staff || []).map((s) => ({
-      staff_member_id: s.staff_member_id,
-      full_name: s.full_name,
-      role: s.role,
-      position: s.position,
-      brutto: s.prev_brutto,
-      prev_brutto: s.prev_brutto,
-    }));
-    setSalaries(rows);
+    // Use live_data if available, fallback to payload_snapshot
+    const live = d.live_data;
 
-    // Init recurring expenses from previous month
-    const recExp: ExpenseRow[] = (d.data.recurring_expenses || []).map((re, idx) => ({
-      id: idx + 1,
-      name: re.name,
-      amount: re.amount,
-      is_recurring: true,
-      fromPrev: true,
-      prevAmount: re.amount,
-    }));
-    setExpenses(recExp);
-    setNextExpId(recExp.length + 1);
+    // Init salaries from live_data (current values)
+    if (live?.salaries?.length) {
+      const rows: SalaryRow[] = live.salaries.map((s) => ({
+        staff_member_id: s.staff_member_id,
+        full_name: s.full_name,
+        role: s.role,
+        position: s.position,
+        brutto: s.current_brutto,
+        prev_brutto: s.prev_brutto,
+        edited_by: s.edited_by,
+        edited_at: s.edited_at,
+      }));
+      setSalaries(rows);
+    } else {
+      // Fallback to old payload
+      const rows: SalaryRow[] = (d.data.salary_staff || []).map((s) => ({
+        staff_member_id: s.staff_member_id,
+        full_name: s.full_name,
+        role: s.role,
+        position: s.position,
+        brutto: s.prev_brutto,
+        prev_brutto: s.prev_brutto,
+      }));
+      setSalaries(rows);
+    }
+
+    // Init expenses from live_data (fixed + other)
+    let nextId = 1;
+    const allExpenses: ExpenseRow[] = [];
+
+    if (live?.fixed_expenses?.length || live?.other_expenses?.length) {
+      for (const fe of live.fixed_expenses || []) {
+        allExpenses.push({
+          id: nextId++,
+          backendId: fe.id,
+          source: "fixed",
+          name: fe.name,
+          amount: fe.amount,
+          is_recurring: fe.is_recurring,
+          fromPrev: false,
+          prevAmount: fe.amount,
+          edited_by: fe.edited_by,
+          edited_at: fe.edited_at,
+        });
+      }
+      for (const oe of live.other_expenses || []) {
+        allExpenses.push({
+          id: nextId++,
+          backendId: oe.id,
+          source: "other",
+          name: oe.name,
+          amount: oe.amount,
+          is_recurring: false,
+          fromPrev: false,
+          prevAmount: oe.amount,
+          edited_by: oe.edited_by,
+          edited_at: oe.edited_at,
+        });
+      }
+    } else {
+      // Fallback to old payload (recurring_expenses)
+      for (const re of d.data.recurring_expenses || []) {
+        allExpenses.push({
+          id: nextId++,
+          name: re.name,
+          amount: re.amount,
+          is_recurring: true,
+          fromPrev: true,
+          prevAmount: re.amount,
+        });
+      }
+    }
+
+    setExpenses(allExpenses);
+    setNextExpId(nextId);
   }
 
   function handleSalaryChange(idx: number, val: string) {
@@ -202,6 +288,8 @@ export default function AccountantRequestPage() {
             name: e.name,
             amount: e.amount,
             is_recurring: e.is_recurring,
+            backend_id: e.backendId ?? null,
+            source: e.source ?? "fixed",
           })),
       });
       setSavedResult(res.data.saved);
@@ -221,8 +309,41 @@ export default function AccountantRequestPage() {
   }
 
   function handleEdit() {
+    // Show resubmit confirmation before editing
+    setResubmitConfirmOpen(true);
+  }
+
+  function confirmResubmit() {
+    setResubmitConfirmOpen(false);
     setSubmitted(false);
     setEditMode(true);
+    // Re-fetch live data when entering edit mode (isEdit=true skips submitted check)
+    loadData(true);
+  }
+
+  // Helper: badge for edited_by
+  function CreatorBadge({ editedBy, editedAt }: { editedBy?: string | null; editedAt?: string | null }) {
+    if (editedBy === "accountant") {
+      return (
+        <span
+          className="text-[10px] px-1.5 py-0.5 rounded bg-teal-500/15 text-teal-400 border border-teal-500/20 shrink-0"
+          title={editedAt ? `Оновлено: ${new Date(editedAt).toLocaleDateString("uk-UA")}` : undefined}
+        >
+          Бухгалтер
+        </span>
+      );
+    }
+    if (editedBy === "user" || !editedBy) {
+      return (
+        <span
+          className="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-400 border border-blue-500/20 shrink-0"
+          title={editedAt ? `Оновлено: ${new Date(editedAt).toLocaleDateString("uk-UA")}` : undefined}
+        >
+          Власник
+        </span>
+      );
+    }
+    return null;
   }
 
   // ── Loading / Error states ──
@@ -245,7 +366,7 @@ export default function AccountantRequestPage() {
           <h1 className="text-xl font-bold text-white mb-2">Посилання недійсне</h1>
           <p className="text-gray-400 text-sm mb-4">{error || "Термін дії закінчився."}</p>
           <button
-            onClick={loadData}
+            onClick={() => loadData()}
             className="flex items-center gap-2 mx-auto px-5 py-2.5 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-400 text-sm font-medium hover:bg-orange-500/20 transition-all"
           >
             <RefreshCw size={14} />
@@ -351,6 +472,28 @@ export default function AccountantRequestPage() {
             </button>
           </div>
         </div>
+
+        {/* Resubmit confirmation dialog */}
+        <ConfirmDialog
+          open={resubmitConfirmOpen}
+          icon={<AlertTriangle size={22} className="text-amber-400" />}
+          title="Звіт уже подано"
+          description={`За ${data.filter_label} звіт уже було подано раніше. Бажаєте подати повторно? Попередні дані буде замінено.`}
+          confirmLabel="Так, редагувати"
+          cancelLabel="Скасувати"
+          onConfirm={confirmResubmit}
+          onCancel={() => setResubmitConfirmOpen(false)}
+        />
+
+        <ConfirmDialog
+          open={!!alertDlg}
+          title={alertDlg?.title ?? ""}
+          description={alertDlg?.description}
+          confirmLabel="Зрозуміло"
+          cancelLabel="Закрити"
+          onConfirm={() => setAlertDlg(null)}
+          onCancel={() => setAlertDlg(null)}
+        />
       </div>
     );
   }
@@ -402,7 +545,7 @@ export default function AccountantRequestPage() {
           <div className="flex items-center gap-1.5 mb-4">
             <History size={11} className="text-gray-600" />
             <p className="text-xs text-gray-500">
-              Суми підставлені з попереднього періоду ({prevLabel}). Відредагуйте якщо зарплата змінилась.
+              Суми підставлені з поточних даних системи. Відредагуйте якщо зарплата змінилась.
             </p>
           </div>
 
@@ -416,7 +559,10 @@ export default function AccountantRequestPage() {
                   <div key={s.staff_member_id} className="py-3 px-4 bg-dark-400/30 rounded-xl">
                     <div className="flex items-center gap-3">
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-white truncate">{s.full_name}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-medium text-white truncate">{s.full_name}</p>
+                          <CreatorBadge editedBy={s.edited_by} editedAt={s.edited_at} />
+                        </div>
                         <p className="text-xs text-gray-500">{s.position || s.role}</p>
                       </div>
                       <div className="flex items-center gap-2">
@@ -468,7 +614,7 @@ export default function AccountantRequestPage() {
           <div className="flex items-center gap-1.5 mb-4">
             <History size={11} className="text-gray-600" />
             <p className="text-xs text-gray-500">
-              Постійні витрати перенесені з попереднього періоду ({prevLabel}). Перевірте суми та додайте нові витрати.
+              Витрати завантажені з поточних даних системи. Перевірте суми та додайте нові витрати.
             </p>
           </div>
 
@@ -479,13 +625,19 @@ export default function AccountantRequestPage() {
                 const amountChanged = exp.fromPrev && numAmount !== exp.prevAmount;
                 return (
                   <div key={exp.id} className="py-3 px-4 bg-dark-400/30 rounded-xl">
-                    {exp.fromPrev && (
-                      <div className="flex items-center gap-1.5 mb-2">
+                    <div className="flex items-center gap-1.5 mb-2 flex-wrap">
+                      {exp.fromPrev && (
                         <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent-500/15 text-accent-400 border border-accent-500/20">
                           з попереднього місяця
                         </span>
-                      </div>
-                    )}
+                      )}
+                      {exp.is_recurring && !exp.fromPrev && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent-500/15 text-accent-400 border border-accent-500/20">
+                          щомісячно
+                        </span>
+                      )}
+                      <CreatorBadge editedBy={exp.edited_by} editedAt={exp.edited_at} />
+                    </div>
                     <div className="flex items-start gap-3">
                       <div className="flex-1 space-y-2">
                         <input

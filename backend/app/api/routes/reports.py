@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import json
+import logging
 import time
 from collections import defaultdict
 from datetime import date
+
+logger = logging.getLogger(__name__)
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import and_, case, extract, func, or_, select
@@ -61,7 +64,7 @@ async def period_report(
     )
     total_income = float(income_result.scalar())
 
-    # Total expenses
+    # Ad-hoc expenses from Expense table
     expense_result = await db.execute(
         select(func.coalesce(func.sum(Expense.amount), 0)).where(
             Expense.user_id == user.id,
@@ -69,17 +72,71 @@ async def period_report(
             Expense.date <= date_to,
         )
     )
-    total_expenses = float(expense_result.scalar())
+    adhoc_expenses = float(expense_result.scalar())
 
-    # Calculate taxes
-    tax_single = round(total_income * user.tax_rate, 2)
-    # Approximate ESV based on number of months in period
+    # Structured expenses: determine (year, month) pairs in the period
+    _periods = []
+    _y, _m = date_from.year, date_from.month
+    while (_y, _m) <= (date_to.year, date_to.month):
+        _periods.append((_y, _m))
+        _m += 1
+        if _m > 12:
+            _m = 1
+            _y += 1
+
+    # Fixed monthly expenses
+    fixed_total = 0.0
+    if _periods:
+        ym_filter = or_(*[
+            and_(MonthlyFixedExpense.year == y, MonthlyFixedExpense.month == m)
+            for y, m in _periods
+        ])
+        fixed_r = await db.execute(
+            select(func.coalesce(func.sum(MonthlyFixedExpense.amount), 0)).where(
+                MonthlyFixedExpense.user_id == user.id,
+                ym_filter,
+            )
+        )
+        fixed_total = float(fixed_r.scalar())
+
+    # Load user settings for tax rates
     nhsu_result = await db.execute(
         select(NhsuSettings).where(NhsuSettings.user_id == user.id)
     )
     nhsu = nhsu_result.scalar_one_or_none()
     esv_monthly = float(nhsu.esv_monthly) if nhsu else settings.esv_monthly
     vz_rate = float(nhsu.vz_rate) / 100 if nhsu else 0.015
+    pdfo_rate_v = float(nhsu.pdfo_rate) / 100 if nhsu else 0.18
+    vz_zp_rate_v = float(nhsu.vz_zp_rate) / 100 if nhsu else 0.05
+    esv_emp_rate_v = float(nhsu.esv_employer_rate) / 100 if nhsu else 0.22
+
+    # Salary expenses (brutto + ESV employer + supplement + bonus)
+    salary_total = 0.0
+    if _periods:
+        ym_filter_sal = or_(*[
+            and_(MonthlySalaryExpense.year == y, MonthlySalaryExpense.month == m)
+            for y, m in _periods
+        ])
+        sal_r = await db.execute(
+            select(MonthlySalaryExpense).where(
+                MonthlySalaryExpense.user_id == user.id,
+                ym_filter_sal,
+            )
+        )
+        for rec in sal_r.scalars().all():
+            brutto = float(rec.brutto) if rec.brutto else 0.0
+            esv = round(brutto * esv_emp_rate_v, 2)
+            netto = round(brutto - round(brutto * pdfo_rate_v, 2) - round(brutto * vz_zp_rate_v, 2), 2)
+            supplement = 0.0
+            if rec.has_supplement and rec.target_net:
+                supplement = max(0, float(rec.target_net) - netto)
+            bonus = float(rec.individual_bonus) if rec.individual_bonus else 0.0
+            salary_total += round(brutto + esv + supplement + bonus, 2)
+
+    total_expenses = round(adhoc_expenses + fixed_total + salary_total, 2)
+
+    # Calculate taxes
+    tax_single = round(total_income * user.tax_rate, 2)
     days = (date_to - date_from).days + 1
     months = max(1, round(days / 30))
     tax_esv = round(esv_monthly * months, 2)
@@ -121,48 +178,35 @@ async def annual_report(
     nhsu = nhsu_result.scalar_one_or_none()
     esv_monthly = float(nhsu.esv_monthly) if nhsu else settings.esv_monthly
     vz_rate = float(nhsu.vz_rate) / 100 if nhsu else 0.015
+    ep_rate_pct = float(nhsu.ep_rate) if nhsu else 5.0
+    pdfo_rate_pct = float(nhsu.pdfo_rate) if nhsu else 18.0
+    vz_zp_rate_pct = float(nhsu.vz_zp_rate) if nhsu else 5.0
+    esv_employer_rate_pct = float(nhsu.esv_employer_rate) if nhsu else 22.0
 
-    # Aggregate income/expenses by month in 2 queries instead of 24
-    year_start = date(year, 1, 1)
-    year_end = date(year, 12, 31)
-
-    inc_by_month_r = await db.execute(
-        select(
-            extract("month", Income.date).label("m"),
-            func.coalesce(func.sum(Income.amount), 0),
-        ).where(
-            Income.user_id == user.id,
-            Income.date >= year_start,
-            Income.date <= year_end,
-        ).group_by("m")
+    # Use _batch_month_totals to include ALL expense sources
+    # (fixed, salary, taxes, ad-hoc) — not just the old Expense table
+    all_periods = [(year, m) for m in range(1, 13)]
+    month_cache = await _batch_month_totals(
+        db, user.id, all_periods, esv_monthly, vz_rate, user.tax_rate,
+        ep_rate_pct=ep_rate_pct,
+        pdfo_rate_pct=pdfo_rate_pct,
+        vz_zp_rate_pct=vz_zp_rate_pct,
+        esv_employer_rate_pct=esv_employer_rate_pct,
     )
-    income_map = {int(row[0]): float(row[1]) for row in inc_by_month_r.all()}
-
-    exp_by_month_r = await db.execute(
-        select(
-            extract("month", Expense.date).label("m"),
-            func.coalesce(func.sum(Expense.amount), 0),
-        ).where(
-            Expense.user_id == user.id,
-            Expense.date >= year_start,
-            Expense.date <= year_end,
-        ).group_by("m")
-    )
-    expense_map = {int(row[0]): float(row[1]) for row in exp_by_month_r.all()}
 
     months_data: list[MonthlyPL] = []
     totals = dict(income=0.0, expenses=0.0, net=0.0, single=0.0, esv=0.0, vz=0.0, taxes=0.0, after=0.0)
 
     for m in range(1, 13):
-        income = income_map.get(m, 0.0)
-        expenses = expense_map.get(m, 0.0)
-
-        tax_single = round(income * user.tax_rate, 2)
-        tax_esv = round(esv_monthly, 2)
-        tax_vz = round(income * vz_rate, 2)
-        total_taxes = round(tax_single + tax_esv + tax_vz, 2)
+        m_data = month_cache[(year, m)]
+        income = m_data["income"]
+        expenses = m_data["expenses"]
+        tax_single = m_data["tax_single"]
+        tax_esv = m_data["tax_esv"]
+        tax_vz = m_data["tax_vz"]
+        total_taxes = m_data["total_taxes"]
         net_profit = round(income - expenses, 2)
-        income_after = round(net_profit - total_taxes, 2)
+        income_after = m_data["income_after_taxes"]
 
         months_data.append(MonthlyPL(
             month=m,
@@ -345,7 +389,7 @@ async def _check_data_integrity(
         select(func.coalesce(func.sum(Expense.amount), 0)).where(
             Expense.user_id == user_id,
             Expense.date >= d_start,
-            Expense.date <= d_end if month != 12 else Expense.date < d_end,
+            Expense.date < d_end,
         )
     )
     total_expenses = float(exp_result.scalar())
@@ -366,9 +410,10 @@ async def _get_nhsu_settings(db: AsyncSession, user_id: int) -> NhsuSettings | N
 
 
 async def _month_range(year: int, month: int) -> tuple[date, date]:
+    """Return (first_day_inclusive, first_day_of_next_month_exclusive)."""
     d_start = date(year, month, 1)
     if month == 12:
-        d_end = date(year, 12, 31)
+        d_end = date(year + 1, 1, 1)
     else:
         d_end = date(year, month + 1, 1)
     return d_start, d_end
@@ -383,16 +428,18 @@ async def _month_totals(
     vz_rate: float,
     tax_rate: float,
     ep_rate_pct: float = 5.0,
+    pdfo_rate_pct: float = 18.0,
+    vz_zp_rate_pct: float = 5.0,
+    esv_employer_rate_pct: float = 22.0,
 ) -> dict:
     d_start, d_end = await _month_range(year, month)
-    is_dec = month == 12
 
     # 1. Income from incomes table (manual entries)
     inc_r = await db.execute(
         select(func.coalesce(func.sum(Income.amount), 0)).where(
             Income.user_id == user_id,
             Income.date >= d_start,
-            Income.date <= d_end if is_dec else Income.date < d_end,
+            Income.date < d_end,
         )
     )
     manual_income = float(inc_r.scalar())
@@ -451,11 +498,14 @@ async def _month_totals(
 
     salary_total = 0.0
     esv_employer = 0.0
+    pdfo_frac = pdfo_rate_pct / 100
+    vz_zp_frac = vz_zp_rate_pct / 100
+    esv_emp_frac = esv_employer_rate_pct / 100
     for rec in salary_records:
         brutto = float(rec.brutto) if rec.brutto else 0.0
-        pdfo = round(brutto * 0.18, 2)  # PDFO 18%
-        vz_zp = round(brutto * 0.05, 2)  # VZ 5%
-        esv = round(brutto * 0.22, 2)    # ESV employer 22%
+        pdfo = round(brutto * pdfo_frac, 2)
+        vz_zp = round(brutto * vz_zp_frac, 2)
+        esv = round(brutto * esv_emp_frac, 2)
 
         # Calculate netto
         netto = round(brutto - pdfo - vz_zp, 2)
@@ -477,14 +527,16 @@ async def _month_totals(
     vz = round(income * vz_rate, 2)
     esv_owner = round(esv_monthly, 2)
 
-    tax_total = round(ep + vz + esv_owner + esv_employer, 2)
+    # esv_employer already included in salary_total (via employer_cost),
+    # so do NOT add it again here to avoid double-counting.
+    tax_total = round(ep + vz + esv_owner, 2)
 
     # 7. Ad-hoc expenses from Expense table
     exp_r = await db.execute(
         select(func.coalesce(func.sum(Expense.amount), 0)).where(
             Expense.user_id == user_id,
             Expense.date >= d_start,
-            Expense.date <= d_end if is_dec else Expense.date < d_end,
+            Expense.date < d_end,
         )
     )
     adhoc_expenses = float(exp_r.scalar())
@@ -518,6 +570,9 @@ async def _batch_month_totals(
     vz_rate: float,
     tax_rate: float,
     ep_rate_pct: float = 5.0,
+    pdfo_rate_pct: float = 18.0,
+    vz_zp_rate_pct: float = 5.0,
+    esv_employer_rate_pct: float = 22.0,
 ) -> dict[tuple[int, int], dict]:
     """Compute month totals for multiple periods in 6 bulk queries instead of 6*N."""
     if not periods:
@@ -602,12 +657,15 @@ async def _batch_month_totals(
     )
     salary_cost_map: dict[tuple[int, int], float] = defaultdict(float)
     salary_esv_map: dict[tuple[int, int], float] = defaultdict(float)
+    pdfo_frac = pdfo_rate_pct / 100
+    vz_zp_frac = vz_zp_rate_pct / 100
+    esv_emp_frac = esv_employer_rate_pct / 100
     for rec in salary_r.scalars().all():
         key = (rec.year, rec.month)
         brutto = float(rec.brutto) if rec.brutto else 0.0
-        pdfo = round(brutto * 0.18, 2)
-        vz_zp = round(brutto * 0.05, 2)
-        esv = round(brutto * 0.22, 2)
+        pdfo = round(brutto * pdfo_frac, 2)
+        vz_zp = round(brutto * vz_zp_frac, 2)
+        esv = round(brutto * esv_emp_frac, 2)
         netto = round(brutto - pdfo - vz_zp, 2)
         supplement = 0.0
         if rec.has_supplement and rec.target_net:
@@ -645,7 +703,8 @@ async def _batch_month_totals(
         ep = round(total_income * ep_rate_pct / 100, 2)
         vz = round(total_income * vz_rate, 2)
         esv_owner = round(esv_monthly, 2)
-        tax_total = round(ep + vz + esv_owner + esv_employer, 2)
+        # esv_employer already included in salary_total (via employer_cost)
+        tax_total = round(ep + vz + esv_owner, 2)
 
         adhoc = expense_map.get((y, m), 0.0)
         expenses = round(fixed_total + salary_total + tax_total + adhoc, 2)
@@ -875,7 +934,15 @@ async def _get_patients_by_doctor(db: AsyncSession, user_id: int, year: int, mon
     return sorted(result, key=lambda x: x.patient_count, reverse=True)
 
 
-async def _get_staff_breakdown(db: AsyncSession, user_id: int, year: int, month: int) -> tuple[list[StaffRoleBreakdown], float, float]:
+async def _get_staff_breakdown(
+    db: AsyncSession,
+    user_id: int,
+    year: int,
+    month: int,
+    pdfo_rate_pct: float = 18.0,
+    vz_zp_rate_pct: float = 5.0,
+    esv_employer_rate_pct: float = 22.0,
+) -> tuple[list[StaffRoleBreakdown], float, float]:
     """Отримати розбивку персоналу по ролях з розрахунком зарплат.
     Повертає: (список по ролях, загальна зарплата, ФОП)
     """
@@ -901,7 +968,7 @@ async def _get_staff_breakdown(db: AsyncSession, user_id: int, year: int, month:
             func.coalesce(func.sum(
                 case(
                     (MonthlySalaryExpense.has_supplement == True,
-                     MonthlySalaryExpense.target_net - (MonthlySalaryExpense.brutto * 0.77)),
+                     MonthlySalaryExpense.target_net - (MonthlySalaryExpense.brutto * (1 - pdfo_rate_pct / 100 - vz_zp_rate_pct / 100))),
                     else_=0.0
                 )
             ), 0),
@@ -921,10 +988,10 @@ async def _get_staff_breakdown(db: AsyncSession, user_id: int, year: int, month:
         individual_bonus = float(row[2] or 0)
         supplement = float(row[3] or 0)
 
-        # Calculate tax components
-        pdfo = round(brutto * 0.18, 2)  # PDFO 18%
-        vz = round(brutto * 0.05, 2)    # VZ 5%
-        esv_emp = round(brutto * 0.22, 2)  # ESV employer 22%
+        # Calculate tax components from configurable rates
+        pdfo = round(brutto * pdfo_rate_pct / 100, 2)
+        vz = round(brutto * vz_zp_rate_pct / 100, 2)
+        esv_emp = round(brutto * esv_employer_rate_pct / 100, 2)
         netto = round(brutto - pdfo - vz, 2)
 
         # Витрати роботодавця = brutto + esv_emp + individual_bonus + supplement
@@ -1039,8 +1106,8 @@ async def _get_top_paid_services_detailed(db: AsyncSession, user_id: int, year: 
             if data["materials"]:
                 materials = json.loads(data["materials"]) if isinstance(data["materials"], str) else data["materials"]
                 if isinstance(materials, list):
-                    materials_cost = sum(float(m.get("cost", 0)) for m in materials) * data["quantity"]
-        except:
+                    materials_cost = sum(float(m.get("quantity", 0)) * float(m.get("cost", 0)) for m in materials) * data["quantity"]
+        except (ValueError, TypeError, KeyError):
             pass
 
         revenue = data["revenue"]
@@ -1133,6 +1200,9 @@ async def _build_dashboard(
     esv_monthly = float(nhsu.esv_monthly) if nhsu else settings.esv_monthly
     vz_rate = float(nhsu.vz_rate) / 100 if nhsu else 0.015
     ep_rate_pct = float(nhsu.ep_rate) if nhsu else 5.0
+    pdfo_rate_pct = float(nhsu.pdfo_rate) if nhsu else 18.0
+    vz_zp_rate_pct = float(nhsu.vz_zp_rate) if nhsu else 5.0
+    esv_employer_rate_pct = float(nhsu.esv_employer_rate) if nhsu else 22.0
 
     # Compute all 6 months in ONE batch call (6 bulk queries instead of 36 sequential)
     months_needed: list[tuple[int, int]] = []
@@ -1147,6 +1217,9 @@ async def _build_dashboard(
     month_cache = await _batch_month_totals(
         db, user.id, months_needed, esv_monthly, vz_rate, user.tax_rate,
         ep_rate_pct=ep_rate_pct,
+        pdfo_rate_pct=pdfo_rate_pct,
+        vz_zp_rate_pct=vz_zp_rate_pct,
+        esv_employer_rate_pct=esv_employer_rate_pct,
     )
 
     # Current and previous months (already in cache)
@@ -1178,7 +1251,6 @@ async def _build_dashboard(
 
     # Income by category
     d_start, d_end = await _month_range(year, month)
-    is_dec = month == 12
 
     # Load income categories
     cat_res = await db.execute(select(IncomeCategory))
@@ -1189,7 +1261,7 @@ async def _build_dashboard(
         select(Income.category_id, func.sum(Income.amount)).where(
             Income.user_id == user.id,
             Income.date >= d_start,
-            Income.date <= d_end if is_dec else Income.date < d_end,
+            Income.date < d_end,
         ).group_by(Income.category_id)
     )
     income_by_cat_raw: dict[str, float] = defaultdict(float)
@@ -1219,13 +1291,48 @@ async def _build_dashboard(
         select(Expense.category_id, func.sum(Expense.amount)).where(
             Expense.user_id == user.id,
             Expense.date >= d_start,
-            Expense.date <= d_end if is_dec else Expense.date < d_end,
+            Expense.date < d_end,
         ).group_by(Expense.category_id)
     )
     expense_by_cat_raw: dict[str, float] = defaultdict(float)
     for cat_id, amt in exp_cat_q.all():
         name = expense_cats.get(cat_id, "Без категорії") if cat_id else "Без категорії"
         expense_by_cat_raw[name] += float(amt)
+
+    # Add structured expenses (fixed + salary) to category breakdown
+    fixed_cat_r = await db.execute(
+        select(func.coalesce(func.sum(MonthlyFixedExpense.amount), 0)).where(
+            MonthlyFixedExpense.user_id == user.id,
+            MonthlyFixedExpense.year == year,
+            MonthlyFixedExpense.month == month,
+        )
+    )
+    fixed_cat_total = float(fixed_cat_r.scalar())
+    if fixed_cat_total > 0:
+        expense_by_cat_raw["Постійні витрати"] = fixed_cat_total
+
+    salary_cat_r = await db.execute(
+        select(MonthlySalaryExpense).where(
+            MonthlySalaryExpense.user_id == user.id,
+            MonthlySalaryExpense.year == year,
+            MonthlySalaryExpense.month == month,
+        )
+    )
+    salary_cat_total = 0.0
+    pdfo_frac_cat = pdfo_rate_pct / 100
+    vz_zp_frac_cat = vz_zp_rate_pct / 100
+    esv_emp_frac_cat = esv_employer_rate_pct / 100
+    for rec in salary_cat_r.scalars().all():
+        brutto = float(rec.brutto) if rec.brutto else 0.0
+        esv = round(brutto * esv_emp_frac_cat, 2)
+        netto = round(brutto - round(brutto * pdfo_frac_cat, 2) - round(brutto * vz_zp_frac_cat, 2), 2)
+        supplement = 0.0
+        if rec.has_supplement and rec.target_net:
+            supplement = max(0, float(rec.target_net) - netto)
+        bonus = float(rec.individual_bonus) if rec.individual_bonus else 0.0
+        salary_cat_total += round(brutto + esv + supplement + bonus, 2)
+    if salary_cat_total > 0:
+        expense_by_cat_raw["Зарплати"] = salary_cat_total
 
     expense_by_category = sorted(
         [
@@ -1245,7 +1352,7 @@ async def _build_dashboard(
         select(Income.source, func.sum(Income.amount)).where(
             Income.user_id == user.id,
             Income.date >= d_start,
-            Income.date <= d_end if is_dec else Income.date < d_end,
+            Income.date < d_end,
         ).group_by(Income.source)
     )
     top_income_sources = sorted(
@@ -1266,7 +1373,7 @@ async def _build_dashboard(
         select(Expense.description, func.sum(Expense.amount)).where(
             Expense.user_id == user.id,
             Expense.date >= d_start,
-            Expense.date <= d_end if is_dec else Expense.date < d_end,
+            Expense.date < d_end,
         ).group_by(Expense.description).order_by(func.sum(Expense.amount).desc()).limit(10)
     )
     top_expense_items = [
@@ -1398,17 +1505,22 @@ async def _build_dashboard(
         total_patients_change_pct = round((total_patients - prev_patients) / prev_patients * 100, 1) if prev_patients > 0 else 0
         total_non_verified_pct = round(total_non_verified / total_patients * 100, 1) if total_patients > 0 else 0
     except Exception as e:
-        print(f"ERROR in _get_patients: {e}")
+        logger.exception("Error in _get_patients")
 
     # Персонал & ФОП (з безпекою)
     staff_by_role = []
     fop_total = 0.0
     fop_pct = 0.0
     try:
-        staff_by_role, fop_total, _ = await _get_staff_breakdown(db, user.id, year, month)
+        staff_by_role, fop_total, _ = await _get_staff_breakdown(
+            db, user.id, year, month,
+            pdfo_rate_pct=pdfo_rate_pct,
+            vz_zp_rate_pct=vz_zp_rate_pct,
+            esv_employer_rate_pct=esv_employer_rate_pct,
+        )
         fop_pct = round(fop_total / cur["income"] * 100, 1) if cur["income"] > 0 else 0
     except Exception as e:
-        print(f"ERROR in _get_staff_breakdown: {e}")
+        logger.exception("Error in _get_staff_breakdown")
 
     # Отримуємо дані про власника (якщо є)
     owner = None
@@ -1432,7 +1544,7 @@ async def _build_dashboard(
                 income_after_taxes=cur["income_after_taxes"],
             )
     except Exception as e:
-        print(f"ERROR in owner_info: {e}")
+        logger.exception("Error in owner_info")
 
     # Платні послуги (з безпекою)
     top_paid_services = []
@@ -1443,7 +1555,7 @@ async def _build_dashboard(
     try:
         top_paid_services, services_margin, services_margin_pct, paid_services_total_revenue, paid_services_total_qty = await _get_top_paid_services_detailed(db, user.id, year, month)
     except Exception as e:
-        print(f"ERROR in _get_top_paid_services_detailed: {e}")
+        logger.exception("Error in _get_top_paid_services_detailed")
 
     # AI insights (using analytics engine for comprehensive analysis)
     # Reuse already-computed `prev` data instead of a duplicate _month_totals call

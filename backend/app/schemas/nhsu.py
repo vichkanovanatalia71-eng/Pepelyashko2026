@@ -1,14 +1,14 @@
 from __future__ import annotations
 
-from typing import Optional
+from typing import Literal, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 # ── Doctor ──────────────────────────────────────────────────────────
 
 class DoctorCreate(BaseModel):
-    full_name: str
+    full_name: str = Field(min_length=1, max_length=255)
     is_owner: bool = False
 
 
@@ -29,18 +29,18 @@ class DoctorResponse(BaseModel):
 # ── Settings ────────────────────────────────────────────────────────
 
 class NhsuSettingsInput(BaseModel):
-    capitation_rate: float = 1007.3
-    coeff_0_5: float = 2.465
-    coeff_6_17: float = 1.25
-    coeff_18_39: float = 0.616
-    coeff_40_64: float = 0.86
-    coeff_65_plus: float = 1.3
-    ep_rate: float = 5.0         # % ЄП від доходу
-    vz_rate: float = 1.5         # % ВЗ від доходу
-    esv_monthly: float = 1760.00 # грн/міс ЄСВ власника
-    pdfo_rate: float = 18.0      # % ПДФО із ЗП
-    vz_zp_rate: float = 5.0      # % ВЗ із ЗП
-    esv_employer_rate: float = 22.0  # % ЄСВ роботодавця
+    capitation_rate: float = Field(default=1007.3, gt=0)
+    coeff_0_5: float = Field(default=2.465, ge=0)
+    coeff_6_17: float = Field(default=1.25, ge=0)
+    coeff_18_39: float = Field(default=0.616, ge=0)
+    coeff_40_64: float = Field(default=0.86, ge=0)
+    coeff_65_plus: float = Field(default=1.3, ge=0)
+    ep_rate: float = Field(default=5.0, ge=0, le=100)
+    vz_rate: float = Field(default=1.5, ge=0, le=100)
+    esv_monthly: float = Field(default=1760.00, ge=0)
+    pdfo_rate: float = Field(default=18.0, ge=0, le=100)
+    vz_zp_rate: float = Field(default=5.0, ge=0, le=100)
+    esv_employer_rate: float = Field(default=22.0, ge=0, le=100)
 
 
 class NhsuSettingsResponse(BaseModel):
@@ -65,14 +65,14 @@ class NhsuSettingsResponse(BaseModel):
 
 class MonthlyRecordInput(BaseModel):
     doctor_id: int
-    age_group: str  # "0_5", "6_17", "18_39", "40_64", "65_plus"
-    patient_count: int
-    non_verified: float = 0
+    age_group: Literal["0_5", "6_17", "18_39", "40_64", "65_plus"]
+    patient_count: int = Field(ge=0)
+    non_verified: float = Field(default=0, ge=0)
 
 
 class NhsuMonthlySaveRequest(BaseModel):
-    year: int
-    month: int  # 1-12
+    year: int = Field(ge=2020, le=2100)
+    month: int = Field(ge=1, le=12)
     records: list[MonthlyRecordInput]
 
 

@@ -1,0 +1,34 @@
+name: Keep Railway services alive
+
+on:
+  schedule:
+    # 5 times per day: 04:00, 08:30, 13:00, 17:30, 22:00 UTC
+    - cron: "0 4 * * *"
+    - cron: "30 8 * * *"
+    - cron: "0 13 * * *"
+    - cron: "30 17 * * *"
+    - cron: "0 22 * * *"
+  workflow_dispatch: # allow manual trigger
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Ping backend health endpoint
+        run: |
+          for i in 1 2 3; do
+            status=$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 "${{ secrets.BACKEND_URL }}/api/health" 2>/dev/null || echo "000")
+            echo "Backend attempt $i: HTTP $status"
+            [ "$status" = "200" ] && break
+            sleep 10
+          done
+
+      - name: Ping frontend
+        run: |
+          for i in 1 2 3; do
+            status=$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 "${{ secrets.FRONTEND_URL }}" 2>/dev/null || echo "000")
+            echo "Frontend attempt $i: HTTP $status"
+            [ "$status" = "200" ] && break
+            sleep 10
+          done

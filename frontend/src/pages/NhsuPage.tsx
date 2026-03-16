@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import api from "../api/client";
-import { MONTH_NAMES, LoadingSpinner, EmptyState, AlertBanner } from "../components/shared";
+import { MONTH_NAMES, LoadingSpinner, EmptyState, AlertBanner, ConfirmDialog } from "../components/shared";
 import type {
   AgeGroup, Doctor, DoctorSummary,
   NhsuMonthlyReport, NhsuSettings,
@@ -29,7 +29,8 @@ interface RecordInput {
 }
 interface UploadedImage {
   file: File; preview: string; doctorId: number | null;
-  analyzed: boolean; error?: string; result?: Record<string, number>;
+  analyzed: boolean; error?: string; warning?: string;
+  confidence?: string; result?: Record<string, number>;
 }
 interface TrendPoint {
   label: string; year: number; month: number; has_data: boolean;
@@ -39,7 +40,7 @@ interface TrendPoint {
 interface AiHistoryEntry {
   id: string; date: string; filename: string;
   doctorId: number | null; doctorName: string;
-  confidence: string; notes: string;
+  confidence: string; notes: string; warning: string;
   totals: { age_0_5:number; age_6_17:number; age_18_39:number; age_40_64:number; age_65_plus:number };
 }
 interface MonthRangeEntry {
@@ -56,6 +57,13 @@ interface RangeSummary {
 // ─── Helpers ─────────────────────────────────────────────────────────
 const fmt  = (n: number) => n.toLocaleString("uk-UA",{minimumFractionDigits:1,maximumFractionDigits:1});
 const fmt2 = (n: number) => n.toLocaleString("uk-UA",{minimumFractionDigits:2,maximumFractionDigits:2});
+
+// Порядок вікових груп: від 0 до 65+
+const AGE_GROUP_ORDER: Record<string, number> = {
+  "0_5": 0, "6_17": 1, "18_39": 2, "40_64": 3, "65_plus": 4,
+};
+const sortRows = <T extends { age_group: string }>(rows: T[]): T[] =>
+  [...rows].sort((a, b) => (AGE_GROUP_ORDER[a.age_group] ?? 99) - (AGE_GROUP_ORDER[b.age_group] ?? 99));
 
 function loadHistory(): AiHistoryEntry[] {
   try { return JSON.parse(localStorage.getItem(AI_HIST_KEY)??"[]"); } catch { return []; }
@@ -96,6 +104,9 @@ export default function NhsuPage() {
   const [aiHistory,   setAiHistory]   = useState<AiHistoryEntry[]>(loadHistory);
   const [showHistory, setShowHistory] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Delete confirmation state
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // YoY comparison state
   const [prevYearReport, setPrevYearReport] = useState<NhsuMonthlyReport | null>(null);
@@ -144,14 +155,14 @@ export default function NhsuPage() {
   useEffect(() => { loadReport(); }, [loadReport]);
 
   // Load previous year report for YoY comparison
-  useEffect(() => {
-    (async () => {
-      try {
-        const { data } = await api.get("/nhsu/monthly", { params: { year: year - 1, month } });
-        setPrevYearReport(data);
-      } catch { setPrevYearReport(null); }
-    })();
+  const loadPrevYear = useCallback(async () => {
+    try {
+      const { data } = await api.get("/nhsu/monthly", { params: { year: year - 1, month } });
+      setPrevYearReport(data);
+    } catch { setPrevYearReport(null); }
   }, [year, month]);
+
+  useEffect(() => { loadPrevYear(); }, [loadPrevYear]);
 
   // Load trend (last 6 months) once
   const loadTrend = useCallback(async () => {
@@ -167,6 +178,10 @@ export default function NhsuPage() {
   // Load and aggregate range data
   const loadRangeData = useCallback(async () => {
     if (!rangeMode) { setRangeData(null); return; }
+    // Ensure end is not before start
+    if (rangeEndYear < year || (rangeEndYear === year && rangeEndMonth < month)) {
+      setRangeData(null); setRangeLoading(false); return;
+    }
     setRangeLoading(true);
     try {
       const months: {year:number; month:number}[] = [];
@@ -360,6 +375,8 @@ export default function NhsuPage() {
         const res = results[i];
         if (!res) return img;
         if (res.error) return { ...img, analyzed:true, error:String(res.error) };
+        const conf = String(res.confidence ?? "low");
+        const warn = String(res.warning ?? "");
         if (img.doctorId) {
           setRecords(prev => prev.map(r => {
             if (r.doctor_id!==img.doctorId) return r;
@@ -372,7 +389,7 @@ export default function NhsuPage() {
           id: `${Date.now()}_${i}`, date: new Date().toLocaleString("uk-UA"),
           filename: img.file.name, doctorId: img.doctorId,
           doctorName: img.doctorId ? (doctors.find(d=>d.id===img.doctorId)?.full_name??"—") : "—",
-          confidence: String(res.confidence??"low"), notes: String(res.notes??""),
+          confidence: conf, notes: String(res.notes??""), warning: warn,
           totals: {
             age_0_5:    Number(res.age_0_5)||0,
             age_6_17:   Number(res.age_6_17)||0,
@@ -381,7 +398,7 @@ export default function NhsuPage() {
             age_65_plus:Number(res.age_65_plus)||0,
           },
         });
-        return { ...img, analyzed:true, result:{
+        return { ...img, analyzed:true, confidence:conf, warning:warn, result:{
           age_0_5:Number(res.age_0_5)||0, age_6_17:Number(res.age_6_17)||0,
           age_18_39:Number(res.age_18_39)||0, age_40_64:Number(res.age_40_64)||0,
           age_65_plus:Number(res.age_65_plus)||0,
@@ -398,6 +415,12 @@ export default function NhsuPage() {
     } finally { setAnalyzing(false); }
   };
 
+  // Centralized refresh — единий виклик після будь-якої мутації
+  const refreshAllData = useCallback(async () => {
+    await Promise.all([loadReport(), loadTrend(), loadPrevYear()]);
+    if (rangeMode) loadRangeData();
+  }, [loadReport, loadTrend, loadPrevYear, rangeMode, loadRangeData]);
+
   // Save monthly data
   const handleSave = async () => {
     setSaving(true); setSaveMsg("");
@@ -411,7 +434,7 @@ export default function NhsuPage() {
         })),
       });
       setSaveMsg("Збережено");
-      await Promise.all([loadReport(), loadTrend()]);
+      await refreshAllData();
       setTimeout(() => setShowModal(false), 700);
     } catch (e: unknown) {
       setSaveMsg((e as {response?:{data?:{detail?:string}}})?.response?.data?.detail ?? "Помилка");
@@ -419,6 +442,15 @@ export default function NhsuPage() {
   };
 
   const clearHistory = () => { saveHistory([]); setAiHistory([]); };
+
+  const handleDeletePeriod = async () => {
+    try {
+      await api.delete(`/nhsu/monthly?year=${year}&month=${month}`);
+      setShowDeleteConfirm(false);
+      setReport(null);
+      await refreshAllData();
+    } catch { /* ignore */ }
+  };
 
   // ─────────────────────────────────────────────────────────────────
   return (
@@ -523,11 +555,18 @@ export default function NhsuPage() {
               <Plus size={15} aria-hidden="true"/>{report?"Редагувати":"Заповнити"}
             </button>
             {report && (
-              <button onClick={exportExcel}
-                aria-label="Експортувати в Excel"
-                className="flex items-center gap-2 px-4 py-2.5 bg-dark-300 hover:bg-dark-200 text-gray-300 rounded-xl text-sm border border-dark-50/20">
-                <Download size={15} aria-hidden="true"/>Excel
-              </button>
+              <>
+                <button onClick={exportExcel}
+                  aria-label="Експортувати в Excel"
+                  className="flex items-center gap-2 px-4 py-2.5 bg-dark-300 hover:bg-dark-200 text-gray-300 rounded-xl text-sm border border-dark-50/20">
+                  <Download size={15} aria-hidden="true"/>Excel
+                </button>
+                <button onClick={() => setShowDeleteConfirm(true)}
+                  aria-label="Видалити дані за місяць"
+                  className="flex items-center gap-2 px-4 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl text-sm border border-red-500/20">
+                  <Trash2 size={15} aria-hidden="true"/>Видалити
+                </button>
+              </>
             )}
           </div>
         </div>
@@ -698,6 +737,49 @@ export default function NhsuPage() {
           </div>
         )}
 
+        {/* Detail tables */}
+        {filteredDoctors.map(doc => (
+          <div key={doc.doctor_id} className="card-neo card-3d-hover overflow-hidden">
+            <div className="px-5 py-3 border-b border-dark-50/10 flex items-center gap-3 bg-dark-400/30">
+              <h4 className="text-white font-semibold">{doc.doctor_name}</h4>
+              {doc.is_owner && <span className="text-xs bg-accent-500/10 text-accent-400 px-2 py-0.5 rounded-full border border-accent-500/20">Власник</span>}
+              <span className="ml-auto text-xs text-gray-500 font-mono">{doc.total_patients} пац. · {fmt2(doc.total_amount)} грн</span>
+            </div>
+            <div className="overflow-x-auto">
+            <table className="w-full text-xs min-w-[580px]">
+              <thead><tr className="border-b border-dark-50/10 bg-dark-300/50">
+                {["Вікова група","Коеф.","Пацієнти","Не вериф.","Сума","ЄП","ВЗ","ЄП+ВЗ"].map(h=>
+                  <th key={h} scope="col" className="px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap text-right first:text-left">{h}</th>
+                )}
+              </tr></thead>
+              <tbody>
+                {sortRows(doc.rows).map(r => (
+                  <tr key={r.age_group} className="border-b border-dark-50/5 hover:bg-dark-300/30 transition-colors">
+                    <td className="px-4 py-2.5 text-gray-300">{r.age_group_label}</td>
+                    <td className="px-4 py-2.5 text-right text-gray-500">{r.age_coefficient}</td>
+                    <td className="px-4 py-2.5 text-right text-gray-200 font-mono">{r.patient_count}</td>
+                    <td className="px-4 py-2.5 text-right text-yellow-400/70 font-mono">{r.non_verified}</td>
+                    <td className="px-4 py-2.5 text-right text-emerald-400 font-mono">{fmt2(r.amount)}</td>
+                    <td className="px-4 py-2.5 text-right text-red-400/70 font-mono">{fmt2(r.ep_amount)}</td>
+                    <td className="px-4 py-2.5 text-right text-orange-400/70 font-mono">{fmt2(r.vz_amount)}</td>
+                    <td className="px-4 py-2.5 text-right text-red-400 font-mono">{fmt2(r.ep_vz_amount)}</td>
+                  </tr>
+                ))}
+                <tr className="bg-dark-400/40 font-semibold">
+                  <td className="px-4 py-2.5 text-gray-300">Всього</td><td/>
+                  <td className="px-4 py-2.5 text-right text-white font-mono">{doc.total_patients}</td>
+                  <td className="px-4 py-2.5 text-right text-yellow-400/70 font-mono">{fmt(doc.total_non_verified)}</td>
+                  <td className="px-4 py-2.5 text-right text-emerald-400 font-mono">{fmt2(doc.total_amount)}</td>
+                  <td className="px-4 py-2.5 text-right text-red-400/70 font-mono">{fmt2(doc.total_ep)}</td>
+                  <td className="px-4 py-2.5 text-right text-orange-400/70 font-mono">{fmt2(doc.total_vz)}</td>
+                  <td className="px-4 py-2.5 text-right text-red-400 font-mono">{fmt2(doc.total_ep_vz)}</td>
+                </tr>
+              </tbody>
+            </table>
+            </div>
+          </div>
+        ))}
+
         {/* Charts */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
           <div className="card-neo card-3d-hover p-5">
@@ -737,49 +819,6 @@ export default function NhsuPage() {
             </ResponsiveContainer>
           </div>
         </div>
-
-        {/* Detail tables */}
-        {filteredDoctors.map(doc => (
-          <div key={doc.doctor_id} className="card-neo card-3d-hover overflow-hidden">
-            <div className="px-5 py-3 border-b border-dark-50/10 flex items-center gap-3 bg-dark-400/30">
-              <h4 className="text-white font-semibold">{doc.doctor_name}</h4>
-              {doc.is_owner && <span className="text-xs bg-accent-500/10 text-accent-400 px-2 py-0.5 rounded-full border border-accent-500/20">Власник</span>}
-              <span className="ml-auto text-xs text-gray-500 font-mono">{doc.total_patients} пац. · {fmt2(doc.total_amount)} грн</span>
-            </div>
-            <div className="overflow-x-auto">
-            <table className="w-full text-xs min-w-[580px]">
-              <thead><tr className="border-b border-dark-50/10 bg-dark-300/50">
-                {["Вікова група","Коеф.","Пацієнти","Не вериф.","Сума","ЄП","ВЗ","ЄП+ВЗ"].map(h=>
-                  <th key={h} scope="col" className="px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap text-right first:text-left">{h}</th>
-                )}
-              </tr></thead>
-              <tbody>
-                {doc.rows.map(r => (
-                  <tr key={r.age_group} className="border-b border-dark-50/5 hover:bg-dark-300/30 transition-colors">
-                    <td className="px-4 py-2.5 text-gray-300">{r.age_group_label}</td>
-                    <td className="px-4 py-2.5 text-right text-gray-500">{r.age_coefficient}</td>
-                    <td className="px-4 py-2.5 text-right text-gray-200 font-mono">{r.patient_count}</td>
-                    <td className="px-4 py-2.5 text-right text-yellow-400/70 font-mono">{r.non_verified}</td>
-                    <td className="px-4 py-2.5 text-right text-emerald-400 font-mono">{fmt(r.amount)}</td>
-                    <td className="px-4 py-2.5 text-right text-red-400/70 font-mono">{fmt(r.ep_amount)}</td>
-                    <td className="px-4 py-2.5 text-right text-orange-400/70 font-mono">{fmt(r.vz_amount)}</td>
-                    <td className="px-4 py-2.5 text-right text-red-400 font-mono">{fmt(r.ep_vz_amount)}</td>
-                  </tr>
-                ))}
-                <tr className="bg-dark-400/40 font-semibold">
-                  <td className="px-4 py-2.5 text-gray-300">Всього</td><td/>
-                  <td className="px-4 py-2.5 text-right text-white font-mono">{doc.total_patients}</td>
-                  <td className="px-4 py-2.5 text-right text-yellow-400/70 font-mono">{fmt(doc.total_non_verified)}</td>
-                  <td className="px-4 py-2.5 text-right text-emerald-400 font-mono">{fmt(doc.total_amount)}</td>
-                  <td className="px-4 py-2.5 text-right text-red-400/70 font-mono">{fmt(doc.total_ep)}</td>
-                  <td className="px-4 py-2.5 text-right text-orange-400/70 font-mono">{fmt(doc.total_vz)}</td>
-                  <td className="px-4 py-2.5 text-right text-red-400 font-mono">{fmt(doc.total_ep_vz)}</td>
-                </tr>
-              </tbody>
-            </table>
-            </div>
-          </div>
-        ))}
       </>)}
 
       {/* ── TREND + FORECAST ── */}
@@ -852,6 +891,7 @@ export default function NhsuPage() {
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-gray-300 truncate">{h.filename}</p>
                       <p className="text-xs text-gray-500">{h.doctorName} · {h.date}</p>
+                      {h.warning && <p className="text-xs text-amber-400/80 mt-0.5 truncate">{h.warning}</p>}
                       {h.notes && <p className="text-xs text-gray-600 italic mt-0.5 truncate">{h.notes}</p>}
                     </div>
                     <div className="text-right flex-shrink-0 space-y-1">
@@ -862,7 +902,7 @@ export default function NhsuPage() {
                         h.confidence==="high"  ?"text-emerald-400 bg-emerald-400/10":
                         h.confidence==="medium"?"text-yellow-400 bg-yellow-400/10":
                                                 "text-red-400 bg-red-400/10"}`}>
-                        {h.confidence}
+                        {h.confidence==="high"?"Висока":h.confidence==="medium"?"Середня":"Низька"}
                       </span>
                     </div>
                   </div>
@@ -911,9 +951,20 @@ export default function NhsuPage() {
                         <div className="flex-1 min-w-0">
                           <p className="text-sm text-gray-300 truncate">{img.file.name}</p>
                           {img.analyzed && !img.error && (
-                            <p className="text-xs text-emerald-400 flex items-center gap-1">
-                              <CheckCircle2 size={11}/>Проаналізовано · {img.result?Object.values(img.result).reduce((a,b)=>a+b,0):0} пац.
-                            </p>
+                            <>
+                              <p className="text-xs flex items-center gap-1.5">
+                                <CheckCircle2 size={11} className="text-emerald-400"/>
+                                <span className="text-emerald-400">Проаналізовано · {img.result?Object.values(img.result).reduce((a,b)=>a+b,0):0} пац.</span>
+                                {img.confidence && (
+                                  <span className={`ml-1 px-1.5 py-0.5 rounded text-[10px] font-semibold ${
+                                    img.confidence==="high"?"bg-emerald-500/20 text-emerald-400":
+                                    img.confidence==="medium"?"bg-amber-500/20 text-amber-400":
+                                    "bg-red-500/20 text-red-400"
+                                  }`}>{img.confidence==="high"?"Висока":img.confidence==="medium"?"Середня":"Низька"}</span>
+                                )}
+                              </p>
+                              {img.warning && <p className="text-[11px] text-amber-400/80 mt-0.5 truncate">{img.warning}</p>}
+                            </>
                           )}
                           {img.error && <p className="text-xs text-red-400 flex items-center gap-1"><AlertCircle size={11}/>{img.error}</p>}
                         </div>
@@ -1004,6 +1055,16 @@ export default function NhsuPage() {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        title={`Видалити дані НСЗУ за ${MONTH_NAMES[month-1]} ${year}?`}
+        description="Усі записи декларацій за цей місяць буде видалено. Цю дію неможливо скасувати."
+        variant="danger"
+        confirmLabel="Видалити"
+        onConfirm={handleDeletePeriod}
+        onCancel={() => setShowDeleteConfirm(false)}
+      />
     </div>
   );
 }

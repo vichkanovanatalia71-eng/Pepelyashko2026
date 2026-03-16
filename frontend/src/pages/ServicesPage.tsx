@@ -38,7 +38,7 @@ function calcFinancials(
   ep_rate: number,
   vz_rate: number
 ) {
-  const total_materials_cost = materials.reduce((s, m) => s + (parseFloat(String(m.cost)) || 0), 0);
+  const total_materials_cost = materials.reduce((s, m) => s + (parseFloat(String(m.quantity)) || 0) * (parseFloat(String(m.cost)) || 0), 0);
   const ep_amount = price * ep_rate / 100;
   const vz_amount = price * vz_rate / 100;
   const total_costs = total_materials_cost + ep_amount + vz_amount;
@@ -100,6 +100,8 @@ export default function ServicesPage() {
     name: string;
     price: number;
     materials: MaterialItem[];
+    confidence: "high" | "medium" | "low";
+    warning: string;
     _selected: boolean;
   }
   const [showImportModal, setShowImportModal] = useState(false);
@@ -109,6 +111,8 @@ export default function ServicesPage() {
   const [importError, setImportError] = useState("");
   const [importNotes, setImportNotes] = useState("");
   const [importProvider, setImportProvider] = useState("");
+  const [importConfidence, setImportConfidence] = useState<"high" | "medium" | "low">("high");
+  const [importWarnings, setImportWarnings] = useState<string[]>([]);
   const [parsedServices, setParsedServices] = useState<ParsedService[]>([]);
   const [importResult, setImportResult] = useState<{ created: number; skipped: number } | null>(null);
   const importFileRef = useRef<HTMLInputElement>(null);
@@ -342,6 +346,8 @@ export default function ServicesPage() {
     setImportError("");
     setImportNotes("");
     setImportProvider("");
+    setImportConfidence("high");
+    setImportWarnings([]);
     setParsedServices([]);
     setImportResult(null);
   }
@@ -350,6 +356,8 @@ export default function ServicesPage() {
     setShowImportModal(false);
     setParsedServices([]);
     setImportResult(null);
+    setImportWarnings([]);
+    setImportConfidence("high");
   }
 
   async function handleImportFiles(files: FileList | null) {
@@ -358,6 +366,8 @@ export default function ServicesPage() {
     setImportLoading(true);
     setImportError("");
     setImportNotes("");
+    setImportConfidence("high");
+    setImportWarnings([]);
     setParsedServices([]);
     setImportResult(null);
 
@@ -375,6 +385,8 @@ export default function ServicesPage() {
       const data = res.data;
       setImportProvider(data.provider || "");
       setImportNotes(data.notes || "");
+      setImportConfidence(data.confidence || "medium");
+      setImportWarnings(data.warnings || []);
 
       if (data.services && data.services.length > 0) {
         setParsedServices(
@@ -388,7 +400,9 @@ export default function ServicesPage() {
               quantity: m.quantity || 0,
               cost: m.cost || 0,
             })),
-            _selected: true,
+            confidence: s.confidence || "medium",
+            warning: s.warning || "",
+            _selected: s.confidence !== "low",
           }))
         );
         setImportStep("preview");
@@ -1214,17 +1228,29 @@ export default function ServicesPage() {
               {importStep === "preview" && !importResult && (
                 <>
                   {/* Info bar */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <Sparkles size={14} className="text-violet-400" />
                       <span className="text-sm text-gray-300">
                         Розпізнано <strong className="text-white">{parsedServices.length}</strong> послуг
                       </span>
                       {importProvider && (
-                        <span className="text-xs text-gray-500 ml-2">
+                        <span className="text-xs text-gray-500">
                           через {importProvider === "anthropic" ? "Claude" : importProvider === "openai" ? "ChatGPT" : "Grok"}
                         </span>
                       )}
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${
+                        importConfidence === "high"
+                          ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                          : importConfidence === "medium"
+                          ? "bg-yellow-500/10 text-yellow-400 border-yellow-500/20"
+                          : "bg-red-500/10 text-red-400 border-red-500/20"
+                      }`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${
+                          importConfidence === "high" ? "bg-emerald-400" : importConfidence === "medium" ? "bg-yellow-400" : "bg-red-400"
+                        }`} />
+                        {importConfidence === "high" ? "Висока точність" : importConfidence === "medium" ? "Середня точність" : "Низька точність"}
+                      </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <button
@@ -1234,7 +1260,7 @@ export default function ServicesPage() {
                         {parsedServices.every((s) => s._selected) ? "Зняти все" : "Вибрати все"}
                       </button>
                       <button
-                        onClick={() => { setImportStep("upload"); setParsedServices([]); }}
+                        onClick={() => { setImportStep("upload"); setParsedServices([]); setImportWarnings([]); }}
                         className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-400 hover:text-gray-200 rounded-lg border border-dark-50/20 transition-all"
                       >
                         <ImagePlus size={13} aria-hidden="true" />
@@ -1243,7 +1269,28 @@ export default function ServicesPage() {
                     </div>
                   </div>
 
-                  {importNotes && (
+                  {/* Global warnings */}
+                  {(importWarnings.length > 0 || importConfidence === "low") && (
+                    <div className={`flex items-start gap-2 p-3 rounded-xl border ${
+                      importConfidence === "low"
+                        ? "bg-red-500/10 border-red-500/20"
+                        : "bg-yellow-500/10 border-yellow-500/20"
+                    }`}>
+                      <AlertCircle size={14} className={`mt-0.5 shrink-0 ${importConfidence === "low" ? "text-red-400" : "text-yellow-400"}`} />
+                      <div className="space-y-1">
+                        {importConfidence === "low" && (
+                          <p className="text-xs text-red-400 font-medium">
+                            Якість розпізнавання низька — уважно перевірте кожен запис перед імпортом. Записи з низькою впевненістю автоматично зняті з вибору.
+                          </p>
+                        )}
+                        {importWarnings.map((w, i) => (
+                          <p key={i} className={`text-xs ${importConfidence === "low" ? "text-red-400/80" : "text-yellow-400"}`}>{w}</p>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {importNotes && !importWarnings.length && (
                     <div className="flex items-start gap-2 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-xl">
                       <AlertCircle size={14} className="text-yellow-400 mt-0.5 shrink-0" />
                       <p className="text-xs text-yellow-400">{importNotes}</p>
@@ -1266,7 +1313,8 @@ export default function ServicesPage() {
                           <th scope="col" className="text-left px-3 py-2.5 text-gray-400 font-medium w-20">Код</th>
                           <th scope="col" className="text-left px-3 py-2.5 text-gray-400 font-medium">Назва</th>
                           <th scope="col" className="text-left px-3 py-2.5 text-gray-400 font-medium w-28">Ціна (грн)</th>
-                          <th scope="col" className="text-left px-3 py-2.5 text-gray-400 font-medium w-16">Матеріали</th>
+                          <th scope="col" className="text-left px-3 py-2.5 text-gray-400 font-medium w-16">Мат.</th>
+                          <th scope="col" className="text-center px-3 py-2.5 text-gray-400 font-medium w-16">Точн.</th>
                           <th scope="col" className="px-3 py-2.5 w-10" />
                         </tr>
                       </thead>
@@ -1275,7 +1323,9 @@ export default function ServicesPage() {
                           <tr
                             key={idx}
                             className={`border-b border-dark-50/5 transition-colors ${
-                              svc._selected ? "bg-violet-500/5" : "opacity-50"
+                              svc._selected
+                                ? svc.confidence === "low" ? "bg-red-500/5" : svc.confidence === "medium" ? "bg-yellow-500/5" : "bg-violet-500/5"
+                                : "opacity-40"
                             }`}
                           >
                             <td className="px-3 py-2">
@@ -1299,8 +1349,13 @@ export default function ServicesPage() {
                                 type="text"
                                 value={svc.name}
                                 onChange={(e) => updateParsedService(idx, "name", e.target.value)}
-                                className="w-full bg-dark-300 border border-dark-50/10 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:border-violet-500/40"
+                                className={`w-full bg-dark-300 border rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:border-violet-500/40 ${
+                                  svc.confidence === "low" ? "border-red-500/30" : "border-dark-50/10"
+                                }`}
                               />
+                              {svc.warning && (
+                                <p className="text-[10px] text-yellow-400/80 mt-0.5 pl-1">{svc.warning}</p>
+                              )}
                             </td>
                             <td className="px-3 py-2">
                               <input
@@ -1309,13 +1364,22 @@ export default function ServicesPage() {
                                 step="0.01"
                                 value={svc.price}
                                 onChange={(e) => updateParsedService(idx, "price", parseFloat(e.target.value) || 0)}
-                                className="w-full bg-dark-300 border border-dark-50/10 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:border-violet-500/40"
+                                className={`w-full bg-dark-300 border rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:border-violet-500/40 ${
+                                  svc.confidence === "low" ? "border-red-500/30" : "border-dark-50/10"
+                                }`}
                               />
                             </td>
-                            <td className="px-3 py-2 text-center">
+                            <td className="px-3 py-2 text-center" title={svc.materials.length > 0 ? svc.materials.map(m => `${m.name} — ${m.cost} грн`).join("\n") : "Немає матеріалів"}>
                               <span className="text-xs text-gray-400">
                                 {svc.materials.length}
                               </span>
+                            </td>
+                            <td className="px-3 py-2 text-center">
+                              <span className={`inline-block w-2 h-2 rounded-full ${
+                                svc.confidence === "high" ? "bg-emerald-400" : svc.confidence === "medium" ? "bg-yellow-400" : "bg-red-400"
+                              }`} title={
+                                svc.confidence === "high" ? "Висока впевненість" : svc.confidence === "medium" ? "Середня впевненість" : "Низька впевненість"
+                              } />
                             </td>
                             <td className="px-1 py-2">
                               <button

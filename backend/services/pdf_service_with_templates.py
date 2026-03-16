@@ -527,7 +527,8 @@ class PDFServiceWithTemplates:
             
             # Generate PDF
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            pdf_filename = f"waybill_{waybill.get('number')}_{timestamp}.pdf"
+            safe_waybill_number = str(waybill.get('number', 'unknown')).replace('/', '_').replace('\\', '_')
+            pdf_filename = f"waybill_{safe_waybill_number}_{timestamp}.pdf"
             pdf_path = os.path.join('/tmp/document_pdfs', pdf_filename)
             
             os.makedirs('/tmp/document_pdfs', exist_ok=True)

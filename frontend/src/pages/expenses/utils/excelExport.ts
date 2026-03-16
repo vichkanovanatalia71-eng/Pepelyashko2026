@@ -3,6 +3,7 @@ import type { MonthlyExpenseData } from "../../../types";
 import type { OtherExpense } from "../types";
 import { ROLE_LABELS } from "../constants";
 import { MONTH_NAMES } from "../../../components/shared/MonthNavigator";
+import { calcNetto } from "./salaryCalculations";
 
 export function exportExpenseExcel(
   data: MonthlyExpenseData,
@@ -14,10 +15,11 @@ export function exportExpenseExcel(
   month: number,
 ) {
   const wb = XLSX.utils.book_new();
+  const monthName = MONTH_NAMES[month - 1] ?? `Місяць ${month}`;
 
   // ── Sheet 1: Summary ──
   const summaryRows: (string | number)[][] = [
-    [`ЗВЕДЕНИЙ ЗВІТ ВИТРАТ — ${MONTH_NAMES[month - 1]} ${year}`],
+    [`ЗВЕДЕНИЙ ЗВІТ ВИТРАТ — ${monthName} ${year}`],
     [],
     ["РОЗДІЛ", "СТАТТЯ", "СУМА (₴)"],
     [],
@@ -47,8 +49,8 @@ export function exportExpenseExcel(
       summaryRows.push(["Зарплата", `${r.full_name} — НСЗУ ЄП`, r.nhsu_ep]);
       summaryRows.push(["Зарплата", `${r.full_name} — НСЗУ ВЗ`, r.nhsu_vz]);
     }
-    const netto = r.brutto - (r.brutto * data.settings.pdfo_rate / 100) - (r.brutto * data.settings.vz_zp_rate / 100);
-    summaryRows.push(["Зарплата", `${r.full_name} — Нетто (на руки)`, Math.round(netto * 100) / 100]);
+    const netto = calcNetto(r.brutto, data.settings.pdfo_rate, data.settings.vz_zp_rate);
+    summaryRows.push(["Зарплата", `${r.full_name} — Нетто (на руки)`, netto]);
     summaryRows.push([]);
   }
   summaryRows.push(["", "Разом зарплатні", data.totals.salary_total]);
@@ -66,8 +68,7 @@ export function exportExpenseExcel(
   summaryRows.push(["═══ ПОДАТКИ ═══", "", ""]);
   summaryRows.push(["Податки", `Єдиний податок (${data.taxes.ep_rate}%)`, data.taxes.ep]);
   summaryRows.push(["Податки", `Військовий збір (${data.taxes.vz_rate}%)`, data.taxes.vz]);
-  summaryRows.push(["Податки", "ЄСВ власника (щомісячний)", data.taxes.esv_owner]);
-  summaryRows.push(["Податки", `ЄСВ роботодавця (${data.settings.esv_employer_rate}%)`, data.taxes.esv_employer]);
+  summaryRows.push(["Податки", "ЄСВ (щомісячний)", data.taxes.esv_owner]);
   summaryRows.push(["", "Разом податки", data.totals.tax_total]);
   summaryRows.push([]);
 
@@ -98,10 +99,9 @@ export function exportExpenseExcel(
   summaryRows.push(["Підсумок", "ЗАЛИШОК", remaining]);
   summaryRows.push([]);
   summaryRows.push(["═══ СТАВКИ ═══", "", ""]);
-  summaryRows.push(["Ставка", "ЄП", `${data.taxes.ep_rate}%`]);
-  summaryRows.push(["Ставка", "ВЗ від доходу", `${data.taxes.vz_rate}%`]);
-  summaryRows.push(["Ставка", "ЄСВ роботодавця", `${data.settings.esv_employer_rate}%`]);
-  summaryRows.push(["Ставка", "ЄСВ власника (місячний)", data.taxes.esv_owner]);
+  summaryRows.push(["Ставка", "Єдиний податок", `${data.taxes.ep_rate}%`]);
+  summaryRows.push(["Ставка", "Військовий збір", `${data.taxes.vz_rate}%`]);
+  summaryRows.push(["Ставка", "ЄСВ (місячний)", data.taxes.esv_owner]);
 
   const ws = XLSX.utils.aoa_to_sheet(summaryRows);
   ws["!cols"] = [{ wch: 18 }, { wch: 48 }, { wch: 18 }];
@@ -114,16 +114,16 @@ export function exportExpenseExcel(
     "НСЗУ брутто", "НСЗУ ЄП", "НСЗУ ВЗ",
   ];
   const staffRows = data.salary.map(r => {
-    const netto = r.brutto - (r.brutto * data.settings.pdfo_rate / 100) - (r.brutto * data.settings.vz_zp_rate / 100);
+    const netto = calcNetto(r.brutto, data.settings.pdfo_rate, data.settings.vz_zp_rate);
     return [
       r.full_name, ROLE_LABELS[r.role] ?? r.role,
       r.brutto, r.esv, r.supplement, r.individual_bonus,
-      r.paid_services_income, Math.round(netto * 100) / 100, r.total_employer_cost,
+      r.paid_services_income, netto, r.total_employer_cost,
       r.nhsu_brutto, r.nhsu_ep, r.nhsu_vz,
     ];
   });
   const ws2 = XLSX.utils.aoa_to_sheet([
-    [`Персонал — ${MONTH_NAMES[month - 1]} ${year}`],
+    [`Персонал — ${monthName} ${year}`],
     [],
     staffHeader,
     ...staffRows,
@@ -133,6 +133,79 @@ export function exportExpenseExcel(
   XLSX.utils.book_append_sheet(wb, ws2, "Персонал");
 
   XLSX.writeFile(wb, `витрати_${year}_${String(month).padStart(2, "0")}.xlsx`);
+}
+
+export function exportReturnExpensesExcel(
+  cashReturnFixed: { id: number; name: string; amount: number }[],
+  cashReturnOther: { id: number; name: string; amount: number }[],
+  cashReturnSum: number,
+  supplements: { full_name: string; supplement: number }[],
+  supplementsTotal: number,
+  doctorIncomes: { doctor_name: string; income: number }[],
+  doctorIncomeTotal: number,
+  cashInRegister: number,
+  withdrawToCard: number,
+  year: number,
+  month: number,
+) {
+  const wb = XLSX.utils.book_new();
+  const monthName = MONTH_NAMES[month - 1] ?? `Місяць ${month}`;
+
+  const rows: (string | number)[][] = [
+    [`ВИТРАТИ НА ПОВЕРНЕННЯ — ${monthName} ${year}`],
+    [],
+    ["КАТЕГОРІЯ", "СТАТТЯ", "СУМА (₴)"],
+    [],
+    ["═══ ПОВЕРНЕННЯ ГОТІВКИ ═══", "", ""],
+  ];
+
+  for (const r of cashReturnFixed) {
+    rows.push(["Постійна витрата", r.name, r.amount]);
+  }
+  for (const r of cashReturnOther) {
+    rows.push(["Інша витрата", r.name, r.amount]);
+  }
+  rows.push(["", "Разом повернення готівки", cashReturnSum]);
+  rows.push([]);
+
+  rows.push(["═══ ДОПЛАТИ ДО ЦІЛЬОВОЇ СУМИ ═══", "", ""]);
+  if (supplements.length === 0) {
+    rows.push(["", "Немає доплат", 0]);
+  } else {
+    for (const r of supplements) {
+      rows.push(["Доплата", `${r.full_name} — доплата`, r.supplement]);
+    }
+  }
+  rows.push(["", "Разом доплати", supplementsTotal]);
+  rows.push([]);
+
+  rows.push(["═══ ДОХІД ЛІКАРІВ (ПЛАТНІ ПОСЛУГИ) ═══", "", ""]);
+  if (doctorIncomes.length === 0) {
+    rows.push(["", "Немає даних", 0]);
+  } else {
+    for (const d of doctorIncomes) {
+      rows.push(["Дохід лікаря", d.doctor_name, d.income]);
+    }
+  }
+  rows.push(["", "Разом дохід лікарів", doctorIncomeTotal]);
+  rows.push([]);
+
+  rows.push(["═══ ГОТІВКА В КАСІ ═══", "", ""]);
+  rows.push(["Каса", `Готівка в касі за ${monthName} ${year}`, cashInRegister]);
+  rows.push([]);
+
+  rows.push(["═══ ПІДСУМОК ═══", "", ""]);
+  rows.push(["Підсумок", "Витрати на повернення", cashReturnSum]);
+  rows.push(["Підсумок", "+ Доплати до цільової суми", supplementsTotal]);
+  rows.push(["Підсумок", "+ Дохід лікарів", doctorIncomeTotal]);
+  rows.push(["Підсумок", "− Готівка в касі", cashInRegister]);
+  rows.push(["", "ВИВЕСТИ НА КАРТКУ", withdrawToCard]);
+
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws["!cols"] = [{ wch: 20 }, { wch: 48 }, { wch: 18 }];
+  XLSX.utils.book_append_sheet(wb, ws, "Витрати на повернення");
+
+  XLSX.writeFile(wb, `повернення_${year}_${String(month).padStart(2, "0")}.xlsx`);
 }
 
 export function exportKpiExcel(
@@ -148,9 +221,10 @@ export function exportKpiExcel(
   const header = ["Назва", "Деталі", "Сума (₴)"];
   const dataRows = rows.map(r => [r.name, r.detail ?? "", r.amount]);
   dataRows.push(["", totalLabel, totalValue]);
+  const monthName = MONTH_NAMES[month - 1] ?? `Місяць ${month}`;
   const ws = XLSX.utils.aoa_to_sheet([
     [title],
-    [`${MONTH_NAMES[month - 1]} ${year}`],
+    [`${monthName} ${year}`],
     [],
     header,
     ...dataRows,

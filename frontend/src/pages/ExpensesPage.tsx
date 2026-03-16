@@ -2,9 +2,10 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import {
   ChevronLeft, ChevronRight, Save, RefreshCw, Lock, LockOpen,
   TrendingDown, Users, Receipt, Plus, Trash2, Edit2, X,
-  Building2, Wallet, BarChart3, Check, UserPlus, Copy, Sparkles,
-  Download, CalendarDays, ImagePlus, AlertCircle, FileSpreadsheet,
-  Eye, Target, Activity, ArrowUpRight, ArrowDownRight,
+  Building2, Wallet, BarChart3, Check, UserPlus, Copy,
+  Download, CalendarDays, AlertCircle, FileSpreadsheet,
+  PanelRightClose, PanelRightOpen,
+  Eye, EyeOff, Target, Activity, ArrowUpRight, ArrowDownRight,
   Share2, ClipboardList, TrendingUp, Banknote, HeartPulse, Search,
 } from "lucide-react";
 import {
@@ -19,20 +20,20 @@ import {
 import api from "../api/client";
 import type {
   MonthlyExpenseData, SalaryExpenseRow, StaffMember,
-  HiredDoctorInfo, Doctor, PeriodSummary, AiParsedExpense,
+  HiredDoctorInfo, Doctor, PeriodSummary, AnalyticsData,
 } from "../types";
 
 // ── Extracted modules ─────────────────────────────────────────────
 import { MONTH_NAMES } from "../components/shared/MonthNavigator";
 import { MONTH_SHORT, ROLE_LABELS, TT_STYLE, PIE_COLORS, CATEGORY_BADGE, fmt } from "./expenses/constants";
 import { initSalaryForm, calcSalary as _calcSalary, calcOwnerSalary as _calcOwnerSalary, isSalaryDirty as _isSalaryDirty } from "./expenses/utils/salaryCalculations";
-import { exportExpenseExcel, exportKpiExcel } from "./expenses/utils/excelExport";
+import { exportExpenseExcel, exportKpiExcel, exportReturnExpensesExcel } from "./expenses/utils/excelExport";
 import {
   CalcRow, TaxRow, SummaryRow, KpiCard, CheckboxToggle,
   Modal, ModalField,
 } from "./expenses/components/ExpenseUiParts";
 import { ShareLinkModal } from "./expenses/components/ShareLinkModal";
-import type { SalaryFormState, OtherExpense, DetailRow, AnnualMonthData, KpiModalState } from "./expenses/types";
+import type { SalaryFormState, OtherExpense, DetailRow, AnnualMonthData, KpiModalState, DrawerSection } from "./expenses/types";
 
 // ══════════════════════════════════════════════════════════════════
 // MAIN COMPONENT
@@ -58,15 +59,16 @@ export default function ExpensesPage() {
   const [staffList, setStaffList] = useState<StaffMember[]>([]);
   const [doctorsList, setDoctorsList] = useState<Doctor[]>([]);
 
-  // Owner hired doctor/nurse selection (persisted in localStorage)
-  const [selectedHiredDoctorId, setSelectedHiredDoctorId] = useState<number | null>(() => {
-    const v = localStorage.getItem("owner_hired_doctor_id");
-    return v ? parseInt(v) : null;
-  });
-  const [selectedHiredNurseId, setSelectedHiredNurseId] = useState<number | null>(() => {
-    const v = localStorage.getItem("owner_hired_nurse_id");
-    return v ? parseInt(v) : null;
-  });
+  // Paid services analytics (for refund table)
+  const [paidServicesData, setPaidServicesData] = useState<{
+    doctor_income: number;
+    cash_in_register: number;
+    doctor_incomes: { doctor_id: number; doctor_name: string; income: number }[];
+  } | null>(null);
+
+  // Owner hired doctor/nurse selection (persisted on server per period)
+  const [selectedHiredDoctorId, setSelectedHiredDoctorId] = useState<number | null>(null);
+  const [selectedHiredNurseId, setSelectedHiredNurseId] = useState<number | null>(null);
 
 
   // ── Fixed modal state
@@ -109,15 +111,6 @@ export default function ExpensesPage() {
     copyFixed: boolean; copySalary: boolean; saving: boolean;
   }>({ open: false, srcYear: 0, srcMonth: 0, copyFixed: true, copySalary: true, saving: false });
 
-  // ── AI parse modal ──
-  const [aiModal, setAiModal] = useState<{
-    open: boolean;
-    text: string;
-    file: File | null;
-    loading: boolean;
-    result: AiParsedExpense | null;
-  }>({ open: false, text: "", file: null, loading: false, result: null });
-  const aiFileRef = useRef<HTMLInputElement>(null);
   const mobileTabsRef = useRef<HTMLDivElement>(null);
 
   // ── Annual analytics data (for "all" mode) ──
@@ -138,18 +131,23 @@ export default function ExpensesPage() {
   const [accReqModal, setAccReqModal] = useState<{
     open: boolean; url: string; expiresAt: string;
   }>({ open: false, url: "", expiresAt: "" });
-  const [accBannerDismissed, setAccBannerDismissed] = useState<string | null>(null);
+  const [accBannerDismissed, setAccBannerDismissed] = useState<string | null>(() => {
+    try { return localStorage.getItem("acc-submitted-dismissed"); } catch { return null; }
+  });
+  const [accSubmittedModal, setAccSubmittedModal] = useState(false);
+  const dismissAccModal = (ts: string) => {
+    setAccSubmittedModal(false);
+    setAccBannerDismissed(ts);
+    try { localStorage.setItem("acc-submitted-dismissed", ts); } catch { /* ignore */ }
+  };
 
   // ── Right sidebar drawer state ──
-  type DrawerSection = "fixed" | "salary" | "other" | "taxes" | "summary" | null;
   const [activeDrawer, setActiveDrawer] = useState<DrawerSection>(null);
 
-  // ── Left sidebar collapse state (inverse coupling: left expanded → right collapsed) ──
-  const [leftCollapsed, setLeftCollapsed] = useState(() => {
-    try { return localStorage.getItem("sidebar-collapsed") === "1"; } catch { return false; }
+  // ── Right sidebar collapse state (independent, default expanded) ──
+  const [expSidebarCollapsed, setExpSidebarCollapsed] = useState(() => {
+    try { return localStorage.getItem("expense-sidebar-collapsed") === "1"; } catch { return false; }
   });
-  // Expense sidebar is expanded when left nav is collapsed, and vice versa
-  const expSidebarCollapsed = !leftCollapsed;
 
   // ── Previous month data for copy-from feature ──
   const [prevMonthData, setPrevMonthData] = useState<MonthlyExpenseData | null>(null);
@@ -187,6 +185,8 @@ export default function ExpensesPage() {
         params: { year, month },
       });
       setData(resp);
+      setSelectedHiredDoctorId(resp.hired_doctor_id ?? null);
+      setSelectedHiredNurseId(resp.hired_nurse_id ?? null);
 
       const sf: Record<number, SalaryFormState> = {};
       for (const row of resp.salary) {
@@ -212,6 +212,38 @@ export default function ExpensesPage() {
       console.error(e);
     } finally {
       setOtherLoading(false);
+    }
+  }, [year, month]);
+
+  // ── Load paid services analytics (for refund table) ────────
+  const loadPaidServicesData = useCallback(async () => {
+    try {
+      const { data: resp } = await api.get<AnalyticsData>("/monthly-services/analytics", {
+        params: { year, month },
+      });
+      const incomeByDoctor: Record<number, { name: string; income: number }> = {};
+      for (const svc of resp.services_table) {
+        if (svc.total_quantity === 0) continue;
+        for (const doc of svc.by_doctor) {
+          if (!incomeByDoctor[doc.doctor_id]) {
+            incomeByDoctor[doc.doctor_id] = { name: doc.doctor_name, income: 0 };
+          }
+          incomeByDoctor[doc.doctor_id].income +=
+            svc.doctor_income * (doc.quantity / svc.total_quantity);
+        }
+      }
+      const doctorIncomes = Object.entries(incomeByDoctor).map(([id, v]) => ({
+        doctor_id: Number(id),
+        doctor_name: v.name,
+        income: Math.round(v.income * 100) / 100,
+      }));
+      setPaidServicesData({
+        doctor_income: resp.dashboard.doctor_income,
+        cash_in_register: resp.dashboard.cash_in_register,
+        doctor_incomes: doctorIncomes,
+      });
+    } catch {
+      setPaidServicesData(null);
     }
   }, [year, month]);
 
@@ -286,7 +318,9 @@ export default function ExpensesPage() {
         const otherSum = (others as OtherExpense[]).reduce((s, e) => s + e.amount, 0);
         if (!d) return { month: i + 1, fixed: 0, salary: 0, taxes: 0, other: 0, income: 0, total: 0, remaining: 0 };
         const md = d as MonthlyExpenseData;
-        const total = md.totals.fixed_total + md.totals.salary_total + md.totals.tax_total + otherSum;
+        const ownerCalc = _calcOwnerSalary(md, selectedHiredDoctorId, selectedHiredNurseId);
+        const paidSvc = md.salary.filter(s => !s.is_owner).reduce((s, r) => s + r.paid_services_income, 0);
+        const total = md.totals.fixed_total + md.totals.salary_total + md.totals.tax_total + otherSum + ownerCalc.total + paidSvc;
         return {
           month: i + 1,
           fixed: md.totals.fixed_total,
@@ -294,8 +328,8 @@ export default function ExpensesPage() {
           taxes: md.totals.tax_total,
           other: otherSum,
           income: md.totals.income,
-          total,
-          remaining: md.totals.income - total,
+          total: Math.round(total * 100) / 100,
+          remaining: Math.round((md.totals.income - total) * 100) / 100,
         };
       });
       setAnnualMonths(annual);
@@ -306,23 +340,15 @@ export default function ExpensesPage() {
     }
   }, [year]);
 
-  useEffect(() => { load(); loadOther(); loadStaff(); loadDoctors(); loadPeriods(); loadPrevMonth(); }, [load, loadOther, loadStaff, loadDoctors, loadPeriods, loadPrevMonth]);
+  useEffect(() => { load(); loadOther(); loadStaff(); loadDoctors(); loadPeriods(); loadPrevMonth(); loadPaidServicesData(); }, [load, loadOther, loadStaff, loadDoctors, loadPeriods, loadPrevMonth, loadPaidServicesData]);
   useEffect(() => { if (viewMode === "all") loadAnnualData(); }, [viewMode, loadAnnualData]);
 
-  // Validate localStorage hired doctor/nurse ids against actual data
+  // Show accountant submitted modal when new submission detected
   useEffect(() => {
-    if (!data?.owner?.hired_doctors) return;
-    const validDoctorIds = new Set(data.owner.hired_doctors.map(d => d.doctor_id));
-    if (selectedHiredDoctorId !== null && !validDoctorIds.has(selectedHiredDoctorId)) {
-      setSelectedHiredDoctorId(null);
-      localStorage.removeItem("owner_hired_doctor_id");
+    if (data?.accountant_submitted_at && data.accountant_submitted_at !== accBannerDismissed) {
+      setAccSubmittedModal(true);
     }
-    const validNurseIds = new Set(data.salary.filter(s => s.role === "nurse").map(s => s.staff_member_id));
-    if (selectedHiredNurseId !== null && !validNurseIds.has(selectedHiredNurseId)) {
-      setSelectedHiredNurseId(null);
-      localStorage.removeItem("owner_hired_nurse_id");
-    }
-  }, [data]);
+  }, [data?.accountant_submitted_at]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Close drawer on Escape key
   useEffect(() => {
@@ -355,7 +381,7 @@ export default function ExpensesPage() {
     const prevent = (e: TouchEvent) => { e.preventDefault(); };
     handle.addEventListener("touchmove", prevent, { passive: false });
     return () => handle.removeEventListener("touchmove", prevent);
-  });
+  }, [activeDrawer]);
 
   const onDragStart = useCallback((e: React.TouchEvent) => {
     sheetDragRef.current = { startY: e.touches[0].clientY, startH: sheetHeight };
@@ -383,16 +409,6 @@ export default function ExpensesPage() {
     }
   }, [sheetHeight]);
 
-  // Sync with left sidebar collapse state
-  useEffect(() => {
-    function handleSidebarToggle(e: Event) {
-      const detail = (e as CustomEvent).detail;
-      setLeftCollapsed(detail.collapsed);
-    }
-    window.addEventListener("sidebar-toggle", handleSidebarToggle);
-    return () => window.removeEventListener("sidebar-toggle", handleSidebarToggle);
-  }, []);
-
   // Auto-scroll mobile tabs to active drawer
   useEffect(() => {
     if (!activeDrawer || !mobileTabsRef.current) return;
@@ -402,12 +418,20 @@ export default function ExpensesPage() {
 
   // ── Drawer section definitions ──
   const DRAWER_SECTIONS: { key: DrawerSection; label: string; icon: React.ReactNode; color: string; badgeColor: string; glow: string; getValue: () => number; getStatus: () => boolean }[] = [
-    { key: "fixed", label: "Постійні витрати", icon: <TrendingDown size={18} />, color: "text-blue-400", badgeColor: "bg-blue-500/25 border-blue-400/50", glow: "0 0 14px rgba(59,130,246,0.45), 0 0 4px rgba(59,130,246,0.3)", getValue: () => data?.totals.fixed_total ?? 0, getStatus: () => (data?.fixed.some(r => r.amount > 0) ?? false) },
-    { key: "salary", label: "Зарплатні витрати", icon: <Users size={18} />, color: "text-purple-400", badgeColor: "bg-purple-500/25 border-purple-400/50", glow: "0 0 14px rgba(168,85,247,0.45), 0 0 4px rgba(168,85,247,0.3)", getValue: () => data?.totals.salary_total ?? 0, getStatus: () => (data?.salary.some(r => r.brutto > 0) ?? false) },
-    { key: "other", label: "Інші витрати", icon: <Wallet size={18} />, color: "text-amber-400", badgeColor: "bg-amber-500/25 border-amber-400/50", glow: "0 0 14px rgba(245,158,11,0.45), 0 0 4px rgba(245,158,11,0.3)", getValue: () => otherTotal, getStatus: () => otherExpenses.length > 0 },
-    { key: "taxes", label: "Податки", icon: <Receipt size={18} />, color: "text-red-400", badgeColor: "bg-red-500/25 border-red-400/50", glow: "0 0 14px rgba(239,68,68,0.45), 0 0 4px rgba(239,68,68,0.3)", getValue: () => data?.totals.tax_total ?? 0, getStatus: () => (data?.totals.tax_total ?? 0) > 0 },
-    { key: "summary", label: "Підсумки", icon: <Building2 size={18} />, color: "text-emerald-400", badgeColor: "bg-emerald-500/25 border-emerald-400/50", glow: "0 0 14px rgba(16,185,129,0.45), 0 0 4px rgba(16,185,129,0.3)", getValue: () => remaining, getStatus: () => grandWithOther > 0 },
+    { key: "fixed", label: "Постійні витрати", icon: <TrendingDown size={20} />, color: "text-blue-400", badgeColor: "bg-blue-500/25 border-blue-400/50", glow: "0 0 14px rgba(59,130,246,0.45), 0 0 4px rgba(59,130,246,0.3)", getValue: () => data?.totals.fixed_total ?? 0, getStatus: () => (data?.fixed.some(r => r.amount > 0) ?? false) },
+    { key: "salary", label: "Зарплатні витрати", icon: <Users size={20} />, color: "text-purple-400", badgeColor: "bg-purple-500/25 border-purple-400/50", glow: "0 0 14px rgba(168,85,247,0.45), 0 0 4px rgba(168,85,247,0.3)", getValue: () => data?.totals.salary_total ?? 0, getStatus: () => (data?.salary.some(r => r.brutto > 0) ?? false) },
+    { key: "other", label: "Інші витрати", icon: <Wallet size={20} />, color: "text-amber-400", badgeColor: "bg-amber-500/25 border-amber-400/50", glow: "0 0 14px rgba(245,158,11,0.45), 0 0 4px rgba(245,158,11,0.3)", getValue: () => otherTotal, getStatus: () => otherExpenses.length > 0 },
+    { key: "taxes", label: "Податки", icon: <Receipt size={20} />, color: "text-red-400", badgeColor: "bg-red-500/25 border-red-400/50", glow: "0 0 14px rgba(239,68,68,0.45), 0 0 4px rgba(239,68,68,0.3)", getValue: () => data?.totals.tax_total ?? 0, getStatus: () => (data?.totals.tax_total ?? 0) > 0 },
+    { key: "summary", label: "Підсумки", icon: <Building2 size={20} />, color: "text-emerald-400", badgeColor: "bg-emerald-500/25 border-emerald-400/50", glow: "0 0 14px rgba(16,185,129,0.45), 0 0 4px rgba(16,185,129,0.3)", getValue: () => remaining, getStatus: () => grandWithOther > 0 },
   ];
+
+  function toggleExpSidebar() {
+    setExpSidebarCollapsed(prev => {
+      const next = !prev;
+      try { localStorage.setItem("expense-sidebar-collapsed", next ? "1" : "0"); } catch {}
+      return next;
+    });
+  }
 
   function toggleDrawer(section: DrawerSection) {
     setFixedSearch(""); setOtherSearch("");
@@ -547,8 +571,9 @@ export default function ExpensesPage() {
         paid_services_from_module: form.paid_services_from_module,
       });
       await load();
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
+      setAlertDlg({ title: "Помилка", description: e?.response?.data?.detail || "Не вдалося зберегти зарплату." });
       setSalaryForms(s => ({ ...s, [staffId]: { ...s[staffId], saving: false } }));
     }
   }
@@ -692,12 +717,69 @@ export default function ExpensesPage() {
     });
   }
 
+  async function toggleFixedVisibility(id: number) {
+    try {
+      await api.patch(`/monthly-expenses/fixed/${id}/visibility`);
+      await load();
+    } catch (e: any) {
+      console.error(e);
+    }
+  }
+
+  async function toggleOtherVisibility(id: number) {
+    try {
+      await api.patch(`/monthly-expenses/other/${id}/visibility`);
+      await loadOther();
+    } catch (e: any) {
+      console.error(e);
+    }
+  }
+
+  async function toggleFixedCashReturn(id: number) {
+    try {
+      const { data: resp } = await api.patch(`/monthly-expenses/fixed/${id}/cash-return`);
+      setData(prev => prev ? {
+        ...prev,
+        fixed: prev.fixed.map(r => r.id === id ? { ...r, is_cash_return: resp.is_cash_return } : r),
+      } : prev);
+    } catch (e: any) {
+      console.error(e);
+    }
+  }
+
+  async function toggleOtherCashReturn(id: number) {
+    try {
+      const { data: resp } = await api.patch(`/monthly-expenses/other/${id}/cash-return`);
+      setOtherExpenses(prev => prev.map(e => e.id === id ? { ...e, is_cash_return: resp.is_cash_return } : e));
+    } catch (e: any) {
+      console.error(e);
+    }
+  }
+
+  function deletePeriodData() {
+    setConfirmDlg({
+      title: `Видалити всі витрати за ${MONTH_NAMES[month - 1]} ${year}?`,
+      description: "Усі постійні, зарплатні та інші витрати за цей місяць буде видалено. Цю дію неможливо скасувати.",
+      variant: "danger",
+      confirmLabel: "Видалити",
+      action: async () => {
+        try {
+          await api.delete(`/monthly-expenses/period?year=${year}&month=${month}`);
+          await Promise.all([load(), loadOther()]);
+        } catch (e: any) {
+          console.error(e);
+          setAlertDlg({ title: "Помилка", description: e?.response?.data?.detail || "Не вдалося видалити дані." });
+        }
+      },
+    });
+  }
+
   // ── Lock / Unlock period ──────────────────────────────────────
   async function lockPeriod() {
     setLockLoading(true);
     try {
       await api.post("/monthly-expenses/lock", { year, month });
-      await Promise.all([load(), loadPeriods()]);
+      await Promise.all([load(), loadOther(), loadPeriods()]);
     } catch (e) { console.error(e); }
     finally { setLockLoading(false); }
   }
@@ -710,7 +792,7 @@ export default function ExpensesPage() {
         setLockLoading(true);
         try {
           await api.delete("/monthly-expenses/lock", { params: { year, month } });
-          await Promise.all([load(), loadPeriods()]);
+          await Promise.all([load(), loadOther(), loadPeriods()]);
         } catch (e) { console.error(e); }
         finally { setLockLoading(false); }
       },
@@ -744,48 +826,6 @@ export default function ExpensesPage() {
     let srcMonth = month - 1;
     if (srcMonth < 1) { srcMonth = 12; srcYear--; }
     setCopyModal({ open: true, srcYear, srcMonth, copyFixed: true, copySalary: true, saving: false });
-  }
-
-  // ── AI parse expense ──────────────────────────────────────────
-  async function submitAiParse() {
-    setAiModal(s => ({ ...s, loading: true }));
-    try {
-      const formData = new FormData();
-      if (aiModal.text) formData.append("text", aiModal.text);
-      if (aiModal.file) formData.append("file", aiModal.file);
-      const { data: result } = await api.post<AiParsedExpense>("/monthly-expenses/ai-parse", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      setAiModal(s => ({ ...s, loading: false, result }));
-    } catch (e) {
-      console.error(e);
-      setAiModal(s => ({ ...s, loading: false }));
-    }
-  }
-
-  async function applyAiResult() {
-    if (!aiModal.result) return;
-    const r = aiModal.result;
-    try {
-      if (r.category === "other" || !r.is_recurring) {
-        await api.post("/monthly-expenses/other", {
-          year, month, name: r.name, amount: r.amount, category: "general",
-        });
-        await loadOther();
-        setAiModal({ open: false, text: "", file: null, loading: false, result: null });
-        setActiveDrawer("other");
-      } else {
-        await api.post("/monthly-expenses/fixed", {
-          year, month, name: r.name, amount: r.amount, is_recurring: r.is_recurring,
-        });
-        await load();
-        setAiModal({ open: false, text: "", file: null, loading: false, result: null });
-        setActiveDrawer("fixed");
-      }
-    } catch (e: any) {
-      console.error(e);
-      setAlertDlg({ title: "Помилка", description: e?.response?.data?.detail || "Не вдалося зберегти витрату." });
-    }
   }
 
   // ── Per-section copy from previous month ────────────────────────
@@ -865,6 +905,18 @@ export default function ExpensesPage() {
     exportExpenseExcel(data, otherExpenses, otherTotal, grandWithOther, remaining, year, month);
   }
 
+  function exportReturnExcel() {
+    if (!data) return;
+    const supplements = (data.salary ?? []).filter(r => r.has_supplement && r.supplement > 0);
+    exportReturnExpensesExcel(
+      cashReturnFixed, cashReturnOther, cashReturnSum,
+      supplements, supplementsTotal,
+      paidServicesData?.doctor_incomes ?? [], doctorIncomeTotal,
+      cashInRegister, withdrawToCard,
+      year, month,
+    );
+  }
+
   // (inline export code has been moved to expenses/utils/excelExport.ts)
 
   // ── Derived data ──────────────────────────────────────────────
@@ -932,14 +984,34 @@ export default function ExpensesPage() {
         rows.push({ name: `ЄП (${data.taxes.ep_rate}%)`,   category: "taxes", amount: data.taxes.ep });
         rows.push({ name: `ВЗ (${data.taxes.vz_rate}%)`,   category: "taxes", amount: data.taxes.vz });
         rows.push({ name: "ЄСВ власника",                   category: "taxes", amount: data.taxes.esv_owner });
-        rows.push({ name: `ЄСВ роботодавця (${data.settings.esv_employer_rate}%)`, category: "taxes", amount: data.taxes.esv_employer });
 
         return rows;
       })()
     : [];
 
-  const grandWithOther = (data?.totals.grand_total ?? 0) + otherTotal;
-  const remaining      = (data?.totals.income ?? 0) - grandWithOther;
+  const detailRowsTotal = detailRows.reduce((sum, row) => sum + row.amount, 0);
+  const ownerSubtotal = detailRows
+    .filter(r => r.category === "owner_own" || r.category === "owner_hired" || r.category === "owner_paid")
+    .reduce((sum, r) => sum + r.amount, 0);
+  const paidServicesSubtotal = detailRows
+    .filter(r => r.category === "salary_paid")
+    .reduce((sum, r) => sum + r.amount, 0);
+
+  // grandWithOther = detailRowsTotal: включає fixed + salary + paid_services + owner + other + taxes
+  const grandWithOther = Math.round(detailRowsTotal * 100) / 100;
+  const remaining      = Math.round(((data?.totals.income ?? 0) - grandWithOther) * 100) / 100;
+
+  // ── Cash return / refund table calculations ────────────────────
+  const cashReturnFixed = (data?.fixed ?? []).filter(r => r.is_cash_return);
+  const cashReturnOther = otherExpenses.filter(e => e.is_cash_return);
+  const cashReturnSum = cashReturnFixed.reduce((s, r) => s + r.amount, 0)
+                      + cashReturnOther.reduce((s, e) => s + e.amount, 0);
+  const supplementsTotal = (data?.salary ?? [])
+    .filter(r => r.has_supplement && r.supplement > 0)
+    .reduce((s, r) => s + r.supplement, 0);
+  const doctorIncomeTotal = paidServicesData?.doctor_income ?? 0;
+  const cashInRegister = paidServicesData?.cash_in_register ?? 0;
+  const withdrawToCard = cashReturnSum + supplementsTotal + doctorIncomeTotal - cashInRegister;
 
   // ── Loading state ─────────────────────────────────────────────
   if (loading && !data) {
@@ -951,8 +1023,8 @@ export default function ExpensesPage() {
   // ══════════════════════════════════════════════════════════════
 
   return (
-    <div className={`space-y-5 max-w-7xl mx-auto transition-[padding] duration-300 ${
-      viewMode === "month" && data ? (expSidebarCollapsed ? "lg:pr-[80px]" : "lg:pr-[208px]") : ""
+    <div className={`space-y-5 transition-[padding] duration-300 ${
+      viewMode === "month" && data ? (expSidebarCollapsed ? "lg:pr-[80px]" : "lg:pr-[280px]") : ""
     }`}>
 
       {/* ═══ HEADER ═══ */}
@@ -987,7 +1059,7 @@ export default function ExpensesPage() {
 
         <div className="flex items-center gap-2 flex-wrap">
           <button
-            onClick={() => { load(); loadOther(); loadPeriods(); }}
+            onClick={() => { load(); loadOther(); loadPeriods(); loadPaidServicesData(); }}
             className="p-2 rounded-xl text-gray-400 hover:text-white hover:bg-dark-300 transition-all"
             title="Оновити"
             aria-label="Оновити дані"
@@ -1423,13 +1495,6 @@ export default function ExpensesPage() {
               <Copy size={13} aria-hidden="true" /> Копіювати з...
             </button>
             <button
-              onClick={() => setAiModal(s => ({ ...s, open: true }))}
-              aria-label="AI-аналіз витрати"
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-dark-400/60 border border-dark-50/15 text-gray-300 text-xs font-semibold hover:border-purple-500/30 hover:text-purple-300 transition-all"
-            >
-              <Sparkles size={13} aria-hidden="true" /> AI-аналіз
-            </button>
-            <button
               onClick={handleAccountantRequest}
               disabled={accReqLoading}
               aria-label="Запит до бухгалтера"
@@ -1439,6 +1504,15 @@ export default function ExpensesPage() {
               Бухгалтеру
             </button>
             <button
+              onClick={handleOwnerShare}
+              disabled={shareLoading}
+              aria-label="Звіт для ФОП"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-dark-400/60 border border-dark-50/15 text-gray-300 text-xs font-semibold hover:border-amber-500/30 hover:text-amber-300 transition-all disabled:opacity-50"
+            >
+              {shareLoading ? <RefreshCw size={13} className="animate-spin" /> : <Building2 size={13} aria-hidden="true" />}
+              Для ФОП
+            </button>
+            <button
               onClick={exportExcel}
               disabled={!data}
               aria-label="Експортувати в Excel"
@@ -1446,6 +1520,15 @@ export default function ExpensesPage() {
             >
               <Download size={13} aria-hidden="true" /> Excel
             </button>
+            {data && (
+              <button
+                onClick={deletePeriodData}
+                aria-label="Видалити всі дані за місяць"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-semibold hover:bg-red-500/20 transition-all"
+              >
+                <Trash2 size={13} aria-hidden="true" /> Видалити
+              </button>
+            )}
           </div>
 
           {/* Lock banner */}
@@ -1543,13 +1626,15 @@ export default function ExpensesPage() {
             </div>
           </div>
 
-          {/* ═══ ACCOUNTANT SUBMITTED BANNER ═══ */}
-          {data.accountant_submitted_at && accBannerDismissed !== data.accountant_submitted_at && (
-            <AlertBanner variant="info" onDismiss={() => setAccBannerDismissed(data.accountant_submitted_at!)}>
-              Бухгалтер подав звіт за {MONTH_NAMES[month - 1]}.
-              Записи з позначкою «Бухгалтер» оновлені —{" "}
-              {new Date(data.accountant_submitted_at).toLocaleString("uk-UA", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })}
-            </AlertBanner>
+          {/* ═══ ACCOUNTANT SUBMITTED INDICATOR (small) ═══ */}
+          {data.accountant_submitted_at && (
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-blue-500/10 border border-blue-500/20">
+              <ClipboardList size={14} className="text-blue-400 shrink-0" />
+              <p className="text-xs text-blue-300">
+                Бухгалтер подав звіт —{" "}
+                {new Date(data.accountant_submitted_at).toLocaleString("uk-UA", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })}
+              </p>
+            </div>
           )}
 
           {/* ═══ MONTH COMPLETION INDICATOR ═══ */}
@@ -1653,7 +1738,7 @@ export default function ExpensesPage() {
                         Всього
                       </td>
                       <td className="px-3 py-2.5 text-right font-bold font-mono text-white tabular-nums">
-                        {fmt(detailRows.reduce((s, r) => s + r.amount, 0))} ₴
+                        {fmt(detailRowsTotal)} ₴
                       </td>
                     </tr>
                   </tfoot>
@@ -1672,15 +1757,38 @@ export default function ExpensesPage() {
             aria-label="Розділи витрат"
           >
             {/* Sidebar header */}
-            <div className={`flex items-center gap-2.5 px-4 py-5 border-b border-dark-50/10 ${expSidebarCollapsed ? "justify-center" : ""}`}>
-              <div className="w-9 h-9 rounded-xl bg-orange-500/10 flex items-center justify-center shrink-0">
-                <BarChart3 size={18} className="text-orange-400" />
+            <div className="p-4 border-b border-dark-50/10">
+              <div className={`flex items-center ${expSidebarCollapsed ? "justify-center" : "gap-3"}`}>
+                <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center shrink-0">
+                  <BarChart3 size={22} className="text-orange-400" />
+                </div>
+                {!expSidebarCollapsed && (
+                  <div className="min-w-0 sidebar-label">
+                    <h2 className="text-lg font-bold text-white tracking-tight">Витрати</h2>
+                    <p className="text-xs text-gray-500">Розділи</p>
+                  </div>
+                )}
               </div>
-              {!expSidebarCollapsed && <span className="sidebar-label text-sm font-semibold text-gray-300 truncate">Витрати</span>}
+            </div>
+
+            {/* Toggle button */}
+            <div className={`px-3 pt-2 pb-1 ${expSidebarCollapsed ? "flex justify-center" : ""}`}>
+              <button
+                onClick={toggleExpSidebar}
+                title={expSidebarCollapsed ? "Розгорнути меню" : "Згорнути меню"}
+                className={`sidebar-toggle-btn ${expSidebarCollapsed ? "" : "w-full justify-between px-3"}`}
+              >
+                {expSidebarCollapsed
+                  ? <PanelRightOpen size={18} aria-hidden="true" />
+                  : <>
+                      <span className="text-xs font-medium sidebar-label">Згорнути</span>
+                      <PanelRightClose size={16} aria-hidden="true" />
+                    </>}
+              </button>
             </div>
 
             {/* Expense nav items */}
-            <nav className="flex-1 flex flex-col gap-1 py-3 px-2 overflow-y-auto">
+            <nav className="flex-1 p-3 space-y-1 overflow-y-auto scrollbar-hide">
               {DRAWER_SECTIONS.map(sec => {
                 const isActive = activeDrawer === sec.key;
                 const value = sec.getValue();
@@ -1690,7 +1798,7 @@ export default function ExpensesPage() {
                     key={sec.key}
                     onClick={() => toggleDrawer(sec.key as DrawerSection)}
                     title={expSidebarCollapsed ? `${sec.label} · ${fmt(value)} ₴` : undefined}
-                    className={`expense-nav-item group ${expSidebarCollapsed ? "justify-center px-0 py-3" : "px-3 py-2.5"} ${
+                    className={`expense-nav-item group ${expSidebarCollapsed ? "justify-center px-0 py-3" : "px-4 py-3"} ${
                       isActive ? "expense-nav-active" : "expense-nav-inactive"
                     }`}
                   >
@@ -1701,12 +1809,12 @@ export default function ExpensesPage() {
                     </span>
                     {!expSidebarCollapsed && (
                       <div className="sidebar-label flex-1 min-w-0">
-                        <p className={`text-xs font-semibold truncate ${isActive ? "text-white" : "text-gray-400"}`}>
+                        <p className={`text-sm font-medium truncate ${isActive ? "text-white" : "text-gray-400"}`}>
                           {sec.label}
                         </p>
                         <div className="flex items-center gap-1.5 mt-0.5">
                           <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${filled ? "bg-emerald-400" : "bg-gray-600"}`} />
-                          <span className={`text-[10px] font-mono tabular-nums truncate ${isActive ? sec.color : "text-gray-600"}`}>
+                          <span className={`text-xs font-mono tabular-nums truncate ${isActive ? sec.color : "text-gray-600"}`}>
                             {sec.key === "summary" ? (
                               <>{value >= 0 ? "+" : ""}{fmt(value)} ₴</>
                             ) : (
@@ -1722,11 +1830,15 @@ export default function ExpensesPage() {
             </nav>
 
             {/* Month indicator */}
-            <div className={`px-4 py-3 border-t border-dark-50/10 ${expSidebarCollapsed ? "text-center" : ""}`}>
-              {expSidebarCollapsed ? (
-                <p className="text-[10px] text-gray-600 font-mono">{String(month).padStart(2, "0")}</p>
-              ) : (
-                <p className="sidebar-label text-xs text-gray-600 truncate">{MONTH_NAMES[month - 1]} {year}</p>
+            <div className="p-3 border-t border-dark-50/10">
+              {!expSidebarCollapsed && (
+                <div className="card-neo-inset px-4 py-3 sidebar-label">
+                  <p className="text-sm text-gray-300 font-medium truncate">{MONTH_NAMES[month - 1]} {year}</p>
+                  <p className="text-xs text-gray-500 truncate">Поточний період</p>
+                </div>
+              )}
+              {expSidebarCollapsed && (
+                <p className="text-[10px] text-gray-600 font-mono text-center">{String(month).padStart(2, "0")}</p>
               )}
             </div>
           </aside>
@@ -1834,7 +1946,7 @@ export default function ExpensesPage() {
                   </div>
                 ) : data.fixed.filter(r => !fixedSearch || r.name.toLowerCase().includes(fixedSearch.toLowerCase())).map((row) => (
                   <div key={row.id}
-                    className="flex items-center gap-3 px-5 py-3 hover:bg-dark-400/20 transition-colors">
+                    className={`flex items-center gap-3 px-5 py-3 hover:bg-dark-400/20 transition-colors ${row.visible_to_accountant === false ? "opacity-50" : ""}`}>
 
                     <div className="flex-1 min-w-0">
                       <span className="text-sm text-gray-300 truncate block">{row.name}</span>
@@ -1858,6 +1970,30 @@ export default function ExpensesPage() {
                     <span className="text-sm font-mono font-semibold text-white tabular-nums shrink-0 w-28 text-right">
                       {fmt(row.amount)} ₴
                     </span>
+
+                    <button
+                      onClick={() => toggleFixedCashReturn(row.id)}
+                      className={`p-1.5 rounded-lg transition-all shrink-0 ${
+                        row.is_cash_return
+                          ? "text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10"
+                          : "text-gray-700 hover:text-emerald-400 hover:bg-emerald-500/10"
+                      }`}
+                      title={row.is_cash_return ? "Позначено як повернення готівки" : "Позначити як повернення готівки"}
+                    >
+                      <Banknote size={13} />
+                    </button>
+
+                    <button
+                      onClick={() => toggleFixedVisibility(row.id)}
+                      className={`p-1.5 rounded-lg transition-all shrink-0 ${
+                        row.visible_to_accountant === false
+                          ? "text-gray-700 hover:text-orange-400 hover:bg-orange-500/10"
+                          : "text-gray-600 hover:text-orange-400 hover:bg-orange-500/10"
+                      }`}
+                      title={row.visible_to_accountant === false ? "Приховано від бухгалтера" : "Видно бухгалтеру"}
+                    >
+                      {row.visible_to_accountant === false ? <EyeOff size={13} /> : <Eye size={13} />}
+                    </button>
 
                     <button
                       onClick={() => {
@@ -1994,6 +2130,7 @@ export default function ExpensesPage() {
                           d => d.doctor_id === selectedHiredDoctorId
                         );
                         const nurseRow = data.salary.find(s => s.staff_member_id === selectedHiredNurseId);
+                        const doctorSalaryRow = hd ? data.salary.find(s => s.staff_member_id === hd.staff_member_id) : undefined;
                         return (
                           <div className="border-b border-amber-500/20">
                             <div className="px-5 py-4 bg-amber-500/5">
@@ -2051,7 +2188,11 @@ export default function ExpensesPage() {
                                         onChange={e => {
                                           const id = e.target.value ? parseInt(e.target.value) : null;
                                           setSelectedHiredDoctorId(id);
-                                          localStorage.setItem("owner_hired_doctor_id", id ? String(id) : "");
+                                          api.put("/monthly-expenses/staff-selection", {
+                                            year, month,
+                                            hired_doctor_id: id,
+                                            hired_nurse_id: selectedHiredNurseId,
+                                          }).catch(console.error);
                                         }}
                                         className="input-dark w-full"
                                       >
@@ -2068,7 +2209,11 @@ export default function ExpensesPage() {
                                         onChange={e => {
                                           const id = e.target.value ? parseInt(e.target.value) : null;
                                           setSelectedHiredNurseId(id);
-                                          localStorage.setItem("owner_hired_nurse_id", id ? String(id) : "");
+                                          api.put("/monthly-expenses/staff-selection", {
+                                            year, month,
+                                            hired_doctor_id: selectedHiredDoctorId,
+                                            hired_nurse_id: id,
+                                          }).catch(console.error);
                                         }}
                                         className="input-dark w-full"
                                       >
@@ -2085,7 +2230,13 @@ export default function ExpensesPage() {
                                       <CalcRow label="ЄП лікаря" value={hd.nhsu_ep} color="text-red-400" info="відрахування" />
                                       <CalcRow label="ВЗ лікаря" value={hd.nhsu_vz} color="text-red-400" info="відрахування" />
                                       <CalcRow label="ЗП лікаря (витрати)" value={hd.staff_total_employer_cost} color="text-red-400" info="відрахування" />
+                                      {(doctorSalaryRow?.supplement ?? 0) > 0 && (
+                                        <CalcRow label="  з них Доплата лікаря" value={doctorSalaryRow!.supplement} color="text-orange-400" info="до цільової" />
+                                      )}
                                       <CalcRow label={`ЗП сестри (${nurseRow.full_name})`} value={nurseRow.total_employer_cost} color="text-red-400" info="відрахування" />
+                                      {(nurseRow.supplement ?? 0) > 0 && (
+                                        <CalcRow label="  з них Доплата сестри" value={nurseRow.supplement} color="text-orange-400" info="до цільової" />
+                                      )}
                                       <div className="border-t border-dark-50/10 pt-2">
                                         <CalcRow label="÷ 2 × 90%" value={ownerCalc.hiredDeclarations} color="text-emerald-400" bold />
                                       </div>
@@ -2534,14 +2685,41 @@ export default function ExpensesPage() {
                       Нічого не знайдено за запитом «{otherSearch}»
                     </div>
                   ) : otherExpenses.filter(e => !otherSearch || e.name.toLowerCase().includes(otherSearch.toLowerCase())).map((exp) => (
-                    <div key={exp.id} className="flex items-center gap-3 px-5 py-3 hover:bg-dark-400/20 transition-colors">
+                    <div key={exp.id} className={`flex items-center gap-3 px-5 py-3 hover:bg-dark-400/20 transition-colors ${exp.visible_to_accountant === false ? "opacity-50" : ""}`}>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm text-gray-200 truncate">{exp.name}</p>
                         {exp.description && (
                           <p className="text-xs text-gray-600 truncate mt-0.5">{exp.description}</p>
                         )}
                       </div>
+                      {exp.edited_by === "accountant" && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-teal-500/15 text-teal-400 border border-teal-500/20 shrink-0" title={exp.edited_at ? `Оновлено: ${new Date(exp.edited_at).toLocaleDateString("uk-UA")}` : undefined}>
+                          Бухгалтер
+                        </span>
+                      )}
                       <span className="font-mono text-sm text-gray-200 shrink-0 tabular-nums">{fmt(exp.amount)} ₴</span>
+                      <button
+                        onClick={() => toggleOtherCashReturn(exp.id)}
+                        className={`p-1.5 rounded-lg transition-all shrink-0 ${
+                          exp.is_cash_return
+                            ? "text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10"
+                            : "text-gray-700 hover:text-emerald-400 hover:bg-emerald-500/10"
+                        }`}
+                        title={exp.is_cash_return ? "Позначено як повернення готівки" : "Позначити як повернення готівки"}
+                      >
+                        <Banknote size={13} />
+                      </button>
+                      <button
+                        onClick={() => toggleOtherVisibility(exp.id)}
+                        className={`p-1.5 rounded-lg transition-all shrink-0 ${
+                          exp.visible_to_accountant === false
+                            ? "text-gray-700 hover:text-orange-400 hover:bg-orange-500/10"
+                            : "text-gray-600 hover:text-orange-400 hover:bg-orange-500/10"
+                        }`}
+                        title={exp.visible_to_accountant === false ? "Приховано від бухгалтера" : "Видно бухгалтеру"}
+                      >
+                        {exp.visible_to_accountant === false ? <EyeOff size={13} /> : <Eye size={13} />}
+                      </button>
                       <button
                         onClick={() => setOtherModal({
                           open: true, isEdit: true, id: exp.id,
@@ -2622,10 +2800,9 @@ export default function ExpensesPage() {
 
                 <div className="bg-dark-400/20 rounded-xl p-4 space-y-2">
                   <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-1.5"><Receipt size={13} className="text-orange-400" />Нараховані податки</p>
-                  <TaxRow label={`ЄП (${data.taxes.ep_rate}%)`}          value={data.taxes.ep} />
-                  <TaxRow label={`ВЗ від доходу (${data.taxes.vz_rate}%)`} value={data.taxes.vz} />
-                  <TaxRow label="ЄСВ власника (щомісячно)"               value={data.taxes.esv_owner} />
-                  <TaxRow label={`ЄСВ роботодавця (${data.settings.esv_employer_rate}%)`} value={data.taxes.esv_employer} />
+                  <TaxRow label={`Єдиний податок (${data.taxes.ep_rate}%)`}     value={data.taxes.ep} />
+                  <TaxRow label={`Військовий збір (${data.taxes.vz_rate}%)`} value={data.taxes.vz} />
+                  <TaxRow label="ЄСВ (щомісячно)"                            value={data.taxes.esv_owner} />
                   <div className="border-t border-dark-50/10 pt-2">
                     <TaxRow label="Разом податки" value={data.totals.tax_total} bold color="text-red-400" />
                   </div>
@@ -2633,14 +2810,11 @@ export default function ExpensesPage() {
 
                 <div className="bg-dark-400/20 rounded-xl p-4 space-y-2">
                   <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-1.5"><Activity size={13} className="text-orange-400" />Ставки</p>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-3 gap-3">
                     {[
-                      { label: "ПДФО", value: `${data.settings.pdfo_rate}%` },
-                      { label: "ВЗ із ЗП", value: `${data.settings.vz_zp_rate}%` },
-                      { label: "ЄСВ роботодавця", value: `${data.settings.esv_employer_rate}%` },
-                      { label: "ЄП", value: `${data.taxes.ep_rate}%` },
-                      { label: "ВЗ від доходу", value: `${data.taxes.vz_rate}%` },
-                      { label: "ЄСВ власника", value: `${fmt(data.taxes.esv_owner)} ₴` },
+                      { label: "Єдиний податок", value: `${data.taxes.ep_rate}%` },
+                      { label: "Військовий збір", value: `${data.taxes.vz_rate}%` },
+                      { label: "ЄСВ", value: `${fmt(data.taxes.esv_owner)} ₴` },
                     ].map(item => (
                       <div key={item.label} className="bg-dark-500/40 rounded-lg p-3 text-center">
                         <p className="text-xs text-gray-500 mb-1">{item.label}</p>
@@ -2689,6 +2863,12 @@ export default function ExpensesPage() {
                 </p>
                 <SummaryRow label="Постійні витрати"  value={data.totals.fixed_total}  color="text-blue-400" />
                 <SummaryRow label="Зарплатні витрати" value={data.totals.salary_total} color="text-purple-400" />
+                {paidServicesSubtotal > 0 && (
+                  <SummaryRow label="Платні послуги персоналу" value={paidServicesSubtotal} color="text-cyan-400" />
+                )}
+                {ownerSubtotal > 0 && (
+                  <SummaryRow label="Виплати власнику" value={ownerSubtotal} color="text-amber-400" />
+                )}
                 <SummaryRow label="Інші витрати"      value={otherTotal}               color="text-amber-400" />
                 <SummaryRow label="Податки"           value={data.totals.tax_total}    color="text-red-400" />
                 <div className="border-t border-dark-50/10 pt-2.5">
@@ -2729,6 +2909,112 @@ export default function ExpensesPage() {
                   </div>
                 )}
               </div>
+              </div>
+            </div>
+          </div>
+          )}
+
+          {/* ── ТАБЛИЦЯ: ВИТРАТИ НА ПОВЕРНЕННЯ ── */}
+          {data && (
+          <div className="card-neo p-5 space-y-4">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-8 h-8 rounded-xl bg-teal-500/10 flex items-center justify-center shrink-0">
+                <Banknote size={18} className="text-teal-400" />
+              </div>
+              <h3 className="font-semibold text-white text-base">Витрати на повернення</h3>
+              <button
+                onClick={exportReturnExcel}
+                className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 text-xs font-medium transition-colors"
+                title="Завантажити в Excel"
+              >
+                <Download size={14} />
+                Excel
+              </button>
+            </div>
+
+            {/* Витрати з позначкою "Повернення готівки" */}
+            <div>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                Повернення готівки
+              </p>
+              {cashReturnFixed.length === 0 && cashReturnOther.length === 0 ? (
+                <p className="text-sm text-gray-600">Немає витрат з позначкою повернення.</p>
+              ) : (
+                <div className="space-y-1">
+                  {cashReturnFixed.map(r => (
+                    <SummaryRow key={`f-${r.id}`} label={r.name} value={r.amount} color="text-blue-400" />
+                  ))}
+                  {cashReturnOther.map(e => (
+                    <SummaryRow key={`o-${e.id}`} label={e.name} value={e.amount} color="text-amber-400" />
+                  ))}
+                  <div className="border-t border-dark-50/10 pt-1.5 mt-1.5">
+                    <SummaryRow label="Разом" value={cashReturnSum} color="text-white" bold />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Доплати до цільової суми */}
+            <div>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                Доплати до цільової суми
+              </p>
+              {(data.salary ?? []).filter(r => r.has_supplement && r.supplement > 0).length === 0 ? (
+                <p className="text-sm text-gray-600">Немає доплат.</p>
+              ) : (
+                <div className="space-y-1">
+                  {data.salary.filter(r => r.has_supplement && r.supplement > 0).map(r => (
+                    <SummaryRow key={r.staff_member_id} label={`${r.full_name} — доплата`} value={r.supplement} color="text-purple-400" />
+                  ))}
+                  <div className="border-t border-dark-50/10 pt-1.5 mt-1.5">
+                    <SummaryRow label="Разом" value={supplementsTotal} color="text-white" bold />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Дохід лікарів */}
+            <div>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                Дохід лікарів (платні послуги)
+              </p>
+              {(paidServicesData?.doctor_incomes ?? []).length === 0 ? (
+                <p className="text-sm text-gray-600">Немає даних.</p>
+              ) : (
+                <div className="space-y-1">
+                  {paidServicesData!.doctor_incomes.map(d => (
+                    <SummaryRow key={d.doctor_id} label={d.doctor_name} value={d.income} color="text-emerald-400" />
+                  ))}
+                  <div className="border-t border-dark-50/10 pt-1.5 mt-1.5">
+                    <SummaryRow label="Разом" value={doctorIncomeTotal} color="text-white" bold />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Готівка в касі */}
+            <div>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                Готівка в касі
+              </p>
+              <SummaryRow label={`Готівка в касі за ${MONTH_NAMES[month - 1]} ${year}`} value={cashInRegister} color="text-yellow-400" />
+            </div>
+
+            {/* Підсумок: Вивести на картку */}
+            <div className="border-t border-white/10 pt-4">
+              <div className="space-y-1.5 text-sm">
+                <SummaryRow label="Витрати на повернення" value={cashReturnSum} />
+                <SummaryRow label="+ Доплати до цільової суми" value={supplementsTotal} />
+                <SummaryRow label="+ Дохід лікарів" value={doctorIncomeTotal} />
+                <SummaryRow label="− Готівка в касі" value={cashInRegister} />
+                <div className="border-t border-dark-50/10 pt-2.5 mt-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-white">Вивести на картку</span>
+                    <span className={`font-bold text-xl font-mono tabular-nums ${withdrawToCard >= 0 ? "text-teal-400" : "text-red-400"}`}>
+                      {fmt(withdrawToCard)} ₴
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -2941,132 +3227,6 @@ export default function ExpensesPage() {
         </Modal>
       )}
 
-      {/* ── AI parse modal ── */}
-      {aiModal.open && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex flex-col justify-end sm:flex-row sm:items-start sm:justify-center sm:p-4 overflow-hidden sm:overflow-y-auto modal-overlay" role="dialog" aria-modal="true" aria-label="AI-аналіз витрати">
-          <div className="absolute inset-0" onClick={() => setAiModal({ open: false, text: "", file: null, loading: false, result: null })} />
-          <div
-            className="relative bg-dark-600 rounded-t-3xl sm:rounded-2xl w-full max-w-lg sm:my-auto modal-glow expense-sheet-modal pb-[env(safe-area-inset-bottom)]"
-          >
-            <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
-              <div className="flex items-center gap-2">
-                <Sparkles size={16} className="text-purple-400" />
-                <h4 className="font-semibold text-white text-sm">AI-аналіз витрати</h4>
-              </div>
-              <button
-                onClick={() => setAiModal({ open: false, text: "", file: null, loading: false, result: null })}
-                aria-label="Закрити"
-                className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all
-                           focus-visible:outline-2 focus-visible:outline-accent-400"
-              >
-                <X size={16} />
-              </button>
-            </div>
-
-            <div className="px-5 py-4 space-y-4">
-              {!aiModal.result ? (
-                <>
-                  <div>
-                    <label className="label-dark">Опис витрати (текст)</label>
-                    <textarea
-                      value={aiModal.text}
-                      onChange={e => setAiModal(s => ({ ...s, text: e.target.value }))}
-                      placeholder="Наприклад: оплатив оренду 15000 грн за лютий, щомісячно..."
-                      className="input-dark w-full h-24 resize-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="label-dark">або зображення / чек</label>
-                    <div
-                      onClick={() => aiFileRef.current?.click()}
-                      className="border border-dashed border-dark-50/20 rounded-xl p-6 text-center cursor-pointer hover:border-purple-500/40 hover:bg-purple-500/5 transition-all"
-                    >
-                      <ImagePlus size={24} className="text-gray-600 mx-auto mb-2" />
-                      {aiModal.file ? (
-                        <p className="text-sm text-purple-300">{aiModal.file.name}</p>
-                      ) : (
-                        <p className="text-xs text-gray-600">Натисніть щоб обрати зображення (JPG, PNG, PDF)</p>
-                      )}
-                    </div>
-                    <input
-                      ref={aiFileRef}
-                      type="file"
-                      accept="image/*,application/pdf"
-                      className="hidden"
-                      onChange={e => setAiModal(s => ({ ...s, file: e.target.files?.[0] ?? null }))}
-                    />
-                  </div>
-                  <div className="flex gap-3 pt-2">
-                    <button
-                      onClick={() => setAiModal({ open: false, text: "", file: null, loading: false, result: null })}
-                      className="flex-1 py-2.5 rounded-xl border border-dark-50/20 text-gray-400 hover:text-white text-sm transition-all"
-                    >
-                      Скасувати
-                    </button>
-                    <button
-                      onClick={submitAiParse}
-                      disabled={aiModal.loading || (!aiModal.text.trim() && !aiModal.file)}
-                      className="flex-1 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-sm font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-60"
-                    >
-                      {aiModal.loading ? <RefreshCw size={14} className="animate-spin" /> : <Sparkles size={14} />}
-                      Аналізувати
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="p-4 rounded-xl bg-purple-500/10 border border-purple-500/20 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <p className="text-xs font-semibold text-purple-400 uppercase tracking-wider">Результат AI</p>
-                      <span className="text-xs text-gray-500">
-                        Впевненість: {Math.round(aiModal.result.confidence * 100)}%
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3 text-sm">
-                      <div>
-                        <p className="text-xs text-gray-500">Категорія</p>
-                        <p className="text-white font-medium">{aiModal.result.category === "fixed" ? "Постійна витрата" : "Інша витрата"}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500">Сума</p>
-                        <p className="text-emerald-400 font-bold font-mono tabular-nums">{fmt(aiModal.result.amount)} ₴</p>
-                      </div>
-                      <div className="col-span-2">
-                        <p className="text-xs text-gray-500">Назва</p>
-                        <p className="text-white">{aiModal.result.name}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500">Постійна</p>
-                        <p className="text-white">{aiModal.result.is_recurring ? "Так" : "Ні"}</p>
-                      </div>
-                    </div>
-                    {aiModal.result.note && (
-                      <p className="text-xs text-gray-500 italic border-t border-purple-500/20 pt-2">
-                        {aiModal.result.note}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex gap-3">
-                    <button
-                      onClick={() => setAiModal(s => ({ ...s, result: null }))}
-                      className="flex-1 py-2.5 rounded-xl border border-dark-50/20 text-gray-400 hover:text-white text-sm transition-all"
-                    >
-                      Назад
-                    </button>
-                    <button
-                      onClick={applyAiResult}
-                      className="flex-1 py-2.5 rounded-xl bg-accent-500 hover:bg-accent-400 text-white text-sm font-semibold transition-all flex items-center justify-center gap-2"
-                    >
-                      <Check size={14} /> Застосувати
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* ── KPI Detail modal (85% screen) ── */}
       {kpiModal.open && data && (() => {
         type ModalRow = { name: string; detail?: string; amount: number };
@@ -3103,8 +3263,7 @@ export default function ExpensesPage() {
             rows = [
               { name: `Єдиний податок (${data.taxes.ep_rate}%)`, detail: `від доходу ${fmt(data.taxes.total_income)} ₴`, amount: data.taxes.ep },
               { name: `Військовий збір (${data.taxes.vz_rate}%)`, detail: `від доходу ${fmt(data.taxes.total_income)} ₴`, amount: data.taxes.vz },
-              { name: "ЄСВ власника", detail: "Фіксований щомісячний", amount: data.taxes.esv_owner },
-              { name: `ЄСВ роботодавця (${data.settings.esv_employer_rate}%)`, detail: "Від зарплатного фонду", amount: data.taxes.esv_employer },
+              { name: "ЄСВ", detail: "Фіксований щомісячний", amount: data.taxes.esv_owner },
             ];
             totalValue = data.totals.tax_total;
             break;
@@ -3113,16 +3272,21 @@ export default function ExpensesPage() {
               ...data.fixed.filter(r => r.amount > 0).map(r => ({
                 name: r.name, detail: "Постійні", amount: r.amount,
               })),
-              ...data.salary.map(r => ({
+              ...data.salary.filter(s => !s.is_owner).map(r => ({
                 name: r.full_name, detail: `Зарплатні · ${ROLE_LABELS[r.role] ?? r.role}`, amount: r.total_employer_cost,
+              })),
+              ...data.salary.filter(s => !s.is_owner && s.paid_services_income > 0).map(r => ({
+                name: `${r.full_name} — Платні послуги`, detail: "Платні послуги", amount: r.paid_services_income,
+              })),
+              ...detailRows.filter(r => r.category === "owner_own" || r.category === "owner_hired" || r.category === "owner_paid").map(r => ({
+                name: r.name, detail: "Виплати власнику", amount: r.amount,
               })),
               ...otherExpenses.map(r => ({
                 name: r.name, detail: "Інші", amount: r.amount,
               })),
-              { name: `ЄП (${data.taxes.ep_rate}%)`, detail: "Податки", amount: data.taxes.ep },
-              { name: `ВЗ (${data.taxes.vz_rate}%)`, detail: "Податки", amount: data.taxes.vz },
-              { name: "ЄСВ власника", detail: "Податки", amount: data.taxes.esv_owner },
-              { name: `ЄСВ роботодавця (${data.settings.esv_employer_rate}%)`, detail: "Податки", amount: data.taxes.esv_employer },
+              { name: `Єдиний податок (${data.taxes.ep_rate}%)`, detail: "Податки", amount: data.taxes.ep },
+              { name: `Військовий збір (${data.taxes.vz_rate}%)`, detail: "Податки", amount: data.taxes.vz },
+              { name: "ЄСВ", detail: "Податки", amount: data.taxes.esv_owner },
             ];
             totalValue = grandWithOther;
             break;
@@ -3133,6 +3297,8 @@ export default function ExpensesPage() {
               { name: "Платні послуги", detail: "Дохід", amount: data.taxes.paid_services_income },
               { name: "Постійні витрати", detail: "Витрати", amount: -data.totals.fixed_total },
               { name: "Зарплатні витрати", detail: "Витрати", amount: -data.totals.salary_total },
+              ...(paidServicesSubtotal > 0 ? [{ name: "Платні послуги персоналу", detail: "Витрати", amount: -paidServicesSubtotal }] : []),
+              ...(ownerSubtotal > 0 ? [{ name: "Виплати власнику", detail: "Витрати", amount: -ownerSubtotal }] : []),
               { name: "Інші витрати", detail: "Витрати", amount: -otherTotal },
               { name: "Податки", detail: "Витрати", amount: -data.totals.tax_total },
             ];
@@ -3147,7 +3313,7 @@ export default function ExpensesPage() {
             <div className="absolute inset-0" onClick={() => setKpiModal({ open: false, type: "", title: "" })} />
             <div
               className="relative bg-dark-600 rounded-t-3xl sm:rounded-2xl shadow-2xl w-full flex flex-col sm:my-auto expense-sheet-modal pb-[env(safe-area-inset-bottom)]"
-              style={{ border: "1px solid #ffffff15", maxHeight: "92vh", maxWidth: "900px" }}
+              style={{ border: "1px solid #ffffff15", height: "85dvh", maxHeight: "85dvh", maxWidth: "900px" }}
             >
               {/* Header */}
               <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0">
@@ -3308,6 +3474,40 @@ export default function ExpensesPage() {
         onConfirm={() => setAlertDlg(null)}
         onCancel={() => setAlertDlg(null)}
       />
+
+      {/* ── Accountant submitted modal ── */}
+      {accSubmittedModal && data?.accountant_submitted_at && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-md animate-fade-in" onClick={() => dismissAccModal(data.accountant_submitted_at!)} />
+          <div className="relative p-6 max-w-sm w-full my-auto animate-modal-in rounded-2xl bg-dark-600 border border-blue-500/25 shadow-[0_0_60px_rgba(59,130,246,0.22),0_0_120px_rgba(59,130,246,0.08),0_24px_70px_rgba(0,0,0,0.55)]">
+            <div className="absolute top-0 left-0 right-0 h-[2px] rounded-t-2xl bg-gradient-to-r from-transparent via-blue-500/90 to-transparent shadow-[0_0_20px_6px_rgba(59,130,246,0.20)]" />
+            <button onClick={() => dismissAccModal(data.accountant_submitted_at!)} aria-label="Закрити" className="absolute top-4 right-4 p-1.5 rounded-xl text-gray-500 hover:text-white hover:bg-dark-300/50 active:scale-90 transition-all duration-150">
+              <X size={16} />
+            </button>
+            <div className="flex flex-col items-center text-center">
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4 bg-blue-500/15 shadow-[0_0_30px_rgba(59,130,246,0.35),0_0_60px_rgba(59,130,246,0.15)]">
+                <ClipboardList size={26} className="text-blue-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-white mb-2">Бухгалтер подав звіт</h3>
+              <p className="text-sm text-gray-400 mb-1 leading-relaxed">
+                Звіт за <strong className="text-white">{MONTH_NAMES[month - 1]} {year}</strong> оброблено.
+              </p>
+              <p className="text-sm text-gray-400 mb-4 leading-relaxed">
+                Записи з позначкою «Бухгалтер» оновлені —{" "}
+                <span className="text-blue-400">
+                  {new Date(data.accountant_submitted_at).toLocaleString("uk-UA", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })}
+                </span>
+              </p>
+            </div>
+            <button
+              onClick={() => dismissAccModal(data.accountant_submitted_at!)}
+              className="w-full px-4 py-3 rounded-xl text-sm font-semibold text-white bg-blue-500 hover:bg-blue-600 active:scale-97 transition-all duration-150 shadow-lg shadow-blue-500/20"
+            >
+              Зрозуміло
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -30,7 +30,7 @@ import {
   ClipboardList,
   Users,
 } from "lucide-react";
-import { LoadingSpinner, ConfirmDialog, AlertBanner } from "../components/shared";
+import { LoadingSpinner, ConfirmDialog, AlertBanner, MONTH_NAMES } from "../components/shared";
 import MedFlowLogo from "../components/shared/MedFlowLogo";
 import {
   BarChart,
@@ -97,6 +97,8 @@ export default function MonthlyServicesPage() {
   const [deleteReportId, setDeleteReportId] = useState<number | null>(null);
   const [finalizeWarningId, setFinalizeWarningId] = useState<number | null>(null);
   const [alertDlg, setAlertDlg] = useState<{ title: string; description?: string } | null>(null);
+  const [showDeletePeriod, setShowDeletePeriod] = useState(false);
+  const [lockLoading, setLockLoading] = useState(false);
 
   // ── Форма звіту ──
   const [formDoctor, setFormDoctor] = useState<number>(0);
@@ -173,6 +175,7 @@ export default function MonthlyServicesPage() {
   }
 
   // ── Helpers ──
+  const isLocked = analytics?.is_locked === true;
   const d = analytics?.dashboard;
   const isEndOfMonth = (() => {
     const last = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
@@ -367,6 +370,14 @@ export default function MonthlyServicesPage() {
     } catch {}
   }
 
+  async function handleDeletePeriod() {
+    try {
+      await api.delete(`/monthly-services/period?year=${selectedYear}&month=${selectedMonth}`);
+      setShowDeletePeriod(false);
+      await Promise.all([loadAnalytics(), loadPeriodInfo()]);
+    } catch {}
+  }
+
   async function handleCopyPrevious() {
     if (!selectedDoctor) {
       setAlertDlg({ title: "Увага", description: "Оберіть конкретного лікаря для копіювання звіту" });
@@ -404,6 +415,31 @@ export default function MonthlyServicesPage() {
       await api.post(`/monthly-services/reports/${id}/unfinalize`);
       await loadAnalytics();
     } catch {}
+  }
+
+  // ── Lock / Unlock period ──
+  async function lockPeriod() {
+    setLockLoading(true);
+    try {
+      await api.post("/monthly-services/lock", { year: selectedYear, month: selectedMonth });
+      await Promise.all([loadAnalytics(), loadPeriodInfo()]);
+    } catch (e: any) {
+      setAlertDlg({ title: "Помилка", description: e?.response?.data?.detail ?? "Не вдалося зафіксувати місяць" });
+    } finally {
+      setLockLoading(false);
+    }
+  }
+
+  async function unlockPeriod() {
+    setLockLoading(true);
+    try {
+      await api.delete("/monthly-services/lock", { params: { year: selectedYear, month: selectedMonth } });
+      await Promise.all([loadAnalytics(), loadPeriodInfo()]);
+    } catch (e: any) {
+      setAlertDlg({ title: "Помилка", description: e?.response?.data?.detail ?? "Не вдалося розблокувати місяць" });
+    } finally {
+      setLockLoading(false);
+    }
   }
 
   // ── Експорт / Поширення ──
@@ -500,6 +536,17 @@ export default function MonthlyServicesPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {isLocked ? (
+            <button onClick={unlockPeriod} disabled={lockLoading} aria-label="Розблокувати місяць для редагування" className="flex items-center gap-2 px-3 py-2 text-sm text-amber-400 hover:bg-amber-500/10 rounded-xl border border-amber-500/20 transition-all tap-target disabled:opacity-50">
+              {lockLoading ? <RefreshCw size={15} className="animate-spin" /> : <Unlock size={15} aria-hidden="true" />}
+              <span className="hidden sm:inline">Розблокувати</span>
+            </button>
+          ) : (
+            <button onClick={lockPeriod} disabled={lockLoading || !analytics} aria-label="Зафіксувати місяць" className="flex items-center gap-2 px-3 py-2 text-sm text-gray-400 hover:bg-amber-500/10 hover:text-amber-400 rounded-xl border border-dark-50/20 hover:border-amber-500/20 transition-all tap-target disabled:opacity-50">
+              {lockLoading ? <RefreshCw size={15} className="animate-spin" /> : <Lock size={15} aria-hidden="true" />}
+              <span className="hidden sm:inline">Зафіксувати</span>
+            </button>
+          )}
           <button onClick={handleExport} aria-label="Експорт у Excel" className="flex items-center gap-2 px-3 py-2 text-sm text-green-400 hover:bg-green-500/10 rounded-xl border border-green-500/20 transition-all tap-target">
             <Download size={15} aria-hidden="true" />
             <span className="hidden sm:inline">Excel</span>
@@ -508,14 +555,20 @@ export default function MonthlyServicesPage() {
             <Share2 size={15} aria-hidden="true" />
             <span className="hidden sm:inline">Поділитися</span>
           </button>
-          <button onClick={handleCopyPrevious} aria-label="Копіювати з попереднього місяця" className="flex items-center gap-2 px-3 py-2 text-sm text-cyan-400 hover:bg-cyan-500/10 rounded-xl border border-cyan-500/20 transition-all tap-target" title="Копіювати з попереднього місяця">
+          <button onClick={handleCopyPrevious} disabled={isLocked} aria-label="Копіювати з попереднього місяця" className="flex items-center gap-2 px-3 py-2 text-sm text-cyan-400 hover:bg-cyan-500/10 rounded-xl border border-cyan-500/20 transition-all tap-target disabled:opacity-50" title="Копіювати з попереднього місяця">
             <Copy size={15} aria-hidden="true" />
             <span className="hidden sm:inline">З минулого</span>
           </button>
-          <button onClick={openCreateReport} aria-label="Додати звіт" className="flex items-center gap-2 px-4 py-2 bg-accent-500/10 hover:bg-accent-500/20 text-accent-400 rounded-xl text-sm font-medium transition-all border border-accent-500/20 tap-target">
+          <button onClick={openCreateReport} disabled={isLocked} aria-label="Додати звіт" className="flex items-center gap-2 px-4 py-2 bg-accent-500/10 hover:bg-accent-500/20 text-accent-400 rounded-xl text-sm font-medium transition-all border border-accent-500/20 tap-target disabled:opacity-50">
             <Plus size={16} aria-hidden="true" />
             <span className="hidden sm:inline">Додати звіт</span>
           </button>
+          {analytics && analytics.reports.length > 0 && !isLocked && (
+            <button onClick={() => setShowDeletePeriod(true)} aria-label="Видалити дані за місяць" className="flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 rounded-xl border border-red-500/20 transition-all tap-target">
+              <Trash2 size={15} aria-hidden="true" />
+              <span className="hidden sm:inline">Видалити</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -544,8 +597,18 @@ export default function MonthlyServicesPage() {
         </div>
       </div>
 
+      {/* Банер: місяць зафіксовано */}
+      {isLocked && (
+        <AlertBanner variant="warning">
+          Місяць <strong>{MONTHS_UA[selectedMonth]} {selectedYear}</strong> зафіксовано. Для редагування{" "}
+          <button onClick={unlockPeriod} className="underline hover:text-yellow-300 transition-colors" aria-label="Розблокувати місяць">
+            розблокуйте
+          </button>.
+        </AlertBanner>
+      )}
+
       {/* Банер: час заповнити звіт */}
-      {isEndOfMonth && !hasReportsThisMonth && selectedYear === now.getFullYear() && selectedMonth === now.getMonth() + 1 && (
+      {!isLocked && isEndOfMonth && !hasReportsThisMonth && selectedYear === now.getFullYear() && selectedMonth === now.getMonth() + 1 && (
         <AlertBanner variant="warning">
           Наближається кінець місяця. Час заповнити звіт за {MONTHS_UA[selectedMonth]}.
         </AlertBanner>
@@ -649,14 +712,16 @@ export default function MonthlyServicesPage() {
                       }`}>
                         {isFinal ? "Зафіксовано" : "Чернетка"}
                       </span>
-                      {!isFinal ? (
-                        <>
-                          <button onClick={() => openEditReport(rep)} aria-label="Редагувати звіт" className="p-1.5 text-gray-500 hover:text-accent-400 hover:bg-accent-500/10 rounded-lg transition-all" title="Редагувати"><Pencil size={14} /></button>
-                          <button onClick={() => handleFinalize(rep.id)} aria-label="Зафіксувати звіт" className="p-1.5 text-gray-500 hover:text-green-400 hover:bg-green-500/10 rounded-lg transition-all" title="Зафіксувати"><Lock size={14} /></button>
-                          <button onClick={() => setDeleteReportId(rep.id)} aria-label="Видалити звіт" className="p-1.5 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all" title="Видалити"><Trash2 size={14} /></button>
-                        </>
-                      ) : (
-                        <button onClick={() => handleUnfinalize(rep.id)} aria-label="Розфіксувати звіт" className="p-1.5 text-gray-500 hover:text-amber-400 hover:bg-amber-500/10 rounded-lg transition-all" title="Розфіксувати"><Unlock size={14} /></button>
+                      {!isLocked && (
+                        !isFinal ? (
+                          <>
+                            <button onClick={() => openEditReport(rep)} aria-label="Редагувати звіт" className="p-1.5 text-gray-500 hover:text-accent-400 hover:bg-accent-500/10 rounded-lg transition-all" title="Редагувати"><Pencil size={14} /></button>
+                            <button onClick={() => handleFinalize(rep.id)} aria-label="Зафіксувати звіт" className="p-1.5 text-gray-500 hover:text-green-400 hover:bg-green-500/10 rounded-lg transition-all" title="Зафіксувати"><Lock size={14} /></button>
+                            <button onClick={() => setDeleteReportId(rep.id)} aria-label="Видалити звіт" className="p-1.5 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all" title="Видалити"><Trash2 size={14} /></button>
+                          </>
+                        ) : (
+                          <button onClick={() => handleUnfinalize(rep.id)} aria-label="Розфіксувати звіт" className="p-1.5 text-gray-500 hover:text-amber-400 hover:bg-amber-500/10 rounded-lg transition-all" title="Розфіксувати"><Unlock size={14} /></button>
+                        )
                       )}
                     </div>
                   </div>
@@ -1156,6 +1221,17 @@ export default function MonthlyServicesPage() {
         cancelLabel="Скасувати"
         onConfirm={() => handleDeleteReport(deleteReportId!)}
         onCancel={() => setDeleteReportId(null)}
+      />
+
+      {/* ── Видалення всіх даних за місяць ── */}
+      <ConfirmDialog
+        open={showDeletePeriod}
+        title={`Видалити дані послуг за ${MONTH_NAMES[selectedMonth-1]} ${selectedYear}?`}
+        description="Усі звіти, записи та готівку за цей місяць буде видалено. Цю дію неможливо скасувати."
+        variant="danger"
+        confirmLabel="Видалити"
+        onConfirm={handleDeletePeriod}
+        onCancel={() => setShowDeletePeriod(false)}
       />
 
       {/* ── Попередження: зафіксувати без каси ── */}

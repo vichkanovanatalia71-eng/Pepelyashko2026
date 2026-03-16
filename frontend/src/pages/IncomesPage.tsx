@@ -24,6 +24,8 @@ export default function IncomesPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState(emptyForm());
+  const [error, setError] = useState("");
+  const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
 
   // #2 — Фільтрація за датою
   const [dateFrom, setDateFrom] = useState("");
@@ -37,17 +39,26 @@ export default function IncomesPage() {
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
   async function loadIncomes() {
-    const params: Record<string, string> = {};
-    if (dateFrom) params.date_from = dateFrom;
-    if (dateTo) params.date_to = dateTo;
-    if (categoryFilter) params.category_id = categoryFilter;
-    const { data } = await api.get("/incomes/", { params });
-    setIncomes(data);
+    try {
+      setError("");
+      const params: Record<string, string> = {};
+      if (dateFrom) params.date_from = dateFrom;
+      if (dateTo) params.date_to = dateTo;
+      if (categoryFilter) params.category_id = categoryFilter;
+      const { data } = await api.get("/incomes/", { params });
+      setIncomes(data);
+    } catch (err: any) {
+      setError(err?.response?.data?.detail || "Не вдалося завантажити доходи");
+    }
   }
 
   async function loadCategories() {
-    const { data } = await api.get("/incomes/categories");
-    setCategories(data);
+    try {
+      const { data } = await api.get("/incomes/categories");
+      setCategories(data);
+    } catch {
+      // categories are non-critical, silently ignore
+    }
   }
 
   useEffect(() => {
@@ -112,23 +123,34 @@ export default function IncomesPage() {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    const payload = {
-      ...form,
-      amount: parseFloat(form.amount),
-      category_id: form.category_id ? parseInt(form.category_id) : null,
-    };
-    if (editingId) {
-      await api.put(`/incomes/${editingId}`, payload);
-    } else {
-      await api.post("/incomes/", payload);
+    try {
+      setError("");
+      const payload = {
+        ...form,
+        amount: parseFloat(form.amount),
+        category_id: form.category_id ? parseInt(form.category_id) : null,
+      };
+      if (editingId) {
+        await api.put(`/incomes/${editingId}`, payload);
+      } else {
+        await api.post("/incomes/", payload);
+      }
+      closeForm();
+      loadIncomes();
+    } catch (err: any) {
+      setError(err?.response?.data?.detail || "Помилка збереження");
     }
-    closeForm();
-    loadIncomes();
   }
 
   async function handleDelete(id: number) {
-    await api.delete(`/incomes/${id}`);
-    loadIncomes();
+    try {
+      setError("");
+      await api.delete(`/incomes/${id}`);
+      setDeleteConfirm(null);
+      loadIncomes();
+    } catch (err: any) {
+      setError(err?.response?.data?.detail || "Помилка видалення");
+    }
   }
 
   // Сортування
@@ -159,6 +181,26 @@ export default function IncomesPage() {
 
   return (
     <div>
+      {error && (
+        <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm flex items-center justify-between">
+          <span>{error}</span>
+          <button onClick={() => setError("")} className="ml-2 text-red-400 hover:text-red-300"><X size={16} /></button>
+        </div>
+      )}
+
+      {deleteConfirm !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => setDeleteConfirm(null)}>
+          <div className="bg-dark-600 rounded-2xl p-6 max-w-sm w-full border border-dark-50/10" onClick={e => e.stopPropagation()}>
+            <p className="text-white font-semibold mb-2">Видалити дохід?</p>
+            <p className="text-gray-400 text-sm mb-5">Цю дію неможливо скасувати.</p>
+            <div className="flex gap-3 justify-end">
+              <button onClick={() => setDeleteConfirm(null)} className="btn-ghost">Скасувати</button>
+              <button onClick={() => handleDelete(deleteConfirm)} className="px-4 py-2 bg-red-500/20 text-red-400 rounded-xl hover:bg-red-500/30 transition">Видалити</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between mb-5 lg:mb-8 flex-wrap gap-3">
         <div className="flex items-center gap-3 flex-1 justify-center">
           <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center shrink-0">
@@ -324,7 +366,7 @@ export default function IncomesPage() {
                   className="p-2 rounded-lg text-gray-600 hover:text-accent-400 hover:bg-accent-500/10 transition-all active:scale-90">
                   <Pencil size={14} />
                 </button>
-                <button onClick={() => handleDelete(income.id)} aria-label="Видалити"
+                <button onClick={() => setDeleteConfirm(income.id)} aria-label="Видалити"
                   className="p-2 rounded-lg text-gray-600 hover:text-red-400 hover:bg-red-500/10 transition-all active:scale-90">
                   <Trash2 size={14} />
                 </button>
@@ -407,7 +449,7 @@ export default function IncomesPage() {
                       className="p-1.5 rounded-lg text-gray-600 hover:text-accent-400 hover:bg-accent-500/10 transition-all">
                       <Pencil size={14} />
                     </button>
-                    <button onClick={() => handleDelete(income.id)}
+                    <button onClick={() => setDeleteConfirm(income.id)}
                       aria-label="Видалити"
                       className="p-1.5 rounded-lg text-gray-600 hover:text-red-400 hover:bg-red-500/10 transition-all">
                       <Trash2 size={16} />
