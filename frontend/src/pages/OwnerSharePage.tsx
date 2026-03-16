@@ -283,10 +283,6 @@ function TabOverview({ nhsuGrandAmount, nhsuGrandEpVz, totalPaidRevenue, paidDas
   paidDash: any; fi: any; ownerName: string;
 }) {
   const totalRevenue = nhsuGrandAmount + totalPaidRevenue;
-  const totalExpenses = nhsuGrandEpVz + (paidDash?.total_costs ?? 0);
-  const epAll = (fi?.ep_all ?? 0) + (paidDash?.ep_amount ?? 0);
-  const vzAll = (fi?.vz_all ?? 0) + (paidDash?.vz_amount ?? 0);
-  const netIncome = totalRevenue - totalExpenses;
   const doctorIncome = fi?.total ?? 0;
   const orgIncome = paidDash?.org_income ?? 0;
 
