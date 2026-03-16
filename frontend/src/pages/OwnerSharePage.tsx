@@ -79,8 +79,8 @@ function KpiCard({
   icon: typeof Building2; color: string; large?: boolean; highlight?: boolean;
 }) {
   return (
-    <div className={`card-neo p-5 ${highlight ? `bg-${color}-500/5 border-${color}-500/20` : ""}`}>
-      <div className="flex items-center gap-2 mb-2">
+    <div className={`card-neo p-5 text-center ${highlight ? `bg-${color}-500/5 border-${color}-500/20` : ""}`}>
+      <div className="flex items-center justify-center gap-2 mb-2">
         <Icon size={15} className={`text-${color}-400`} />
         <span className="text-xs text-gray-500">{label}</span>
       </div>
@@ -228,7 +228,6 @@ function TabOverview({ nhsuGrandAmount, totalPaidRevenue, paidDash, fi, ownerNam
 }) {
   const totalRevenue = nhsuGrandAmount + totalPaidRevenue;
   const doctorIncome = fi?.total ?? 0;
-  const orgIncome = paidDash?.org_income ?? 0;
 
   return (
     <div className="space-y-6">
@@ -252,8 +251,8 @@ function TabOverview({ nhsuGrandAmount, totalPaidRevenue, paidDash, fi, ownerNam
           Розподіл доходу
         </p>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div className="card-neo p-6 bg-emerald-500/5 border-emerald-500/20">
-            <div className="flex items-center gap-3 mb-3">
+          <div className="card-neo p-6 bg-emerald-500/5 border-emerald-500/20 text-center">
+            <div className="flex items-center justify-center gap-3 mb-3">
               <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
                 <Stethoscope size={20} className="text-emerald-400" />
               </div>
@@ -263,18 +262,6 @@ function TabOverview({ nhsuGrandAmount, totalPaidRevenue, paidDash, fi, ownerNam
               </div>
             </div>
             <p className="text-3xl font-bold text-emerald-400 tabular-nums">{fmt(doctorIncome)} <span className="text-sm text-gray-500">грн</span></p>
-          </div>
-          <div className="card-neo p-6 bg-blue-500/5 border-blue-500/20">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center">
-                <Building2 size={20} className="text-blue-400" />
-              </div>
-              <div>
-                <p className="text-xs text-gray-500">Дохід організації</p>
-                <p className="text-sm text-gray-400">Від платних послуг</p>
-              </div>
-            </div>
-            <p className="text-3xl font-bold text-blue-400 tabular-nums">{fmt(orgIncome)} <span className="text-sm text-gray-500">грн</span></p>
           </div>
         </div>
       </div>
@@ -876,7 +863,7 @@ export default function OwnerSharePage() {
                 <Building2 size={18} className="text-amber-400" />
               </div>
               <div>
-                <h1 className="text-base font-bold text-white">Фінанси ФОП</h1>
+                <h1 className="text-base font-bold text-white">Зведені фінанси за ФОП {ownerName ? `+ ${ownerName}` : ""}</h1>
                 <p className="text-xs text-gray-500">{data.filter_label}</p>
               </div>
             </div>

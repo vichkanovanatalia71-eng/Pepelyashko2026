@@ -90,7 +90,7 @@ export default function Layout() {
             {!collapsed && (
               <div className="min-w-0 sidebar-label">
                 <h1 className="text-lg font-bold text-white tracking-tight">MedFlow</h1>
-                <p className="text-xs text-gray-500">Фінанси ФОП</p>
+                <p className="text-xs text-gray-500">Зведені фінанси за ФОП</p>
               </div>
             )}
           </div>
