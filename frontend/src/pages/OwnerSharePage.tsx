@@ -25,7 +25,6 @@ import {
   Stethoscope,
   FileSpreadsheet,
   Shield,
-  Receipt,
 } from "lucide-react";
 
 import {
@@ -287,7 +286,6 @@ function TabOverview({ nhsuGrandAmount, nhsuGrandEpVz, totalPaidRevenue, paidDas
   const totalExpenses = nhsuGrandEpVz + (paidDash?.total_costs ?? 0);
   const epAll = (fi?.ep_all ?? 0) + (paidDash?.ep_amount ?? 0);
   const vzAll = (fi?.vz_all ?? 0) + (paidDash?.vz_amount ?? 0);
-  const totalTaxes = epAll + vzAll + (fi?.esv_owner ?? 0);
   const netIncome = totalRevenue - totalExpenses;
   const doctorIncome = fi?.total ?? 0;
   const orgIncome = paidDash?.org_income ?? 0;
@@ -307,20 +305,7 @@ function TabOverview({ nhsuGrandAmount, nhsuGrandEpVz, totalPaidRevenue, paidDas
         </div>
       </div>
 
-      {/* Secondary KPIs — Level 2 */}
-      <div>
-        <p className="text-xs text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
-          <Receipt size={12} />
-          Витрати та податки
-        </p>
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-          <KpiCard label="Витрати" value={fmt(totalExpenses)} icon={Package} color="orange" />
-          <KpiCard label="Податки (ЄП + ВЗ + ЄСВ)" value={fmt(totalTaxes)} icon={Shield} color="red" />
-          <KpiCard label="Чистий підсумок" value={fmt(netIncome)} icon={TrendingUp} color="emerald" highlight />
-        </div>
-      </div>
-
-      {/* Distribution KPIs — Level 3 */}
+{/* Distribution KPIs — Level 3 */}
       <div>
         <p className="text-xs text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
           <Users size={12} />
