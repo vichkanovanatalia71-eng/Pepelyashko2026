@@ -1887,6 +1887,117 @@ async def _build_owner_share_payload(
         "esv_owner": esv_owner,
     }
 
+    # ── 4. Витрати на повернення (return expenses) ──
+    # Fixed expenses з позначкою is_cash_return
+    fixed_res = await db.execute(
+        select(MonthlyFixedExpense).where(
+            MonthlyFixedExpense.user_id == user_id,
+            MonthlyFixedExpense.year == year,
+            MonthlyFixedExpense.month == month,
+        ).order_by(MonthlyFixedExpense.id)
+    )
+    all_fixed = fixed_res.scalars().all()
+    cash_return_fixed = [
+        {"id": r.id, "name": r.name or FIXED_CATEGORY_NAMES.get(r.category_key, r.category_key), "amount": float(r.amount)}
+        for r in all_fixed if r.is_cash_return
+    ]
+
+    # Other expenses з позначкою is_cash_return
+    other_res = await db.execute(
+        select(MonthlyOtherExpense).where(
+            MonthlyOtherExpense.user_id == user_id,
+            MonthlyOtherExpense.year == year,
+            MonthlyOtherExpense.month == month,
+        ).order_by(MonthlyOtherExpense.id)
+    )
+    all_other = other_res.scalars().all()
+    cash_return_other = [
+        {"id": r.id, "name": r.name, "amount": float(r.amount)}
+        for r in all_other if r.is_cash_return
+    ]
+
+    cash_return_sum = sum(r["amount"] for r in cash_return_fixed) + sum(r["amount"] for r in cash_return_other)
+
+    # Salary supplements
+    sal_all_res = await db.execute(
+        select(MonthlySalaryExpense).where(
+            MonthlySalaryExpense.user_id == user_id,
+            MonthlySalaryExpense.year == year,
+            MonthlySalaryExpense.month == month,
+        )
+    )
+    saved_salary_all = {r.staff_member_id: r for r in sal_all_res.scalars().all()}
+
+    staff_all_res = await db.execute(
+        select(StaffMember).where(
+            StaffMember.user_id == user_id,
+            StaffMember.is_active == True,
+        )
+    )
+    staff_all = {s.id: s for s in staff_all_res.scalars().all()}
+
+    pdfo_rate_calc = float(nhsu_settings.pdfo_rate) / 100 if nhsu_settings else 0.18
+    vz_zp_rate_calc = float(nhsu_settings.vz_zp_rate) / 100 if nhsu_settings else 0.05
+
+    supplements_list = []
+    for sid, sal in saved_salary_all.items():
+        if sal.has_supplement and sal.target_net is not None:
+            brutto_val = float(sal.brutto)
+            netto_val = round(brutto_val - round(brutto_val * pdfo_rate_calc, 2) - round(brutto_val * vz_zp_rate_calc, 2), 2)
+            supp = max(0.0, round(float(sal.target_net) - netto_val, 2))
+            if supp > 0:
+                sm = staff_all.get(sid)
+                supplements_list.append({
+                    "staff_member_id": sid,
+                    "full_name": sm.full_name if sm else "—",
+                    "supplement": supp,
+                })
+    supplements_total = sum(s["supplement"] for s in supplements_list)
+
+    # Doctor incomes (per-doctor from paid services)
+    from app.api.routes.monthly_services import _build_analytics as _ps_analytics
+    doctor_incomes_list: list[dict] = []
+    doctor_income_total = 0.0
+    cash_in_register = 0.0
+    try:
+        ps_ana = await _ps_analytics(db, user_id, year, month, None)
+        ps_dict = ps_ana.model_dump(mode="json")
+        doctor_income_total = ps_dict.get("dashboard", {}).get("doctor_income", 0.0)
+        cash_in_register = ps_dict.get("dashboard", {}).get("cash_in_register", 0.0)
+        # Compute per-doctor incomes from services_table
+        svcs = ps_dict.get("services_table", [])
+        income_by_doctor: dict[int, dict] = {}
+        for svc in svcs:
+            for doc in svc.get("doctors", []):
+                did = doc.get("doctor_id")
+                if did not in income_by_doctor:
+                    income_by_doctor[did] = {"name": doc.get("doctor_name", ""), "income": 0.0}
+                total_qty = svc.get("total_quantity", 0)
+                if total_qty > 0:
+                    income_by_doctor[did]["income"] += svc.get("doctor_income", 0) * (doc.get("quantity", 0) / total_qty)
+        doctor_incomes_list = [
+            {"doctor_id": did, "doctor_name": v["name"], "income": round(v["income"], 2)}
+            for did, v in income_by_doctor.items()
+        ]
+    except Exception:
+        pass
+
+    withdraw_to_card = round(cash_return_sum + supplements_total + doctor_income_total - cash_in_register, 2)
+
+    return_expenses = {
+        "cash_return_fixed": cash_return_fixed,
+        "cash_return_other": cash_return_other,
+        "cash_return_sum": round(cash_return_sum, 2),
+        "supplements": supplements_list,
+        "supplements_total": round(supplements_total, 2),
+        "doctor_incomes": doctor_incomes_list,
+        "doctor_income_total": round(doctor_income_total, 2),
+        "cash_in_register": round(cash_in_register, 2),
+        "withdraw_to_card": withdraw_to_card,
+        "year": year,
+        "month": month,
+    }
+
     # ПІБ власника
     owner_name = owner_doctor.full_name if owner_doctor else ""
 
@@ -1895,6 +2006,7 @@ async def _build_owner_share_payload(
         "nhsu": nhsu_data,
         "paid_services": paid_data,
         "formed_income": formed_income,
+        "return_expenses": return_expenses,
     }
 
 

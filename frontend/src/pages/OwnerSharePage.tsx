@@ -52,15 +52,29 @@ const TT_STYLE = { background: "#1a1a2e", border: "1px solid #333", borderRadius
 const fmt = (v: number) =>
   v.toLocaleString("uk-UA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-type TabId = "overview" | "nhsu" | "paid" | "doctor" | "details";
+type TabId = "overview" | "nhsu" | "paid" | "doctor" | "payments";
 
 const TABS: { id: TabId; label: string; icon: typeof Eye }[] = [
   { id: "overview", label: "Огляд", icon: Eye },
   { id: "nhsu", label: "НСЗУ", icon: Landmark },
   { id: "paid", label: "Платні послуги", icon: CreditCard },
   { id: "doctor", label: "Дохід лікаря", icon: Stethoscope },
-  { id: "details", label: "Деталізація", icon: FileSpreadsheet },
+  { id: "payments", label: "Оплата доходу і витрат", icon: Banknote },
 ];
+
+interface ReturnExpensesData {
+  cash_return_fixed: { id: number; name: string; amount: number }[];
+  cash_return_other: { id: number; name: string; amount: number }[];
+  cash_return_sum: number;
+  supplements: { staff_member_id: number; full_name: string; supplement: number }[];
+  supplements_total: number;
+  doctor_incomes: { doctor_id: number; doctor_name: string; income: number }[];
+  doctor_income_total: number;
+  cash_in_register: number;
+  withdraw_to_card: number;
+  year: number;
+  month: number;
+}
 
 interface ShareData {
   token: string;
@@ -71,6 +85,7 @@ interface ShareData {
     nhsu: any;
     paid_services: any;
     formed_income: any;
+    return_expenses?: ReturnExpensesData;
   };
 }
 
@@ -833,6 +848,135 @@ function TabDetails({
   );
 }
 
+/* ── Tab: Оплата доходу і витрат ── */
+function PaymentRow({
+  label, value, color = "text-gray-300", bold = false,
+}: {
+  label: string; value: number; color?: string; bold?: boolean;
+}) {
+  return (
+    <div className="flex items-center justify-between py-1.5">
+      <span className={`text-sm ${bold ? "font-semibold text-white" : "text-gray-400"}`}>{label}</span>
+      <span className={`text-sm font-mono tabular-nums ${bold ? "font-bold" : "font-medium"} ${color}`}>
+        {fmt(value)} ₴
+      </span>
+    </div>
+  );
+}
+
+function TabPayments({ returnExpenses }: { returnExpenses?: ReturnExpensesData }) {
+  if (!returnExpenses) {
+    return (
+      <div className="card-neo p-8 text-center">
+        <Banknote size={32} className="text-gray-600 mx-auto mb-3" />
+        <p className="text-gray-400 text-sm">Дані про витрати на повернення відсутні</p>
+      </div>
+    );
+  }
+
+  const re = returnExpenses;
+  const monthName = MONTHS_UA[re.month] ?? "";
+
+  return (
+    <div className="space-y-4">
+      <div className="card-neo p-5 space-y-4">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-8 h-8 rounded-xl bg-teal-500/10 flex items-center justify-center shrink-0">
+            <Banknote size={18} className="text-teal-400" />
+          </div>
+          <h3 className="font-semibold text-white text-base">Витрати на повернення</h3>
+        </div>
+
+        {/* Повернення готівки */}
+        <div>
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+            Повернення готівки
+          </p>
+          {re.cash_return_fixed.length === 0 && re.cash_return_other.length === 0 ? (
+            <p className="text-sm text-gray-600">Немає витрат з позначкою повернення.</p>
+          ) : (
+            <div className="space-y-1">
+              {re.cash_return_fixed.map(r => (
+                <PaymentRow key={`f-${r.id}`} label={r.name} value={r.amount} color="text-blue-400" />
+              ))}
+              {re.cash_return_other.map(e => (
+                <PaymentRow key={`o-${e.id}`} label={e.name} value={e.amount} color="text-amber-400" />
+              ))}
+              <div className="border-t border-dark-50/10 pt-1.5 mt-1.5">
+                <PaymentRow label="Разом" value={re.cash_return_sum} color="text-white" bold />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Доплати до цільової суми */}
+        <div>
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+            Доплати до цільової суми
+          </p>
+          {re.supplements.length === 0 ? (
+            <p className="text-sm text-gray-600">Немає доплат.</p>
+          ) : (
+            <div className="space-y-1">
+              {re.supplements.map(s => (
+                <PaymentRow key={s.staff_member_id} label={`${s.full_name} — доплата`} value={s.supplement} color="text-purple-400" />
+              ))}
+              <div className="border-t border-dark-50/10 pt-1.5 mt-1.5">
+                <PaymentRow label="Разом" value={re.supplements_total} color="text-white" bold />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Дохід лікарів */}
+        <div>
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+            Дохід лікарів (платні послуги)
+          </p>
+          {re.doctor_incomes.length === 0 ? (
+            <p className="text-sm text-gray-600">Немає даних.</p>
+          ) : (
+            <div className="space-y-1">
+              {re.doctor_incomes.map(d => (
+                <PaymentRow key={d.doctor_id} label={d.doctor_name} value={d.income} color="text-emerald-400" />
+              ))}
+              <div className="border-t border-dark-50/10 pt-1.5 mt-1.5">
+                <PaymentRow label="Разом" value={re.doctor_income_total} color="text-white" bold />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Готівка в касі */}
+        <div>
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+            Готівка в касі
+          </p>
+          <PaymentRow label={`Готівка в касі за ${monthName} ${re.year}`} value={re.cash_in_register} color="text-yellow-400" />
+        </div>
+
+        {/* Підсумок: Вивести на картку */}
+        <div className="border-t border-white/10 pt-4">
+          <div className="space-y-1.5 text-sm">
+            <PaymentRow label="Витрати на повернення" value={re.cash_return_sum} />
+            <PaymentRow label="+ Доплати до цільової суми" value={re.supplements_total} />
+            <PaymentRow label="+ Дохід лікарів" value={re.doctor_income_total} />
+            <PaymentRow label="− Готівка в касі" value={re.cash_in_register} />
+            <div className="border-t border-dark-50/10 pt-2.5 mt-2">
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-white">Вивести на картку</span>
+                <span className={`font-bold text-xl font-mono tabular-nums ${re.withdraw_to_card >= 0 ? "text-teal-400" : "text-red-400"}`}>
+                  {fmt(re.withdraw_to_card)} ₴
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ════════════════════════════════════════════════════════════
    MAIN COMPONENT
    ════════════════════════════════════════════════════════════ */
@@ -1011,18 +1155,8 @@ export default function OwnerSharePage() {
           />
         )}
 
-        {activeTab === "details" && (
-          <TabDetails
-            nhsu={nhsu}
-            nhsuDoctors={nhsuDoctors}
-            nhsuGrandPatients={nhsuGrandPatients}
-            nhsuGrandNonVerified={nhsuGrandNonVerified}
-            nhsuGrandAmount={nhsuGrandAmount}
-            nhsuGrandEpVz={nhsuGrandEpVz}
-            paidTable={paidTable}
-            paidTrend={paidTrend}
-            expensesPie={expensesPie}
-          />
+        {activeTab === "payments" && (
+          <TabPayments returnExpenses={data.data.return_expenses} />
         )}
 
         {/* Footer */}
