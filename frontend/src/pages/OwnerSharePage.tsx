@@ -2,11 +2,8 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import api from "../api/client";
 import {
-  TrendingUp,
-  Package,
   Landmark,
   Banknote,
-  Wallet,
   Clock,
   AlertCircle,
   Users,
@@ -17,38 +14,19 @@ import {
   ClipboardList,
   Layers,
   BarChart3,
-  UserCircle,
   PiggyBank,
   CircleDollarSign,
   Printer,
   Eye,
   Stethoscope,
-  FileSpreadsheet,
   Shield,
 } from "lucide-react";
-
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  Legend,
-} from "recharts";
 
 const MONTHS_UA = [
   "", "Січень", "Лютий", "Березень", "Квітень",
   "Травень", "Червень", "Липень", "Серпень",
   "Вересень", "Жовтень", "Листопад", "Грудень",
 ];
-const PIE_COLORS = ["#60a5fa", "#f97316", "#ef4444", "#a855f7", "#10b981"];
-const TT_STYLE = { background: "#1a1a2e", border: "1px solid #333", borderRadius: 8 };
-
 const fmt = (v: number) =>
   v.toLocaleString("uk-UA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -742,112 +720,6 @@ function TabDoctorIncome({ fi, ownerDoctor, hiredDoctor, ownerName, filterLabel 
   );
 }
 
-/* ── Tab: Деталізація ── */
-function TabDetails({
-  nhsu, nhsuDoctors, nhsuGrandPatients, nhsuGrandNonVerified, nhsuGrandAmount, nhsuGrandEpVz,
-  paidTable, paidTrend, expensesPie,
-}: {
-  nhsu: any; nhsuDoctors: any[]; nhsuGrandPatients: number;
-  nhsuGrandNonVerified: number; nhsuGrandAmount: number; nhsuGrandEpVz: number;
-  paidTable: any[]; paidTrend: any[]; expensesPie: any[];
-}) {
-  return (
-    <div className="space-y-6">
-      {/* NHSU age group totals */}
-      {nhsu && (
-        <div>
-          <p className="text-xs text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
-            <Landmark size={12} />
-            Повна розшифровка НСЗУ по вікових групах
-          </p>
-          <AgeGroupSummaryTable
-            nhsu={nhsu}
-            nhsuGrandPatients={nhsuGrandPatients}
-            nhsuGrandNonVerified={nhsuGrandNonVerified}
-            nhsuGrandAmount={nhsuGrandAmount}
-            nhsuGrandEpVz={nhsuGrandEpVz}
-          />
-        </div>
-      )}
-
-      {/* Per-doctor NHSU detail */}
-      {nhsuDoctors.length > 0 && (
-        <div>
-          <p className="text-xs text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
-            <Users size={12} />
-            Деталізація НСЗУ по лікарях та вікових групах
-          </p>
-          <div className="space-y-4">
-            {nhsuDoctors.map((doc: any) => (
-              <NhsuDoctorTable key={doc.doctor_id} doctor={doc} />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Services full table */}
-      {paidTable.length > 0 && (
-        <div>
-          <p className="text-xs text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
-            <ClipboardList size={12} />
-            Повна розшифровка по платних послугах
-          </p>
-          <ServicesTable rows={paidTable} />
-        </div>
-      )}
-
-      {/* Charts */}
-      {expensesPie.length > 0 && (
-        <div>
-          <p className="text-xs text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
-            <BarChart3 size={12} />
-            Структура витрат
-          </p>
-          <div className="card-neo p-5">
-            <ResponsiveContainer width="100%" height={220}>
-              <PieChart>
-                <Pie data={expensesPie} cx="50%" cy="50%" outerRadius={75} dataKey="value" label={({ name, percent }: any) => `${name} ${(percent * 100).toFixed(0)}%`}>
-                  {expensesPie.map((_: any, i: number) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
-                </Pie>
-                <Tooltip contentStyle={TT_STYLE} formatter={(v: number) => fmt(v) + " грн"} />
-                <Legend wrapperStyle={{ fontSize: 11 }} />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      )}
-
-      {paidTrend.length > 1 && (
-        <div>
-          <p className="text-xs text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
-            <BarChart3 size={12} />
-            Динаміка по місяцях
-          </p>
-          <div className="card-neo p-5">
-            <ResponsiveContainer width="100%" height={240}>
-              <BarChart data={paidTrend}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                <XAxis dataKey="label" tick={{ fill: "#888", fontSize: 10 }} />
-                <YAxis tick={{ fill: "#888", fontSize: 10 }} />
-                <Tooltip contentStyle={TT_STYLE} />
-                <Bar dataKey="sum" fill="#60a5fa" radius={[4, 4, 0, 0]} name="Оборот (грн)" />
-                <Bar dataKey="doctor_income" fill="#4ade80" radius={[4, 4, 0, 0]} name="Дохід лікарів (грн)" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      )}
-
-      {!nhsu && paidTable.length === 0 && (
-        <div className="card-neo p-8 text-center">
-          <FileSpreadsheet size={32} className="text-gray-600 mx-auto mb-3" />
-          <p className="text-gray-400 text-sm">Деталізовані дані відсутні</p>
-        </div>
-      )}
-    </div>
-  );
-}
-
 /* ── Tab: Оплата доходу і витрат ── */
 function PaymentRow({
   label, value, color = "text-gray-300", bold = false,
@@ -1038,24 +910,11 @@ export default function OwnerSharePage() {
   // ── NHSU aggregated totals ──
   const nhsuGrandPatients = nhsu?.grand_total_patients ?? 0;
   const nhsuGrandAmount = nhsu?.grand_total_amount ?? 0;
-  const nhsuGrandEpVz = nhsu?.grand_total_ep_vz ?? 0;
   const nhsuGrandNonVerified = nhsuDoctors.reduce((s: number, d: any) => s + (d.total_non_verified ?? 0), 0);
 
   // ── Paid services ──
   const paidDash = paid?.dashboard;
   const paidTable: any[] = paid?.services_table ?? [];
-  const paidTrend = (paid?.monthly_trend ?? [])
-    .filter((r: any) => r.sum > 0)
-    .map((r: any) => ({
-      label: `${MONTHS_UA[r.month]?.slice(0, 3)} ${r.year}`,
-      sum: r.sum,
-      doctor_income: r.doctor_income,
-    }));
-  const expensesPie = paidDash ? [
-    { name: "Матеріали", value: paidDash.materials_cost },
-    { name: `ЄП (${paid.ep_rate}%)`, value: paidDash.ep_amount },
-    { name: `ВЗ (${paid.vz_rate}%)`, value: paidDash.vz_amount },
-  ].filter((x: any) => x.value > 0) : [];
 
   const totalPaidRevenue = paidDash?.total_revenue ?? 0;
 
