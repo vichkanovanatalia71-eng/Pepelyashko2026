@@ -530,8 +530,8 @@ function TabPaidServices({ paidDash, paidTable }: {
 }
 
 /* ── Tab: Дохід лікаря ── */
-function TabDoctorIncome({ fi, ownerDoctor, hiredDoctor, ownerName, filterLabel }: {
-  fi: any; ownerDoctor: any; hiredDoctor: any; ownerName: string; filterLabel: string;
+function TabDoctorIncome({ fi, ownerName, filterLabel }: {
+  fi: any; ownerName: string; filterLabel: string;
 }) {
   if (!fi) {
     return (
@@ -609,7 +609,6 @@ function TabDoctorIncome({ fi, ownerDoctor, hiredDoctor, ownerName, filterLabel 
           </div>
         </div>
 
-        {ownerDoctor && <NhsuDoctorTable doctor={ownerDoctor} />}
       </div>
 
       {/* ── НСЗУ лікаря: найманий лікар ── */}
@@ -643,7 +642,6 @@ function TabDoctorIncome({ fi, ownerDoctor, hiredDoctor, ownerName, filterLabel 
               </div>
             </div>
 
-            {hiredDoctor && <NhsuDoctorTable doctor={hiredDoctor} />}
           </>
         ) : (
           <div className="card-neo p-8 text-center">
@@ -852,11 +850,6 @@ export default function OwnerSharePage() {
 
   // ── NHSU per-doctor data ──
   const nhsuDoctors: any[] = nhsu?.doctors ?? [];
-  const ownerDoctor = nhsuDoctors.find((d: any) => d.is_owner);
-  const hiredDoctors = nhsuDoctors.filter((d: any) => !d.is_owner);
-  const hiredDoctor = fi?.hired_doctor
-    ? hiredDoctors.find((d: any) => d.doctor_id === fi.hired_doctor.doctor_id) ?? hiredDoctors[0]
-    : hiredDoctors[0];
 
   // ── NHSU aggregated totals ──
   const nhsuGrandPatients = nhsu?.grand_total_patients ?? 0;
@@ -958,8 +951,6 @@ export default function OwnerSharePage() {
         {activeTab === "doctor" && (
           <TabDoctorIncome
             fi={fi}
-            ownerDoctor={ownerDoctor}
-            hiredDoctor={hiredDoctor}
             ownerName={ownerName}
             filterLabel={data.filter_label}
           />
