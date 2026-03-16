@@ -863,7 +863,7 @@ export default function OwnerSharePage() {
                 <Building2 size={18} className="text-amber-400" />
               </div>
               <div>
-                <h1 className="text-base font-bold text-white">Зведені фінанси за ФОП {ownerName ? `+ ${ownerName}` : ""}</h1>
+                <h1 className="text-base font-bold text-white">Зведені фінанси за ФОП {ownerName || ""}</h1>
                 <p className="text-xs text-gray-500">{data.filter_label}</p>
               </div>
             </div>
