@@ -559,6 +559,12 @@ async def create_report(
 
     await db.commit()
     await db.refresh(report)
+
+    # Інвалідуємо кеш аналітики для цього періоду
+    for key in list(_analytics_cache.keys()):
+        if key.startswith(f"{user.id}:{body.year}:{body.month}:"):
+            _analytics_cache.pop(key, None)
+
     result = await _build_report_responses(db, [report], svcs_all)
     return result[0]
 
@@ -645,6 +651,11 @@ async def update_report(
     await db.commit()
     await db.refresh(report)
 
+    # Інвалідуємо кеш аналітики для цього періоду
+    for key in list(_analytics_cache.keys()):
+        if key.startswith(f"{user.id}:{report.year}:{report.month}:"):
+            _analytics_cache.pop(key, None)
+
     svcs_r = await db.execute(select(Service).where(Service.user_id == user.id))
     svcs_all = {s.id: s for s in svcs_r.scalars().all()}
     result = await _build_report_responses(db, [report], svcs_all)
@@ -671,6 +682,12 @@ async def finalize_report(
     report.updated_at = datetime.now(timezone.utc)
     await db.commit()
     await db.refresh(report)
+
+    # Інвалідуємо кеш аналітики для цього періоду
+    for key in list(_analytics_cache.keys()):
+        if key.startswith(f"{user.id}:{report.year}:{report.month}:"):
+            _analytics_cache.pop(key, None)
+
     svcs_r = await db.execute(select(Service).where(Service.user_id == user.id))
     svcs_all = {s.id: s for s in svcs_r.scalars().all()}
     result = await _build_report_responses(db, [report], svcs_all)
@@ -697,6 +714,12 @@ async def unfinalize_report(
     report.updated_at = datetime.now(timezone.utc)
     await db.commit()
     await db.refresh(report)
+
+    # Інвалідуємо кеш аналітики для цього періоду
+    for key in list(_analytics_cache.keys()):
+        if key.startswith(f"{user.id}:{report.year}:{report.month}:"):
+            _analytics_cache.pop(key, None)
+
     svcs_r = await db.execute(select(Service).where(Service.user_id == user.id))
     svcs_all = {s.id: s for s in svcs_r.scalars().all()}
     result = await _build_report_responses(db, [report], svcs_all)
@@ -719,8 +742,14 @@ async def delete_report(
     if not report:
         raise HTTPException(404, detail="Звіт не знайдено")
     await _check_service_period_lock(db, user.id, report.year, report.month)
+    report_year, report_month = report.year, report.month
     await db.delete(report)
     await db.commit()
+
+    # Інвалідуємо кеш аналітики для цього періоду
+    for key in list(_analytics_cache.keys()):
+        if key.startswith(f"{user.id}:{report_year}:{report_month}:"):
+            _analytics_cache.pop(key, None)
 
 
 @router.delete("/period", status_code=204)
@@ -764,6 +793,11 @@ async def delete_period_data(
         )
     )
     await db.commit()
+
+    # Інвалідуємо кеш аналітики для цього періоду
+    for key in list(_analytics_cache.keys()):
+        if key.startswith(f"{user.id}:{year}:{month}:"):
+            _analytics_cache.pop(key, None)
 
 
 @router.post("/reports/copy-previous", response_model=ReportResponse, status_code=201)
@@ -827,6 +861,11 @@ async def copy_previous_month(
 
     await db.commit()
     await db.refresh(new_report)
+
+    # Інвалідуємо кеш аналітики для цього періоду
+    for key in list(_analytics_cache.keys()):
+        if key.startswith(f"{user.id}:{year}:{month}:"):
+            _analytics_cache.pop(key, None)
 
     svcs_r = await db.execute(select(Service).where(Service.user_id == user.id))
     svcs_all = {s.id: s for s in svcs_r.scalars().all()}
