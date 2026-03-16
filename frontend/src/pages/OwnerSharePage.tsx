@@ -540,6 +540,7 @@ function TabDoctorIncome({ fi, ownerName, filterLabel }: {
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
           <MiniKpi label="Дохід від НСЗУ (за власні декларації)" value={`${fmt(fi.own_declarations)} грн`} color="emerald-400" />
           <MiniKpi label="Дохід від НСЗУ (найманий лікар)" value={`${fmt(fi.hired_declarations)} грн`} color="blue-400" />
+          <MiniKpi label="Разом за декларації" value={`${fmt(fi.own_declarations + fi.hired_declarations)} грн`} color="yellow-400" />
           <MiniKpi label="Дохід від платних послуг" value={`${fmt(fi.paid_services_income)} грн`} color="purple-400" />
           <MiniKpi label="Податки (ЄП + ВЗ + ЄСВ)" value={`${fmt(fi.ep_all + fi.vz_all + fi.esv_owner)} грн`} color="red-400" />
           <MiniKpi label="Чистий дохід за період" value={`${fmt(fi.total)} грн`} color="emerald-400" />
