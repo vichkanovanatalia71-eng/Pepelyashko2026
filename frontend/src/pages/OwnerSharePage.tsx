@@ -884,7 +884,7 @@ export default function OwnerSharePage() {
           </div>
 
           {/* Tab navigation */}
-          <div className="grid grid-cols-5 gap-2 overflow-x-auto pb-0 -mb-px">
+          <div className="flex gap-2 overflow-x-auto pb-2 -mb-px scrollbar-hide">
             {TABS.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -892,7 +892,7 @@ export default function OwnerSharePage() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center justify-center gap-1.5 px-3 py-3 text-sm font-semibold rounded-xl transition-all whitespace-nowrap
+                  className={`flex items-center justify-center gap-1.5 px-3 py-3 text-sm font-semibold rounded-xl transition-all whitespace-nowrap shrink-0
                     ${isActive
                       ? "text-white bg-accent-500/20 border border-accent-400/50 shadow-[0_4px_12px_rgba(99,102,241,0.3),inset_0_1px_0_rgba(255,255,255,0.1)] translate-y-0"
                       : "text-gray-400 bg-dark-400/40 border border-dark-50/15 shadow-[0_2px_6px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.05)] hover:text-white hover:bg-dark-400/60 hover:shadow-[0_4px_10px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-[0_1px_3px_rgba(0,0,0,0.3)]"
