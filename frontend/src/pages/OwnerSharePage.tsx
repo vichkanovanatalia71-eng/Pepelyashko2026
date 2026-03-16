@@ -2,8 +2,11 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import api from "../api/client";
 import {
+  TrendingUp,
+  Package,
   Landmark,
   Banknote,
+  Wallet,
   Clock,
   AlertCircle,
   Users,
@@ -14,6 +17,7 @@ import {
   ClipboardList,
   Layers,
   BarChart3,
+  UserCircle,
   PiggyBank,
   CircleDollarSign,
   Printer,
@@ -157,59 +161,6 @@ function NhsuDoctorTable({ doctor }: { doctor: any }) {
               <td className="px-3 py-2.5 text-right text-yellow-400/70 font-bold tabular-nums">{doctor.total_non_verified}</td>
               <td className="px-3 py-2.5 text-right text-blue-400 font-bold tabular-nums">{fmt(doctor.total_amount)}</td>
               <td className="px-3 py-2.5 text-right text-red-400 font-bold tabular-nums">{fmt(doctor.total_ep_vz)}</td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
-    </div>
-  );
-}
-
-/* ── Age Group Summary Table ── */
-function AgeGroupSummaryTable({ nhsu, nhsuGrandPatients, nhsuGrandNonVerified, nhsuGrandAmount, nhsuGrandEpVz }: {
-  nhsu: any; nhsuGrandPatients: number; nhsuGrandNonVerified: number; nhsuGrandAmount: number; nhsuGrandEpVz: number;
-}) {
-  if (!nhsu?.age_group_totals?.length) return null;
-  return (
-    <div className="card-neo overflow-hidden">
-      <div className="px-5 py-3 border-b border-dark-50/10">
-        <h4 className="text-sm font-medium text-gray-400 flex items-center gap-2">
-          <Layers size={14} className="text-blue-400" />
-          Зведені декларації по вікових групах (усі лікарі)
-        </h4>
-      </div>
-      <div className="overflow-x-auto">
-        <table className="w-full text-xs min-w-[600px]">
-          <thead>
-            <tr className="border-b border-dark-50/10 bg-dark-300/50">
-              <th scope="col" className="text-left px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Вікова група</th>
-              <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Коеф.</th>
-              <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Пацієнтів</th>
-              <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Не вериф.</th>
-              <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">Нарахування</th>
-              <th scope="col" className="text-right px-3 py-2.5 text-gray-400 font-medium whitespace-nowrap">ЄП + ВЗ</th>
-            </tr>
-          </thead>
-          <tbody>
-            {nhsu.age_group_totals.map((r: any) => (
-              <tr key={r.age_group} className="border-b border-dark-50/5 hover:bg-dark-300/30 transition-colors">
-                <td className="px-3 py-2.5 text-gray-200">{r.age_group_label}</td>
-                <td className="px-3 py-2.5 text-right text-gray-400 tabular-nums">{r.age_coefficient}</td>
-                <td className="px-3 py-2.5 text-right text-gray-200 tabular-nums">{r.total_patients}</td>
-                <td className="px-3 py-2.5 text-right text-yellow-400/70 tabular-nums">{r.total_non_verified}</td>
-                <td className="px-3 py-2.5 text-right text-blue-400 font-medium tabular-nums">{fmt(r.total_amount)}</td>
-                <td className="px-3 py-2.5 text-right text-red-400 tabular-nums">{fmt(r.total_ep_vz)}</td>
-              </tr>
-            ))}
-          </tbody>
-          <tfoot>
-            <tr className="border-t border-dark-50/15 bg-dark-400/20">
-              <td className="px-3 py-2.5 text-gray-300 font-semibold">Разом</td>
-              <td />
-              <td className="px-3 py-2.5 text-right text-white font-bold tabular-nums">{nhsuGrandPatients}</td>
-              <td className="px-3 py-2.5 text-right text-yellow-400/70 font-bold tabular-nums">{nhsuGrandNonVerified}</td>
-              <td className="px-3 py-2.5 text-right text-blue-400 font-bold tabular-nums">{fmt(nhsuGrandAmount)}</td>
-              <td className="px-3 py-2.5 text-right text-red-400 font-bold tabular-nums">{fmt(nhsuGrandEpVz)}</td>
             </tr>
           </tfoot>
         </table>
