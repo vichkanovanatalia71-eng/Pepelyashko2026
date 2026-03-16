@@ -538,7 +538,7 @@ function TabDoctorIncome({ fi, ownerName, filterLabel }: {
           Зведений дохід лікаря {ownerName ? ownerName.split(" ")[0] : ""}
         </p>
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-          <MiniKpi label="Дохід від НСЗУ (власна декларація)" value={`${fmt(fi.own_declarations)} грн`} color="emerald-400" />
+          <MiniKpi label="Дохід від НСЗУ (за власні декларації)" value={`${fmt(fi.own_declarations)} грн`} color="emerald-400" />
           <MiniKpi label="Дохід від НСЗУ (найманий лікар)" value={`${fmt(fi.hired_declarations)} грн`} color="blue-400" />
           <MiniKpi label="Дохід від платних послуг" value={`${fmt(fi.paid_services_income)} грн`} color="purple-400" />
           <MiniKpi label="Податки (ЄП + ВЗ + ЄСВ)" value={`${fmt(fi.ep_all + fi.vz_all + fi.esv_owner)} грн`} color="red-400" />
@@ -562,11 +562,11 @@ function TabDoctorIncome({ fi, ownerName, filterLabel }: {
         </div>
       </div>
 
-      {/* ── НСЗУ лікаря: власна декларація ── */}
+      {/* ── НСЗУ лікаря: за власні декларації ── */}
       <div className="space-y-4">
         <p className="text-xs text-gray-500 uppercase tracking-wider flex items-center gap-2">
           <BadgeDollarSign size={12} />
-          НСЗУ — власна декларація
+          НСЗУ — за власні декларації
         </p>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -580,7 +580,7 @@ function TabDoctorIncome({ fi, ownerName, filterLabel }: {
         <div className="card-neo overflow-hidden">
           <div className="px-5 py-3 border-b border-dark-50/10">
             <h4 className="text-sm font-medium text-gray-400 flex items-center gap-2">
-              <Calculator size={14} className="text-orange-400" />Розрахунок доходу від власної декларації
+              <Calculator size={14} className="text-orange-400" />Розрахунок доходу за власні декларації
             </h4>
           </div>
           <div className="px-5 py-4 space-y-1.5 text-sm">
@@ -883,7 +883,7 @@ export default function OwnerSharePage() {
           </div>
 
           {/* Tab navigation */}
-          <div className="flex gap-1 overflow-x-auto pb-0 -mb-px">
+          <div className="grid grid-cols-5 gap-2 overflow-x-auto pb-0 -mb-px">
             {TABS.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -891,13 +891,13 @@ export default function OwnerSharePage() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 transition-colors whitespace-nowrap ${
-                    isActive
-                      ? "text-accent-400 border-accent-400 bg-dark-400/30"
-                      : "text-gray-500 border-transparent hover:text-gray-300 hover:bg-dark-400/20"
-                  }`}
+                  className={`flex items-center justify-center gap-1.5 px-3 py-3 text-sm font-semibold rounded-xl transition-all whitespace-nowrap
+                    ${isActive
+                      ? "text-white bg-accent-500/20 border border-accent-400/50 shadow-[0_4px_12px_rgba(99,102,241,0.3),inset_0_1px_0_rgba(255,255,255,0.1)] translate-y-0"
+                      : "text-gray-400 bg-dark-400/40 border border-dark-50/15 shadow-[0_2px_6px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.05)] hover:text-white hover:bg-dark-400/60 hover:shadow-[0_4px_10px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-[0_1px_3px_rgba(0,0,0,0.3)]"
+                    }`}
                 >
-                  <Icon size={14} />
+                  <Icon size={15} />
                   {tab.label}
                 </button>
               );
